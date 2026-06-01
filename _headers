@@ -1,0 +1,11 @@
+# Cross-origin isolation enables SharedArrayBuffer, which QEMU-WASM's threads need.
+# Netlify / Cloudflare Pages format. (GitHub Pages can't set custom headers — the
+# bundled coi-serviceworker.js provides the same isolation on those hosts instead.)
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
+
+# Long-cache the big immutable build artifacts (cache-busted by the ?v= query).
+/vendor/*
+  Cache-Control: public, max-age=31536000
