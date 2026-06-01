@@ -10,69 +10,105 @@
        Vercel via _headers) it's a harmless no-op. MUST load first. -->
   <script src="coi-serviceworker.js"></script>
   <style>
-    :root { --bg:#0b0b12; --fg:#d8d8e0; --accent:#ffd23f; --accent2:#55ff55; --border:#2a2a3a; --panel:#15151f;
-            --mono:"SF Mono","Cascadia Code",Menlo,Consolas,monospace; }
-    * { box-sizing:border-box; }
-    html,body { margin:0; height:100%; background:var(--bg); color:var(--fg); font-family:system-ui,sans-serif; }
-    header { padding:12px 18px 4px; }
-    header h1 { margin:0; font-size:19px; color:var(--accent); font-family:var(--mono); letter-spacing:.4px; }
-    header p { margin:4px 0 0; font-size:13px; color:#9a9ab0; max-width:920px; }
-    header a { color:var(--accent2); }
-    .toolbar { display:flex; gap:10px; align-items:center; padding:8px 18px; flex-wrap:wrap; }
-    .toolbar button { font-family:var(--mono); font-size:13px; padding:6px 12px; background:#1d1d2b; color:var(--fg);
-                      border:1px solid var(--border); border-radius:6px; cursor:pointer; }
-    .toolbar button:hover { border-color:var(--accent); }
-    .toolbar button:disabled { opacity:.4; cursor:default; }
-    #status { font-family:var(--mono); font-size:12px; color:#9a9ab0; margin-left:auto; }
-    .stage { display:flex; justify-content:center; padding:10px 18px 24px; }
-    #frame { position:relative; background:#000; border:1px solid var(--border); border-radius:8px; overflow:hidden;
-             box-shadow:0 6px 40px rgba(0,0,0,.5); width:644px; }
+    /* ---- afterdavis theme: the TempleOS desktop, recreated in CSS ----
+       mediumblue desktop · white double-bordered windows w/ blinking title tabs ·
+       DOS VGA bitmap font · green ">" prompts · red links · gold accents. */
+    @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); font-weight:normal; font-style:normal; }
+    :root { --blue:mediumblue; --red:rgb(161,6,8); --green:#149f35; --gold:gold; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga',"Courier New",monospace;
+        cursor:url('assets/cursor.png'),auto; }
+    html { overflow-y:auto; }
+    body { min-height:100vh; background:var(--blue); color:#fff; line-height:1.5; }
+    ::selection { background:#000; color:yellow; }
+
+    /* TempleOS top status bar */
+    #topbar { display:flex; justify-content:space-between; align-items:center; gap:10px;
+              background:var(--blue); color:#fff; padding:2px 10px; border-bottom:2px solid #fff;
+              font-size:14px; line-height:1.2; flex-wrap:wrap; }
+    #topbar .l span { margin-right:14px; white-space:nowrap; }
+    #topbar .r { color:yellow; }
+
+    header { display:flex; align-items:center; gap:14px; padding:12px 14px 2px; flex-wrap:wrap; }
+    header img.terry { height:56px; width:auto; image-rendering:pixelated; border:2px solid #fff; }
+    header h1 { font-size:21px; font-weight:normal; color:#fff; letter-spacing:.3px; }
+    header p { font-size:13px; color:#dfe6ff; max-width:900px; }
+    a { color:var(--gold); }
+
+    /* a TempleOS window: white box, double-blue border, white outline, blinking title tab */
+    .win { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue);
+           outline:4px solid #fff; margin:16px 12px; padding:12px; overflow:visible; }
+    .win[data-title]::before { content:attr(data-title); position:absolute; top:-12px; left:8px;
+           padding:2px 5px 0; background:#fff; color:var(--blue); line-height:.8; letter-spacing:.1em;
+           animation:winTitle .6s step-start infinite; }
+    @keyframes winTitle { 50% { background:var(--blue); color:#fff; } }
+
+    /* toolbar / buttons — afterdavis invert-on-hover */
+    .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    button { font-family:'dos_vga',monospace; font-size:15px; color:#000; background:#fff;
+             border:2px solid #fff; outline:2px solid #000; padding:4px 11px; }
+    button:hover:not(:disabled) { color:#fff; background:#000; }
+    button:disabled { opacity:.4; }
+
+    /* the emulator screen, framed as a TempleOS window */
+    .stage { display:flex; justify-content:center; padding:4px 12px 8px; }
+    #frame { position:relative; width:fit-content; max-width:96vw; margin:16px auto; padding:5px;
+             background:#fff; border:6px double var(--blue); outline:4px solid #fff; }
+    #frame::before { content:"TempleOS V5.03"; position:absolute; top:-12px; left:8px; padding:2px 5px 0;
+             background:#fff; color:var(--blue); line-height:.8; letter-spacing:.1em;
+             animation:winTitle .6s step-start infinite; }
     canvas#canvas { display:block; width:640px; height:480px; image-rendering:pixelated; background:#000; outline:none; }
-    /* phased loading overlay, centered over the canvas */
-    #loadui { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-              gap:12px; padding:24px; background:rgba(8,8,16,.92); color:#cfcfe0; font-family:var(--mono); text-align:center; }
-    #loadui .spinner { width:34px; height:34px; border:3px solid #2a2a3a; border-top-color:var(--accent2); border-radius:50%;
-                       animation:spin 0.9s linear infinite; }
+
+    /* loading overlay over the canvas */
+    #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center;
+              justify-content:center; gap:12px; padding:24px; background:rgba(0,0,40,.92); color:#fff; text-align:center; }
+    #loadui.dim { background:rgba(0,0,40,.5); }
+    #loadui .spinner { width:34px; height:34px; border:3px solid rgba(255,255,255,.25); border-top-color:var(--gold);
+                       border-radius:50%; animation:spin .9s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
-    #ldtext { font-size:13px; max-width:560px; line-height:1.5; min-height:2.4em; }
-    .ldbarwrap { height:8px; width:80%; max-width:480px; background:#1d1d2b; border-radius:4px; overflow:hidden; }
-    .ldbarwrap > i { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent2),var(--accent));
-                     transition:width .2s; }
-    #ldsteps { display:flex; gap:16px; font-size:12px; flex-wrap:wrap; justify-content:center; }
-    #ldsteps span { color:#6a6a80; }
-    #ldsteps span.cur { color:var(--accent); font-weight:bold; }
-    #ldsteps span.done { color:var(--accent2); }
-    .hb { font-size:12px; color:var(--accent2); font-family:var(--mono); }
-    #loadui.dim { background:rgba(8,8,16,.55); }
-    /* guidance banner shown when the OS is ready */
-    #guide { display:none; margin:0 18px 8px; max-width:920px; padding:10px 14px; border-radius:8px;
-             background:#1b2a14; border:1px solid #3a5a22; color:#d7f0c0; font-size:13px; line-height:1.5; }
-    #guide b { color:var(--accent2); }
-    #guide kbd { background:#0c0c14; border:1px solid #3a5a22; border-bottom-width:2px; border-radius:4px;
-                 padding:0 6px; font-family:var(--mono); color:#fff; }
-    #dbg { display:none; margin:8px 18px; max-width:920px; height:220px; overflow:auto; background:#08080e;
-           border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-family:var(--mono);
-           font-size:11px; line-height:1.45; color:#9fcf9f; white-space:pre-wrap; }
+    #ldtext { font-size:14px; max-width:560px; line-height:1.5; min-height:2.4em; }
+    .ldbarwrap { height:10px; width:80%; max-width:480px; background:rgba(255,255,255,.18); border:1px solid #fff; }
+    .ldbarwrap > i { display:block; height:100%; width:0; background:var(--gold); transition:width .2s; }
+    .hb { font-size:12px; color:#9fe6ff; }
+
+    /* help banner (a TempleOS window) — shown once the OS is ready */
+    #guide { display:none; font-size:14px; }
+    #guide b { color:var(--red); }
+    #guide i { color:var(--green); font-style:normal; }
+    #guide kbd { background:var(--blue); color:#fff; border:1px solid var(--blue); padding:0 5px; }
+
+    /* debug console — a dark terminal window */
+    #dbg { display:none; height:200px; overflow:auto; background:#000; color:#7fe07f; border:6px double var(--blue);
+           outline:4px solid #fff; font-size:12px; line-height:1.45; white-space:pre-wrap; }
     #dbg .err { color:#ff8a8a; }
-    footer { padding:0 18px 22px; font-size:12px; color:#7a7a90; max-width:920px; }
-    code { background:#1d1d2b; padding:1px 5px; border-radius:4px; }
-    .warn { color:#ff8a8a; }
+
+    footer { text-align:center; padding:6px 14px 26px; font-size:13px; color:#cfe; opacity:.85; }
+    footer a { color:var(--gold); }
   </style>
 </head>
 <body>
+  <div id="topbar">
+    <div class="l">
+      <span id="tb-date">Mon 01/01</span><span id="tb-time">00:00:00</span><span>FPS:30</span><span>Mem:0010000000</span><span>CPU99</span><span>1</span>
+    </div>
+    <div class="r">the real 64-bit OS in your browser</div>
+  </div>
+
   <header>
-    <h1>TempleOS — the real 64-bit OS, booting in your browser</h1>
-    <p>This boots the <b>complete, unmodified TempleOS V5.03</b> on a <b>64-bit QEMU</b> whose CPU core is compiled to WebAssembly — JIT-translating the guest's x86-64 to WASM. Real kernel, real HolyC JIT, graphics, sound, keyboard &amp; mouse. <a href="https://github.com/ParkerrDev/TempleOS-wasm">source &amp; build notes →</a></p>
+    <img class="terry" src="assets/terrydancing.gif" alt="Terry A. Davis" title="R.I.P. Terry A. Davis (1969–2018)" />
+    <div>
+      <h1>TempleOS — the real 64-bit OS, booting in your browser</h1>
+      <p>The <b>complete, unmodified TempleOS V5.03</b> on a <b>64-bit QEMU</b> compiled to WebAssembly — JIT-translating the guest's x86-64 to WASM. Real kernel, real HolyC JIT, graphics, sound, keyboard &amp; mouse. <a href="https://github.com/ParkerrDev/TempleOS-wasm">source &amp; build notes →</a></p>
+    </div>
   </header>
 
-  <div class="toolbar">
+  <div class="toolbar win" data-title="Menu">
     <button id="bootBtn">▶ Boot TempleOS</button>
     <button id="restartBtn" disabled title="Reload the clean desktop snapshot (~4s) — use this any time TempleOS gets into a weird state">↻ Restart (clean desktop)</button>
     <button id="tourBtn" disabled title="Open the built-in TempleOS Welcome guide">🧭 Take the Tour</button>
     <button id="fsBtn" disabled>⛶ Fullscreen</button>
   </div>
 
-  <div id="guide"></div>
+  <div id="guide" class="win" data-title="Help"></div>
 
   <div class="stage">
     <div id="frame">
@@ -88,12 +124,28 @@
   </div>
 
   <!-- live diagnostic log -->
-  <pre id="dbg"></pre>
+  <pre id="dbg" class="win" data-title="Debug"></pre>
 
   <footer>
-    <p><b>Notes:</b> needs a desktop browser with SharedArrayBuffer (cross-origin isolation — provided here by the bundled service worker, or by COOP/COEP headers on hosts that support them). The default boots the <b>installed hard disk</b>, restored <b>instantly from a snapshot</b> (~4s) — no compile wait, no prompts. <b>Click a window, then type</b> (keyboard &amp; mouse work; capital letters too); TempleOS routes keys to the <b>focused window</b>. <b>↻ Restart</b> reloads the clean desktop in a few seconds — use it any time TempleOS gets into a weird state (e.g. a mistyped command pops up its built-in debugger; that’s authentic TempleOS, and Restart clears it). <b>🧭 Take the Tour</b> opens the built-in <i>Welcome</i> guide. <span class="warn">Note:</span> TempleOS’s native interactive pop-up tour doesn’t get input focus under the software renderer, so the tour button opens the same intro <i>documentation</i> instead (navigable, with links).</p>
+    <p>A browser port in the spirit of <a href="https://github.com/ParkerrDev/afterdavis">afterdavis</a> — running the real TempleOS V5.03. R.I.P. Terry A. Davis (1969–2018), “the smartest programmer that's ever lived.”</p>
   </footer>
 
+  <script>
+    // Live TempleOS-style clock in the top status bar (cosmetic — the real FPS/Mem
+    // are inside the emulated screen). No deps; runs once a second.
+    (function () {
+      const D = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const p2 = (n) => String(n).padStart(2, "0");
+      const dateEl = document.getElementById("tb-date");
+      const timeEl = document.getElementById("tb-time");
+      function tick() {
+        const t = new Date();
+        dateEl.textContent = `${D[t.getDay()]} ${p2(t.getMonth() + 1)}/${p2(t.getDate())}`;
+        timeEl.textContent = `${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`;
+      }
+      tick(); setInterval(tick, 1000);
+    })();
+  </script>
   <script type="module" src="./os-qemu.js"></script>
 </body>
 </html>

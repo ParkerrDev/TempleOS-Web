@@ -89,6 +89,8 @@ here (thread‑sync overhead), so the build deliberately uses a single vCPU.
   the [ktock/qemu‑wasm](https://github.com/ktock/qemu-wasm) fork; see that project for the
   corresponding source.
 - **coi-serviceworker** — © Guido Zuidhof and contributors, **MIT**.
+- **Theme & assets** — the TempleOS‑desktop look (DOS VGA bitmap font, cursor, the Terry GIF)
+  is from [afterdavis](https://github.com/ParkerrDev/afterdavis), a Terry Davis tribute.
 
 Because the bundled QEMU WebAssembly is GPLv2, this distribution as a whole is governed by
 the GPLv2 with respect to that component (source is available upstream as noted above).
