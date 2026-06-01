@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TempleOS — the real 64-bit OS in your browser (QEMU/WASM)</title>
+  <!-- Cross-origin isolation (needed for SharedArrayBuffer) without server config:
+       this service worker injects COOP/COEP on every response and reloads once on
+       first visit. On hosts that already send the headers (Netlify / Cloudflare /
+       Vercel via _headers) it's a harmless no-op. MUST load first. -->
+  <script src="coi-serviceworker.js"></script>
+  <style>
+    :root { --bg:#0b0b12; --fg:#d8d8e0; --accent:#ffd23f; --accent2:#55ff55; --border:#2a2a3a; --panel:#15151f;
+            --mono:"SF Mono","Cascadia Code",Menlo,Consolas,monospace; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; height:100%; background:var(--bg); color:var(--fg); font-family:system-ui,sans-serif; }
+    header { padding:12px 18px 4px; }
+    header h1 { margin:0; font-size:19px; color:var(--accent); font-family:var(--mono); letter-spacing:.4px; }
+    header p { margin:4px 0 0; font-size:13px; color:#9a9ab0; max-width:920px; }
+    header a { color:var(--accent2); }
+    .toolbar { display:flex; gap:10px; align-items:center; padding:8px 18px; flex-wrap:wrap; }
+    .toolbar button { font-family:var(--mono); font-size:13px; padding:6px 12px; background:#1d1d2b; color:var(--fg);
+                      border:1px solid var(--border); border-radius:6px; cursor:pointer; }
+    .toolbar button:hover { border-color:var(--accent); }
+    .toolbar button:disabled { opacity:.4; cursor:default; }
+    #status { font-family:var(--mono); font-size:12px; color:#9a9ab0; margin-left:auto; }
+    .stage { display:flex; justify-content:center; padding:10px 18px 24px; }
+    #frame { position:relative; background:#000; border:1px solid var(--border); border-radius:8px; overflow:hidden;
+             box-shadow:0 6px 40px rgba(0,0,0,.5); width:644px; }
+    canvas#canvas { display:block; width:640px; height:480px; image-rendering:pixelated; background:#000; outline:none; }
+    /* phased loading overlay, centered over the canvas */
+    #loadui { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+              gap:12px; padding:24px; background:rgba(8,8,16,.92); color:#cfcfe0; font-family:var(--mono); text-align:center; }
+    #loadui .spinner { width:34px; height:34px; border:3px solid #2a2a3a; border-top-color:var(--accent2); border-radius:50%;
+                       animation:spin 0.9s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #ldtext { font-size:13px; max-width:560px; line-height:1.5; min-height:2.4em; }
+    .ldbarwrap { height:8px; width:80%; max-width:480px; background:#1d1d2b; border-radius:4px; overflow:hidden; }
+    .ldbarwrap > i { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent2),var(--accent));
+                     transition:width .2s; }
+    #ldsteps { display:flex; gap:16px; font-size:12px; flex-wrap:wrap; justify-content:center; }
+    #ldsteps span { color:#6a6a80; }
+    #ldsteps span.cur { color:var(--accent); font-weight:bold; }
+    #ldsteps span.done { color:var(--accent2); }
+    .hb { font-size:12px; color:var(--accent2); font-family:var(--mono); }
+    #loadui.dim { background:rgba(8,8,16,.55); }
+    /* guidance banner shown when the OS is ready */
+    #guide { display:none; margin:0 18px 8px; max-width:920px; padding:10px 14px; border-radius:8px;
+             background:#1b2a14; border:1px solid #3a5a22; color:#d7f0c0; font-size:13px; line-height:1.5; }
+    #guide b { color:var(--accent2); }
+    #guide kbd { background:#0c0c14; border:1px solid #3a5a22; border-bottom-width:2px; border-radius:4px;
+                 padding:0 6px; font-family:var(--mono); color:#fff; }
+    #dbg { display:none; margin:8px 18px; max-width:920px; height:220px; overflow:auto; background:#08080e;
+           border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-family:var(--mono);
+           font-size:11px; line-height:1.45; color:#9fcf9f; white-space:pre-wrap; }
+    #dbg .err { color:#ff8a8a; }
+    footer { padding:0 18px 22px; font-size:12px; color:#7a7a90; max-width:920px; }
+    code { background:#1d1d2b; padding:1px 5px; border-radius:4px; }
+    .warn { color:#ff8a8a; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TempleOS — the real 64-bit OS, booting in your browser</h1>
+    <p>This boots the <b>complete, unmodified TempleOS V5.03</b> on a <b>64-bit QEMU</b> whose CPU core is compiled to WebAssembly — JIT-translating the guest's x86-64 to WASM. Real kernel, real HolyC JIT, graphics, sound, keyboard &amp; mouse. <a href="https://github.com/ParkerrDev/TempleOS-wasm">source &amp; build notes →</a></p>
+  </header>
+
+  <div class="toolbar">
+    <button id="bootBtn">▶ Boot TempleOS</button>
+    <button id="restartBtn" disabled title="Reload the clean desktop snapshot (~4s) — use this any time TempleOS gets into a weird state">↻ Restart (clean desktop)</button>
+    <button id="tourBtn" disabled title="Open the built-in TempleOS Welcome guide">🧭 Take the Tour</button>
+    <button id="fsBtn" disabled>⛶ Fullscreen</button>
+  </div>
+
+  <div id="guide"></div>
+
+  <div class="stage">
+    <div id="frame">
+      <canvas id="canvas" width="640" height="480" tabindex="0"></canvas>
+      <!-- loading overlay -->
+      <div id="loadui">
+        <div class="spinner"></div>
+        <div id="ldtext">Press “Boot TempleOS” to start.</div>
+        <div class="ldbarwrap"><i id="ldbar"></i></div>
+        <div id="hb" class="hb">main-thread heartbeat: starting…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- live diagnostic log -->
+  <pre id="dbg"></pre>
+
+  <footer>
+    <p><b>Notes:</b> needs a desktop browser with SharedArrayBuffer (cross-origin isolation — provided here by the bundled service worker, or by COOP/COEP headers on hosts that support them). The default boots the <b>installed hard disk</b>, restored <b>instantly from a snapshot</b> (~4s) — no compile wait, no prompts. <b>Click a window, then type</b> (keyboard &amp; mouse work; capital letters too); TempleOS routes keys to the <b>focused window</b>. <b>↻ Restart</b> reloads the clean desktop in a few seconds — use it any time TempleOS gets into a weird state (e.g. a mistyped command pops up its built-in debugger; that’s authentic TempleOS, and Restart clears it). <b>🧭 Take the Tour</b> opens the built-in <i>Welcome</i> guide. <span class="warn">Note:</span> TempleOS’s native interactive pop-up tour doesn’t get input focus under the software renderer, so the tour button opens the same intro <i>documentation</i> instead (navigable, with links).</p>
+  </footer>
+
+  <script type="module" src="./os-qemu.js"></script>
+</body>
+</html>
