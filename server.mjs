@@ -21,6 +21,11 @@ const MIME = {
   ".gz": "application/octet-stream",   // served raw; the page gunzips client-side
   ".bin": "application/octet-stream",
   ".ico": "image/x-icon",
+  ".woff2": "font/woff2",
+  ".png": "image/png",
+  ".gif": "image/gif",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
 };
 
 createServer(async (req, res) => {
