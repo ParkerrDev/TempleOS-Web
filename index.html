@@ -42,16 +42,18 @@
            animation:winTitle .6s step-start infinite; }
     @keyframes winTitle { 50% { background:var(--blue); color:#fff; } }
 
-    /* toolbar / buttons — afterdavis invert-on-hover */
-    .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    /* three-column desktop: Menu (left) · TempleOS (center) · Help (right) */
+    .desktop-row { display:flex; gap:14px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:6px 12px 4px; }
+    /* Menu window — a vertical button stack in the left column */
+    .toolbar { display:flex; flex-direction:column; gap:10px; align-items:stretch; width:max-content; margin:18px 0; }
+    .toolbar button { width:100%; text-align:left; }
     button { font-family:'dos_vga',monospace; font-size:15px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:4px 11px; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
 
-    /* the emulator screen, framed as a TempleOS window */
-    .stage { display:flex; justify-content:center; padding:4px 12px 8px; }
-    #frame { position:relative; width:fit-content; max-width:96vw; margin:16px auto; padding:5px;
+    /* the emulator screen, framed as a TempleOS window (center column) */
+    #frame { position:relative; width:fit-content; max-width:96vw; margin:18px 0; padding:5px;
              background:#fff; border:6px double var(--blue); outline:4px solid #fff; }
     #frame::before { content:"TempleOS V5.03"; position:absolute; top:-12px; left:8px; padding:2px 5px 0;
              background:#fff; color:var(--blue); line-height:.8; letter-spacing:.1em;
@@ -70,8 +72,8 @@
     .ldbarwrap > i { display:block; height:100%; width:0; background:var(--gold); transition:width .2s; }
     .hb { font-size:12px; color:#9fe6ff; }
 
-    /* help banner (a TempleOS window) — shown once the OS is ready */
-    #guide { display:none; font-size:14px; }
+    /* help window — right column (shows a hint before boot, live tips after) */
+    #guide { width:248px; margin:18px 0; font-size:13px; }
     #guide b { color:var(--red); }
     #guide i { color:var(--green); font-style:normal; }
     #guide kbd { background:var(--blue); color:#fff; border:1px solid var(--blue); padding:0 5px; }
@@ -101,16 +103,15 @@
     </div>
   </header>
 
-  <div class="toolbar win" data-title="Menu">
-    <button id="bootBtn">▶ Boot TempleOS</button>
-    <button id="restartBtn" disabled title="Reload the clean desktop snapshot (~4s) — use this any time TempleOS gets into a weird state">↻ Restart (clean desktop)</button>
-    <button id="tourBtn" disabled title="Open the built-in TempleOS Welcome guide">🧭 Take the Tour</button>
-    <button id="fsBtn" disabled>⛶ Fullscreen</button>
-  </div>
+  <!-- Menu (buttons, left) · TempleOS (center) · Help (right) -->
+  <div class="desktop-row">
+    <div class="toolbar win" data-title="Menu">
+      <button id="bootBtn">▶ Boot TempleOS</button>
+      <button id="restartBtn" disabled title="Reload the clean desktop snapshot (~4s) — use this any time TempleOS gets into a weird state">↻ Restart (clean desktop)</button>
+      <button id="tourBtn" disabled title="Open the built-in TempleOS Welcome guide">🧭 Take the Tour</button>
+      <button id="fsBtn" disabled>⛶ Fullscreen</button>
+    </div>
 
-  <div id="guide" class="win" data-title="Help"></div>
-
-  <div class="stage">
     <div id="frame">
       <canvas id="canvas" width="640" height="480" tabindex="0"></canvas>
       <!-- loading overlay -->
@@ -121,6 +122,8 @@
         <div id="hb" class="hb">main-thread heartbeat: starting…</div>
       </div>
     </div>
+
+    <div id="guide" class="win" data-title="Help">Controls are on the left. Once TempleOS is running, click a window and type — tips &amp; help appear here.</div>
   </div>
 
   <!-- live diagnostic log -->
