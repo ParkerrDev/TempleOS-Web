@@ -379,11 +379,8 @@ function watchBoot(snap) {
 // presses N at the prompts instead (see watchBoot + the on-page guide banner).
 // Real keyboard/mouse work via the PS/2 path + usb-tablet.
 
-// Single emulated build: UNMODIFIED TempleOS on hemu.
+// Single build: UNMODIFIED TempleOS on hemu.
 $("bootBtn").addEventListener("click", boot);
-// NATIVE — not the emulator at all: TempleOS HolyC graphics compiled straight to WASM
-// and run directly (the holyc-wasm compiler + a JS framebuffer/sound/input runtime).
-$("bootNativeBtn").addEventListener("click", () => { location.href = BASE + "native/index.html"; });
 
 // RESTART — the robust "it got weird" button. Because the snapshot boot is ~4s,
 // the most reliable recovery from ANY messy guest state (TempleOS debugger popup
