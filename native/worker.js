@@ -114,6 +114,7 @@ self.onmessage = async (e) => {
           rect: (x, y, w, h, c) => fb.rect(x, y, w, h, c),
           circle: (x, y, r, c, fl) => fb.circle(x, y, r, c, fl),
           text: (x, y, c, s) => fb.text(x, y, c, s),
+          sprite: (x, y, w, h, px, scale) => fb.sprite(x, y, w, h, px, scale),
           fill: (c) => { fb.fill(c); },
           flip: () => presentMaybe(true),
         },

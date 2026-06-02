@@ -18,6 +18,7 @@ export const DEMOS = [
   {
     label: "Graphics",
     items: [
+      { name: "Dancing Terry (sprite)", path: "demos/Terry.HC" },
       { name: "Bouncing lines", path: "Demo/Graphics/Lines.HC" },
       { name: "Bounce", path: "Demo/Graphics/Bounce.HC" },
       { name: "Grid", path: "Demo/Graphics/Grid.HC" },

@@ -110,6 +110,32 @@ export class Framebuffer {
     }
   }
 
+  // Blit an 8-bit indexed sprite (TempleOS DCBlot/CSprite format: one palette
+  // index per pixel, 0xFF = transparent) with integer nearest-neighbor scaling.
+  sprite(x, y, w, h, px, scale = 1) {
+    x |= 0; y |= 0; w |= 0; h |= 0;
+    scale = Math.max(1, scale | 0);
+    const W = this.width, H = this.height, idx = this.indices;
+    for (let sy = 0; sy < h; sy++) {
+      const drow = y + sy * scale;
+      for (let sx = 0; sx < w; sx++) {
+        const c = px[sy * w + sx];
+        if (c === 0xff) continue;            // transparent
+        const ci = c & 15;
+        const dx = x + sx * scale;
+        for (let oy = 0; oy < scale; oy++) {
+          const yy = drow + oy;
+          if (yy < 0 || yy >= H) continue;
+          const base = yy * W;
+          for (let ox = 0; ox < scale; ox++) {
+            const xx = dx + ox;
+            if (xx >= 0 && xx < W) idx[base + xx] = ci;
+          }
+        }
+      }
+    }
+  }
+
   // Convert the index buffer to RGBA and present it.
   present() {
     if (!this.ctx) return;   // worker side has no canvas; the main thread presents the shared buffer
