@@ -1,18 +1,35 @@
-# TempleOS-wasm performance: web-optimized variant + the 60fps investigation
+# TempleOS-wasm performance: hybrid native-display variant + the 60fps investigation
 
 ## What shipped (ParkerrDev/TempleOS-wasm, live)
 
-- **Original / ⚡ Web-Optimized chooser.** Two boot buttons; each variant has its
-  own RedSea disk + instant-boot snapshot, selected via `?webopt`. Restart stays
-  on the chosen variant.
-- **Web-optimized build** (640×480 / 16-color unchanged), two Adam-level changes
-  recompiled into TempleOS:
-  - `Adam/Gr/GrScrn.HC` `DCBlotColor8`: **SWAR screen compositing** — composite
-    8 bytes/word, skip all-transparent words, copy all-opaque words, byte-wise
-    only on mixed words. Replaces a 307K-iteration scalar byte loop.
-  - `Adam/WinMgr.HC`: **90fps WinMgr period** (was ~30).
-- Honest result: **modest** (desktop idle ~31 vs ~30 fps). The cap turned out
-  near-moot because the desktop is *loop-bound* (~28ms WinMgr loop), not cap-bound.
+- **Original / 🖥 Hybrid (native display) / 🚀 Native chooser.** Each emulated
+  variant has its own RedSea disk + instant-boot snapshot, selected via `?webopt`.
+- **Hybrid "native-display" build** (640×480 / 16-color unchanged) — the full OS
+  runs emulated, but three changes are recompiled into TempleOS:
+  - `Adam/Gr/GrScrn.HC` `GrUpdateScrn`: **native display hypercall**. The planar
+    pack + emulated VGA plane writes are replaced by `OutU32(0xEB, gr.dc2->body)`.
+    A custom port handler in qemu `hw/display/vga.c` reads the guest's composited
+    8-bit 640×480 frame straight from guest RAM and palette-blits it to the display
+    surface **natively** (on the display thread; the OUT just records the address so
+    the vCPU thread never touches the surface). QEMU's own VGA draw is suppressed.
+  - `Adam/Gr/GrScrn.HC` `DCBlotColor8`: **SWAR screen compositing** (8 bytes/word).
+  - `Adam/WinMgr.HC`: **90fps WinMgr cap** (was ~30).
+- **Honest result: not a speedup.** Measured, settled (snapshot-restored, then let
+  it stabilize — the FPS counter spikes to 99 during the restore gap, ignore that):
+  - **Idle desktop: ~27 fps Hybrid vs ~27 fps Original** — statistically identical.
+    Below the old 30 fps cap, so cap90 never even binds; the desktop is loop-bound on
+    the emulated re-render, which SWAR (composite) and the hypercall (flush) don't touch.
+  - **Full-screen repaint (a game redrawing everything): ~8–9 fps** (the `WVscr`
+    worst case: `DCFill`+`GrUpdateScrn` ×100 ≈ 117 ms; hypercall 111 ms).
+  The hybrid is a cleaner, genuinely-native display path and the architecture the
+  user asked for — but it is **performance-neutral**. See "The wall (corrected)":
+  the hypercall *empirically disproved* the framebuffer-write hypothesis.
+- **🚀 Native (HolyC→WASM) is the only 60fps path — and it clears it.** No emulation:
+  HolyC compiled straight to WASM, run in a worker, presented via rAF. Measured
+  (Plasma, vsync off so the render rate shows): **median 84 fps, peak 106 fps** —
+  i.e. it renders *above* 60 and is merely vsync-capped to the display's 60 fps in
+  normal use. A visible "N fps (native)" counter is in the toolbar. This is *the*
+  web-optimized TempleOS (compiled FOR the web); it is the games, not the full desktop.
 
 ## Infrastructure built (the durable asset)
 
@@ -49,12 +66,24 @@ frame is ~23ms. The delta is NOT TempleOS's fault:
   logging off, `notdirty_write`'s `is_clean` check leaves `TLB_NOTDIRTY` armed, so
   writes stay slow). Reverted.
 
-### The wall
-Pinning the *dominant* per-write cost (helper dispatch vs `notdirty_write`
-bookkeeping vs `tb_invalidate_phys_range_fast` page-collection lock vs display
-contention) needs a **working profiler inside the vCPU worker thread** —
-`fprintf`/`console.log` from that pthread don't surface to the page under
-`PROXY_TO_PTHREAD`, and a `WROPT` store counter via stderr produced nothing.
+### The wall (corrected by the hypercall experiment)
+The display **hypercall** is the clean experiment that settles the root cause: it
+removes the planar pack **and** every emulated VGA framebuffer write, replacing
+them with one cheap port OUT + a native host blit. If framebuffer writes were the
+bottleneck, fps should jump. **It didn't** — `GrUpdateScrn` went 117ms → 111ms
+(~6ms saved, ~1.05×), and TempleOS's own counter still reads ~7 fps.
+
+So the framebuffer-write store path (the "~5.8µs/write" hypothesis above) is **not**
+the dominant cost. The real per-frame cost is the **emulated screen build itself**:
+`GrUpdateScrn` blits every window's DC into `gr.dc` (`GrUpdateTasks`) and composites
+`gr.dc→gr.dc2` (`DCBlotColor8`) — ~600KB of byte-pushing through the x86→WASM
+emulator every frame at ~32M ops/sec. SWAR speeds the *composite* pass; the
+window-blit pass is unoptimized; either way ~110–120ms/full-repaint remains. Even
+SWAR-ing every byte-push caps the full emulated OS near **~15–20 fps**, not 60.
+
+Conclusion: **for the full emulated OS, the limit is the emulator, not the display
+or the OS.** The hybrid ships as a correct, clean native-display architecture, not a
+performance fix. Real 60fps lives only on the non-emulated Native (HolyC→WASM) path.
 
 ## Roadmap for a future 60fps effort (in order)
 1. **Profiling first**: get counters out of the vCPU worker (write to the shared
