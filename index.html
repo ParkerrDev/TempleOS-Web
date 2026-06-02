@@ -53,8 +53,14 @@
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; align-items:stretch; }
 
     /* three columns: [Menu + Debug] left · TempleOS center · Help right */
-    .desktop-row { display:flex; gap:6px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px 6px; }
-    .col-left { display:flex; flex-direction:column; gap:16px; width:204px; flex:0 0 auto; }
+    .desktop-row { display:flex; gap:8px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px; }
+    .col-left { display:flex; flex-direction:column; gap:16px; width:232px; flex:0 0 auto; }
+    .col-right { display:flex; flex-direction:column; gap:16px; width:268px; flex:0 0 auto; }
+    /* Debug = an outer window frame (overflow visible, so its title/[X] show) wrapping an inner scrollable console */
+    .dbgw { padding:3px; }
+    /* Terry window (bottom-right): the gif on the window's own background (its transparency shows) */
+    .terrywin { padding:6px; text-align:center; }
+    .terrywin img { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
     .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
     button { font-family:'dos_vga',monospace; font-size:17px; color:#000; background:#fff;
@@ -80,13 +86,13 @@
     .hb { font-size:12px; color:#9fe6ff; }
 
     /* Help window — right column */
-    #guide { width:236px; flex:0 0 auto; font-size:17px; }
+    #guide { font-size:17px; }
     #guide b { color:var(--red); }
     #guide i { color:#0a7f25; font-style:normal; }
     #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
 
     /* Debug terminal — dark window under the Menu */
-    #dbg { height:200px; overflow:auto; background:#000; color:#7fe07f; padding:8px;
+    #dbg { height:188px; overflow:auto; background:#000; color:#7fe07f; padding:6px; margin:0;
            font-size:14px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
     #dbg .err { color:#ff8a8a; }
 
@@ -124,7 +130,7 @@
         <button id="tourBtn" disabled title="Open the built-in TempleOS Welcome guide">🧭 Take the Tour</button>
         <button id="fsBtn" disabled>⛶ Fullscreen</button>
       </div>
-      <pre id="dbg" class="win" data-title="Debug"><span class="close">[X]</span></pre>
+      <div class="win dbgw" data-title="Debug"><span class="close">[X]</span><pre id="dbg"></pre></div>
     </div>
 
     <div id="frame" data-title="TempleOS V5.03">
@@ -137,7 +143,10 @@
       </div>
     </div>
 
-    <div id="guide" class="win" data-title="Help"><span class="close">[X]</span>Controls are on the left. Once TempleOS is running, click a window and type — tips &amp; help appear here.</div>
+    <div class="col-right">
+      <div id="guide" class="win" data-title="Help"><span class="close">[X]</span>Controls are on the left. Once TempleOS is running, click a window and type — tips &amp; help appear here.</div>
+      <div class="win terrywin" data-title="Terry"><span class="close">[X]</span><img src="assets/terrydancing.gif" alt="Terry A. Davis dancing"></div>
+    </div>
   </div>
 
   <footer>
