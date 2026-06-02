@@ -259,6 +259,35 @@ class Codegen {
     if (c != null) this.constEnv[d.name] = c;
   }
 
+  // Emit a constant integer-array global (sprite/bitmap data, lookup tables) as a
+  // single wasm DATA SEGMENT at the global's address, instead of thousands of
+  // per-element stores in __rt_init. Returns true if handled; returns false (so
+  // the caller falls back to runtime stores) for float arrays, nested lists, or
+  // any non-constant element. wasm memory is zero-initialized, so a partial
+  // initializer leaves the remainder 0, matching C semantics.
+  tryStaticConstArray(g) {
+    const ty = this.resolveType(g.type);
+    if (!isArray(ty)) return false;
+    const et = this.resolveType(ty.of);
+    if (!isInt(et)) return false;
+    const esz = this.typeSize(et);
+    if (esz !== 1 && esz !== 2 && esz !== 4 && esz !== 8) return false;
+    const init = g.init;
+    if (!init || init.kind !== "InitList") return false;
+    const cap = this.typeSize(ty);                  // reserved bytes for this global
+    const bytes = [];
+    for (const el of init.elements) {
+      if (el.kind === "InitList") return false;      // nested aggregate: fall back
+      const c = foldConstInt(el, this.constEnv);
+      if (c == null) return false;                   // non-constant element: fall back
+      let v = BigInt.asUintN(64, c);
+      for (let b = 0; b < esz; b++) { bytes.push(Number(v & 0xffn)); v >>= 8n; }
+    }
+    if (bytes.length > cap) bytes.length = cap;       // never write past the global
+    this.data.push({ addr: g.addr, bytes });         // -> m.addData(addr, bytes)
+    return true;
+  }
+
   // ============================================================ functions
   collectFunctions() {
     // host intrinsics visible as callable HolyC functions
@@ -605,6 +634,9 @@ class FnCtx {
   }
 
   genGlobalInit(g) {
+    // Constant integer arrays (sprite/bitmap data, tables) compile to one wasm
+    // data segment rather than thousands of per-element stores — instant to emit.
+    if (g.init.kind === "InitList" && this.cg.tryStaticConstArray(g)) return;
     const pushAddr = () => this.f.i64_const(g.addr);
     if (g.init.kind === "InitList") { this.storeInitInto(pushAddr, g.type, g.init); return; }
     pushAddr(); this.f.op("i32_wrap_i64");

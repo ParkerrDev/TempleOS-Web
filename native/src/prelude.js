@@ -258,6 +258,13 @@ U0 GrPrint(CDC *dc, I64 x, I64 y, U8 *s) {
   if (dc) col=dc->color;
   __gr_text(x,y,col&15,s);
 }
+// Blit an 8-bit indexed sprite: one palette index (0..15) per pixel, 0xFF =
+// transparent. Like TempleOS DCBlot, the source carries its own colors, so dc
+// only matters for clipping (the framebuffer handles bounds). scale>1 upsizes
+// with nearest-neighbor (chunky-pixel look).
+U0 GrSprite(CDC *dc, I64 x, I64 y, U8 *image, I64 w, I64 h, I64 scale=1) {
+  __gr_sprite(x,y,w,h,image,scale);
+}
 U0 GrFloodFill(CDC *dc, I64 x, I64 y) {}
 
 //==================== misc no-ops demos sometimes call ====================

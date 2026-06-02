@@ -344,6 +344,9 @@ export class Module {
 
   emit() {
     const out = [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
+    // Append a byte array WITHOUT `out.push(...arr)`: function-call spread of a
+    // large array (e.g. a sprite/bitmap data section) blows the call stack.
+    const appendBytes = (arr) => { for (let i = 0; i < arr.length; i++) out.push(arr[i]); };
 
     // Type section (1)
     {
@@ -352,7 +355,7 @@ export class Module {
         ...uleb(t.params.length), ...t.params,
         ...uleb(t.results.length), ...t.results,
       ]);
-      out.push(...section(1, vec(items)));
+      appendBytes(section(1, vec(items)));
     }
 
     // Import section (2)
@@ -368,13 +371,13 @@ export class Module {
       for (const im of this.importGlobals) {
         items.push([...strBytes(im.module), ...strBytes(im.name), 0x03, im.vt, im.mutable ? 0x01 : 0x00]);
       }
-      out.push(...section(2, vec(items)));
+      appendBytes(section(2, vec(items)));
     }
 
     // Function section (3)
     {
       const items = this.funcs.map((f) => uleb(f.typeIdx));
-      out.push(...section(3, vec(items)));
+      appendBytes(section(3, vec(items)));
     }
 
     // Table section (4)
@@ -383,31 +386,31 @@ export class Module {
         ? [0x00, ...uleb(this.table.min)]
         : [0x01, ...uleb(this.table.min), ...uleb(this.table.max)];
       const items = [[0x70, ...limits]]; // funcref
-      out.push(...section(4, vec(items)));
+      appendBytes(section(4, vec(items)));
     }
 
     // Memory section (5)
     if (this.localMemory) {
       const m = this.localMemory;
       const limits = m.max === undefined ? [0x00, ...uleb(m.min)] : [0x01, ...uleb(m.min), ...uleb(m.max)];
-      out.push(...section(5, vec([limits])));
+      appendBytes(section(5, vec([limits])));
     }
 
     // Global section (6)
     {
       const items = this.globals.map((g) => [g.vt, g.mutable ? 0x01 : 0x00, ...g.init, OP.end]);
-      out.push(...section(6, vec(items)));
+      appendBytes(section(6, vec(items)));
     }
 
     // Export section (7)
     {
       const items = this.exports.map((e) => [...strBytes(e.name), e.kind, ...uleb(e.index)]);
-      out.push(...section(7, vec(items)));
+      appendBytes(section(7, vec(items)));
     }
 
     // Start section (8)
     if (this.startIndex !== null) {
-      out.push(...section(8, uleb(this.startIndex)));
+      appendBytes(section(8, uleb(this.startIndex)));
     }
 
     // Element section (9)
@@ -418,7 +421,7 @@ export class Module {
         ...uleb(el.funcIndices.length),
         ...el.funcIndices.flatMap((i) => uleb(i)),
       ]);
-      out.push(...section(9, vec(items)));
+      appendBytes(section(9, vec(items)));
     }
 
     // Code section (10)
@@ -429,7 +432,7 @@ export class Module {
         const bodyBytes = [...localsVec, ...f.body.bytes, OP.end];
         return [...uleb(bodyBytes.length), ...bodyBytes];
       });
-      out.push(...section(10, vec(items)));
+      appendBytes(section(10, vec(items)));
     }
 
     // Data section (11)
@@ -439,7 +442,7 @@ export class Module {
         OP.i32_const, ...sleb(d.offset), OP.end,
         ...uleb(d.bytes.length), ...d.bytes,
       ]);
-      out.push(...section(11, vec(items)));
+      appendBytes(section(11, vec(items)));
     }
 
     return Uint8Array.from(out);

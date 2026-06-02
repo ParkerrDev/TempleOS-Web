@@ -41,10 +41,16 @@ for (const group of DEMOS) {
   demoSel.appendChild(og);
 }
 
-function loadDemo(path) {
-  const src = SOURCES[path];
+async function loadDemo(path) {
+  let src = SOURCES[path];
+  if (src == null) {
+    // Large demos (e.g. the Terry sprite, ~600 KB) aren't in the always-loaded
+    // bundle — fetch the .HC on demand instead of bloating every page load.
+    setStatus("fetching " + path + " …");
+    try { const r = await fetch(path); if (r.ok) src = await r.text(); } catch (e) {}
+  }
   if (src != null) { editor.value = src; setStatus("loaded " + path); }
-  else { editor.value = "// missing bundled source: " + path; setStatus("load failed"); }
+  else { editor.value = "// missing source: " + path; setStatus("load failed"); }
 }
 demoSel.addEventListener("change", () => { if (demoSel.value) loadDemo(demoSel.value); });
 

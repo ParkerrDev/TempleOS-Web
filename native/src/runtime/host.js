@@ -55,6 +55,14 @@ export function createHost(opts = {}) {
     __gr_flip() { state.gfx?.flip(); state.onFlip?.(); },
     __gr_width() { return BigInt(state.gfx?.width ?? 640); },
     __gr_height() { return BigInt(state.gfx?.height ?? 480); },
+    // Blit an 8-bit indexed sprite (TempleOS DCBlot format: one palette index per
+    // pixel, 0xFF = transparent), reading w*h bytes from wasm memory at addr.
+    __gr_sprite(x, y, w, h, addr, scale) {
+      const W = Number(w), H = Number(h);
+      if (W <= 0 || H <= 0) return;
+      const a = Number(addr);
+      state.gfx?.sprite?.(Number(x), Number(y), W, H, u8().subarray(a, a + W * H), Number(scale) || 1);
+    },
 
     __snd(freq) { state.snd?.tone(freq); },
     __play_note(freq, ms) {
