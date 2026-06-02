@@ -18,16 +18,12 @@ const ISO_URL = `${BASE}vendor/images/TempleOS.ISO?${V}`;
 const WASM_URL = `${QEMU_BASE}/qemu-system-x86_64.wasm?${V}`;
 // INSTANT BOOT: a pre-baked post-boot snapshot (QEMU migration stream of the
 // RAM + device state, gzipped). Restoring it with `-incoming file:/snapshot.bin`
-// skips the ~30–90s self-compile AND the install/tour prompts — boot is ~1–2s.
+// skips the ~30–90s self-compile AND the install prompts — boot is ~1–2s.
 // `?nosnap` forces a full cold boot (and the guided prompts).
-// `?tour` boots a snapshot captured right after answering Y to "Take Tour?".
-const TOUR = /[?&]tour/.test(location.search);
-const SNAP_URL = `${BASE}vendor/images/${TOUR ? "tour-snapshot" : "snapshot"}.bin.gz?${V}`;
+const SNAP_URL = `${BASE}vendor/images/snapshot.bin.gz?${V}`;
 // The DEFAULT experience is the real INSTALLED TempleOS: it boots from a
 // pre-installed hard-disk image (RedSea on C:), restored instantly from a
 // post-boot snapshot. `?nosnap` = cold hard-drive boot (the ~30–90s self-compile).
-// `?tour` reuses the SAME installed disk — its snapshot is just the desktop with
-// the Welcome doc open, so it pairs with the default disk (no extra image).
 const DISK_URL = `${BASE}vendor/images/templeos-hd.qcow2.gz?${V}`;
 // `?install` is one-time TOOLING: blank disk + live CD so TempleOS's VM installer
 // formats it and copies ::/ → C:/ — we extract that to make the shipped disk.
@@ -317,16 +313,10 @@ function watchBoot(snap) {
     window.__abDone = true;
     if (ld) ld.style.display = "none";
     canvas.focus();
-    // Recovery + tour controls are usable once the desktop is up.
+    // Recovery control is usable once the desktop is up.
     $("restartBtn").disabled = false;
-    if (snap && !TOUR) $("tourBtn").disabled = false;   // hide "Take the Tour" when already in it
     if (guide) {
-      guide.innerHTML = TOUR
-        ? "<b>The TempleOS tour</b> — this is the built-in <kbd>Welcome to TempleOS</kbd> guide. " +
-          "Read it, press <kbd>↓</kbd> / <kbd>PgDn</kbd> to scroll, and click the <b>green links</b> " +
-          "(e.g. <i>Hello World</i>, <i>TempleOS Charter</i>) to explore. " +
-          "Click <b>↻ Restart</b> for the clean desktop."
-        : snap
+      guide.innerHTML = snap
         ? "<b>TempleOS is ready</b> — the real installed OS, restored instantly from a snapshot. " +
           "<b>Click a window, then type</b> — capital letters work. Try a command at the <kbd>C:/Home&gt;</kbd> prompt. " +
           "Mistyped command? TempleOS pops up its debugger — just click <b>↻ Restart</b> for a clean desktop (~4s)."
@@ -396,16 +386,7 @@ $("bootBtn").addEventListener("click", boot);
 // desktop. A one-shot autoboot flag means the user doesn't press Boot again.
 $("restartBtn").addEventListener("click", () => {
   try { sessionStorage.setItem("tos_autoboot", "1"); } catch {}
-  location.href = location.pathname;   // clean desktop (also drops ?tour)
-});
-
-// TOUR — boots a snapshot of the desktop with TempleOS's built-in "Welcome" guide
-// open in the editor (navigable, clickable green links). The native interactive
-// tour's pop-up menu doesn't get input focus under the software SDL renderer, so
-// we open the real intro doc instead — the same content, and it actually renders.
-$("tourBtn").addEventListener("click", () => {
-  try { sessionStorage.setItem("tos_autoboot", "1"); } catch {}
-  location.href = location.pathname + "?tour";
+  location.href = location.pathname;   // clean desktop
 });
 try {
   if (sessionStorage.getItem("tos_autoboot")) {
