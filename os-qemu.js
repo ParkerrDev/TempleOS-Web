@@ -396,6 +396,9 @@ function bootVariant(wantWebopt) {
 }
 $("bootBtn").addEventListener("click", () => bootVariant(false));
 $("bootWebBtn").addEventListener("click", () => bootVariant(true));
+// NATIVE — not QEMU at all: TempleOS HolyC graphics compiled straight to WASM and
+// run directly (the holyc-wasm compiler + a JS framebuffer/sound/input runtime).
+$("bootNativeBtn").addEventListener("click", () => { location.href = BASE + "native/index.html"; });
 
 // RESTART — the robust "it got weird" button. Because the snapshot boot is ~4s,
 // the most reliable recovery from ANY messy guest state (TempleOS debugger popup

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HolyC → WebAssembly · TempleOS in the browser</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header>
+    <h1>🚀 TempleOS Native&nbsp;—&nbsp;HolyC → WebAssembly</h1>
+    <p class="tag">TempleOS HolyC graphics compiled <b>directly to WebAssembly</b> and run in the browser — <b>no QEMU, no x86 emulation, no middle-man</b>. Native speed. <a href="../index.html">← Back to chooser</a></p>
+  </header>
+
+  <div class="toolbar">
+    <select id="demoSelect" title="Pick a TempleOS graphics demo / game">
+      <option value="">— pick a demo / game —</option>
+    </select>
+    <button id="runBtn">▶ Run</button>
+    <button id="stopBtn">■ Stop</button>
+    <span id="status" class="status">ready</span>
+  </div>
+
+  <main>
+    <section class="pane editor-pane">
+      <div class="pane-title">HolyC source</div>
+      <textarea id="editor" spellcheck="false" autocomplete="off"></textarea>
+    </section>
+    <section class="pane screen-pane">
+      <div class="pane-title">Screen (640×480, 16-color)</div>
+      <canvas id="screen" width="640" height="480" tabindex="0"></canvas>
+      <div class="pane-title">Console</div>
+      <pre id="console"></pre>
+    </section>
+  </main>
+
+  <footer>
+    <span>Click the screen to enable sound. Keyboard &amp; mouse go to the running program.</span>
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
