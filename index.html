@@ -145,7 +145,7 @@
 
     <div class="col-right">
       <div id="guide" class="win" data-title="Help"><span class="close">[X]</span>Controls are on the left. Once TempleOS is running, click a window and type — tips &amp; help appear here.</div>
-      <div class="win terrywin" data-title="Terry"><span class="close">[X]</span><img src="assets/terry.gif" alt="Terry A. Davis"></div>
+      <div class="win terrywin" data-title="Terry"><span class="close">[X]</span><img src="assets/terrydancing.gif" alt="Terry A. Davis"></div>
     </div>
   </div>
 
@@ -201,6 +201,22 @@
       }, true);
     })();
     // [X] is decorative only — no behaviour.
+
+    // ---- Terry window: loop back and forth between the two gifs, one full loop
+    // each (terrydancing 7.2s, then terry 2.84s, repeat). Setting src to a
+    // different cached gif restarts it from frame 0. ----
+    (function () {
+      const img = document.querySelector(".terrywin img");
+      if (!img) return;
+      const seq = [["assets/terrydancing.gif", 7200], ["assets/terry.gif", 2840]];
+      seq.forEach(([s]) => { const p = new Image(); p.src = s; });   // preload both
+      let i = 0;
+      (function next() {
+        img.src = seq[i][0];
+        const d = seq[i][1]; i = (i + 1) % seq.length;
+        setTimeout(next, d);
+      })();
+    })();
   </script>
   <script type="module" src="./os-qemu.js"></script>
 </body>
