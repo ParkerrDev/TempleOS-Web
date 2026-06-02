@@ -20,25 +20,12 @@ const WASM_URL = `${QEMU_BASE}/qemu-system-x86_64.wasm?${V}`;
 // RAM + device state, gzipped). Restoring it with `-incoming file:/snapshot.bin`
 // skips the ~30–90s self-compile AND the install prompts — boot is ~1–2s.
 // `?nosnap` forces a full cold boot (and the guided prompts).
-// `?webopt` selects the HYBRID "native-display" TempleOS: the full OS still runs
-// emulated, but the composited 640x480 frame is handed to the host via a display
-// hypercall (guest OutU32(0xEB, gr.dc2->body)) and blitted to the surface NATIVELY
-// in vga.c — replacing the slow planar pack + emulated VGA writes. Also has the
-// SWAR screen composite + a 90fps WinMgr cap recompiled in. HONEST NOTE: this is a
-// cleaner display path, NOT a speedup — measured ~27fps idle desktop (identical to
-// Original) and ~8fps full-screen repaint; the limit is the emulated per-frame
-// render, not the display. For real 60fps use the Native (HolyC->WASM) build (it
-// renders 84-106fps, vsync-capped to 60). Ships its own disk + snapshot; default Original.
-const WEBOPT = /[?&]webopt/.test(location.search);
-const SNAP_URL = WEBOPT
-  ? `${BASE}vendor/images/webopt-snapshot.bin.gz?${V}`
-  : `${BASE}vendor/images/snapshot.bin.gz?${V}`;
+// hemu runs the UNMODIFIED TempleOS V5.03 (RedSea install on C:) — nothing patched.
+const SNAP_URL = `${BASE}vendor/images/snapshot.bin.gz?${V}`;
 // The DEFAULT experience is the real INSTALLED TempleOS: it boots from a
 // pre-installed hard-disk image (RedSea on C:), restored instantly from a
 // post-boot snapshot. `?nosnap` = cold hard-drive boot (the ~30–90s self-compile).
-const DISK_URL = WEBOPT
-  ? `${BASE}vendor/images/webopt-disk.qcow2.gz?${V}`
-  : `${BASE}vendor/images/templeos-hd.qcow2.gz?${V}`;
+const DISK_URL = `${BASE}vendor/images/templeos-hd.qcow2.gz?${V}`;
 // `?install` is one-time TOOLING: blank disk + live CD so TempleOS's VM installer
 // formats it and copies ::/ → C:/ — we extract that to make the shipped disk.
 const INSTALL = /[?&]install/.test(location.search);
@@ -392,18 +379,10 @@ function watchBoot(snap) {
 // presses N at the prompts instead (see watchBoot + the on-page guide banner).
 // Real keyboard/mouse work via the PS/2 path + usb-tablet.
 
-// Variant chooser: each Boot button boots its variant, reloading to the right
-// URL first if needed (the loader reads ?webopt at load time). Booting the one
-// you're already on just starts immediately.
-function bootVariant(wantWebopt) {
-  if (wantWebopt === WEBOPT) { boot(); return; }
-  try { sessionStorage.setItem("tos_autoboot", "1"); } catch {}
-  location.href = location.pathname + (wantWebopt ? "?webopt" : "");
-}
-$("bootBtn").addEventListener("click", () => bootVariant(false));
-$("bootWebBtn").addEventListener("click", () => bootVariant(true));
-// NATIVE — not QEMU at all: TempleOS HolyC graphics compiled straight to WASM and
-// run directly (the holyc-wasm compiler + a JS framebuffer/sound/input runtime).
+// Single emulated build: UNMODIFIED TempleOS on hemu.
+$("bootBtn").addEventListener("click", boot);
+// NATIVE — not the emulator at all: TempleOS HolyC graphics compiled straight to WASM
+// and run directly (the holyc-wasm compiler + a JS framebuffer/sound/input runtime).
 $("bootNativeBtn").addEventListener("click", () => { location.href = BASE + "native/index.html"; });
 
 // RESTART — the robust "it got weird" button. Because the snapshot boot is ~4s,
@@ -413,7 +392,7 @@ $("bootNativeBtn").addEventListener("click", () => { location.href = BASE + "nat
 // press Boot again.
 $("restartBtn").addEventListener("click", () => {
   try { sessionStorage.setItem("tos_autoboot", "1"); } catch {}
-  location.href = location.pathname + (WEBOPT ? "?webopt" : "");   // clean desktop, same variant
+  location.href = location.pathname;   // reload the clean desktop
 });
 try {
   if (sessionStorage.getItem("tos_autoboot")) {
