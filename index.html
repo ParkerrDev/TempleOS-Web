@@ -98,6 +98,31 @@
 
     footer { text-align:center; margin:0; padding:8px; font-size:16px; color:#cfe; opacity:.85; }
     footer a { color:var(--gold); }
+
+    /* ---- HolyC -> WebAssembly editor: an overlay "window" over the desktop ---- */
+    #editorOverlay { position:fixed; inset:0; z-index:1000; display:none;
+                     align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,.66); }
+    #editorOverlay.open { display:flex; }
+    #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }
+    #editorWin .close { cursor:pointer; }                 /* this [X] actually closes the window */
+    #editorWin .close:hover { color:#fff; background:var(--blue); }
+    .ed-bar { display:flex; gap:7px; align-items:center; flex:0 0 auto; }
+    #editorWin .ed-bar button { width:auto; text-align:center; }
+    #editorWin select { width:auto; max-width:300px; font-size:16px; color:#000; background:#fff;
+                        border:2px solid #fff; outline:2px solid #000; padding:4px 6px; }
+    #editorWin #status { margin-left:auto; color:var(--blue); font-size:14px; white-space:nowrap;
+                         overflow:hidden; text-overflow:ellipsis; max-width:42%; }
+    .ed-body { flex:1 1 auto; min-height:0; display:flex; gap:6px; }
+    .ed-pane { flex:1 1 0; min-width:0; display:flex; flex-direction:column; border:3px double var(--blue); background:#fff; }
+    .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:13px; letter-spacing:.08em; }
+    #editor { flex:1 1 auto; min-height:0; width:100%; resize:none; border:0; outline:none; padding:6px 8px;
+              background:#fff; color:var(--blue); font-size:15px; line-height:1.35; tab-size:2; white-space:pre; overflow:auto; }
+    .ed-screenwrap { flex:0 0 auto; background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
+    #editorWin #screen { display:block; height:min(44vh,430px); width:auto; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; background:#000; }
+    #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000;
+                          color:var(--green); font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+    .ed-foot { flex:0 0 auto; color:var(--blue); font-size:13px; padding:1px 2px 0; }
+    @media (max-width:860px){ .ed-body{flex-direction:column} #editorWin{height:94vh} #editorWin #screen{height:34vh} }
   </style>
 </head>
 <body>
@@ -128,6 +153,7 @@
         <button id="bootBtn" title="Unmodified TempleOS V5.03 on hemu (Holy Emulator) — a lean QEMU built just for TempleOS">▶ Boot TempleOS</button>
         <button id="restartBtn" disabled title="Reload the clean desktop snapshot (~4s)">↻ Restart</button>
         <button id="fsBtn" disabled>⛶ Fullscreen</button>
+        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed">⌨ HolyC Editor</button>
       </div>
       <div class="win dbgw" data-title="Debug"><span class="close">[X]</span><pre id="dbg"></pre></div>
     </div>
@@ -152,6 +178,34 @@
     <p>Made with ♥ by <a href="https://parkerhunt.me">parkerhunt.me</a> — R.I.P. Terry A. Davis (1969–2018), “the smartest programmer that's ever lived.”</p>
   </footer>
   </main>
+
+  <!-- HolyC -> WebAssembly editor: an overlay window over the desktop, opened from the Menu -->
+  <div id="editorOverlay" role="dialog" aria-modal="true" aria-label="HolyC to WebAssembly editor">
+    <div class="win" id="editorWin" data-title="HolyC → WebAssembly Editor">
+      <span class="close" id="editorClose" title="Close editor">[X]</span>
+      <div class="ed-bar">
+        <select id="demoSelect" title="Pick a TempleOS HolyC demo or game">
+          <option value="">— pick a demo / game —</option>
+        </select>
+        <button id="runBtn">▶ Run</button>
+        <button id="stopBtn">■ Stop</button>
+        <span id="status">ready</span>
+      </div>
+      <div class="ed-body">
+        <section class="ed-pane">
+          <div class="ed-h">HolyC source</div>
+          <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
+        </section>
+        <section class="ed-pane">
+          <div class="ed-h">Screen — 640×480, 16-color</div>
+          <div class="ed-screenwrap"><canvas id="screen" width="640" height="480" tabindex="0"></canvas></div>
+          <div class="ed-h">Console</div>
+          <pre id="console"></pre>
+        </section>
+      </div>
+      <div class="ed-foot">Click the screen to enable sound &amp; send keyboard/mouse to the program. Compiled with holyc-wasm — no emulation.</div>
+    </div>
+  </div>
 
   <script>
     // ---- Top status bar, fed LIVE by the OS (debug port 0xE9 -> /dbg.out) ----
@@ -216,6 +270,33 @@
         const d = seq[i][1]; i = (i + 1) % seq.length;
         setTimeout(next, d);
       })();
+    })();
+  </script>
+  <script>
+    // ---- HolyC → WebAssembly editor: open as an overlay window from the Menu.
+    // The editor module (and its ~1.8 MB demo bundle) is lazy-loaded on first
+    // open, so it never weighs down the main page load. ----
+    (function () {
+      const ov = document.getElementById("editorOverlay");
+      const openBtn = document.getElementById("editorBtn");
+      const closeBtn = document.getElementById("editorClose");
+      let loaded = false;
+      function open() {
+        ov.classList.add("open");
+        if (!loaded) {
+          loaded = true;
+          import("./native/app.js")
+            .then(() => { if (window.__holycEditor) window.__holycEditor.run(); })   // run the default demo once, on first open
+            .catch((e) => { const s = document.getElementById("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); });
+        }
+      }
+      function close() {
+        ov.classList.remove("open");
+        if (window.__holycEditor) window.__holycEditor.stop();   // free CPU + release the keyboard back to the desktop
+      }
+      openBtn.addEventListener("click", open);
+      closeBtn.addEventListener("click", close);
+      ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(); });   // click the backdrop to close
     })();
   </script>
   <script type="module" src="./os-qemu.js"></script>
