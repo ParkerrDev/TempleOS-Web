@@ -115,8 +115,20 @@
     .ed-body { flex:1 1 auto; min-height:0; display:flex; gap:6px; }
     .ed-pane { flex:1 1 0; min-width:0; display:flex; flex-direction:column; border:3px double var(--blue); background:#fff; }
     .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:13px; letter-spacing:.08em; }
-    #editor { flex:1 1 auto; min-height:0; width:100%; resize:none; border:0; outline:none; padding:6px 8px;
-              background:#fff; color:var(--blue); font-size:15px; line-height:1.35; tab-size:2; white-space:pre; overflow:auto; }
+    /* editor with syntax highlighting: a colored <pre> backdrop behind a
+       transparent-text textarea (identical metrics so the caret aligns). */
+    .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }
+    #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;
+        font-family:'dos_vga',monospace; font-size:15px; line-height:1.35; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
+    #editorHL { z-index:0; pointer-events:none; overflow:hidden; color:#16163a; background:transparent; }
+    #editor { z-index:1; resize:none; outline:none; color:transparent; background:transparent; caret-color:#16163a; }
+    #editor::selection { background:rgba(110,160,255,.4); }   /* translucent so colored text shows through */
+    .ed-editwrap.plain #editorHL { display:none; }            /* huge sources (sprite data): skip highlighting */
+    .ed-editwrap.plain #editor { color:#16163a; }
+    /* HolyC token colors */
+    #editorHL .tc{ color:#7d8aa0; font-style:italic; }  #editorHL .ts{ color:#0a7f25; }
+    #editorHL .tk{ color:#a10608; font-weight:bold; }   #editorHL .tt{ color:#6a1b9a; }
+    #editorHL .tco{ color:#b35a00; }  #editorHL .tn{ color:#b35a00; }  #editorHL .tp{ color:#0a6a8a; }
     .ed-screenwrap { flex:0 0 auto; background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
     #editorWin #screen { display:block; height:min(44vh,430px); width:auto; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; background:#000; }
     #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000;
@@ -188,13 +200,12 @@
           <option value="">— pick a demo / game —</option>
         </select>
         <button id="runBtn">▶ Run</button>
-        <button id="stopBtn">■ Stop</button>
         <span id="status">ready</span>
       </div>
       <div class="ed-body">
         <section class="ed-pane">
           <div class="ed-h">HolyC source</div>
-          <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
+          <div class="ed-editwrap"><pre id="editorHL" aria-hidden="true"></pre><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea></div>
         </section>
         <section class="ed-pane">
           <div class="ed-h">Screen — 640×480, 16-color</div>
@@ -297,6 +308,45 @@
       openBtn.addEventListener("click", open);
       closeBtn.addEventListener("click", close);
       ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(); });   // click the backdrop to close
+    })();
+
+    // ---- lightweight, dependency-free HolyC syntax highlighter ----
+    // Paints a colored <pre> behind the (transparent-text) textarea. app.js reads
+    // editor.value as usual; it dispatches "input" when it loads a demo so we repaint.
+    (function () {
+      const ta = document.getElementById("editor");
+      const hl = document.getElementById("editorHL");
+      const wrap = ta && ta.closest(".ed-editwrap");
+      if (!ta || !hl || !wrap) return;
+      const KW = new Set("if else while for do switch case default break continue return goto sizeof try catch throw class union public extern _extern import _import reg noreg interrupt haserrcode lastclass start end asm offset argpop noargpop".split(" "));
+      const TY = new Set("U0 U8 U16 U32 U64 I8 I16 I32 I64 F64 Bool U8z CDC CTask CDoc CHashTable CFifoI64 CDate".split(" "));
+      const CO = new Set("TRUE FALSE NULL ON OFF BLACK BLUE GREEN CYAN RED PURPLE BROWN LTGRAY DKGRAY LTBLUE LTGREEN LTCYAN LTRED LTPURPLE YELLOW WHITE GR_WIDTH GR_HEIGHT TRANSPARENT".split(" "));
+      const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const RE = /(\/\*[\s\S]*?\*\/)|(\/\/[^\n]*)|("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])*')|(#[A-Za-z_]+)|(\b\d[\w.]*)|([A-Za-z_]\w*)|([\s\S])/g;
+      function paint(code) {
+        let out = "", m; RE.lastIndex = 0;
+        while ((m = RE.exec(code))) {
+          if (m[1] || m[2]) out += '<span class="tc">' + esc(m[1] || m[2]) + "</span>";
+          else if (m[3] || m[4]) out += '<span class="ts">' + esc(m[3] || m[4]) + "</span>";
+          else if (m[5]) out += '<span class="tp">' + esc(m[5]) + "</span>";
+          else if (m[6]) out += '<span class="tn">' + esc(m[6]) + "</span>";
+          else if (m[7]) { const w = m[7], c = KW.has(w) ? "tk" : TY.has(w) ? "tt" : CO.has(w) ? "tco" : ""; out += c ? '<span class="' + c + '">' + esc(w) + "</span>" : esc(w); }
+          else out += esc(m[8]);
+        }
+        return out;
+      }
+      let raf = 0;
+      function update() {
+        raf = 0;
+        const v = ta.value;
+        if (v.length > 40000) { wrap.classList.add("plain"); hl.textContent = ""; return; }  // too big to highlight live (e.g. sprite data)
+        wrap.classList.remove("plain");
+        hl.innerHTML = paint(v) + "\n";
+        hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft;
+      }
+      ta.addEventListener("input", () => { if (!raf) raf = requestAnimationFrame(update); });
+      ta.addEventListener("scroll", () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; });
+      update();
     })();
   </script>
   <script type="module" src="./os-qemu.js"></script>
