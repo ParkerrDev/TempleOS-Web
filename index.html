@@ -126,7 +126,7 @@
       <div class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
         <button id="bootBtn">▶ Boot Original</button>
-        <button id="bootWebBtn" title="Web-optimized build: SWAR screen compositing + uncapped refresh (experimental)">⚡ Boot Web-Optimized</button>
+        <button id="bootWebBtn" title="Hybrid build: the full OS runs emulated, but the composited frame is blitted to the screen NATIVELY by the host (a display hypercall) + SWAR compositing + 90fps cap. A cleaner display path — about the same speed as Original, since the limit is the emulated per-frame render, not the display. For real 60fps, use Boot Native.">🖥 Boot Hybrid (native display)</button>
         <button id="bootNativeBtn" title="TempleOS HolyC graphics compiled directly to WebAssembly — NO emulation, native speed">🚀 Boot Native (no emulation)</button>
         <button id="restartBtn" disabled title="Reload the clean desktop snapshot (~4s)">↻ Restart</button>
         <button id="fsBtn" disabled>⛶ Fullscreen</button>

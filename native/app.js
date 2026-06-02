@@ -181,7 +181,20 @@ async function run() {
   curCanvas = fresh;
   reattachCanvas(fresh);
   mainFb = new Framebuffer(fresh.getContext("2d"), 640, 480, SCALE, new Uint8Array(fbSAB));
-  const present = () => { if (!running) return; mainFb.present(); rafId = requestAnimationFrame(present); };
+  // present + an HONEST fps counter: count only frames where the framebuffer
+  // actually changed (real animation frames), capped at the display refresh — so a
+  // static screen reads 0, not a misleading 60. This is the *visible* native fps.
+  let _ph = 0, _rf = 0, _t0 = performance.now();
+  const fbBytes = new Uint8Array(fbSAB);
+  const present = () => {
+    if (!running) return;
+    mainFb.present();
+    let h = 0; for (let i = 0; i < fbBytes.length; i += 1009) h = (h * 31 + fbBytes[i]) | 0;
+    if (h !== _ph) { _rf++; _ph = h; }
+    const now = performance.now();
+    if (now - _t0 >= 1000) { window.__nativeFps = _rf; setStatus("running · " + _rf + " fps (native)"); _rf = 0; _t0 = now; }
+    rafId = requestAnimationFrame(present);
+  };
 
   worker = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
   worker.onmessage = (e) => {

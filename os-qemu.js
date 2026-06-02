@@ -12,7 +12,7 @@ const BASE = new URL("./", document.baseURI).href;
 const QEMU_BASE = BASE + "vendor/qemu-sdl";
 // Cache-buster: bump this whenever the QEMU build changes. A fresh ?v= makes the
 // URLs distinct and forces a clean fetch past any immutable caching.
-const V = "v=20260602b";
+const V = "v=20260602c";
 const ROM_BASE = `${BASE}vendor/qemu/load-rom.data?${V}`;
 const ISO_URL = `${BASE}vendor/images/TempleOS.ISO?${V}`;
 const WASM_URL = `${QEMU_BASE}/qemu-system-x86_64.wasm?${V}`;
@@ -20,9 +20,15 @@ const WASM_URL = `${QEMU_BASE}/qemu-system-x86_64.wasm?${V}`;
 // RAM + device state, gzipped). Restoring it with `-incoming file:/snapshot.bin`
 // skips the ~30–90s self-compile AND the install prompts — boot is ~1–2s.
 // `?nosnap` forces a full cold boot (and the guided prompts).
-// `?webopt` selects the WEB-OPTIMIZED TempleOS (SWAR screen composite + a 90fps
-// WinMgr refresh, recompiled in). It ships its own disk + snapshot so the chooser
-// can offer Original vs Web-optimized; default (no param) is the Original.
+// `?webopt` selects the HYBRID "native-display" TempleOS: the full OS still runs
+// emulated, but the composited 640x480 frame is handed to the host via a display
+// hypercall (guest OutU32(0xEB, gr.dc2->body)) and blitted to the surface NATIVELY
+// in vga.c — replacing the slow planar pack + emulated VGA writes. Also has the
+// SWAR screen composite + a 90fps WinMgr cap recompiled in. HONEST NOTE: this is a
+// cleaner display path, NOT a speedup — measured ~27fps idle desktop (identical to
+// Original) and ~8fps full-screen repaint; the limit is the emulated per-frame
+// render, not the display. For real 60fps use the Native (HolyC->WASM) build (it
+// renders 84-106fps, vsync-capped to 60). Ships its own disk + snapshot; default Original.
 const WEBOPT = /[?&]webopt/.test(location.search);
 const SNAP_URL = WEBOPT
   ? `${BASE}vendor/images/webopt-snapshot.bin.gz?${V}`
