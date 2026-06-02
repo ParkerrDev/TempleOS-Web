@@ -13,7 +13,7 @@
     * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga',"Courier New",monospace;
         cursor:url('assets/cursor.png'),auto; }
     html { overflow-y:auto; }
-    body { background:var(--blue); color:#fff; font-size:16px; line-height:1.45; min-height:100vh; }
+    body { background:var(--blue); color:#fff; font-size:17px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
     ::selection { background:#000; color:yellow; }
 
     /* TempleOS top status bar — live from the OS; tight + spaced like afterdavis */
@@ -26,10 +26,14 @@
     #tb-key { text-transform:uppercase; color:yellow; white-space:nowrap; }
 
     /* compact header so the footer fits without scrolling */
-    header { display:flex; align-items:center; gap:10px; padding:5px 8px 1px; flex-wrap:wrap; }
-    header img.terry { height:40px; width:auto; image-rendering:pixelated; border:2px solid #fff; }
-    header h1 { font-size:20px; font-weight:normal; color:#fff; }
-    header p { font-size:14px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
+    header { display:flex; align-items:stretch; gap:10px; padding:5px 8px 1px; }
+    header .htxt { display:flex; flex-direction:column; justify-content:center; }
+    /* Terry as an animated background so the div (not the gif's intrinsic size) drives
+       layout: it stretches to the full height of the title + paragraph beside it. */
+    header .terry { flex:0 0 auto; align-self:stretch; width:54px; image-rendering:pixelated; border:2px solid #fff;
+                    background:url('assets/terrydancing.gif') center/contain no-repeat #000; }
+    header h1 { font-size:22px; font-weight:normal; color:#fff; }
+    header p { font-size:15px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
     a { color:var(--gold); }
 
     /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X].
@@ -41,15 +45,19 @@
            line-height:.7; letter-spacing:.1em; color:var(--blue); background:#fff;
            animation:winTitle .5s step-start infinite; }
     @keyframes winTitle { 50% { color:#fff; background:var(--blue); } }
-    .close { position:absolute; top:-10px; right:6px; padding:2px 1px 0 2px; line-height:.8; letter-spacing:.1em;
+    .close { position:absolute; top:-7px; right:6px; font-size:15px; padding:1px 2px 0; line-height:.7; letter-spacing:.05em;
              color:var(--blue); background:#fff; }   /* purely decorative — no hover, no action */
+
+    /* the area below the header: distribute the window-row and footer EVENLY in the
+       remaining vertical space (equal gaps above/below the row and below the footer). */
+    main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; align-items:stretch; }
 
     /* three columns: [Menu + Debug] left · TempleOS center · Help right */
     .desktop-row { display:flex; gap:6px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px 6px; }
     .col-left { display:flex; flex-direction:column; gap:16px; width:204px; flex:0 0 auto; }
 
     .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
-    button { font-family:'dos_vga',monospace; font-size:16px; color:#000; background:#fff;
+    button { font-family:'dos_vga',monospace; font-size:17px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
@@ -63,25 +71,26 @@
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center;
               justify-content:center; gap:12px; padding:18px; background:#000; color:#fff; text-align:center; }
     #loadui.dim { background:rgba(0,0,0,.55); }
-    #ldtext { font-size:16px; max-width:560px; line-height:1.5; min-height:2.4em; }
+    #ldtext { font-size:17px; max-width:560px; line-height:1.5; min-height:2.4em; }
     .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#0a0a0a;
                  border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
-    .ldbarwrap > i { display:block; height:100%; width:0; transition:width .2s;
-                     background:repeating-linear-gradient(90deg, var(--green) 0 30px, #0a0a0a 30px 34px); }
+    .ldbarwrap > i { display:block; height:100%; width:0; transition:width .2s; background:var(--green); }
+    .ldbarwrap::after { content:""; position:absolute; inset:0; pointer-events:none;
+                       background:repeating-linear-gradient(90deg, transparent 0 22px, #0a0a0a 22px 24px); }
     .hb { font-size:12px; color:#9fe6ff; }
 
     /* Help window — right column */
-    #guide { width:236px; flex:0 0 auto; font-size:16px; }
+    #guide { width:236px; flex:0 0 auto; font-size:17px; }
     #guide b { color:var(--red); }
     #guide i { color:#0a7f25; font-style:normal; }
     #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
 
     /* Debug terminal — dark window under the Menu */
-    #dbg { width:100%; height:210px; overflow:auto; background:#000; color:#7fe07f; padding:8px;
-           font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+    #dbg { height:200px; overflow:auto; background:#000; color:#7fe07f; padding:8px;
+           font-size:14px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
     #dbg .err { color:#ff8a8a; }
 
-    footer { text-align:center; padding:5px 8px 18px; font-size:15px; color:#cfe; opacity:.85; }
+    footer { text-align:center; margin:0; padding:8px; font-size:16px; color:#cfe; opacity:.85; }
     footer a { color:var(--gold); }
   </style>
 </head>
@@ -98,13 +107,14 @@
   </div>
 
   <header>
-    <img class="terry" src="assets/terrydancing.gif" alt="Terry A. Davis" title="R.I.P. Terry A. Davis (1969–2018)" />
-    <div>
+    <div class="terry" role="img" aria-label="Terry A. Davis" title="R.I.P. Terry A. Davis (1969–2018)"></div>
+    <div class="htxt">
       <h1>TempleOS — the real 64-bit OS, booting in your browser</h1>
       <p>The <b>complete, unmodified TempleOS V5.03</b> on a <b>64-bit QEMU</b> compiled to WebAssembly — real kernel, real HolyC JIT, graphics, sound, keyboard &amp; mouse. <a href="https://github.com/ParkerrDev/TempleOS-wasm">source &amp; build notes →</a></p>
     </div>
   </header>
 
+  <main class="stage">
   <div class="desktop-row">
     <div class="col-left">
       <div class="toolbar win" data-title="Menu">
@@ -133,6 +143,7 @@
   <footer>
     <p>A browser port in the spirit of <a href="https://github.com/ParkerrDev/afterdavis">afterdavis</a> — running the real TempleOS V5.03. R.I.P. Terry A. Davis (1969–2018), “the smartest programmer that's ever lived.”</p>
   </footer>
+  </main>
 
   <script>
     // ---- Top status bar, fed LIVE by the OS (debug port 0xE9 -> /dbg.out) ----
