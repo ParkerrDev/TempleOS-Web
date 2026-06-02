@@ -12,7 +12,7 @@ const BASE = new URL("./", document.baseURI).href;
 const QEMU_BASE = BASE + "vendor/qemu-sdl";
 // Cache-buster: bump this whenever the QEMU build changes. A fresh ?v= makes the
 // URLs distinct and forces a clean fetch past any immutable caching.
-const V = "v=20260601y";
+const V = "v=20260602a";
 const ROM_BASE = `${BASE}vendor/qemu/load-rom.data?${V}`;
 const ISO_URL = `${BASE}vendor/images/TempleOS.ISO?${V}`;
 const WASM_URL = `${QEMU_BASE}/qemu-system-x86_64.wasm?${V}`;
@@ -201,7 +201,7 @@ async function boot() {
          "-drive","file=/disk.qcow2,format=qcow2,if=ide,index=0","-boot","c",
          "-vga","std","-display","sdl",
          "-usb","-device","usb-tablet",
-         "-serial","none","-parallel","none","-monitor","none","-nic","none",
+         "-serial","file:/serial.out","-debugcon","file:/dbg.out","-parallel","none","-monitor","none","-nic","none",
          ...(snapBytes ? ["-incoming","file:/snapshot.bin"] : [])],
     locateFile: (p) => `${QEMU_BASE}/${p}?${V}`,
     mainScriptUrlOrBlob: `${QEMU_BASE}/out.js?${V}`,
