@@ -53,6 +53,7 @@ async function loadDemo(path) {
   }
   if (src != null) { editor.value = src; setStatus("loaded " + path); }
   else { editor.value = "// missing source: " + path; setStatus("load failed"); }
+  editor.dispatchEvent(new Event("input"));   // refresh the host page's syntax highlighting
 }
 demoSel.addEventListener("change", () => { if (demoSel.value) loadDemo(demoSel.value); });
 
@@ -231,8 +232,8 @@ function reattachCanvas(c) {
   window._canvas = c;
 }
 
-$("runBtn").addEventListener("click", run);
-$("stopBtn").addEventListener("click", stop);
+$("runBtn").addEventListener("click", run);   // toggles Run <-> Stop (single button)
+$("stopBtn")?.addEventListener("click", stop);  // optional second button; the overlay uses just runBtn
 
 // check cross-origin isolation
 if (!self.crossOriginIsolated) {
