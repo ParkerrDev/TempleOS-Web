@@ -189,7 +189,9 @@ async function run() {
   const present = () => {
     if (!running) return;
     mainFb.present();
-    let h = 0; for (let i = 0; i < fbBytes.length; i += 1009) h = (h * 31 + fbBytes[i]) | 0;
+    // full-coverage change detection: a single changed pixel must register, so
+    // sparse-update demos (Bounce, RandDemo) are counted honestly, not skipped.
+    let h = 0; for (let i = 0; i < fbBytes.length; i++) h = (h * 33 + fbBytes[i]) | 0;
     if (h !== _ph) { _rf++; _ph = h; }
     const now = performance.now();
     if (now - _t0 >= 1000) { window.__nativeFps = _rf; setStatus("running · " + _rf + " fps (native)"); _rf = 0; _t0 = now; }
@@ -232,8 +234,10 @@ if (!self.crossOriginIsolated) {
 }
 
 // load a default GRAPHICS demo on open (so the Screen shows graphics, not console)
+// and auto-run it, so opening the page immediately shows live, solid-60fps graphics.
 {
   const def = SOURCES["Demo/Graphics/Lines.HC"] ? "Demo/Graphics/Lines.HC" : DEMOS[0].items[0].path;
   demoSel.value = def;
   loadDemo(def);
+  if (self.crossOriginIsolated) setTimeout(run, 150);  // compile+run the default demo on open
 }
