@@ -20,11 +20,19 @@ const WASM_URL = `${QEMU_BASE}/qemu-system-x86_64.wasm?${V}`;
 // RAM + device state, gzipped). Restoring it with `-incoming file:/snapshot.bin`
 // skips the ~30–90s self-compile AND the install prompts — boot is ~1–2s.
 // `?nosnap` forces a full cold boot (and the guided prompts).
-const SNAP_URL = `${BASE}vendor/images/snapshot.bin.gz?${V}`;
+// `?webopt` selects the WEB-OPTIMIZED TempleOS (SWAR screen composite + a 90fps
+// WinMgr refresh, recompiled in). It ships its own disk + snapshot so the chooser
+// can offer Original vs Web-optimized; default (no param) is the Original.
+const WEBOPT = /[?&]webopt/.test(location.search);
+const SNAP_URL = WEBOPT
+  ? `${BASE}vendor/images/webopt-snapshot.bin.gz?${V}`
+  : `${BASE}vendor/images/snapshot.bin.gz?${V}`;
 // The DEFAULT experience is the real INSTALLED TempleOS: it boots from a
 // pre-installed hard-disk image (RedSea on C:), restored instantly from a
 // post-boot snapshot. `?nosnap` = cold hard-drive boot (the ~30–90s self-compile).
-const DISK_URL = `${BASE}vendor/images/templeos-hd.qcow2.gz?${V}`;
+const DISK_URL = WEBOPT
+  ? `${BASE}vendor/images/webopt-disk.qcow2.gz?${V}`
+  : `${BASE}vendor/images/templeos-hd.qcow2.gz?${V}`;
 // `?install` is one-time TOOLING: blank disk + live CD so TempleOS's VM installer
 // formats it and copies ::/ → C:/ — we extract that to make the shipped disk.
 const INSTALL = /[?&]install/.test(location.search);
@@ -378,15 +386,25 @@ function watchBoot(snap) {
 // presses N at the prompts instead (see watchBoot + the on-page guide banner).
 // Real keyboard/mouse work via the PS/2 path + usb-tablet.
 
-$("bootBtn").addEventListener("click", boot);
+// Variant chooser: each Boot button boots its variant, reloading to the right
+// URL first if needed (the loader reads ?webopt at load time). Booting the one
+// you're already on just starts immediately.
+function bootVariant(wantWebopt) {
+  if (wantWebopt === WEBOPT) { boot(); return; }
+  try { sessionStorage.setItem("tos_autoboot", "1"); } catch {}
+  location.href = location.pathname + (wantWebopt ? "?webopt" : "");
+}
+$("bootBtn").addEventListener("click", () => bootVariant(false));
+$("bootWebBtn").addEventListener("click", () => bootVariant(true));
 
 // RESTART — the robust "it got weird" button. Because the snapshot boot is ~4s,
 // the most reliable recovery from ANY messy guest state (TempleOS debugger popup
 // from a typo, a maximized/empty window, a stuck prompt) is to reload the clean
-// desktop. A one-shot autoboot flag means the user doesn't press Boot again.
+// desktop (of the SAME variant). A one-shot autoboot flag means the user doesn't
+// press Boot again.
 $("restartBtn").addEventListener("click", () => {
   try { sessionStorage.setItem("tos_autoboot", "1"); } catch {}
-  location.href = location.pathname;   // clean desktop
+  location.href = location.pathname + (WEBOPT ? "?webopt" : "");   // clean desktop, same variant
 });
 try {
   if (sessionStorage.getItem("tos_autoboot")) {
