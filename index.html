@@ -6,78 +6,82 @@
   <title>TempleOS — the real 64-bit OS in your browser (QEMU/WASM)</title>
   <script src="coi-serviceworker.js"></script>
   <style>
-    /* afterdavis theme (the TempleOS desktop), scaled uniformly to 125% via zoom. */
+    /* afterdavis theme: the TempleOS desktop, at the DOS VGA font's native 16px;
+       the screen auto-fits the viewport so the whole page shows without scrolling. */
     @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); font-weight:normal; font-style:normal; }
-    :root { --blue:mediumblue; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; }
+    :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; }
     * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga',"Courier New",monospace;
         cursor:url('assets/cursor.png'),auto; }
     html { overflow-y:auto; }
-    /* everything proportionally 125% larger (like browser zoom) */
-    body { zoom:1.25; background:var(--blue); color:#fff; font-size:16px; line-height:1.5; min-height:100vh; }
+    body { background:var(--blue); color:#fff; font-size:16px; line-height:1.45; min-height:100vh; }
     ::selection { background:#000; color:yellow; }
 
-    /* TempleOS top status bar — live from the OS; tight (line-height .8) like afterdavis */
+    /* TempleOS top status bar — live from the OS; tight + spaced like afterdavis */
     #topbar { display:flex; line-height:.8; justify-content:space-between; align-items:flex-start; gap:10px;
               background:var(--blue); color:#fff; padding:4px 8px; border-bottom:2px solid #fff; }
     #topbar .status { display:flex; }
-    #topbar .status > span:not(:last-child) { margin-right:14px; white-space:nowrap; }
     #topbar .status > span { white-space:nowrap; }
+    #topbar .status > span:not(:last-child) { margin-right:16px; }
     .y { color:yellow; }
     #tb-key { text-transform:uppercase; color:yellow; white-space:nowrap; }
 
-    header { display:flex; align-items:center; gap:12px; padding:8px 8px 2px; flex-wrap:wrap; }
-    header img.terry { height:54px; width:auto; image-rendering:pixelated; border:2px solid #fff; }
-    header h1 { font-size:22px; font-weight:normal; color:#fff; }
-    header p { font-size:16px; color:#dfe6ff; max-width:1000px; }
+    /* compact header so the footer fits without scrolling */
+    header { display:flex; align-items:center; gap:10px; padding:5px 8px 1px; flex-wrap:wrap; }
+    header img.terry { height:40px; width:auto; image-rendering:pixelated; border:2px solid #fff; }
+    header h1 { font-size:20px; font-weight:normal; color:#fff; }
+    header p { font-size:14px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
     a { color:var(--gold); }
 
-    /* a TempleOS window: white box, double-blue border, white outline, blinking title tab + [X].
-       margins/title/[X] match afterdavis exactly (tight, on the border, no hover). */
+    /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X].
+       margins/title/[X] match afterdavis (tight, on the border, no hover). */
     .win, #frame { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue);
-                   outline:4px solid #fff; margin:5px; overflow:visible; }
-    .win { padding:1em; }
+                   outline:4px solid #fff; margin:3px 5px; overflow:visible; }
+    .win { padding:.7em; }
     [data-title]::before { content:attr(data-title); position:absolute; top:-9px; left:6px; padding:2px 1px 0 2px;
            line-height:.7; letter-spacing:.1em; color:var(--blue); background:#fff;
            animation:winTitle .5s step-start infinite; }
     @keyframes winTitle { 50% { color:#fff; background:var(--blue); } }
     .close { position:absolute; top:-10px; right:6px; padding:2px 1px 0 2px; line-height:.8; letter-spacing:.1em;
-             color:var(--blue); background:#fff; }   /* no :hover — afterdavis doesn't style it */
+             color:var(--blue); background:#fff; }   /* purely decorative — no hover, no action */
 
     /* three columns: [Menu + Debug] left · TempleOS center · Help right */
-    .desktop-row { display:flex; gap:6px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:4px 6px; }
-    .col-left { display:flex; flex-direction:column; gap:6px; width:200px; flex:0 0 auto; }
+    .desktop-row { display:flex; gap:6px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px 6px; }
+    .col-left { display:flex; flex-direction:column; gap:16px; width:204px; flex:0 0 auto; }
 
-    .toolbar { display:flex; flex-direction:column; gap:8px; align-items:stretch; }
+    .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
     button { font-family:'dos_vga',monospace; font-size:16px; color:#000; background:#fff;
-             border:2px solid #fff; outline:2px solid #000; padding:5px 8px; text-align:left; width:100%; white-space:nowrap; }
+             border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
 
     /* the emulator screen, framed as a TempleOS window (center) */
     #frame { padding:5px; }
-    canvas#canvas { display:block; width:640px; height:480px; image-rendering:pixelated; background:#000; outline:none; }
+    /* auto-fit: as large as the viewport allows (up to 800x600), so the whole page fits without scrolling */
+    canvas#canvas { display:block; height:min(74vh,600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; }
 
-    /* loading overlay (no spinner; green TempleOS-style bar) */
+    /* loading overlay — solid black; green segmented TempleOS-style bar (no spinner) */
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center;
-              justify-content:center; gap:12px; padding:18px; background:rgba(0,0,40,.92); color:#fff; text-align:center; }
-    #loadui.dim { background:rgba(0,0,40,.5); }
+              justify-content:center; gap:12px; padding:18px; background:#000; color:#fff; text-align:center; }
+    #loadui.dim { background:rgba(0,0,0,.55); }
     #ldtext { font-size:16px; max-width:560px; line-height:1.5; min-height:2.4em; }
-    .ldbarwrap { height:20px; width:80%; max-width:480px; background:#0a0a0a; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
-    .ldbarwrap > i { display:block; height:100%; width:0; background:var(--green); transition:width .2s; }
-    .hb { font-size:13px; color:#9fe6ff; }
+    .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#0a0a0a;
+                 border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
+    .ldbarwrap > i { display:block; height:100%; width:0; transition:width .2s;
+                     background:repeating-linear-gradient(90deg, var(--green) 0 30px, #0a0a0a 30px 34px); }
+    .hb { font-size:12px; color:#9fe6ff; }
 
     /* Help window — right column */
-    #guide { width:240px; flex:0 0 auto; font-size:16px; }
+    #guide { width:236px; flex:0 0 auto; font-size:16px; }
     #guide b { color:var(--red); }
     #guide i { color:#0a7f25; font-style:normal; }
     #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
 
     /* Debug terminal — dark window under the Menu */
-    #dbg { width:100%; height:230px; overflow:auto; background:#000; color:#7fe07f; padding:8px;
+    #dbg { width:100%; height:210px; overflow:auto; background:#000; color:#7fe07f; padding:8px;
            font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
     #dbg .err { color:#ff8a8a; }
 
-    footer { text-align:center; padding:6px 8px 24px; font-size:15px; color:#cfe; opacity:.85; }
+    footer { text-align:center; padding:5px 8px 18px; font-size:15px; color:#cfe; opacity:.85; }
     footer a { color:var(--gold); }
   </style>
 </head>
@@ -97,7 +101,7 @@
     <img class="terry" src="assets/terrydancing.gif" alt="Terry A. Davis" title="R.I.P. Terry A. Davis (1969–2018)" />
     <div>
       <h1>TempleOS — the real 64-bit OS, booting in your browser</h1>
-      <p>The <b>complete, unmodified TempleOS V5.03</b> on a <b>64-bit QEMU</b> compiled to WebAssembly — JIT-translating the guest's x86-64 to WASM. Real kernel, real HolyC JIT, graphics, sound, keyboard &amp; mouse. <a href="https://github.com/ParkerrDev/TempleOS-wasm">source &amp; build notes →</a></p>
+      <p>The <b>complete, unmodified TempleOS V5.03</b> on a <b>64-bit QEMU</b> compiled to WebAssembly — real kernel, real HolyC JIT, graphics, sound, keyboard &amp; mouse. <a href="https://github.com/ParkerrDev/TempleOS-wasm">source &amp; build notes →</a></p>
     </div>
   </header>
 
@@ -131,14 +135,11 @@
   </footer>
 
   <script>
-    // ---- Top status bar, fed LIVE by the OS ----
-    // A HolyC task in TempleOS writes "MM/DD/YY HH:MM:SS FPS CPU MEM" to the QEMU
-    // debug port (0xE9) every second; QEMU mirrors it to /dbg.out. We read the tail
-    // (fast, offset-read so file growth doesn't matter) and update each field.
+    // ---- Top status bar, fed LIVE by the OS (debug port 0xE9 -> /dbg.out) ----
     (function () {
       const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], p2 = (n) => String(n).padStart(2, "0");
       const el = (id) => document.getElementById(id);
-      const tbDate = el("tb-date"), tbTime = el("tb-time"), tbFps = el("tb-fps"), tbMem = el("tb-mem"), tbCpu = el("tb-cpu"), tbCpuN = el("tb-cpun");
+      const tbDate = el("tb-date"), tbTime = el("tb-time"), tbFps = el("tb-fps"), tbMem = el("tb-mem"), tbCpuN = el("tb-cpun");
       function clock() { const t = new Date(); tbDate.textContent = `${days[t.getDay()]} ${p2(t.getMonth()+1)}/${p2(t.getDate())}`; tbTime.textContent = `${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`; }
       function tail() {
         const q = window.__qemu; if (!q || !q.FS) return null;
@@ -167,12 +168,11 @@
             }
           }
         }
-        if (!synced) clock();   // host clock until the OS stream is flowing
+        if (!synced) clock();
       }
       tick(); setInterval(tick, 250);
 
-      // ---- top-right: last key, captured from the window (works whether you're
-      // typing into the OS or not — SDL gets the same event) ----
+      // top-right: last key, captured from the window (works in or out of the OS)
       const tbKey = el("tb-key");
       addEventListener("keydown", (e) => {
         let k = e.key;
@@ -180,11 +180,7 @@
         tbKey.textContent = k;
       }, true);
     })();
-
-    // ---- [X] close buttons: hide the window on click (no hover effect; reload restores) ----
-    document.querySelectorAll(".close").forEach((x) => {
-      x.addEventListener("click", () => { const w = x.closest(".win, #frame"); if (w) w.style.display = "none"; });
-    });
+    // [X] is decorative only — no behaviour.
   </script>
   <script type="module" src="./os-qemu.js"></script>
 </body>
