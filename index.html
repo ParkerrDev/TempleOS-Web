@@ -202,13 +202,14 @@
     })();
     // [X] is decorative only — no behaviour.
 
-    // ---- Terry window: play terrydancing FORWARDS (7.2s), then BACKWARDS (a
-    // frame-reversed copy, 7.2s), then terry (2.84s) — repeat. Setting src to a
-    // different cached gif restarts it from frame 0. ----
+    // ---- Terry window: each gif forwards then backwards (frame-reversed copies):
+    // terrydancing fwd (7.2s) -> terrydancing back (7.2s) -> terry fwd (2.84s) ->
+    // terry back (2.84s) -> repeat. Setting src to a different cached gif restarts
+    // it from frame 0. ----
     (function () {
       const img = document.querySelector(".terrywin img");
       if (!img) return;
-      const seq = [["assets/terrydancing.gif", 7200], ["assets/terrydancing-rev.gif", 7200], ["assets/terry.gif", 2840]];
+      const seq = [["assets/terrydancing.gif", 7200], ["assets/terrydancing-rev.gif", 7200], ["assets/terry.gif", 2840], ["assets/terry-rev.gif", 2840]];
       seq.forEach(([s]) => { const p = new Image(); p.src = s; });   // preload both
       let i = 0;
       (function next() {
