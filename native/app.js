@@ -47,7 +47,9 @@ async function loadDemo(path) {
     // Large demos (e.g. the Terry sprite, ~600 KB) aren't in the always-loaded
     // bundle — fetch the .HC on demand instead of bloating every page load.
     setStatus("fetching " + path + " …");
-    try { const r = await fetch(path); if (r.ok) src = await r.text(); } catch (e) {}
+    // resolve relative to THIS module (works whether app.js is the page or is
+    // loaded as an overlay from the main site at a different base URL).
+    try { const r = await fetch(new URL(path, import.meta.url)); if (r.ok) src = await r.text(); } catch (e) {}
   }
   if (src != null) { editor.value = src; setStatus("loaded " + path); }
   else { editor.value = "// missing source: " + path; setStatus("load failed"); }
@@ -239,11 +241,12 @@ if (!self.crossOriginIsolated) {
   setStatus("ready");
 }
 
-// load a default GRAPHICS demo on open (so the Screen shows graphics, not console)
-// and auto-run it, so opening the page immediately shows live, solid-60fps graphics.
+// load a default GRAPHICS demo so the editor opens with something to run.
 {
   const def = SOURCES["Demo/Graphics/Lines.HC"] ? "Demo/Graphics/Lines.HC" : DEMOS[0].items[0].path;
   demoSel.value = def;
   loadDemo(def);
-  if (self.crossOriginIsolated) setTimeout(run, 150);  // compile+run the default demo on open
 }
+// Expose run/stop so the host page (the overlay opener) can drive the editor:
+// run the default demo when the window opens, stop it when the window closes.
+window.__holycEditor = { run, stop, isRunning: () => running };
