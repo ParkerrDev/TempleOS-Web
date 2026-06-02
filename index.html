@@ -4,92 +4,93 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TempleOS — the real 64-bit OS in your browser (QEMU/WASM)</title>
-  <!-- Cross-origin isolation (needed for SharedArrayBuffer) without server config:
-       this service worker injects COOP/COEP on every response and reloads once on
-       first visit. On hosts that already send the headers (Netlify / Cloudflare /
-       Vercel via _headers) it's a harmless no-op. MUST load first. -->
   <script src="coi-serviceworker.js"></script>
   <style>
-    /* ---- afterdavis theme: the TempleOS desktop, recreated in CSS ----
-       mediumblue desktop · white double-bordered windows w/ blinking title tabs ·
-       DOS VGA bitmap font (at its native 16px so it stays crisp) · green ">" /
-       loading bars · red links · gold accents. */
+    /* afterdavis theme (the TempleOS desktop), scaled uniformly to 125% via zoom. */
     @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); font-weight:normal; font-style:normal; }
     :root { --blue:mediumblue; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; }
     * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga',"Courier New",monospace;
         cursor:url('assets/cursor.png'),auto; }
     html { overflow-y:auto; }
-    /* 16px = the font's native bitmap size → crisp (matches afterdavis). */
-    body { min-height:100vh; background:var(--blue); color:#fff; font-size:16px; line-height:1.5; }
+    /* everything proportionally 125% larger (like browser zoom) */
+    body { zoom:1.25; background:var(--blue); color:#fff; font-size:16px; line-height:1.5; min-height:100vh; }
     ::selection { background:#000; color:yellow; }
 
-    /* TempleOS top status bar — mirrors the real OS bar (fed live from the guest) */
-    #topbar { display:flex; justify-content:space-between; align-items:center; gap:12px;
-              background:var(--blue); color:#fff; padding:3px 12px; border-bottom:2px solid #fff;
-              font-size:16px; line-height:1.2; flex-wrap:wrap; }
-    #topbar .r { color:yellow; }
+    /* TempleOS top status bar — live from the OS; tight (line-height .8) like afterdavis */
+    #topbar { display:flex; line-height:.8; justify-content:space-between; align-items:flex-start; gap:10px;
+              background:var(--blue); color:#fff; padding:4px 8px; border-bottom:2px solid #fff; }
+    #topbar .status { display:flex; }
+    #topbar .status > span:not(:last-child) { margin-right:14px; white-space:nowrap; }
+    #topbar .status > span { white-space:nowrap; }
+    .y { color:yellow; }
+    #tb-key { text-transform:uppercase; color:yellow; white-space:nowrap; }
 
-    header { display:flex; align-items:center; gap:16px; padding:14px 16px 4px; flex-wrap:wrap; }
-    header img.terry { height:72px; width:auto; image-rendering:pixelated; border:2px solid #fff; }
-    header h1 { font-size:28px; font-weight:normal; color:#fff; letter-spacing:.3px; }
+    header { display:flex; align-items:center; gap:12px; padding:8px 8px 2px; flex-wrap:wrap; }
+    header img.terry { height:54px; width:auto; image-rendering:pixelated; border:2px solid #fff; }
+    header h1 { font-size:22px; font-weight:normal; color:#fff; }
     header p { font-size:16px; color:#dfe6ff; max-width:1000px; }
     a { color:var(--gold); }
 
-    /* a TempleOS window: white box, double-blue border, white outline, blinking title tab + [X] */
+    /* a TempleOS window: white box, double-blue border, white outline, blinking title tab + [X].
+       margins/title/[X] match afterdavis exactly (tight, on the border, no hover). */
     .win, #frame { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue);
-                   outline:4px solid #fff; }
-    .win { padding:14px; }
-    [data-title]::before { content:attr(data-title); position:absolute; top:-13px; left:10px;
-           padding:2px 6px 0; background:#fff; color:var(--blue); font-size:16px; line-height:.8; letter-spacing:.08em;
-           animation:winTitle .6s step-start infinite; }
-    @keyframes winTitle { 50% { background:var(--blue); color:#fff; } }
-    .close { position:absolute; top:-13px; right:10px; padding:2px 7px 0; background:#fff; color:var(--blue);
-             font-size:16px; line-height:.8; user-select:none; z-index:3; }
-    .close:hover { background:var(--red); color:#fff; }
+                   outline:4px solid #fff; margin:5px; overflow:visible; }
+    .win { padding:1em; }
+    [data-title]::before { content:attr(data-title); position:absolute; top:-9px; left:6px; padding:2px 1px 0 2px;
+           line-height:.7; letter-spacing:.1em; color:var(--blue); background:#fff;
+           animation:winTitle .5s step-start infinite; }
+    @keyframes winTitle { 50% { color:#fff; background:var(--blue); } }
+    .close { position:absolute; top:-10px; right:6px; padding:2px 1px 0 2px; line-height:.8; letter-spacing:.1em;
+             color:var(--blue); background:#fff; }   /* no :hover — afterdavis doesn't style it */
 
-    /* three-column desktop: [Menu + Debug] left · TempleOS center · Help right */
-    .desktop-row { display:flex; gap:16px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:8px 14px 6px; }
-    .col-left { display:flex; flex-direction:column; gap:18px; margin:20px 0; width:212px; flex:0 0 auto; }
+    /* three columns: [Menu + Debug] left · TempleOS center · Help right */
+    .desktop-row { display:flex; gap:6px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:4px 6px; }
+    .col-left { display:flex; flex-direction:column; gap:6px; width:200px; flex:0 0 auto; }
 
-    /* Menu window — vertical button stack */
-    .toolbar { display:flex; flex-direction:column; gap:12px; align-items:stretch; width:100%; }
+    .toolbar { display:flex; flex-direction:column; gap:8px; align-items:stretch; }
     button { font-family:'dos_vga',monospace; font-size:16px; color:#000; background:#fff;
-             border:2px solid #fff; outline:2px solid #000; padding:6px 10px; text-align:left; width:100%; white-space:nowrap; }
+             border:2px solid #fff; outline:2px solid #000; padding:5px 8px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
 
     /* the emulator screen, framed as a TempleOS window (center) */
-    #frame { margin:20px 0; padding:6px; }
-    canvas#canvas { display:block; width:800px; height:600px; max-width:100%; image-rendering:pixelated; background:#000; outline:none; }
+    #frame { padding:5px; }
+    canvas#canvas { display:block; width:640px; height:480px; image-rendering:pixelated; background:#000; outline:none; }
 
-    /* loading overlay over the canvas (no spinner; green TempleOS-style bar) */
-    #loadui { position:absolute; inset:6px; display:flex; flex-direction:column; align-items:center;
-              justify-content:center; gap:14px; padding:24px; background:rgba(0,0,40,.92); color:#fff; text-align:center; }
+    /* loading overlay (no spinner; green TempleOS-style bar) */
+    #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center;
+              justify-content:center; gap:12px; padding:18px; background:rgba(0,0,40,.92); color:#fff; text-align:center; }
     #loadui.dim { background:rgba(0,0,40,.5); }
-    #ldtext { font-size:16px; max-width:620px; line-height:1.5; min-height:2.4em; }
-    .ldbarwrap { height:22px; width:82%; max-width:520px; background:#0a0a0a; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
+    #ldtext { font-size:16px; max-width:560px; line-height:1.5; min-height:2.4em; }
+    .ldbarwrap { height:20px; width:80%; max-width:480px; background:#0a0a0a; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
     .ldbarwrap > i { display:block; height:100%; width:0; background:var(--green); transition:width .2s; }
-    .hb { font-size:14px; color:#9fe6ff; }
+    .hb { font-size:13px; color:#9fe6ff; }
 
-    /* Help window — right column (a hint before boot, live tips after) */
-    #guide { width:248px; flex:0 0 auto; font-size:16px; margin:20px 0; }
+    /* Help window — right column */
+    #guide { width:240px; flex:0 0 auto; font-size:16px; }
     #guide b { color:var(--red); }
     #guide i { color:#0a7f25; font-style:normal; }
-    #guide kbd { background:var(--blue); color:#fff; border:1px solid var(--blue); padding:0 6px; }
+    #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
 
-    /* Debug terminal — a dark window under the Menu, in the left column */
-    #dbg { width:100%; height:260px; overflow:auto; background:#000; color:#7fe07f; padding:12px;
+    /* Debug terminal — dark window under the Menu */
+    #dbg { width:100%; height:230px; overflow:auto; background:#000; color:#7fe07f; padding:8px;
            font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
     #dbg .err { color:#ff8a8a; }
 
-    footer { text-align:center; padding:8px 16px 28px; font-size:15px; color:#cfe; opacity:.85; }
+    footer { text-align:center; padding:6px 8px 24px; font-size:15px; color:#cfe; opacity:.85; }
     footer a { color:var(--gold); }
   </style>
 </head>
 <body>
   <div id="topbar">
-    <div class="l" id="tb-os">booting…</div>
-    <div class="r">the real 64-bit OS in your browser</div>
+    <div class="status">
+      <span id="tb-date">…</span>
+      <span id="tb-time">…</span>
+      <span id="tb-fps">FPS:0</span>
+      <span id="tb-mem">Mem:0000000000</span>
+      <span id="tb-cpu">CPU<span class="y" id="tb-cpun">0</span></span>
+    </div>
+    <p id="tb-key"></p>
   </div>
 
   <header>
@@ -100,21 +101,20 @@
     </div>
   </header>
 
-  <!-- [Menu + Debug] left · TempleOS center · Help right -->
   <div class="desktop-row">
     <div class="col-left">
       <div class="toolbar win" data-title="Menu">
-        <span class="close" title="close">[X]</span>
+        <span class="close">[X]</span>
         <button id="bootBtn">▶ Boot TempleOS</button>
-        <button id="restartBtn" disabled title="Reload the clean desktop snapshot (~4s) — use this any time TempleOS gets into a weird state">↻ Restart</button>
+        <button id="restartBtn" disabled title="Reload the clean desktop snapshot (~4s)">↻ Restart</button>
         <button id="tourBtn" disabled title="Open the built-in TempleOS Welcome guide">🧭 Take the Tour</button>
         <button id="fsBtn" disabled>⛶ Fullscreen</button>
       </div>
-      <pre id="dbg" class="win" data-title="Debug"><span class="close" title="close">[X]</span></pre>
+      <pre id="dbg" class="win" data-title="Debug"><span class="close">[X]</span></pre>
     </div>
 
     <div id="frame" data-title="TempleOS V5.03">
-      <span class="close" title="close">[X]</span>
+      <span class="close">[X]</span>
       <canvas id="canvas" width="640" height="480" tabindex="0"></canvas>
       <div id="loadui">
         <div id="ldtext">Press “Boot TempleOS” to start.</div>
@@ -123,7 +123,7 @@
       </div>
     </div>
 
-    <div id="guide" class="win" data-title="Help"><span class="close" title="close">[X]</span>Controls are on the left. Once TempleOS is running, click a window and type — tips &amp; help appear here.</div>
+    <div id="guide" class="win" data-title="Help"><span class="close">[X]</span>Controls are on the left. Once TempleOS is running, click a window and type — tips &amp; help appear here.</div>
   </div>
 
   <footer>
@@ -131,42 +131,57 @@
   </footer>
 
   <script>
-    // ---- Top status bar, fed live BY THE OS ----
-    // A tiny HolyC task inside TempleOS writes "MM/DD/YY HH:MM:SS FPS CPU [MEM]" to
-    // the QEMU debug port (0xE9) every second; QEMU mirrors that to /dbg.out in the
-    // in-memory FS. We read the tail and reformat it like the real top bar. Falls
-    // back to a host clock until the OS stream is flowing.
+    // ---- Top status bar, fed LIVE by the OS ----
+    // A HolyC task in TempleOS writes "MM/DD/YY HH:MM:SS FPS CPU MEM" to the QEMU
+    // debug port (0xE9) every second; QEMU mirrors it to /dbg.out. We read the tail
+    // (fast, offset-read so file growth doesn't matter) and update each field.
     (function () {
-      const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      const p2 = (n) => String(n).padStart(2, "0");
-      const osEl = document.getElementById("tb-os");
-      function clock() { const t = new Date(); return `${days[t.getDay()]} ${p2(t.getMonth()+1)}/${p2(t.getDate())} ${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`; }
+      const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], p2 = (n) => String(n).padStart(2, "0");
+      const el = (id) => document.getElementById(id);
+      const tbDate = el("tb-date"), tbTime = el("tb-time"), tbFps = el("tb-fps"), tbMem = el("tb-mem"), tbCpu = el("tb-cpu"), tbCpuN = el("tb-cpun");
+      function clock() { const t = new Date(); tbDate.textContent = `${days[t.getDay()]} ${p2(t.getMonth()+1)}/${p2(t.getDate())}`; tbTime.textContent = `${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`; }
       function tail() {
         const q = window.__qemu; if (!q || !q.FS) return null;
-        let d; try { d = q.FS.readFile("/dbg.out"); } catch { return null; }
-        if (!d || !d.length) return null;
-        const n = Math.min(512, d.length);
-        return new TextDecoder().decode(d.subarray(d.length - n));
+        let st; try { st = q.FS.stat("/dbg.out"); } catch { return null; }
+        if (!st || !st.size) return null;
+        const n = Math.min(600, st.size), off = st.size - n, buf = new Uint8Array(n);
+        try { const fd = q.FS.open("/dbg.out", "r"); q.FS.read(fd, buf, 0, n, off); q.FS.close(fd); return new TextDecoder().decode(buf); }
+        catch { try { const d = q.FS.readFile("/dbg.out"); return new TextDecoder().decode(d.subarray(Math.max(0, d.length - n))); } catch { return null; } }
       }
-      function fmt(line) {
-        const m = line.trim().match(/(\d\d)\/(\d\d)\/(\d\d)\s+(\d\d):(\d\d):(\d\d)\s+(\d+)\s+(\d+)(?:\s+([0-9A-Fa-f]+))?/);
-        if (!m) return null;
-        const [, mo, da, yr, hh, mm, ss, fps, cpu, mem] = m;
-        const dow = days[new Date(2000 + (+yr), (+mo) - 1, +da).getDay()];
-        let s = `${dow} ${mo}/${da} ${hh}:${mm}:${ss} FPS:${fps}`;
-        if (mem) s += ` Mem:${mem}`;
-        s += ` CPU${cpu}`;
-        return s;
-      }
+      let synced = false;
       function tick() {
-        let out = null; const t = tail();
-        if (t) { const ls = t.split("\n").filter((x) => x.trim()); for (let i = ls.length - 1; i >= 0; i--) { const f = fmt(ls[i]); if (f) { out = f; break; } } }
-        osEl.textContent = out || clock();
+        const t = tail();
+        if (t) {
+          const ls = t.split("\n").filter((x) => x.trim());
+          for (let i = ls.length - 1; i >= 0; i--) {
+            const m = ls[i].trim().match(/(\d\d)\/(\d\d)\/(\d\d)\s+(\d\d:\d\d:\d\d)\s+(\d+)\s+(\d+)(?:\s+([0-9A-Fa-f]+))?/);
+            if (m) {
+              const [, mo, da, yr, time, fps, cpu, mem] = m;
+              tbDate.textContent = `${days[new Date(2000 + (+yr), (+mo) - 1, +da).getDay()]} ${mo}/${da}`;
+              tbTime.textContent = time;
+              tbFps.textContent = `FPS:${fps}`;
+              tbCpuN.textContent = cpu;
+              if (mem) tbMem.textContent = `Mem:${mem}`; else tbMem.style.display = "none";
+              synced = true;
+              return;
+            }
+          }
+        }
+        if (!synced) clock();   // host clock until the OS stream is flowing
       }
-      tick(); setInterval(tick, 1000);
+      tick(); setInterval(tick, 250);
+
+      // ---- top-right: last key, captured from the window (works whether you're
+      // typing into the OS or not — SDL gets the same event) ----
+      const tbKey = el("tb-key");
+      addEventListener("keydown", (e) => {
+        let k = e.key;
+        if (k === " ") k = "SPACE"; else if (k.length === 1) k = k.toUpperCase();
+        tbKey.textContent = k;
+      }, true);
     })();
 
-    // ---- [X] close buttons: hide the window (reload restores everything) ----
+    // ---- [X] close buttons: hide the window on click (no hover effect; reload restores) ----
     document.querySelectorAll(".close").forEach((x) => {
       x.addEventListener("click", () => { const w = x.closest(".win, #frame"); if (w) w.style.display = "none"; });
     });

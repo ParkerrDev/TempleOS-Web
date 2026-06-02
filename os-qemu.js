@@ -12,7 +12,7 @@ const BASE = new URL("./", document.baseURI).href;
 const QEMU_BASE = BASE + "vendor/qemu-sdl";
 // Cache-buster: bump this whenever the QEMU build changes. A fresh ?v= makes the
 // URLs distinct and forces a clean fetch past any immutable caching.
-const V = "v=20260602a";
+const V = "v=20260602b";
 const ROM_BASE = `${BASE}vendor/qemu/load-rom.data?${V}`;
 const ISO_URL = `${BASE}vendor/images/TempleOS.ISO?${V}`;
 const WASM_URL = `${QEMU_BASE}/qemu-system-x86_64.wasm?${V}`;
