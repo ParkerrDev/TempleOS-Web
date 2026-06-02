@@ -1,0 +1,332 @@
+diff --git a/hw/display/vga.c b/hw/display/vga.c
+index 37557c3..e110185 100644
+--- a/hw/display/vga.c
++++ b/hw/display/vga.c
+@@ -38,6 +38,8 @@
+ #include "hw/xen/xen.h"
+ #include "migration/vmstate.h"
+ #include "trace.h"
++#include "exec/address-spaces.h"   /* WEB-OPT: get_system_io for the display hypercall */
++#include "exec/cpu-common.h"       /* WEB-OPT: cpu_physical_memory_read */
+ 
+ //#define DEBUG_VGA_MEM
+ //#define DEBUG_VGA_REG
+@@ -1467,9 +1469,65 @@ void vga_dirty_log_stop(VGACommonState *s)
+ /*
+  * graphic modes
+  */
++/* ===== WEB-OPT: native display hypercall =====================================
++ * The guest (Adam/GrUpdateScrn) composites a frame into ordinary RAM, then issues
++ * OutU32(0xEB, gr.dc2->body). This host handler reads that 8-bit 640x480 image
++ * straight from guest RAM and palette-blits it to the display surface at NATIVE
++ * speed, replacing the slow planar pack + the slow guest framebuffer writes. The
++ * whole OS still runs emulated; only the per-frame blit runs native. Once the
++ * hypercall is in use, the VGA's own draw is suppressed so it doesn't fight it. */
++static VGACommonState *g_hc_vga;
++static int g_hc_active;
++static uint32_t g_hc_fb_addr;          /* guest phys addr of the 8-bit 640x480 frame */
++static uint8_t g_hc_buf[640 * 480];
++static const uint32_t g_hc_pal[16] = {
++    0x000000, 0x0000aa, 0x00aa00, 0x00aaaa, 0xaa0000, 0xaa00aa, 0xaa5500, 0xaaaaaa,
++    0x555555, 0x5555ff, 0x55ff55, 0x55ffff, 0xff5555, 0xff55ff, 0xffff55, 0xffffff,
++};
++/* The guest's OUT only RECORDS the frame address — cheap, and safe to run on the
++ * vCPU thread. The actual surface blit happens in vga_draw_graphic, which runs on
++ * the display thread that owns the surface; doing it here would race the display
++ * thread's surface realloc during the text->graphics mode switch (guest Panic). */
++static void hc_write(void *opaque, hwaddr eaddr, uint64_t val, unsigned size)
++{
++    g_hc_fb_addr = (uint32_t)(val & 0xffffffffu);
++    g_hc_active = 1;
++}
++/* hemu: called from the wasm32 TCG backend's GrUpdateVGAGraphics HLE. Records the
++ * composited 8-bit frame (gr.dc2->body) for the display thread to palette-blit
++ * natively (reusing the path above), replacing the emulated planar pack + VGA
++ * plane writes. Same effect as the OUT handler, but driven by HLE not the guest. */
++void hemu_present(uint32_t fb_phys)
++{
++    g_hc_fb_addr = fb_phys;
++    g_hc_active = 1;
++}
++static uint64_t hc_read(void *opaque, hwaddr eaddr, unsigned size) { return 0; }
++static const MemoryRegionOps hc_ops = {
++    .read = hc_read, .write = hc_write,
++    .valid.min_access_size = 1, .valid.max_access_size = 4,
++    .endianness = DEVICE_LITTLE_ENDIAN,
++};
++/* ============================================================================ */
++
+ static void vga_draw_graphic(VGACommonState *s, int full_update)
+ {
+     DisplaySurface *surface = qemu_console_surface(s->con);
++    if (g_hc_active) {  /* WEB-OPT: native display blit, on the surface-owning display thread */
++        int hw = surface_width(surface), hh = surface_height(surface);
++        if (hw >= 640 && hh >= 480 && surface_bits_per_pixel(surface) == 32) {
++            int hstride = surface_stride(surface), hx, hy;
++            uint8_t *hd = surface_data(surface);
++            cpu_physical_memory_read(g_hc_fb_addr, g_hc_buf, sizeof(g_hc_buf));
++            for (hy = 0; hy < 480; hy++) {
++                uint32_t *row = (uint32_t *)(hd + (size_t)hy * hstride);
++                const uint8_t *src = g_hc_buf + (size_t)hy * 640;
++                for (hx = 0; hx < 640; hx++) row[hx] = g_hc_pal[src[hx] & 15];
++            }
++            dpy_gfx_update(s->con, 0, 0, 640, 480);
++        }
++        return;
++    }
+     int y1, y, update, linesize, y_start, double_scan, mask, depth;
+     int width, height, shift_control, bwidth, bits;
+     ram_addr_t page0, page1, region_start, region_end;
+@@ -2250,6 +2308,14 @@ bool vga_common_init(VGACommonState *s, Object *obj, Error **errp)
+ 
+     vga_dirty_log_start(s);
+ 
++    /* WEB-OPT: register the native display hypercall (guest OUTs gr.dc2 to 0xEB) */
++    g_hc_vga = s;
++    {
++        static MemoryRegion hc_mr;
++        memory_region_init_io(&hc_mr, obj, &hc_ops, s, "tos-hc", 4);
++        memory_region_add_subregion(get_system_io(), 0xEB, &hc_mr);
++    }
++
+     return true;
+ }
+ 
+diff --git a/migration/migration.c b/migration/migration.c
+index 3ce04b2..b5d82ed 100644
+--- a/migration/migration.c
++++ b/migration/migration.c
+@@ -3734,3 +3734,45 @@ static void register_migration_types(void)
+ }
+ 
+ type_init(register_migration_types);
++
++/* ===================== HCWASM snapshot hooks =====================
++ * Trigger a migration-to-file ("savevm" to /snapshot.bin) from JS so we can
++ * bake a POST-BOOT snapshot and restore it with `-incoming file:/snapshot.bin`
++ * for near-instant boot (skips the ~30-90s self-compile + the install/tour
++ * prompts). qmp_migrate() assumes the BQL is held, so we take it; migration
++ * then runs async in its own thread — poll hcwasm_migration_done().
++ */
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++#include <pthread.h>
++/* Run the actual migrate on a FRESH worker thread: the browser MAIN thread can't
++ * block on the BQL (Atomics.wait is disallowed there) and QEMU's own loop thread
++ * already holds the BQL (would double-lock). A new pthread holds neither, can
++ * Atomics.wait for the BQL, then issues the migrate (qmp_migrate expects the BQL
++ * held and spawns its own migration thread to write the file). */
++static void *hcwasm_save_thread(void *arg)
++{
++    Error *err = NULL;
++    qemu_mutex_lock_iothread();
++    qmp_migrate("file:/snapshot.bin", false, NULL, false, false,
++                false, false, false, false, false, false, &err);
++    qemu_mutex_unlock_iothread();
++    if (err) error_report_err(err);
++    return NULL;
++}
++EMSCRIPTEN_KEEPALIVE
++int hcwasm_save_snapshot(void)
++{
++    pthread_t t;
++    if (pthread_create(&t, NULL, hcwasm_save_thread, NULL) != 0) return -1;
++    pthread_detach(t);
++    return 0;
++}
++EMSCRIPTEN_KEEPALIVE
++int hcwasm_migration_done(void)
++{
++    /* 1 once migration is no longer running (completed/failed); 0 while active.
++     * Racy by design — JS also watches /snapshot.bin's size to confirm. */
++    return migration_is_idle() ? 1 : 0;
++}
++#endif
+diff --git a/tcg/wasm32.c b/tcg/wasm32.c
+index d60ce4b..fdc316e 100644
+--- a/tcg/wasm32.c
++++ b/tcg/wasm32.c
+@@ -23,6 +23,7 @@
+ 
+ #include "qemu/osdep.h"
+ #include "exec/cpu_ldst.h"
++#include "exec/cpu-common.h"   /* hemu: cpu_physical_memory_read/write for native HLE */
+ #include "tcg/tcg-op.h"
+ #include "tcg/tcg-ldst.h"
+ #include <string.h>
+@@ -1317,6 +1318,122 @@ static inline uintptr_t tcg_qemu_tb_exec_tci(CPUArchState *env)
+     }
+ }
+ 
++/* ===== hemu: native HLE of the per-frame compositor ========================
++ * Unmodified TempleOS calls DCBlotColor8(dc,img) once per GrUpdateScrn to
++ * composite the whole 640x480 frame (img->body -> dc->body, skipping
++ * TRANSPARENT) — ~307K emulated byte-iterations/frame, the dominant single-vCPU
++ * cost. hemu recognizes that function by entry address and runs it NATIVELY on
++ * guest RAM, then simulates its HolyC callee-clean RET. The OS binary is
++ * untouched (pure emulator-side HLE); if the OS ever recompiles it to a
++ * different address, the check simply stops firing and it falls back to full
++ * emulation (no crash). HolyC ABI (Doc/HelloWorld.DD): at entry [RSP]=ret,
++ * [RSP+8]=arg1=dc, [RSP+16]=arg2=img; RET1 pops ret + args (callee-clean).
++ * CDC: width_internal@20 height@24 body@384. CPUX86State: eip@128, RSP@32.
++ * TempleOS identity-maps RAM, so guest virtual == physical. */
++/* HLE target addresses (from the shipped snapshot). All three are compositor/flush
++ * functions called only from GrUpdateScrn (verified in Adam/Gr/GrScrn.HC), so
++ * shortcutting them by address is safe; if the OS ever recompiles to a different
++ * address the checks simply stop firing and it falls back to full emulation. */
++#define HLE_DCBLOT8 0x119C8428u   /* DCBlotColor8(dc,img)          composite (native) */
++#define HLE_DCBLOT4 0x119E2529u   /* DCBlotColor4(dst,src,cache,n) planar pack (skipped) */
++#define HLE_VGAGR   0x116536E0u   /* GrUpdateVGAGraphics()         VGA write (-> native present) */
++#define HLE_GR_DC2  0x119AD3D8u   /* &gr.dc2 (CDC*); ->body @+384 is the composited frame */
++extern void hemu_present(uint32_t fb_phys);   /* hw/display/vga.c: native gr.dc2 blit */
++static int g_hle_on = 1;
++static uint8_t g_hle_s[1u << 20], g_hle_d[1u << 20], g_hle_p[1u << 20];
++static uint64_t g_hle_hits;
++
++static int hle_dispatch(CPUArchState *env)
++{
++    uint64_t eip = *(uint64_t *)((uint8_t *)env + 128);
++    /* Only the compositor (DCBlotColor8) is HLE'd — it's the clear win (~9ms->0.4ms).
++     * The DCBLOT4 (planar pack) and VGAGR (flush) branches below are correct but
++     * DISABLED: DCBLOT4-native was measured ~neutral (the guest-RAM bulk copies needed
++     * for its dirty cache cost about as much as the emulated pack), and VGAGR-as-present
++     * was NET NEGATIVE (~36->26fps display-thread contention). Kept for reference. */
++    if (eip != HLE_DCBLOT8) {
++        return 0;
++    }
++    uint64_t rsp = *(uint64_t *)((uint8_t *)env + 32);
++    uint64_t ret = 0;
++    cpu_physical_memory_read(rsp, &ret, 8);
++    if (eip == HLE_DCBLOT8) {                      /* composite img->body into dc->body */
++        uint64_t dc = 0, img = 0, db = 0, ib = 0;
++        uint32_t wi = 0, ht = 0;
++        cpu_physical_memory_read(rsp + 8,    &dc,  8);
++        cpu_physical_memory_read(rsp + 16,   &img, 8);
++        cpu_physical_memory_read(dc  + 384,  &db,  8);
++        cpu_physical_memory_read(img + 384,  &ib,  8);
++        cpu_physical_memory_read(img + 20,   &wi,  4);
++        cpu_physical_memory_read(img + 24,   &ht,  4);
++        uint64_t n = (uint64_t)wi * ht;
++        /* Robustness: if the args don't look like a real DCBlotColor8 call (would be
++         * the case if this address matched a different function in some other boot),
++         * do NOT touch the guest — return 0 so the real function is emulated. This
++         * keeps the HLE safe even if the baked address is ever stale. */
++        if (!(n && n <= sizeof(g_hle_s) && db && ib)) {
++            return 0;
++        }
++        cpu_physical_memory_read(ib, g_hle_s, n);
++        cpu_physical_memory_read(db, g_hle_d, n);
++        for (uint64_t i = 0; i < n; i++) {
++            uint8_t s = g_hle_s[i];
++            if (s != 0xFF) {
++                g_hle_d[i] = s;
++            }
++        }
++        cpu_physical_memory_write(db, g_hle_d, n);
++        g_hle_hits++;
++        *(uint64_t *)((uint8_t *)env + 32) = rsp + 24;   /* 2 args, callee-clean */
++    } else if (eip == HLE_VGAGR) {                 /* present gr.dc2 natively; skip VGA writes */
++        uint64_t body = 0;
++        cpu_physical_memory_read(HLE_GR_DC2 + 384, &body, 8);
++        if (body) {
++            hemu_present((uint32_t)body);
++        }
++        *(uint64_t *)((uint8_t *)env + 32) = rsp + 8;    /* 0 args */
++    } else {                                       /* HLE_DCBLOT4: native planar pack (RAM->RAM) */
++        uint64_t dst = 0, img = 0, cache = 0, cnt = 0;
++        cpu_physical_memory_read(rsp + 8,  &dst,   8);   /* gr.dc1->body (4 planes) */
++        cpu_physical_memory_read(rsp + 16, &img,   8);   /* gr.dc2->body (8-bit) */
++        cpu_physical_memory_read(rsp + 24, &cache, 8);   /* gr.dc_cache->body */
++        cpu_physical_memory_read(rsp + 32, &cnt,   8);   /* word count */
++        if (!(cnt && cnt * 8 <= sizeof(g_hle_s) && cnt * 4 <= sizeof(g_hle_p) && dst && img && cache)) {
++            return 0;
++        }
++        cpu_physical_memory_read(img,   g_hle_s, cnt * 8);
++        cpu_physical_memory_read(cache, g_hle_d, cnt * 8);
++        cpu_physical_memory_read(dst,   g_hle_p, cnt * 4);
++        {
++            uint64_t *iw = (uint64_t *)g_hle_s, *cw = (uint64_t *)g_hle_d;
++            uint8_t *p0 = g_hle_p, *p1 = g_hle_p + cnt, *p2 = g_hle_p + 2 * cnt, *p3 = g_hle_p + 3 * cnt;
++            for (uint64_t i = 0; i < cnt; i++) {
++                uint64_t w = iw[i];
++                if (w == cw[i]) {                  /* dirty cache: skip unchanged 8-pixel groups */
++                    continue;
++                }
++                cw[i] = w;
++                uint8_t b0 = 0, b1 = 0, b2 = 0, b3 = 0;
++                for (int j = 0; j < 8; j++) {       /* plane_p bit j = bit p of pixel j */
++                    uint8_t px = (uint8_t)(w >> (j * 8));
++                    b0 |= (uint8_t)(( px       & 1) << j);
++                    b1 |= (uint8_t)(((px >> 1) & 1) << j);
++                    b2 |= (uint8_t)(((px >> 2) & 1) << j);
++                    b3 |= (uint8_t)(((px >> 3) & 1) << j);
++                }
++                p0[i] = b0; p1[i] = b1; p2[i] = b2; p3[i] = b3;
++            }
++        }
++        cpu_physical_memory_write(cache, g_hle_d, cnt * 8);
++        cpu_physical_memory_write(dst,   g_hle_p, cnt * 4);
++        g_hle_hits++;
++        *(uint64_t *)((uint8_t *)env + 32) = rsp + 40;   /* 4 args, callee-clean */
++    }
++    *(uint64_t *)((uint8_t *)env + 128) = ret;           /* eip = return address */
++    return 1;
++}
++/* ========================================================================== */
++
+ uintptr_t QEMU_DISABLE_CFI tcg_qemu_tb_exec(CPUArchState *env,
+                                             const void *v_tb_ptr)
+ {
+@@ -1324,6 +1441,9 @@ uintptr_t QEMU_DISABLE_CFI tcg_qemu_tb_exec(CPUArchState *env,
+     ctx.tb_ptr = (uint32_t*)v_tb_ptr;
+     ctx.do_init = 1;
+     while (true) {
++        if (g_hle_on && hle_dispatch(env)) {
++            return 0;   /* HLE'd the call; re-dispatch from the simulated return addr */
++        }
+         trysleep();
+         int tb_counter_ptr = (uint32_t)ctx.tb_ptr + counter_vec_off;
+         uint32_t res;
+diff --git a/tcg/wasm32.h b/tcg/wasm32.h
+index 82ac7e3..8396454 100644
+--- a/tcg/wasm32.h
++++ b/tcg/wasm32.h
+@@ -37,6 +37,12 @@ int get_core_nums();
+ 
+ void init_wasm32();
+ 
+-#define INSTANTIATE_NUM 1500
++/* Lowered from 1500 → 1 so a translation block JIT-compiles to wasm on its
++ * SECOND execution instead of its 1500th. At 1500 (ktock's default) almost no
++ * block gets hot enough during OS boot, so boot ran in the slow TCI interpreter
++ * the whole time (effectively never finishing). At 1, anything executed more
++ * than once becomes compiled wasm — dramatically faster boot. The downside
++ * (compiling cold code) is bounded by MAX_INSTANCE_ALIVE. */
++#define INSTANTIATE_NUM 1
+ 
+ #endif
+diff --git a/ui/sdl2.c b/ui/sdl2.c
+index 4971963..fde6a88 100644
+--- a/ui/sdl2.c
++++ b/ui/sdl2.c
+@@ -116,8 +116,18 @@ void sdl2_window_create(struct sdl2_console *scon)
+ 
+         scon->winctx = SDL_GL_CreateContext(scon->real_window);
+     } else {
+-        /* The SDL renderer is only used by sdl2-2D, when OpenGL is disabled */
+-        scon->real_renderer = SDL_CreateRenderer(scon->real_window, -1, 0);
++        /* The SDL renderer is only used by sdl2-2D, when OpenGL is disabled.
++         * Under Emscripten the default ("first") renderer is GLES2/WebGL, which
++         * cannot work with a worker-thread canvas (createShader on undefined).
++         * Force the SOFTWARE renderer, which blits pixels straight to the 2D
++         * canvas with no GL context. */
++        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
++        SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION, "0");
++        scon->real_renderer = SDL_CreateRenderer(scon->real_window, -1,
++                                                 SDL_RENDERER_SOFTWARE);
++        if (!scon->real_renderer) {
++            scon->real_renderer = SDL_CreateRenderer(scon->real_window, -1, 0);
++        }
+     }
+     sdl_update_caption(scon);
+ }
