@@ -28,10 +28,10 @@
     /* compact header so the footer fits without scrolling */
     header { display:flex; align-items:stretch; gap:10px; padding:5px 8px 1px; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
-    /* Terry as an animated background so the div (not the gif's intrinsic size) drives
+    /* TempleOS logo as a background so the div (not the SVG's intrinsic size) drives
        layout: it stretches to the full height of the title + paragraph beside it. */
-    header .terry { flex:0 0 auto; align-self:stretch; width:54px; image-rendering:pixelated; border:2px solid #fff;
-                    background:url('assets/terrydancing.gif') center/contain no-repeat #000; }
+    header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
+                   background:url('assets/TempleOS.svg') center/contain no-repeat; }
     header h1 { font-size:22px; font-weight:normal; color:#fff; }
     header p { font-size:15px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
     a { color:var(--gold); }
@@ -113,7 +113,7 @@
   </div>
 
   <header>
-    <div class="terry" role="img" aria-label="Terry A. Davis" title="R.I.P. Terry A. Davis (1969–2018)"></div>
+    <div class="logo" role="img" aria-label="TempleOS" title="TempleOS"></div>
     <div class="htxt">
       <h1>TempleOS — the real 64-bit OS, booting in your browser</h1>
       <p>The <b>complete, unmodified TempleOS V5.03</b> on a <b>64-bit QEMU</b> compiled to WebAssembly — real kernel, real HolyC JIT, graphics, sound, keyboard &amp; mouse. <a href="https://github.com/ParkerrDev/TempleOS-wasm">source &amp; build notes →</a></p>
