@@ -102,6 +102,9 @@ export function binResultType(a, b) {
   if (isPtr(a) && isInt(b)) return a;
   if (isInt(a) && isPtr(b)) return b;
   if (isPtr(a) && isPtr(b)) return T.I64; // ptr - ptr
+  // integer: unsigned propagates (C "usual arithmetic conversions"), so a
+  // comparison on an unsigned arithmetic result is done unsigned, not signed.
+  if (isInt(a) && isInt(b) && (!a.signed || !b.signed)) return T.U64;
   return T.I64;
 }
 
