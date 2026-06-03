@@ -1163,7 +1163,10 @@ class FnCtx {
     this.genExprCoerce(node.left, T.I64);
     this.genExprCoerce(node.right, T.I64);
     this.intOp(node.op, (isUnsigned(lr) && isUnsigned(rr)) || isUnsigned(lr));
-    return T.I64;
+    // Propagate unsignedness (C "usual arithmetic conversions"): if either
+    // operand is unsigned the result is unsigned, so a following comparison
+    // (e.g. carry detection `(r & m) < (a & m)`) is done unsigned, not signed.
+    return (isUnsigned(lr) || isUnsigned(rr)) ? T.U64 : T.I64;
   }
 
   intOp(op, unsigned) {
