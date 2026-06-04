@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TempleOS — booted by HEMU (clean-room x86-64 emulator in HolyC)</title>
+  <style>
+    @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); font-weight:normal; font-style:normal; }
+    :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga',"Courier New",monospace; cursor:url('assets/cursor.png'),auto; }
+    html { overflow-y:auto; }
+    body { background:var(--blue); color:#fff; font-size:17px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
+    ::selection { background:#000; color:yellow; }
+    a { color:var(--gold); }
+
+    #topbar { display:flex; line-height:.8; justify-content:space-between; align-items:flex-start; gap:10px;
+              background:var(--blue); color:#fff; padding:4px 8px; border-bottom:2px solid #fff; }
+    #topbar .status > span:not(:last-child) { margin-right:16px; }
+    .y { color:yellow; } #tb-key { text-transform:uppercase; color:yellow; white-space:nowrap; }
+
+    header { display:flex; align-items:stretch; gap:10px; padding:5px 8px 1px; }
+    header .htxt { display:flex; flex-direction:column; justify-content:center; }
+    header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
+                   background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
+    header h1 { font-size:22px; font-weight:normal; color:#fff; }
+    header p { font-size:15px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
+
+    .win, #frame { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue);
+                   outline:4px solid #fff; margin:3px 5px; overflow:visible; }
+    .win { padding:.7em; }
+    [data-title]::before { content:attr(data-title); position:absolute; top:-9px; left:6px; padding:2px 1px 0 2px;
+           line-height:.7; letter-spacing:.1em; color:var(--blue); background:#fff; animation:winTitle .5s step-start infinite; }
+    @keyframes winTitle { 50% { color:#fff; background:var(--blue); } }
+
+    main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
+    .desktop-row { display:flex; gap:8px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px; }
+    .col-left { display:flex; flex-direction:column; gap:16px; width:232px; flex:0 0 auto; }
+    .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
+    a.button, button { font-family:'dos_vga',monospace; font-size:17px; color:#000; background:#fff; text-decoration:none; display:block;
+             border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
+    a.button:hover, button:hover:not(:disabled) { color:#fff; background:#000; }
+
+    #frame { padding:5px; }
+    canvas#canvas { display:block; height:min(74vh,600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; }
+    #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+              gap:12px; padding:18px; background:#000; color:#fff; text-align:center; }
+    #ldtext { font-size:17px; max-width:560px; line-height:1.5; min-height:2.4em; }
+    .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#0a0a0a; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
+    .ldbarwrap > i { display:block; height:100%; width:0; transition:width .2s; background:var(--green); }
+    .ldbarwrap::after { content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(90deg, transparent 0 22px, #0a0a0a 22px 24px); }
+    .col-right { display:flex; flex-direction:column; gap:16px; width:268px; flex:0 0 auto; }
+    #guide { font-size:16px; } #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
+    footer { text-align:center; padding:8px; font-size:16px; color:#cfe; opacity:.85; }
+  </style>
+</head>
+<body>
+  <div id="topbar">
+    <div class="status"><span>TempleOS V5.03</span><span>engine: <span class="y">HEMU</span> (HolyC x86-64)</span><span id="tb-fps">starting…</span></div>
+    <p id="tb-key"></p>
+  </div>
+
+  <header>
+    <div class="logo" role="img" aria-label="TempleOS" title="TempleOS"></div>
+    <div class="htxt">
+      <h1>TempleOS — booted by HEMU</h1>
+      <p>Real TempleOS V5.03 running on a <b>clean-room x86-64 emulator written in HolyC</b> and compiled to
+         WebAssembly — <b>no QEMU</b>. The clock, mouse cursor and keyboard are driven by the OS itself.
+         <a href="./">← chooser</a> · <a href="https://github.com/ParkerrDev/TempleOS-wasm">source →</a></p>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div class="desktop-row">
+      <div class="col-left">
+        <div class="toolbar win" data-title="Menu">
+          <a class="button" href="./">◤ Chooser</a>
+          <button id="restartBtn" title="Reload the snapshot from the start">↻ Restart</button>
+          <a class="button" href="./qemu.html">▶ Boot with QEMU instead</a>
+        </div>
+      </div>
+
+      <div id="frame" data-title="TempleOS V5.03 · HEMU">
+        <canvas id="canvas" width="640" height="480" tabindex="0"></canvas>
+        <div id="loadui">
+          <div id="ldtext">loading hemu…</div>
+          <div class="ldbarwrap"><i id="ldbar"></i></div>
+        </div>
+      </div>
+
+      <div class="col-right">
+        <div class="win" data-title="Help" id="guide">
+          <b>Click the window</b>, then <b>move the mouse</b> and <b>type</b>. The cursor and the
+          <kbd>C:/Home&gt;</kbd> prompt are the real OS. The menu-bar clock ticks because TempleOS's own
+          status task is running inside the emulator.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>hemu — a TempleOS-only x86-64 emulator, ~95% HolyC, compiled to WASM by holyc-wasm. R.I.P. Terry A. Davis.</p>
+  </footer>
+
+  <script type="module">
+    import { createHost } from "./holyc-wasm/src/runtime/host.js";
+
+    const PALETTE = [
+      [0x00,0x00,0x00],[0x00,0x00,0xaa],[0x00,0xaa,0x00],[0x00,0xaa,0xaa],
+      [0xaa,0x00,0x00],[0xaa,0x00,0xaa],[0xaa,0x55,0x00],[0xaa,0xaa,0xaa],
+      [0x55,0x55,0x55],[0x55,0x55,0xff],[0x55,0xff,0x55],[0x55,0xff,0xff],
+      [0xff,0x55,0x55],[0xff,0x55,0xff],[0xff,0xff,0x55],[0xff,0xff,0xff],
+    ];
+    const pal32 = new Uint32Array(16);
+    for (let i = 0; i < 16; i++) { const [r,g,b] = PALETTE[i]; pal32[i] = (255<<24)|(b<<16)|(g<<8)|r; }
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = ctx.createImageData(640, 480);
+    const out32 = new Uint32Array(img.data.buffer);
+    const ld = document.getElementById("loadui"), ldtext = document.getElementById("ldtext"), ldbar = document.getElementById("ldbar");
+    const tbFps = document.getElementById("tb-fps"), tbKey = document.getElementById("tb-key");
+    const setLoad = (s, pct) => { ldtext.textContent = s; if (pct != null) ldbar.style.width = pct + "%"; };
+
+    // ---- input: a host-owned cursor + a set-1 scancode queue, pulled by snapshot.HC each frame ----
+    let msX = 320, msY = 240, msB = 0;
+    const keyq = [];
+    const SC = {
+      Escape:0x01,Digit1:0x02,Digit2:0x03,Digit3:0x04,Digit4:0x05,Digit5:0x06,Digit6:0x07,Digit7:0x08,
+      Digit8:0x09,Digit9:0x0A,Digit0:0x0B,Minus:0x0C,Equal:0x0D,Backspace:0x0E,Tab:0x0F,
+      KeyQ:0x10,KeyW:0x11,KeyE:0x12,KeyR:0x13,KeyT:0x14,KeyY:0x15,KeyU:0x16,KeyI:0x17,KeyO:0x18,KeyP:0x19,
+      BracketLeft:0x1A,BracketRight:0x1B,Enter:0x1C,ControlLeft:0x1D,
+      KeyA:0x1E,KeyS:0x1F,KeyD:0x20,KeyF:0x21,KeyG:0x22,KeyH:0x23,KeyJ:0x24,KeyK:0x25,KeyL:0x26,
+      Semicolon:0x27,Quote:0x28,Backquote:0x29,ShiftLeft:0x2A,Backslash:0x2B,
+      KeyZ:0x2C,KeyX:0x2D,KeyC:0x2E,KeyV:0x2F,KeyB:0x30,KeyN:0x31,KeyM:0x32,
+      Comma:0x33,Period:0x34,Slash:0x35,ShiftRight:0x36,Space:0x39,
+      ArrowUp:0x48,ArrowLeft:0x4B,ArrowRight:0x4D,ArrowDown:0x50,
+    };
+    canvas.addEventListener("mousemove", e => {
+      const r = canvas.getBoundingClientRect();
+      msX = Math.max(0, Math.min(639, (e.clientX - r.left) * 640 / r.width  | 0));
+      msY = Math.max(0, Math.min(479, (e.clientY - r.top)  * 480 / r.height | 0));
+    });
+    canvas.addEventListener("mousedown", e => { msB |= (1 << e.button); canvas.focus(); });
+    canvas.addEventListener("mouseup",   e => { msB &= ~(1 << e.button); });
+    canvas.addEventListener("contextmenu", e => e.preventDefault());
+    addEventListener("keydown", e => { const s = SC[e.code]; if (s !== undefined) { keyq.push(s);        tbKey.textContent = e.code.replace(/^(Key|Digit)/,""); e.preventDefault(); } });
+    addEventListener("keyup",   e => { const s = SC[e.code]; if (s !== undefined) { keyq.push(s | 0x80); e.preventDefault(); } });
+
+    // ---- optional PC-speaker sound (square wave, started on first gesture) ----
+    let actx = null, osc = null, gain = null;
+    function snd(freq) { if (!actx) return; if (freq > 0) { osc.frequency.value = freq; gain.gain.value = 0.04; } else gain.gain.value = 0; }
+    addEventListener("pointerdown", () => {
+      if (actx) return;
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); osc = actx.createOscillator(); gain = actx.createGain();
+            osc.type = "square"; gain.gain.value = 0; osc.connect(gain).connect(actx.destination); osc.start(); } catch {}
+    });
+
+    // ---- load the 5 MB compressed RAM snapshot (decompresses to 384 MB) ----
+    setLoad("downloading TempleOS RAM snapshot (~5 MB)…", 5);
+    const gz = await fetch("./hemu-wasm/live.bin.gz");
+    if (!gz.ok) { setLoad("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
+    // track download progress
+    const total = +(gz.headers.get("content-length") || 5222517);
+    const reader = gz.body.getReader(); const chunks = []; let got = 0;
+    for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.length; setLoad(`downloading snapshot… ${(got/1048576).toFixed(1)} MB`, 5 + 45 * got / total); }
+    setLoad("decompressing snapshot (→ 384 MB)…", 55);
+    const gzBlob = new Blob(chunks);
+    let snap = new Uint8Array(await new Response(gzBlob.stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+
+    // ---- compile + instantiate the HolyC emulator (createHost = the proven Node/browser host:
+    //      its __malloc grows WASM memory to fit the 384 MB guest RAM) ----
+    setLoad("starting hemu (HolyC → WASM x86-64 core)…", 80);
+    const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm")).arrayBuffer());
+    const host = createHost({
+      onText: () => {},
+      snd: { tone: (f) => snd(Number(f)) },
+      snapLoad: (base, u8) => { u8.set(snap, base); },
+      present: (addr, w, h, u8) => {
+        const n = Math.min(w * h, out32.length);
+        for (let i = 0; i < n; i++) out32[i] = pal32[u8[addr + i] & 15];
+        ctx.putImageData(img, 0, 0);
+      },
+    });
+    host.env.__host_msx = () => BigInt(msX);
+    host.env.__host_msy = () => BigInt(msY);
+    host.env.__host_msb = () => BigInt(msB);
+    host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
+
+    const inst = await WebAssembly.instantiate(mod, { env: host.env });
+    host.attach(inst);
+    inst.exports.__rt_init();
+
+    document.getElementById("restartBtn").addEventListener("click", () => location.reload());
+
+    let frames = 0, t0 = performance.now(), started = false;
+    function loop() {
+      try { inst.exports.__main(); }                 // one TempleOS frame (loads the snapshot on frame 0)
+      catch (e) { setLoad("hemu trap: " + e.message); return; }
+      if (!started) { started = true; ld.style.display = "none"; snap = null; canvas.focus(); }
+      frames++;
+      if (frames % 15 === 0) tbFps.textContent = (frames / ((performance.now() - t0) / 1000)).toFixed(0) + " fps";
+      requestAnimationFrame(loop);
+    }
+    setLoad("starting TempleOS…", 100);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

@@ -25,6 +25,9 @@ export function createHost(opts = {}) {
     onFlip: opts.onFlip || null,
     onTick: opts.onTick || null,           // called before scan/sleep/yield (e.g. mouse mirror)
     present: opts.present || null,         // (addr,w,h,u8) => void — raw framebuffer blit (hemu)
+    snapLoad: opts.snapLoad || null,       // (memBase,u8) => void — load a RAM snapshot (hemu)
+    hostIn: opts.hostIn || null,           // (port) => int
+    hostOut: opts.hostOut || null,         // (port,val) => void
   };
 
   function mem() { return state.mem; }
@@ -67,6 +70,9 @@ export function createHost(opts = {}) {
     // Blit a raw 8-bit indexed framebuffer (w*h palette-index bytes at addr) — used
     // by hemu to present its guest VGA/linear framebuffer to a canvas.
     __present(addr, w, h) { state.present?.(Number(addr), Number(w), Number(h), u8()); },
+    __snap_load(base) { state.snapLoad?.(Number(base), u8()); },
+    __host_in(port) { return BigInt(state.hostIn ? state.hostIn(Number(port)) | 0 : 0); },
+    __host_out(port, val) { state.hostOut?.(Number(port), Number(val)); },
 
     __snd(freq) { state.snd?.tone(freq); },
     __play_note(freq, ms) {

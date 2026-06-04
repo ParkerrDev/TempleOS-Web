@@ -63,6 +63,9 @@ export const HOST_IMPORTS = {
   __gr_height:   { params: [], results: [I] },
   __gr_sprite:   { params: [I, I, I, I, I, I], results: [] }, // x,y,w,h,dataAddr,scale — 8-bit indexed sprite, 0xFF=transparent
   __present:     { params: [I, I, I], results: [] },      // (fbAddr, w, h) — blit a raw 8-bit indexed framebuffer
+  __snap_load:   { params: [I], results: [] },            // (memBase) — host loads a RAM snapshot into guest memory
+  __host_in:     { params: [I], results: [I] },           // (port) — host I/O read (devices the host owns)
+  __host_out:    { params: [I, I], results: [] },         // (port,val) — host I/O write
 
   __snd:         { params: [F], results: [] },           // freq Hz (0 = off)
   __play_note:   { params: [F, I], results: [] },        // freq, ms (blocks)
