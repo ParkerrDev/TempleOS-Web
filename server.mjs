@@ -20,6 +20,9 @@ const MIME = {
   ".data": "application/octet-stream",
   ".gz": "application/octet-stream",   // served raw; the page gunzips client-side
   ".bin": "application/octet-stream",
+  ".hc": "text/plain; charset=utf-8",
+  ".HC": "text/plain; charset=utf-8",
+  ".md": "text/plain; charset=utf-8",
   ".ico": "image/x-icon",
   ".woff2": "font/woff2",
   ".png": "image/png",
@@ -37,6 +40,8 @@ createServer(async (req, res) => {
 
   let path = decodeURIComponent((req.url || "/").split("?")[0]);
   if (path === "/") path = "/index.html";
+  if (path === "/qemu" || path === "/qemu/") path = "/qemu.html";
+  if (path === "/hemu" || path === "/hemu/") path = "/hemu.html";
   // contain to ROOT (no path traversal)
   const file = normalize(join(ROOT, path));
   if (!file.startsWith(ROOT)) { res.writeHead(403).end("forbidden"); return; }

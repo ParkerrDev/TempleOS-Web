@@ -1,0 +1,16 @@
+{
+  "name": "holyc-wasm",
+  "version": "0.1.0",
+  "description": "A from-scratch HolyC -> WebAssembly compiler with a TempleOS graphics/sound runtime for the browser.",
+  "type": "module",
+  "bin": {
+    "holyc": "cli/holyc.js"
+  },
+  "scripts": {
+    "test": "node tests/run.js",
+    "serve": "node web/server.js",
+    "selftest:wasm": "node src/wasm/emitter.selftest.js"
+  },
+  "license": "MIT",
+  "author": "Built with Claude Code"
+}

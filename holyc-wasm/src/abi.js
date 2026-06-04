@@ -66,6 +66,10 @@ export const HOST_IMPORTS = {
   __snap_load:   { params: [I], results: [] },            // (memBase) — host loads a RAM snapshot into guest memory
   __host_in:     { params: [I], results: [I] },           // (port) — host I/O read (devices the host owns)
   __host_out:    { params: [I, I], results: [] },         // (port,val) — host I/O write
+  __host_msx:    { params: [], results: [I] },            // absolute mouse x (0..639), host-owned cursor
+  __host_msy:    { params: [], results: [I] },            // absolute mouse y (0..479)
+  __host_msb:    { params: [], results: [I] },            // mouse button bits
+  __host_key:    { params: [], results: [I] },            // next set-1 scancode, or <0 when drained
 
   __snd:         { params: [F], results: [] },           // freq Hz (0 = off)
   __play_note:   { params: [F, I], results: [] },        // freq, ms (blocks)

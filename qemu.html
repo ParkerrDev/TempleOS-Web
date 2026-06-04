@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TempleOS — the real 64-bit OS in your browser (QEMU/WASM)</title>
+  <script src="coi-serviceworker.js"></script>
+  <style>
+    /* afterdavis theme: the TempleOS desktop, at the DOS VGA font's native 16px;
+       the screen auto-fits the viewport so the whole page shows without scrolling. */
+    @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); font-weight:normal; font-style:normal; }
+    :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga',"Courier New",monospace;
+        cursor:url('assets/cursor.png'),auto; }
+    html { overflow-y:auto; }
+    body { background:var(--blue); color:#fff; font-size:17px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
+    ::selection { background:#000; color:yellow; }
+
+    /* TempleOS top status bar — live from the OS; tight + spaced like afterdavis */
+    #topbar { display:flex; line-height:.8; justify-content:space-between; align-items:flex-start; gap:10px;
+              background:var(--blue); color:#fff; padding:4px 8px; border-bottom:2px solid #fff; }
+    #topbar .status { display:flex; }
+    #topbar .status > span { white-space:nowrap; }
+    #topbar .status > span:not(:last-child) { margin-right:16px; }
+    .y { color:yellow; }
+    #tb-key { text-transform:uppercase; color:yellow; white-space:nowrap; }
+
+    /* compact header so the footer fits without scrolling */
+    header { display:flex; align-items:stretch; gap:10px; padding:5px 8px 1px; }
+    header .htxt { display:flex; flex-direction:column; justify-content:center; }
+    /* TempleOS logo as a background so the div (not the SVG's intrinsic size) drives
+       layout: it stretches to the full height of the title + paragraph beside it. */
+    header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
+                   background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
+    header h1 { font-size:22px; font-weight:normal; color:#fff; }
+    header p { font-size:15px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
+    a { color:var(--gold); }
+
+    /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X].
+       margins/title/[X] match afterdavis (tight, on the border, no hover). */
+    .win, #frame { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue);
+                   outline:4px solid #fff; margin:3px 5px; overflow:visible; }
+    .win { padding:.7em; }
+    [data-title]::before { content:attr(data-title); position:absolute; top:-9px; left:6px; padding:2px 1px 0 2px;
+           line-height:.7; letter-spacing:.1em; color:var(--blue); background:#fff;
+           animation:winTitle .5s step-start infinite; }
+    @keyframes winTitle { 50% { color:#fff; background:var(--blue); } }
+    .close { position:absolute; top:-7px; right:6px; font-size:15px; padding:1px 2px 0; line-height:.7; letter-spacing:.05em;
+             color:var(--blue); background:#fff; }   /* purely decorative — no hover, no action */
+
+    /* the area below the header: distribute the window-row and footer EVENLY in the
+       remaining vertical space (equal gaps above/below the row and below the footer). */
+    main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; align-items:stretch; }
+
+    /* three columns: [Menu + Debug] left · TempleOS center · Help right */
+    .desktop-row { display:flex; gap:8px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px; }
+    .col-left { display:flex; flex-direction:column; gap:16px; width:232px; flex:0 0 auto; }
+    .col-right { display:flex; flex-direction:column; gap:16px; width:268px; flex:0 0 auto; }
+    /* Debug = an outer window frame (overflow visible, so its title/[X] show) wrapping an inner scrollable console */
+    .dbgw { padding:3px; }
+    /* Terry window (bottom-right): the gif on the window's own background (its transparency shows) */
+    .terrywin { padding:6px; text-align:center; }
+    .terrywin img { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
+
+    .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
+    button { font-family:'dos_vga',monospace; font-size:17px; color:#000; background:#fff;
+             border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
+    button:hover:not(:disabled) { color:#fff; background:#000; }
+    button:disabled { opacity:.4; }
+
+    /* the emulator screen, framed as a TempleOS window (center) */
+    #frame { padding:5px; }
+    /* auto-fit: as large as the viewport allows (up to 800x600), so the whole page fits without scrolling */
+    canvas#canvas { display:block; height:min(74vh,600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; }
+
+    /* loading overlay — solid black; green segmented TempleOS-style bar (no spinner) */
+    #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center;
+              justify-content:center; gap:12px; padding:18px; background:#000; color:#fff; text-align:center; }
+    #loadui.dim { background:rgba(0,0,0,.55); }
+    #ldtext { font-size:17px; max-width:560px; line-height:1.5; min-height:2.4em; }
+    .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#0a0a0a;
+                 border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
+    .ldbarwrap > i { display:block; height:100%; width:0; transition:width .2s; background:var(--green); }
+    .ldbarwrap::after { content:""; position:absolute; inset:0; pointer-events:none;
+                       background:repeating-linear-gradient(90deg, transparent 0 22px, #0a0a0a 22px 24px); }
+    .hb { font-size:12px; color:#9fe6ff; }
+
+    /* Help window — right column */
+    #guide { font-size:17px; }
+    #guide b { color:var(--red); }
+    #guide i { color:#0a7f25; font-style:normal; }
+    #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
+
+    /* Debug terminal — dark window under the Menu */
+    #dbg { height:188px; overflow:auto; background:#000; color:#7fe07f; padding:6px; margin:0;
+           font-size:14px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+    #dbg .err { color:#ff8a8a; }
+
+    footer { text-align:center; margin:0; padding:8px; font-size:16px; color:#cfe; opacity:.85; }
+    footer a { color:var(--gold); }
+
+    /* ---- HolyC -> WebAssembly editor: an overlay "window" over the desktop ---- */
+    #editorOverlay { position:fixed; inset:0; z-index:1000; display:none;
+                     align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,.66); }
+    #editorOverlay.open { display:flex; }
+    #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }
+    #editorWin .close { cursor:pointer; }                 /* this [X] actually closes the window */
+    #editorWin .close:hover { color:#fff; background:var(--blue); }
+    .ed-bar { display:flex; gap:7px; align-items:center; flex:0 0 auto; }
+    #editorWin .ed-bar button { width:auto; text-align:center; }
+    #editorWin select { width:auto; max-width:300px; font-size:16px; color:#000; background:#fff;
+                        border:2px solid #fff; outline:2px solid #000; padding:4px 6px; }
+    #editorWin #status { margin-left:auto; color:var(--blue); font-size:14px; white-space:nowrap;
+                         overflow:hidden; text-overflow:ellipsis; max-width:42%; }
+    .ed-body { flex:1 1 auto; min-height:0; display:flex; gap:6px; }
+    .ed-pane { flex:1 1 0; min-width:0; display:flex; flex-direction:column; border:3px double var(--blue); background:#fff; }
+    .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:13px; letter-spacing:.08em; }
+    /* editor with syntax highlighting: a colored <pre> backdrop behind a
+       transparent-text textarea (identical metrics so the caret aligns). */
+    .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }
+    #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;
+        font-family:'dos_vga',monospace; font-size:15px; line-height:1.35; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
+    #editorHL { z-index:0; pointer-events:none; overflow:hidden; color:#16163a; background:transparent; }
+    #editor { z-index:1; resize:none; outline:none; color:transparent; background:transparent; caret-color:#16163a; }
+    #editor::selection { background:rgba(110,160,255,.4); }   /* translucent so colored text shows through */
+    .ed-editwrap.plain #editorHL { display:none; }            /* huge sources (sprite data): skip highlighting */
+    .ed-editwrap.plain #editor { color:#16163a; }
+    /* HolyC token colors */
+    #editorHL .tc{ color:#7d8aa0; font-style:italic; }  #editorHL .ts{ color:#0a7f25; }
+    #editorHL .tk{ color:#a10608; font-weight:bold; }   #editorHL .tt{ color:#6a1b9a; }
+    #editorHL .tco{ color:#b35a00; }  #editorHL .tn{ color:#b35a00; }  #editorHL .tp{ color:#0a6a8a; }
+    .ed-screenwrap { flex:0 0 auto; background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
+    #editorWin #screen { display:block; height:min(44vh,430px); width:auto; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; background:#000; }
+    #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000;
+                          color:var(--green); font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+    .ed-foot { flex:0 0 auto; color:var(--blue); font-size:13px; padding:1px 2px 0; }
+    @media (max-width:860px){ .ed-body{flex-direction:column} #editorWin{height:94vh} #editorWin #screen{height:34vh} }
+  </style>
+</head>
+<body>
+  <div id="topbar">
+    <div class="status">
+      <span id="tb-date">…</span>
+      <span id="tb-time">…</span>
+      <span id="tb-fps">FPS:0</span>
+      <span id="tb-mem">Mem:0000000000</span>
+      <span id="tb-cpu">CPU<span class="y" id="tb-cpun">0</span></span>
+    </div>
+    <p id="tb-key"></p>
+  </div>
+
+  <header>
+    <div class="logo" role="img" aria-label="TempleOS" title="TempleOS"></div>
+    <div class="htxt">
+      <h1>TempleOS — the real 64-bit OS, booting in your browser</h1>
+      <p>The <b>complete, unmodified TempleOS V5.03</b> on a <b>64-bit QEMU</b> compiled to WebAssembly — real kernel, real HolyC JIT, graphics, sound, keyboard &amp; mouse. <a href="./">← chooser</a> · <a href="https://github.com/ParkerrDev/TempleOS-wasm">source &amp; build notes →</a></p>
+    </div>
+  </header>
+
+  <main class="stage">
+  <div class="desktop-row">
+    <div class="col-left">
+      <div class="toolbar win" data-title="Menu">
+        <span class="close">[X]</span>
+        <button id="bootBtn" title="Unmodified TempleOS V5.03 on hemu (Holy Emulator) — a lean QEMU built just for TempleOS">▶ Boot TempleOS</button>
+        <button id="restartBtn" disabled title="Reload the clean desktop snapshot (~4s)">↻ Restart</button>
+        <button id="fsBtn" disabled>⛶ Fullscreen</button>
+        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed">⌨ HolyC Editor</button>
+      </div>
+      <div class="win dbgw" data-title="Debug"><span class="close">[X]</span><pre id="dbg"></pre></div>
+    </div>
+
+    <div id="frame" data-title="TempleOS V5.03">
+      <span class="close">[X]</span>
+      <canvas id="canvas" width="640" height="480" tabindex="0"></canvas>
+      <div id="loadui">
+        <div id="ldtext">Press “Boot TempleOS” to start.</div>
+        <div class="ldbarwrap"><i id="ldbar"></i></div>
+        <div id="hb" class="hb">main-thread heartbeat: starting…</div>
+      </div>
+    </div>
+
+    <div class="col-right">
+      <div id="guide" class="win" data-title="Help"><span class="close">[X]</span>Controls are on the left. Once TempleOS is running, click a window and type — tips &amp; help appear here.</div>
+      <div class="win terrywin" data-title="Terry"><span class="close">[X]</span><img src="assets/terrydancing.gif" alt="Terry A. Davis"></div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Made with ♥ by <a href="https://parkerhunt.me">parkerhunt.me</a> — R.I.P. Terry A. Davis (1969–2018), “the smartest programmer that's ever lived.”</p>
+  </footer>
+  </main>
+
+  <!-- HolyC -> WebAssembly editor: an overlay window over the desktop, opened from the Menu -->
+  <div id="editorOverlay" role="dialog" aria-modal="true" aria-label="HolyC to WebAssembly editor">
+    <div class="win" id="editorWin" data-title="HolyC → WebAssembly Editor">
+      <span class="close" id="editorClose" title="Close editor">[X]</span>
+      <div class="ed-bar">
+        <select id="demoSelect" title="Pick a TempleOS HolyC demo or game">
+          <option value="">— pick a demo / game —</option>
+        </select>
+        <button id="runBtn">▶ Run</button>
+        <span id="status">ready</span>
+      </div>
+      <div class="ed-body">
+        <section class="ed-pane">
+          <div class="ed-h">HolyC source</div>
+          <div class="ed-editwrap"><pre id="editorHL" aria-hidden="true"></pre><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea></div>
+        </section>
+        <section class="ed-pane">
+          <div class="ed-h">Screen — 640×480, 16-color</div>
+          <div class="ed-screenwrap"><canvas id="screen" width="640" height="480" tabindex="0"></canvas></div>
+          <div class="ed-h">Console</div>
+          <pre id="console"></pre>
+        </section>
+      </div>
+      <div class="ed-foot">Click the screen to enable sound &amp; send keyboard/mouse to the program. Compiled with holyc-wasm — no emulation.</div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Top status bar, fed LIVE by the OS (debug port 0xE9 -> /dbg.out) ----
+    (function () {
+      const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], p2 = (n) => String(n).padStart(2, "0");
+      const el = (id) => document.getElementById(id);
+      const tbDate = el("tb-date"), tbTime = el("tb-time"), tbFps = el("tb-fps"), tbMem = el("tb-mem"), tbCpuN = el("tb-cpun");
+      function clock() { const t = new Date(); tbDate.textContent = `${days[t.getDay()]} ${p2(t.getMonth()+1)}/${p2(t.getDate())}`; tbTime.textContent = `${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`; }
+      function tail() {
+        const q = window.__qemu; if (!q || !q.FS) return null;
+        let st; try { st = q.FS.stat("/dbg.out"); } catch { return null; }
+        if (!st || !st.size) return null;
+        const n = Math.min(600, st.size), off = st.size - n, buf = new Uint8Array(n);
+        try { const fd = q.FS.open("/dbg.out", "r"); q.FS.read(fd, buf, 0, n, off); q.FS.close(fd); return new TextDecoder().decode(buf); }
+        catch { try { const d = q.FS.readFile("/dbg.out"); return new TextDecoder().decode(d.subarray(Math.max(0, d.length - n))); } catch { return null; } }
+      }
+      let synced = false;
+      function tick() {
+        const t = tail();
+        if (t) {
+          const ls = t.split("\n").filter((x) => x.trim());
+          for (let i = ls.length - 1; i >= 0; i--) {
+            const m = ls[i].trim().match(/(\d\d)\/(\d\d)\/(\d\d)\s+(\d\d:\d\d:\d\d)\s+(\d+)\s+(\d+)(?:\s+([0-9A-Fa-f]+))?/);
+            if (m) {
+              const [, mo, da, yr, time, fps, cpu, mem] = m;
+              tbDate.textContent = `${days[new Date(2000 + (+yr), (+mo) - 1, +da).getDay()]} ${mo}/${da}`;
+              tbTime.textContent = time;
+              tbFps.textContent = `FPS:${fps}`;
+              tbCpuN.textContent = cpu;
+              if (mem) tbMem.textContent = `Mem:${mem}`; else tbMem.style.display = "none";
+              synced = true;
+              return;
+            }
+          }
+        }
+        if (!synced) clock();
+      }
+      tick(); setInterval(tick, 250);
+
+      // top-right: last key, captured from the window (works in or out of the OS)
+      const tbKey = el("tb-key");
+      addEventListener("keydown", (e) => {
+        let k = e.key;
+        if (k === " ") k = "SPACE"; else if (k.length === 1) k = k.toUpperCase();
+        tbKey.textContent = k;
+      }, true);
+    })();
+    // [X] is decorative only — no behaviour.
+
+    // ---- Terry window: each gif forwards then backwards (frame-reversed copies):
+    // terrydancing fwd (7.2s) -> terrydancing back (7.2s) -> terry fwd (2.84s) ->
+    // terry back (2.84s) -> repeat. Setting src to a different cached gif restarts
+    // it from frame 0. ----
+    (function () {
+      const img = document.querySelector(".terrywin img");
+      if (!img) return;
+      const seq = [["assets/terrydancing.gif", 7200], ["assets/terrydancing-rev.gif", 7200], ["assets/terry.gif", 2840], ["assets/terry-rev.gif", 2840]];
+      seq.forEach(([s]) => { const p = new Image(); p.src = s; });   // preload both
+      let i = 0;
+      (function next() {
+        img.src = seq[i][0];
+        const d = seq[i][1]; i = (i + 1) % seq.length;
+        setTimeout(next, d);
+      })();
+    })();
+  </script>
+  <script>
+    // ---- HolyC → WebAssembly editor: open as an overlay window from the Menu.
+    // The editor module (and its ~1.8 MB demo bundle) is lazy-loaded on first
+    // open, so it never weighs down the main page load. ----
+    (function () {
+      const ov = document.getElementById("editorOverlay");
+      const openBtn = document.getElementById("editorBtn");
+      const closeBtn = document.getElementById("editorClose");
+      let loaded = false;
+      function open() {
+        ov.classList.add("open");
+        if (!loaded) {
+          loaded = true;
+          import("./native/app.js")
+            .then(() => { if (window.__holycEditor) window.__holycEditor.run(); })   // run the default demo once, on first open
+            .catch((e) => { const s = document.getElementById("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); });
+        }
+      }
+      function close() {
+        ov.classList.remove("open");
+        if (window.__holycEditor) window.__holycEditor.stop();   // free CPU + release the keyboard back to the desktop
+      }
+      openBtn.addEventListener("click", open);
+      closeBtn.addEventListener("click", close);
+      ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(); });   // click the backdrop to close
+    })();
+
+    // ---- lightweight, dependency-free HolyC syntax highlighter ----
+    // Paints a colored <pre> behind the (transparent-text) textarea. app.js reads
+    // editor.value as usual; it dispatches "input" when it loads a demo so we repaint.
+    (function () {
+      const ta = document.getElementById("editor");
+      const hl = document.getElementById("editorHL");
+      const wrap = ta && ta.closest(".ed-editwrap");
+      if (!ta || !hl || !wrap) return;
+      const KW = new Set("if else while for do switch case default break continue return goto sizeof try catch throw class union public extern _extern import _import reg noreg interrupt haserrcode lastclass start end asm offset argpop noargpop".split(" "));
+      const TY = new Set("U0 U8 U16 U32 U64 I8 I16 I32 I64 F64 Bool U8z CDC CTask CDoc CHashTable CFifoI64 CDate".split(" "));
+      const CO = new Set("TRUE FALSE NULL ON OFF BLACK BLUE GREEN CYAN RED PURPLE BROWN LTGRAY DKGRAY LTBLUE LTGREEN LTCYAN LTRED LTPURPLE YELLOW WHITE GR_WIDTH GR_HEIGHT TRANSPARENT".split(" "));
+      const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const RE = /(\/\*[\s\S]*?\*\/)|(\/\/[^\n]*)|("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])*')|(#[A-Za-z_]+)|(\b\d[\w.]*)|([A-Za-z_]\w*)|([\s\S])/g;
+      function paint(code) {
+        let out = "", m; RE.lastIndex = 0;
+        while ((m = RE.exec(code))) {
+          if (m[1] || m[2]) out += '<span class="tc">' + esc(m[1] || m[2]) + "</span>";
+          else if (m[3] || m[4]) out += '<span class="ts">' + esc(m[3] || m[4]) + "</span>";
+          else if (m[5]) out += '<span class="tp">' + esc(m[5]) + "</span>";
+          else if (m[6]) out += '<span class="tn">' + esc(m[6]) + "</span>";
+          else if (m[7]) { const w = m[7], c = KW.has(w) ? "tk" : TY.has(w) ? "tt" : CO.has(w) ? "tco" : ""; out += c ? '<span class="' + c + '">' + esc(w) + "</span>" : esc(w); }
+          else out += esc(m[8]);
+        }
+        return out;
+      }
+      let raf = 0;
+      function update() {
+        raf = 0;
+        const v = ta.value;
+        if (v.length > 40000) { wrap.classList.add("plain"); hl.textContent = ""; return; }  // too big to highlight live (e.g. sprite data)
+        wrap.classList.remove("plain");
+        hl.innerHTML = paint(v) + "\n";
+        hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft;
+      }
+      ta.addEventListener("input", () => { if (!raf) raf = requestAnimationFrame(update); });
+      ta.addEventListener("scroll", () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; });
+      update();
+    })();
+  </script>
+  <script type="module" src="./os-qemu.js"></script>
+</body>
+</html>
