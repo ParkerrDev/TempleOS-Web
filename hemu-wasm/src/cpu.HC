@@ -707,7 +707,7 @@ U0  FCmpFL(F64 a, F64 b)    {                 // FCOMI/FUCOMI: set EFLAGS ZF/PF/
 }
 U0 OpX87(U64 op)
 {
-  I64 sub, sti; F64 a, b, r;
+  I64 sub, sti, bcd_i, bcd_d, bcd_ng; F64 a, b, r;
   DecodeModRM();
   sub = rg & 7; sti = rm & 7;
   if (isMem) {
@@ -735,6 +735,15 @@ U0 OpX87(U64 op)
       else if (sub == 2) WrMem(ea, 2, RoundI(FStv(0)));            // FIST  m16int
       else if (sub == 3) { WrMem(ea, 2, RoundI(FStv(0))); FPopv(); } // FISTP m16int
       else if (sub == 5) FPush(IntToF64(RdMem(ea, 8)));            // FILD  m64int
+      else if (sub == 4) {                                          // FBLD m80 — packed-BCD load (18 digits + sign)
+        bcd_i = 0; for (bcd_d = 8; bcd_d >= 0; bcd_d--) { bcd_ng = RdMem(ea + bcd_d, 1); bcd_i = bcd_i * 100 + (bcd_ng >> 4) * 10 + (bcd_ng & 15); }
+        if (RdMem(ea + 9, 1) & 0x80) bcd_i = -bcd_i; FPush(IntToF64(bcd_i));
+      }
+      else if (sub == 6) {                                          // FBSTP m80 — packed-BCD store + pop (x87 float->decimal)
+        bcd_i = RoundI(FStv(0)); bcd_ng = 0; if (bcd_i < 0) { bcd_ng = 1; bcd_i = -bcd_i; }
+        for (bcd_d = 0; bcd_d < 9; bcd_d++) { WrMem(ea + bcd_d, 1, (bcd_i % 10) | ((bcd_i / 10 % 10) << 4)); bcd_i /= 100; }
+        WrMem(ea + 9, 1, bcd_ng ? 0x80 : 0); FPopv();
+      }
       else if (sub == 7) { WrMem(ea, 8, RoundI(FStv(0))); FPopv(); } // FISTP m64int
     } else if (op == 0xD8 || op == 0xDC) {                           // real arith (m32 / m64)
       if (op == 0xD8) b = F32ToF64(RdMem(ea, 4)); else b = BitsToF64(RdMem(ea, 8));
@@ -759,8 +768,18 @@ U0 OpX87(U64 op)
     if (sub == 0) FPush(FStv(sti));                                  // FLD  st(i)
     else if (sub == 1) { a = FStv(0); FStset(0, FStv(sti)); FStset(sti, a); }  // FXCH
     else if (sub == 4) { if (sti == 0) FStset(0, -FStv(0)); else if (sti == 1) { a = FStv(0); if (a < 0) FStset(0, -a); } }  // FCHS/FABS
-    else if (sub == 5) { if (sti == 0) FPush(1.0); else if (sti == 3) FPush(3.14159265358979323846); else if (sti == 6) FPush(0.0); }  // FLD1/FLDPI/FLDZ
-    else if (sub == 7) { if (sti == 2) FStset(0, SqrtF64(FStv(0))); else if (sti == 6) FStset(0, __sin(FStv(0))); else if (sti == 7) FStset(0, __cos(FStv(0))); }  // FSQRT/FSIN/FCOS
+    else if (sub == 5) {                                             // FLD1/FLDL2T/FLDL2E/FLDPI/FLDLG2/FLDLN2/FLDZ
+      if (sti == 0) FPush(1.0); else if (sti == 1) FPush(3.32192809488736235); else if (sti == 2) FPush(1.44269504088896341);
+      else if (sti == 3) FPush(3.14159265358979324); else if (sti == 4) FPush(0.30102999566398120);
+      else if (sti == 5) FPush(0.69314718055994531); else if (sti == 6) FPush(0.0);
+    }
+    else if (sub == 6) {                                             // F2XM1/FYL2X/FDECSTP/FINCSTP (float->string magnitude)
+      if (sti == 0) FStset(0, __pow(2.0, FStv(0)) - 1.0);                                      // F2XM1: 2^ST0 - 1
+      else if (sti == 1) { r = FStv(1) * __log(FStv(0)) * 1.44269504088896341; FPopv(); FStset(0, r); }  // FYL2X: ST1*=log2(ST0), pop
+      else if (sti == 6) fsp = (fsp - 1) & 7;                                                  // FDECSTP
+      else if (sti == 7) fsp = (fsp + 1) & 7;                                                  // FINCSTP
+    }
+    else if (sub == 7) { if (sti == 2) FStset(0, SqrtF64(FStv(0))); else if (sti == 4) FStset(0, IntToF64(RoundI(FStv(0)))); else if (sti == 5) FStset(0, FStv(0) * __pow(2.0, IntToF64(F64ToInt(FStv(1))))); else if (sti == 6) FStset(0, __sin(FStv(0))); else if (sti == 7) FStset(0, __cos(FStv(0))); }  // FSQRT/FRNDINT/FSCALE/FSIN/FCOS
   } else if (op == 0xD8) {
     a = FStv(0); b = FStv(sti);
     if (sub == 2 || sub == 3) { FCmpSW(a, b); if (sub == 3) FPopv(); }
