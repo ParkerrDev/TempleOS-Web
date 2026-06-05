@@ -241,6 +241,7 @@
         onText: () => {}, snd: { tone: (f) => snd(Number(f)) },
         snapLoad: (base, u8) => { u8.set(snap, base); },
         diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },   // ATA -> real C: sectors
+        diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },  // ATA writes -> in-session overlay
         present: (addr, w, h, u8) => blit(u8.subarray(addr, addr + w * h), w, h),
       });
       host.env.__host_msx = () => BigInt(msX); host.env.__host_msy = () => BigInt(msY); host.env.__host_msb = () => BigInt(msB);

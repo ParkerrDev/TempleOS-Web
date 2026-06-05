@@ -36,7 +36,9 @@ U64 g_skip_c4, g_skip_vga;           // DCBlotColor4 (4 args) + GrUpdateVGAGraph
 U8 g_hooktbl[256];                   // rip&0xFF -> "maybe a special address" gate: lets Step() skip the four
                                      // 64-bit hook compares for the ~98% of instructions that aren't at one.
 U64 ata_words, ata_seccnt, ata_pos, ata_r3, ata_r4, ata_r5;   // ATA PIO read — serve C: sectors (disk == live.bin)
+U64 ata_wr, ata_wlba, ata_wcnt;                              // ATA PIO write in progress (lba, count) -> __host_disk_wr
 U8 *ata_buf;
+U64 g_seg[8];                                                // segment selectors (ES,CS,SS,DS,FS,GS) — stored, ignored (flat long mode)
 U64 g_hpet_rate, g_jiffies0;         // wall-clock pacing: HPET ticks/instr, and the snapshot's base jiffies
 U64 g_badop;
 // system state: control regs, descriptor tables, MSRs, TSC, code/stack segments
@@ -521,18 +523,25 @@ U0 IoOut(U64 port, U64 v)
 {
   I64 i;
   if (port >= 0x3B0 && port <= 0x3DF) return;          // VGA registers — framebuffer is HLE'd, ignore (skip the chain)
+  if (port == 0x1F0 || port == 0x170) {                // ATA data port WRITE (16-bit words during a WRITE command)
+    if (ata_wr && ata_words > 0) { *(U16 *)(ata_buf + ata_pos) = v; ata_pos += 2; ata_words--;
+      if (ata_words == 0) { __host_disk_wr(ata_wlba, ata_wcnt, ata_buf); ata_wr = 0; } }   // commit to the host overlay
+    return;
+  }
   v &= 0xFF;
   if (port == 0x1F2 || port == 0x172) { ata_seccnt = ((ata_seccnt << 8) | v) & 0xFFFF; return; }   // ATA sector count
   if (port == 0x1F3 || port == 0x173) { ata_r3 = ((ata_r3 << 8) | v) & 0xFFFF; return; }           // LBA48 reg (2 writes)
   if (port == 0x1F4 || port == 0x174) { ata_r4 = ((ata_r4 << 8) | v) & 0xFFFF; return; }
   if (port == 0x1F5 || port == 0x175) { ata_r5 = ((ata_r5 << 8) | v) & 0xFFFF; return; }
-  if (port == 0x1F7 || port == 0x177) {                // ATA command (TempleOS reads with 0x29 = READ MULTIPLE EXT)
-    if (v == 0x20 || v == 0x21 || v == 0x24 || v == 0x29 || v == 0xC4) {
-      U64 lba = (ata_r3 & 0xFF) | ((ata_r4 & 0xFF) << 8) | ((ata_r5 & 0xFF) << 16)
-              | (((ata_r3 >> 8) & 0xFF) << 24) | (((ata_r4 >> 8) & 0xFF) << 32) | (((ata_r5 >> 8) & 0xFF) << 40);
-      U64 cnt = ata_seccnt & 0xFFFF; if (!cnt) cnt = 256; if (cnt > 256) cnt = 256;
-      __host_disk(lba, cnt, ata_buf); ata_words = cnt * 256; ata_pos = 0;   // host stages real sectors into ata_buf
-    } else ata_words = 0;
+  if (port == 0x1F7 || port == 0x177) {                // ATA command (LBA48/28 read+write multiple/sectors)
+    U64 lba = (ata_r3 & 0xFF) | ((ata_r4 & 0xFF) << 8) | ((ata_r5 & 0xFF) << 16)
+            | (((ata_r3 >> 8) & 0xFF) << 24) | (((ata_r4 >> 8) & 0xFF) << 32) | (((ata_r5 >> 8) & 0xFF) << 40);
+    U64 cnt = ata_seccnt & 0xFFFF; if (!cnt) cnt = 256; if (cnt > 256) cnt = 256;
+    if (v == 0x20 || v == 0x21 || v == 0x24 || v == 0x29 || v == 0xC4) {              // READ
+      __host_disk(lba, cnt, ata_buf); ata_words = cnt * 256; ata_pos = 0; ata_wr = 0;   // host stages real sectors
+    } else if (v == 0x30 || v == 0x34 || v == 0x39 || v == 0xC5) {                    // WRITE: receive data, then commit
+      ata_words = cnt * 256; ata_pos = 0; ata_wr = 1; ata_wlba = lba; ata_wcnt = cnt;   // DRQ asserted -> OS sends words
+    } else { ata_words = 0; ata_wr = 0; }
     ata_r3 = 0; ata_r4 = 0; ata_r5 = 0; ata_seccnt = 0;
     return;
   }
@@ -1035,6 +1044,10 @@ U0 Step()
     case 0x8A: DecodeModRM(); WrReg(rg, 1, RdRM(1)); break;       // MOV r8, r/m8
     case 0x89: DecodeModRM(); WrRM(sz, RdReg(rg, sz)); break;     // MOV r/m, r
     case 0x8B: DecodeModRM(); WrReg(rg, sz, RdRM(sz)); break;     // MOV r, r/m
+    case 0x86: DecodeModRM(); imm = RdRM(1);  WrRM(1, RdReg(rg, 1));   WrReg(rg, 1, imm);  break;  // XCHG r/m8, r8 (atomic swap; locks)
+    case 0x87: DecodeModRM(); imm = RdRM(sz); WrRM(sz, RdReg(rg, sz)); WrReg(rg, sz, imm); break;  // XCHG r/m, r
+    case 0x8E: DecodeModRM(); g_seg[rg & 7] = RdRM(2); break;     // MOV Sreg, r/m16 — selector stored, ignored (flat)
+    case 0x8C: DecodeModRM(); WrRM(2, g_seg[rg & 7]); break;      // MOV r/m16, Sreg
     case 0xC6: DecodeModRM(1); WrRM(1, Fetch8()); break;          // MOV r/m8, imm8
     case 0xC7: DecodeModRM(sz == 2 ? 2 : 4); imm = FetchImm(sz); WrRM(sz, imm); break;  // MOV r/m, imm (imm16 w/ 0x66, else imm32)
     case 0x8D: DecodeModRM(); WrReg(rg, sz, ea); break;          // LEA

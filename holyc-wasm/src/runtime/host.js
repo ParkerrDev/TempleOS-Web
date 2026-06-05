@@ -73,6 +73,7 @@ export function createHost(opts = {}) {
     __present(addr, w, h) { state.present?.(Number(addr), Number(w), Number(h), u8()); },
     __snap_load(base) { state.snapLoad?.(Number(base), u8()); },
     __host_disk(lba, count, buf) { state.diskRead?.(Number(lba), Number(count), u8(), Number(buf)); },
+    __host_disk_wr(lba, count, buf) { state.diskWrite?.(Number(lba), Number(count), u8(), Number(buf)); },
     __host_in(port) { return BigInt(state.hostIn ? state.hostIn(Number(port)) | 0 : 0); },
     __host_out(port, val) { state.hostOut?.(Number(port), Number(val)); },
     // hemu input/pacing hooks — default stubs; real runners (snap-run, web/hemu.html) override env.*
