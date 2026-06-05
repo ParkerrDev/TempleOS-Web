@@ -35,6 +35,7 @@ async function boot({ gz, wasmUrl, fixedB }) {
     snd: { tone: (f) => postMessage({ cmd: "snd", f: Number(f) }) },   // AudioContext lives on the main thread
     snapLoad: (base, u8) => { u8.set(snap, base); },
     diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },   // ATA -> real C: sectors
+    diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },  // ATA writes -> in-session overlay
     present: (addr, w, h, u8) => {
       if (outstanding >= 2) return;                       // main hasn't caught up — drop, keep emulating
       const buf = new Uint8Array(w * h);

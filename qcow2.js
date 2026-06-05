@@ -17,14 +17,20 @@ export function makeQcow2(buf) {                       // buf: Uint8Array of the
     if (l2e & (1n << 62n)) throw new Error("qcow2 compressed cluster (unsupported)");
     const off = l2e & OFF; return off === 0n ? -1 : Number(off);
   }
+  const overlay = new Map();                          // lba -> Uint8Array(512): in-session writes (the .qcow2 stays pristine)
   return {
     readInto(lba, count, dst, dstOff) {               // fill count*512 bytes at dst[dstOff]
       for (let s = 0; s < count; s++) {
-        const gOff = (lba + s) * 512, gIdx = Math.floor(gOff / clusterSize), inC = gOff % clusterSize, o = dstOff + s * 512;
+        const o = dstOff + s * 512, ov = overlay.get(lba + s);
+        if (ov) { dst.set(ov, o); continue; }          // a prior write wins
+        const gOff = (lba + s) * 512, gIdx = Math.floor(gOff / clusterSize), inC = gOff % clusterSize;
         const c = clusterAt(gIdx);
         if (c < 0) dst.fill(0, o, o + 512);
         else dst.set(buf.subarray(c + inC, c + inC + 512), o);
       }
+    },
+    writeInto(lba, count, src, srcOff) {              // ATA writes land in the overlay (so reads see them back)
+      for (let s = 0; s < count; s++) overlay.set(lba + s, src.slice(srcOff + s * 512, srcOff + s * 512 + 512));
     }
   };
 }

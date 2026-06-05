@@ -75,6 +75,7 @@ export const HOST_IMPORTS = {
   __host_time:   { params: [I], results: [I] },           // (cmosRegIdx) — host wall-clock field for the guest RTC
   __host_wheel:  { params: [], results: [I] },            // cumulative mouse-wheel position -> ms.pos.z
   __host_disk:   { params: [I, I, I], results: [] },      // (lba, sectorCount, bufAddr) — stage real disk sectors into guest mem
+  __host_disk_wr:{ params: [I, I, I], results: [] },      // (lba, sectorCount, bufAddr) — persist guest sectors to a writable overlay
   __host_prof:   { params: [I], results: [] },            // debug: sample rip for profiling
 
   __snd:         { params: [F], results: [] },           // freq Hz (0 = off)
