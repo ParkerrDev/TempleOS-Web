@@ -15,7 +15,7 @@ U0 InitMem(U64 sz)
   for (i = 0; i < 256; i++) g_pfx[i] = 0;
   g_pfx[0x66] = 1; g_pfx[0x67] = 1; g_pfx[0xF0] = 1; g_pfx[0xF2] = 1; g_pfx[0xF3] = 1;
   g_pfx[0x2E] = 1; g_pfx[0x36] = 1; g_pfx[0x3E] = 1; g_pfx[0x26] = 1; g_pfx[0x64] = 1; g_pfx[0x65] = 1;
-  g_desk = MAlloc(307200); g_pbuf = MAlloc(307200);
+  g_desk = MAlloc(307200); g_hpet_rate = 33;
 }
 
 // 0=RAX 1=RCX 2=RDX 3=RBX 4=RSP 5=RBP 6=RSI 7=RDI 8..15=R8..R15
@@ -26,8 +26,13 @@ I64 halted;                          // 0 run, 1 HLT, 2 bad opcode, 3 #DE
 I64 icount;
 I64 irq_stall;                       // deadlock watchdog: instrs IRQ0 has been pending under IF=0
 U64 g_hle_blit;                      // entry addr of the transparent compositor blit to run natively (0=off)
-U8 *g_desk, *g_pbuf;                 // g_desk = last COMPLETE desktop composite; g_pbuf = g_desk + fresh cursor
+U8 *g_desk;                          // last COMPLETE frame (desktop + the OS's own cursor), captured tear-free
 I64 g_desk_ready;
+U64 g_capture_rip;
+U64 g_skip_c4, g_skip_vga;           // DCBlotColor4 (4 args) + GrUpdateVGAGraphics (0 args): the dc2->dc1->VGA
+                                     // planar path. We present dc2 directly, so this output is dead — skip both
+                                     // function bodies (just pop args + return) to refresh faster -> smoother cursor.
+U64 g_hpet_rate, g_jiffies0;         // wall-clock pacing: HPET ticks/instr, and the snapshot's base jiffies
 U64 g_badop;
 // system state: control regs, descriptor tables, MSRs, TSC, code/stack segments
 U64 cr0, cr2, cr3, cr4, cr8, g_cs, g_ss;
@@ -437,7 +442,7 @@ U64 RtcRead(I64 idx)                  // CMOS RTC register read (binary mode, ad
   U64 tsec, s, m, h;
   if (idx == 0x0A) return 0;          // status A: bit7=0 => update not in progress
   if (idx == 0x0B) return 0x06;       // status B: bit1=24h, bit2=binary (so no BCD conversion)
-  tsec = rtc_base_sec + icount / 3000000;   // ~3M emulated instrs per wall-clock second
+  tsec = rtc_base_sec + (RdMem(0xBD98, 8) - g_jiffies0) / 1000;   // jiffies are paced to wall-clock (1000/s)
   s = tsec % 60; m = (tsec / 60) % 60; h = (tsec / 3600) % 24;
   if (idx == 0) return s;             // seconds
   if (idx == 2) return m;             // minutes
@@ -894,25 +899,17 @@ U0 HleBlit()
   U64 sb = RdMem(src_dc + 0x180, 8), db = RdMem(dst_dc + 0x180, 8);
   I64 w = RdMem(src_dc + 0x14, 4) & 0xFFFF, h = RdMem(src_dc + 0x18, 4) & 0xFFFF, n = w * h, i;
   U8 v;
-  if (sb && db && sb < mem_size && db < mem_size && n > 0 && sb + n <= mem_size && db + n <= mem_size) {
+  if (sb && db && sb < mem_size && db < mem_size && n > 0 && sb + n <= mem_size && db + n <= mem_size)
     for (i = 0; i < n; i++) { v = mem[sb + i]; if (v != 0xFF) mem[db + i] = v; }
-    // Snapshot the COMPLETE composite so Present() never shows a torn mid-render frame.
-    if (g_desk && w == 640 && h == 480) { for (i = 0; i < n; i++) g_desk[i] = mem[db + i]; g_desk_ready = 1; }
-  }
   reg[0] = n; reg[4] += 24; rip = ret;     // RAX=n (clobbered by the real fn); pop ret + 2 args
 }
 
-// Build the present frame EACH display frame: copy the latest complete desktop, then overlay a mouse
-// cursor at the current ms.pos — so the cursor moves at display rate even though the desktop (clock,
-// windows) only re-composites a few times a second.
-U0 ComposeCursor()
+// Snapshot the COMPLETE composited frame (desktop + the OS's own mouse cursor, which GrUpdateScrn has
+// just drawn) into g_desk, so Present() shows the native cursor and never a torn mid-render frame.
+U0 CaptureDesk()
 {
-  I64 cx = *(U64 *)(mem + 0xBF68), cy = *(U64 *)(mem + 0xBF70), rr, cc, px, py, i;
-  for (i = 0; i < 307200; i++) g_pbuf[i] = g_desk[i];
-  for (rr = 0; rr < 13; rr++) for (cc = 0; cc <= rr && cc < 9; cc++) {
-    px = cx + cc; py = cy + rr;                                  // a small arrow: white edges, black fill
-    if (px >= 0 && px < 640 && py >= 0 && py < 480) g_pbuf[py * 640 + px] = (cc == 0 || cc == rr) ? 15 : 0;
-  }
+  U64 bd = RdMem(0x119ad3d8 + 0x180, 8); I64 k;     // gr.dc2->body
+  if (bd && bd + 307200 <= mem_size) { for (k = 0; k < 307200; k++) g_desk[k] = mem[bd + k]; g_desk_ready = 1; }
 }
 
 U0 Step()
@@ -921,6 +918,9 @@ U0 Step()
   I64 sz, d, opn, r2, imm;
 
   if (rip == g_hle_blit) { HleBlit(); return; }   // native fast-path for the dominant compositor blit
+  if (rip == g_capture_rip) CaptureDesk();        // grab the finished frame (incl. native cursor) tear-free
+  if (rip == g_skip_c4)  { rip = RdMem(reg[4], 8); reg[4] += 8 + 32; return; }  // skip DCBlotColor4 (4 args)
+  if (rip == g_skip_vga) { rip = RdMem(reg[4], 8); reg[4] += 8;      return; }  // skip GrUpdateVGAGraphics
   pfx66 = 0; repf = 0; hasRex = 0; rexW = 0; rexR = 0; rexX = 0; rexB = 0; g_segbase = 0;
   op = Fetch8();
   while (g_pfx[op]) {                                  // legacy prefixes (one table lookup, not 11 compares)
@@ -1111,7 +1111,7 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
       if (skip > maxi - icount) skip = maxi - icount;
       if (skip < 1) skip = 1;
       if (pit_div) { pit_counter -= skip; if (pit_counter <= 0) { pit_counter = pit_div; pic1_irr |= 1; } }
-      hpet_ctr += 33 * skip; tsc += tsc_rate * skip; icount += skip;
+      hpet_ctr += g_hpet_rate * skip; tsc += tsc_rate * skip; icount += skip;
       if ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask)) {     // an IRQ is now pending
         if (rfl & F_IF) { halted = 0; CheckIrq(); }                 // IF=1: wake + service it
         else { irq_stall += skip; if (irq_stall > 2000000) { irq_stall = 0; rfl |= F_IF; halted = 0; CheckIrq(); } }
@@ -1119,7 +1119,7 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
       continue;
     }
     if (pit_div) { pit_counter--; if (pit_counter <= 0) { pit_counter = pit_div; pic1_irr |= 1; } }  // PIT -> IRQ0
-    hpet_ctr += 33; tsc += tsc_rate;                                                  // time advances per instr
+    hpet_ctr += g_hpet_rate; tsc += tsc_rate;                                         // time advances per instr
     Step(); icount++;
     if ((rfl & F_IF) && ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask))) CheckIrq();
     // Deadlock watchdog: a snapshot resumed mid-CLI can leave a task CLI-spinning to acquire a

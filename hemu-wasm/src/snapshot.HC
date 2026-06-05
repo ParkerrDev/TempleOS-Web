@@ -43,7 +43,7 @@ U64 BodySum()                           // checksum the composited framebuffer (
 U0 Present()                            // HLE: blit the composited desktop
 {
   U64 dc, body, w, h;
-  if (g_desk_ready) { ComposeCursor(); __present(g_pbuf, 640, 480); return; }  // complete desktop + fresh cursor
+  if (g_desk_ready) { __present(g_desk, 640, 480); return; }  // last complete frame (desktop + native OS cursor)
   dc = g_dc2;                           // &gr.dc2 (CDC), relocated by FindDc2()
   body = *(U64 *)(mem + dc + 384);      // CDC.body @ +384
   w = *(U64 *)(mem + dc + 20) & 0xFFFF; // width_internal @ +20
@@ -65,7 +65,7 @@ U0 WakeTasks()                          // make every scheduler task ready so th
   }
 }
 
-U64 g_inited, g_budget;                 // persist across per-frame __main calls (browser drives one frame/RAF)
+U64 g_inited, g_budget, g_fcount;       // persist across per-frame __main calls (browser drives one frame/RAF)
 
 // Input is pulled from the host each frame so the SAME snapshot.HC serves both runners: the Node
 // harness (snap-run.mjs) feeds a synthetic cursor sweep + keystrokes to prove animation headlessly,
@@ -73,17 +73,26 @@ U64 g_inited, g_budget;                 // persist across per-frame __main calls
 // (0..639,0..479); __host_msb = button bits; __host_key = next set-1 scancode, or <0 when drained.
 U0 Frame()
 {
-  I64 mx = __host_msx(), my = __host_msy();
+  I64 mx = __host_msx(), my = __host_msy(), mb = __host_msb();
   if (mx < 0) mx = 0; else if (mx > 639) mx = 639;
   if (my < 0) my = 0; else if (my > 479) my = 479;
-  *(U64*)(mem + 0xBF68) = mx;          // ms.pos.x  (the OS's DrawMs/DrawStdMs draws the XOR arrow here)
+  *(U64*)(mem + 0xBF68) = mx;          // ms.pos.x  (the OS's DrawMs draws its arrow here)
   *(U64*)(mem + 0xBF70) = my;          // ms.pos.y
+  mem[0xC008] = mb & 1;                // ms.lb  — left button; the WinMgr turns lb edges into clicks
+  mem[0xC009] = (mb >> 1) & 1;         // ms.rb  — right button
   I64 sc = __host_key();
   while (sc >= 0) { InjectKey(sc); sc = __host_key(); }   // drain host keystrokes -> IRQ1 -> echo
   mem[0xC2B0] = 1;                     // re-assert ms_hard.installed (defeats any mid-run reset)
-  WakeTasks();                         // make the WinMgr ready so it refreshes + runs DrawMs this frame
-  g_budget += __host_budget();         // host paces this (target ~30fps); WakeTasks forces the refresh
-  Run(g_budget);                       // so we don't need to burn the WinMgr's idle busy-spin each frame
+  WakeTasks();                         // make the WinMgr ready so it refreshes + draws the cursor this frame
+  // Wall-clock pacing: advance guest time by the real frame delta (dt ms) spread over B instructions,
+  // so the clock + animations track real time no matter how fast we emulate (was running ~10x fast).
+  I64 dt = __host_dt(); if (dt < 1) dt = 1; else if (dt > 100) dt = 100;
+  I64 B = __host_budget(); if (B < 50000) B = 50000;
+  pit_div = B / dt; if (pit_div < 1) pit_div = 1; pit_counter = pit_div;   // dt PIT ticks/frame
+  tsc_rate = 1000000 * dt / B; if (tsc_rate < 1) tsc_rate = 1;             // tsc += freq*dt/1000 per frame
+  g_hpet_rate = 100000 * dt / B; if (g_hpet_rate < 1) g_hpet_rate = 1;     // hpet += 1e8*dt/1000 per frame
+  g_budget = icount + B;               // run exactly B instrs (no drift if a prior frame fell short)
+  Run(g_budget);
   Present();
 }
 
@@ -93,7 +102,6 @@ U0 Main()                              // host calls __main once per display fra
     InitMem(402653184);                // 384 MiB guest RAM
     __snap_load(mem);                  // host copies the TempleOS RAM snapshot into guest memory
     SetSnapRegs();
-    tsc_rate = 333;                    // freq/3M: tS advances in lockstep with the icount-based RTC
     g_dc2 = 0x119AD3D8;                 // gr.dc2 (= R14 in the live regs)
     // HLE fixups for qemu-wasm's live snapshot:
     //  - winmgr.ideal_refresh_tS (@0x1140cc10) no longer matches the resumed tS; zero it so the
@@ -102,10 +110,13 @@ U0 Main()                              // host calls __main once per display fra
     //    TRUE or DrawMs's gate (ms.show && ms_hard.installed) fails and the cursor never draws.
     *(U64*)(mem + 0x1140cc10) = 0;
     *(U64*)(mem + 0x1140cc18) = 0;
-    pit_div = 3000; pit_counter = 3000;  // 1000 jiffies/sec, consistent with tsc_rate=333 + HPET +33
     mem[0xC2B0] = 1;                    // ms_hard.installed = TRUE
     g_hle_blit = 0x119c8428;           // HLE DCBlotColor8 (dc->dc2 composite) — was 61% of frame time
-    g_inited = 1;
+    g_capture_rip = 0x119b828f;        // GrUpdateScrn, instr after the cursor call returns — dc2 complete + cursor
+    g_skip_c4  = 0x119e2529;           // DCBlotColor4 — dead VGA planar path (we present dc2); skip its body
+    g_skip_vga = 0x116536e0;           // GrUpdateVGAGraphics — likewise dead; skip both to refresh faster
+    g_jiffies0 = *(U64*)(mem + 0xBD98); // base jiffies; the RTC clock = base + (jiffies-base)/1000 sec
+    g_inited = 1;                       // (pit_div/tsc_rate/hpet are set per-frame by Frame() for wall-clock pacing)
   }
   Frame();
 }
