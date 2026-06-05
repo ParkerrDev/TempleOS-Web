@@ -103,6 +103,7 @@
 
   <script type="module">
     import { createHost } from "./holyc-wasm/src/runtime/host.js";
+    import { loadDisk } from "./qcow2.js";
 
     const PALETTE = [
       [0x00,0x00,0x00],[0x00,0x00,0xaa],[0x00,0xaa,0x00],[0x00,0xaa,0xaa],
@@ -219,13 +220,16 @@
     async function runInline() {
       setLoad("decompressing snapshot (→ 384 MB)…", 55);
       let snap = new Uint8Array(await new Response(new Blob([gzBytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
-      setLoad("starting hemu (HolyC → WASM x86-64 core)…", 85);
+      setLoad("starting hemu (HolyC → WASM x86-64 core)…", 88);
       const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm")).arrayBuffer());
+      let disk = null;   // C: disk loads in the background; file I/O works once it lands (desktop runs from cache)
+      loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => disk = d).catch(() => disk = null);
       engineLabel = "1 core";
       let curBudget = FIXED_B || 1500000, dtMs = 16;
       const host = createHost({
         onText: () => {}, snd: { tone: (f) => snd(Number(f)) },
         snapLoad: (base, u8) => { u8.set(snap, base); },
+        diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },   // ATA -> real C: sectors
         present: (addr, w, h, u8) => blit(u8.subarray(addr, addr + w * h), w, h),
       });
       host.env.__host_msx = () => BigInt(msX); host.env.__host_msy = () => BigInt(msY); host.env.__host_msb = () => BigInt(msB);

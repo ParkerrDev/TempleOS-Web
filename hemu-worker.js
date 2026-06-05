@@ -6,11 +6,12 @@
 // blit cost leaves the critical path. The canvas stays on the main thread (frames are shipped via
 // postMessage), so hemu.html can fall back to its in-line single-thread engine if this ever fails.
 import { createHost } from "./holyc-wasm/src/runtime/host.js";
+import { loadDisk } from "./qcow2.js";
 
 let msX = 320, msY = 240, msB = 0;          // latest pointer state from the main thread
 const keyq = [];                            // set-1 scancodes from the main thread
 let curBudget = 1500000, dtMs = 16;         // guest instr/frame + real wall-clock ms/frame
-let outstanding = 0, snap = null, loaded = false;
+let outstanding = 0, snap = null, loaded = false, disk = null;
 
 onmessage = (e) => {
   const m = e.data;
@@ -23,13 +24,17 @@ async function boot({ gz, wasmUrl, fixedB }) {
   if (fixedB) curBudget = fixedB;
   postMessage({ cmd: "progress", text: "decompressing snapshot (→ 384 MB)…", pct: 60 });
   snap = new Uint8Array(await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
-  postMessage({ cmd: "progress", text: "starting hemu core (HolyC → WASM)…", pct: 85 });
+  postMessage({ cmd: "progress", text: "starting hemu core (HolyC → WASM)…", pct: 88 });
   const mod = await WebAssembly.compile(await (await fetch(wasmUrl)).arrayBuffer());
+  // Load the C: disk in the BACKGROUND so the desktop appears immediately; TempleOS file I/O
+  // (ATA reads) works once it lands. The resumed desktop runs entirely from cached RAM meanwhile.
+  loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => disk = d).catch(() => disk = null);
 
   const host = createHost({
     onText: () => {},
     snd: { tone: (f) => postMessage({ cmd: "snd", f: Number(f) }) },   // AudioContext lives on the main thread
     snapLoad: (base, u8) => { u8.set(snap, base); },
+    diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },   // ATA -> real C: sectors
     present: (addr, w, h, u8) => {
       if (outstanding >= 2) return;                       // main hasn't caught up — drop, keep emulating
       const buf = new Uint8Array(w * h);

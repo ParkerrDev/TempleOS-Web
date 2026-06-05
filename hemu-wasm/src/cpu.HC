@@ -16,6 +16,7 @@ U0 InitMem(U64 sz)
   g_pfx[0x66] = 1; g_pfx[0x67] = 1; g_pfx[0xF0] = 1; g_pfx[0xF2] = 1; g_pfx[0xF3] = 1;
   g_pfx[0x2E] = 1; g_pfx[0x36] = 1; g_pfx[0x3E] = 1; g_pfx[0x26] = 1; g_pfx[0x64] = 1; g_pfx[0x65] = 1;
   g_desk = MAlloc(307200); g_hpet_rate = 33;
+  ata_buf = MAlloc(131072);                                  // 256 sectors * 512 B: ATA PIO read staging
 }
 
 // 0=RAX 1=RCX 2=RDX 3=RBX 4=RSP 5=RBP 6=RSI 7=RDI 8..15=R8..R15
@@ -34,6 +35,8 @@ U64 g_skip_c4, g_skip_vga;           // DCBlotColor4 (4 args) + GrUpdateVGAGraph
                                      // function bodies (just pop args + return) to refresh faster -> smoother cursor.
 U8 g_hooktbl[256];                   // rip&0xFF -> "maybe a special address" gate: lets Step() skip the four
                                      // 64-bit hook compares for the ~98% of instructions that aren't at one.
+U64 ata_words, ata_seccnt, ata_pos, ata_r3, ata_r4, ata_r5;   // ATA PIO read — serve C: sectors (disk == live.bin)
+U8 *ata_buf;
 U64 g_hpet_rate, g_jiffies0;         // wall-clock pacing: HPET ticks/instr, and the snapshot's base jiffies
 U64 g_badop;
 // system state: control regs, descriptor tables, MSRs, TSC, code/stack segments
@@ -81,6 +84,10 @@ U0 InjectMouse(I64 b0, I64 b1, I64 b2) { ms_byte0=b0; ms_byte1=b1; ms_byte2=b2; 
 U64 hpet_ctr;                        // synthetic HPET main counter (monotonic)
 U64 lapic_base;                      // discovered base of the LAPIC uncached alias (page-aligned)
 U64 hpet_base;                       // discovered base of the HPET alias
+U64 g_hpet_srip, g_hpet_sic, g_hpet_spin;  // HPET busy-wait fast-forward: TempleOS delays by spinning on the
+                                     // HPET counter; tied to instr count that spins for millions of instrs and
+                                     // freezes the UI. When the SAME instr re-reads the counter in a tight loop,
+                                     // accelerate it (quadratically) so the delay completes in a few reads.
 
 #define F_CF 0x0001
 #define F_PF 0x0004
@@ -108,7 +115,13 @@ U64 MmioRd(U64 a, I64 sz)
   off = a & 0xFFF;
   if (off == 0x20)  return 0;                 // LAPIC APIC_ID -> CPU 0
   if (off == 0x30)  return 0x50014;           // LAPIC version
-  if (off == 0xF0)  return hpet_ctr;          // HPET main counter (lo) — also LAPIC SVR read
+  if (off == 0xF0) {                          // HPET main counter (lo) — also LAPIC SVR read
+    if (rip == g_hpet_srip && (icount - g_hpet_sic) < 64) {   // same instr re-reading in a tight spin = a delay loop
+      g_hpet_spin++; hpet_ctr += g_hpet_spin << 6;            // accelerate (quadratic) so the delay ends in a few reads
+    } else g_hpet_spin = 0;
+    g_hpet_srip = rip; g_hpet_sic = icount;
+    return hpet_ctr;
+  }
   if (off == 0xF4 || off == 0xF8) return hpet_ctr >> 32;  // HPET main counter (hi)
   return 0;
 }
@@ -121,9 +134,15 @@ U0 MmioWr(U64 a, I64 sz, U64 v)
 // WASM loads/stores are little-endian + unaligned-safe, matching x86 — so a
 // pointer-cast deref is one host load instead of a byte loop. Accesses at/above
 // mem_size are device MMIO, routed away from the RAM buffer so they never trap.
+// TempleOS also maps an UNCACHED ALIAS of all RAM at virtual 2^40 + phys (for
+// cache-bypassing access to shared structures like task message queues); strip
+// that bit so aliased RAM access hits real RAM instead of being dropped as MMIO.
 U64 RdMem(U64 a, I64 sz)
 {
-  if (a >= mem_size) return MmioRd(a, sz);
+  if (a >= mem_size) {
+    a &= 0xFFFFFFFFFF;                            // strip the uncached-alias bit (2^40)
+    if (a >= mem_size) return MmioRd(a, sz);      // genuine MMIO (or MMIO via the alias)
+  }
   if (sz == 8) return *(U64 *)(mem + a);
   if (sz == 4) return *(U32 *)(mem + a);
   if (sz == 2) return *(U16 *)(mem + a);
@@ -131,7 +150,10 @@ U64 RdMem(U64 a, I64 sz)
 }
 U0 WrMem(U64 a, I64 sz, U64 v)
 {
-  if (a >= mem_size) { MmioWr(a, sz, v); return; }
+  if (a >= mem_size) {
+    a &= 0xFFFFFFFFFF;                            // strip the uncached-alias bit (2^40)
+    if (a >= mem_size) { MmioWr(a, sz, v); return; }
+  }
   if (sz == 8) { *(U64 *)(mem + a) = v; return; }
   if (sz == 4) { *(U32 *)(mem + a) = v; return; }
   if (sz == 2) { *(U16 *)(mem + a) = v; return; }
@@ -508,6 +530,11 @@ U64 IoIn(U64 port)
     if (nextms) st |= 0x20;
     return st;
   }
+  if (port == 0x1F7 || port == 0x177) return ata_words > 0 ? 0x48 : 0x40;   // ATA status: DRDY (+DRQ while data left)
+  if (port == 0x1F0 || port == 0x170) {                                     // ATA data: serve staged sector words
+    if (ata_words > 0) { U64 w = *(U16 *)(ata_buf + ata_pos); ata_pos += 2; ata_words--; return w; }
+    return 0;
+  }
   return 0;
 }
 U0 IoOut(U64 port, U64 v)
@@ -515,6 +542,20 @@ U0 IoOut(U64 port, U64 v)
   I64 i;
   if (port >= 0x3B0 && port <= 0x3DF) return;          // VGA registers — framebuffer is HLE'd, ignore (skip the chain)
   v &= 0xFF;
+  if (port == 0x1F2 || port == 0x172) { ata_seccnt = ((ata_seccnt << 8) | v) & 0xFFFF; return; }   // ATA sector count
+  if (port == 0x1F3 || port == 0x173) { ata_r3 = ((ata_r3 << 8) | v) & 0xFFFF; return; }           // LBA48 reg (2 writes)
+  if (port == 0x1F4 || port == 0x174) { ata_r4 = ((ata_r4 << 8) | v) & 0xFFFF; return; }
+  if (port == 0x1F5 || port == 0x175) { ata_r5 = ((ata_r5 << 8) | v) & 0xFFFF; return; }
+  if (port == 0x1F7 || port == 0x177) {                // ATA command (TempleOS reads with 0x29 = READ MULTIPLE EXT)
+    if (v == 0x20 || v == 0x21 || v == 0x24 || v == 0x29 || v == 0xC4) {
+      U64 lba = (ata_r3 & 0xFF) | ((ata_r4 & 0xFF) << 8) | ((ata_r5 & 0xFF) << 16)
+              | (((ata_r3 >> 8) & 0xFF) << 24) | (((ata_r4 >> 8) & 0xFF) << 32) | (((ata_r5 >> 8) & 0xFF) << 40);
+      U64 cnt = ata_seccnt & 0xFFFF; if (!cnt) cnt = 256; if (cnt > 256) cnt = 256;
+      __host_disk(lba, cnt, ata_buf); ata_words = cnt * 256; ata_pos = 0;   // host stages real sectors into ata_buf
+    } else ata_words = 0;
+    ata_r3 = 0; ata_r4 = 0; ata_r5 = 0; ata_seccnt = 0;
+    return;
+  }
   if (port == 0x64) {                                   // PS/2 controller command
     if (v == 0xD4) ms_next = 1;                          // next 0x60 byte -> mouse
     else if (v == 0x20) Ps2Resp(0x47, 0);               // read config (kbd+mouse IRQ + sys flag)
