@@ -78,6 +78,9 @@ U0 Frame()
   if (my < 0) my = 0; else if (my > 479) my = 479;
   *(U64*)(mem + 0xBF68) = mx;          // ms.pos.x  (the OS's DrawMs draws its arrow here)
   *(U64*)(mem + 0xBF70) = my;          // ms.pos.y
+  *(U64*)(mem + 0xBF78) = __host_wheel(); // ms.pos.z — mouse wheel (WinMgr scrolls on z - scroll_z)
+  *(U64*)(mem + 0xBF80) = mx / 8;      // ms.pos_text.x — text-cell coords; window drag/resize/menus use THESE
+  *(U64*)(mem + 0xBF88) = my / 8;      // ms.pos_text.y (FONT_WIDTH=FONT_HEIGHT=8); MsUpdate normally derives them
   mem[0xC008] = mb & 1;                // ms.lb  — left button; the WinMgr turns lb edges into clicks
   mem[0xC009] = (mb >> 1) & 1;         // ms.rb  — right button
   I64 sc = __host_key();

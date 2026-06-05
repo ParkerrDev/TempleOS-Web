@@ -473,21 +473,11 @@ U0 Cpuid()  // enough feature bits for TempleOS: FPU/TSC/MSR/PAE/APIC/MMX/FXSR/S
   else if (a == 0x80000001)   { reg[0] = 0; reg[1] = 0; reg[2] = 0x00000001; reg[3] = 0x28100800; }
   else                        { reg[0] = 0; reg[1] = 0; reg[2] = 0; reg[3] = 0; }
 }
-U64 RtcRead(I64 idx)                  // CMOS RTC register read (binary mode, advancing clock)
+U64 RtcRead(I64 idx)                  // CMOS RTC register read (binary mode, host wall clock)
 {
-  U64 tsec, s, m, h;
   if (idx == 0x0A) return 0;          // status A: bit7=0 => update not in progress
   if (idx == 0x0B) return 0x06;       // status B: bit1=24h, bit2=binary (so no BCD conversion)
-  tsec = rtc_base_sec + (RdMem(0xBD98, 8) - g_jiffies0) / 1000;   // jiffies are paced to wall-clock (1000/s)
-  s = tsec % 60; m = (tsec / 60) % 60; h = (tsec / 3600) % 24;
-  if (idx == 0) return s;             // seconds
-  if (idx == 2) return m;             // minutes
-  if (idx == 4) return h;             // hours
-  if (idx == 6) return rtc_dow;       // day of week
-  if (idx == 7) return rtc_day;       // day of month
-  if (idx == 8) return rtc_mon;       // month
-  if (idx == 9) return rtc_year;      // year (kernel adds 2000)
-  return 0;
+  return __host_time(idx);            // sec/min/hour/dow/day/mon/year from the host — Now() tracks real time
 }
 U64 IoIn(U64 port)
 {

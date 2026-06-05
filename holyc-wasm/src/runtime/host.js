@@ -79,6 +79,20 @@ export function createHost(opts = {}) {
     __host_msx() { return 0n; }, __host_msy() { return 0n; }, __host_msb() { return 0n; },
     __host_key() { return -1n; }, __host_budget() { return 1000000n; }, __host_prof(_rip) {},
     __host_dt() { return 16n; },
+    // CMOS RTC fields from the host wall clock, so the guest's Now() tracks real date/time
+    // (not the snapshot's frozen clock). idx = CMOS register the guest selected via OUT 0x70.
+    __host_time(idx) {
+      const d = new Date(); idx = Number(idx);
+      if (idx === 0) return BigInt(d.getSeconds());
+      if (idx === 2) return BigInt(d.getMinutes());
+      if (idx === 4) return BigInt(d.getHours());
+      if (idx === 6) return BigInt(d.getDay());           // 0=Sun..6=Sat
+      if (idx === 7) return BigInt(d.getDate());          // day of month 1..31
+      if (idx === 8) return BigInt(d.getMonth() + 1);     // month 1..12
+      if (idx === 9) return BigInt(d.getFullYear() - 2000); // kernel adds 2000
+      return 0n;
+    },
+    __host_wheel() { return 0n; },   // cumulative mouse-wheel position -> ms.pos.z (browser overrides)
 
     __snd(freq) { state.snd?.tone(freq); },
     __play_note(freq, ms) {
