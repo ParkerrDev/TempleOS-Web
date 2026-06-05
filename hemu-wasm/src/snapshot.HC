@@ -40,9 +40,10 @@ U64 BodySum()                           // checksum the composited framebuffer (
   for (i = 0; i < n; i += 4) s += mem[body + i] * (i + 7);
   return s;
 }
-U0 Present()                            // HLE: blit gr.dc2->body (the composited desktop)
+U0 Present()                            // HLE: blit the composited desktop
 {
   U64 dc, body, w, h;
+  if (g_desk_ready) { ComposeCursor(); __present(g_pbuf, 640, 480); return; }  // complete desktop + fresh cursor
   dc = g_dc2;                           // &gr.dc2 (CDC), relocated by FindDc2()
   body = *(U64 *)(mem + dc + 384);      // CDC.body @ +384
   w = *(U64 *)(mem + dc + 20) & 0xFFFF; // width_internal @ +20
@@ -81,7 +82,8 @@ U0 Frame()
   while (sc >= 0) { InjectKey(sc); sc = __host_key(); }   // drain host keystrokes -> IRQ1 -> echo
   mem[0xC2B0] = 1;                     // re-assert ms_hard.installed (defeats any mid-run reset)
   WakeTasks();                         // make the WinMgr ready so it refreshes + runs DrawMs this frame
-  g_budget += 4000000; Run(g_budget);  // deadlock watchdog keeps jiffies/scheduler flowing
+  g_budget += __host_budget();         // host paces this (target ~30fps); WakeTasks forces the refresh
+  Run(g_budget);                       // so we don't need to burn the WinMgr's idle busy-spin each frame
   Present();
 }
 
@@ -102,6 +104,7 @@ U0 Main()                              // host calls __main once per display fra
     *(U64*)(mem + 0x1140cc18) = 0;
     pit_div = 3000; pit_counter = 3000;  // 1000 jiffies/sec, consistent with tsc_rate=333 + HPET +33
     mem[0xC2B0] = 1;                    // ms_hard.installed = TRUE
+    g_hle_blit = 0x119c8428;           // HLE DCBlotColor8 (dc->dc2 composite) — was 61% of frame time
     g_inited = 1;
   }
   Frame();

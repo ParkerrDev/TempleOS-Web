@@ -181,10 +181,15 @@
         ctx.putImageData(img, 0, 0);
       },
     });
+    // Adaptive per-frame guest budget: the cursor redraws every display frame (smooth) while the
+    // desktop re-composites as often as the budget allows. We keep frame time under ~33ms so the
+    // display holds 30fps+, and spend any spare capacity on a higher composite rate.
+    let curBudget = 1000000;
     host.env.__host_msx = () => BigInt(msX);
     host.env.__host_msy = () => BigInt(msY);
     host.env.__host_msb = () => BigInt(msB);
     host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
+    host.env.__host_budget = () => BigInt(curBudget | 0);
 
     const inst = await WebAssembly.instantiate(mod, { env: host.env });
     host.attach(inst);
@@ -192,13 +197,20 @@
 
     document.getElementById("restartBtn").addEventListener("click", () => location.reload());
 
-    let frames = 0, t0 = performance.now(), started = false;
+    let frames = 0, started = false, fpsT = performance.now(), fpsN = 0;
     function loop() {
+      const a = performance.now();
       try { inst.exports.__main(); }                 // one TempleOS frame (loads the snapshot on frame 0)
       catch (e) { setLoad("hemu trap: " + e.message); return; }
+      const dt = performance.now() - a;
+      if (dt > 33 && curBudget > 250000) curBudget = (curBudget * 0.80) | 0;        // protect 30fps
+      else if (dt < 22 && curBudget < 3000000) curBudget = (curBudget * 1.10) | 0;  // smoother desktop with spare
       if (!started) { started = true; ld.style.display = "none"; snap = null; canvas.focus(); }
-      frames++;
-      if (frames % 15 === 0) tbFps.textContent = (frames / ((performance.now() - t0) / 1000)).toFixed(0) + " fps";
+      frames++; fpsN++;
+      if (performance.now() - fpsT > 500) {
+        tbFps.textContent = (fpsN * 1000 / (performance.now() - fpsT)).toFixed(0) + " fps";
+        fpsT = performance.now(); fpsN = 0;
+      }
       requestAnimationFrame(loop);
     }
     setLoad("starting TempleOS…", 100);

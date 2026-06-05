@@ -769,25 +769,50 @@ class FnCtx {
     for (let i = segs.length - 1; i >= 0; i--) { segMarks[i] = this.pushCtrl(); this.f.block(); }
     // dispatch (inside innermost = seg0 block)
     const defLabel = labels.find((l) => l.isDefault);
-    for (const lab of labels) {
-      if (lab.isDefault) continue;
-      if (lab.loExpr) {
-        // runtime case value: disc == <expr>
-        this.f.local_get(disc);
-        this.genExprCoerce(lab.loExpr, T.I64);
-        this.f.op("i64_eq");
-      } else if (lab.lo === lab.hi) {
-        this.f.local_get(disc);
-        this.f.i64_const(lab.lo).op("i64_eq");
-      } else {
-        // lo <= disc <= hi
-        this.f.local_get(disc).i64_const(lab.lo).op("i64_ge_s");
-        this.f.local_get(disc).i64_const(lab.hi).op("i64_le_s");
-        this.f.op("i32_and");
-      }
-      this.f.br_if(this.rel(segMarks[lab.segIdx]));
+    const defDst = defLabel ? segMarks[defLabel.segIdx] : brk;
+    // Fast path: a dense block of constant integer cases compiles to an O(1) br_table (jump table)
+    // instead of an O(n) compare chain — critical for big dispatchers like the CPU opcode switch.
+    const cst = labels.filter((l) => !l.isDefault);
+    const dense = cst.length > 1 && cst.every((l) => l.lo != null && !l.loExpr);
+    let blo, bhi;
+    if (dense) {
+      blo = cst[0].lo; bhi = cst[0].hi != null ? cst[0].hi : cst[0].lo;
+      for (const l of cst) { const a = l.lo, b = l.hi != null ? l.hi : l.lo; if (a < blo) blo = a; if (b > bhi) bhi = b; }
     }
-    this.f.br(this.rel(defLabel ? segMarks[defLabel.segIdx] : brk));
+    if (dense && bhi - blo >= 0n && bhi - blo <= 1024n) {
+      const N = Number(bhi - blo) + 1;
+      const dflt = this.rel(defDst);
+      const table = new Array(N).fill(dflt);
+      for (const l of cst) {
+        const a = Number(l.lo - blo), b = Number((l.hi != null ? l.hi : l.lo) - blo);
+        const d = this.rel(segMarks[l.segIdx]);
+        for (let v = a; v <= b; v++) table[v] = d;
+      }
+      this.f.local_get(disc); this.f.i64_const(blo); this.f.op("i64_lt_s"); this.f.br_if(this.rel(defDst));
+      this.f.local_get(disc); this.f.i64_const(bhi); this.f.op("i64_gt_s"); this.f.br_if(this.rel(defDst));
+      this.f.local_get(disc); this.f.i64_const(blo); this.f.op("i64_sub"); this.f.op("i32_wrap_i64");
+      this.f.br_table(table, dflt);
+    } else {
+      for (const lab of labels) {
+        if (lab.isDefault) continue;
+        if (lab.loExpr) {
+          // runtime case value: disc == <expr>
+          this.f.local_get(disc);
+          this.genExprCoerce(lab.loExpr, T.I64);
+          this.f.op("i64_eq");
+        } else if (lab.lo === lab.hi) {
+          this.f.local_get(disc);
+          this.f.i64_const(lab.lo).op("i64_eq");
+        } else {
+          // lo <= disc <= hi
+          this.f.local_get(disc).i64_const(lab.lo).op("i64_ge_s");
+          this.f.local_get(disc).i64_const(lab.hi).op("i64_le_s");
+          this.f.op("i32_and");
+        }
+        this.f.br_if(this.rel(segMarks[lab.segIdx]));
+      }
+      this.f.br(this.rel(defDst));
+    }
     // segment bodies
     this.loops.push({ brk, cont: brk }); // break works; continue maps to break (no loop)
     for (let i = 0; i < segs.length; i++) {

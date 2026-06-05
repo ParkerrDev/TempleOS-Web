@@ -77,12 +77,24 @@ host.env.__host_msx = () => { const f = presentCount; if (f % 8 === 2) keyq.push
 host.env.__host_msy = () => BigInt(100 + (presentCount * 3) % 280);
 host.env.__host_msb = () => 0n;
 host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
+host.env.__host_budget = () => BigInt(process.env.BUDGET || 4000000);
+const prof = new Map();
+host.env.__host_prof = (rip) => { const b = Number(rip) >>> 14; prof.set(b, (prof.get(b) || 0) + 1); };
 
 const mod = await WebAssembly.compile(r.bytes);
 const inst = await WebAssembly.instantiate(mod, { env: host.env });
 host.attach(inst);
 inst.exports.__rt_init();
 const t0 = performance.now();
-try { for (let i = 0; i < 120; i++) inst.exports.__main(); }   // __main now runs ONE frame per call
+const ft = [];
+try { for (let i = 0; i < 120; i++) { const a = performance.now(); inst.exports.__main(); ft.push(performance.now() - a); } }   // __main runs ONE frame per call
 catch (e) { console.log("WASM TRAP:", e.message); }
+const steady = ft.slice(5);                                     // skip warmup (frame 0 = snapshot load)
+const avg = steady.reduce((s, x) => s + x, 0) / steady.length;
+const sorted = [...steady].sort((a, b) => a - b), p95 = sorted[Math.floor(sorted.length * 0.95)];
 console.log(`ran in ${((performance.now() - t0) / 1000).toFixed(2)}s; presented=${JSON.stringify(presented)}`);
+console.log(`PERF: avg ${avg.toFixed(1)} ms/frame = ${(1000/avg).toFixed(1)} fps | p95 ${p95.toFixed(1)} ms | frame0 ${ft[0].toFixed(0)} ms`);
+const top = [...prof.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14);
+const tot = [...prof.values()].reduce((s, x) => s + x, 0);
+console.log("PROFILE (hot 16KB rip buckets):");
+for (const [b, c] of top) console.log(`  0x${(b<<14).toString(16)}-0x${((b<<14)+0x3fff).toString(16)}  ${(100*c/tot).toFixed(1)}%  (${c})`);

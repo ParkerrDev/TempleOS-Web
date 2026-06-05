@@ -70,6 +70,8 @@ export const HOST_IMPORTS = {
   __host_msy:    { params: [], results: [I] },            // absolute mouse y (0..479)
   __host_msb:    { params: [], results: [I] },            // mouse button bits
   __host_key:    { params: [], results: [I] },            // next set-1 scancode, or <0 when drained
+  __host_budget: { params: [], results: [I] },            // guest instructions to run this display frame
+  __host_prof:   { params: [I], results: [] },            // debug: sample rip for profiling
 
   __snd:         { params: [F], results: [] },           // freq Hz (0 = off)
   __play_note:   { params: [F, I], results: [] },        // freq, ms (blocks)

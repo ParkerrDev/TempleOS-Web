@@ -7,7 +7,16 @@
 
 U8 *mem;                            // guest RAM (MAlloc'd so the snapshot can use 100s of MB)
 U64 mem_size;                       // bytes of guest RAM; anything >= this is MMIO (LAPIC/HPET/IOAPIC)
-U0 InitMem(U64 sz) { mem = MAlloc(sz + 16); mem_size = sz; }  // +16 pad absorbs boundary-spanning reads
+U8 g_pfx[256];                       // prefix-byte lookup (1 = legacy prefix) — skips an 11-way compare per instr
+U0 InitMem(U64 sz)
+{
+  I64 i;
+  mem = MAlloc(sz + 16); mem_size = sz;                       // +16 pad absorbs boundary-spanning reads
+  for (i = 0; i < 256; i++) g_pfx[i] = 0;
+  g_pfx[0x66] = 1; g_pfx[0x67] = 1; g_pfx[0xF0] = 1; g_pfx[0xF2] = 1; g_pfx[0xF3] = 1;
+  g_pfx[0x2E] = 1; g_pfx[0x36] = 1; g_pfx[0x3E] = 1; g_pfx[0x26] = 1; g_pfx[0x64] = 1; g_pfx[0x65] = 1;
+  g_desk = MAlloc(307200); g_pbuf = MAlloc(307200);
+}
 
 // 0=RAX 1=RCX 2=RDX 3=RBX 4=RSP 5=RBP 6=RSI 7=RDI 8..15=R8..R15
 U64 reg[16];
@@ -16,6 +25,9 @@ U64 rfl;
 I64 halted;                          // 0 run, 1 HLT, 2 bad opcode, 3 #DE
 I64 icount;
 I64 irq_stall;                       // deadlock watchdog: instrs IRQ0 has been pending under IF=0
+U64 g_hle_blit;                      // entry addr of the transparent compositor blit to run natively (0=off)
+U8 *g_desk, *g_pbuf;                 // g_desk = last COMPLETE desktop composite; g_pbuf = g_desk + fresh cursor
+I64 g_desk_ready;
 U64 g_badop;
 // system state: control regs, descriptor tables, MSRs, TSC, code/stack segments
 U64 cr0, cr2, cr3, cr4, cr8, g_cs, g_ss;
@@ -873,15 +885,45 @@ U0 Op0F()
 }
 
 //---------------------------------------------------------------- one instruction
+// HLE the hot transparent window-compositor blit (its entry = g_hle_blit): run the flat 0xFF-skip
+// copy natively instead of interpreting ~5 instrs/byte, then simulate its callee-clean RET 0x10.
+// Blit(dst_dc@[rsp+8], src_dc@[rsp+16]) — copies src.width*src.height bytes src.body->dst.body.
+U0 HleBlit()
+{
+  U64 ret = RdMem(reg[4], 8), dst_dc = RdMem(reg[4] + 8, 8), src_dc = RdMem(reg[4] + 16, 8);
+  U64 sb = RdMem(src_dc + 0x180, 8), db = RdMem(dst_dc + 0x180, 8);
+  I64 w = RdMem(src_dc + 0x14, 4) & 0xFFFF, h = RdMem(src_dc + 0x18, 4) & 0xFFFF, n = w * h, i;
+  U8 v;
+  if (sb && db && sb < mem_size && db < mem_size && n > 0 && sb + n <= mem_size && db + n <= mem_size) {
+    for (i = 0; i < n; i++) { v = mem[sb + i]; if (v != 0xFF) mem[db + i] = v; }
+    // Snapshot the COMPLETE composite so Present() never shows a torn mid-render frame.
+    if (g_desk && w == 640 && h == 480) { for (i = 0; i < n; i++) g_desk[i] = mem[db + i]; g_desk_ready = 1; }
+  }
+  reg[0] = n; reg[4] += 24; rip = ret;     // RAX=n (clobbered by the real fn); pop ret + 2 args
+}
+
+// Build the present frame EACH display frame: copy the latest complete desktop, then overlay a mouse
+// cursor at the current ms.pos — so the cursor moves at display rate even though the desktop (clock,
+// windows) only re-composites a few times a second.
+U0 ComposeCursor()
+{
+  I64 cx = *(U64 *)(mem + 0xBF68), cy = *(U64 *)(mem + 0xBF70), rr, cc, px, py, i;
+  for (i = 0; i < 307200; i++) g_pbuf[i] = g_desk[i];
+  for (rr = 0; rr < 13; rr++) for (cc = 0; cc <= rr && cc < 9; cc++) {
+    px = cx + cc; py = cy + rr;                                  // a small arrow: white edges, black fill
+    if (px >= 0 && px < 640 && py >= 0 && py < 480) g_pbuf[py * 640 + px] = (cc == 0 || cc == rr) ? 15 : 0;
+  }
+}
+
 U0 Step()
 {
   U64 op, a, b, r, cf;
   I64 sz, d, opn, r2, imm;
 
+  if (rip == g_hle_blit) { HleBlit(); return; }   // native fast-path for the dominant compositor blit
   pfx66 = 0; repf = 0; hasRex = 0; rexW = 0; rexR = 0; rexX = 0; rexB = 0; g_segbase = 0;
   op = Fetch8();
-  while (op == 0x66 || op == 0x67 || op == 0xF0 || op == 0xF2 || op == 0xF3 ||
-         op == 0x2E || op == 0x36 || op == 0x3E || op == 0x26 || op == 0x64 || op == 0x65) {
+  while (g_pfx[op]) {                                  // legacy prefixes (one table lookup, not 11 compares)
     if (op == 0x66) pfx66 = 1;
     else if (op == 0xF3) repf = 1;
     else if (op == 0xF2) repf = 2;
@@ -902,6 +944,12 @@ U0 Step()
   if (op < 0x40 && (op & 7) == 3) { opn = (op >> 3) & 7; DecodeModRM(); a = RdReg(rg, sz); b = RdRM(sz);    r = Arith(opn, a, b, sz); if (opn != 7) WrReg(rg, sz, r); return; }
   if (op < 0x40 && (op & 7) == 4) { opn = (op >> 3) & 7; b = Fetch8();        a = RdReg(0, 1);  r = Arith(opn, a, b, 1);  if (opn != 7) WrReg(0, 1, r);  return; }  // ALU AL, imm8
   if (op < 0x40 && (op & 7) == 5) { opn = (op >> 3) & 7; b = FetchImm(sz);    a = RdReg(0, sz); r = Arith(opn, a, b, sz); if (opn != 7) WrReg(0, sz, r); return; }  // ALU eAX, imm
+
+  // hot-path: MOV dominates render/blit loops — handle before the long opcode switch
+  if (op == 0x89) { DecodeModRM(); WrRM(sz, RdReg(rg, sz)); return; }   // MOV r/m, r
+  if (op == 0x8B) { DecodeModRM(); WrReg(rg, sz, RdRM(sz)); return; }   // MOV r, r/m
+  if (op == 0x88) { DecodeModRM(); WrRM(1, RdReg(rg, 1)); return; }     // MOV r/m8, r8
+  if (op == 0x8A) { DecodeModRM(); WrReg(rg, 1, RdRM(1)); return; }     // MOV r8, r/m8
 
   switch (op) {
     case 0x90: break;
@@ -1054,13 +1102,24 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
 {
   while (icount < maxi) {
     if (halted >= 2) break;                                         // bad opcode / fault: stop
-    if (pit_div) { pit_counter--; if (pit_counter <= 0) { pit_counter = pit_div; pic1_irr |= 1; } }  // PIT -> IRQ0
-    hpet_ctr += 33; tsc += tsc_rate;                                                  // time advances even while halted
-    if (halted == 1) {                                             // HLT: idle until an unmasked IRQ wakes us
-      if ((rfl & F_IF) && ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask))) { halted = 0; CheckIrq(); }
-      icount++;
+    if (halted == 1) {                                             // HLT: idle until an IRQ
+      // Fast-forward the dead time: nothing but the PIT advances while halted, so jump straight to
+      // the next tick in ONE step instead of spinning millions of no-op iterations (huge fps win —
+      // the guest idles between WinMgr refreshes and that idle was costing ~all the wall-clock).
+      I64 skip = pit_div ? pit_counter : 1;
+      if (skip < 1) skip = 1;
+      if (skip > maxi - icount) skip = maxi - icount;
+      if (skip < 1) skip = 1;
+      if (pit_div) { pit_counter -= skip; if (pit_counter <= 0) { pit_counter = pit_div; pic1_irr |= 1; } }
+      hpet_ctr += 33 * skip; tsc += tsc_rate * skip; icount += skip;
+      if ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask)) {     // an IRQ is now pending
+        if (rfl & F_IF) { halted = 0; CheckIrq(); }                 // IF=1: wake + service it
+        else { irq_stall += skip; if (irq_stall > 2000000) { irq_stall = 0; rfl |= F_IF; halted = 0; CheckIrq(); } }
+      }
       continue;
     }
+    if (pit_div) { pit_counter--; if (pit_counter <= 0) { pit_counter = pit_div; pic1_irr |= 1; } }  // PIT -> IRQ0
+    hpet_ctr += 33; tsc += tsc_rate;                                                  // time advances per instr
     Step(); icount++;
     if ((rfl & F_IF) && ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask))) CheckIrq();
     // Deadlock watchdog: a snapshot resumed mid-CLI can leave a task CLI-spinning to acquire a
