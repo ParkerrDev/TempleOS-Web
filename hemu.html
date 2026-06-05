@@ -134,17 +134,19 @@
       setInterval(() => { const n = performance.now(); tbFps.textContent = `${(blitCount * 1000 / (n - t0)).toFixed(0)} fps · ${engineLabel}`; blitCount = 0; t0 = n; }, 500); }
 
     // ---- input: a host-owned cursor + a set-1 scancode queue, pulled by snapshot.HC each frame ----
-    let msX = 320, msY = 240, msB = 0;
+    let msX = 320, msY = 240, msB = 0, wheelZ = 0;
     const keyq = [];
     const SC = {
-      Escape:0x01,Digit1:0x02,Digit2:0x03,Digit3:0x04,Digit4:0x05,Digit5:0x06,Digit6:0x07,Digit7:0x08,
+      Digit1:0x02,Digit2:0x03,Digit3:0x04,Digit4:0x05,Digit5:0x06,Digit6:0x07,Digit7:0x08,
       Digit8:0x09,Digit9:0x0A,Digit0:0x0B,Minus:0x0C,Equal:0x0D,Backspace:0x0E,Tab:0x0F,
       KeyQ:0x10,KeyW:0x11,KeyE:0x12,KeyR:0x13,KeyT:0x14,KeyY:0x15,KeyU:0x16,KeyI:0x17,KeyO:0x18,KeyP:0x19,
       BracketLeft:0x1A,BracketRight:0x1B,Enter:0x1C,ControlLeft:0x1D,
       KeyA:0x1E,KeyS:0x1F,KeyD:0x20,KeyF:0x21,KeyG:0x22,KeyH:0x23,KeyJ:0x24,KeyK:0x25,KeyL:0x26,
       Semicolon:0x27,Quote:0x28,Backquote:0x29,ShiftLeft:0x2A,Backslash:0x2B,
       KeyZ:0x2C,KeyX:0x2D,KeyC:0x2E,KeyV:0x2F,KeyB:0x30,KeyN:0x31,KeyM:0x32,
-      Comma:0x33,Period:0x34,Slash:0x35,ShiftRight:0x36,Space:0x39,
+      Comma:0x33,Period:0x34,Slash:0x35,ShiftRight:0x36,AltLeft:0x38,AltRight:0x38,Space:0x39,
+      CapsLock:0x3A,F1:0x3B,F2:0x3C,F3:0x3D,F4:0x3E,F5:0x3F,F6:0x40,F7:0x41,F8:0x42,F9:0x43,F10:0x44,F11:0x57,F12:0x58,
+      Home:0x47,PageUp:0x49,End:0x4F,PageDown:0x51,Insert:0x52,Delete:0x53,
       ArrowUp:0x48,ArrowLeft:0x4B,ArrowRight:0x4D,ArrowDown:0x50,
     };
     // Pointer Lock — like QEMU: click the screen to "capture" the mouse (browser cursor hidden,
@@ -154,7 +156,7 @@
     canvas.addEventListener("click", () => { if (!locked) canvas.requestPointerLock(); });
     document.addEventListener("pointerlockchange", () => {
       locked = document.pointerLockElement === canvas;
-      tbKey.textContent = locked ? "captured — Esc to release" : "click to capture";
+      tbKey.textContent = locked ? "captured · Esc releases · Ctrl+[ = in-OS Esc" : "click to capture";
     });
     document.addEventListener("mousemove", e => {                       // relative movement while captured
       if (!locked) return;
@@ -165,7 +167,16 @@
     document.addEventListener("mousedown", e => { if (locked) { msB |= btnBit(e); e.preventDefault(); notifyInput(); } });
     document.addEventListener("mouseup",   e => { if (locked) { msB &= ~btnBit(e); e.preventDefault(); notifyInput(); } });
     canvas.addEventListener("contextmenu", e => e.preventDefault());
-    addEventListener("keydown", e => { if (!locked) return; const s = SC[e.code]; if (s !== undefined) { keyq.push(s);        e.preventDefault(); notifyInput(); } });
+    canvas.addEventListener("wheel", e => {                              // mouse wheel -> ms.pos.z (TempleOS scroll)
+      if (!locked) return;
+      wheelZ += e.deltaY > 0 ? 1 : -1; e.preventDefault(); notifyInput();
+    }, { passive: false });
+    addEventListener("keydown", e => {
+      if (!locked) return;
+      // The real Esc key always releases Pointer Lock (browser security) — give the OS its own Esc via Ctrl+[.
+      if (e.ctrlKey && e.code === "BracketLeft") { keyq.push(0x01); keyq.push(0x81); e.preventDefault(); notifyInput(); return; }
+      const s = SC[e.code]; if (s !== undefined) { keyq.push(s);        e.preventDefault(); notifyInput(); }
+    });
     addEventListener("keyup",   e => { if (!locked) return; const s = SC[e.code]; if (s !== undefined) { keyq.push(s | 0x80); e.preventDefault(); notifyInput(); } });
 
     // ---- optional PC-speaker sound (square wave, started on first gesture) ----
@@ -196,7 +207,7 @@
       let worker, watchdog, alive = false;
       try { worker = new Worker("./hemu-worker.js", { type: "module" }); } catch (e) { return false; }
       engineLabel = "2 cores";
-      notifyInput = () => worker?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, keys: keyq.splice(0) });
+      notifyInput = () => worker?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0) });
       const fallback = (why) => {
         if (!worker) return;
         clearTimeout(watchdog); try { worker.terminate(); } catch {} worker = null; notifyInput = () => {};
@@ -233,6 +244,7 @@
         present: (addr, w, h, u8) => blit(u8.subarray(addr, addr + w * h), w, h),
       });
       host.env.__host_msx = () => BigInt(msX); host.env.__host_msy = () => BigInt(msY); host.env.__host_msb = () => BigInt(msB);
+      host.env.__host_wheel = () => BigInt(wheelZ);
       host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
       host.env.__host_budget = () => BigInt(curBudget | 0);
       host.env.__host_dt = () => BigInt(dtMs | 0);            // real wall-clock ms/frame -> guest clock tracks real time

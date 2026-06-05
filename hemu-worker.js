@@ -8,7 +8,7 @@
 import { createHost } from "./holyc-wasm/src/runtime/host.js";
 import { loadDisk } from "./qcow2.js";
 
-let msX = 320, msY = 240, msB = 0;          // latest pointer state from the main thread
+let msX = 320, msY = 240, msB = 0, wheel = 0;   // latest pointer state from the main thread
 const keyq = [];                            // set-1 scancodes from the main thread
 let curBudget = 1500000, dtMs = 16;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null;
@@ -16,7 +16,7 @@ let outstanding = 0, snap = null, loaded = false, disk = null;
 onmessage = (e) => {
   const m = e.data;
   if (m.cmd === "init") boot(m).catch(err => postMessage({ cmd: "error", msg: String(err?.message || err) }));
-  else if (m.cmd === "input") { msX = m.x; msY = m.y; msB = m.b; if (m.keys) for (const k of m.keys) keyq.push(k); }
+  else if (m.cmd === "input") { msX = m.x; msY = m.y; msB = m.b; if (m.wheel !== undefined) wheel = m.wheel; if (m.keys) for (const k of m.keys) keyq.push(k); }
   else if (m.cmd === "ack") outstanding--;   // main finished a frame — release a flow-control slot
 };
 
@@ -46,6 +46,7 @@ async function boot({ gz, wasmUrl, fixedB }) {
   host.env.__host_msx = () => BigInt(msX);
   host.env.__host_msy = () => BigInt(msY);
   host.env.__host_msb = () => BigInt(msB);
+  host.env.__host_wheel = () => BigInt(wheel);
   host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
   host.env.__host_budget = () => BigInt(curBudget | 0);
   host.env.__host_dt = () => BigInt(dtMs | 0);
