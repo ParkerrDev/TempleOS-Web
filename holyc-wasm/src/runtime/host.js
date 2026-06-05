@@ -73,6 +73,9 @@ export function createHost(opts = {}) {
     __snap_load(base) { state.snapLoad?.(Number(base), u8()); },
     __host_in(port) { return BigInt(state.hostIn ? state.hostIn(Number(port)) | 0 : 0); },
     __host_out(port, val) { state.hostOut?.(Number(port), Number(val)); },
+    // hemu input/pacing hooks — default stubs; real runners (snap-run, web/hemu.html) override env.*
+    __host_msx() { return 0n; }, __host_msy() { return 0n; }, __host_msb() { return 0n; },
+    __host_key() { return -1n; }, __host_budget() { return 1000000n; }, __host_prof(_rip) {},
 
     __snd(freq) { state.snd?.tone(freq); },
     __play_note(freq, ms) {
