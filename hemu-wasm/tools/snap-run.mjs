@@ -80,7 +80,7 @@ host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
 host.env.__host_budget = () => BigInt(process.env.BUDGET || 4000000);
 host.env.__host_dt = () => 33n;   // simulate a steady 30fps wall clock headless
 const prof = new Map();
-host.env.__host_prof = (rip) => { const b = Number(rip) >>> 14; prof.set(b, (prof.get(b) || 0) + 1); };
+host.env.__host_prof = (rip) => { const b = Number(rip) >>> 10; prof.set(b, (prof.get(b) || 0) + 1); };
 
 const mod = await WebAssembly.compile(r.bytes);
 const inst = await WebAssembly.instantiate(mod, { env: host.env });
@@ -95,7 +95,7 @@ const avg = steady.reduce((s, x) => s + x, 0) / steady.length;
 const sorted = [...steady].sort((a, b) => a - b), p95 = sorted[Math.floor(sorted.length * 0.95)];
 console.log(`ran in ${((performance.now() - t0) / 1000).toFixed(2)}s; presented=${JSON.stringify(presented)}`);
 console.log(`PERF: avg ${avg.toFixed(1)} ms/frame = ${(1000/avg).toFixed(1)} fps | p95 ${p95.toFixed(1)} ms | frame0 ${ft[0].toFixed(0)} ms`);
-const top = [...prof.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14);
+const top = [...prof.entries()].sort((a, b) => b[1] - a[1]).slice(0, 22);
 const tot = [...prof.values()].reduce((s, x) => s + x, 0);
-console.log("PROFILE (hot 16KB rip buckets):");
-for (const [b, c] of top) console.log(`  0x${(b<<14).toString(16)}-0x${((b<<14)+0x3fff).toString(16)}  ${(100*c/tot).toFixed(1)}%  (${c})`);
+console.log("PROFILE (hot 1KB rip buckets):");
+for (const [b, c] of top) console.log(`  0x${(b<<10).toString(16)}-0x${((b<<10)+0x3fff).toString(16)}  ${(100*c/tot).toFixed(1)}%  (${c})`);
