@@ -1069,6 +1069,10 @@ U0 Step()
 
     case 0x84: DecodeModRM(); SetLogic((RdRM(1) & RdReg(rg, 1)) & 0xFF, 1); break;   // TEST r/m8, r8
     case 0x85: DecodeModRM(); SetLogic((RdRM(sz) & RdReg(rg, sz)) & SizeMask(sz), sz); break; // TEST r/m, r
+    case 0xA0: a = Fetch64(); WrReg(0, 1, RdMem(a, 1)); break;     // MOV AL, [moffs64]
+    case 0xA1: a = Fetch64(); WrReg(0, sz, RdMem(a, sz)); break;   // MOV [r/e/]AX, [moffs64]
+    case 0xA2: a = Fetch64(); WrMem(a, 1, RdReg(0, 1)); break;     // MOV [moffs64], AL
+    case 0xA3: a = Fetch64(); WrMem(a, sz, RdReg(0, sz)); break;   // MOV [moffs64], [r/e/]AX
     case 0xA8: b = Fetch8();     SetLogic((RdReg(0, 1) & b) & 0xFF, 1); break;       // TEST AL, imm8
     case 0xA9: b = FetchImm(sz); SetLogic((RdReg(0, sz) & b) & SizeMask(sz), sz); break; // TEST eAX, imm
 
@@ -1100,8 +1104,12 @@ U0 Step()
 
     case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:  // MOV r8, imm8
       r2 = (op - 0xB0) | (rexB << 3); WrReg(r2, 1, Fetch8()); break;
-    case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:  // MOV r, imm
-      r2 = (op - 0xB8) | (rexB << 3); if (rexW) reg[r2] = Fetch64(); else reg[r2] = Fetch32(); break;
+    case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:  // MOV r, imm (imm size follows operand size)
+      r2 = (op - 0xB8) | (rexB << 3);
+      if (rexW) reg[r2] = Fetch64();
+      else if (sz == 2) { WrReg(r2, 2, RdMem(rip, 2)); rip += 2; }   // 0x66 prefix -> MOV r16, imm16 (don't over-read imm32)
+      else reg[r2] = Fetch32();
+      break;
 
     case 0xC0: DecodeModRM(1); d = Fetch8();        DoShift(rg & 7, d, 1);  break;  // grp2 r/m8, imm8
     case 0xC1: DecodeModRM(1); d = Fetch8();        DoShift(rg & 7, d, sz); break;  // grp2 r/m, imm8
