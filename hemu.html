@@ -135,16 +135,25 @@
       Comma:0x33,Period:0x34,Slash:0x35,ShiftRight:0x36,Space:0x39,
       ArrowUp:0x48,ArrowLeft:0x4B,ArrowRight:0x4D,ArrowDown:0x50,
     };
-    canvas.addEventListener("mousemove", e => {
-      const r = canvas.getBoundingClientRect();
-      msX = Math.max(0, Math.min(639, (e.clientX - r.left) * 640 / r.width  | 0));
-      msY = Math.max(0, Math.min(479, (e.clientY - r.top)  * 480 / r.height | 0));
+    // Pointer Lock — like QEMU: click the screen to "capture" the mouse (browser cursor hidden,
+    // movement goes only to TempleOS, which draws its OWN cursor). Press Esc to release.
+    let locked = false;
+    const btnBit = e => e.button === 0 ? 1 : e.button === 2 ? 2 : 0;   // left->ms.lb, right->ms.rb
+    canvas.addEventListener("click", () => { if (!locked) canvas.requestPointerLock(); });
+    document.addEventListener("pointerlockchange", () => {
+      locked = document.pointerLockElement === canvas;
+      tbKey.textContent = locked ? "captured — Esc to release" : "click to capture";
     });
-    canvas.addEventListener("mousedown", e => { msB |= (1 << e.button); canvas.focus(); });
-    canvas.addEventListener("mouseup",   e => { msB &= ~(1 << e.button); });
+    document.addEventListener("mousemove", e => {                       // relative movement while captured
+      if (!locked) return;
+      msX = Math.max(0, Math.min(639, msX + e.movementX));
+      msY = Math.max(0, Math.min(479, msY + e.movementY));
+    });
+    document.addEventListener("mousedown", e => { if (locked) { msB |= btnBit(e); e.preventDefault(); } });
+    document.addEventListener("mouseup",   e => { if (locked) { msB &= ~btnBit(e); e.preventDefault(); } });
     canvas.addEventListener("contextmenu", e => e.preventDefault());
-    addEventListener("keydown", e => { const s = SC[e.code]; if (s !== undefined) { keyq.push(s);        tbKey.textContent = e.code.replace(/^(Key|Digit)/,""); e.preventDefault(); } });
-    addEventListener("keyup",   e => { const s = SC[e.code]; if (s !== undefined) { keyq.push(s | 0x80); e.preventDefault(); } });
+    addEventListener("keydown", e => { if (!locked) return; const s = SC[e.code]; if (s !== undefined) { keyq.push(s);        e.preventDefault(); } });
+    addEventListener("keyup",   e => { if (!locked) return; const s = SC[e.code]; if (s !== undefined) { keyq.push(s | 0x80); e.preventDefault(); } });
 
     // ---- optional PC-speaker sound (square wave, started on first gesture) ----
     let actx = null, osc = null, gain = null;
@@ -184,12 +193,13 @@
     // Adaptive per-frame guest budget: the cursor redraws every display frame (smooth) while the
     // desktop re-composites as often as the budget allows. We keep frame time under ~33ms so the
     // display holds 30fps+, and spend any spare capacity on a higher composite rate.
-    let curBudget = 1000000;
+    let curBudget = 1000000, dtMs = 16;
     host.env.__host_msx = () => BigInt(msX);
     host.env.__host_msy = () => BigInt(msY);
     host.env.__host_msb = () => BigInt(msB);
     host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
     host.env.__host_budget = () => BigInt(curBudget | 0);
+    host.env.__host_dt = () => BigInt(dtMs | 0);    // real wall-clock ms/frame -> guest clock tracks real time
 
     const inst = await WebAssembly.instantiate(mod, { env: host.env });
     host.attach(inst);
@@ -197,15 +207,17 @@
 
     document.getElementById("restartBtn").addEventListener("click", () => location.reload());
 
-    let frames = 0, started = false, fpsT = performance.now(), fpsN = 0;
+    let frames = 0, started = false, fpsT = performance.now(), fpsN = 0, lastT = performance.now();
     function loop() {
+      const now = performance.now();
+      dtMs = Math.max(1, Math.min(100, now - lastT)); lastT = now;   // real time this frame represents
       const a = performance.now();
       try { inst.exports.__main(); }                 // one TempleOS frame (loads the snapshot on frame 0)
       catch (e) { setLoad("hemu trap: " + e.message); return; }
-      const dt = performance.now() - a;
-      if (dt > 33 && curBudget > 250000) curBudget = (curBudget * 0.80) | 0;        // protect 30fps
-      else if (dt < 22 && curBudget < 3000000) curBudget = (curBudget * 1.10) | 0;  // smoother desktop with spare
-      if (!started) { started = true; ld.style.display = "none"; snap = null; canvas.focus(); }
+      const work = performance.now() - a;            // compute cost; keep it under ~30ms to hold 30fps+
+      if (work > 30 && curBudget > 250000) curBudget = (curBudget * 0.85) | 0;
+      else if (work < 20 && curBudget < 4000000) curBudget = (curBudget * 1.10) | 0;
+      if (!started) { started = true; ld.style.display = "none"; snap = null; }
       frames++; fpsN++;
       if (performance.now() - fpsT > 500) {
         tbFps.textContent = (fpsN * 1000 / (performance.now() - fpsT)).toFixed(0) + " fps";

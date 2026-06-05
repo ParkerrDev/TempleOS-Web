@@ -78,6 +78,7 @@ host.env.__host_msy = () => BigInt(100 + (presentCount * 3) % 280);
 host.env.__host_msb = () => 0n;
 host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
 host.env.__host_budget = () => BigInt(process.env.BUDGET || 4000000);
+host.env.__host_dt = () => 33n;   // simulate a steady 30fps wall clock headless
 const prof = new Map();
 host.env.__host_prof = (rip) => { const b = Number(rip) >>> 14; prof.set(b, (prof.get(b) || 0) + 1); };
 
@@ -87,7 +88,7 @@ host.attach(inst);
 inst.exports.__rt_init();
 const t0 = performance.now();
 const ft = [];
-try { for (let i = 0; i < 120; i++) { const a = performance.now(); inst.exports.__main(); ft.push(performance.now() - a); } }   // __main runs ONE frame per call
+try { for (let i = 0; i < (+process.env.FRAMES||120); i++) { const a = performance.now(); inst.exports.__main(); ft.push(performance.now() - a); } }   // __main runs ONE frame per call
 catch (e) { console.log("WASM TRAP:", e.message); }
 const steady = ft.slice(5);                                     // skip warmup (frame 0 = snapshot load)
 const avg = steady.reduce((s, x) => s + x, 0) / steady.length;

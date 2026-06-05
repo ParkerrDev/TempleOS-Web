@@ -76,6 +76,7 @@ export function createHost(opts = {}) {
     // hemu input/pacing hooks — default stubs; real runners (snap-run, web/hemu.html) override env.*
     __host_msx() { return 0n; }, __host_msy() { return 0n; }, __host_msb() { return 0n; },
     __host_key() { return -1n; }, __host_budget() { return 1000000n; }, __host_prof(_rip) {},
+    __host_dt() { return 16n; },
 
     __snd(freq) { state.snd?.tone(freq); },
     __play_note(freq, ms) {

@@ -71,6 +71,7 @@ export const HOST_IMPORTS = {
   __host_msb:    { params: [], results: [I] },            // mouse button bits
   __host_key:    { params: [], results: [I] },            // next set-1 scancode, or <0 when drained
   __host_budget: { params: [], results: [I] },            // guest instructions to run this display frame
+  __host_dt:     { params: [], results: [I] },            // real wall-clock ms since last frame (for pacing)
   __host_prof:   { params: [I], results: [] },            // debug: sample rip for profiling
 
   __snd:         { params: [F], results: [] },           // freq Hz (0 = off)
