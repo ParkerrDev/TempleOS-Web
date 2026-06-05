@@ -391,9 +391,31 @@ U0 StrStep(I64 op, I64 sz)
 }
 U0 DoStr(I64 op, I64 sz)
 {
-  I64 cmpkind;
+  I64 cmpkind; U64 n, total, i;
   cmpkind = (op == 0xA6 || op == 0xA7 || op == 0xAE || op == 0xAF);   // SCAS/CMPS terminate on ZF
   if (!repf) { StrStep(op, sz); return; }
+  // Bulk fast path for REP MOVS/STOS (forward, flat) — TempleOS's MemCpy/MemSet are REP MOVSQ/STOSQ
+  // over large buffers; emulating them element-by-element through StrStep was the single biggest
+  // interpreter cost. Do them as one native copy/fill. (DF=0, no segment override, in-RAM only.)
+  if (g_segbase == 0 && !(rfl & F_DF) && reg[1] > 0) {
+    n = reg[1]; total = n * sz;
+    if (op == 0xA4 || op == 0xA5) {                                   // REP MOVS: copy RSI -> RDI
+      U64 s = reg[6], dt = reg[7];
+      if (s + total <= mem_size && dt + total <= mem_size) {
+        if (sz == 8) for (i = 0; i < n; i++) *(U64 *)(mem + dt + i * 8) = *(U64 *)(mem + s + i * 8);
+        else         for (i = 0; i < total; i++) mem[dt + i] = mem[s + i];
+        reg[6] = s + total; reg[7] = dt + total; reg[1] = 0; return;
+      }
+    } else if (op == 0xAA || op == 0xAB) {                            // REP STOS: fill RDI with AL/AX/EAX/RAX
+      U64 dt = reg[7], val = RdReg(0, sz);
+      if (dt + total <= mem_size) {
+        if      (sz == 8) for (i = 0; i < n; i++) *(U64 *)(mem + dt + i * 8) = val;
+        else if (sz == 1) for (i = 0; i < total; i++) mem[dt + i] = val;
+        else              for (i = 0; i < n; i++) WrMem(dt + i * sz, sz, val);
+        reg[7] = dt + total; reg[1] = 0; return;
+      }
+    }
+  }
   while (reg[1] != 0) {
     StrStep(op, sz);
     reg[1]--;
@@ -489,6 +511,7 @@ U64 IoIn(U64 port)
 U0 IoOut(U64 port, U64 v)
 {
   I64 i;
+  if (port >= 0x3B0 && port <= 0x3DF) return;          // VGA registers — framebuffer is HLE'd, ignore (skip the chain)
   v &= 0xFF;
   if (port == 0x64) {                                   // PS/2 controller command
     if (v == 0xD4) ms_next = 1;                          // next 0x60 byte -> mouse
