@@ -26,6 +26,7 @@ export function createHost(opts = {}) {
     onTick: opts.onTick || null,           // called before scan/sleep/yield (e.g. mouse mirror)
     present: opts.present || null,         // (addr,w,h,u8) => void — raw framebuffer blit (hemu)
     snapLoad: opts.snapLoad || null,       // (memBase,u8) => void — load a RAM snapshot (hemu)
+    diskRead: opts.diskRead || null,       // (lba,count,u8,dst) => void — stage disk sectors into guest mem (hemu ATA)
     hostIn: opts.hostIn || null,           // (port) => int
     hostOut: opts.hostOut || null,         // (port,val) => void
   };
@@ -71,6 +72,7 @@ export function createHost(opts = {}) {
     // by hemu to present its guest VGA/linear framebuffer to a canvas.
     __present(addr, w, h) { state.present?.(Number(addr), Number(w), Number(h), u8()); },
     __snap_load(base) { state.snapLoad?.(Number(base), u8()); },
+    __host_disk(lba, count, buf) { state.diskRead?.(Number(lba), Number(count), u8(), Number(buf)); },
     __host_in(port) { return BigInt(state.hostIn ? state.hostIn(Number(port)) | 0 : 0); },
     __host_out(port, val) { state.hostOut?.(Number(port), Number(val)); },
     // hemu input/pacing hooks — default stubs; real runners (snap-run, web/hemu.html) override env.*

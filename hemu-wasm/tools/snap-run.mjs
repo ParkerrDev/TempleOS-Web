@@ -20,6 +20,8 @@ console.log(`compiled snapshot.HC: ${r.bytes.length} bytes, ${r.warnings.length}
 // from a qemu migration stream.  A ".elf" is a core dump (PT_LOAD segments).
 const FLAT = ELF.endsWith(".bin");
 const fd = openSync(ELF, "r");
+const DISK = process.env.DISK || "/tmp/templeos.raw";       // raw C: image for ATA reads (qemu-img convert)
+let diskFd = null; try { diskFd = openSync(DISK, "r"); console.log(`[disk] ${DISK} attached`); } catch { console.log(`[disk] none (${DISK})`); }
 const segs = [];
 if (!FLAT) {
   const eh = Buffer.alloc(64); readSync(fd, eh, 0, 64, 0);
@@ -52,6 +54,12 @@ const host = createHost({
     }
     console.log(`[snapLoad] ${(loaded / 1048576).toFixed(0)}MB into guest RAM (base ${base}, ${FLAT?"flat":"elf"})`);
   },
+  diskRead: (lba, count, u8, dst) => {                      // ATA PIO: stage real C: sectors into guest mem
+    if (!diskFd) return;
+    const n = count * 512, b = Buffer.alloc(n);
+    readSync(diskFd, b, 0, n, lba * 512);
+    u8.set(b, dst);
+  },
   present: (addr, w, h, u8) => {
     const ppm = Buffer.alloc(w * h * 3);
     for (let i = 0; i < w * h; i++) { const c = u8[addr + i] & 15; const [r2, g, b] = PALETTE[c]; ppm[i*3]=r2; ppm[i*3+1]=g; ppm[i*3+2]=b; }
@@ -73,7 +81,7 @@ const host = createHost({
 // Host-driven input (snapshot.HC pulls these each frame). Headless: synthetic cursor sweep +
 // a '1' keystroke (set-1 make 0x02 / break 0x82) every 8 frames, to prove cursor + keyboard echo.
 const keyq = [];
-host.env.__host_msx = () => { const f = presentCount; if (f % 8 === 2) keyq.push(0x02); if (f % 8 === 3) keyq.push(0x82); return BigInt(60 + (f * 4) % 520); };
+host.env.__host_msx = () => { const f = presentCount; if (!process.env.NOKEYS && f % 8 === 2) keyq.push(0x02); if (!process.env.NOKEYS && f % 8 === 3) keyq.push(0x82); return BigInt(60 + (f * 4) % 520); };
 host.env.__host_msy = () => BigInt(100 + (presentCount * 3) % 280);
 host.env.__host_msb = () => 0n;
 host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;

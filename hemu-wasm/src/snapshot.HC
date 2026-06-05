@@ -115,6 +115,10 @@ U0 Main()                              // host calls __main once per display fra
     g_capture_rip = 0x119b828f;        // GrUpdateScrn, instr after the cursor call returns — dc2 complete + cursor
     g_skip_c4  = 0x119e2529;           // DCBlotColor4 — dead VGA planar path (we present dc2); skip its body
     g_skip_vga = 0x116536e0;           // GrUpdateVGAGraphics — likewise dead; skip both to refresh faster
+    g_hooktbl[g_hle_blit & 0xFF] = 1;  // gate the per-instruction hook compares (Step reads g_hooktbl[rip&0xFF])
+    g_hooktbl[g_capture_rip & 0xFF] = 1;
+    g_hooktbl[g_skip_c4 & 0xFF] = 1;
+    g_hooktbl[g_skip_vga & 0xFF] = 1;
     g_jiffies0 = *(U64*)(mem + 0xBD98); // base jiffies; the RTC clock = base + (jiffies-base)/1000 sec
     g_inited = 1;                       // (pit_div/tsc_rate/hpet are set per-frame by Frame() for wall-clock pacing)
   }

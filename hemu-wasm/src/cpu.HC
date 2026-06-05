@@ -32,6 +32,8 @@ U64 g_capture_rip;
 U64 g_skip_c4, g_skip_vga;           // DCBlotColor4 (4 args) + GrUpdateVGAGraphics (0 args): the dc2->dc1->VGA
                                      // planar path. We present dc2 directly, so this output is dead — skip both
                                      // function bodies (just pop args + return) to refresh faster -> smoother cursor.
+U8 g_hooktbl[256];                   // rip&0xFF -> "maybe a special address" gate: lets Step() skip the four
+                                     // 64-bit hook compares for the ~98% of instructions that aren't at one.
 U64 g_hpet_rate, g_jiffies0;         // wall-clock pacing: HPET ticks/instr, and the snapshot's base jiffies
 U64 g_badop;
 // system state: control regs, descriptor tables, MSRs, TSC, code/stack segments
@@ -138,7 +140,7 @@ U0 WrMem(U64 a, I64 sz, U64 v)
 
 //---------------------------------------------------------------- fetch / imm
 U64 Fetch8()  { U64 b = mem[rip]; rip++; return b; }
-U64 Fetch32() { U64 v = RdMem(rip, 4); rip += 4; return v; }
+U64 Fetch32() { U64 v = *(U32 *)(mem + rip); rip += 4; return v; }   // rip is always code in RAM — skip RdMem's MMIO check
 U64 Fetch64() { U64 v = RdMem(rip, 8); rip += 8; return v; }
 I64 SignExt8(U64 b)  { b &= 0xFF;       if (b & 0x80)       return b - 0x100;       return b; }
 I64 SignExt32(U64 v) { v &= 0xFFFFFFFF; if (v & 0x80000000) return v - 0x100000000; return v; }
@@ -265,7 +267,7 @@ U0 DecodeModRM(I64 immlen = 0)
 {
   U64 b, sib, addr = 0;
   I64 base_rm, ss, idxf, idx, bs;
-  b = Fetch8();
+  b = mem[rip]; rip++;                  // inline Fetch8 (no inlining in the compiler; this is per-modrm hot)
   md = (b >> 6) & 3;
   rg = ((b >> 3) & 7) | (rexR << 3);
   base_rm = b & 7;
@@ -563,6 +565,20 @@ U0 IoOut(U64 port, U64 v)
     if (pit_wlo) { pit_reload = v; pit_wlo = 0; }
     else { pit_reload |= (v << 8); pit_div = pit_reload; if (!pit_div) pit_div = 65536; pit_counter = pit_div; pit_wlo = 1; }
   }
+}
+// String I/O (INS/OUTS, +REP). The ATA PIO data port (0x1F0) flows through these for REP INSW disk
+// reads — IoIn returns blank-disk zeros, so the read completes instead of deadlocking the poller.
+U0 DoIns(I64 sz)                                          // INS: [RDI] <- port DX
+{
+  I64 d; if (rfl & F_DF) d = -sz; else d = sz;
+  if (!repf) { WrMem(reg[7], sz, IoIn(reg[2] & 0xFFFF)); reg[7] += d; return; }
+  while (reg[1] != 0) { WrMem(reg[7], sz, IoIn(reg[2] & 0xFFFF)); reg[7] += d; reg[1]--; }
+}
+U0 DoOuts(I64 sz)                                         // OUTS: port DX <- [RSI]
+{
+  I64 d; if (rfl & F_DF) d = -sz; else d = sz;
+  if (!repf) { IoOut(reg[2] & 0xFFFF, RdMem(reg[6], sz)); reg[6] += d; return; }
+  while (reg[1] != 0) { IoOut(reg[2] & 0xFFFF, RdMem(reg[6], sz)); reg[6] += d; reg[1]--; }
 }
 U0 CheckIrq()                                            // deliver one pending, unmasked IRQ
 {
@@ -940,23 +956,25 @@ U0 Step()
   U64 op, a, b, r, cf;
   I64 sz, d, opn, r2, imm;
 
-  if (rip == g_hle_blit) { HleBlit(); return; }   // native fast-path for the dominant compositor blit
-  if (rip == g_capture_rip) CaptureDesk();        // grab the finished frame (incl. native cursor) tear-free
-  if (rip == g_skip_c4)  { rip = RdMem(reg[4], 8); reg[4] += 8 + 32; return; }  // skip DCBlotColor4 (4 args)
-  if (rip == g_skip_vga) { rip = RdMem(reg[4], 8); reg[4] += 8;      return; }  // skip GrUpdateVGAGraphics
+  if (g_hooktbl[rip & 0xFF]) {                     // gate: only ~1.5% of rips need the four hook compares
+    if (rip == g_hle_blit) { HleBlit(); return; }   // native fast-path for the dominant compositor blit
+    if (rip == g_capture_rip) CaptureDesk();        // grab the finished frame (incl. native cursor) tear-free
+    if (rip == g_skip_c4)  { rip = RdMem(reg[4], 8); reg[4] += 8 + 32; return; }  // skip DCBlotColor4 (4 args)
+    if (rip == g_skip_vga) { rip = RdMem(reg[4], 8); reg[4] += 8;      return; }  // skip GrUpdateVGAGraphics
+  }
   pfx66 = 0; repf = 0; hasRex = 0; rexW = 0; rexR = 0; rexX = 0; rexB = 0; g_segbase = 0;
-  op = Fetch8();
+  op = mem[rip]; rip++;
   while (g_pfx[op]) {                                  // legacy prefixes (one table lookup, not 11 compares)
     if (op == 0x66) pfx66 = 1;
     else if (op == 0xF3) repf = 1;
     else if (op == 0xF2) repf = 2;
     else if (op == 0x64) g_segbase = msr_fsbase;   // FS:
     else if (op == 0x65) g_segbase = msr_gsbase;   // GS:
-    op = Fetch8();                                  // (0xF0 LOCK ignored: single vCPU)
+    op = mem[rip]; rip++;                                  // (0xF0 LOCK ignored: single vCPU)
   }
   if (op >= 0x40 && op <= 0x4F) {
     hasRex = 1; rexW = (op >> 3) & 1; rexR = (op >> 2) & 1; rexX = (op >> 1) & 1; rexB = op & 1;
-    op = Fetch8();
+    op = mem[rip]; rip++;
   }
   if (rexW) sz = 8; else if (pfx66) sz = 2; else sz = 4;
 
@@ -968,11 +986,11 @@ U0 Step()
   if (op < 0x40 && (op & 7) == 4) { opn = (op >> 3) & 7; b = Fetch8();        a = RdReg(0, 1);  r = Arith(opn, a, b, 1);  if (opn != 7) WrReg(0, 1, r);  return; }  // ALU AL, imm8
   if (op < 0x40 && (op & 7) == 5) { opn = (op >> 3) & 7; b = FetchImm(sz);    a = RdReg(0, sz); r = Arith(opn, a, b, sz); if (opn != 7) WrReg(0, sz, r); return; }  // ALU eAX, imm
 
-  // hot-path: MOV dominates render/blit loops — handle before the long opcode switch
-  if (op == 0x89) { DecodeModRM(); WrRM(sz, RdReg(rg, sz)); return; }   // MOV r/m, r
-  if (op == 0x8B) { DecodeModRM(); WrReg(rg, sz, RdRM(sz)); return; }   // MOV r, r/m
-  if (op == 0x88) { DecodeModRM(); WrRM(1, RdReg(rg, 1)); return; }     // MOV r/m8, r8
-  if (op == 0x8A) { DecodeModRM(); WrReg(rg, 1, RdRM(1)); return; }     // MOV r8, r/m8
+  // hot-path: MOV dominates render/blit loops — handle before the long opcode switch (RdRM/WrRM inlined)
+  if (op == 0x89) { DecodeModRM(); if (isMem) WrMem(ea, sz, RdReg(rg, sz)); else WrReg(rm, sz, RdReg(rg, sz)); return; }  // MOV r/m, r
+  if (op == 0x8B) { DecodeModRM(); WrReg(rg, sz, isMem ? RdMem(ea, sz) : RdReg(rm, sz)); return; }                        // MOV r, r/m
+  if (op == 0x88) { DecodeModRM(); if (isMem) WrMem(ea, 1, RdReg(rg, 1)); else WrReg(rm, 1, RdReg(rg, 1)); return; }      // MOV r/m8, r8
+  if (op == 0x8A) { DecodeModRM(); WrReg(rg, 1, isMem ? RdMem(ea, 1) : RdReg(rm, 1)); return; }                          // MOV r8, r/m8
 
   switch (op) {
     case 0x90: break;
@@ -1055,6 +1073,10 @@ U0 Step()
     case 0x99: if (rexW) { if (reg[0] >> 63) reg[2] = 0xFFFFFFFFFFFFFFFF; else reg[2] = 0; }  // CQO
                else { if (reg[0] & 0x80000000) WrReg(2, 4, 0xFFFFFFFF); else WrReg(2, 4, 0); } break; // CDQ
 
+    case 0x6C: DoIns(1); break;                   // INSB  [RDI] <- DX
+    case 0x6D: DoIns(sz == 2 ? 2 : 4); break;     // INSW/INSD (ATA PIO sector reads land here)
+    case 0x6E: DoOuts(1); break;                  // OUTSB DX <- [RSI]
+    case 0x6F: DoOuts(sz == 2 ? 2 : 4); break;    // OUTSW/OUTSD
     case 0xA4: DoStr(0xA4, 1);  break;
     case 0xA5: DoStr(0xA5, sz); break;
     case 0xAA: DoStr(0xAA, 1);  break;
