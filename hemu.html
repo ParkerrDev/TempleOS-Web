@@ -121,6 +121,17 @@
     const tbFps = document.getElementById("tb-fps"), tbKey = document.getElementById("tb-key");
     const setLoad = (s, pct) => { ldtext.textContent = s; if (pct != null) ldbar.style.width = pct + "%"; };
 
+    // palettize an 8-bit indexed frame into the canvas; firstFrame() reveals it once TempleOS is up
+    let blitCount = 0;                                           // shown frames since last fps tick (both engines)
+    function blit(idx, w, h) { const n = Math.min(w * h, out32.length); for (let i = 0; i < n; i++) out32[i] = pal32[idx[i] & 15]; ctx.putImageData(img, 0, 0); blitCount++; }
+    let started = false;
+    function firstFrame() { if (started) return; started = true; ld.style.display = "none"; }
+    let notifyInput = () => {};                                  // multi-core engine overrides this to forward input
+    let engineLabel = "…";
+    const FIXED_B = +((new URLSearchParams(location.search)).get("b")) || 0;   // ?b=1500000 pins the guest budget (debug/sweep)
+    { let t0 = performance.now();                                // single source of truth for the on-screen FPS (shown frames/s)
+      setInterval(() => { const n = performance.now(); tbFps.textContent = `${(blitCount * 1000 / (n - t0)).toFixed(0)} fps · ${engineLabel}`; blitCount = 0; t0 = n; }, 500); }
+
     // ---- input: a host-owned cursor + a set-1 scancode queue, pulled by snapshot.HC each frame ----
     let msX = 320, msY = 240, msB = 0;
     const keyq = [];
@@ -148,12 +159,13 @@
       if (!locked) return;
       msX = Math.max(0, Math.min(639, msX + e.movementX));
       msY = Math.max(0, Math.min(479, msY + e.movementY));
+      notifyInput();
     });
-    document.addEventListener("mousedown", e => { if (locked) { msB |= btnBit(e); e.preventDefault(); } });
-    document.addEventListener("mouseup",   e => { if (locked) { msB &= ~btnBit(e); e.preventDefault(); } });
+    document.addEventListener("mousedown", e => { if (locked) { msB |= btnBit(e); e.preventDefault(); notifyInput(); } });
+    document.addEventListener("mouseup",   e => { if (locked) { msB &= ~btnBit(e); e.preventDefault(); notifyInput(); } });
     canvas.addEventListener("contextmenu", e => e.preventDefault());
-    addEventListener("keydown", e => { if (!locked) return; const s = SC[e.code]; if (s !== undefined) { keyq.push(s);        e.preventDefault(); } });
-    addEventListener("keyup",   e => { if (!locked) return; const s = SC[e.code]; if (s !== undefined) { keyq.push(s | 0x80); e.preventDefault(); } });
+    addEventListener("keydown", e => { if (!locked) return; const s = SC[e.code]; if (s !== undefined) { keyq.push(s);        e.preventDefault(); notifyInput(); } });
+    addEventListener("keyup",   e => { if (!locked) return; const s = SC[e.code]; if (s !== undefined) { keyq.push(s | 0x80); e.preventDefault(); notifyInput(); } });
 
     // ---- optional PC-speaker sound (square wave, started on first gesture) ----
     let actx = null, osc = null, gain = null;
@@ -172,61 +184,75 @@
     const total = +(gz.headers.get("content-length") || 5222517);
     const reader = gz.body.getReader(); const chunks = []; let got = 0;
     for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.length; setLoad(`downloading snapshot… ${(got/1048576).toFixed(1)} MB`, 5 + 45 * got / total); }
-    setLoad("decompressing snapshot (→ 384 MB)…", 55);
-    const gzBlob = new Blob(chunks);
-    let snap = new Uint8Array(await new Response(gzBlob.stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
-
-    // ---- compile + instantiate the HolyC emulator (createHost = the proven Node/browser host:
-    //      its __malloc grows WASM memory to fit the 384 MB guest RAM) ----
-    setLoad("starting hemu (HolyC → WASM x86-64 core)…", 80);
-    const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm")).arrayBuffer());
-    const host = createHost({
-      onText: () => {},
-      snd: { tone: (f) => snd(Number(f)) },
-      snapLoad: (base, u8) => { u8.set(snap, base); },
-      present: (addr, w, h, u8) => {
-        const n = Math.min(w * h, out32.length);
-        for (let i = 0; i < n; i++) out32[i] = pal32[u8[addr + i] & 15];
-        ctx.putImageData(img, 0, 0);
-      },
-    });
-    // Adaptive per-frame guest budget: the cursor redraws every display frame (smooth) while the
-    // desktop re-composites as often as the budget allows. We keep frame time under ~33ms so the
-    // display holds 30fps+, and spend any spare capacity on a higher composite rate.
-    let curBudget = 1000000, dtMs = 16;
-    host.env.__host_msx = () => BigInt(msX);
-    host.env.__host_msy = () => BigInt(msY);
-    host.env.__host_msb = () => BigInt(msB);
-    host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
-    host.env.__host_budget = () => BigInt(curBudget | 0);
-    host.env.__host_dt = () => BigInt(dtMs | 0);    // real wall-clock ms/frame -> guest clock tracks real time
-
-    const inst = await WebAssembly.instantiate(mod, { env: host.env });
-    host.attach(inst);
-    inst.exports.__rt_init();
+    const gzBytes = await new Blob(chunks).arrayBuffer();   // keep the 5 MB gz; each engine decompresses to 384 MB itself
 
     document.getElementById("restartBtn").addEventListener("click", () => location.reload());
 
-    let frames = 0, started = false, fpsT = performance.now(), fpsN = 0, lastT = performance.now();
-    function loop() {
-      const now = performance.now();
-      dtMs = Math.max(1, Math.min(100, now - lastT)); lastT = now;   // real time this frame represents
-      const a = performance.now();
-      try { inst.exports.__main(); }                 // one TempleOS frame (loads the snapshot on frame 0)
-      catch (e) { setLoad("hemu trap: " + e.message); return; }
-      const work = performance.now() - a;            // compute cost; keep it under ~30ms to hold 30fps+
-      if (work > 30 && curBudget > 250000) curBudget = (curBudget * 0.85) | 0;
-      else if (work < 20 && curBudget < 4000000) curBudget = (curBudget * 1.10) | 0;
-      if (!started) { started = true; ld.style.display = "none"; snap = null; }
-      frames++; fpsN++;
-      if (performance.now() - fpsT > 500) {
-        tbFps.textContent = (fpsN * 1000 / (performance.now() - fpsT)).toFixed(0) + " fps";
-        fpsT = performance.now(); fpsN = 0;
+    // ---- engine: prefer the MULTI-CORE worker (emulate on a 2nd core, palettize+blit here on the
+    //      main thread). The in-line single-thread loop is the proven fallback if module workers are
+    //      unavailable or the worker fails to produce frames. ----
+    function runWorker() {
+      let worker, watchdog, alive = false;
+      try { worker = new Worker("./hemu-worker.js", { type: "module" }); } catch (e) { return false; }
+      engineLabel = "2 cores";
+      notifyInput = () => worker?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, keys: keyq.splice(0) });
+      const fallback = (why) => {
+        if (!worker) return;
+        clearTimeout(watchdog); try { worker.terminate(); } catch {} worker = null; notifyInput = () => {};
+        console.warn("hemu: multi-core engine failed (" + why + ") — falling back to single core");
+        runInline();
+      };
+      worker.onerror = (e) => fallback(e.message || "worker error");
+      worker.onmessage = (e) => {
+        if (!worker) return;
+        const m = e.data;
+        if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h); worker.postMessage({ cmd: "ack" }); alive = true; firstFrame(); }
+        else if (m.cmd === "snd") snd(m.f);
+        else if (m.cmd === "progress") setLoad(m.text, m.pct);
+        else if (m.cmd === "error") fallback(m.msg);
+      };
+      worker.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: "./hemu-wasm/snapshot.wasm", fixedB: FIXED_B });   // gz cloned; main keeps its copy
+      watchdog = setTimeout(() => { if (!alive) fallback("no frame in 10s"); }, 10000);
+      return true;
+    }
+
+    async function runInline() {
+      setLoad("decompressing snapshot (→ 384 MB)…", 55);
+      let snap = new Uint8Array(await new Response(new Blob([gzBytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+      setLoad("starting hemu (HolyC → WASM x86-64 core)…", 85);
+      const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm")).arrayBuffer());
+      engineLabel = "1 core";
+      let curBudget = FIXED_B || 1500000, dtMs = 16;
+      const host = createHost({
+        onText: () => {}, snd: { tone: (f) => snd(Number(f)) },
+        snapLoad: (base, u8) => { u8.set(snap, base); },
+        present: (addr, w, h, u8) => blit(u8.subarray(addr, addr + w * h), w, h),
+      });
+      host.env.__host_msx = () => BigInt(msX); host.env.__host_msy = () => BigInt(msY); host.env.__host_msb = () => BigInt(msB);
+      host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
+      host.env.__host_budget = () => BigInt(curBudget | 0);
+      host.env.__host_dt = () => BigInt(dtMs | 0);            // real wall-clock ms/frame -> guest clock tracks real time
+      const inst = await WebAssembly.instantiate(mod, { env: host.env });
+      host.attach(inst); inst.exports.__rt_init();
+      let lastT = performance.now();
+      function loop() {
+        const now = performance.now();
+        dtMs = Math.max(1, Math.min(100, now - lastT)); lastT = now;
+        try { inst.exports.__main(); } catch (e) { setLoad("hemu trap: " + e.message); return; }
+        const work = performance.now() - now;              // keep work just under one display frame so RAF holds ~60fps
+        if (!FIXED_B) {                                     // size the budget to ~one composite/frame (no wasted re-composites)
+          if (work > 15 && curBudget > 900000) curBudget = (curBudget * 0.90) | 0;
+          else if (work < 11 && curBudget < 2500000) curBudget = (curBudget * 1.07) | 0;
+        }
+        firstFrame(); snap = null;                          // snapshot loaded on frame 0 -> free the 384 MB copy
+        requestAnimationFrame(loop);
       }
+      setLoad("starting TempleOS…", 100);
       requestAnimationFrame(loop);
     }
-    setLoad("starting TempleOS…", 100);
-    requestAnimationFrame(loop);
+
+    // multi-core by default; ?single forces the in-line single-thread engine (for comparison/debug)
+    if (location.search.includes("single") || !runWorker()) runInline();
   </script>
 </body>
 </html>
