@@ -84,10 +84,6 @@ U0 InjectMouse(I64 b0, I64 b1, I64 b2) { ms_byte0=b0; ms_byte1=b1; ms_byte2=b2; 
 U64 hpet_ctr;                        // synthetic HPET main counter (monotonic)
 U64 lapic_base;                      // discovered base of the LAPIC uncached alias (page-aligned)
 U64 hpet_base;                       // discovered base of the HPET alias
-U64 g_hpet_srip, g_hpet_sic, g_hpet_spin;  // HPET busy-wait fast-forward: TempleOS delays by spinning on the
-                                     // HPET counter; tied to instr count that spins for millions of instrs and
-                                     // freezes the UI. When the SAME instr re-reads the counter in a tight loop,
-                                     // accelerate it (quadratically) so the delay completes in a few reads.
 
 #define F_CF 0x0001
 #define F_PF 0x0004
@@ -115,13 +111,7 @@ U64 MmioRd(U64 a, I64 sz)
   off = a & 0xFFF;
   if (off == 0x20)  return 0;                 // LAPIC APIC_ID -> CPU 0
   if (off == 0x30)  return 0x50014;           // LAPIC version
-  if (off == 0xF0) {                          // HPET main counter (lo) — also LAPIC SVR read
-    if (rip == g_hpet_srip && (icount - g_hpet_sic) < 64) {   // same instr re-reading in a tight spin = a delay loop
-      g_hpet_spin++; hpet_ctr += g_hpet_spin << 6;            // accelerate (quadratic) so the delay ends in a few reads
-    } else g_hpet_spin = 0;
-    g_hpet_srip = rip; g_hpet_sic = icount;
-    return hpet_ctr;
-  }
+  if (off == 0xF0)  return hpet_ctr;          // HPET main counter (lo) — also LAPIC SVR read
   if (off == 0xF4 || off == 0xF8) return hpet_ctr >> 32;  // HPET main counter (hi)
   return 0;
 }
@@ -1056,7 +1046,7 @@ U0 Step()
     case 0x89: DecodeModRM(); WrRM(sz, RdReg(rg, sz)); break;     // MOV r/m, r
     case 0x8B: DecodeModRM(); WrReg(rg, sz, RdRM(sz)); break;     // MOV r, r/m
     case 0xC6: DecodeModRM(1); WrRM(1, Fetch8()); break;          // MOV r/m8, imm8
-    case 0xC7: DecodeModRM(4); imm = SignExt32(Fetch32()); WrRM(sz, imm); break;  // MOV r/m, imm32
+    case 0xC7: DecodeModRM(sz == 2 ? 2 : 4); imm = FetchImm(sz); WrRM(sz, imm); break;  // MOV r/m, imm (imm16 w/ 0x66, else imm32)
     case 0x8D: DecodeModRM(); WrReg(rg, sz, ea); break;          // LEA
     case 0x63: DecodeModRM(); WrReg(rg, sz, SignExtTo64(RdRM(4), 4)); break;     // MOVSXD r64, r/m32
     case 0x87: DecodeModRM(); a = RdRM(sz); WrRM(sz, RdReg(rg, sz)); WrReg(rg, sz, a); break;  // XCHG r/m, r
