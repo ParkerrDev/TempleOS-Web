@@ -773,13 +773,25 @@ U0 OpX87(U64 op)
       else if (sti == 3) FPush(3.14159265358979324); else if (sti == 4) FPush(0.30102999566398120);
       else if (sti == 5) FPush(0.69314718055994531); else if (sti == 6) FPush(0.0);
     }
-    else if (sub == 6) {                                             // F2XM1/FYL2X/FDECSTP/FINCSTP (float->string magnitude)
+    else if (sub == 6) {                                             // F2XM1/FYL2X/FPTAN/FPATAN/FXTRACT/FDECSTP/FINCSTP
       if (sti == 0) FStset(0, __pow(2.0, FStv(0)) - 1.0);                                      // F2XM1: 2^ST0 - 1
       else if (sti == 1) { r = FStv(1) * __log(FStv(0)) * 1.44269504088896341; FPopv(); FStset(0, r); }  // FYL2X: ST1*=log2(ST0), pop
+      else if (sti == 2) { FStset(0, __tan(FStv(0))); FPush(1.0); }                            // FPTAN: ST0=tan, push 1.0
+      else if (sti == 3) { r = __atan2(FStv(1), FStv(0)); FPopv(); FStset(0, r); }             // FPATAN: ST1=atan2(ST1,ST0), pop
+      else if (sti == 4) { a = FStv(0); if (a == 0.0) { FStset(0, 0.0); FPush(0.0); } else { b = a; if (b < 0) b = -b; bcd_i = F64ToInt(__log(b) * 1.44269504088896341); if (IntToF64(bcd_i) > __log(b) * 1.44269504088896341) bcd_i--; FStset(0, IntToF64(bcd_i)); FPush(a / __pow(2.0, IntToF64(bcd_i))); } }  // FXTRACT
       else if (sti == 6) fsp = (fsp - 1) & 7;                                                  // FDECSTP
       else if (sti == 7) fsp = (fsp + 1) & 7;                                                  // FINCSTP
     }
-    else if (sub == 7) { if (sti == 2) FStset(0, SqrtF64(FStv(0))); else if (sti == 4) FStset(0, IntToF64(RoundI(FStv(0)))); else if (sti == 5) FStset(0, FStv(0) * __pow(2.0, IntToF64(F64ToInt(FStv(1))))); else if (sti == 6) FStset(0, __sin(FStv(0))); else if (sti == 7) FStset(0, __cos(FStv(0))); }  // FSQRT/FRNDINT/FSCALE/FSIN/FCOS
+    else if (sub == 7) {                                            // FPREM/FYL2XP1/FSQRT/FSINCOS/FRNDINT/FSCALE/FSIN/FCOS
+      if (sti == 0) { a = FStv(0); b = FStv(1); FStset(0, a - IntToF64(F64ToInt(a / b)) * b); }  // FPREM: ST0 %= ST1
+      else if (sti == 1) { r = FStv(1) * __log(FStv(0) + 1.0) * 1.44269504088896341; FPopv(); FStset(0, r); }  // FYL2XP1
+      else if (sti == 2) FStset(0, SqrtF64(FStv(0)));                                          // FSQRT
+      else if (sti == 3) { a = FStv(0); FStset(0, __sin(a)); FPush(__cos(a)); }                // FSINCOS
+      else if (sti == 4) FStset(0, IntToF64(RoundI(FStv(0))));                                 // FRNDINT
+      else if (sti == 5) FStset(0, FStv(0) * __pow(2.0, IntToF64(F64ToInt(FStv(1)))));         // FSCALE
+      else if (sti == 6) FStset(0, __sin(FStv(0)));                                            // FSIN
+      else if (sti == 7) FStset(0, __cos(FStv(0)));                                            // FCOS
+    }
   } else if (op == 0xD8) {
     a = FStv(0); b = FStv(sti);
     if (sub == 2 || sub == 3) { FCmpSW(a, b); if (sub == 3) FPopv(); }
@@ -994,11 +1006,12 @@ U0 HleBlit()
 
 // Snapshot the COMPLETE composited frame (desktop + the OS's own mouse cursor, which GrUpdateScrn has
 // just drawn) into g_desk, so Present() shows the native cursor and never a torn mid-render frame.
-U0 CaptureDesk()
+U0 CaptureFrom(U64 bd)                               // grab a 640x480 8-bit frame at `bd` into g_desk
 {
-  U64 bd = RdMem(0x119ad3d8 + 0x180, 8); I64 k;     // gr.dc2->body
+  I64 k;
   if (bd && bd + 307200 <= mem_size) { for (k = 0; k < 307200; k++) g_desk[k] = mem[bd + k]; g_desk_ready = 1; }
 }
+U0 CaptureDesk() { CaptureFrom(RdMem(0x119ad3d8 + 0x180, 8)); }   // gr.dc2->body
 
 U0 Step()
 {
@@ -1008,7 +1021,7 @@ U0 Step()
   if (g_hooktbl[rip & 0xFF]) {                     // gate: only ~1.5% of rips need the four hook compares
     if (rip == g_hle_blit) { HleBlit(); return; }   // native fast-path for the dominant compositor blit
     if (rip == g_capture_rip) CaptureDesk();        // grab the finished frame (incl. native cursor) tear-free
-    if (rip == g_skip_c4)  { rip = RdMem(reg[4], 8); reg[4] += 8 + 32; return; }  // skip DCBlotColor4 (4 args)
+    if (rip == g_skip_c4)  { CaptureFrom(RdMem(reg[4] + 16, 8)); rip = RdMem(reg[4], 8); reg[4] += 8 + 32; return; }  // capture DCBlotColor4's src (the real VGA-bound frame, desktop OR fullscreen game) then skip
     if (rip == g_skip_vga) { rip = RdMem(reg[4], 8); reg[4] += 8;      return; }  // skip GrUpdateVGAGraphics
   }
   pfx66 = 0; repf = 0; hasRex = 0; rexW = 0; rexR = 0; rexX = 0; rexB = 0; g_segbase = 0;
