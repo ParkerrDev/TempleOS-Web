@@ -985,7 +985,7 @@ U0 Op0F()
     case 0xA5: DecodeModRM(); DoShld(1, RdReg(rg, sz), RdReg(1, 1), sz); break;  // SHLD r/m,r,CL
     case 0xAC: DecodeModRM(); DoShld(0, RdReg(rg, sz), Fetch8(), sz); break;     // SHRD r/m,r,imm8
     case 0xAD: DecodeModRM(); DoShld(0, RdReg(rg, sz), RdReg(1, 1), sz); break;  // SHRD r/m,r,CL
-    default: g_badop = 0x0F00 | op2; halted = 2; break;
+    default: g_badop = 0x0F00 | op2; halted = 2; "BADOP0F op2=%X rip=%X\n", op2, rip; break;
   }
 }
 
@@ -1021,7 +1021,7 @@ U0 Step()
   if (g_hooktbl[rip & 0xFF]) {                     // gate: only ~1.5% of rips need the four hook compares
     if (rip == g_hle_blit) { HleBlit(); return; }   // native fast-path for the dominant compositor blit
     if (rip == g_capture_rip) CaptureDesk();        // grab the finished frame (incl. native cursor) tear-free
-    if (rip == g_skip_c4)  { CaptureFrom(RdMem(reg[4] + 16, 8)); rip = RdMem(reg[4], 8); reg[4] += 8 + 32; return; }  // capture DCBlotColor4's src (the real VGA-bound frame, desktop OR fullscreen game) then skip
+    if (rip == g_skip_c4)  { rip = RdMem(reg[4], 8); reg[4] += 8 + 32; return; }  // skip DCBlotColor4 (4 args)
     if (rip == g_skip_vga) { rip = RdMem(reg[4], 8); reg[4] += 8;      return; }  // skip GrUpdateVGAGraphics
   }
   pfx66 = 0; repf = 0; hasRex = 0; rexW = 0; rexR = 0; rexX = 0; rexB = 0; g_segbase = 0;
@@ -1189,7 +1189,7 @@ U0 Step()
     case 0xCD: d = Fetch8(); DoInt(d, 0, 0); break;                 // INT n
     case 0xCF: DoIret(); break;                                     // IRETQ
 
-    default: g_badop = op; halted = 2; break;
+    default: g_badop = op; halted = 2; "BADOP op=%X rip=%X b=%X %X %X %X\n", op, rip, mem[rip-2], mem[rip-1], mem[rip], mem[rip+1]; break;
   }
 }
 

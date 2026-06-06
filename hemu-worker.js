@@ -31,7 +31,7 @@ async function boot({ gz, wasmUrl, fixedB }) {
   loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => disk = d).catch(() => disk = null);
 
   const host = createHost({
-    onText: () => {},
+    onText: (s) => { if (s && s.indexOf("BADOP") >= 0) console.log("[hemu]", s.trim()); },
     snd: { tone: (f) => postMessage({ cmd: "snd", f: Number(f) }) },   // AudioContext lives on the main thread
     snapLoad: (base, u8) => { u8.set(snap, base); },
     diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },   // ATA -> real C: sectors
