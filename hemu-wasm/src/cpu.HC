@@ -1247,7 +1247,7 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
     // (safe: a spin-acquire holds nothing yet) so the scheduler runs the holder and the lock frees.
     else if ((pic1_irr & 1) && !(pic1_mask & 1)) { irq_stall++;
       if (irq_stall > 2000000) { irq_stall = 0; rfl |= F_IF; CheckIrq(); } }
-    else irq_stall = 0;
+    else irq_stall = 0;                                                       // deadlock watchdog
   }
 }
 

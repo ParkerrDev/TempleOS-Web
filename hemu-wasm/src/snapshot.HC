@@ -58,8 +58,15 @@ U0 WakeTasks()                          // make every scheduler task ready so th
   U64 head = *(U64 *)(mem + 0x15F8C060); // CCPU+0x38 = scheduler ring head
   U64 t = head; I64 n = 0;
   while (n < 24) {
-    *(U64 *)(mem + t + 0x18) &= ~0x204;  // clear AWAITING_MSG / suspend skip-bits
-    *(U64 *)(mem + t + 0x10) = 0;        // wake_jiffy = now
+    // Skip a task suspended waiting on its own PopUp (master->popup_task @ +0x450 != 0). PopUp(parent)
+    // uses TaskExe(WAKE_MASTER), which SUSPENDS the master until the popup's job (e.g. a game launched
+    // from the Ctrl+M menu) finishes. Force-waking it makes TaskExe return early -> JobResScan sees the
+    // job unfinished -> PopUp Kills the still-running servant -> the game never appears. Leaving these
+    // suspended lets the popup run to completion, exactly as on real hardware.
+    if (!*(U64 *)(mem + t + 0x450)) {
+      *(U64 *)(mem + t + 0x18) &= ~0x204; // clear AWAITING_MSG / suspend skip-bits
+      *(U64 *)(mem + t + 0x10) = 0;       // wake_jiffy = now
+    }
     t = *(U64 *)(mem + t + 0x80); n++;
     if (!t || t >= 0x18000000 || t == head) break;
   }
