@@ -190,7 +190,7 @@
 
     // ---- load the 5 MB compressed RAM snapshot (decompresses to 384 MB) ----
     setLoad("downloading TempleOS RAM snapshot (~5 MB)…", 5);
-    const gz = await fetch("./hemu-wasm/live.bin.gz");
+    const gz = await fetch("./hemu-wasm/live.bin.gz", { cache: "no-cache" });
     if (!gz.ok) { setLoad("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
     // track download progress
     const total = +(gz.headers.get("content-length") || 5222517);
@@ -232,7 +232,7 @@
       setLoad("decompressing snapshot (→ 384 MB)…", 55);
       let snap = new Uint8Array(await new Response(new Blob([gzBytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
       setLoad("starting hemu (HolyC → WASM x86-64 core)…", 88);
-      const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm")).arrayBuffer());
+      const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm", { cache: "no-cache" })).arrayBuffer());
       let disk = null;   // C: disk loads in the background; file I/O works once it lands (desktop runs from cache)
       loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => disk = d).catch(() => disk = null);
       engineLabel = "1 core";
