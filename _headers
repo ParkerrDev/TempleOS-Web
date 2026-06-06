@@ -9,3 +9,19 @@
 # Long-cache the big immutable build artifacts (cache-busted by the ?v= query).
 /vendor/*
   Cache-Control: public, max-age=31536000
+
+# HEMU artifacts change every deploy — always revalidate so a cached coi-serviceworker
+# can never pin users to an old (crashing) build. (This is what caused "fix deployed but
+# still crashes": the SW re-fetched the stale wasm from the browser HTTP cache.)
+/hemu
+  Cache-Control: no-cache
+/hemu.html
+  Cache-Control: no-cache
+/hemu-worker.js
+  Cache-Control: no-cache
+/coi-serviceworker.js
+  Cache-Control: no-cache
+/hemu-wasm/snapshot.wasm
+  Cache-Control: no-cache
+/hemu-wasm/live.bin.gz
+  Cache-Control: no-cache
