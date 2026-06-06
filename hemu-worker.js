@@ -25,7 +25,7 @@ async function boot({ gz, wasmUrl, fixedB }) {
   postMessage({ cmd: "progress", text: "decompressing snapshot (→ 384 MB)…", pct: 60 });
   snap = new Uint8Array(await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
   postMessage({ cmd: "progress", text: "starting hemu core (HolyC → WASM)…", pct: 88 });
-  const mod = await WebAssembly.compile(await (await fetch(wasmUrl)).arrayBuffer());
+  const mod = await WebAssembly.compile(await (await fetch(wasmUrl, { cache: "no-cache" })).arrayBuffer());
   // Load the C: disk in the BACKGROUND so the desktop appears immediately; TempleOS file I/O
   // (ATA reads) works once it lands. The resumed desktop runs entirely from cached RAM meanwhile.
   loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => disk = d).catch(() => disk = null);
