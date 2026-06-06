@@ -56,20 +56,23 @@ U0 Present()                            // HLE: blit the composited desktop
 U0 WakeTasks()                          // make every scheduler task ready so the WinMgr composites
 {
   U64 head = *(U64 *)(mem + 0x15F8C060); // CCPU+0x38 = scheduler ring head
-  U64 t = head; I64 n = 0;
+  U64 t = head; I64 n = 0, game = 0;
   while (n < 24) {
     // Skip a task suspended waiting on its own PopUp (master->popup_task @ +0x450 != 0). PopUp(parent)
     // uses TaskExe(WAKE_MASTER), which SUSPENDS the master until the popup's job (e.g. a game launched
     // from the Ctrl+M menu) finishes. Force-waking it makes TaskExe return early -> JobResScan sees the
     // job unfinished -> PopUp Kills the still-running servant -> the game never appears. Leaving these
-    // suspended lets the popup run to completion, exactly as on real hardware.
-    if (!*(U64 *)(mem + t + 0x450)) {
+    // suspended lets the popup run to completion, exactly as on real hardware. A suspended popup-master
+    // also means a fullscreen popup/game is up, so g_game_running gates the hidden-desktop-redraw skip.
+    if (*(U64 *)(mem + t + 0x450)) game = 1;
+    else {
       *(U64 *)(mem + t + 0x18) &= ~0x204; // clear AWAITING_MSG / suspend skip-bits
       *(U64 *)(mem + t + 0x10) = 0;       // wake_jiffy = now
     }
     t = *(U64 *)(mem + t + 0x80); n++;
     if (!t || t >= 0x18000000 || t == head) break;
   }
+  g_game_running = game;
 }
 
 U64 g_inited, g_budget, g_fcount;       // persist across per-frame __main calls (browser drives one frame/RAF)
@@ -125,10 +128,16 @@ U0 Main()                              // host calls __main once per display fra
     g_capture_rip = 0x119b828f;        // GrUpdateScrn, instr after the cursor call returns — dc2 complete + cursor
     g_skip_c4  = 0x119e2529;           // DCBlotColor4 — dead VGA planar path (we present dc2); skip its body
     g_skip_vga = 0x116536e0;           // GrUpdateVGAGraphics — likewise dead; skip both to refresh faster
+    g_skip_xlat = 0x119e2428;          // the XLAT palette-convert scanline blit (dc2 -> VGA color remap) — pure
+                                       // dead work (dc2 presented directly with the JS palette). Big desktop win.
+    g_skip_bg = 0x11655828;            // the desktop text/content redraw — skipped ONLY behind a fullscreen game
+                                       // (g_game_running), where the desktop windows are hidden, to free the vCPU.
     g_hooktbl[g_hle_blit & 0xFF] = 1;  // gate the per-instruction hook compares (Step reads g_hooktbl[rip&0xFF])
     g_hooktbl[g_capture_rip & 0xFF] = 1;
     g_hooktbl[g_skip_c4 & 0xFF] = 1;
     g_hooktbl[g_skip_vga & 0xFF] = 1;
+    g_hooktbl[g_skip_xlat & 0xFF] = 1;
+    g_hooktbl[g_skip_bg & 0xFF] = 1;
     g_jiffies0 = *(U64*)(mem + 0xBD98); // base jiffies; the RTC clock = base + (jiffies-base)/1000 sec
     g_inited = 1;                       // (pit_div/tsc_rate/hpet are set per-frame by Frame() for wall-clock pacing)
   }

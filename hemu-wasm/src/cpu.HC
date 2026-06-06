@@ -30,7 +30,13 @@ U64 g_hle_blit;                      // entry addr of the transparent compositor
 U8 *g_desk;                          // last COMPLETE frame (desktop + the OS's own cursor), captured tear-free
 I64 g_desk_ready;
 U64 g_capture_rip;
-U64 g_skip_c4, g_skip_vga;           // DCBlotColor4 (4 args) + GrUpdateVGAGraphics (0 args): the dc2->dc1->VGA
+U64 g_skip_c4, g_skip_vga, g_skip_xlat;  // DEAD dc2->VGA output paths (hemu presents dc2 directly, so the OS's
+                                     // dc2->VGA color/planar conversion produces nothing we use): DCBlotColor4
+                                     // (4 args), GrUpdateVGAGraphics (0 args), the XLAT palette scanline blit (4 args)
+U64 g_skip_bg;                       // the desktop text/content render (0 args) — LIVE for the desktop, but pure
+                                     // waste behind a fullscreen game; skipped only while g_game_running.
+U64 g_game_running;                  // set by WakeTasks each frame: a task is suspended on its PopUp (a fullscreen
+                                     // game/app is up), so the desktop windows behind it are hidden -> don't redraw
                                      // planar path. We present dc2 directly, so this output is dead — skip both
                                      // function bodies (just pop args + return) to refresh faster -> smoother cursor.
 U8 g_hooktbl[256];                   // rip&0xFF -> "maybe a special address" gate: lets Step() skip the four
@@ -1023,6 +1029,8 @@ U0 Step()
     if (rip == g_capture_rip) CaptureDesk();        // grab the finished frame (incl. native cursor) tear-free
     if (rip == g_skip_c4)  { rip = RdMem(reg[4], 8); reg[4] += 8 + 32; return; }  // skip DCBlotColor4 (4 args)
     if (rip == g_skip_vga) { rip = RdMem(reg[4], 8); reg[4] += 8;      return; }  // skip GrUpdateVGAGraphics
+    if (rip == g_skip_xlat){ rip = RdMem(reg[4], 8); reg[4] += 8 + 32; return; }  // skip XLAT palette convert (4 args)
+    if (rip == g_skip_bg && g_game_running) { rip = RdMem(reg[4], 8); reg[4] += 8; return; }  // skip the hidden desktop redraw behind a fullscreen game
   }
   pfx66 = 0; repf = 0; hasRex = 0; rexW = 0; rexR = 0; rexX = 0; rexB = 0; g_segbase = 0;
   op = mem[rip]; rip++;
@@ -1237,15 +1245,21 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
       }
       continue;
     }
-    if (pit_div) { pit_counter--; if (pit_counter <= 0) { pit_counter = pit_div; pic1_irr |= 1; } }  // PIT -> IRQ0
-    hpet_ctr += g_hpet_rate; tsc += tsc_rate;                                         // time advances per instr
-    Step(); icount++;
+    // Run a BATCH of instructions, then tick the devices once. Advancing PIT/TSC/HPET and checking
+    // IRQs on every single instruction was ~20% of the loop; the guest only needs ~us device
+    // granularity and pit_div (~45k instr/tick) dwarfs the batch, so batching is timing-transparent
+    // but removes that per-instruction overhead (a core speedup that lifts the whole desktop + games).
+    I64 batch = 64; if (batch > maxi - icount) batch = maxi - icount; I64 b = 0;
+    while (b < batch) { Step(); b++; if (halted) break; }                     // stop the batch on HLT/fault
+    icount += b; hpet_ctr += g_hpet_rate * b; tsc += tsc_rate * b;            // advance time for the batch
+    if (pit_div) { pit_counter -= b; if (pit_counter <= 0) { pit_counter += pit_div; pic1_irr |= 1; } }  // PIT -> IRQ0
+    if (halted) continue;                                                     // HLT/fault: let the outer loop handle it
     if ((rfl & F_IF) && ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask))) CheckIrq();
     // Deadlock watchdog: a snapshot resumed mid-CLI can leave a task CLI-spinning to acquire a
     // lock held by another (now de-scheduled) task; with IF=0 the PIT IRQ0 can't fire to run the
     // holder -> permanent stall. If IRQ0 has been pending+blocked too long, force one delivery
     // (safe: a spin-acquire holds nothing yet) so the scheduler runs the holder and the lock frees.
-    else if ((pic1_irr & 1) && !(pic1_mask & 1)) { irq_stall++;
+    else if ((pic1_irr & 1) && !(pic1_mask & 1)) { irq_stall += b;
       if (irq_stall > 2000000) { irq_stall = 0; rfl |= F_IF; CheckIrq(); } }
     else irq_stall = 0;                                                       // deadlock watchdog
   }
