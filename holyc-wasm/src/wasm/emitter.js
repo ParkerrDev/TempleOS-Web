@@ -335,6 +335,7 @@ export class Module {
   exportFunc(name, index) { this.exports.push({ name, kind: 0x00, index }); }
   exportMemory(name, index = 0) { this.exports.push({ name, kind: 0x02, index }); }
   exportGlobal(name, index) { this.exports.push({ name, kind: 0x03, index }); }
+  exportTable(name, index = 0) { this.exports.push({ name, kind: 0x01, index }); }
 
   setStart(index) { this.startIndex = index; }
 

@@ -77,6 +77,12 @@ export const HOST_IMPORTS = {
   __host_disk:   { params: [I, I, I], results: [] },      // (lba, sectorCount, bufAddr) — stage real disk sectors into guest mem
   __host_disk_wr:{ params: [I, I, I], results: [] },      // (lba, sectorCount, bufAddr) — persist guest sectors to a writable overlay
   __host_prof:   { params: [I], results: [] },            // debug: sample rip for profiling
+  __jit_state:   { params: [I, I, I], results: [I] },     // (regOff,rflOff,ripOff) -> 1 to enable the JIT (0 = stub/off)
+  __jit_compile: { params: [I], results: [I] },           // (rip) -> block instr count if jitted, else 0 (host compiles)
+  __jit_run:     { params: [I], results: [I] },           // (rip) -> new rip (runs the JIT'd native block)
+  __jit_x87:     { params: [I, I, I], results: [] },       // (fprOff,fspOff,swOff) — JIT learns the x87 FPU state offsets
+  __jit_dispatch:{ params: [I], results: [I] },            // (budget) -> instr count: run a CHAIN of JIT'd blocks (amortizes the host round-trip)
+  __jit_chain:   { params: [I, I], results: [] },          // (jitRipOff,jitNOff) — JIT builds its native dispatch-loop module
 
   __snd:         { params: [F], results: [] },           // freq Hz (0 = off)
   __play_note:   { params: [F, I], results: [] },        // freq, ms (blocks)

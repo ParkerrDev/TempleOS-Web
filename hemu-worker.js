@@ -7,11 +7,14 @@
 // postMessage), so hemu.html can fall back to its in-line single-thread engine if this ever fails.
 import { createHost } from "./holyc-wasm/src/runtime/host.js";
 import { loadDisk } from "./qcow2.js";
+import * as jit from "./jit.js";             // x86-64 -> WASM block JIT (the speed: interp ~6fps -> JIT 30-65fps games)
 
 let msX = 320, msY = 240, msB = 0, wheel = 0;   // latest pointer state from the main thread
 const keyq = [];                            // set-1 scancodes from the main thread
 let curBudget = 1500000, dtMs = 16;         // guest instr/frame + real wall-clock ms/frame
-let outstanding = 0, snap = null, loaded = false, disk = null;
+let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0;
+const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
+const G_FS = 402648, G_GS = 402656, G_TSC = 402600;   // msr_fsbase/msr_gsbase/tsc global byte-offsets (FS segment + RDTSC); rebuild snapshot.wasm if the HC globals change
 
 onmessage = (e) => {
   const m = e.data;
@@ -33,7 +36,7 @@ async function boot({ gz, wasmUrl, fixedB }) {
   const host = createHost({
     onText: (s) => { if (s && s.indexOf("BADOP") >= 0) console.log("[hemu]", s.trim()); },
     snd: { tone: (f) => postMessage({ cmd: "snd", f: Number(f) }) },   // AudioContext lives on the main thread
-    snapLoad: (base, u8) => { u8.set(snap, base); },
+    snapLoad: (base, u8) => { gBase = base; u8.set(snap, base); },   // capture gBase for the JIT
     diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },   // ATA -> real C: sectors
     diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },  // ATA writes -> in-session overlay
     present: (addr, w, h, u8) => {
@@ -51,8 +54,21 @@ async function boot({ gz, wasmUrl, fixedB }) {
   host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
   host.env.__host_budget = () => BigInt(curBudget | 0);
   host.env.__host_dt = () => BigInt(dtMs | 0);
+  // ---- JIT wiring: blocks read hemu's shared state at the offsets passed via __jit_state/__jit_x87/__jit_chain;
+  //      __jit_state returns 1 to ENABLE (return 0n / ?nojit -> pure interpreter). See jit.js + JIT-DESIGN.md. ----
+  let inst;
+  if (!NOJIT) {
+    host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem); return 1n; };
+    host.env.__jit_compile = (rip) => BigInt(jit.jitCompile(Number(rip)));
+    host.env.__jit_run = (rip) => BigInt(jit.jitRun(Number(rip)));
+    host.env.__jit_x87 = (a, b, c) => jit.jitX87(a, b, c);
+    host.env.__jit_dispatch = (b) => BigInt(jit.jitDispatch(Number(b)));
+    host.env.__jit_chain = (a, b) => jit.jitChain(a, b);
+    jit.jitSeg(G_FS, G_GS, G_TSC); jit.jitReset();
+    console.log("[hemu] JIT enabled (x86-64 -> WASM)");
+  } else console.log("[hemu] JIT disabled (?nojit) — pure interpreter");
 
-  const inst = await WebAssembly.instantiate(mod, { env: host.env });
+  inst = await WebAssembly.instantiate(mod, { env: host.env });
   host.attach(inst);
   inst.exports.__rt_init();
   postMessage({ cmd: "progress", text: "starting TempleOS…", pct: 100 });

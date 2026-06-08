@@ -125,9 +125,11 @@ class Codegen {
     this.m.exportFunc("__main", this.mainFn.index);
     this.m.exportFunc("__rt_init", this.rtInit.index);
     this.m.exportGlobal("__sp", this.spGlobal);
+    // export functions a runtime JIT needs to call (hemu's RdMem/WrMem handle MMIO + the 2^40 alias).
+    for (const nm of ["RdMem", "WrMem", "Step"]) { const fn = this.functions.get(nm); if (fn && fn.slot) this.m.exportFunc(nm, fn.slot.index); }
 
     const bytes = this.m.emit();
-    return { bytes, warnings: this.warnings, dataEnd: this.cursor };
+    return { bytes, warnings: this.warnings, dataEnd: this.cursor, globals: this.globals };
   }
 
   // ============================================================ classes

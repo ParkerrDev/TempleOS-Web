@@ -37,6 +37,10 @@ U64 g_skip_bg;                       // the desktop text/content render (0 args)
                                      // waste behind a fullscreen game; skipped only while g_game_running.
 U64 g_game_running;                  // set by WakeTasks each frame: a task is suspended on its PopUp (a fullscreen
                                      // game/app is up), so the desktop windows behind it are hidden -> don't redraw
+U64 g_jit_on;                        // 0 = pure interpreter (zero-init; a JIT host sets it 1 after wiring __jit_*).
+U64 g_jit_rip[16384];                // direct-mapped block cache: the rip occupying slot (rip & 0x3FFF)
+I64 g_jit_n[16384];                  // that block's instr count (>0 = JIT'd), 0 = tried+unjittable, -1 = still counting
+I64 g_jit_hot[16384];                // per-slot hotness counter until the compile threshold (64)
                                      // planar path. We present dc2 directly, so this output is dead — skip both
                                      // function bodies (just pop args + return) to refresh faster -> smoother cursor.
 U8 g_hooktbl[256];                   // rip&0xFF -> "maybe a special address" gate: lets Step() skip the four
@@ -1249,9 +1253,36 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
     // IRQs on every single instruction was ~20% of the loop; the guest only needs ~us device
     // granularity and pit_div (~45k instr/tick) dwarfs the batch, so batching is timing-transparent
     // but removes that per-instruction overhead (a core speedup that lifts the whole desktop + games).
-    I64 batch = 64; if (batch > maxi - icount) batch = maxi - icount; I64 b = 0;
-    while (b < batch) { Step(); b++; if (halted) break; }                     // stop the batch on HLT/fault
-    icount += b; hpet_ctr += g_hpet_rate * b; tsc += tsc_rate * b;            // advance time for the batch
+    I64 b = 0;
+    // JIT dispatch (gated by g_jit_on=0 default -> zero overhead until a JIT host wires it up): a hot
+    // block compiled to native WASM runs in ONE __jit_run (b = its instr count). Until then, count the
+    // block's hotness and at the threshold ask the host to compile it. See JIT-DESIGN.md.
+    if (g_jit_on) {
+      I64 slot = rip & 0x3FFF;
+      // run a CHAIN of JIT'd blocks natively (one host round-trip). Cap the chain to one PIT period so
+      // IRQ0 still fires on time -- otherwise a guest spin-wait on the timer never wakes (games freeze).
+      if (g_jit_rip[slot] == rip && g_jit_n[slot] > 0) {
+        I64 cap = maxi - icount;                                            // stop the chain at the NEXT PIT tick (not a full period) so IRQ0 is
+        if (pit_div > 0 && pit_counter > 0 && cap > pit_counter) cap = pit_counter;  // raised+serviced on time, matching the interpreter -> no game animation phase drift
+        b = __jit_dispatch(cap);
+      }
+      else {
+        if (g_jit_rip[slot] != rip) { g_jit_rip[slot] = rip; g_jit_hot[slot] = 0; g_jit_n[slot] = -1; }
+        if (g_jit_n[slot] < 0) { g_jit_hot[slot]++; if (g_jit_hot[slot] > 64) g_jit_n[slot] = __jit_compile(rip); }
+      }
+    }
+    if (!b) {                                                                 // not a JIT'd block: interpret a batch
+      I64 batch = 64; if (batch > maxi - icount) batch = maxi - icount;
+      if (g_jit_on) {                                                         // JIT on: interpret only until the NEXT rip is a JIT'd block, then
+        while (b < batch) {                                                   // hand straight back (else a blind 64-batch buries the JIT — most insns
+          Step(); b++; if (halted) break;                                     // after a chain break ARE JIT'd, so the batch was ~all the interp cost).
+          I64 s2 = rip & 0x3FFF; if (g_jit_rip[s2] == rip && g_jit_n[s2] > 0) break;
+        }
+      } else {
+        while (b < batch) { Step(); b++; if (halted) break; }                 // pure interpreter (deploy): fast fixed batch, zero added checks
+      }
+    }
+    icount += b; hpet_ctr += g_hpet_rate * b; tsc += tsc_rate * b;            // advance time for the batch/block
     if (pit_div) { pit_counter -= b; if (pit_counter <= 0) { pit_counter += pit_div; pic1_irr |= 1; } }  // PIT -> IRQ0
     if (halted) continue;                                                     // HLT/fault: let the outer loop handle it
     if ((rfl & F_IF) && ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask))) CheckIrq();
