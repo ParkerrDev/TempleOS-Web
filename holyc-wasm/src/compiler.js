@@ -26,8 +26,8 @@ export function compileHolyC(source, opts = {}) {
     defines: opts.defines || {},
   });
   const ast = parse(pp, userName, { resilient: opts.resilient });
-  const { bytes, warnings, dataEnd } = codegen(ast, opts);
-  return { bytes, warnings, dataEnd, ast, diagnostics: ast.diagnostics || [] };
+  const { bytes, warnings, dataEnd, globals } = codegen(ast, opts);
+  return { bytes, warnings, dataEnd, globals, ast, diagnostics: ast.diagnostics || [] };
 }
 
 export { lex, preprocess, parse };

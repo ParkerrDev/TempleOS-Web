@@ -139,6 +139,9 @@ U0 Main()                              // host calls __main once per display fra
     g_hooktbl[g_skip_xlat & 0xFF] = 1;
     g_hooktbl[g_skip_bg & 0xFF] = 1;
     g_jiffies0 = *(U64*)(mem + 0xBD98); // base jiffies; the RTC clock = base + (jiffies-base)/1000 sec
+    g_jit_on = __jit_state(&reg[0], &rfl, &rip);   // hand over CPU-state offsets; host returns 1 to enable the JIT
+    __jit_x87(&fpr[0], &fsp, &x87_sw);             // hand over the x87 FPU state offsets (for JIT'd float blocks)
+    __jit_chain(&g_jit_rip[0], &g_jit_n[0]);       // let the JIT build its native dispatch-loop module (chains blocks)
     g_inited = 1;                       // (pit_div/tsc_rate/hpet are set per-frame by Frame() for wall-clock pacing)
   }
   Frame();

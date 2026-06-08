@@ -80,6 +80,9 @@ export function createHost(opts = {}) {
     __host_msx() { return 0n; }, __host_msy() { return 0n; }, __host_msb() { return 0n; },
     __host_key() { return -1n; }, __host_budget() { return 1000000n; }, __host_prof(_rip) {},
     __host_dt() { return 16n; },
+    // JIT hooks — default stubs (no JIT). A JIT-aware runner overrides __jit_compile/__jit_run and
+    // uses the offsets from __jit_state. With these no-ops, hemu's g_jit_on stays 0 and nothing changes.
+    __jit_state(_r, _f, _p) { return 0n; }, __jit_compile(_rip) { return 0n; }, __jit_run(rip) { return rip; }, __jit_x87(_a, _b, _c) {}, __jit_dispatch(_b) { return 0n; }, __jit_chain(_a, _b) {},
     // CMOS RTC fields from the host wall clock, so the guest's Now() tracks real date/time
     // (not the snapshot's frozen clock). idx = CMOS register the guest selected via OUT 0x70.
     __host_time(idx) {

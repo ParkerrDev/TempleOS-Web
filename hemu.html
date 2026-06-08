@@ -123,10 +123,27 @@
     const setLoad = (s, pct) => { ldtext.textContent = s; if (pct != null) ldbar.style.width = pct + "%"; };
 
     // palettize an 8-bit indexed frame into the canvas; firstFrame() reveals it once TempleOS is up
-    let blitCount = 0;                                           // shown frames since last fps tick (both engines)
-    function blit(idx, w, h) { const n = Math.min(w * h, out32.length); for (let i = 0; i < n; i++) out32[i] = pal32[idx[i] & 15]; ctx.putImageData(img, 0, 0); blitCount++; }
+    let blitCount = 0, lastFrameHash = 0;                        // blitCount = DISTINCT frames since last fps tick (honest animation rate)
+    function blit(idx, w, h) {
+      const n = Math.min(w * h, out32.length);
+      for (let i = 0; i < n; i++) out32[i] = pal32[idx[i] & 15];
+      ctx.putImageData(img, 0, 0);
+      let s = 0; for (let i = 0; i < n; i += 16) s = (s * 31 + idx[i]) >>> 0;   // hash the frame; count it only if it CHANGED —
+      if (s !== lastFrameHash) { blitCount++; lastFrameHash = s; }              // the worker re-presents the latest frame every __main, so counting blits lied (high # while frozen)
+    }
     let started = false;
-    function firstFrame() { if (started) return; started = true; ld.style.display = "none"; }
+    function firstFrame() { if (started) return; started = true; ld.style.display = "none"; autoGame(); }
+    function autoGame() {   // TEST hook: ?autogame=X,Y -> decline tour (N), Ctrl+M game menu, click the sprite at X,Y
+      const p = new URLSearchParams(location.search).get("autogame"); if (!p) return;
+      const [gx, gy] = p.split(",").map(Number);
+      const send = (keys, x, y, b) => { if (keys) for (const k of keys) keyq.push(k); if (x != null) msX = x; if (y != null) msY = y; if (b != null) msB = b; notifyInput(); };
+      let t = 1500;
+      setTimeout(() => send([0x31, 0xB1]), t); t += 600;                          // N — decline "Take Tour?"
+      setTimeout(() => send([0x1D, 0x32, 0xB2, 0x9D]), t); t += 1000;             // Ctrl+M — game menu
+      setTimeout(() => send(null, gx, gy, 0), t); t += 200;                        // move cursor to the sprite
+      setTimeout(() => send(null, gx, gy, 1), t); t += 250;                        // press
+      setTimeout(() => send(null, gx, gy, 0), t);                                  // release -> launch
+    }
     let notifyInput = () => {};                                  // multi-core engine overrides this to forward input
     let engineLabel = "…";
     const FIXED_B = +((new URLSearchParams(location.search)).get("b")) || 0;   // ?b=1500000 pins the guest budget (debug/sweep)
