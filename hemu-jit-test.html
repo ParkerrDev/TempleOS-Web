@@ -1,0 +1,54 @@
+<!doctype html><html><head><meta charset="utf-8"><title>hemu JIT fps test</title></head>
+<body><pre id="result">booting…</pre>
+<script type="module">
+// In-Chromium game-fps test: boots real TempleOS + the JIT-hooked wasm, launches BlackDiamond, measures
+// the in-game fps (distinct composited frames / wall-second, CPU-bound). ?jit=1 -> JIT on, ?jit=0 -> interp.
+// Served from filesystem root so jit.js's absolute imports resolve as URLs (same code as node).
+import { createHost } from "/Users/parkerh/Dev/TempleOS/holyc-wasm/src/runtime/host.js";
+import * as jit from "/Users/parkerh/Dev/TempleOS-wasm/jit.js";
+import { loadDisk } from "/Users/parkerh/Dev/TempleOS-wasm/qcow2.js";
+const out = document.getElementById("result");
+const log = (s) => { out.textContent = s; };
+const useJit = new URL(location).searchParams.get("jit") !== "0";
+const MW = Number(new URL(location).searchParams.get("mw") || 1000);
+const RAMSZ = 402653184;
+try {
+  log("fetching + decompressing snapshot (→384MB)…");
+  const gz = await (await fetch("/Users/parkerh/Dev/TempleOS-wasm/hemu-wasm/live.bin.gz", { cache: "no-cache" })).arrayBuffer();
+  const snap = new Uint8Array(await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+  log("compiling wasm…");
+  const mod = await WebAssembly.compile(await (await fetch("/Users/parkerh/Dev/TempleOS-wasm/snapshot-jit.wasm", { cache: "no-cache" })).arrayBuffer());
+  log("loading disk…");
+  let disk = null; try { disk = await loadDisk("/Users/parkerh/Dev/TempleOS-wasm/vendor/images/templeos-hd.qcow2.gz"); } catch {}
+  let mx = 320, my = 240, mb = 0, gBase = 0, inst, bad = false;
+  const keyq = []; let measuring = false, presents = 0, changes = 0, lastHash = 0;
+  const host = createHost({
+    onText: (s) => { if (s && s.indexOf("BADOP") >= 0) bad = true; }, snd: { tone: () => {} },
+    snapLoad: (base, u8) => { gBase = base; u8.set(snap, base); },
+    diskRead: (lba, cnt, u8, dst) => { if (disk) disk.readInto(lba, cnt, u8, dst); },
+    diskWrite: (lba, cnt, u8, src) => { if (disk) disk.writeInto(lba, cnt, u8, src); },
+    present: (a, w, h, u8) => { if (measuring) { let s = 0; for (let i = 0; i < w * h; i += 16) s = (s * 31 + u8[a + i]) >>> 0; presents++; if (s !== lastHash) { changes++; lastHash = s; } } } });
+  host.env.__host_msx = () => BigInt(mx); host.env.__host_msy = () => BigInt(my); host.env.__host_msb = () => BigInt(mb); host.env.__host_wheel = () => 0n;
+  const BUD = BigInt(Number(new URL(location).searchParams.get("b") || 1500000));
+  host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n; host.env.__host_budget = () => BUD; host.env.__host_dt = () => 33n; host.env.__host_prof = () => {}; host.env.__host_time = () => 0n;
+  host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem); return useJit ? 1n : 0n; };
+  host.env.__jit_compile = (rip) => BigInt(jit.jitCompile(Number(rip)));
+  host.env.__jit_run = (rip) => BigInt(jit.jitRun(Number(rip)));
+  host.env.__jit_x87 = (a, b, c) => jit.jitX87(a, b, c);
+  host.env.__jit_dispatch = (b) => BigInt(jit.jitDispatch(Number(b)));
+  host.env.__jit_chain = (a, b) => jit.jitChain(a, b);
+  jit.jitSeg(402648, 402656, 402600);   // msr_fsbase / msr_gsbase / tsc global offsets (FS segment + RDTSC support)
+  if (useJit) jit.jitReset();
+  inst = await WebAssembly.instantiate(mod, { env: host.env }); host.attach(inst); inst.exports.__rt_init();
+  const run = (n) => { for (let i = 0; i < n; i++) inst.exports.__main(); };
+  const key = (...scs) => { for (const s of scs) { keyq.push(s); run(4); } };
+  log("booting OS + launching BlackDiamond…");
+  const gx = Number(new URL(location).searchParams.get("gx") || 108), gy = Number(new URL(location).searchParams.get("gy") || 325);
+  run(120); key(0x31, 0xB1); run(30); key(0x1D, 0x32, 0xB2, 0x9D); run(50); mx = gx; my = gy; run(6); mb = 1; run(10); mb = 0;  // launch game (gx,gy = menu sprite)
+  run(400);
+  log("measuring…");
+  measuring = true; const t0 = performance.now(); run(MW); const wall = (performance.now() - t0) / 1000; measuring = false;
+  const ms = (wall * 1000) / MW, fr = changes / presents, fps = changes / wall;
+  out.textContent = `RESULT jit=${useJit} ms/__main=${ms.toFixed(2)} changeRate=${(fr * 100).toFixed(1)}% fps=${fps.toFixed(1)} ${bad ? "BADOP" : "ok"}`;
+} catch (e) { out.textContent = "ERROR " + (e && e.stack || e); }
+</script></body></html>
