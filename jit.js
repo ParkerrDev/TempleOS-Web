@@ -58,6 +58,10 @@ function emitEA(f, m, endRip) {
   }
   if (SEG && (SEG === 1 ? MSRFS : MSRGS)) { i32c(f, SEG === 1 ? MSRFS : MSRGS); ld64(f); f.op("i64_add"); }  // FS/GS segment base (cpu.HC: ea = addr + g_segbase)
   f.local_set(3);
+  // RSP/RBP-relative (no index) and RIP-relative always address the guest stack/code in RAM (ea < MEMSIZE),
+  // so the per-access MMIO bounds branch is provably dead — mark it for elision in rdRM/wrRM. No segment override
+  // (FS/GS could shift ea anywhere). Only emitEA sets this; every other path keeps the safe bounds check.
+  m.knownRam = !SEG && (m.ripRel || (m.index < 0 && (m.base === 4 || m.base === 5)));
 }
 const memAddr = (f) => { i64c(f, GBASE); f.local_get(3); f.op("i64_add"); f.op("i32_wrap_i64"); };  // -> i32 wasm addr
 
@@ -110,12 +114,14 @@ export function jitChain(jitRipOff, jitNOff) { JITRIP = Number(jitRipOff); JITN 
 // read / write a decoded r/m operand (reg or mem) at size sz. For mem, emitEA(f,m,endRip) must run first.
 function rdRM(f, m, sz, rex) {
   if (!m.isMem) { rdReg(f, m.rm, sz, rex); return; }
+  if (m.knownRam) { memAddr(f); f.load(LDSZ[sz], 0, ALN[sz]); return; }  // rsp/rbp/rip-relative: always RAM, no MMIO check
   f.local_get(3); i64c(f, MEMSIZE); f.op("i64_lt_u"); f.if_(VT.i64);   // ea < RAM size?
   memAddr(f); f.load(LDSZ[sz], 0, ALN[sz]);                            //  yes: direct RAM load
   f.else_(); f.local_get(3); i64c(f, sz); f.call(RD_IDX); f.end();     //  no: RdMem(ea,sz) -> MMIO/alias
 }
 function wrRM(f, m, sz, rex, emitVal) {
   if (!m.isMem) { wrReg(f, m.rm, sz, rex, emitVal); return; }
+  if (m.knownRam) { memAddr(f); emitVal(); f.store(STSZ[sz], 0, ALN[sz]); return; }  // rsp/rbp/rip-relative: always RAM
   f.local_get(3); i64c(f, MEMSIZE); f.op("i64_lt_u"); f.if_();
   memAddr(f); emitVal(); f.store(STSZ[sz], 0, ALN[sz]);                //  RAM: store exactly sz bytes
   f.else_(); f.local_get(3); i64c(f, sz); emitVal(); f.call(WR_IDX); f.end();  // MMIO: WrMem(ea,sz,val)
@@ -781,7 +787,7 @@ function jitDispatchTrace(budget) {
   let ran = 0;
   while (ran < budget) {
     const rip = dv.getInt32(RIP, true), slot = rip & 0x3FFF;
-    if (blockRip[slot] === rip && blockFn[slot]) { const c = blockFn[slot](); ran += c; if (c === 0) break; continue; }
+    if (blockRip[slot] === rip && blockFn[slot]) { if (globalThis.__PROF) { const P = globalThis.__PROF; P[rip] = (P[rip] || 0) + (blocks.get(rip)?.ninstr || 1); } const c = blockFn[slot](); ran += c; if (c === 0) break; continue; }
     // chain broke -> categorize, weighted by 1 (each break = one interpreter hand-off)
     let key;
     if (blocks.has(rip)) key = "collide";
