@@ -38,13 +38,46 @@ const LDSZ = { 1: "i64_load8_u", 2: "i64_load16_u", 4: "i64_load32_u", 8: "i64_l
 const STSZ = { 1: "i64_store8", 2: "i64_store16", 4: "i64_store32", 8: "i64_store" };
 const ALN = { 1: 0, 2: 1, 4: 2, 8: 3 };
 
+// ---- REGISTER CACHE: guest reg[0..15] live in WASM locals RC+0..RC+15 for the whole block (V8 puts
+// them in machine registers — the big in-game win: every access was a memory round-trip V8 can't elide).
+// jitCompile tracks which regs a block touches (rcUsed) and writes (rcDirty); entry code loads used regs
+// from reg[] memory, every exit (tail + guard early-returns) writes dirty ones back, so memory is current
+// whenever the interpreter/host can observe it. reg[] never aliases guest RAM, so mem ops can't desync it.
+const RC = 19;                              // first cache local (see setBody: locals 19..34)
+let rcUsed = 0, rcDirty = 0;
 // reg #i read/write at size sz (rex=true if a REX prefix is present -> regs 4..7 are SPL.. not AH..).
-function regAddr(i, sz, rex) { return (sz === 1 && !rex && i >= 4 && i < 8) ? REG + (i - 4) * 8 + 1 : REG + i * 8; }
-function rdReg(f, i, sz, rex) { i32c(f, regAddr(i, sz, rex)); f.load(LDSZ[sz], 0, ALN[sz]); }
+function rdReg(f, i, sz, rex) {
+  if (sz === 1 && !rex && i >= 4 && i < 8) {                       // AH/CH/DH/BH = bits 8..15 of reg[i-4]
+    rcUsed |= 1 << (i - 4);
+    f.local_get(RC + i - 4); i64c(f, 8); f.op("i64_shr_u"); i64c(f, 0xFF); f.op("i64_and"); return;
+  }
+  rcUsed |= 1 << i;
+  f.local_get(RC + i);
+  if (sz === 4) { i64c(f, 0xFFFFFFFF); f.op("i64_and"); }
+  else if (sz === 2) { i64c(f, 0xFFFF); f.op("i64_and"); }
+  else if (sz === 1) { i64c(f, 0xFF); f.op("i64_and"); }
+}
 function wrReg(f, i, sz, rex, emitVal) {
-  if (sz === 8) { i32c(f, REG + i * 8); emitVal(); st64(f); }
-  else if (sz === 4) { i32c(f, REG + i * 8); emitVal(); i64c(f, 0xFFFFFFFF); f.op("i64_and"); st64(f); }   // 32-bit write zero-extends
-  else { i32c(f, regAddr(i, sz, rex)); emitVal(); f.store(STSZ[sz], 0, ALN[sz]); }                          // 8/16 preserve upper
+  if (sz === 1 && !rex && i >= 4 && i < 8) {                       // AH-form: replace bits 8..15 of reg[i-4]
+    rcUsed |= 1 << (i - 4); rcDirty |= 1 << (i - 4);
+    f.local_get(RC + i - 4); i64c(f, ~0xFF00); f.op("i64_and");
+    emitVal(); i64c(f, 0xFF); f.op("i64_and"); i64c(f, 8); f.op("i64_shl"); f.op("i64_or");
+    f.local_set(RC + i - 4); return;
+  }
+  rcUsed |= 1 << i; rcDirty |= 1 << i;                             // used too: partial writes read the local; full writes just load harmlessly
+  if (sz === 8) { emitVal(); f.local_set(RC + i); }
+  else if (sz === 4) { emitVal(); i64c(f, 0xFFFFFFFF); f.op("i64_and"); f.local_set(RC + i); }   // 32-bit write zero-extends
+  else {                                                           // 8/16 preserve upper bits
+    const m = sz === 2 ? 0xFFFFn : 0xFFn;
+    f.local_get(RC + i); i64c(f, ~m); f.op("i64_and");
+    emitVal(); i64c(f, m); f.op("i64_and"); f.op("i64_or");
+    f.local_set(RC + i);
+  }
+}
+// write every dirty cached reg (+ the fsp cache) back to memory — REQUIRED before any path that leaves the block
+function wbDirty(f) {
+  for (let i = 0; i < 16; i++) if (rcDirty & (1 << i)) { i32c(f, REG + i * 8); f.local_get(RC + i); st64(f); }
+  if (rcX87) { i32c(f, FSP); f.local_get(FSPLOC); st64(f); }
 }
 
 // effective address of a memory ModRM -> local 3 (guest addr). endRip needed for RIP-relative.
@@ -69,10 +102,14 @@ const memAddr = (f) => { i64c(f, GBASE); f.local_get(3); f.op("i64_add"); f.op("
 let FPR = 0, FSP = 0, X87SW = 0;
 export function jitX87(fpr, fsp, sw) { FPR = Number(fpr); FSP = Number(fsp); X87SW = Number(sw); }
 const fc64 = (f, v) => f.raw(OP.f64_const, ...new Uint8Array(new Float64Array([v]).buffer));   // f64.const
-const fStAddr = (f, i) => { i32c(f, FSP); f.load("i64_load", 0, 3); if (i) { i64c(f, i); f.op("i64_add"); } i64c(f, 7); f.op("i64_and"); i64c(f, 8); f.op("i64_mul"); i64c(f, FPR); f.op("i64_add"); f.op("i32_wrap_i64"); };
+// fsp is CACHED in local 35 for the whole block (loaded at entry, written back at every exit) — x87-heavy
+// game code (Varoom) hits fsp on every float micro-op, and the memory round-trips dominated block time.
+const FSPLOC = 35;
+let rcX87 = 0;                                             // block uses the x87 stack -> entry-load + writeback fsp
+const fStAddr = (f, i) => { rcX87 = 1; f.local_get(FSPLOC); if (i) { i64c(f, i); f.op("i64_add"); } i64c(f, 7); f.op("i64_and"); i64c(f, 8); f.op("i64_mul"); i64c(f, FPR); f.op("i64_add"); f.op("i32_wrap_i64"); };
 const fLd = (f, i) => { fStAddr(f, i); f.load("f64_load", 0, 3); };                            // push ST(i) (f64)
 const fSt = (f, i, ev) => { fStAddr(f, i); ev(); f.store("f64_store", 0, 3); };                // ST(i) = f64 from ev()
-const fInc = (f, d) => { i32c(f, FSP); i32c(f, FSP); f.load("i64_load", 0, 3); i64c(f, d); f.op("i64_add"); i64c(f, 7); f.op("i64_and"); f.store("i64_store", 0, 3); }; // fsp=(fsp+d)&7
+const fInc = (f, d) => { rcX87 = 1; f.local_get(FSPLOC); i64c(f, d); f.op("i64_add"); i64c(f, 7); f.op("i64_and"); f.local_set(FSPLOC); }; // fsp=(fsp+d)&7 (local only)
 const fPush = (f, ev) => { ev(); f.local_set(5); fInc(f, -1); fSt(f, 0, () => f.local_get(5)); };  // local5(f64): v(old fsp) -> dec fsp -> store
 const fPop = (f) => fInc(f, 1);
 const fRoundI = (f) => { f.local_set(5); f.local_get(5); fc64(f, 0.5); f.local_get(5); f.op("f64_copysign"); f.op("f64_add"); f.fc("i64_trunc_sat_f64_s"); }; // RoundI = trunc(d+copysign(0.5,d)); SATURATING like cpu.HC F64ToInt (a trapping trunc would crash the block on NaN where the interpreter continues)
@@ -248,6 +285,7 @@ export function jitCompile(rip) {
     return e.ninstr;
   }
   globalThis.__sawmem = false; FLAGPEND = null;          // start each block with no deferred flags
+  rcUsed = 0; rcDirty = 0; rcX87 = 0;                     // fresh register-cache tracking per block
   const m = new Module();                                 // build module + imports first so RD_IDX/WR_IDX are known
   m.importMemory("env", "mem", 1);
   RD_IDX = m.importFunc("env", "RdMem", [VT.i64, VT.i64], [VT.i64]);
@@ -374,26 +412,26 @@ export function jitCompile(rip) {
         } else if (op === 0xFF && (ext === 2 || ext === 4)) {                // call/jmp r/m (indirect)
           materialize(f);                                                    // block exit -> flush deferred flags
           if (m.isMem) emitEA(f, m, j - GBASE);
-          if (ext === 2) { /* call: push next rip */ i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); st64(f); // rsp-=8
+          if (ext === 2) { /* call: push next rip */ wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); }); // rsp-=8
             i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); i64c(f, j - GBASE); f.store("i64_store", 0, 3); }
           rdRM(f, m, 8, true);                                              // target on stack -> block return
           term = true; n++; i = j; break;
         } else if (op === 0xFF && ext === 6) {                              // PUSH r/m (always 8 bytes; cpu.HC RdRM(8))
           if (m.isMem) emitEA(f, m, j - GBASE);
           rdRM(f, m, 8, true); f.local_set(0);                             // v (read BEFORE rsp changes, in case base==rsp)
-          i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); st64(f);   // rsp -= 8
+          wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); });   // rsp -= 8
           i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); f.local_get(0); f.store("i64_store", 0, 3);  // [rsp] = v
           handled = true;
         } else break;
       } else if (op >= 0x50 && op <= 0x57) {                                 // push reg
         const r = (op & 7) | (rexB << 3);
-        i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); st64(f);    // rsp -= 8
+        wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); });    // rsp -= 8
         i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); rdReg(f, r, 8, true); f.store("i64_store", 0, 3);
         handled = true;
       } else if (op >= 0x58 && op <= 0x5F) {                                 // pop reg
         const r = (op & 7) | (rexB << 3);
         wrReg(f, r, 8, true, () => { i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); f.load("i64_load", 0, 3); });
-        i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_add"); st64(f);    // rsp += 8
+        wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_add"); });    // rsp += 8
         handled = true;
       } else if (op === 0x63) {                                              // movsxd r64, r/m32
         const m = decodeModRM(j, rexR, rexX, rexB); j = m.j;
@@ -412,32 +450,32 @@ export function jitCompile(rip) {
         const tgt = (j + 4 - GBASE) + imm32s(j); j += 4; materialize(f); i64c(f, tgt); term = true; n++; i = j; break;
       } else if (op === 0xE8) {                                              // call rel32
         const tgt = (j + 4 - GBASE) + imm32s(j); j += 4; materialize(f);
-        i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); st64(f);    // rsp -= 8
+        wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); });    // rsp -= 8
         i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); i64c(f, j - GBASE); f.store("i64_store", 0, 3);   // [rsp] = ret
         i64c(f, tgt); term = true; n++; i = j; break;
       } else if (op === 0xC3) {                                              // ret
         materialize(f);
         i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); f.load("i64_load", 0, 3);   // target = [rsp]
-        i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_add"); st64(f);    // rsp += 8
+        wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_add"); });    // rsp += 8
         term = true; n++; i = j; break;
       } else if (op === 0xC2) {                                              // ret imm16
         const k = U8[j] | (U8[j + 1] << 8); j += 2; materialize(f);
         i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); f.load("i64_load", 0, 3);
-        i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8 + k); f.op("i64_add"); st64(f);
+        wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8 + k); f.op("i64_add"); });
         term = true; n++; i = j; break;
       } else if (op === 0xC9) {                                              // leave: rsp=rbp; rbp=[rsp]; rsp+=8
-        i32c(f, REG + 4 * 8); rdReg(f, 5, 8, true); st64(f);                 // rsp = rbp
+        wrReg(f, 4, 8, true, () => rdReg(f, 5, 8, true));                 // rsp = rbp
         wrReg(f, 5, 8, true, () => { i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); f.load("i64_load", 0, 3); });
-        i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_add"); st64(f);
+        wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_add"); });
         handled = true;
       } else if (op === 0x68 || op === 0x6A) {                               // push imm (sign-extended to 64)
         const v = op === 0x6A ? imm8s(j) : imm32s(j); j += op === 0x6A ? 1 : 4;
-        i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); st64(f);   // rsp -= 8
+        wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); });   // rsp -= 8
         i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); i64c(f, v); f.store("i64_store", 0, 3);
         handled = true;
       } else if (op === 0x9C) {                                              // PUSHFQ: rsp-=8; [rsp]=rfl
         materialize(f);                                                      // pushes rfl -> deferred flags must be live first
-        i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); st64(f);
+        wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_sub"); });
         i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); i32c(f, RFL); ld64(f); f.store("i64_store", 0, 3);
         handled = true;
       } else if (op === 0x9D) {                                              // POPFQ: rfl = ([rsp] & ~0x10000) | 2; rsp+=8
@@ -445,13 +483,13 @@ export function jitCompile(rip) {
         i32c(f, RFL);
         i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); f.load("i64_load", 0, 3);
         i64c(f, ~0x10000); f.op("i64_and"); i64c(f, 2); f.op("i64_or"); st64(f);
-        i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_add"); st64(f);
+        wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_add"); });
         handled = true;
       } else if (op === 0x8F) {                                             // POP r/m64: v=[rsp]; rsp+=8; r/m=v (ea uses OLD rsp)
         const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j;
         if (mm.isMem) emitEA(f, mm, j - GBASE);
         i64c(f, GBASE); rdReg(f, 4, 8, true); f.op("i64_add"); f.op("i32_wrap_i64"); f.load("i64_load", 0, 3); f.local_set(0);
-        i32c(f, REG + 4 * 8); rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_add"); st64(f);
+        wrReg(f, 4, 8, true, () => { rdReg(f, 4, 8, true); i64c(f, 8); f.op("i64_add"); });
         wrRM(f, mm, 8, true, () => f.local_get(0));
         handled = true;
       } else if (op === 0x69 || op === 0x6B) {                              // IMUL r, r/m, imm (no flags; result masked to sz, matches cpu.HC)
@@ -468,25 +506,25 @@ export function jitCompile(rip) {
         i64c(f, sz); i64c(f, -sz); i32c(f, RFL); f.load("i32_load", 0, 2); i32c(f, 0x400); f.op("i32_and"); f.op("i32_eqz"); f.op("select"); f.local_set(6);  // d = DF ? -sz : sz
         if (op === 0xAC || op === 0xAD) {                                    // LODS: RAX(sz)=[rsi]; rsi+=d
           rdReg(f, 6, 8, true); f.local_set(3); wrReg(f, 0, sz, rex, () => rdRM(f, MEMM, sz, rex));
-          i32c(f, REG + 6 * 8); rdReg(f, 6, 8, true); f.local_get(6); f.op("i64_add"); st64(f);
+          wrReg(f, 6, 8, true, () => { rdReg(f, 6, 8, true); f.local_get(6); f.op("i64_add"); });
         } else if (op === 0xAA || op === 0xAB) {                             // STOS: [rdi]=RAX(sz); rdi+=d
           rdReg(f, 7, 8, true); f.local_set(3); wrRM(f, MEMM, sz, rex, () => rdReg(f, 0, sz, rex));
-          i32c(f, REG + 7 * 8); rdReg(f, 7, 8, true); f.local_get(6); f.op("i64_add"); st64(f);
+          wrReg(f, 7, 8, true, () => { rdReg(f, 7, 8, true); f.local_get(6); f.op("i64_add"); });
         } else if (op === 0xA4 || op === 0xA5) {                             // MOVS: [rdi]=[rsi]; rsi+=d; rdi+=d
           rdReg(f, 6, 8, true); f.local_set(3); rdRM(f, MEMM, sz, rex); f.local_set(0);
           rdReg(f, 7, 8, true); f.local_set(3); wrRM(f, MEMM, sz, rex, () => f.local_get(0));
-          i32c(f, REG + 6 * 8); rdReg(f, 6, 8, true); f.local_get(6); f.op("i64_add"); st64(f);
-          i32c(f, REG + 7 * 8); rdReg(f, 7, 8, true); f.local_get(6); f.op("i64_add"); st64(f);
+          wrReg(f, 6, 8, true, () => { rdReg(f, 6, 8, true); f.local_get(6); f.op("i64_add"); });
+          wrReg(f, 7, 8, true, () => { rdReg(f, 7, 8, true); f.local_get(6); f.op("i64_add"); });
         } else if (op === 0xAE || op === 0xAF) {                             // SCAS: cmp RAX,[rdi]; rdi+=d
           rdReg(f, 0, sz, rex); f.local_set(0); rdReg(f, 7, 8, true); f.local_set(3); rdRM(f, MEMM, sz, rex); f.local_set(1);
           f.local_get(0); f.local_get(1); f.op("i64_sub"); f.local_set(2); deferFlags(f, "sub", sz);
-          i32c(f, REG + 7 * 8); rdReg(f, 7, 8, true); f.local_get(6); f.op("i64_add"); st64(f);
+          wrReg(f, 7, 8, true, () => { rdReg(f, 7, 8, true); f.local_get(6); f.op("i64_add"); });
         } else {                                                            // CMPS (A6/A7): cmp [rsi],[rdi]; rsi+=d; rdi+=d
           rdReg(f, 6, 8, true); f.local_set(3); rdRM(f, MEMM, sz, rex); f.local_set(0);
           rdReg(f, 7, 8, true); f.local_set(3); rdRM(f, MEMM, sz, rex); f.local_set(1);
           f.local_get(0); f.local_get(1); f.op("i64_sub"); f.local_set(2); deferFlags(f, "sub", sz);
-          i32c(f, REG + 6 * 8); rdReg(f, 6, 8, true); f.local_get(6); f.op("i64_add"); st64(f);
-          i32c(f, REG + 7 * 8); rdReg(f, 7, 8, true); f.local_get(6); f.op("i64_add"); st64(f);
+          wrReg(f, 6, 8, true, () => { rdReg(f, 6, 8, true); f.local_get(6); f.op("i64_add"); });
+          wrReg(f, 7, 8, true, () => { rdReg(f, 7, 8, true); f.local_get(6); f.op("i64_add"); });
         }
         handled = true;
       } else if (op === 0xFA || op === 0xFB || op === 0xFC || op === 0xFD) { // cli/sti/cld/std (just toggle the rfl bit)
@@ -552,7 +590,7 @@ export function jitCompile(rip) {
           rdRM(f, mm, sz, rex); f.local_set(0);                            // a = rm (zero-extended)
           const sextL = (L) => { f.local_get(L); if (sz === 1) f.op("i64_extend8_s"); else if (sz === 2) f.op("i64_extend16_s"); else if (sz === 4) f.op("i64_extend32_s"); };
           const RAX = REG + 0 * 8, RDX = REG + 2 * 8;
-          const exitHere = () => { f.if_(0x40); materialize(f); i32c(f, RIP); i64c(f, i - GBASE); st64(f); i32c(f, n); f.op("return"); f.end(); };  // rare/trapping case -> re-run in interpreter (flush flags)
+          const exitHere = () => { f.if_(0x40); materialize(f); i32c(f, RIP); i64c(f, i - GBASE); st64(f); wbDirty(f); i32c(f, n); f.op("return"); f.end(); };  // rare/trapping case -> re-run in interpreter (flush flags + reg cache; rcDirty here = regs written by EARLIER instrs on this path, program-order correct)
           if (ext === 4 || ext === 5) {                                    // MUL / IMUL
             rdReg(f, 0, sz, rex); f.local_set(1);                          // b = AL/AX/EAX/RAX
             if (sz === 8) {                                                // full 128-bit: al/ah/bl/bh -> ll/lh/hl/hh -> mid -> lo(RAX)/hi(RDX)
@@ -567,17 +605,17 @@ export function jitCompile(rip) {
               f.local_get(10); i64c(f, 32); f.op("i64_shr_u");
               f.local_get(11); i64c(f, 0xFFFFFFFF); f.op("i64_and"); f.op("i64_add");
               f.local_get(12); i64c(f, 0xFFFFFFFF); f.op("i64_and"); f.op("i64_add"); f.local_set(14);  // mid = (ll>>32)+(lh&lo)+(hl&lo)
-              i32c(f, RAX); f.local_get(10); i64c(f, 0xFFFFFFFF); f.op("i64_and"); f.local_get(14); i64c(f, 32); f.op("i64_shl"); f.op("i64_or"); st64(f);  // RAX = lo
-              i32c(f, RDX);                                                // RDX = hi = hh + (lh>>32)+(hl>>32)+(mid>>32)
-              f.local_get(13);
-              f.local_get(11); i64c(f, 32); f.op("i64_shr_u"); f.op("i64_add");
-              f.local_get(12); i64c(f, 32); f.op("i64_shr_u"); f.op("i64_add");
-              f.local_get(14); i64c(f, 32); f.op("i64_shr_u"); f.op("i64_add");
-              if (ext === 5) {                                            // IMUL sign-correct: hi -= (a<0?b:0) + (b<0?a:0)
-                f.local_get(0); i64c(f, 63); f.op("i64_shr_s"); f.local_get(1); f.op("i64_and"); f.op("i64_sub");
-                f.local_get(1); i64c(f, 63); f.op("i64_shr_s"); f.local_get(0); f.op("i64_and"); f.op("i64_sub");
-              }
-              st64(f);
+              wrReg(f, 0, 8, true, () => { f.local_get(10); i64c(f, 0xFFFFFFFF); f.op("i64_and"); f.local_get(14); i64c(f, 32); f.op("i64_shl"); f.op("i64_or"); });  // RAX = lo
+              wrReg(f, 2, 8, true, () => {                                // RDX = hi = hh + (lh>>32)+(hl>>32)+(mid>>32)
+                f.local_get(13);
+                f.local_get(11); i64c(f, 32); f.op("i64_shr_u"); f.op("i64_add");
+                f.local_get(12); i64c(f, 32); f.op("i64_shr_u"); f.op("i64_add");
+                f.local_get(14); i64c(f, 32); f.op("i64_shr_u"); f.op("i64_add");
+                if (ext === 5) {                                          // IMUL sign-correct: hi -= (a<0?b:0) + (b<0?a:0)
+                  f.local_get(0); i64c(f, 63); f.op("i64_shr_s"); f.local_get(1); f.op("i64_and"); f.op("i64_sub");
+                  f.local_get(1); i64c(f, 63); f.op("i64_shr_s"); f.local_get(0); f.op("i64_and"); f.op("i64_sub");
+                }
+              });
             } else {                                                      // sz<8: r = a*b (MUL zero-ext, IMUL sign-ext); RAX=low, RDX=high
               if (ext === 4) { f.local_get(0); f.local_get(1); f.op("i64_mul"); }
               else { sextL(0); sextL(1); f.op("i64_mul"); }
@@ -587,10 +625,10 @@ export function jitCompile(rip) {
             }
           } else if (ext === 6) {                                         // DIV (unsigned)
             if (sz === 8) {                                               // guard a==0 || RDX!=0 (128-bit dividend -> interpreter); else RAX=lo/a, RDX=lo%a
-              f.local_get(0); f.op("i64_eqz"); i32c(f, RDX); ld64(f); f.op("i64_eqz"); i32c(f, 1); f.op("i32_xor"); f.op("i32_or"); exitHere();
-              i32c(f, RAX); ld64(f); f.local_set(1);                      // lo = RAX
-              i32c(f, RAX); f.local_get(1); f.local_get(0); f.op("i64_div_u"); st64(f);
-              i32c(f, RDX); f.local_get(1); f.local_get(0); f.op("i64_rem_u"); st64(f);
+              f.local_get(0); f.op("i64_eqz"); rdReg(f, 2, 8, true); f.op("i64_eqz"); i32c(f, 1); f.op("i32_xor"); f.op("i32_or"); exitHere();
+              rdReg(f, 0, 8, true); f.local_set(1);                       // lo = RAX
+              wrReg(f, 0, 8, true, () => { f.local_get(1); f.local_get(0); f.op("i64_div_u"); });
+              wrReg(f, 2, 8, true, () => { f.local_get(1); f.local_get(0); f.op("i64_rem_u"); });
             } else {                                                      // r = (RDX<<bits)|RAX (zero-ext); RAX=r/a, RDX=r%a
               f.local_get(0); f.op("i64_eqz"); exitHere();               // guard a==0
               rdReg(f, 2, sz, rex); i64c(f, sz * 8); f.op("i64_shl"); rdReg(f, 0, sz, rex); f.op("i64_or"); f.local_set(1);  // r
@@ -601,9 +639,9 @@ export function jitCompile(rip) {
             sextL(0); f.local_set(0);                                     // a = sext(rm)  (so sa is signed; reuse local 0)
             f.local_get(0); f.op("i64_eqz"); f.local_get(0); i64c(f, -1); f.op("i64_eq"); f.op("i32_or"); exitHere();  // guard sa==0 || sa==-1 (div trap)
             if (sz === 8) {                                               // cpu.HC 64-bit-fits: RAX=lo/a, RDX=lo%a (ignores RDX dividend)
-              i32c(f, RAX); ld64(f); f.local_set(1);                      // lo = RAX
-              i32c(f, RAX); f.local_get(1); f.local_get(0); f.op("i64_div_s"); st64(f);
-              i32c(f, RDX); f.local_get(1); f.local_get(0); f.op("i64_rem_s"); st64(f);
+              rdReg(f, 0, 8, true); f.local_set(1);                       // lo = RAX
+              wrReg(f, 0, 8, true, () => { f.local_get(1); f.local_get(0); f.op("i64_div_s"); });
+              wrReg(f, 2, 8, true, () => { f.local_get(1); f.local_get(0); f.op("i64_rem_s"); });
             } else {                                                      // sdd = (sext(RDX)<<bits)|(RAX&mask); RAX=sdd/sa, RDX=sdd%sa
               sextL2: { rdReg(f, 2, sz, rex); if (sz === 1) f.op("i64_extend8_s"); else if (sz === 2) f.op("i64_extend16_s"); else if (sz === 4) f.op("i64_extend32_s"); }
               i64c(f, sz * 8); f.op("i64_shl"); rdReg(f, 0, sz, rex); f.op("i64_or"); f.local_set(1);  // sdd
@@ -671,7 +709,7 @@ export function jitCompile(rip) {
         else wrReg(f, 0, 4, rex, () => { rdReg(f, 0, 2, rex); f.op("i64_extend16_s"); });              // CWDE EAX=sext16(AX)
         handled = true;
       } else if (op === 0x99) {                                              // CDQ/CQO: sign-extend A into D (no flags)
-        if (rexW) { i32c(f, REG + 2 * 8); rdReg(f, 0, 8, true); i64c(f, 63); f.op("i64_shr_s"); st64(f); }   // CQO RDX = RAX>>s63
+        if (rexW) { wrReg(f, 2, 8, true, () => { rdReg(f, 0, 8, true); i64c(f, 63); f.op("i64_shr_s"); }); }   // CQO RDX = RAX>>s63
         else wrReg(f, 2, 4, rex, () => { rdReg(f, 0, 4, rex); f.op("i64_extend32_s"); i64c(f, 63); f.op("i64_shr_s"); });  // CDQ EDX = sext(EAX)>>s63
         handled = true;
       } else if (op === 0x90 && !rex) { handled = true; }                    // nop
@@ -745,13 +783,24 @@ export function jitCompile(rip) {
     f.local_get(4); i64c(f, K); f.op("i64_lt_u"); emitCond(f, loopT.cc); f.op("i32_and"); f.br_if(0);  // loop while counter<K && taken
     f.end();
     i32c(f, RIP); i64c(f, rip); i64c(f, loopT.fall); f.local_get(4); i64c(f, K); f.op("i64_ge_u"); f.op("select"); st64(f);  // exit rip = cap? entry : fallthrough
+    wbDirty(f);                                            // flush the register cache (the loop ran entirely in locals — the whole point)
     f.local_get(4); i64c(f, n); f.op("i64_mul"); f.op("i32_wrap_i64");   // return counter*n = instructions actually run (i32)
   } else {
     if (term) { f.local_set(3); i32c(f, RIP); f.local_get(3); st64(f); }   // terminator left exit rip on the stack (already materialized before the push)
     else { materialize(f); i32c(f, RIP); i64c(f, i - GBASE); st64(f); }    // fall-through: flush deferred flags so the interpreter sees correct rfl
+    wbDirty(f);                                            // flush the register cache to reg[] memory
     i32c(f, n);                                            // return instr count (i32)
   }
-  blk.setBody([{ count: 5, vt: VT.i64 }, { count: 1, vt: VT.f64 }, { count: 13, vt: VT.i64 }], f);  // i64: 0-3 scratch, 4 loop counter; f64: 5 x87 scratch; i64 6-15: mul/div scratch; i64 16-18: lazy-flag a/b/r
+  // ENTRY: load every used guest reg from reg[] memory into its cache local. Prepended LAST so the loads
+  // sit BEFORE the loopT loop opcode (outside the loop) — register reads inside a 1024-iteration loop
+  // never touch memory, which is the main in-game speedup.
+  if (rcUsed || rcX87) {
+    const g = new Func();
+    for (let k = 0; k < 16; k++) if (rcUsed & (1 << k)) { i32c(g, REG + k * 8); g.load("i64_load", 0, 3); g.local_set(RC + k); }
+    if (rcX87) { i32c(g, FSP); g.load("i64_load", 0, 3); g.local_set(FSPLOC); }
+    f.bytes.unshift(...g.bytes);
+  }
+  blk.setBody([{ count: 5, vt: VT.i64 }, { count: 1, vt: VT.f64 }, { count: 13, vt: VT.i64 }, { count: 17, vt: VT.i64 }], f);  // i64: 0-3 scratch, 4 loop counter; f64: 5 x87 scratch; i64 6-15: mul/div scratch; 16-18: lazy-flag a/b/r; 19-34: guest reg cache; 35: fsp cache
   m.exportFunc("run", blk.index);
   let inst;
   try { inst = new WebAssembly.Instance(new WebAssembly.Module(Uint8Array.from(m.emit())), { env: { mem: MEM, RdMem: RDMEM, WrMem: WRMEM } }); }
