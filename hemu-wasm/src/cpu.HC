@@ -38,9 +38,9 @@ U64 g_skip_bg;                       // the desktop text/content render (0 args)
 U64 g_game_running;                  // set by WakeTasks each frame: a task is suspended on its PopUp (a fullscreen
                                      // game/app is up), so the desktop windows behind it are hidden -> don't redraw
 U64 g_jit_on;                        // 0 = pure interpreter (zero-init; a JIT host sets it 1 after wiring __jit_*).
-U64 g_jit_rip[16384];                // direct-mapped block cache: the rip occupying slot (rip & 0x3FFF)
-I64 g_jit_n[16384];                  // that block's instr count (>0 = JIT'd), 0 = tried+unjittable, -1 = still counting
-I64 g_jit_hot[16384];                // per-slot hotness counter until the compile threshold (64)
+U64 g_jit_rip[65536];                // direct-mapped block cache: the rip occupying slot (rip & 0xFFFF)
+I64 g_jit_n[65536];                  // that block's instr count (>0 = JIT'd), 0 = tried+unjittable, -1 = still counting
+I64 g_jit_hot[65536];                // per-slot hotness counter until the compile threshold (64)
                                      // planar path. We present dc2 directly, so this output is dead — skip both
                                      // function bodies (just pop args + return) to refresh faster -> smoother cursor.
 U8 g_hooktbl[256];                   // rip&0xFF -> "maybe a special address" gate: lets Step() skip the four
@@ -1263,7 +1263,7 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
     // block compiled to native WASM runs in ONE __jit_run (b = its instr count). Until then, count the
     // block's hotness and at the threshold ask the host to compile it. See JIT-DESIGN.md.
     if (g_jit_on) {
-      I64 slot = rip & 0x3FFF;
+      I64 slot = rip & 0xFFFF;
       // run a CHAIN of JIT'd blocks natively (one host round-trip). Cap the chain to one PIT period so
       // IRQ0 still fires on time -- otherwise a guest spin-wait on the timer never wakes (games freeze).
       if (g_jit_rip[slot] == rip && g_jit_n[slot] > 0) {
@@ -1281,7 +1281,7 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
       if (g_jit_on) {                                                         // JIT on: interpret only until the NEXT rip is a JIT'd block, then
         while (b < batch) {                                                   // hand straight back (else a blind 64-batch buries the JIT — most insns
           Step(); b++; if (halted) break;                                     // after a chain break ARE JIT'd, so the batch was ~all the interp cost).
-          I64 s2 = rip & 0x3FFF; if (g_jit_rip[s2] == rip && g_jit_n[s2] > 0) break;
+          I64 s2 = rip & 0xFFFF; if (g_jit_rip[s2] == rip && g_jit_n[s2] > 0) break;
         }
       } else {
         while (b < batch) { Step(); b++; if (halted) break; }                 // pure interpreter (deploy): fast fixed batch, zero added checks

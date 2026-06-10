@@ -14,7 +14,7 @@ const keyq = [];                            // set-1 scancodes from the main thr
 let curBudget = 1500000, dtMs = 16;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0;
 const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
-const G_FS = 402680, G_GS = 402688, G_TSC = 402600;   // msr_fsbase/msr_gsbase/tsc global byte-offsets (FS segment + RDTSC); `node hemu-wasm/build.mjs` prints them after every rebuild — keep in sync
+const G_FS = 1582328, G_GS = 1582336, G_TSC = 1582248;   // msr_fsbase/msr_gsbase/tsc global byte-offsets (FS segment + RDTSC); `node hemu-wasm/build.mjs` prints them after every rebuild — keep in sync
 
 onmessage = (e) => {
   const m = e.data;
