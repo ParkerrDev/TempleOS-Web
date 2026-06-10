@@ -17,6 +17,5 @@ const r = compileHolyC(src, {
 writeFileSync(resolve(dir, "snapshot.wasm"), Buffer.from(r.bytes));
 console.log(`snapshot.wasm: ${r.bytes.length} bytes, ${r.warnings.length} warnings`);
 for (const w of r.warnings) console.log("  warn:", w);
-// The worker's JIT wiring needs these global byte-offsets (hemu-worker.js G_FS/G_GS/G_TSC) — they move
-// whenever cpu.HC/snapshot.HC globals change, so print them at every build:
-for (const n of ["msr_fsbase", "msr_gsbase", "tsc"]) console.log(`  ${n} @ ${r.globals.get(n).addr}`);
+// Segment/TSC addresses flow to the JIT at runtime via the __jit_seg handoff (per-core CCpuState),
+// so there are no hardcoded offsets to keep in sync anymore.

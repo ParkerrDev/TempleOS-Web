@@ -19,13 +19,10 @@ U0 InitMem(U64 sz)
   ata_buf = MAlloc(131072);                                  // 256 sectors * 512 B: ATA PIO read staging
 }
 
-// 0=RAX 1=RCX 2=RDX 3=RBX 4=RSP 5=RBP 6=RSI 7=RDI 8..15=R8..R15
-U64 reg[16];
-U64 rip;
-U64 rfl;
-I64 halted;                          // 0 run, 1 HLT, 2 bad opcode, 3 #DE
+// PER-CORE state (reg/rip/rfl/halted/irq_stall/fpu/seg/decode) lives in CCpuState g_cpu_st[] — defined in
+// snapshot.HC (the parent) BEFORE this include, accessed through #define reg CST.f_reg etc. (CST = this
+// instance's MY_CORE slot). SHARED state (mem, devices, JIT cache, icount, tsc, cr*, idtr/gdtr) stays below.
 I64 icount;
-I64 irq_stall;                       // deadlock watchdog: instrs IRQ0 has been pending under IF=0
 U64 g_hle_blit;                      // entry addr of the transparent compositor blit to run natively (0=off)
 U8 *g_desk;                          // last COMPLETE frame (desktop + the OS's own cursor), captured tear-free
 I64 g_desk_ready;
@@ -48,7 +45,7 @@ U8 g_hooktbl[256];                   // rip&0xFF -> "maybe a special address" ga
 U64 ata_words, ata_seccnt, ata_pos, ata_r3, ata_r4, ata_r5;   // ATA PIO read — serve C: sectors (disk == live.bin)
 U64 ata_wr, ata_wlba, ata_wcnt;                              // ATA PIO write in progress (lba, count) -> __host_disk_wr
 U8 *ata_buf;
-U64 g_seg[8];                                                // segment selectors (ES,CS,SS,DS,FS,GS) — stored, ignored (flat long mode)
+// g_seg[8] moved into CCpuState (per-core)
 U64 g_hpet_rate, g_jiffies0;         // wall-clock pacing: HPET ticks/instr, and the snapshot's base jiffies
 U64 g_badop;
 // system state: control regs, descriptor tables, MSRs, TSC, code/stack segments
@@ -61,12 +58,9 @@ I64 tsc_rate;                        // TSC ticks added per executed instruction
                                      // TempleOS time (tS, etc.) is GetTSC/cnts.time_stamp_freq, so the
                                      // TSC must continue from the snapshot value and advance, or all
                                      // time freezes. The snapshot restores tsc + sets tsc_rate.
-U64 msr_efer, msr_star, msr_lstar, msr_sfmask, msr_fsbase, msr_gsbase, msr_kgsbase, msr_apic;
+U64 msr_efer, msr_star, msr_lstar, msr_sfmask, msr_kgsbase, msr_apic;   // msr_fsbase/msr_gsbase moved into CCpuState (per-core)
 U64 xmm_lo[16], xmm_hi[16];          // SSE XMM registers (low/high 64 bits each)
-U8  fsc[8];                          // scratch for U64 <-> F64 bit reinterpretation
-F64 fpr[8];                          // x87 FPU register stack (kept at 64-bit precision)
-I64 fsp;                             // x87 top-of-stack index; ST(0) = fpr[fsp]
-U64 x87_cw, x87_sw;                  // x87 control + status words
+// fsc/fpr/fsp/x87_cw/x87_sw moved into CCpuState (per-core)
 // devices: dual 8259 PICs + 8254 PIT (channel 0 -> IRQ0 = the scheduler tick)
 I64 pic1_base, pic1_mask, pic1_irr, pic1_isr, pic1_initstep;
 I64 pic2_base, pic2_mask, pic2_irr, pic2_isr, pic2_initstep;
@@ -109,10 +103,7 @@ U64 hpet_base;                       // discovered base of the HPET alias
 #define F_OF 0x0800
 
 // prefix + decode scratch
-I64 hasRex, rexW, rexR, rexX, rexB, pfx66, repf;
-U64 g_segbase;                       // FS/GS segment base for the current instruction (0 = flat)
-I64 md, rg, rm, isMem;
-U64 ea;
+// prefix + decode scratch (hasRex/rex*/pfx66/repf/g_segbase/md/rg/rm/isMem/ea) moved into CCpuState (per-core)
 
 //---------------------------------------------------------------- MMIO (LAPIC / HPET)
 // TempleOS reaches the LAPIC and HPET through an "uncached alias" whose base we
