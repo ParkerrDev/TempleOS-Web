@@ -14,7 +14,7 @@ const keyq = [];                            // set-1 scancodes from the main thr
 let curBudget = 1500000, dtMs = 16;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0;
 const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
-const G_FS = 402648, G_GS = 402656, G_TSC = 402600;   // msr_fsbase/msr_gsbase/tsc global byte-offsets (FS segment + RDTSC); rebuild snapshot.wasm if the HC globals change
+const G_FS = 402680, G_GS = 402688, G_TSC = 402600;   // msr_fsbase/msr_gsbase/tsc global byte-offsets (FS segment + RDTSC); `node hemu-wasm/build.mjs` prints them after every rebuild — keep in sync
 
 onmessage = (e) => {
   const m = e.data;
@@ -73,25 +73,37 @@ async function boot({ gz, wasmUrl, fixedB }) {
   inst.exports.__rt_init();
   postMessage({ cmd: "progress", text: "starting TempleOS…", pct: 100 });
 
-  // Fast yield via MessageChannel: lets the loop run back-to-back (no setTimeout 4 ms clamp) while
-  // still draining the input/ack messages between iterations, so this core stays saturated.
+  // Fast yield via MessageChannel: drains input/ack messages between iterations without the
+  // setTimeout 4 ms clamp (used when the frame already ran long and there's nothing to sleep).
   const tick = new MessageChannel();
   let resume = null;
   tick.port1.onmessage = () => { const r = resume; resume = null; r && r(); };
   const yieldTick = () => new Promise(r => { resume = r; tick.port2.postMessage(0); });
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-  let lastT = performance.now();
+  // Pace the loop at ~60 __main/s. Pre-JIT, emulation was slow enough to self-pace near 60; the JIT
+  // made __main fast, so the unthrottled loop spun 150-220+/s and every per-refresh animation (title
+  // marquee, window wiggle, cursor) ran that much faster — the "everything ~2x speed" bug. The guest's
+  // own refresh gate now paces drawing at ~31fps (snapshot.HC); 60Hz here keeps input/present snappy.
+  // dt carries a fractional accumulator so integer ms truncation doesn't slow the guest clock (~12%
+  // at 240Hz, ~4% at 60Hz — jiffies/tS now track wall-clock exactly).
+  const FRAME_MS = 1000 / 60;
+  let lastT = performance.now(), dtAcc = 0;
   for (;;) {
     const now = performance.now();
-    dtMs = Math.max(1, Math.min(100, now - lastT)); lastT = now;   // real wall-clock time this frame represents
+    dtAcc += now - lastT; lastT = now;
+    if (dtAcc > 100) dtAcc = 100;                                  // tab was backgrounded — don't fast-forward
+    dtMs = Math.max(1, Math.min(100, Math.floor(dtAcc)));
+    dtAcc -= dtMs;                                                 // carry the sub-ms remainder to the next frame
     try { inst.exports.__main(); }                                 // emulate one TempleOS frame (+ present via the host)
     catch (err) { postMessage({ cmd: "error", msg: "hemu trap: " + err.message }); return; }
     if (!loaded) { loaded = true; snap = null; }                   // snapshot now in WASM RAM — free the 384 MB copy
-    if (!fixedB) {                                                 // size budget to ~one composite/frame (no wasted re-composites)
-      const work = performance.now() - now;
-      if (work > 15 && curBudget > 900000) curBudget = (curBudget * 0.90) | 0;
-      else if (work < 11 && curBudget < 2500000) curBudget = (curBudget * 1.07) | 0;
+    const work = performance.now() - now;
+    if (!fixedB) {                                                 // size budget to fill the frame (games need the MIPS;
+      if (work > 15 && curBudget > 900000) curBudget = (curBudget * 0.90) | 0;        // slow machines auto-shrink)
+      else if (work < 11 && curBudget < 24000000) curBudget = (curBudget * 1.07) | 0;
     }
-    await yieldTick();
+    const wait = FRAME_MS - (performance.now() - now);
+    if (wait > 1) await sleep(wait); else await yieldTick();
   }
 }
