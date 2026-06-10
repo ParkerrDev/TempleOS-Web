@@ -53,7 +53,8 @@ U0 Present()                            // HLE: blit the composited desktop
   if (body && body < 0x18000000) __present(mem + body, w, h);
 }
 
-U0 WakeTasks()                          // make every scheduler task ready so the WinMgr composites
+U64 g_wake_jif;                         // guest jiffies at the last force-wake (32-jiffy = ~31Hz cadence)
+U0 WakeTasks(I64 do_wake)               // scan tasks (g_game_running) and optionally force them ready
 {
   U64 head = *(U64 *)(mem + 0x15F8C060); // CCPU+0x38 = scheduler ring head
   U64 t = head; I64 n = 0, game = 0;
@@ -65,7 +66,7 @@ U0 WakeTasks()                          // make every scheduler task ready so th
     // suspended lets the popup run to completion, exactly as on real hardware. A suspended popup-master
     // also means a fullscreen popup/game is up, so g_game_running gates the hidden-desktop-redraw skip.
     if (*(U64 *)(mem + t + 0x450)) game = 1;
-    else {
+    else if (do_wake) {
       *(U64 *)(mem + t + 0x18) &= ~0x204; // clear AWAITING_MSG / suspend skip-bits
       *(U64 *)(mem + t + 0x10) = 0;       // wake_jiffy = now
     }
@@ -96,14 +97,24 @@ U0 Frame()
   I64 sc = __host_key();
   while (sc >= 0) { InjectKey(sc); sc = __host_key(); }   // drain host keystrokes -> IRQ1 -> echo
   mem[0xC2B0] = 1;                     // re-assert ms_hard.installed (defeats any mid-run reset)
-  WakeTasks();                         // make the WinMgr ready so it refreshes + draws the cursor this frame
+  // Wake the scheduler at the OS's OWN refresh cadence (~31Hz), not every __main: force-waking the
+  // WinMgr per __main made refresh (and every per-refresh animation: title marquee, border wiggle,
+  // cursor) track the host loop rate — with the JIT that was 150-220/s, i.e. "everything ~5x speed".
+  // 32 guest-jiffies (= 32 real ms with correct pacing) restores TempleOS's designed ~30fps cadence.
+  // The popup/game scan still runs every frame so g_game_running stays fresh.
+  U64 jif = *(U64*)(mem + 0xBD98);
+  if (jif - g_wake_jif >= 32 || jif < g_wake_jif) { WakeTasks(1); g_wake_jif = jif; }
+  else WakeTasks(0);
   // Wall-clock pacing: advance guest time by the real frame delta (dt ms) spread over B instructions,
   // so the clock + animations track real time no matter how fast we emulate (was running ~10x fast).
   I64 dt = __host_dt(); if (dt < 1) dt = 1; else if (dt > 100) dt = 100;
   I64 B = __host_budget(); if (B < 50000) B = 50000;
   pit_div = B / dt; if (pit_div < 1) pit_div = 1; pit_counter = pit_div;   // dt PIT ticks/frame
-  tsc_rate = 1000000 * dt / B; if (tsc_rate < 1) tsc_rate = 1;             // tsc += freq*dt/1000 per frame
-  g_hpet_rate = 100000 * dt / B; if (g_hpet_rate < 1) g_hpet_rate = 1;     // hpet += 1e8*dt/1000 per frame
+  // Q16 fixed-point clock rates (integer ticks/instr truncated badly: the JIT era's 1.6 -> 1 ran tS at
+  // 0.63x real; sub-tick precision keeps guest time exact at any MIPS). Target: 1e6 TSC + 1e5 HPET / ms.
+  g_tsc_q16 = (1000000 * dt << 16) / B; if (g_tsc_q16 < 1) g_tsc_q16 = 1;
+  g_hpet_q16 = (100000 * dt << 16) / B; if (g_hpet_q16 < 1) g_hpet_q16 = 1;
+  tsc_rate = g_tsc_q16 >> 16; if (tsc_rate < 1) tsc_rate = 1;              // legacy approx (RunTo HLE path only)
   g_budget = icount + B;               // run exactly B instrs (no drift if a prior frame fell short)
   Run(g_budget);
   Present();
@@ -123,6 +134,9 @@ U0 Main()                              // host calls __main once per display fra
     //    TRUE or DrawMs's gate (ms.show && ms_hard.installed) fails and the cursor never draws.
     *(U64*)(mem + 0x1140cc10) = 0;
     *(U64*)(mem + 0x1140cc18) = 0;
+    //  - winmgr.refresh_freq (@0x1140cc08) was calibrated by qemu's wrong-speed boot clock (28.5).
+    //    Set it to 31.25 = 1000/32 so the OS's own refresh gate matches the 32-jiffy wake cadence.
+    *(F64*)(mem + 0x1140cc08) = 31.25;
     mem[0xC2B0] = 1;                    // ms_hard.installed = TRUE
     g_hle_blit = 0x119c8428;           // HLE DCBlotColor8 (dc->dc2 composite) — was 61% of frame time
     g_capture_rip = 0x119b828f;        // GrUpdateScrn, instr after the cursor call returns — dc2 complete + cursor

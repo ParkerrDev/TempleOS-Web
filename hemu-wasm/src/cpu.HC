@@ -54,6 +54,9 @@ U64 g_badop;
 // system state: control regs, descriptor tables, MSRs, TSC, code/stack segments
 U64 cr0, cr2, cr3, cr4, cr8, g_cs, g_ss;
 U64 idtr_base, idtr_limit, gdtr_base, gdtr_limit, tsc;
+I64 g_tsc_q16, g_tsc_acc;            // TSC advance per instruction in Q16 fixed-point + fractional accumulator.
+I64 g_hpet_q16, g_hpet_acc;          // Same for the HPET counter. Integer rates truncated badly (e.g. the JIT era's
+                                     // 1.6 ticks/instr -> 1 = guest tS at 0.63x real), so sub-tick precision matters.
 I64 tsc_rate;                        // TSC ticks added per executed instruction (0 = off, for tests).
                                      // TempleOS time (tS, etc.) is GetTSC/cnts.time_stamp_freq, so the
                                      // TSC must continue from the snapshot value and advance, or all
@@ -1242,7 +1245,9 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
       if (skip > maxi - icount) skip = maxi - icount;
       if (skip < 1) skip = 1;
       if (pit_div) { pit_counter -= skip; if (pit_counter <= 0) { pit_counter = pit_div; pic1_irr |= 1; } }
-      hpet_ctr += g_hpet_rate * skip; tsc += tsc_rate * skip; icount += skip;
+      g_hpet_acc += g_hpet_q16 * skip; hpet_ctr += g_hpet_acc >> 16; g_hpet_acc &= 0xFFFF;
+      g_tsc_acc  += g_tsc_q16  * skip; tsc      += g_tsc_acc  >> 16; g_tsc_acc  &= 0xFFFF;
+      icount += skip;
       if ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask)) {     // an IRQ is now pending
         if (rfl & F_IF) { halted = 0; CheckIrq(); }                 // IF=1: wake + service it
         else { irq_stall += skip; if (irq_stall > 2000000) { irq_stall = 0; rfl |= F_IF; halted = 0; CheckIrq(); } }
@@ -1282,7 +1287,9 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
         while (b < batch) { Step(); b++; if (halted) break; }                 // pure interpreter (deploy): fast fixed batch, zero added checks
       }
     }
-    icount += b; hpet_ctr += g_hpet_rate * b; tsc += tsc_rate * b;            // advance time for the batch/block
+    icount += b;                                                              // advance time for the batch/block (Q16: sub-tick exact)
+    g_hpet_acc += g_hpet_q16 * b; hpet_ctr += g_hpet_acc >> 16; g_hpet_acc &= 0xFFFF;
+    g_tsc_acc  += g_tsc_q16  * b; tsc      += g_tsc_acc  >> 16; g_tsc_acc  &= 0xFFFF;
     if (pit_div) { pit_counter -= b; if (pit_counter <= 0) { pit_counter += pit_div; pic1_irr |= 1; } }  // PIT -> IRQ0
     if (halted) continue;                                                     // HLT/fault: let the outer loop handle it
     if ((rfl & F_IF) && ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask))) CheckIrq();
