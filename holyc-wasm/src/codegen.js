@@ -87,7 +87,10 @@ class Codegen {
   // ============================================================ run
   run() {
     // host imports first
-    this.m.setMemory(MEM_INITIAL_PAGES, MEM_MAX_PAGES);
+    // SMP: with opts.sharedMemory, IMPORT a shared memory (env.mem) so N instances share guest RAM;
+    // still exported as "memory" (index 0) so existing consumers of inst.exports.memory keep working.
+    if (this.opts.sharedMemory) this.m.importMemory("env", "mem", MEM_INITIAL_PAGES, MEM_MAX_PAGES, true);
+    else this.m.setMemory(MEM_INITIAL_PAGES, MEM_MAX_PAGES);
     this.imports = {};
     for (const [name, sig] of Object.entries(HOST_IMPORTS)) {
       const idx = this.m.importFunc("env", name, sig.params, sig.results);
@@ -984,7 +987,42 @@ class FnCtx {
   }
 
   // address of an lvalue: pushes i64 addr, returns pointee type
+  // Fold a pure-constant address chain (globalIdent[.field|[constIdx]]*) to its absolute address.
+  // Returns {addr, type} or null. This restores flat i64.const addressing for the per-core CPU-state
+  // pattern (g_cpu_st[MY_CORE].f_reg[i] etc.) — without it every register access in the interpreter
+  // rebuilt the address with const+add chains (~2x slower interp).
+  addrConst(node) {
+    try {
+      if (node.kind === "Ident") {
+        if (this.locals.get(node.name)) return null;
+        const G = this.cg.globals.get(node.name);
+        if (!G) return null;
+        return { addr: Number(G.addr), type: G.type };
+      }
+      if (node.kind === "Member" && !node.arrow) {
+        const b = this.addrConst(node.base);
+        if (!b) return null;
+        const bt = this.cg.resolveType(b.type);
+        if (!bt || !isClass(bt)) return null;
+        const fld = this.fieldOf(bt, node.name);
+        if (!fld) return null;
+        return { addr: b.addr + Number(fld.offset || 0), type: fld.type };
+      }
+      if (node.kind === "Index") {
+        const b = this.addrConst(node.base);
+        if (!b) return null;
+        const bt = this.cg.resolveType(b.type);
+        if (!isArray(bt)) return null;
+        const cidx = foldConstInt(node.index, this.cg.defines || {});
+        if (cidx === null || cidx === undefined) return null;
+        return { addr: b.addr + Number(cidx) * this.cg.typeSize(bt.of), type: bt.of };
+      }
+    } catch { return null; }
+    return null;
+  }
+
   genAddr(node) {
+    if (!process.env.NOFOLD) { const ac = this.addrConst(node); if (ac) { this.f.i64_const(ac.addr); return ac.type; } }
     switch (node.kind) {
       case "Ident": {
         const L = this.locals.get(node.name);
@@ -1014,6 +1052,7 @@ class FnCtx {
   }
 
   genIndexAddr(node) {
+    if (!process.env.NOFOLD) { const ac = this.addrConst(node); if (ac) { this.f.i64_const(ac.addr); return ac.type; } }
     let bt = this.peekType(node.base);
     bt = this.cg.resolveType(bt);
     let elemT;
@@ -1023,6 +1062,15 @@ class FnCtx {
       this.genExpr(node.base); elemT = T.I64;
     }
     const esz = this.cg.typeSize(elemT);
+    // constant index: fold idx*esz at compile time (a[0] adds NOTHING) — hot for the per-core
+    // CPU-state pattern g_cpu_st[MY_CORE].f_reg[i], where a runtime 0*sizeof mul on every register
+    // access cost the interpreter ~2x.
+    const cidx = foldConstInt(node.index, this.cg.defines || {});
+    if (cidx !== null && cidx !== undefined) {
+      const off = Number(cidx) * esz;
+      if (off) this.f.i64_const(off).op("i64_add");
+      return elemT;
+    }
     this.genExprCoerce(node.index, T.I64);
     if (esz !== 1) this.f.i64_const(esz).op("i64_mul");
     this.f.op("i64_add");
@@ -1040,6 +1088,7 @@ class FnCtx {
   }
 
   genMemberAddr(node) {
+    if (!process.env.NOFOLD) { const ac = this.addrConst(node); if (ac) { this.f.i64_const(ac.addr); return ac.type; } }
     let bt = this.peekType(node.base);
     if (node.arrow) {
       bt = this.cg.resolveType(bt);

@@ -292,8 +292,8 @@ export class Module {
     return idx; // global index
   }
 
-  importMemory(module, name, min, max = undefined) {
-    this.importMems.push({ module, name, min, max });
+  importMemory(module, name, min, max = undefined, shared = false) {
+    this.importMems.push({ module, name, min, max, shared });
   }
 
   setMemory(min, max = undefined) {
@@ -366,7 +366,8 @@ export class Module {
         items.push([...strBytes(im.module), ...strBytes(im.name), 0x00, ...uleb(im.typeIdx)]);
       }
       for (const im of this.importMems) {
-        const limits = im.max === undefined ? [0x00, ...uleb(im.min)] : [0x01, ...uleb(im.min), ...uleb(im.max)];
+        const limits = im.shared ? [0x03, ...uleb(im.min), ...uleb(im.max)]        // shared memory (threads): flag 0x03 = has-max + shared
+          : im.max === undefined ? [0x00, ...uleb(im.min)] : [0x01, ...uleb(im.min), ...uleb(im.max)];
         items.push([...strBytes(im.module), ...strBytes(im.name), 0x02, ...limits]);
       }
       for (const im of this.importGlobals) {
