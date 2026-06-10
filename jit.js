@@ -16,8 +16,8 @@ let RD_IDX = 0, WR_IDX = 1;                // imported func indices (RdMem, WrMe
 const MEMSIZE = 402653184;                 // guest RAM size; ea >= this is MMIO/alias -> route to hemu's RdMem/WrMem
 const MEMM = { isMem: true };              // synthetic "memory operand" so rdRM/wrRM route a register-computed addr (local 3) through the MMIO check (string ops)
 const blocks = new Map();                  // entry rip -> { fn, ninstr }  (compile-time bookkeeping)
-const blockFn = new Array(16384).fill(null);   // fast dispatch arrays, indexed by rip & 0x3FFF
-const blockRip = new Int32Array(16384).fill(-1);
+const blockFn = new Array(65536).fill(null);   // fast dispatch arrays, indexed by rip & 0xFFFF
+const blockRip = new Int32Array(65536).fill(-1);
 
 export function jitState(reg, rfl, rip, gbase, memObj, rdMem, wrMem) {
   REG = Number(reg); RFL = Number(rfl); RIP = Number(rip);
@@ -75,7 +75,7 @@ const fSt = (f, i, ev) => { fStAddr(f, i); ev(); f.store("f64_store", 0, 3); }; 
 const fInc = (f, d) => { i32c(f, FSP); i32c(f, FSP); f.load("i64_load", 0, 3); i64c(f, d); f.op("i64_add"); i64c(f, 7); f.op("i64_and"); f.store("i64_store", 0, 3); }; // fsp=(fsp+d)&7
 const fPush = (f, ev) => { ev(); f.local_set(5); fInc(f, -1); fSt(f, 0, () => f.local_get(5)); };  // local5(f64): v(old fsp) -> dec fsp -> store
 const fPop = (f) => fInc(f, 1);
-const fRoundI = (f) => { f.local_set(5); f.local_get(5); fc64(f, 0.5); f.local_get(5); f.op("f64_copysign"); f.op("f64_add"); f.op("i64_trunc_f64_s"); }; // RoundI = trunc(d+copysign(0.5,d))
+const fRoundI = (f) => { f.local_set(5); f.local_get(5); fc64(f, 0.5); f.local_get(5); f.op("f64_copysign"); f.op("f64_add"); f.fc("i64_trunc_sat_f64_s"); }; // RoundI = trunc(d+copysign(0.5,d)); SATURATING like cpu.HC F64ToInt (a trapping trunc would crash the block on NaN where the interpreter continues)
 
 // ---- WASM dispatch module: a persistent runtime that call_indirects JIT'd blocks back-to-back in NATIVE
 // wasm (zero JS per block) until an un-JIT'd rip. The block fns live in its funcref table (table.set on
@@ -85,14 +85,14 @@ function buildRuntime() {
   if (!RIP || !JITRIP || !MEM) return;
   const rm = new Module();
   rm.importMemory("env", "mem", 1);
-  rm.setTable(16384); rm.exportTable("tbl");
+  rm.setTable(65536); rm.exportTable("tbl");
   const bt = rm.typeIndex([], [VT.i32]);                              // JIT block func type ([]->i32 count)
   const { index, setBody } = rm.func([VT.i32], [VT.i32], "dispatch"); // (budget) -> instr count ran
   const f = new Func();
   i32c(f, 0); f.local_set(1);                                         // ran = 0
   f.loop(0x40);
     i32c(f, RIP); f.load("i32_load", 0, 2); f.local_set(2);                                   // rip = [RIP] (low 32)
-    f.local_get(2); i32c(f, 0x3FFF); f.op("i32_and"); f.local_set(3);                          // slot = rip & 0x3FFF
+    f.local_get(2); i32c(f, 0xFFFF); f.op("i32_and"); f.local_set(3);                          // slot = rip & 0xFFFF
     i32c(f, JITRIP); f.local_get(3); i32c(f, 8); f.op("i32_mul"); f.op("i32_add"); f.load("i32_load", 0, 2);
     f.local_get(2); f.op("i32_eq");                                                            // g_jit_rip[slot] == rip
     i32c(f, JITN); f.local_get(3); i32c(f, 8); f.op("i32_mul"); f.op("i32_add"); f.load("i32_load", 0, 2); i32c(f, 0); f.op("i32_gt_s"); f.op("i32_and"); // && g_jit_n[slot] > 0
@@ -244,7 +244,7 @@ function emitALU(f, m, sz, rex, grp, srcEmit, isCmpTest) {
 export function jitCompile(rip) {
   if (blocks.has(rip)) {                                   // cache hit: re-point the slot to THIS rip's block —
     const e = blocks.get(rip);                             // a colliding rip (same slot) may have overwritten it,
-    if (e.fn) { const sl = rip & 0x3FFF; blockFn[sl] = e.fn; blockRip[sl] = rip; if (RUNTBL) RUNTBL.set(sl, e.fn); }  // and the dispatch indexes by slot.
+    if (e.fn) { const sl = rip & 0xFFFF; blockFn[sl] = e.fn; blockRip[sl] = rip; if (RUNTBL) RUNTBL.set(sl, e.fn); }  // and the dispatch indexes by slot.
     return e.ninstr;
   }
   globalThis.__sawmem = false; FLAGPEND = null;          // start each block with no deferred flags
@@ -617,13 +617,18 @@ export function jitCompile(rip) {
         if (!FPR || globalThis.__NOX87) break;                               // x87 offsets not wired (or bisect toggle)
         const modrm = U8[j], sub = (modrm >> 3) & 7, isMemX = (modrm >> 6) !== 3, sti = modrm & 7;
         if (isMemX) {
-          const memOK = (op === 0xDD && (sub === 0 || sub === 2 || sub === 3))     // FLD/FST/FSTP m64
-            || (op === 0xDF && (sub === 5 || sub === 7))                           // FILD/FISTP m64int
-            || (op === 0xDB && (sub === 0 || sub === 3))                           // FILD/FISTP m32int
+          const memOK = (op === 0xDD && (sub === 0 || sub === 1 || sub === 2 || sub === 3))   // FLD/FISTTP/FST/FSTP m64
+            || (op === 0xDF && (sub === 1 || sub === 5 || sub === 7))                // FISTTP m16/FILD/FISTP m64int
+            || (op === 0xDB && (sub === 0 || sub === 1 || sub === 3))                // FILD/FISTTP/FISTP m32int
             || (op === 0xDC && sub !== 2 && sub !== 3);                            // FADD/FMUL/FSUB(R)/FDIV(R) m64
           if (!memOK) break;
           const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; emitEA(f, mm, j - GBASE);
-          if (op === 0xDD && sub === 0) fPush(f, () => { memAddr(f); f.load("f64_load", 0, 3); });
+          // FISTTP mNN (sub 1, the SSE3 truncate-and-pop F64->int store; HolyC emits it for every F64->I64
+          // cast, so it's ~half of Varoom's chain breaks). cpu.HC: WrMem(ea,N,F64ToInt(st0)); pop — F64ToInt
+          // is the SATURATING HolyC cast (i64.trunc_sat), NOT the round-nearest fRoundI.
+          const STW = { 0xDD: ["i64_store", 3], 0xDB: ["i64_store32", 2], 0xDF: ["i64_store16", 1] };
+          if (sub === 1 && op !== 0xDC) { memAddr(f); fLd(f, 0); f.fc("i64_trunc_sat_f64_s"); f.store(STW[op][0], 0, STW[op][1]); fPop(f); }
+          else if (op === 0xDD && sub === 0) fPush(f, () => { memAddr(f); f.load("f64_load", 0, 3); });
           else if (op === 0xDD && sub === 2) { memAddr(f); fLd(f, 0); f.store("f64_store", 0, 3); }
           else if (op === 0xDD && sub === 3) { memAddr(f); fLd(f, 0); f.store("f64_store", 0, 3); fPop(f); }
           else if (op === 0xDF && sub === 5) fPush(f, () => { memAddr(f); f.load("i64_load", 0, 3); f.op("f64_convert_i64_s"); });
@@ -639,7 +644,8 @@ export function jitCompile(rip) {
           handled = true;
         } else {                                                                  // register forms (ST(i))
           const regOK = ((op === 0xD8 || op === 0xDC) && sub !== 2 && sub !== 3)   // st0 OP st(i) / st(i) OP st0
-            || (op === 0xD9 && (sub === 0 || sub === 1 || (sub === 4 && sti <= 1)));// FLD st(i) / FXCH / FCHS,FABS
+            || (op === 0xD9 && (sub === 0 || sub === 1 || (sub === 4 && sti <= 1)
+              || (sub === 7 && sti === 2)));                                       // FLD st(i) / FXCH / FCHS,FABS / FSQRT
           if (!regOK) break;
           j += 1;                                                                  // consume modrm
           if (op === 0xD8) {                                                       // st0 = st0 OP st(i)
@@ -656,6 +662,7 @@ export function jitCompile(rip) {
           else if (op === 0xD9 && sub === 1) { fLd(f, 0); f.local_set(5); fSt(f, 0, () => fLd(f, sti)); fSt(f, sti, () => f.local_get(5)); }  // FXCH
           else if (op === 0xD9 && sub === 4 && sti === 0) fSt(f, 0, () => { fLd(f, 0); f.op("f64_neg"); });    // FCHS
           else if (op === 0xD9 && sub === 4 && sti === 1) fSt(f, 0, () => { fLd(f, 0); f.op("f64_abs"); });    // FABS
+          else if (op === 0xD9 && sub === 7 && sti === 2) fSt(f, 0, () => { fLd(f, 0); f.op("f64_sqrt"); });   // FSQRT (cpu.HC __pow(d,.5); V8's fdlibm pow(x,.5) IS sqrt(x) bit-for-bit)
           handled = true;
         }
       } else if (op === 0x98) {                                              // CBW/CWDE/CDQE: sign-extend the accumulator
@@ -750,8 +757,8 @@ export function jitCompile(rip) {
   try { inst = new WebAssembly.Instance(new WebAssembly.Module(Uint8Array.from(m.emit())), { env: { mem: MEM, RdMem: RDMEM, WrMem: WRMEM } }); }
   catch (e) { blocks.set(rip, { fn: null, ninstr: 0 }); return 0; }   // unjittable block: fall back to interpreter
   blocks.set(rip, { fn: inst.exports.run, ninstr: n });
-  blockFn[rip & 0x3FFF] = inst.exports.run; blockRip[rip & 0x3FFF] = rip;   // fast dispatch arrays
-  if (RUNTBL) RUNTBL.set(rip & 0x3FFF, inst.exports.run);                   // + the WASM dispatch table (call_indirect)
+  blockFn[rip & 0xFFFF] = inst.exports.run; blockRip[rip & 0xFFFF] = rip;   // fast dispatch arrays
+  if (RUNTBL) RUNTBL.set(rip & 0xFFFF, inst.exports.run);                   // + the WASM dispatch table (call_indirect)
   return n;
 }
 
@@ -768,7 +775,7 @@ export function jitDispatch(budget) {
   const ripV = new Int32Array(MEM.buffer, RIP, 1);      // JS fallback (no runtime module): rip fits in i31
   let ran = 0;
   while (ran < budget) {
-    const rip = ripV[0], slot = rip & 0x3FFF;
+    const rip = ripV[0], slot = rip & 0xFFFF;
     if (blockRip[slot] !== rip) break;                 // next rip isn't a JIT'd block -> back to the interpreter
     const fn = blockFn[slot]; if (!fn) break;
     const c = fn(); ran += c; if (c === 0) break;      // count==0 = guard early-exit, no progress -> let the interpreter run that insn
@@ -786,7 +793,7 @@ function jitDispatchTrace(budget) {
   const brk = (globalThis.__COVBRK ||= {});
   let ran = 0;
   while (ran < budget) {
-    const rip = dv.getInt32(RIP, true), slot = rip & 0x3FFF;
+    const rip = dv.getInt32(RIP, true), slot = rip & 0xFFFF;
     if (blockRip[slot] === rip && blockFn[slot]) { if (globalThis.__PROF) { const P = globalThis.__PROF; P[rip] = (P[rip] || 0) + (blocks.get(rip)?.ninstr || 1); } const c = blockFn[slot](); ran += c; if (c === 0) break; continue; }
     // chain broke -> categorize, weighted by 1 (each break = one interpreter hand-off)
     let key;
@@ -813,7 +820,7 @@ function jitDispatchG(budget) {
   const dv = new DataView(MEM.buffer);
   let ran = 0;
   while (ran < budget) {
-    const rip = dv.getInt32(RIP, true), slot = rip & 0x3FFF;
+    const rip = dv.getInt32(RIP, true), slot = rip & 0xFFFF;
     if (dv.getInt32(JITRIP + slot * 8, true) !== rip) break;
     if (dv.getInt32(JITN + slot * 8, true) <= 0) break;
     const fn = RUNTBL.get(slot); if (!fn) break;
