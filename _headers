@@ -25,3 +25,9 @@
   Cache-Control: no-cache
 /hemu-wasm/live.bin.gz
   Cache-Control: no-cache
+# jit.js + the compiler modules it imports must move in lockstep with snapshot.wasm's
+# global offsets (G_FS/G_GS/G_TSC) — a stale jit.js corrupts segment bases (BADOP crash).
+/jit.js
+  Cache-Control: no-cache
+/holyc-wasm/*
+  Cache-Control: no-cache
