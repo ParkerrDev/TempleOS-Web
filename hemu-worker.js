@@ -23,15 +23,25 @@ onmessage = (e) => {
   else if (m.cmd === "ack") outstanding--;   // main finished a frame — release a flow-control slot
 };
 
+// Stream-decompress into ONE preallocated buffer: Response.arrayBuffer() would hold all the
+// inflate chunks AND the assembled copy at once (~2x peak) — phones live or die on this.
+async function gunzipInto(gz, size) {
+  const out = new Uint8Array(size);
+  const rd = new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip")).getReader();
+  let off = 0;
+  for (;;) { const { done, value } = await rd.read(); if (done) break;
+    if (off + value.length > size) throw new Error("snapshot larger than expected");
+    out.set(value, off); off += value.length; }
+  return out;
+}
+
 async function boot({ gz, wasmUrl, fixedB }) {
   if (fixedB) curBudget = fixedB;
   postMessage({ cmd: "progress", text: "decompressing snapshot (→ 384 MB)…", pct: 60 });
-  snap = new Uint8Array(await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+  snap = await gunzipInto(gz, 402653184);
+  gz = null;                                   // free the 10 MB clone — boot() never returns
   postMessage({ cmd: "progress", text: "starting hemu core (HolyC → WASM)…", pct: 88 });
   const mod = await WebAssembly.compile(await (await fetch(wasmUrl, { cache: "no-cache" })).arrayBuffer());
-  // Load the C: disk in the BACKGROUND so the desktop appears immediately; TempleOS file I/O
-  // (ATA reads) works once it lands. The resumed desktop runs entirely from cached RAM meanwhile.
-  loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => disk = d).catch(() => disk = null);
 
   const host = createHost({
     onText: (s) => { if (s && s.indexOf("BADOP") >= 0) console.log("[hemu]", s.trim()); },
@@ -98,7 +108,12 @@ async function boot({ gz, wasmUrl, fixedB }) {
     dtAcc -= dtMs;                                                 // carry the sub-ms remainder to the next frame
     try { inst.exports.__main(); }                                 // emulate one TempleOS frame (+ present via the host)
     catch (err) { postMessage({ cmd: "error", msg: "hemu trap: " + err.message }); return; }
-    if (!loaded) { loaded = true; snap = null; }                   // snapshot now in WASM RAM — free the 384 MB copy
+    if (!loaded) { loaded = true; snap = null;                     // snapshot now in WASM RAM — free the 384 MB copy
+      // Load the C: disk AFTER boot settles (file I/O works once it lands; the desktop runs from
+      // cached RAM). Deferring it keeps the disk decompress out of the boot memory spike — the
+      // difference between living and dying on iOS Safari's per-tab memory budget.
+      setTimeout(() => loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => disk = d).catch(() => disk = null), 2500);
+    }
     const work = performance.now() - now;
     if (!fixedB) {                                                 // size budget to fill the frame (games need the MIPS;
       if (work > 15 && curBudget > 900000) curBudget = (curBudget * 0.90) | 0;        // slow machines auto-shrink)

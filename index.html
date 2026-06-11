@@ -54,6 +54,16 @@
 
     #frame { padding:5px; }
     canvas#canvas { display:block; height:min(74vh,600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
+    /* fullscreen: black letterbox, centered 4:3 screen, window chrome hidden */
+    #frame:fullscreen { display:flex; align-items:center; justify-content:center; background:#000; border:0; outline:0; margin:0; padding:0; }
+    #frame:fullscreen canvas#canvas { height:min(100vh,75vw); width:auto; max-width:100vw; }
+    #frame:fullscreen::before { display:none; }
+    #frame:fullscreen .close, #frame:fullscreen .cap, #frame:fullscreen #loadui { display:none; }
+    #frame::backdrop { background:#000; }
+    #frame:-webkit-full-screen { display:flex; align-items:center; justify-content:center; background:#000; border:0; outline:0; margin:0; padding:0; }
+    #frame:-webkit-full-screen canvas#canvas { height:min(100vh,75vw); width:auto; max-width:100vw; }
+    #frame:-webkit-full-screen::before { display:none; }
+    #frame:-webkit-full-screen .close, #frame:-webkit-full-screen .cap { display:none; }
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
     #ldtext { font-size:17px; max-width:560px; line-height:1.5; min-height:2.4em; }
@@ -123,15 +133,16 @@
     #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
     .ed-foot { flex:0 0 auto; color:var(--blue); font-size:13px; padding:1px 2px 0; }
 
-    /* God Words window */
-    #godWin { display:flex; flex-direction:column; gap:8px; width:min(620px,94vw); height:min(70vh,560px); margin:0; padding:10px; }
+    /* God Tools window */
+    #godWin { display:flex; flex-direction:column; gap:8px; width:min(680px,94vw); height:min(74vh,620px); margin:0; padding:10px; }
     #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:20px; line-height:1.6; word-break:break-word; }
     #godOut .w { color:yellow; margin-right:.55em; }
-    #godBar { display:flex; gap:8px; align-items:center; }
+    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:15px; line-height:1.45; white-space:pre-wrap; }
+    #godOut .p .ref { color:#7fe07f; }
+    #godOut .s { display:block; color:#7fe07f; font-size:16px; margin:6px 0; }
+    #godOut canvas { display:block; width:320px; max-width:100%; image-rendering:pixelated; background:#fff; margin:8px 0; border:2px solid #fff; }
+    #godBar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     #godBar button { width:auto; }
-    #godEnt { flex:1 1 auto; height:14px; background:#0a0a0a; border:2px solid #000; outline:2px solid var(--blue); overflow:hidden; }
-    #godEnt > i { display:block; height:100%; width:0; background:var(--green); transition:width .15s; }
-    #godHint { font-size:14px; color:var(--blue); }
 
     /* ---- responsive: phones & narrow windows ---- */
     @media (max-width:980px) {
@@ -177,7 +188,7 @@
         <button id="restartBtn" title="Reload the clean desktop snapshot (~4s)">↻ Restart</button>
         <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS">⛶ Fullscreen</button>
         <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed">⌨ HolyC Editor</button>
-        <button id="godBtn" title="Draw God's words, TempleOS-style: entropy from your keystroke timing — HolyC compiled to WASM">✞ God Words</button>
+        <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser">✞ God Tools</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)">🕹 Touch controls</button>
       </div>
       <div class="win dbgw" data-title="Debug"><span class="close">[X]</span><pre id="dbg"></pre></div>
@@ -197,7 +208,7 @@
           <div id="ldtext">loading hemu…</div>
           <div class="ldbarwrap"><i id="ldbar"></i></div>
         </div>
-        <div class="cap" id="cap">click the screen to capture mouse + keyboard · Ctrl+Alt+G releases · Esc goes to the OS</div>
+        <div class="cap" id="cap">click the screen to capture mouse + keyboard · Esc releases (and is sent to the OS)</div>
       </div>
       <div id="keysbar"></div>
     </div>
@@ -206,7 +217,7 @@
       <div id="guide" class="win" data-title="Help">
         <span class="close">[X]</span>
         <b>Click the screen</b>, then move the mouse and type — you're using the real OS.
-        <b>Esc</b> is sent to TempleOS (exits games/menus); release the mouse with <kbd>Ctrl+Alt+G</kbd>.
+        <b>Esc</b> releases the mouse and is also sent to TempleOS, so it exits games and menus too.
         Press <kbd>Ctrl+M</kbd> for the games menu, click a sprite to play. <kbd>F7</kbd> draws a God word.
         Fullscreen keeps every key (even Esc) inside the OS.
       </div>
@@ -244,18 +255,19 @@
     </div>
   </div>
 
-  <!-- God Words overlay: TempleOS GodBits/GodPick semantics, compiled in-browser by holyc-wasm -->
-  <div id="godOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="God Words">
-    <div class="win" id="godWin" data-title="God Words · holyc-wasm">
+  <!-- God Tools overlay: the Adam/God suite (Word / Bible Passage / Song / Doodle), GodBits/GodPick
+       semantics compiled in-browser by holyc-wasm; entropy pooled from your input timing + CSPRNG. -->
+  <div id="godOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="God Tools">
+    <div class="win" id="godWin" data-title="God Tools · Adam/God · holyc-wasm">
       <span class="close" id="godClose" title="Close">[X]</span>
       <div id="godOut"></div>
       <div id="godBar">
         <button id="godWord">✞ Word</button>
+        <button id="godPassage">📖 Passage</button>
+        <button id="godSong">♪ Song</button>
+        <button id="godDoodle">✎ Doodle</button>
         <button id="godClear">Clear</button>
-        <div id="godEnt" title="entropy pool"><i></i></div>
       </div>
-      <div id="godHint">Press random keys (or tap the entropy bar rhythm-free) — each keystroke's timing feeds God's
-        random-bit fifo, exactly like TempleOS's <b>GodBitsIns(GetTSC)</b>. Then draw a word.</div>
     </div>
   </div>
 
@@ -348,23 +360,21 @@
     const pushKey = (sc) => { keyq.push(sc | ent()); notifyInput(); };
     const tapKey = (sc, ms = 70) => { pushKey(sc); setTimeout(() => pushKey(sc | 0x80), ms); };
 
-    // ---- mouse capture: QEMU-style. Click captures; Ctrl+Alt+G releases; Esc is FORWARDED to the
-    //      OS (exits games). In fullscreen, navigator.keyboard.lock keeps Esc from breaking capture;
-    //      outside fullscreen the browser force-releases on Esc — we re-capture on the next click and
-    //      still deliver Esc to the OS via the pointerlockchange fallback below. ----
-    let locked = false, releasedByUs = false, sawEscDown = 0;
+    // ---- mouse capture: click captures; Esc releases (browser behavior) AND is forwarded to the
+    //      OS so games/menus exit. In fullscreen, navigator.keyboard.lock keeps Esc from breaking
+    //      capture, so it purely acts in-OS there. ----
+    let locked = false, sawEscDown = 0;
     const btnBit = e => e.button === 0 ? 1 : e.button === 2 ? 2 : 0;
     canvas.addEventListener("click", () => { if (!locked && !document.body.classList.contains("touch")) canvas.requestPointerLock(); });
     document.addEventListener("pointerlockchange", () => {
       const was = locked;
       locked = document.pointerLockElement === canvas;
-      tbKey.textContent = locked ? "captured · Ctrl+Alt+G releases" : "click to capture";
-      if (was && !locked && !releasedByUs && performance.now() - sawEscDown > 250) {
-        // browser force-release (Esc outside fullscreen) that we did NOT see as a keydown:
+      tbKey.textContent = locked ? "captured · Esc releases" : "click to capture";
+      if (was && !locked && performance.now() - sawEscDown > 250) {
+        // browser force-release (Esc) that we did NOT see as a keydown:
         // the user meant "Esc" — deliver it to the OS so games/menus still exit.
         tapKey(0x01);
       }
-      releasedByUs = false;
     });
     document.addEventListener("mousemove", e => {
       if (!locked) return;
@@ -387,9 +397,6 @@
     };
     addEventListener("keydown", e => {
       if (!keysToOS(e)) return;
-      if (e.ctrlKey && e.altKey && e.code === "KeyG") {           // QEMU's grab-release combo
-        releasedByUs = true; document.exitPointerLock(); e.preventDefault(); return;
-      }
       if (e.code === "Escape") {
         // Send Esc as a complete make+break NOW: outside fullscreen the browser force-releases
         // pointer lock on Esc and our keyup gate closes — a make-only Esc would stick in the OS.
@@ -528,7 +535,8 @@
     const total = +(gz.headers.get("content-length") || 5222517);
     const reader = gz.body.getReader(); const chunks = []; let got = 0;
     for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.length; setLoad(`downloading snapshot… ${(got/1048576).toFixed(1)} MB`, 5 + 45 * got / total); }
-    const gzBytes = await new Blob(chunks).arrayBuffer();
+    let gzBytes = await new Blob(chunks).arrayBuffer();
+    chunks.length = 0;
     dbg(`snapshot downloaded (${(got/1048576).toFixed(1)} MB)`);
 
     $("restartBtn").addEventListener("click", () => location.reload());
@@ -542,6 +550,13 @@
       const fallback = (why) => {
         if (!worker) return;
         clearTimeout(watchdog); try { worker.terminate(); } catch {} worker = null; notifyInput = () => {};
+        if (alive) {
+          // The engine ALREADY booted and then died (e.g. iOS reclaimed the worker's memory).
+          // Do NOT boot a second 384 MB engine on top — that's a guaranteed tab kill on phones.
+          dbg("engine crashed after boot (" + why + ")", true);
+          ld.style.display = ""; setLoad("The emulator stopped (" + why + "). Tap ↻ Restart.", 0);
+          return;
+        }
         dbg("multi-core engine failed (" + why + ") — falling back to single core", true);
         runInline();
       };
@@ -549,7 +564,10 @@
       worker.onmessage = (e) => {
         if (!worker) return;
         const m = e.data;
-        if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h); worker.postMessage({ cmd: "ack" }); alive = true; firstFrame(); }
+        if (m.cmd === "frame") {
+          if (!alive && document.body.classList.contains("touch")) gzBytes = null;   // phones: free the 10 MB — no inline fallback after boot anyway
+          blit(new Uint8Array(m.buf), m.w, m.h); worker.postMessage({ cmd: "ack" }); alive = true; firstFrame();
+        }
         else if (m.cmd === "snd") snd(m.f);
         else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
         else if (m.cmd === "error") fallback(m.msg);
@@ -561,7 +579,10 @@
 
     async function runInline() {
       setLoad("decompressing snapshot (→ 384 MB)…", 55);
-      let snap = new Uint8Array(await new Response(new Blob([gzBytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+      let snap = new Uint8Array(402653184);          // stream-decompress into ONE buffer (no 2x peak)
+      { const rd = new Blob([gzBytes]).stream().pipeThrough(new DecompressionStream("gzip")).getReader();
+        let off = 0;
+        for (;;) { const { done, value } = await rd.read(); if (done) break; snap.set(value, off); off += value.length; } }
       setLoad("starting hemu (HolyC → WASM x86-64 core)…", 88);
       const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm", { cache: "no-cache" })).arrayBuffer());
       let disk = null;
@@ -601,11 +622,12 @@
 
     if (location.search.includes("single") || !runWorker()) runInline();
 
-    // ---- God Words window: TempleOS's GodBits/GodPick, compiled in-browser by holyc-wasm.
-    //      Entropy = your keystroke/tap timing (the same physics as GodBitsIns(GetTSC)). ----
-    { const ov = $("godOverlay"), out = $("godOut"), entBar = $("godEnt").firstElementChild, hint = $("godHint");
-      let god = null, words = null, loading = false;
-      const GOD_HC = `// TempleOS Adam/God semantics: a bit-per-byte fifo fed from keystroke timing.
+    // ---- God Tools window: the Adam/God suite — Word, Bible Passage, Song, Doodle — with the
+    //      GodBits/GodPick machinery written in HolyC and compiled in-browser by holyc-wasm.
+    //      The entropy pool feeds itself: CSPRNG seed + every keystroke/click's timing. ----
+    { const ov = $("godOverlay"), out = $("godOut");
+      let god = null, godMem = null, gG = null, words = null, kjv = null, loading = false;
+      const GOD_HC = `// TempleOS Adam/God semantics: a bit-per-byte fifo, LSB first; GodPick redraws until in range.
 U8 fifo[16384];
 I64 fhead, ftail;
 U0 GodBitsIns(I64 num_bits, I64 n)
@@ -615,47 +637,110 @@ I64 GodBits(I64 num_bits)
 { I64 res = 0;
   while (num_bits--) { res = (res << 1) | fifo[ftail & 16383]; ftail++; }
   return res; }
-I64 GodPick(I64 num_words)
-{ I64 bits = 0, v = num_words;
-  while (1 << bits < num_words) bits++;
-  while (v >= num_words) { if (fhead - ftail < bits) return -1; v = GodBits(bits); }
+I64 GodPick(I64 num)
+{ I64 bits = 0, v = num;
+  while (1 << bits < num) bits++;
+  while (v >= num) { if (fhead - ftail < bits) return -1; v = GodBits(bits); }
   return v; }
+// GodSong: god-picked notes (7 bits each: 5 pitch + 2 duration), host renders + plays.
+I64 g_notes[32];
+I64 GodSongGen(I64 n)
+{ I64 i; if (n > 32) n = 32;
+  for (i = 0; i < n; i++) { if (fhead - ftail < 7) return i; g_notes[i] = GodBits(7); }
+  return n; }
+// GodDoodle: god-picked polyline on a 160x120 16-color canvas.
+U8 g_pix[19200];
+U0 DPlot(I64 x, I64 y, I64 c)
+{ if (x >= 0 && x < 160 && y >= 0 && y < 120) { g_pix[y * 160 + x] = c; if (y < 119) g_pix[y * 160 + 160 + x] = c; } }
+U0 DLine(I64 x0, I64 y0, I64 x1, I64 y1, I64 c)
+{ I64 i, dx = x1 - x0, dy = y1 - y0, n = dx;
+  if (n < 0) n = 0 - n;
+  if (dy > n) n = dy;
+  if (0 - dy > n) n = 0 - dy;
+  if (n < 1) n = 1;
+  for (i = 0; i <= n; i++) DPlot(x0 + dx * i / n, y0 + dy * i / n, c); }
+I64 GodDoodleGen(I64 strokes)
+{ I64 i, x0, y0, x1, y1, c = 4;
+  for (i = 0; i < 19200; i++) g_pix[i] = 15;
+  if (fhead - ftail < 15) return 0;
+  x0 = (GodBits(8) * 160) >> 8; y0 = (GodBits(7) * 120) >> 7;
+  for (i = 0; i < strokes; i++) {
+    if (fhead - ftail < 19) return i;
+    x1 = (GodBits(8) * 160) >> 8; y1 = (GodBits(7) * 120) >> 7;
+    if (!(i & 3)) { c = GodBits(4); if (c == 15) c = 0; }
+    DLine(x0, y0, x1, y1, c); x0 = x1; y0 = y1; }
+  return strokes; }
 `;
       async function init() {
         if (god || loading) return; loading = true;
-        hint.textContent = "compiling GodBits (HolyC → WASM)…";
         try {
-          const [{ compileHolyC }, wtxt] = await Promise.all([
+          const [{ compileHolyC }, { createHost }, wtxt] = await Promise.all([
             import("./holyc-wasm/src/compiler.js"),
+            import("./holyc-wasm/src/runtime/host.js"),
             fetch("./assets/godwords.txt", { cache: "no-cache" }).then(r => r.text()),
           ]);
           words = wtxt.split("\n").filter(Boolean);
-          const r = compileHolyC(GOD_HC, { filename: "god.HC", lenient: false, exports: ["GodBitsIns", "GodBitCnt", "GodBits", "GodPick"] });
-          const inst = await WebAssembly.instantiate(await WebAssembly.compile(r.bytes), { env: (await import("./holyc-wasm/src/runtime/host.js")).createHost({}).env });
+          const r = compileHolyC(GOD_HC, { filename: "god.HC", lenient: false,
+            exports: ["GodBitsIns", "GodBitCnt", "GodBits", "GodPick", "GodSongGen", "GodDoodleGen"] });
+          gG = (n) => Number(r.globals.get(n).addr);
+          const inst = await WebAssembly.instantiate(await WebAssembly.compile(r.bytes), { env: createHost({}).env });
           inst.exports.__rt_init();
-          god = inst.exports;
-          hint.innerHTML = `GodBits compiled (${r.bytes.length} bytes of WASM) · ${words.length} words — press random keys, then draw.`;
-          dbg("God Words ready: holyc-wasm compiled GodBits, " + words.length + " words");
-        } catch (e) { hint.textContent = "failed to load: " + e.message; dbg("God Words failed: " + e.message, true); }
+          god = inst.exports; godMem = inst.exports.memory;
+          const seed = crypto.getRandomValues(new Uint32Array(64));        // never make the user wait
+          for (const v of seed) god.GodBitsIns(32n, BigInt(v >>> 0));
+          dbg("God Tools ready: holyc-wasm compiled Adam/God (" + r.bytes.length + " bytes of WASM)");
+        } catch (e) { out.textContent = "failed to load: " + e.message; dbg("God Tools failed: " + e.message, true); }
         loading = false;
       }
-      const bits = () => god ? Number(god.GodBitCnt()) : 0;
-      const meter = () => { entBar.style.width = Math.min(100, bits() / 64 * 100) + "%"; };
-      const feed = () => { if (!god) return;
-        god.GodBitsIns(24n, BigInt(((performance.now() * 1000) >>> 0) ^ ((Math.random() * 0x1000000) | 0)));
-        meter(); };
-      addEventListener("keydown", (e) => { if (ov.classList.contains("open")) { feed(); e.stopPropagation(); } }, true);
-      $("godEnt").addEventListener("pointerdown", feed);
-      ov.addEventListener("pointerdown", (e) => { if (e.target === ov) close(); });
-      $("godWord").addEventListener("click", () => { if (!god || !words) return;
-        const need = 13;   // ceil(log2(7569))
-        if (bits() < need) { hint.textContent = `need ~${need} bits — press random keys (have ${bits()})`; return; }
-        const i = Number(god.GodPick(BigInt(words.length)));
-        if (i < 0) { hint.textContent = "entropy ran dry mid-draw — press more random keys"; meter(); return; }
-        const sp = document.createElement("span"); sp.className = "w"; sp.textContent = words[i];
-        out.appendChild(sp); out.scrollTop = out.scrollHeight; meter();
-      });
+      // entropy: every key/click on the page tithes its timing to the pool, TempleOS-style;
+      // ensure() tops up from the CSPRNG so the buttons always just work.
+      const feed = () => { if (god) god.GodBitsIns(24n, BigInt(((performance.now() * 1000) >>> 0) ^ ((Math.random() * 0x1000000) | 0))); };
+      addEventListener("keydown", feed, true);
+      addEventListener("pointerdown", feed, true);
+      const ensure = (n) => { if (!god) return false;
+        while (Number(god.GodBitCnt()) < n) { const v = crypto.getRandomValues(new Uint32Array(1))[0]; god.GodBitsIns(32n, BigInt(v >>> 0)); }
+        return true; };
+      const append = (el) => { out.appendChild(el); out.scrollTop = out.scrollHeight; };
+      $("godWord").addEventListener("click", () => { if (!ensure(64) || !words) return;
+        const i = Number(god.GodPick(BigInt(words.length))); if (i < 0) return;
+        const sp = document.createElement("span"); sp.className = "w"; sp.textContent = words[i]; append(sp); });
+      $("godPassage").addEventListener("click", async () => { if (!ensure(96)) return;
+        if (!kjv) { $("godPassage").disabled = true;
+          kjv = (await (await fetch("./assets/kjv.txt", { cache: "force-cache" })).text()).split("\n");
+          $("godPassage").disabled = false; dbg("KJV loaded: " + kjv.length + " lines"); }
+        const i = Number(god.GodPick(BigInt(kjv.length - 12))); if (i < 0) return;
+        const sp = document.createElement("span"); sp.className = "p";
+        sp.textContent = kjv.slice(i, i + 10).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+        append(sp); });
+      $("godSong").addEventListener("click", () => { if (!ensure(256)) return;
+        const n = Number(god.GodSongGen(16n)); if (!n) return;
+        const dvg = new DataView(godMem.buffer), base = gG("g_notes");
+        const PENT = [0, 2, 4, 7, 9], NAME = ["C", "D", "E", "G", "A"];
+        const notes = [];
+        for (let i = 0; i < n; i++) { const v = Number(dvg.getBigInt64(base + i * 8, true));
+          const deg = (v >> 2) & 31, dur = [1, 1, 2, 3][v & 3];
+          const oct = Math.floor(deg / 5) % 3, st = PENT[deg % 5] + 12 * oct;
+          notes.push({ f: 261.63 * Math.pow(2, st / 12), nm: NAME[deg % 5] + (4 + oct), dur }); }
+        const sp = document.createElement("span"); sp.className = "s";
+        sp.textContent = "♪ " + notes.map(q => q.nm + (q.dur > 1 ? "·".repeat(q.dur - 1) : "")).join(" ");
+        append(sp);
+        try { const ac = new (window.AudioContext || window.webkitAudioContext)();
+          const o = ac.createOscillator(), g = ac.createGain(); o.type = "square"; g.gain.value = 0;
+          o.connect(g).connect(ac.destination); o.start();
+          let t = ac.currentTime + 0.05;
+          for (const q of notes) { const d = q.dur * 0.18;
+            o.frequency.setValueAtTime(q.f, t); g.gain.setValueAtTime(0.05, t); g.gain.setValueAtTime(0, t + d - 0.03); t += d; }
+          o.stop(t + 0.1); o.onended = () => ac.close();
+        } catch {} });
+      $("godDoodle").addEventListener("click", () => { if (!ensure(512)) return;
+        const n = Number(god.GodDoodleGen(24n)); if (!n) return;
+        const c = document.createElement("canvas"); c.width = 160; c.height = 120;
+        const cx2 = c.getContext("2d"), im = cx2.createImageData(160, 120), o32 = new Uint32Array(im.data.buffer);
+        const px = new Uint8Array(godMem.buffer, gG("g_pix"), 19200);
+        for (let i = 0; i < 19200; i++) o32[i] = pal32[px[i] & 15];
+        cx2.putImageData(im, 0, 0); append(c); });
       $("godClear").addEventListener("click", () => { out.textContent = ""; });
+      ov.addEventListener("pointerdown", (e) => { if (e.target === ov) close(); });
       const open = () => { ov.classList.add("open"); init(); };
       const close = () => ov.classList.remove("open");
       $("godBtn").addEventListener("click", open);
