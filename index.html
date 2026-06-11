@@ -24,7 +24,9 @@
     #topbar .status > span:not(:last-child) { margin-right:16px; }
     .y { color:yellow; } #tb-key { text-transform:uppercase; color:yellow; white-space:nowrap; }
 
-    header { display:flex; align-items:stretch; gap:10px; padding:5px 8px 1px; }
+    /* header shares the centered content width of the desktop row below it */
+    header { display:flex; align-items:stretch; gap:10px; padding:4px 8px 1px;
+             width:100%; max-width:calc(clamp(300px, min(72vh, (100vw - 690px) * 3 / 4), 600px) * 4 / 3 + 538px); margin:0 auto; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
                    background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
@@ -53,7 +55,7 @@
     button:disabled { opacity:.4; }
 
     #frame { padding:5px; }
-    canvas#canvas { display:block; height:min(74vh,600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
+    canvas#canvas { display:block; height:clamp(300px, min(72vh, (100vw - 690px) * 3 / 4), 600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
     /* fullscreen: black letterbox, centered 4:3 screen, window chrome hidden */
     #frame:fullscreen { display:flex; align-items:center; justify-content:center; background:#000; border:0; outline:0; margin:0; padding:0; }
     #frame:fullscreen canvas#canvas { height:min(100vh,75vw); width:auto; max-width:100vw; }
@@ -76,7 +78,7 @@
     #frame.fsmode #keysbar button { font-size:12px; padding:3px 5px; }
     #fsExit { display:none; position:absolute; top:6px; right:8px; z-index:7; width:auto; font-size:15px;
               padding:4px 9px; opacity:.88; }
-    #frame.fsmode #fsExit { display:block; }
+    body.touch #frame.fsmode #fsExit { display:block; }   /* desktop: pointer is locked in fullscreen — a button is unreachable */
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
     #ldtext { font-size:17px; max-width:560px; line-height:1.5; min-height:2.4em; }
@@ -85,8 +87,8 @@
     .ldbarwrap::after { content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(90deg, transparent 0 22px, #0a0a0a 22px 24px); }
 
     /* on-screen function/modifier keys — works on desktop and mobile; modifiers latch (✱) */
-    #keysbar { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; padding:6px 4px 2px; max-width:830px; }
-    #keysbar button { width:auto; font-size:14px; padding:4px 7px; text-align:center; }
+    #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; padding:4px 2px 0; width:0; min-width:100%; }  /* preferred width 0: the FRAME sizes the column, keys wrap to it */
+    #keysbar button { width:auto; font-size:13px; padding:3px 6px; text-align:center; }
     #keysbar button.mod.on { color:#fff; background:var(--red); border-color:var(--red); }
     #frame .cap { text-align:center; font-size:13px; color:var(--blue); padding-top:3px; }
 
@@ -111,10 +113,11 @@
     #dbg { height:170px; overflow:auto; background:#000; color:#7fe07f; padding:6px; margin:0;
            font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
     #dbg .err { color:#ff8a8a; }
+    .dbgnote { font-size:13px; padding:4px 2px 1px; color:var(--blue); }
     .terrywin { padding:6px; text-align:center; }
     .terrywin img { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
-    footer { text-align:center; padding:8px; font-size:15px; color:#cfe; opacity:.85; }
+    footer { text-align:center; padding:4px; font-size:14px; color:#cfe; opacity:.85; }
     footer a { color:var(--gold); }
 
     /* ---- overlays (HolyC editor / God Words): a window floating over the desktop ---- */
@@ -164,10 +167,10 @@
       .col-center { order:-1; width:100%; }
       #frame { margin:3px auto; max-width:98vw; }
       canvas#canvas { width:min(96vw,640px); height:auto; }
-      header h1 { font-size:18px; } header p { font-size:13px; }
+      header { max-width:none; } header h1 { font-size:18px; } header p { font-size:13px; }
       #topbar { font-size:14px; }
       .terrywin img { height:120px; }
-      #keysbar { max-width:98vw; }
+      #keysbar { min-width:96vw; }
       .ed-body { flex-direction:column; } #editorWin { height:94vh; } #editorWin #screen { height:34vh; }
     }
   </style>
@@ -204,7 +207,8 @@
         <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser">✞ God Tools</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)">🕹 Touch controls</button>
       </div>
-      <div class="win dbgw" data-title="Debug"><span class="close">[X]</span><pre id="dbg"></pre></div>
+      <div class="win dbgw" data-title="Debug"><span class="close">[X]</span><pre id="dbg"></pre>
+        <div class="dbgnote">Bug? Idea? <a href="https://github.com/ParkerrDev/TempleOS-wasm/issues/new" target="_blank" rel="noopener">Open a GitHub issue</a></div></div>
     </div>
 
     <div class="col-center">
@@ -222,7 +226,6 @@
           <div id="ldtext">loading hemu…</div>
           <div class="ldbarwrap"><i id="ldbar"></i></div>
         </div>
-        <div class="cap" id="cap">click the screen to capture mouse + keyboard · Esc releases (and is sent to the OS)</div>
       </div>
       <div id="keysbar"></div>
     </div>
@@ -794,10 +797,11 @@ I64 GodDoodleGen(I64 strokes)
       let i = 0;
       (function next() { img2.src = seq[i][0]; const d = seq[i][1]; i = (i + 1) % seq.length; setTimeout(next, d); })(); }
 
-    // ---- topbar: last key pressed ----
+    // ---- topbar: last key pressed (capture state text is owned by pointerlockchange) ----
     addEventListener("keydown", (e) => {
+      if (locked) return;
       let k = e.key; if (k === " ") k = "SPACE"; else if (k.length === 1) k = k.toUpperCase();
-      if (locked) tbKey.textContent = "captured · Ctrl+Alt+G releases";
+      tbKey.textContent = k;
     }, true);
   </script>
 
