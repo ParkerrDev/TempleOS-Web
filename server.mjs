@@ -40,7 +40,6 @@ createServer(async (req, res) => {
 
   let path = decodeURIComponent((req.url || "/").split("?")[0]);
   if (path === "/") path = "/index.html";
-  if (path === "/qemu" || path === "/qemu/") path = "/qemu.html";
   if (path === "/hemu" || path === "/hemu/") path = "/hemu.html";
   // contain to ROOT (no path traversal)
   const file = normalize(join(ROOT, path));

@@ -1,4 +1,5 @@
 // codegen.js — lowers the HolyC AST to a WebAssembly module.
+const NOFOLD = typeof process !== "undefined" && process.env && process.env.NOFOLD;  // bisect toggle (Node-only)
 //
 // Value model:
 //   - ints & pointers -> wasm i64
@@ -129,7 +130,7 @@ class Codegen {
     this.m.exportFunc("__rt_init", this.rtInit.index);
     this.m.exportGlobal("__sp", this.spGlobal);
     // export functions a runtime JIT needs to call (hemu's RdMem/WrMem handle MMIO + the 2^40 alias).
-    for (const nm of ["RdMem", "WrMem", "Step", "RasterHLE"]) { const fn = this.functions.get(nm); if (fn && fn.slot) this.m.exportFunc(nm, fn.slot.index); }
+    for (const nm of ["RdMem", "WrMem", "Step", "RasterHLE", ...(this.opts.exports || [])]) { const fn = this.functions.get(nm); if (fn && fn.slot) this.m.exportFunc(nm, fn.slot.index); }
 
     const bytes = this.m.emit();
     return { bytes, warnings: this.warnings, dataEnd: this.cursor, globals: this.globals };
@@ -1029,7 +1030,7 @@ class FnCtx {
   }
 
   genAddr(node) {
-    if (!process.env.NOFOLD) { const ac = this.addrConst(node); if (ac) { this.f.i64_const(ac.addr); return ac.type; } }
+    if (!NOFOLD) { const ac = this.addrConst(node); if (ac) { this.f.i64_const(ac.addr); return ac.type; } }
     switch (node.kind) {
       case "Ident": {
         const L = this.locals.get(node.name);
@@ -1059,7 +1060,7 @@ class FnCtx {
   }
 
   genIndexAddr(node) {
-    if (!process.env.NOFOLD) { const ac = this.addrConst(node); if (ac) { this.f.i64_const(ac.addr); return ac.type; } }
+    if (!NOFOLD) { const ac = this.addrConst(node); if (ac) { this.f.i64_const(ac.addr); return ac.type; } }
     let bt = this.peekType(node.base);
     bt = this.cg.resolveType(bt);
     let elemT;
@@ -1095,7 +1096,7 @@ class FnCtx {
   }
 
   genMemberAddr(node) {
-    if (!process.env.NOFOLD) { const ac = this.addrConst(node); if (ac) { this.f.i64_const(ac.addr); return ac.type; } }
+    if (!NOFOLD) { const ac = this.addrConst(node); if (ac) { this.f.i64_const(ac.addr); return ac.type; } }
     let bt = this.peekType(node.base);
     if (node.arrow) {
       bt = this.cg.resolveType(bt);
