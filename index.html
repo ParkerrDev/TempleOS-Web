@@ -473,11 +473,13 @@
         if (performance.now() - t0 < 260 && moved < 14) { msB |= 1; notifyInput(); setTimeout(() => { msB &= ~1; notifyInput(); }, 90); }
       }, { passive: false });
     }
-    { // joystick: velocity-based fine control
+    { // joystick: velocity-based fine control (float accumulator, INTEGER store — the host
+      //   BigInt()s the cursor, and a fractional msX is a TypeError trap on Safari)
       const joy = $("joy"), knob = $("joyk");
-      let vx = 0, vy = 0, active = false, raf = 0;
+      let vx = 0, vy = 0, active = false, raf = 0, fx = 0, fy = 0;
       const integ = () => { if (!active && !vx && !vy) { raf = 0; return; }
-        msX = Math.max(0, Math.min(639, msX + vx)); msY = Math.max(0, Math.min(479, msY + vy));
+        fx = Math.max(0, Math.min(639, fx + vx)); fy = Math.max(0, Math.min(479, fy + vy));
+        msX = fx | 0; msY = fy | 0;
         notifyInput(); raf = requestAnimationFrame(integ); };
       const setv = (t) => { const r = joy.getBoundingClientRect();
         let dx = t.clientX - (r.left + r.width / 2), dy = t.clientY - (r.top + r.height / 2);
@@ -485,7 +487,7 @@
         if (m > max) { dx *= max / m; dy *= max / m; }
         knob.style.transform = `translate(${dx}px,${dy}px)`;
         vx = dx / max * 7; vy = dy / max * 7; };
-      joy.addEventListener("touchstart", (e) => { e.preventDefault(); active = true; setv(e.changedTouches[0]); if (!raf) raf = requestAnimationFrame(integ); }, { passive: false });
+      joy.addEventListener("touchstart", (e) => { e.preventDefault(); fx = msX; fy = msY; active = true; setv(e.changedTouches[0]); if (!raf) raf = requestAnimationFrame(integ); }, { passive: false });
       joy.addEventListener("touchmove", (e) => { e.preventDefault(); setv(e.changedTouches[0]); }, { passive: false });
       joy.addEventListener("touchend", (e) => { e.preventDefault(); active = false; vx = vy = 0; knob.style.transform = ""; }, { passive: false });
       const bind = (el, bit) => { el.addEventListener("touchstart", (e) => { e.preventDefault(); el.classList.add("on"); msB |= bit; notifyInput(); }, { passive: false });
@@ -596,9 +598,9 @@
         diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },
         present: (addr, w, h, u8) => blit(u8.subarray(addr, addr + w * h), w, h),
       });
-      host.env.__host_msx = () => BigInt(msX); host.env.__host_msy = () => BigInt(msY); host.env.__host_msb = () => BigInt(msB);
-      host.env.__host_wheel = () => BigInt(wheelZ);
-      host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
+      host.env.__host_msx = () => BigInt(msX | 0); host.env.__host_msy = () => BigInt(msY | 0); host.env.__host_msb = () => BigInt(msB | 0);
+      host.env.__host_wheel = () => BigInt(wheelZ | 0);
+      host.env.__host_key = () => keyq.length ? BigInt(keyq.shift() | 0) : -1n;
       host.env.__host_budget = () => BigInt(curBudget | 0);
       host.env.__host_dt = () => BigInt(dtMs | 0);
       const inst = await WebAssembly.instantiate(mod, { env: host.env });

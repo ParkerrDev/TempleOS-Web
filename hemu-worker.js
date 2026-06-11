@@ -57,11 +57,13 @@ async function boot({ gz, wasmUrl, fixedB }) {
       postMessage({ cmd: "frame", buf: buf.buffer, w, h }, [buf.buffer]);
     },
   });
-  host.env.__host_msx = () => BigInt(msX);
-  host.env.__host_msy = () => BigInt(msY);
-  host.env.__host_msb = () => BigInt(msB);
-  host.env.__host_wheel = () => BigInt(wheel);
-  host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
+  // |0 on every BigInt crossing: a fractional value (trackpad movementX, joystick velocity)
+  // throws "Not an integer" in BigInt() and traps the whole emulator.
+  host.env.__host_msx = () => BigInt(msX | 0);
+  host.env.__host_msy = () => BigInt(msY | 0);
+  host.env.__host_msb = () => BigInt(msB | 0);
+  host.env.__host_wheel = () => BigInt(wheel | 0);
+  host.env.__host_key = () => keyq.length ? BigInt(keyq.shift() | 0) : -1n;
   host.env.__host_budget = () => BigInt(curBudget | 0);
   host.env.__host_dt = () => BigInt(dtMs | 0);
   // ---- JIT wiring: blocks read hemu's shared state at the offsets passed via __jit_state/__jit_x87/__jit_chain;
