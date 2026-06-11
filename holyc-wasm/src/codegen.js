@@ -129,7 +129,7 @@ class Codegen {
     this.m.exportFunc("__rt_init", this.rtInit.index);
     this.m.exportGlobal("__sp", this.spGlobal);
     // export functions a runtime JIT needs to call (hemu's RdMem/WrMem handle MMIO + the 2^40 alias).
-    for (const nm of ["RdMem", "WrMem", "Step"]) { const fn = this.functions.get(nm); if (fn && fn.slot) this.m.exportFunc(nm, fn.slot.index); }
+    for (const nm of ["RdMem", "WrMem", "Step", "RasterHLE"]) { const fn = this.functions.get(nm); if (fn && fn.slot) this.m.exportFunc(nm, fn.slot.index); }
 
     const bytes = this.m.emit();
     return { bytes, warnings: this.warnings, dataEnd: this.cursor, globals: this.globals };
@@ -362,7 +362,13 @@ class Codegen {
   genRtInit() {
     const ctx = new FnCtx(this, { name: "__rt_init", params: [], retType: T.U0, node: { body: null } });
     const f = ctx.f;
-    // set Fs->pix_width / pix_height if __Fs global + class CTask exist
+    // RUN-ONCE guard: __main calls __rt_init on every invocation (per frame in the emulator), but
+    // global initializers must apply exactly once — re-running them silently reverted every mutated
+    // initialized global each frame (e.g. a scan cursor reset to its initial value 60×/s).
+    const guard = this.alloc(8, 8);
+    f.i64_const(guard); f.op("i32_wrap_i64"); f.load("i64_load", 0, 3); f.op("i64_eqz");
+    f.if_();
+    f.i64_const(guard); f.op("i32_wrap_i64"); f.i64_const(1); f.store("i64_store", 0, 3);
     // initialize globals with initializers (in declaration order)
     for (const g of this.globals.values()) {
       if (g.init == null) continue;
@@ -371,6 +377,7 @@ class Codegen {
     // call the prelude's runtime-init hook if present (sets Fs, gr.dc, ...)
     const hook = this.functions.get("__hcrt_init");
     if (hook && !hook.isImport) f.call(hook.index);
+    f.end();
     ctx.endFrameFallthrough();
     this.rtInit.setBody(ctx.localDecls(), f);
   }

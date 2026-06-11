@@ -58,7 +58,7 @@ async function boot({ gz, wasmUrl, fixedB }) {
   //      __jit_state returns 1 to ENABLE (return 0n / ?nojit -> pure interpreter). See jit.js + JIT-DESIGN.md. ----
   let inst;
   if (!NOJIT) {
-    host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem); return 1n; };
+    host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem, inst.exports.RasterHLE); return 1n; };
     host.env.__jit_compile = (rip) => BigInt(jit.jitCompile(Number(rip)));
     host.env.__jit_run = (rip) => BigInt(jit.jitRun(Number(rip)));
     host.env.__jit_x87 = (a, b, c) => jit.jitX87(a, b, c);

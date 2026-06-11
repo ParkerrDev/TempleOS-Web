@@ -2,23 +2,24 @@
 // JIT off, capture the framebuffer; repeat with the JIT on; compare. Equal frame count -> equal icount
 // -> equal guest clock -> the renders MUST be byte-identical if the JIT is correct (this is the
 // strongest correctness check for mul/div/bt etc., which the desktop barely exercises).
-import { compileHolyC } from "/Users/parkerh/Dev/TempleOS/holyc-wasm/src/compiler.js";
-import { createHost } from "/Users/parkerh/Dev/TempleOS/holyc-wasm/src/runtime/host.js";
-import * as jit from "/Users/parkerh/Dev/TempleOS-wasm/jit.js";
+import { compileHolyC } from "./holyc-wasm/src/compiler.js";
+import { createHost } from "./holyc-wasm/src/runtime/host.js";
+import * as jit from "./jit.js";
 import { readFileSync } from "node:fs";
 const RAMSZ = 402653184;
 const liveBuf = readFileSync(process.env.LIVE || "/tmp/live.bin");
 const diskBuf = readFileSync(process.env.RAW || "/tmp/templeos.raw");
-const dir = "/Users/parkerh/Dev/hemu-wasm/src";
+const dir = "./hemu-wasm/src";
 const src = readFileSync(dir + "/snapshot.HC", "latin1");
 const r = compileHolyC(src, { filename: "snapshot.HC", lenient: false, includeResolver: (p) => { try { return readFileSync(dir + "/" + p, "latin1"); } catch { return null; } } });
 const mod = await WebAssembly.compile(r.bytes);
-jit.jitSeg(Number(r.globals.get("msr_fsbase").addr), Number(r.globals.get("msr_gsbase").addr), Number(r.globals.get("tsc").addr));
-const ICOUNT = Number(r.globals.get("icount").addr);
+const ICOUNT = Number(r.globals.get("icount").addr);   // seg/tsc now flow per-core via __jit_seg (no module-load jitSeg)
 const NF = Number(process.env.NF || 700);   // total frames before capture (deterministic, no timing window)
 if (process.env.NOX87) globalThis.__NOX87 = 1;        // bisect toggles
 if (process.env.NOMULDIV) globalThis.__NOMULDIV = 1;
 if (process.env.NOBTMEM) globalThis.__NOBTMEM = 1;
+if (process.env.NOREP) globalThis.__NOREP = 1;
+if (process.env.NOLOCK) globalThis.__NOLOCK = 1;
 
 async function boot(useJit) {
   if (useJit) jit.jitReset();
@@ -33,12 +34,13 @@ async function boot(useJit) {
   host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n; host.env.__host_budget = () => 1500000n; host.env.__host_dt = () => 33n; host.env.__host_prof = () => {};
   host.env.__host_time = () => 0n;   // PIN the RTC (host.js default is new Date() = wall-clock -> nondeterministic between boots)
   if (useJit) {
-    host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem); return 1n; };
+    host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem, inst.exports.RasterHLE); return 1n; };
     host.env.__jit_compile = (rip) => BigInt(jit.jitCompile(Number(rip)));
     host.env.__jit_run = (rip) => BigInt(jit.jitRun(Number(rip)));
     host.env.__jit_x87 = (a, b, c) => jit.jitX87(a, b, c);
     host.env.__jit_dispatch = (b) => BigInt(jit.jitDispatch(Number(b)));
     host.env.__jit_chain = (a, b) => jit.jitChain(a, b);
+    host.env.__jit_seg = (a, b, c) => jit.jitSeg(Number(a), Number(b), Number(c));
   }
   inst = await WebAssembly.instantiate(mod, { env: host.env }); host.attach(inst); inst.exports.__rt_init();
   const run = (n) => { for (let i = 0; i < n; i++) inst.exports.__main(); };
