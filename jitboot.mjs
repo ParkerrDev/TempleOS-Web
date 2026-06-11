@@ -1,17 +1,16 @@
 // Desktop JIT test on the bundled snapshot: boot real TempleOS (flat live.bin RAM + raw disk) with the
 // JIT OFF vs ON, verify the desktop renders identically (correctness) and measure the speedup.
-import { compileHolyC } from "/Users/parkerh/Dev/TempleOS/holyc-wasm/src/compiler.js";
-import { createHost } from "/Users/parkerh/Dev/TempleOS/holyc-wasm/src/runtime/host.js";
-import * as jit from "/Users/parkerh/Dev/TempleOS-wasm/jit.js";
+import { compileHolyC } from "./holyc-wasm/src/compiler.js";
+import { createHost } from "./holyc-wasm/src/runtime/host.js";
+import * as jit from "./jit.js";
 import { readFileSync } from "node:fs";
 const RAMSZ = 402653184;
 const liveBuf = readFileSync(process.env.LIVE || "/tmp/live.bin");          // 402MB flat guest RAM
 const diskBuf = readFileSync(process.env.RAW || "/tmp/templeos.raw");       // 256MB raw C: disk
-const dir = "/Users/parkerh/Dev/hemu-wasm/src";
+const dir = "./hemu-wasm/src";
 const src = readFileSync(dir + "/snapshot.HC", "latin1");
 const r = compileHolyC(src, { filename: "snapshot.HC", lenient: false, includeResolver: (p) => { try { return readFileSync(dir + "/" + p, "latin1"); } catch { return null; } } });
 const mod = await WebAssembly.compile(r.bytes);
-// msr_fsbase/gsbase are now per-core (CCpuState); the guest hands their addresses to the JIT via __jit_seg below.
 
 async function boot(useJit, warm, timed) {
   if (useJit) jit.jitReset();

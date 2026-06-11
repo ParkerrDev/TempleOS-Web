@@ -2,25 +2,24 @@
 // JIT block on IDENTICAL inputs, compare reg[0..15]+rfl+written memory. Ground truth = the interpreter,
 // so this PROVES the JIT's values (adc/sbb/mul/div/imul/string/bt) match exactly, free of any IRQ/timing
 // confound. The new ops are the focus (complex flags).
-import { compileHolyC } from "/Users/parkerh/Dev/TempleOS/holyc-wasm/src/compiler.js";
-import { createHost } from "/Users/parkerh/Dev/TempleOS/holyc-wasm/src/runtime/host.js";
-import * as jit from "/Users/parkerh/Dev/TempleOS-wasm/jit.js";
+import { compileHolyC } from "./holyc-wasm/src/compiler.js";
+import { createHost } from "./holyc-wasm/src/runtime/host.js";
+import * as jit from "./jit.js";
 import { readFileSync } from "node:fs";
 const RAMSZ = 402653184, SCRATCH = 0x10000000, MOPND = 0x10100000;   // guest scratch within real RAM (256MB): code + mem operand
 const liveBuf = readFileSync(process.env.LIVE || "/tmp/live.bin");
-const dir = "/Users/parkerh/Dev/hemu-wasm/src";
+const dir = "./hemu-wasm/src";
 const src = readFileSync(dir + "/snapshot.HC", "latin1");
 const r = compileHolyC(src, { filename: "snapshot.HC", lenient: false, includeResolver: (p) => { try { return readFileSync(dir + "/" + p, "latin1"); } catch { return null; } } });
 // reg/rfl/rip/fpr/fsp/x87_sw moved into per-core CCpuState (snapshot.HC); capture their addresses from the
 // guest's __jit_state/__jit_x87 handoff (robust vs the globals map). halted is 16B after rip in CCpuState.
 let REG = 0, RFL = 0, RIP = 0, FPR = 0, FSP = 0, X87 = 0, HALTED = 0;
 const mod = await WebAssembly.compile(r.bytes);
-// msr_fsbase/gsbase now per-core (CCpuState); addresses handed to the JIT via __jit_seg (host import below).
 let gBase = 0, inst;
 const host = createHost({ onText: () => {}, snd: { tone: () => {} }, snapLoad: (base, u8) => { gBase = base; u8.set(liveBuf.subarray(0, RAMSZ), base); }, diskRead: () => {}, diskWrite: () => {}, present: () => {} });
 host.env.__host_msx = () => 0n; host.env.__host_msy = () => 0n; host.env.__host_msb = () => 0n; host.env.__host_wheel = () => 0n;
 host.env.__host_key = () => -1n; host.env.__host_budget = () => 1000000n; host.env.__host_dt = () => 33n; host.env.__host_prof = () => {}; host.env.__host_time = () => 0n;
-host.env.__jit_state = (rg, fl, rp) => { REG = Number(rg); RFL = Number(fl); RIP = Number(rp); HALTED = RIP + 16; jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem); return 1n; };
+host.env.__jit_state = (rg, fl, rp) => { REG = Number(rg); RFL = Number(fl); RIP = Number(rp); HALTED = Number(rp) + 16; jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem); return 1n; };
 host.env.__jit_compile = (rip) => BigInt(jit.jitCompile(Number(rip))); host.env.__jit_run = (rip) => BigInt(jit.jitRun(Number(rip)));
 host.env.__jit_x87 = (a, b, c) => { FPR = Number(a); FSP = Number(b); X87 = Number(c); jit.jitX87(a, b, c); }; host.env.__jit_dispatch = (b) => BigInt(jit.jitDispatch(Number(b))); host.env.__jit_chain = (a, b) => jit.jitChain(a, b); host.env.__jit_seg = (fs, gs, tsc) => jit.jitSeg(Number(fs), Number(gs), Number(tsc));
 inst = await WebAssembly.instantiate(mod, { env: host.env }); host.attach(inst); inst.exports.__rt_init();
