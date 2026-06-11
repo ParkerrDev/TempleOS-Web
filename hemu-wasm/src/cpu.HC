@@ -737,6 +737,7 @@ U64 g_raster_hle[4], g_raster_cand; I64 g_raster_n, g_raster_calls;  // ACTIVE c
 // colors may differ — they already do interp-vs-JIT). g_raster_diffs/g_raster_checks tally the result.
 U64 g_raster_verify, g_raster_ret, g_rv_zbuf, g_rv_dc, g_rv_c1, g_rv_c2, g_rv_icount, g_rv_irqc;
 U64 g_dbg_bad[13]; I64 g_dbg_badn;       // forensics: first failing verify (zbad,bod,cnt,idx,flags,colw,c1 e/n,c2 e/n,z e/n,zj)
+U64 g_ctr_rip; I64 g_ctr_n;              // diag: count executions of one rip (arm: poke g_ctr_rip + its g_hooktbl bit)
 I64 g_rv_idx, g_rv_cnt, g_rv_step = 1, g_raster_diffs, g_raster_checks, g_rv_bodydiff; U8  g_rv_savb[1024]; U32 g_rv_savz[1024], g_rv_natz[1024], g_rv_natb[1024];
 U16 RasterRand(U64 fsb)                              // replicate RandU16 (0xc678) for the dither
 {
@@ -883,6 +884,7 @@ U0 Step()
   U64 op, a, b, r, cf; I64 sz, d, opn, r2, imm;
 
   if (g_hooktbl[rip & 0xFFFF]) {                   // gate: only ~1.5% of rips need the four hook compares
+    if (rip == g_ctr_rip && g_ctr_rip) g_ctr_n++;  // diag execution counter (0 = off)
     if (g_raster_n || g_raster_cand) { I64 q; for (q = 0; q < g_raster_n; q++) if (rip == g_raster_hle[q]) { if (RasterHLE()) return; q = 99; }   // native span filler (all armed copies)
       if (rip == g_raster_cand && g_raster_cand) { if (RasterHLE()) return; } }                                               // candidate under shadow-verify
     if (rip == g_raster_ret && g_raster_ret) RasterVerifyRet();            // shadow-verify: compare emulated vs native at the span filler's return

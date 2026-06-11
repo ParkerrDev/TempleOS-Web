@@ -1,58 +1,68 @@
 # TempleOS‑wasm
 
-**The real, complete TempleOS V5.03 running in your browser** — a full 64‑bit PC
-emulated by [QEMU](https://www.qemu.org/) compiled to WebAssembly. The actual TempleOS
-kernel, HolyC JIT, graphics, sound, keyboard and mouse — not a reimplementation, not a
-screenshot. It boots to the installed desktop **in a few seconds**.
+**The real, complete TempleOS V5.03 running in your browser** — on **HEMU**, a clean‑room
+x86‑64 emulator written almost entirely in **HolyC** and compiled to WebAssembly by the
+bundled from‑scratch HolyC→WASM compiler ([`holyc-wasm/`](./holyc-wasm)). The actual
+TempleOS kernel, HolyC JIT, graphics, games, keyboard and mouse — not a reimplementation,
+not a screenshot. It boots to the installed desktop **in a few seconds**, and the 3D games
+run at their designed 30 fps thanks to an x86‑64→WASM block JIT and native HLE of the
+hottest render routines.
 
 > This is a static site. Drop it on any static host (with cross‑origin isolation — see
 > *Deploying*) and it runs entirely client‑side.
 
 ## Try it
 
-- **Boot TempleOS** — restores the installed hard‑disk desktop instantly from a snapshot.
-- **↻ Restart (clean desktop)** — reloads the clean snapshot in ~4 s. Use it any time the
-  OS gets into a weird state. (A mistyped command drops you into TempleOS's built‑in
-  debugger — that's authentic TempleOS, and Restart clears it.)
-- **🧭 Take the Tour** — opens TempleOS's built‑in *Welcome* guide (navigable, with links).
-- **Click a window, then type.** TempleOS routes keys to the focused window. Capital
-  letters and the mouse work.
+- The desktop boots automatically — restored from a RAM snapshot in ~4 s.
+- **Click the screen** to capture mouse + keyboard. **Ctrl+Alt+G** releases the mouse
+  (QEMU's combo); **Esc goes to the OS** (exits games and menus). Fullscreen captures
+  *every* key for the OS, including Esc.
+- **Ctrl+M** opens the personal menu — click a game sprite (Varoom, BlackDiamond, …) to play.
+- **↻ Restart** reloads the clean snapshot any time the OS gets into a weird state.
+- **⌨ HolyC Editor** — write & run TempleOS HolyC compiled *natively* to WASM (no emulation).
+- **✞ God Words** — TempleOS's divine word oracle on the page itself: GodBits/GodPick
+  compiled in‑browser by holyc-wasm, entropy from your keystroke timing.
+- On phones: an on‑screen joystick + L/R mouse buttons + a keyboard summon button appear,
+  and the function/modifier key bar works by touch.
 
 ### URL options
 | URL | What it does |
 |-----|--------------|
-| `/` | Default — installed desktop, restored instantly from a snapshot (~4 s) |
-| `/?nosnap` | Cold boot the installed hard disk (watch the ~30–90 s self‑compile) |
-| `/?tour` | Boot straight into the Welcome guide |
+| `/` | Installed desktop, restored instantly from a snapshot (~4 s) |
+| `/?single` | Force the single‑threaded in‑page engine (no worker) |
+| `/?b=N` | Pin the guest instruction budget per frame (debug) |
 
 ## How it works
 
 TempleOS is 64‑bit‑only and is its own self‑hosting compiler, so it can't be cross‑compiled
-to WASM directly. Instead, a **graphical build of `qemu-system-x86_64` is compiled to
-WebAssembly** (from the [ktock/qemu‑wasm](https://github.com/ktock/qemu-wasm) fork, whose
-TCG backend JIT‑translates the guest's x86‑64 to WASM at runtime). It runs in a Web Worker
-with `SharedArrayBuffer`, an SDL software framebuffer blitted to a `<canvas>`, and PS/2
-keyboard + USB‑tablet mouse.
+to WASM directly. HEMU takes the emulation route, TempleOS‑style: a **TempleOS‑only x86‑64
+emulator written in HolyC** (`hemu-wasm/src/cpu.HC` + `snapshot.HC`, ~1.3k lines), compiled
+to WebAssembly by **holyc-wasm**, a from‑scratch HolyC compiler in JavaScript. It resumes a
+live RAM snapshot of the booted desktop, emulates just the hardware TempleOS touches
+(PIC/PIT/HPET/PS‑2/ATA/VGA‑DAC), and pulls input from the host each frame.
 
-Cold boot is slow because TempleOS **recompiles its entire system on every boot**
-(~30–90 s under emulation). So the default experience restores a **QEMU migration snapshot**
-of the already‑booted desktop (`-incoming`), skipping the compile entirely — boot is ~4 s.
+Performance comes from three layers:
+- an **x86‑64 → WASM block JIT** (`jit.js`) that compiles hot guest code to native WASM at
+  runtime — the same trick TempleOS's own JIT plays, one level up;
+- **HLE** of the hottest render routines (the window compositor blit and the games' span
+  fillers), each shadow‑verified bit‑exact against the emulated version before activation;
+- a worker engine that runs the emulator off the main thread.
+
+The guest clock is paced to real time (the OS clock ticks at 1.00× and the games run at
+their designed ~30 fps), and keystroke timing feeds the OS's God apps with real entropy,
+exactly like the TSC sampling on real hardware.
 
 ### What's in `vendor/`
 | Path | Size | What |
 |------|------|------|
-| `vendor/qemu-sdl/` | ~13 MB | the graphical `qemu-system-x86_64.wasm` + loader + worker |
-| `vendor/qemu/load-rom.data` | 0.5 MB | packed BIOS / VGA option ROMs |
-| `vendor/images/templeos-hd.qcow2.gz` | 41 MB | the installed TempleOS hard disk (RedSea on C:) |
-| `vendor/images/snapshot.bin.gz` | 4.8 MB | booted‑desktop RAM snapshot (instant boot) |
-| `vendor/images/tour-snapshot.bin.gz` | 5.2 MB | desktop with the Welcome guide open (`?tour`) |
+| `vendor/images/templeos-hd.qcow2.gz` | 41 MB | the installed TempleOS hard disk (RedSea on C:), read on demand |
+| `hemu-wasm/live.bin.gz` | 5 MB | booted‑desktop RAM snapshot (instant boot) |
+| `hemu-wasm/snapshot.wasm` | 55 KB | the compiled emulator |
 
-First load is ~64 MB, cached afterward. (The `.gz` assets are decompressed in the browser.)
+The desktop appears after the 5 MB snapshot loads; the disk image streams in the background
+for file I/O. (The `.gz` assets are decompressed in the browser.)
 
 ## Running locally
-
-A plain file server isn't enough — the page needs **cross‑origin isolation** for
-`SharedArrayBuffer`. Two options:
 
 ```bash
 # 1) the bundled zero-dependency server (sets COOP/COEP for you)
@@ -73,24 +83,11 @@ It's all static files; the only requirement is cross‑origin isolation.
   the headers and reloads once on first visit). Paths are deployment‑relative, so it works at
   a domain root *or* a project subpath like `/TempleOS-wasm/`.
 
-## Performance
-
-Boot is ~4 s (snapshot) and the desktop runs at roughly **30–45 fps** — near the practical
-ceiling for emulating a 64‑bit PC in a browser. The cost is single‑core CPU emulation
-(x86‑64 → WASM JIT); the canvas is already GPU‑composited by the browser, and a GPU can't
-accelerate sequential CPU emulation. Multi‑core (`-smp` + MTTCG) was measured at ~8× *slower*
-here (thread‑sync overhead), so the build deliberately uses a single vCPU.
-
 ## Credits & licenses
 
-- **TempleOS** — created by **Terry A. Davis**. Public domain. The disk image and snapshots
+- **TempleOS** — created by **Terry A. Davis**. Public domain. The disk image and snapshot
   contain TempleOS V5.03.
-- **QEMU** — licensed **GPLv2**. The `qemu-system-x86_64.wasm` here is built from QEMU via
-  the [ktock/qemu‑wasm](https://github.com/ktock/qemu-wasm) fork; see that project for the
-  corresponding source.
+- **holyc-wasm, HEMU, the JIT** — written for this project; same repository.
 - **coi-serviceworker** — © Guido Zuidhof and contributors, **MIT**.
 - **Theme & assets** — the TempleOS‑desktop look (DOS VGA bitmap font, cursor, the Terry GIF)
   is from [afterdavis](https://github.com/ParkerrDev/afterdavis), a Terry Davis tribute.
-
-Because the bundled QEMU WebAssembly is GPLv2, this distribution as a whole is governed by
-the GPLv2 with respect to that component (source is available upstream as noted above).

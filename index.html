@@ -2,97 +2,741 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TempleOS in your browser — boot with QEMU or HEMU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>TempleOS — the real 64-bit OS in your browser</title>
+  <link rel="icon" href="assets/TempleOS.svg" type="image/svg+xml" />
+  <script src="coi-serviceworker.js"></script>
   <style>
+    /* afterdavis theme: the TempleOS desktop look. */
     @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); font-weight:normal; font-style:normal; }
     :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; }
     * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga',"Courier New",monospace; cursor:url('assets/cursor.png'),auto; }
+    html { overflow-y:auto; }
     body { background:var(--blue); color:#fff; font-size:17px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
     ::selection { background:#000; color:yellow; }
     a { color:var(--gold); }
 
+    /* live top status bar (always visible — survives fullscreen games, unlike the in-OS wallpaper bar) */
     #topbar { display:flex; line-height:.8; justify-content:space-between; align-items:flex-start; gap:10px;
               background:var(--blue); color:#fff; padding:4px 8px; border-bottom:2px solid #fff; }
+    #topbar .status { display:flex; flex-wrap:wrap; }
+    #topbar .status > span { white-space:nowrap; }
     #topbar .status > span:not(:last-child) { margin-right:16px; }
-    .y { color:yellow; }
+    .y { color:yellow; } #tb-key { text-transform:uppercase; color:yellow; white-space:nowrap; }
 
-    header { display:flex; align-items:stretch; gap:12px; padding:10px 8px 2px; }
-    header .logo { flex:0 0 auto; align-self:stretch; width:72px; border:2px solid #fff;
-                   background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
+    header { display:flex; align-items:stretch; gap:10px; padding:5px 8px 1px; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
-    header h1 { font-size:26px; font-weight:normal; }
-    header p { font-size:16px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
+    header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
+                   background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
+    header h1 { font-size:22px; font-weight:normal; color:#fff; }
+    header p { font-size:15px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
 
-    main { flex:1 1 auto; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:14px 8px; }
-    .cards { display:flex; gap:22px; justify-content:center; align-items:stretch; flex-wrap:wrap; max-width:880px; }
-
-    /* a TempleOS window: white box, double-blue border, white outline, blinking title */
-    .win { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue); outline:4px solid #fff;
-           margin:8px; padding:18px 16px 16px; width:360px; display:flex; flex-direction:column; gap:10px; }
-    [data-title]::before { content:attr(data-title); position:absolute; top:-9px; left:8px; padding:2px 2px 0;
-           line-height:.7; letter-spacing:.1em; color:var(--blue); background:#fff; animation:winTitle .5s step-start infinite; }
+    /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X] */
+    .win, #frame { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue);
+                   outline:4px solid #fff; margin:3px 5px; overflow:visible; }
+    .win { padding:.7em; }
+    [data-title]::before { content:attr(data-title); position:absolute; top:-9px; left:6px; padding:2px 1px 0 2px;
+           line-height:.7; letter-spacing:.1em; color:var(--blue); background:#fff; animation:winTitle .5s step-start infinite; z-index:2; }
     @keyframes winTitle { 50% { color:#fff; background:var(--blue); } }
-    .win h2 { font-size:21px; font-weight:normal; }
-    .win p { font-size:15px; line-height:1.45; flex:1 1 auto; }
-    .win .meta { font-size:13px; color:var(--red); }
+    .close { position:absolute; top:-7px; right:6px; font-size:15px; padding:1px 2px 0; line-height:.7; letter-spacing:.05em;
+             color:var(--blue); background:#fff; z-index:2; }
 
-    a.boot { font-family:'dos_vga',monospace; font-size:18px; color:#000; background:#fff; text-decoration:none; text-align:center;
-             border:2px solid #fff; outline:2px solid #000; padding:9px 10px; margin-top:4px; }
-    a.boot:hover { color:#fff; background:#000; }
+    main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
+    .desktop-row { display:flex; gap:8px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px; }
+    .col-left { display:flex; flex-direction:column; gap:16px; width:232px; flex:0 0 auto; }
+    .col-right { display:flex; flex-direction:column; gap:16px; width:268px; flex:0 0 auto; }
+    .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
+    .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
+    button { font-family:'dos_vga',monospace; font-size:17px; color:#000; background:#fff;
+             border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
+    button:hover:not(:disabled) { color:#fff; background:#000; }
+    button:disabled { opacity:.4; }
 
-    footer { text-align:center; padding:10px; font-size:15px; color:#cfe; opacity:.85; }
+    #frame { padding:5px; }
+    canvas#canvas { display:block; height:min(74vh,600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
+    #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+              gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
+    #ldtext { font-size:17px; max-width:560px; line-height:1.5; min-height:2.4em; }
+    .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#0a0a0a; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
+    .ldbarwrap > i { display:block; height:100%; width:0; transition:width .2s; background:var(--green); }
+    .ldbarwrap::after { content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(90deg, transparent 0 22px, #0a0a0a 22px 24px); }
+
+    /* on-screen function/modifier keys — works on desktop and mobile; modifiers latch (✱) */
+    #keysbar { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; padding:6px 4px 2px; max-width:830px; }
+    #keysbar button { width:auto; font-size:14px; padding:4px 7px; text-align:center; }
+    #keysbar button.mod.on { color:#fff; background:var(--red); border-color:var(--red); }
+    #frame .cap { text-align:center; font-size:13px; color:var(--blue); padding-top:3px; }
+
+    /* touch controls: joystick + mouse buttons + keyboard summon, overlaid on the frame */
+    #touchui { display:none; position:absolute; inset:0; pointer-events:none; z-index:4; }
+    body.touch #touchui { display:block; }
+    #joy { position:absolute; left:12px; bottom:12px; width:124px; height:124px; border-radius:50%;
+           background:rgba(0,0,168,.28); border:2px solid rgba(255,255,255,.6); pointer-events:auto; touch-action:none; }
+    #joyk { position:absolute; left:50%; top:50%; width:48px; height:48px; margin:-24px 0 0 -24px; border-radius:50%;
+            background:rgba(255,255,255,.75); }
+    .tbtn { position:absolute; width:64px; height:64px; border-radius:50%; pointer-events:auto; touch-action:none;
+            background:rgba(255,255,255,.7); color:#000; font-size:15px; display:flex; align-items:center; justify-content:center;
+            border:2px solid #fff; outline:2px solid #000; user-select:none; }
+    .tbtn:active, .tbtn.on { background:var(--red); color:#fff; }
+    #tL { right:96px; bottom:14px; } #tR { right:18px; bottom:14px; }
+    #tKb { right:18px; bottom:92px; width:54px; height:42px; border-radius:8px; font-size:18px; }
+    #mobInput { position:fixed; left:-30px; bottom:0; width:20px; height:20px; opacity:.01; font-size:16px; }
+
+    .col-right #guide { font-size:16px; }
+    #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
+    .dbgw { padding:3px; }
+    #dbg { height:170px; overflow:auto; background:#000; color:#7fe07f; padding:6px; margin:0;
+           font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+    #dbg .err { color:#ff8a8a; }
+    .terrywin { padding:6px; text-align:center; }
+    .terrywin img { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
+
+    footer { text-align:center; padding:8px; font-size:15px; color:#cfe; opacity:.85; }
+    footer a { color:var(--gold); }
+
+    /* ---- overlays (HolyC editor / God Words): a window floating over the desktop ---- */
+    .overlay { position:fixed; inset:0; z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,.66); }
+    .overlay.open { display:flex; }
+    .overlay .close { cursor:pointer; }
+    .overlay .close:hover { color:#fff; background:var(--blue); }
+    #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }
+    .ed-bar { display:flex; gap:7px; align-items:center; flex:0 0 auto; }
+    #editorWin .ed-bar button { width:auto; text-align:center; }
+    #editorWin select { width:auto; max-width:300px; font-size:16px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:4px 6px; }
+    #editorWin #status { margin-left:auto; color:var(--blue); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:42%; }
+    .ed-body { flex:1 1 auto; min-height:0; display:flex; gap:6px; }
+    .ed-pane { flex:1 1 0; min-width:0; display:flex; flex-direction:column; border:3px double var(--blue); background:#fff; }
+    .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:13px; letter-spacing:.08em; }
+    .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }
+    #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;
+        font-family:'dos_vga',monospace; font-size:15px; line-height:1.35; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
+    #editorHL { z-index:0; pointer-events:none; overflow:hidden; color:#16163a; background:transparent; }
+    #editor { z-index:1; resize:none; outline:none; color:transparent; background:transparent; caret-color:#16163a; }
+    #editor::selection { background:rgba(110,160,255,.4); }
+    .ed-editwrap.plain #editorHL { display:none; }
+    .ed-editwrap.plain #editor { color:#16163a; }
+    #editorHL .tc{ color:#7d8aa0; font-style:italic; }  #editorHL .ts{ color:#0a7f25; }
+    #editorHL .tk{ color:#a10608; font-weight:bold; }   #editorHL .tt{ color:#6a1b9a; }
+    #editorHL .tco{ color:#b35a00; }  #editorHL .tn{ color:#b35a00; }  #editorHL .tp{ color:#0a6a8a; }
+    .ed-screenwrap { flex:0 0 auto; background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
+    #editorWin #screen { display:block; height:min(44vh,430px); width:auto; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; background:#000; }
+    #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+    .ed-foot { flex:0 0 auto; color:var(--blue); font-size:13px; padding:1px 2px 0; }
+
+    /* God Words window */
+    #godWin { display:flex; flex-direction:column; gap:8px; width:min(620px,94vw); height:min(70vh,560px); margin:0; padding:10px; }
+    #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:20px; line-height:1.6; word-break:break-word; }
+    #godOut .w { color:yellow; margin-right:.55em; }
+    #godBar { display:flex; gap:8px; align-items:center; }
+    #godBar button { width:auto; }
+    #godEnt { flex:1 1 auto; height:14px; background:#0a0a0a; border:2px solid #000; outline:2px solid var(--blue); overflow:hidden; }
+    #godEnt > i { display:block; height:100%; width:0; background:var(--green); transition:width .15s; }
+    #godHint { font-size:14px; color:var(--blue); }
+
+    /* ---- responsive: phones & narrow windows ---- */
+    @media (max-width:980px) {
+      .desktop-row { flex-direction:column; align-items:center; }
+      .col-left, .col-right { width:min(96vw,560px); flex-direction:column; }
+      .col-center { order:-1; width:100%; }
+      #frame { margin:3px auto; max-width:98vw; }
+      canvas#canvas { width:min(96vw,640px); height:auto; }
+      header h1 { font-size:18px; } header p { font-size:13px; }
+      #topbar { font-size:14px; }
+      .terrywin img { height:120px; }
+      #keysbar { max-width:98vw; }
+      .ed-body { flex-direction:column; } #editorWin { height:94vh; } #editorWin #screen { height:34vh; }
+    }
   </style>
 </head>
 <body>
   <div id="topbar">
-    <div class="status"><span>TempleOS V5.03</span><span id="clock"></span></div>
-    <div>Public Domain Operating System</div>
+    <div class="status">
+      <span id="tb-date">…</span>
+      <span id="tb-time">…</span>
+      <span id="tb-fps">starting…</span>
+      <span>engine: <span class="y">HEMU</span></span>
+    </div>
+    <p id="tb-key"></p>
   </div>
 
   <header>
     <div class="logo" role="img" aria-label="TempleOS" title="TempleOS"></div>
     <div class="htxt">
-      <h1>TempleOS, in your browser</h1>
-      <p>Terry Davis's 64-bit operating system, running two completely different ways. Pick how to boot it.</p>
+      <h1>TempleOS — the real 64-bit OS, booting in your browser</h1>
+      <p>The <b>complete, unmodified TempleOS V5.03</b> on <b>HEMU</b> — a clean-room x86-64 emulator written in
+         HolyC, compiled to WebAssembly. Real kernel, HolyC JIT, graphics, games, keyboard &amp; mouse.
+         <a href="https://github.com/ParkerrDev/TempleOS-wasm">source &amp; build notes →</a></p>
     </div>
   </header>
 
-  <main>
-    <div class="cards">
-      <div class="win" data-title="QEMU / WASM">
-        <h2>Boot with QEMU</h2>
-        <p>The whole PC emulated by <b>QEMU compiled to WebAssembly</b> (with a TempleOS-tuned HLE acceleration).
-           Cycle-faithful x86 — boots the real desktop, full keyboard/mouse/sound, plus a built-in HolyC→WASM editor.</p>
-        <span class="meta">~13 MB engine · maximum fidelity</span>
-        <a class="boot" href="./qemu.html">▶ Boot with QEMU</a>
+  <main class="stage">
+  <div class="desktop-row">
+    <div class="col-left">
+      <div class="toolbar win" data-title="Menu">
+        <span class="close">[X]</span>
+        <button id="restartBtn" title="Reload the clean desktop snapshot (~4s)">↻ Restart</button>
+        <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS">⛶ Fullscreen</button>
+        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed">⌨ HolyC Editor</button>
+        <button id="godBtn" title="Draw God's words, TempleOS-style: entropy from your keystroke timing — HolyC compiled to WASM">✞ God Words</button>
+        <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)">🕹 Touch controls</button>
       </div>
-
-      <div class="win" data-title="HEMU / HolyC">
-        <h2>Boot with HEMU</h2>
-        <p>A <b>clean-room x86-64 emulator written in HolyC</b> (~95% HolyC, &lt;1800 lines), compiled to WASM —
-           <b>zero QEMU code</b>. Resumes a live snapshot; the clock ticks and the mouse cursor &amp; keyboard are
-           driven by the OS itself.</p>
-        <span class="meta">~40 KB engine + 5 MB snapshot</span>
-        <a class="boot" href="./hemu.html">▶ Boot with HEMU</a>
-      </div>
+      <div class="win dbgw" data-title="Debug"><span class="close">[X]</span><pre id="dbg"></pre></div>
     </div>
-  </main>
+
+    <div class="col-center">
+      <div id="frame" data-title="TempleOS V5.03 · HEMU">
+        <span class="close">[X]</span>
+        <canvas id="canvas" width="640" height="480" tabindex="0"></canvas>
+        <div id="touchui">
+          <div id="joy"><div id="joyk"></div></div>
+          <div id="tKb" class="tbtn" title="open keyboard">⌨</div>
+          <div id="tL" class="tbtn">L</div>
+          <div id="tR" class="tbtn">R</div>
+        </div>
+        <div id="loadui">
+          <div id="ldtext">loading hemu…</div>
+          <div class="ldbarwrap"><i id="ldbar"></i></div>
+        </div>
+        <div class="cap" id="cap">click the screen to capture mouse + keyboard · Ctrl+Alt+G releases · Esc goes to the OS</div>
+      </div>
+      <div id="keysbar"></div>
+    </div>
+
+    <div class="col-right">
+      <div id="guide" class="win" data-title="Help">
+        <span class="close">[X]</span>
+        <b>Click the screen</b>, then move the mouse and type — you're using the real OS.
+        <b>Esc</b> is sent to TempleOS (exits games/menus); release the mouse with <kbd>Ctrl+Alt+G</kbd>.
+        Press <kbd>Ctrl+M</kbd> for the games menu, click a sprite to play. <kbd>F7</kbd> draws a God word.
+        Fullscreen keeps every key (even Esc) inside the OS.
+      </div>
+      <div class="win terrywin" data-title="Terry"><span class="close">[X]</span><img src="assets/terrydancing.gif" alt="Terry A. Davis"></div>
+    </div>
+  </div>
 
   <footer>
-    <p>R.I.P. Terry A. Davis (1969–2018) — “the smartest programmer that's ever lived.” ·
-       <a href="https://github.com/ParkerrDev/TempleOS-wasm">source</a></p>
+    <p>Made with ♥ by <a href="https://parkerhunt.me">parkerhunt.me</a> — R.I.P. Terry A. Davis (1969–2018), “the smartest programmer that's ever lived.”</p>
   </footer>
+  </main>
+
+  <!-- HolyC -> WebAssembly editor overlay -->
+  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="HolyC to WebAssembly editor">
+    <div class="win" id="editorWin" data-title="HolyC → WebAssembly Editor">
+      <span class="close" id="editorClose" title="Close editor">[X]</span>
+      <div class="ed-bar">
+        <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
+        <button id="runBtn">▶ Run</button>
+        <span id="status">ready</span>
+      </div>
+      <div class="ed-body">
+        <section class="ed-pane">
+          <div class="ed-h">HolyC source</div>
+          <div class="ed-editwrap"><pre id="editorHL" aria-hidden="true"></pre><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea></div>
+        </section>
+        <section class="ed-pane">
+          <div class="ed-h">Screen — 640×480, 16-color</div>
+          <div class="ed-screenwrap"><canvas id="screen" width="640" height="480" tabindex="0"></canvas></div>
+          <div class="ed-h">Console</div>
+          <pre id="console"></pre>
+        </section>
+      </div>
+      <div class="ed-foot">Click the screen to enable sound &amp; send keyboard/mouse to the program. Compiled with holyc-wasm — no emulation.</div>
+    </div>
+  </div>
+
+  <!-- God Words overlay: TempleOS GodBits/GodPick semantics, compiled in-browser by holyc-wasm -->
+  <div id="godOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="God Words">
+    <div class="win" id="godWin" data-title="God Words · holyc-wasm">
+      <span class="close" id="godClose" title="Close">[X]</span>
+      <div id="godOut"></div>
+      <div id="godBar">
+        <button id="godWord">✞ Word</button>
+        <button id="godClear">Clear</button>
+        <div id="godEnt" title="entropy pool"><i></i></div>
+      </div>
+      <div id="godHint">Press random keys (or tap the entropy bar rhythm-free) — each keystroke's timing feeds God's
+        random-bit fifo, exactly like TempleOS's <b>GodBitsIns(GetTSC)</b>. Then draw a word.</div>
+    </div>
+  </div>
+
+  <input id="mobInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" aria-hidden="true" tabindex="-1" />
+
+  <script type="module">
+    import { createHost } from "./holyc-wasm/src/runtime/host.js";
+    import { loadDisk } from "./qcow2.js";
+
+    const $ = (id) => document.getElementById(id);
+    const dbgEl = $("dbg");
+    const dbg = (s, err) => { const at = dbgEl.scrollTop + dbgEl.clientHeight >= dbgEl.scrollHeight - 4;
+      const sp = document.createElement("span"); if (err) sp.className = "err";
+      sp.textContent = s + "\n"; dbgEl.appendChild(sp); while (dbgEl.childNodes.length > 400) dbgEl.removeChild(dbgEl.firstChild);
+      if (at) dbgEl.scrollTop = dbgEl.scrollHeight; };
+    dbg("hemu host starting…");
+    addEventListener("error", (e) => dbg("JS: " + e.message, true));
+
+    const PALETTE = [
+      [0x00,0x00,0x00],[0x00,0x00,0xaa],[0x00,0xaa,0x00],[0x00,0xaa,0xaa],
+      [0xaa,0x00,0x00],[0xaa,0x00,0xaa],[0xaa,0x55,0x00],[0xaa,0xaa,0xaa],
+      [0x55,0x55,0x55],[0x55,0x55,0xff],[0x55,0xff,0x55],[0x55,0xff,0xff],
+      [0xff,0x55,0x55],[0xff,0x55,0xff],[0xff,0xff,0x55],[0xff,0xff,0xff],
+    ];
+    const pal32 = new Uint32Array(16);
+    for (let i = 0; i < 16; i++) { const [r,g,b] = PALETTE[i]; pal32[i] = (255<<24)|(b<<16)|(g<<8)|r; }
+
+    const canvas = $("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = ctx.createImageData(640, 480);
+    const out32 = new Uint32Array(img.data.buffer);
+    const ld = $("loadui"), ldtext = $("ldtext"), ldbar = $("ldbar");
+    const tbFps = $("tb-fps"), tbKey = $("tb-key");
+    const setLoad = (s, pct) => { ldtext.textContent = s; if (pct != null) ldbar.style.width = pct + "%"; };
+
+    // ---- live topbar clock (the OS RTC is synced to the host clock, so this matches the OS) ----
+    { const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], p2 = (n) => String(n).padStart(2, "0");
+      const tick = () => { const t = new Date();
+        $("tb-date").textContent = `${days[t.getDay()]} ${p2(t.getMonth()+1)}/${p2(t.getDate())}`;
+        $("tb-time").textContent = `${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`; };
+      tick(); setInterval(tick, 1000); }
+
+    let blitCount = 0, lastFrameHash = 0;
+    function blit(idx, w, h) {
+      const n = Math.min(w * h, out32.length);
+      for (let i = 0; i < n; i++) out32[i] = pal32[idx[i] & 15];
+      ctx.putImageData(img, 0, 0);
+      let s = 0; for (let i = 0; i < n; i += 16) s = (s * 31 + idx[i]) >>> 0;
+      if (s !== lastFrameHash) { blitCount++; lastFrameHash = s; }
+    }
+    let started = false;
+    function firstFrame() { if (started) return; started = true; ld.style.display = "none"; dbg("TempleOS desktop up"); autoGame(); }
+    function autoGame() {   // TEST hook: ?autogame=X,Y -> decline tour (N), Ctrl+M game menu, click the sprite at X,Y
+      const p = new URLSearchParams(location.search).get("autogame"); if (!p) return;
+      const [gx, gy] = p.split(",").map(Number);
+      const send = (keys, x, y, b) => { if (keys) for (const k of keys) keyq.push(k); if (x != null) msX = x; if (y != null) msY = y; if (b != null) msB = b; notifyInput(); };
+      let t = 1500;
+      setTimeout(() => send([0x31, 0xB1]), t); t += 600;
+      setTimeout(() => send([0x1D, 0x32, 0xB2, 0x9D]), t); t += 1000;
+      setTimeout(() => send(null, gx, gy, 0), t); t += 200;
+      setTimeout(() => send(null, gx, gy, 1), t); t += 250;
+      setTimeout(() => send(null, gx, gy, 0), t);
+    }
+    let notifyInput = () => {};
+    let engineLabel = "…";
+    const FIXED_B = +((new URLSearchParams(location.search)).get("b")) || 0;
+    { let t0 = performance.now();
+      setInterval(() => { const n = performance.now(); tbFps.textContent = `${(blitCount * 1000 / (n - t0)).toFixed(0)} fps · ${engineLabel}`; blitCount = 0; t0 = n; }, 500); }
+
+    // ---- input: a host-owned cursor + a set-1 scancode queue, pulled by snapshot.HC each frame ----
+    let msX = 320, msY = 240, msB = 0, wheelZ = 0;
+    const keyq = [];
+    const SC = {
+      Escape:0x01,
+      Digit1:0x02,Digit2:0x03,Digit3:0x04,Digit4:0x05,Digit5:0x06,Digit6:0x07,Digit7:0x08,
+      Digit8:0x09,Digit9:0x0A,Digit0:0x0B,Minus:0x0C,Equal:0x0D,Backspace:0x0E,Tab:0x0F,
+      KeyQ:0x10,KeyW:0x11,KeyE:0x12,KeyR:0x13,KeyT:0x14,KeyY:0x15,KeyU:0x16,KeyI:0x17,KeyO:0x18,KeyP:0x19,
+      BracketLeft:0x1A,BracketRight:0x1B,Enter:0x1C,ControlLeft:0x1D,ControlRight:0x1D,
+      KeyA:0x1E,KeyS:0x1F,KeyD:0x20,KeyF:0x21,KeyG:0x22,KeyH:0x23,KeyJ:0x24,KeyK:0x25,KeyL:0x26,
+      Semicolon:0x27,Quote:0x28,Backquote:0x29,ShiftLeft:0x2A,Backslash:0x2B,
+      KeyZ:0x2C,KeyX:0x2D,KeyC:0x2E,KeyV:0x2F,KeyB:0x30,KeyN:0x31,KeyM:0x32,
+      Comma:0x33,Period:0x34,Slash:0x35,ShiftRight:0x36,AltLeft:0x38,AltRight:0x38,Space:0x39,
+      CapsLock:0x3A,F1:0x3B,F2:0x3C,F3:0x3D,F4:0x3E,F5:0x3F,F6:0x40,F7:0x41,F8:0x42,F9:0x43,F10:0x44,F11:0x57,F12:0x58,
+      Home:0x47,PageUp:0x49,End:0x4F,PageDown:0x51,Insert:0x52,Delete:0x53,
+      ArrowUp:0x48,ArrowLeft:0x4B,ArrowRight:0x4D,ArrowDown:0x50,
+    };
+    // Bits 8+ of each queued scancode carry real keystroke-timing entropy: TempleOS feeds GetTSC
+    // samples at key IRQs to its God apps (GodBitsIns), and the emulated tsc alone is deterministic.
+    const ent = () => ((((performance.now() * 1000) >>> 0) ^ (Math.random() * 0x10000)) & 0xFFFF) * 256;
+    const pushKey = (sc) => { keyq.push(sc | ent()); notifyInput(); };
+    const tapKey = (sc, ms = 70) => { pushKey(sc); setTimeout(() => pushKey(sc | 0x80), ms); };
+
+    // ---- mouse capture: QEMU-style. Click captures; Ctrl+Alt+G releases; Esc is FORWARDED to the
+    //      OS (exits games). In fullscreen, navigator.keyboard.lock keeps Esc from breaking capture;
+    //      outside fullscreen the browser force-releases on Esc — we re-capture on the next click and
+    //      still deliver Esc to the OS via the pointerlockchange fallback below. ----
+    let locked = false, releasedByUs = false, sawEscDown = 0;
+    const btnBit = e => e.button === 0 ? 1 : e.button === 2 ? 2 : 0;
+    canvas.addEventListener("click", () => { if (!locked && !document.body.classList.contains("touch")) canvas.requestPointerLock(); });
+    document.addEventListener("pointerlockchange", () => {
+      const was = locked;
+      locked = document.pointerLockElement === canvas;
+      tbKey.textContent = locked ? "captured · Ctrl+Alt+G releases" : "click to capture";
+      if (was && !locked && !releasedByUs && performance.now() - sawEscDown > 250) {
+        // browser force-release (Esc outside fullscreen) that we did NOT see as a keydown:
+        // the user meant "Esc" — deliver it to the OS so games/menus still exit.
+        tapKey(0x01);
+      }
+      releasedByUs = false;
+    });
+    document.addEventListener("mousemove", e => {
+      if (!locked) return;
+      msX = Math.max(0, Math.min(639, msX + e.movementX));
+      msY = Math.max(0, Math.min(479, msY + e.movementY));
+      notifyInput();
+    });
+    document.addEventListener("mousedown", e => { if (locked) { msB |= btnBit(e); e.preventDefault(); notifyInput(); } });
+    document.addEventListener("mouseup",   e => { if (locked) { msB &= ~btnBit(e); e.preventDefault(); notifyInput(); } });
+    canvas.addEventListener("contextmenu", e => e.preventDefault());
+    canvas.addEventListener("wheel", e => {
+      if (!locked) return;
+      wheelZ += e.deltaY > 0 ? 1 : -1; e.preventDefault(); notifyInput();
+    }, { passive: false });
+
+    const keysToOS = (e) => {
+      if (e && e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return false;
+      if (document.querySelector(".overlay.open")) return false;
+      return locked || document.body.classList.contains("touch");
+    };
+    addEventListener("keydown", e => {
+      if (!keysToOS(e)) return;
+      if (e.ctrlKey && e.altKey && e.code === "KeyG") {           // QEMU's grab-release combo
+        releasedByUs = true; document.exitPointerLock(); e.preventDefault(); return;
+      }
+      if (e.code === "Escape") {
+        // Send Esc as a complete make+break NOW: outside fullscreen the browser force-releases
+        // pointer lock on Esc and our keyup gate closes — a make-only Esc would stick in the OS.
+        sawEscDown = performance.now();
+        if (!e.repeat) { pushKey(0x01); pushKey(0x81); }
+        e.preventDefault(); return;
+      }
+      if (e.ctrlKey && e.code === "BracketLeft") { pushKey(0x01); pushKey(0x81); e.preventDefault(); return; }  // legacy in-OS Esc
+      const s = SC[e.code]; if (s !== undefined) { if (!e.repeat) pushKey(s); e.preventDefault(); }
+    });
+    addEventListener("keyup", e => { if (!keysToOS(e)) return; const s = SC[e.code]; if (s !== undefined && e.code !== "Escape") { pushKey(s | 0x80); e.preventDefault(); } });
+
+    // fullscreen: capture EVERY key for the OS (incl. Esc/F11/F12) via the Keyboard Lock API
+    $("fsBtn").addEventListener("click", () => {
+      const fr = $("frame");
+      if (!document.fullscreenElement) fr.requestFullscreen().catch(() => {});
+      else document.exitFullscreen();
+    });
+    document.addEventListener("fullscreenchange", async () => {
+      if (document.fullscreenElement) {
+        try { await navigator.keyboard?.lock?.(); dbg("keyboard locked (Esc stays in the OS)"); } catch {}
+        if (!document.body.classList.contains("touch")) canvas.requestPointerLock();
+      } else { try { navigator.keyboard?.unlock?.(); } catch {} }
+    });
+
+    // ---- on-screen function/modifier keys (desktop + mobile). Modifiers latch until the next
+    //      non-modifier key from this bar; Win is the E0-extended pull-down-menu key. ----
+    { const bar = $("keysbar");
+      const E0 = "E0";   // marker: extended scancode
+      const KEYS = [["Esc",0x01],["F1",0x3B],["F2",0x3C],["F3",0x3D],["F4",0x3E],["F5",0x3F],["F6",0x40],["F7",0x41],
+                    ["F8",0x42],["F9",0x43],["F10",0x44],["F11",0x57],["F12",0x58],
+                    ["Tab",0x0F],["Ctrl",0x1D,"mod"],["Alt",0x38,"mod"],["Shift",0x2A,"mod"],["Win",0x5B,"mod",E0],
+                    ["Ins",0x52],["Del",0x53],["Home",0x47],["End",0x4F],["PgUp",0x49],["PgDn",0x51]];
+      const latched = new Map();   // sc -> {e0}
+      const mk = (sc, e0) => { if (e0) pushKey(0xE0); pushKey(sc); };
+      const br = (sc, e0) => { if (e0) pushKey(0xE0); pushKey(sc | 0x80); };
+      for (const [label, sc, mod, e0] of KEYS) {
+        const b = document.createElement("button");
+        b.textContent = label; b.type = "button"; if (mod) b.className = "mod";
+        b.addEventListener("pointerdown", (e) => { e.preventDefault();
+          if (mod) {
+            if (latched.has(sc)) { latched.delete(sc); b.classList.remove("on"); br(sc, e0); }
+            else { latched.set(sc, { e0, btn: b }); b.classList.add("on"); mk(sc, e0); }
+          } else {
+            mk(sc, e0); setTimeout(() => { br(sc, e0);
+              for (const [m, info] of latched) { br(m, info.e0); info.btn.classList.remove("on"); }
+              latched.clear(); }, 80);
+          } });
+        bar.appendChild(b);
+      }
+    }
+
+    // ---- touch controls: direct touch = absolute cursor + tap-to-click; joystick = fine relative
+    //      moves; L/R = holdable mouse buttons (drags); ⌨ opens the device keyboard. ----
+    if (navigator.maxTouchPoints > 0 || "ontouchstart" in window) document.body.classList.add("touch");
+    $("touchBtn").addEventListener("click", () => document.body.classList.toggle("touch"));
+    { // direct canvas touch: move cursor absolutely; quick tap = left click; long-press = right click
+      let t0 = 0, moved = 0, lpTimer = 0;
+      const pos = (t) => { const r = canvas.getBoundingClientRect();
+        return [Math.max(0, Math.min(639, (t.clientX - r.left) * 640 / r.width)) | 0,
+                Math.max(0, Math.min(479, (t.clientY - r.top) * 480 / r.height)) | 0]; };
+      canvas.addEventListener("touchstart", (e) => { if (!document.body.classList.contains("touch")) return;
+        e.preventDefault(); const t = e.changedTouches[0]; [msX, msY] = pos(t); notifyInput();
+        t0 = performance.now(); moved = 0;
+        lpTimer = setTimeout(() => { msB |= 2; notifyInput(); setTimeout(() => { msB &= ~2; notifyInput(); }, 120); navigator.vibrate?.(20); }, 480);
+      }, { passive: false });
+      canvas.addEventListener("touchmove", (e) => { if (!document.body.classList.contains("touch")) return;
+        e.preventDefault(); const t = e.changedTouches[0]; const [nx, ny] = pos(t);
+        moved += Math.abs(nx - msX) + Math.abs(ny - msY); msX = nx; msY = ny; notifyInput();
+        if (moved > 14) { clearTimeout(lpTimer); lpTimer = 0; }
+      }, { passive: false });
+      canvas.addEventListener("touchend", (e) => { if (!document.body.classList.contains("touch")) return;
+        e.preventDefault(); clearTimeout(lpTimer);
+        if (performance.now() - t0 < 260 && moved < 14) { msB |= 1; notifyInput(); setTimeout(() => { msB &= ~1; notifyInput(); }, 90); }
+      }, { passive: false });
+    }
+    { // joystick: velocity-based fine control
+      const joy = $("joy"), knob = $("joyk");
+      let vx = 0, vy = 0, active = false, raf = 0;
+      const integ = () => { if (!active && !vx && !vy) { raf = 0; return; }
+        msX = Math.max(0, Math.min(639, msX + vx)); msY = Math.max(0, Math.min(479, msY + vy));
+        notifyInput(); raf = requestAnimationFrame(integ); };
+      const setv = (t) => { const r = joy.getBoundingClientRect();
+        let dx = t.clientX - (r.left + r.width / 2), dy = t.clientY - (r.top + r.height / 2);
+        const m = Math.hypot(dx, dy), max = r.width / 2 - 8;
+        if (m > max) { dx *= max / m; dy *= max / m; }
+        knob.style.transform = `translate(${dx}px,${dy}px)`;
+        vx = dx / max * 7; vy = dy / max * 7; };
+      joy.addEventListener("touchstart", (e) => { e.preventDefault(); active = true; setv(e.changedTouches[0]); if (!raf) raf = requestAnimationFrame(integ); }, { passive: false });
+      joy.addEventListener("touchmove", (e) => { e.preventDefault(); setv(e.changedTouches[0]); }, { passive: false });
+      joy.addEventListener("touchend", (e) => { e.preventDefault(); active = false; vx = vy = 0; knob.style.transform = ""; }, { passive: false });
+      const bind = (el, bit) => { el.addEventListener("touchstart", (e) => { e.preventDefault(); el.classList.add("on"); msB |= bit; notifyInput(); }, { passive: false });
+        el.addEventListener("touchend", (e) => { e.preventDefault(); el.classList.remove("on"); msB &= ~bit; notifyInput(); }, { passive: false }); };
+      bind($("tL"), 1); bind($("tR"), 2);
+    }
+    { // ⌨: summon the device keyboard; typed characters become scancode sequences
+      const inp = $("mobInput");
+      $("tKb").addEventListener("touchstart", (e) => { e.preventDefault(); inp.focus({ preventScroll: true }); }, { passive: false });
+      const CH = { a:0x1E,b:0x30,c:0x2E,d:0x20,e:0x12,f:0x21,g:0x22,h:0x23,i:0x17,j:0x24,k:0x25,l:0x26,m:0x32,n:0x31,o:0x18,p:0x19,q:0x10,r:0x13,s:0x1F,t:0x14,u:0x16,v:0x2F,w:0x11,x:0x2D,y:0x15,z:0x2C,
+        "0":0x0B,"1":0x02,"2":0x03,"3":0x04,"4":0x05,"5":0x06,"6":0x07,"7":0x08,"8":0x09,"9":0x0A,
+        " ":0x39,"=":0x0D,";":0x27,",":0x33,".":0x34,"/":0x35,"-":0x0C,"'":0x28,"[":0x1A,"]":0x1B,"\\":0x2B,"`":0x29 };
+      const SHIFTED = { "*":"8","(":"9",")":"0","&":"7","_":"-","+":"=",":":";","\"":"'","{":"[","}":"]","|":"\\","<":",",">":".","?":"/","!":"1","@":"2","#":"3","$":"4","%":"5","^":"6","~":"`" };
+      const typeChar = (ch) => {
+        const up = ch >= "A" && ch <= "Z", base = SHIFTED[ch] !== undefined ? SHIFTED[ch] : (up ? ch.toLowerCase() : ch);
+        const sc = CH[base]; if (sc === undefined) return;
+        const sh = up || SHIFTED[ch] !== undefined;
+        if (sh) pushKey(0x2A);
+        pushKey(sc); pushKey(sc | 0x80);
+        if (sh) pushKey(0x2A | 0x80);
+      };
+      inp.addEventListener("beforeinput", (e) => {
+        if (e.inputType === "insertText" && e.data) for (const ch of e.data) typeChar(ch);
+        else if (e.inputType === "deleteContentBackward") { pushKey(0x0E); pushKey(0x8E); }
+        else if (e.inputType === "insertLineBreak") { pushKey(0x1C); pushKey(0x9C); }
+        e.preventDefault();
+      });
+      inp.addEventListener("keydown", (e) => {   // physical-style keys some soft keyboards still report
+        if (e.key === "Enter") { pushKey(0x1C); pushKey(0x9C); e.preventDefault(); }
+        else if (e.key === "Backspace") { pushKey(0x0E); pushKey(0x8E); e.preventDefault(); }
+      });
+    }
+
+    // ---- optional PC-speaker sound ----
+    let actx = null, osc = null, gain = null;
+    function snd(freq) { if (!actx) return; if (freq > 0) { osc.frequency.value = freq; gain.gain.value = 0.04; } else gain.gain.value = 0; }
+    addEventListener("pointerdown", () => {
+      if (actx) return;
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); osc = actx.createOscillator(); gain = actx.createGain();
+            osc.type = "square"; gain.gain.value = 0; osc.connect(gain).connect(actx.destination); osc.start(); } catch {}
+    });
+
+    // ---- load the compressed RAM snapshot ----
+    setLoad("downloading TempleOS RAM snapshot (~5 MB)…", 5);
+    const gz = await fetch("./hemu-wasm/live.bin.gz", { cache: "no-cache" });
+    if (!gz.ok) { setLoad("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
+    const total = +(gz.headers.get("content-length") || 5222517);
+    const reader = gz.body.getReader(); const chunks = []; let got = 0;
+    for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.length; setLoad(`downloading snapshot… ${(got/1048576).toFixed(1)} MB`, 5 + 45 * got / total); }
+    const gzBytes = await new Blob(chunks).arrayBuffer();
+    dbg(`snapshot downloaded (${(got/1048576).toFixed(1)} MB)`);
+
+    $("restartBtn").addEventListener("click", () => location.reload());
+
+    // ---- engine: multi-core worker, single-thread inline fallback ----
+    function runWorker() {
+      let worker, watchdog, alive = false;
+      try { worker = new Worker("./hemu-worker.js", { type: "module" }); } catch (e) { return false; }
+      engineLabel = "2 cores";
+      notifyInput = () => worker?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0) });
+      const fallback = (why) => {
+        if (!worker) return;
+        clearTimeout(watchdog); try { worker.terminate(); } catch {} worker = null; notifyInput = () => {};
+        dbg("multi-core engine failed (" + why + ") — falling back to single core", true);
+        runInline();
+      };
+      worker.onerror = (e) => fallback(e.message || "worker error");
+      worker.onmessage = (e) => {
+        if (!worker) return;
+        const m = e.data;
+        if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h); worker.postMessage({ cmd: "ack" }); alive = true; firstFrame(); }
+        else if (m.cmd === "snd") snd(m.f);
+        else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
+        else if (m.cmd === "error") fallback(m.msg);
+      };
+      worker.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: "./hemu-wasm/snapshot.wasm", fixedB: FIXED_B });
+      watchdog = setTimeout(() => { if (!alive) fallback("no frame in 10s"); }, 10000);
+      return true;
+    }
+
+    async function runInline() {
+      setLoad("decompressing snapshot (→ 384 MB)…", 55);
+      let snap = new Uint8Array(await new Response(new Blob([gzBytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+      setLoad("starting hemu (HolyC → WASM x86-64 core)…", 88);
+      const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm", { cache: "no-cache" })).arrayBuffer());
+      let disk = null;
+      loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => { disk = d; dbg("C: disk image ready"); }).catch(() => disk = null);
+      engineLabel = "1 core";
+      let curBudget = FIXED_B || 1500000, dtMs = 16;
+      const host = createHost({
+        onText: (s) => { if (s && s.indexOf("BADOP") >= 0) dbg("[guest] " + s.trim(), true); }, snd: { tone: (f) => snd(Number(f)) },
+        snapLoad: (base, u8) => { u8.set(snap, base); },
+        diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },
+        diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },
+        present: (addr, w, h, u8) => blit(u8.subarray(addr, addr + w * h), w, h),
+      });
+      host.env.__host_msx = () => BigInt(msX); host.env.__host_msy = () => BigInt(msY); host.env.__host_msb = () => BigInt(msB);
+      host.env.__host_wheel = () => BigInt(wheelZ);
+      host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;
+      host.env.__host_budget = () => BigInt(curBudget | 0);
+      host.env.__host_dt = () => BigInt(dtMs | 0);
+      const inst = await WebAssembly.instantiate(mod, { env: host.env });
+      host.attach(inst); inst.exports.__rt_init();
+      let lastT = performance.now();
+      function loop() {
+        const now = performance.now();
+        dtMs = Math.max(1, Math.min(100, now - lastT)); lastT = now;
+        try { inst.exports.__main(); } catch (e) { setLoad("hemu trap: " + e.message); dbg("hemu trap: " + e.message, true); return; }
+        const work = performance.now() - now;
+        if (!FIXED_B) {
+          if (work > 15 && curBudget > 900000) curBudget = (curBudget * 0.90) | 0;
+          else if (work < 11 && curBudget < 2500000) curBudget = (curBudget * 1.07) | 0;
+        }
+        firstFrame(); snap = null;
+        requestAnimationFrame(loop);
+      }
+      setLoad("starting TempleOS…", 100);
+      requestAnimationFrame(loop);
+    }
+
+    if (location.search.includes("single") || !runWorker()) runInline();
+
+    // ---- God Words window: TempleOS's GodBits/GodPick, compiled in-browser by holyc-wasm.
+    //      Entropy = your keystroke/tap timing (the same physics as GodBitsIns(GetTSC)). ----
+    { const ov = $("godOverlay"), out = $("godOut"), entBar = $("godEnt").firstElementChild, hint = $("godHint");
+      let god = null, words = null, loading = false;
+      const GOD_HC = `// TempleOS Adam/God semantics: a bit-per-byte fifo fed from keystroke timing.
+U8 fifo[16384];
+I64 fhead, ftail;
+U0 GodBitsIns(I64 num_bits, I64 n)
+{ while (num_bits--) { fifo[fhead & 16383] = n & 1; fhead++; n = n >> 1; } }
+I64 GodBitCnt() { return fhead - ftail; }
+I64 GodBits(I64 num_bits)
+{ I64 res = 0;
+  while (num_bits--) { res = (res << 1) | fifo[ftail & 16383]; ftail++; }
+  return res; }
+I64 GodPick(I64 num_words)
+{ I64 bits = 0, v = num_words;
+  while (1 << bits < num_words) bits++;
+  while (v >= num_words) { if (fhead - ftail < bits) return -1; v = GodBits(bits); }
+  return v; }
+`;
+      async function init() {
+        if (god || loading) return; loading = true;
+        hint.textContent = "compiling GodBits (HolyC → WASM)…";
+        try {
+          const [{ compileHolyC }, wtxt] = await Promise.all([
+            import("./holyc-wasm/src/compiler.js"),
+            fetch("./assets/godwords.txt", { cache: "no-cache" }).then(r => r.text()),
+          ]);
+          words = wtxt.split("\n").filter(Boolean);
+          const r = compileHolyC(GOD_HC, { filename: "god.HC", lenient: false, exports: ["GodBitsIns", "GodBitCnt", "GodBits", "GodPick"] });
+          const inst = await WebAssembly.instantiate(await WebAssembly.compile(r.bytes), { env: (await import("./holyc-wasm/src/runtime/host.js")).createHost({}).env });
+          inst.exports.__rt_init();
+          god = inst.exports;
+          hint.innerHTML = `GodBits compiled (${r.bytes.length} bytes of WASM) · ${words.length} words — press random keys, then draw.`;
+          dbg("God Words ready: holyc-wasm compiled GodBits, " + words.length + " words");
+        } catch (e) { hint.textContent = "failed to load: " + e.message; dbg("God Words failed: " + e.message, true); }
+        loading = false;
+      }
+      const bits = () => god ? Number(god.GodBitCnt()) : 0;
+      const meter = () => { entBar.style.width = Math.min(100, bits() / 64 * 100) + "%"; };
+      const feed = () => { if (!god) return;
+        god.GodBitsIns(24n, BigInt(((performance.now() * 1000) >>> 0) ^ ((Math.random() * 0x1000000) | 0)));
+        meter(); };
+      addEventListener("keydown", (e) => { if (ov.classList.contains("open")) { feed(); e.stopPropagation(); } }, true);
+      $("godEnt").addEventListener("pointerdown", feed);
+      ov.addEventListener("pointerdown", (e) => { if (e.target === ov) close(); });
+      $("godWord").addEventListener("click", () => { if (!god || !words) return;
+        const need = 13;   // ceil(log2(7569))
+        if (bits() < need) { hint.textContent = `need ~${need} bits — press random keys (have ${bits()})`; return; }
+        const i = Number(god.GodPick(BigInt(words.length)));
+        if (i < 0) { hint.textContent = "entropy ran dry mid-draw — press more random keys"; meter(); return; }
+        const sp = document.createElement("span"); sp.className = "w"; sp.textContent = words[i];
+        out.appendChild(sp); out.scrollTop = out.scrollHeight; meter();
+      });
+      $("godClear").addEventListener("click", () => { out.textContent = ""; });
+      const open = () => { ov.classList.add("open"); init(); };
+      const close = () => ov.classList.remove("open");
+      $("godBtn").addEventListener("click", open);
+      $("godClose").addEventListener("click", close);
+    }
+
+    // ---- Terry window: gif sequence forwards/backwards ----
+    { const img2 = document.querySelector(".terrywin img");
+      const seq = [["assets/terrydancing.gif", 7200], ["assets/terrydancing-rev.gif", 7200], ["assets/terry.gif", 2840], ["assets/terry-rev.gif", 2840]];
+      seq.forEach(([s]) => { const p = new Image(); p.src = s; });
+      let i = 0;
+      (function next() { img2.src = seq[i][0]; const d = seq[i][1]; i = (i + 1) % seq.length; setTimeout(next, d); })(); }
+
+    // ---- topbar: last key pressed ----
+    addEventListener("keydown", (e) => {
+      let k = e.key; if (k === " ") k = "SPACE"; else if (k.length === 1) k = k.toUpperCase();
+      if (locked) tbKey.textContent = "captured · Ctrl+Alt+G releases";
+    }, true);
+  </script>
 
   <script>
-    const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    const pad = n => String(n).padStart(2, "0");
-    function tick() {
-      const d = new Date();
-      document.getElementById("clock").textContent =
-        `${days[d.getDay()]} ${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-    }
-    tick(); setInterval(tick, 1000);
+    // ---- HolyC → WebAssembly editor overlay (lazy-loads ./native/app.js on first open) ----
+    (function () {
+      const ov = document.getElementById("editorOverlay");
+      const openBtn = document.getElementById("editorBtn");
+      const closeBtn = document.getElementById("editorClose");
+      let loaded = false;
+      function open() {
+        ov.classList.add("open");
+        if (!loaded) {
+          loaded = true;
+          import("./native/app.js")
+            .then(() => { if (window.__holycEditor) window.__holycEditor.run(); })
+            .catch((e) => { const s = document.getElementById("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); });
+        }
+      }
+      function close() {
+        ov.classList.remove("open");
+        if (window.__holycEditor) window.__holycEditor.stop();
+      }
+      openBtn.addEventListener("click", open);
+      closeBtn.addEventListener("click", close);
+      ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(); });
+    })();
+
+    // ---- lightweight HolyC syntax highlighter for the editor ----
+    (function () {
+      const ta = document.getElementById("editor");
+      const hl = document.getElementById("editorHL");
+      const wrap = ta && ta.closest(".ed-editwrap");
+      if (!ta || !hl || !wrap) return;
+      const KW = new Set("if else while for do switch case default break continue return goto sizeof try catch throw class union public extern _extern import _import reg noreg interrupt haserrcode lastclass start end asm offset argpop noargpop".split(" "));
+      const TY = new Set("U0 U8 U16 U32 U64 I8 I16 I32 I64 F64 Bool U8z CDC CTask CDoc CHashTable CFifoI64 CDate".split(" "));
+      const CO = new Set("TRUE FALSE NULL ON OFF BLACK BLUE GREEN CYAN RED PURPLE BROWN LTGRAY DKGRAY LTBLUE LTGREEN LTCYAN LTRED LTPURPLE YELLOW WHITE GR_WIDTH GR_HEIGHT TRANSPARENT".split(" "));
+      const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const RE = /(\/\*[\s\S]*?\*\/)|(\/\/[^\n]*)|("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])*')|(#[A-Za-z_]+)|(\b\d[\w.]*)|([A-Za-z_]\w*)|([\s\S])/g;
+      function paint(code) {
+        let out = "", m; RE.lastIndex = 0;
+        while ((m = RE.exec(code))) {
+          if (m[1] || m[2]) out += '<span class="tc">' + esc(m[1] || m[2]) + "</span>";
+          else if (m[3] || m[4]) out += '<span class="ts">' + esc(m[3] || m[4]) + "</span>";
+          else if (m[5]) out += '<span class="tp">' + esc(m[5]) + "</span>";
+          else if (m[6]) out += '<span class="tn">' + esc(m[6]) + "</span>";
+          else if (m[7]) { const w = m[7], c = KW.has(w) ? "tk" : TY.has(w) ? "tt" : CO.has(w) ? "tco" : ""; out += c ? '<span class="' + c + '">' + esc(w) + "</span>" : esc(w); }
+          else out += esc(m[8]);
+        }
+        return out;
+      }
+      let raf = 0;
+      function update() {
+        raf = 0;
+        const v = ta.value;
+        if (v.length > 40000) { wrap.classList.add("plain"); hl.textContent = ""; return; }
+        wrap.classList.remove("plain");
+        hl.innerHTML = paint(v) + "\n";
+        hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft;
+      }
+      ta.addEventListener("input", () => { if (!raf) raf = requestAnimationFrame(update); });
+      ta.addEventListener("scroll", () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; });
+      update();
+    })();
   </script>
 </body>
 </html>
