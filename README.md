@@ -89,5 +89,8 @@ It's all static files; the only requirement is cross‑origin isolation.
   contain TempleOS V5.03.
 - **holyc-wasm, HEMU, the JIT** — written for this project; same repository.
 - **coi-serviceworker** — © Guido Zuidhof and contributors, **MIT**.
-- **Theme & assets** — the TempleOS‑desktop look (DOS VGA bitmap font, cursor, the Terry GIF)
-  is from [afterdavis](https://github.com/ParkerrDev/afterdavis), a Terry Davis tribute.
+- **Theme & assets** — the TempleOS‑desktop look (cursor, the Terry GIF) is from
+  [afterdavis](https://github.com/ParkerrDev/afterdavis); the TempleOS font and the window
+  chrome styling (vertical border titles, scrolling title marquee, blinking MENU chip) are
+  adopted from [TempleOS-tribute](https://github.com/del-Real/TempleOS-tribute) by
+  Alberto del Real (MIT).

@@ -8,17 +8,18 @@
   <script src="coi-serviceworker.js"></script>
   <style>
     /* afterdavis theme: the TempleOS desktop look. */
+    @font-face { font-family:'TempleOS'; src:url('fonts/templeos_font.woff') format('woff'), url('fonts/templeos_font.ttf') format('truetype'); font-weight:normal; font-style:normal; }
     @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); font-weight:normal; font-style:normal; }
     :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga',"Courier New",monospace; cursor:url('assets/cursor.png'),auto; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'TempleOS','dos_vga',"Courier New",monospace; cursor:url('assets/cursor.png'),auto; }
     html { overflow-y:auto; }
-    body { background:var(--blue); color:#fff; font-size:17px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
+    body { background:var(--blue); color:#fff; font-size:14px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
     ::selection { background:#000; color:yellow; }
     a { color:var(--gold); }
 
     /* live top status bar (always visible — survives fullscreen games, unlike the in-OS wallpaper bar) */
-    #topbar { display:flex; line-height:.8; justify-content:space-between; align-items:flex-start; gap:10px;
-              background:var(--blue); color:#fff; padding:4px 8px; border-bottom:2px solid #fff; }
+    #topbar { display:flex; line-height:1; justify-content:space-between; align-items:center; gap:10px;
+              background:var(--blue); color:#fff; padding:3px 8px 2px; }
     #topbar .status { display:flex; flex-wrap:wrap; }
     #topbar .status > span { white-space:nowrap; }
     #topbar .status > span:not(:last-child) { margin-right:16px; }
@@ -26,22 +27,33 @@
 
     /* header shares the centered content width of the desktop row below it */
     header { display:flex; align-items:stretch; gap:10px; padding:4px 8px 1px;
-             width:100%; max-width:calc(clamp(300px, min(72vh, (100vw - 690px) * 3 / 4), 600px) * 4 / 3 + 538px); margin:0 auto; }
+             width:100%; max-width:calc(clamp(300px, min(72vh, (100vw - 690px) * 3 / 4), 600px) * 4 / 3 + 550px); margin:0 auto; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
                    background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
-    header h1 { font-size:22px; font-weight:normal; color:#fff; }
-    header p { font-size:15px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
+    header h1 { font-size:17px; font-weight:normal; color:#fff; }
+    header p { font-size:11px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
 
     /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X] */
     .win, #frame { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue);
                    outline:4px solid #fff; margin:3px 5px; overflow:visible; }
-    .win { padding:.7em; }
-    [data-title]::before { content:attr(data-title); position:absolute; top:-9px; left:6px; padding:2px 1px 0 2px;
-           line-height:.7; letter-spacing:.1em; color:var(--blue); background:#fff; animation:winTitle .5s step-start infinite; z-index:2; }
-    @keyframes winTitle { 50% { color:#fff; background:var(--blue); } }
-    .close { position:absolute; top:-7px; right:6px; font-size:15px; padding:1px 2px 0; line-height:.7; letter-spacing:.05em;
-             color:var(--blue); background:#fff; z-index:2; }
+    .win { padding:.7em; padding-top:24px; padding-left:18px; }
+    /* TempleOS window bar: blinking MENU chip + scrolling title marquee + [X]; drag handle */
+    .wbar { position:absolute; top:0; left:14px; right:2px; height:19px; display:flex; align-items:center; gap:5px;
+            background:#fff; z-index:2; overflow:hidden; user-select:none; }
+    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:13px; padding:1px 3px 0;
+             animation:menuBlink 1s step-start infinite; }
+    @keyframes menuBlink { 50% { background:var(--blue); color:#fff; } }
+    .wtitle { flex:1 1 auto; min-width:0; overflow:hidden; background:var(--blue); color:#fff; height:15px;
+              font-size:13px; line-height:15px; white-space:nowrap; }
+    .wtitle > span { display:inline-block; padding-left:100%; animation:wscroll 8s linear infinite; }
+    @keyframes wscroll { to { transform:translateX(-100%); } }
+    /* vertical title running up the left border, like the real WinMgr */
+    .wvert { position:absolute; top:20px; bottom:4px; left:1px; width:14px; overflow:hidden; z-index:2;
+             writing-mode:vertical-rl; text-orientation:upright; background:#fff; color:var(--blue);
+             font-size:11px; line-height:13px; letter-spacing:-2px; user-select:none; }
+    .close { flex:0 0 auto; font-size:14px; padding:1px 2px 0; color:var(--blue); background:#fff; }
+    .win-ph { visibility:hidden; }   /* placeholder keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
     .desktop-row { display:flex; gap:8px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px; }
@@ -49,28 +61,26 @@
     .col-right { display:flex; flex-direction:column; gap:16px; width:268px; flex:0 0 auto; }
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
-    button { font-family:'dos_vga',monospace; font-size:17px; color:#000; background:#fff;
+    button { font-family:'TempleOS','dos_vga',monospace; font-size:13px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
 
-    #frame { padding:5px; }
+    #frame { padding:5px; padding-top:21px; padding-left:16px; }
     canvas#canvas { display:block; height:clamp(300px, min(72vh, (100vw - 690px) * 3 / 4), 600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
     /* fullscreen: black letterbox, centered 4:3 screen, window chrome hidden */
-    #frame:fullscreen { display:flex; align-items:center; justify-content:center; background:#000; border:0; outline:0; margin:0; padding:0; }
+    #frame:fullscreen { display:flex; align-items:center; justify-content:center; background:#000; border:0; outline:0; margin:0; padding:0 !important; }
     #frame:fullscreen canvas#canvas { height:min(100vh,75vw); width:auto; max-width:100vw; }
-    #frame:fullscreen::before { display:none; }
-    #frame:fullscreen .close, #frame:fullscreen .cap, #frame:fullscreen #loadui { display:none; }
+    #frame:fullscreen .wbar, #frame:fullscreen .wvert, #frame:fullscreen .cap, #frame:fullscreen #loadui { display:none; }
     #frame::backdrop { background:#000; }
     #frame:-webkit-full-screen { display:flex; align-items:center; justify-content:center; background:#000; border:0; outline:0; margin:0; padding:0; }
     #frame:-webkit-full-screen canvas#canvas { height:min(100vh,75vw); width:auto; max-width:100vw; }
-    #frame:-webkit-full-screen::before { display:none; }
-    #frame:-webkit-full-screen .close, #frame:-webkit-full-screen .cap { display:none; }
+    #frame:-webkit-full-screen .wbar, #frame:-webkit-full-screen .wvert, #frame:-webkit-full-screen .cap { display:none; }
     /* faux fullscreen — iPhone Safari has no element-fullscreen API; pin the frame over the viewport */
     body.fakefs { overflow:hidden; }
-    body.fakefs #frame { position:fixed; inset:0; z-index:500; margin:0; padding:0; border:0; outline:0; background:#000;
+    body.fakefs #frame { position:fixed; inset:0; z-index:500; margin:0; padding:0 !important; border:0; outline:0; background:#000;
                          display:flex; align-items:center; justify-content:center; }
-    body.fakefs #frame::before, body.fakefs #frame .close, body.fakefs #frame .cap, body.fakefs #loadui { display:none; }
+    body.fakefs #frame .wbar, body.fakefs #frame .wvert, body.fakefs #frame .cap, body.fakefs #loadui { display:none; }
     body.fakefs canvas#canvas { height:min(100dvh,75vw); width:auto; max-width:100vw; }
     /* in either fullscreen mode: keys bar floats over the top, exit button top-right */
     #frame.fsmode #keysbar { position:absolute; top:4px; left:50%; transform:translateX(-50%); z-index:6;
@@ -79,7 +89,7 @@
     #fsExit { display:none; position:absolute; top:6px; right:8px; z-index:7; width:auto; font-size:15px;
               padding:4px 9px; opacity:.88; }
     body.touch #frame.fsmode #fsExit { display:block; }   /* desktop: pointer is locked in fullscreen — a button is unreachable */
-    #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    #loadui { position:absolute; inset:21px 5px 5px 16px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
     #ldtext { font-size:17px; max-width:560px; line-height:1.5; min-height:2.4em; }
     .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#0a0a0a; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
@@ -88,7 +98,7 @@
 
     /* on-screen function/modifier keys — works on desktop and mobile; modifiers latch (✱) */
     #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; padding:4px 2px 0; width:0; min-width:100%; }  /* preferred width 0: the FRAME sizes the column, keys wrap to it */
-    #keysbar button { width:auto; font-size:13px; padding:3px 6px; text-align:center; }
+    #keysbar button { width:auto; font-size:11px; padding:3px 5px; text-align:center; }
     #keysbar button.mod.on { color:#fff; background:var(--red); border-color:var(--red); }
     #frame .cap { text-align:center; font-size:13px; color:var(--blue); padding-top:3px; }
 
@@ -107,17 +117,17 @@
     #tKb { right:18px; bottom:92px; width:54px; height:42px; border-radius:8px; font-size:18px; }
     #mobInput { position:fixed; left:-30px; bottom:0; width:20px; height:20px; opacity:.01; font-size:16px; }
 
-    .col-right #guide { font-size:16px; }
+    .col-right #guide { font-size:12px; }
     #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
-    .dbgw { padding:3px; }
+    .dbgw { padding:3px; padding-top:22px; padding-left:17px; }
     #dbg { height:170px; overflow:auto; background:#000; color:#7fe07f; padding:6px; margin:0;
-           font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+           font-size:11px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
     #dbg .err { color:#ff8a8a; }
-    .dbgnote { font-size:13px; padding:4px 2px 1px; color:var(--blue); }
+    .dbgnote { font-size:11px; padding:4px 2px 1px; color:var(--blue); }
     .terrywin { padding:6px; text-align:center; }
     .terrywin img { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
-    footer { text-align:center; padding:4px; font-size:14px; color:#cfe; opacity:.85; }
+    footer { text-align:center; padding:4px; font-size:12px; color:#cfe; opacity:.85; }
     footer a { color:var(--gold); }
 
     /* ---- overlays (HolyC editor / God Words): a window floating over the desktop ---- */
@@ -135,7 +145,7 @@
     .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:13px; letter-spacing:.08em; }
     .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }
     #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;
-        font-family:'dos_vga',monospace; font-size:15px; line-height:1.35; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
+        font-family:'TempleOS','dos_vga',monospace; font-size:15px; line-height:1.35; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
     #editorHL { z-index:0; pointer-events:none; overflow:hidden; color:#16163a; background:transparent; }
     #editor { z-index:1; resize:none; outline:none; color:transparent; background:transparent; caret-color:#16163a; }
     #editor::selection { background:rgba(110,160,255,.4); }
@@ -151,11 +161,11 @@
 
     /* God Tools window */
     #godWin { display:flex; flex-direction:column; gap:8px; width:min(680px,94vw); height:min(74vh,620px); margin:0; padding:10px; }
-    #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:20px; line-height:1.6; word-break:break-word; }
+    #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:16px; line-height:1.6; word-break:break-word; }
     #godOut .w { color:yellow; margin-right:.55em; }
-    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:15px; line-height:1.45; white-space:pre-wrap; }
+    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:12px; line-height:1.45; white-space:pre-wrap; }
     #godOut .p .ref { color:#7fe07f; }
-    #godOut .s { display:block; color:#7fe07f; font-size:16px; margin:6px 0; }
+    #godOut .s { display:block; color:#7fe07f; font-size:13px; margin:6px 0; }
     #godOut canvas { display:block; width:320px; max-width:100%; image-rendering:pixelated; background:#fff; margin:8px 0; border:2px solid #fff; }
     #godBar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     #godBar button { width:auto; }
@@ -166,7 +176,7 @@
       .col-left, .col-right { width:min(96vw,560px); flex-direction:column; }
       .col-center { order:-1; width:100%; }
       #frame { margin:3px auto; max-width:98vw; }
-      canvas#canvas { width:min(96vw,640px); height:auto; }
+      canvas#canvas { width:min(100vw - 58px, 640px); height:auto; }
       header { max-width:none; } header h1 { font-size:18px; } header p { font-size:13px; }
       #topbar { font-size:14px; }
       .terrywin img { height:120px; }
@@ -433,8 +443,18 @@
       let fake = false;
       const fsUi = (on) => {
         frame.classList.toggle("fsmode", on);
-        if (on) frame.appendChild(keysbar);              // keysbar rides inside the fullscreen element
-        else colCenter.appendChild(keysbar);
+        if (on) {
+          frame.appendChild(keysbar);                    // keysbar rides inside the fullscreen element
+          if (frame.dataset.floating) {                  // a dragged frame has inline pos that fights fullscreen
+            frame._fsSaved = { left: frame.style.left, top: frame.style.top, width: frame.style.width, height: frame.style.height };
+            frame.style.left = frame.style.top = frame.style.width = frame.style.height = "";
+          }
+        } else {
+          colCenter.appendChild(keysbar);
+          if (frame.dataset.floating && frame._fsSaved) {
+            Object.assign(frame.style, frame._fsSaved); frame._fsSaved = null;
+          }
+        }
       };
       const fauxOn = () => { fake = true; document.body.classList.add("fakefs"); fsUi(true); scrollTo(0, 0); };
       const fauxOff = () => { fake = false; document.body.classList.remove("fakefs"); fsUi(false); };
@@ -788,6 +808,61 @@ I64 GodDoodleGen(I64 strokes)
       const close = () => ov.classList.remove("open");
       $("godBtn").addEventListener("click", open);
       $("godClose").addEventListener("click", close);
+    }
+
+    // ---- TempleOS window chrome + dragging: every [data-title] window gets a bar with a
+    //      blinking MENU chip, a scrolling title marquee, its [X], and a vertical title up the
+    //      left border; the bar drags the window (pointer events: mouse AND touch), windows
+    //      raise on press, stay partly on-screen, and leave a placeholder so the layout holds. ----
+    { let zTop = 60;
+      const closeWin = (w) => { w.style.display = "none"; if (w._ph) { w._ph.remove(); w._ph = null; } };
+      const makeDraggable = (w, handle) => {
+        handle.style.touchAction = "none";
+        w.addEventListener("pointerdown", () => { if (w.dataset.floating) w.style.zIndex = ++zTop; }, true);
+        handle.addEventListener("pointerdown", (e) => {
+          if (e.target.closest(".close,button,select,a,input,textarea")) return;
+          const r = w.getBoundingClientRect();
+          if (!w.dataset.floating) {
+            if (!w.closest(".overlay")) {                       // overlays are already fixed-context
+              const ph = document.createElement("div");
+              ph.className = "win-ph"; ph.style.width = r.width + "px"; ph.style.height = r.height + "px";
+              ph.style.flex = "0 0 auto"; ph.style.margin = getComputedStyle(w).margin;
+              w.parentNode.insertBefore(ph, w); w._ph = ph;
+            }
+            w.dataset.floating = "1";
+            w.style.position = "fixed"; w.style.margin = "0";
+            w.style.left = r.left + "px"; w.style.top = r.top + "px";
+            w.style.width = r.width + "px"; w.style.height = r.height + "px";
+          }
+          w.style.zIndex = ++zTop;
+          const sx = e.clientX - parseFloat(w.style.left), sy = e.clientY - parseFloat(w.style.top);
+          const move = (ev) => {
+            w.style.left = Math.max(40 - w.offsetWidth, Math.min(innerWidth - 40, ev.clientX - sx)) + "px";
+            w.style.top = Math.max(0, Math.min(innerHeight - 24, ev.clientY - sy)) + "px";
+          };
+          const up = () => { handle.removeEventListener("pointermove", move); handle.removeEventListener("pointerup", up); handle.removeEventListener("pointercancel", up); };
+          try { handle.setPointerCapture(e.pointerId); } catch {}
+          handle.addEventListener("pointermove", move);
+          handle.addEventListener("pointerup", up);
+          handle.addEventListener("pointercancel", up);
+          e.preventDefault();
+        });
+      };
+      for (const w of document.querySelectorAll("[data-title]")) {
+        const bar = document.createElement("div"); bar.className = "wbar";
+        const mn = document.createElement("span"); mn.className = "wmenu"; mn.textContent = "MENU";
+        const ti = document.createElement("div"); ti.className = "wtitle";
+        const ts = document.createElement("span"); ts.textContent = w.dataset.title + "   ";
+        ti.appendChild(ts); bar.append(mn, ti);
+        let x = w.querySelector(":scope > .close");
+        if (x) bar.appendChild(x);
+        if (x && w.id !== "frame" && !w.closest(".overlay")) x.addEventListener("click", () => closeWin(w));
+        const v = document.createElement("span"); v.className = "wvert";
+        v.textContent = w.dataset.title.split("·")[0].trim();
+        w.prepend(v); w.prepend(bar);
+        w.removeAttribute("data-title");
+        makeDraggable(w, bar);
+      }
     }
 
     // ---- Terry window: gif sequence forwards/backwards ----
