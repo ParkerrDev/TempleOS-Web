@@ -188,13 +188,17 @@
       if (!locked) return;
       wheelZ += e.deltaY > 0 ? 1 : -1; e.preventDefault(); notifyInput();
     }, { passive: false });
+    // Bits 8+ of each queued scancode carry real keystroke-timing entropy: TempleOS feeds GetTSC
+    // samples at key IRQs to its God apps (GodBitsIns), and the emulated tsc alone is deterministic
+    // (GodWord picked the same word forever). InjectKey adds these bits to tsc before queueing.
+    const ent = () => ((((performance.now() * 1000) >>> 0) ^ (Math.random() * 0x10000)) & 0xFFFF) * 256;
     addEventListener("keydown", e => {
       if (!locked) return;
       // The real Esc key always releases Pointer Lock (browser security) — give the OS its own Esc via Ctrl+[.
-      if (e.ctrlKey && e.code === "BracketLeft") { keyq.push(0x01); keyq.push(0x81); e.preventDefault(); notifyInput(); return; }
-      const s = SC[e.code]; if (s !== undefined) { keyq.push(s);        e.preventDefault(); notifyInput(); }
+      if (e.ctrlKey && e.code === "BracketLeft") { keyq.push(0x01 | ent()); keyq.push(0x81 | ent()); e.preventDefault(); notifyInput(); return; }
+      const s = SC[e.code]; if (s !== undefined) { keyq.push(s | ent());        e.preventDefault(); notifyInput(); }
     });
-    addEventListener("keyup",   e => { if (!locked) return; const s = SC[e.code]; if (s !== undefined) { keyq.push(s | 0x80); e.preventDefault(); notifyInput(); } });
+    addEventListener("keyup",   e => { if (!locked) return; const s = SC[e.code]; if (s !== undefined) { keyq.push(s | 0x80 | ent()); e.preventDefault(); notifyInput(); } });
 
     // ---- optional PC-speaker sound (square wave, started on first gesture) ----
     let actx = null, osc = null, gain = null;

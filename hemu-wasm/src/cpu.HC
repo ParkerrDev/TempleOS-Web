@@ -80,7 +80,12 @@ U0 Ps2Resp(I64 b, I64 isms) { ps2q[ps2qt & 15] = b; ps2q_ms[ps2qt & 15] = isms; 
 I64 pit2_reload, pit2_div, pit2_wlo, spk_on;
 U0 UpdateSpk()
 { if (spk_on && pit2_div) __snd(1193182.0 / pit2_div); else __snd(0.0); }
-U0 InjectKey(I64 sc) { kbd_q[kbd_qt & 63] = sc; kbd_qt++; pic1_irr |= 2; }   // enqueue + raise IRQ1
+U0 InjectKey(I64 sc)                  // low 8 = set-1 scancode; bits 8+ = host key-arrival entropy.
+{ // TempleOS harvests randomness from GetTSC at key IRQs (GodBitsIns). Our tsc is a deterministic
+  // function of the frame schedule, so without this the God apps draw the SAME bits every time
+  // ('musical' forever). The host's real keystroke timing restores the hardware physics.
+  tsc += sc >> 8; kbd_q[kbd_qt & 63] = sc & 0xFF; kbd_qt++; pic1_irr |= 2;
+}
 U0 InjectMouse(I64 b0, I64 b1, I64 b2) { ms_byte0=b0; ms_byte1=b1; ms_byte2=b2; ms_has=3; ms_phase=0; pic2_irr |= 0x10; }  // IRQ12
 // MMIO: any guest access at/above mem_size goes here. LAPIC/HPET/IOAPIC live high
 // in the physical map and are NOT in the RAM snapshot, so we emulate the few
