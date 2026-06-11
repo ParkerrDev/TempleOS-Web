@@ -25,7 +25,7 @@ host.env.__host_msx = () => BigInt(mx); host.env.__host_msy = () => BigInt(my); 
 host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n; host.env.__host_prof = () => {};
 host.env.__host_budget = () => BigInt(curBudget | 0); host.env.__host_dt = () => BigInt(dtMs | 0);
 if (!NOJIT) {                                                   // EXACT hemu-worker.js wiring
-  host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem); return 1n; };
+  host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem, inst.exports.RasterHLE); return 1n; };
   host.env.__jit_compile = (rip) => BigInt(jit.jitCompile(Number(rip)));
   host.env.__jit_run = (rip) => BigInt(jit.jitRun(Number(rip)));
   host.env.__jit_x87 = (a, b, c) => jit.jitX87(a, b, c);
