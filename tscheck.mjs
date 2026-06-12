@@ -269,6 +269,16 @@ console.log("  back to results OK");
   console.log("  DETACH OK (one-way [X]; close+reopen restores the backdrop)");
 }
 
+// [?] help: hidden until hover
+{
+  const hidden = await page.$eval("#tsHelpPop", (e) => getComputedStyle(e).display === "none");
+  await page.hover("#tsHelp");
+  const shown = await page.$eval("#tsHelpPop", (e) => getComputedStyle(e).display !== "none");
+  if (!hidden || !shown) throw new Error("help popup hover wrong");
+  await page.hover("#tsQ");
+  console.log("== [?] help == hidden by default, shows on hover");
+}
+
 // × clear button (inside the input; hidden when empty)
 {
   await page.fill("#tsQ", "something");
