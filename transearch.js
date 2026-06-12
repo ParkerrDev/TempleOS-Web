@@ -123,29 +123,75 @@ function altsFor(tok) {
 function query(q, id, opts = {}) {
   if (!ready) { postMessage({ type: "results", id, hits: [], vids: [], note: "loading" }); return; }
   const scope = opts.scope || "all", year = opts.year || "", sort = opts.sort || "rel";
-  const ql = q.toLowerCase().trim();
-  const toks = ql.split(/[^a-z0-9']+/).filter((w) => w.length >= 2);
-  if (!toks.length) { postMessage({ type: "results", id, hits: [], vids: [] }); return; }
-  // matchers per token: [{ w, score }] — exact token first, then fuzzy alternates
+
+  // ---- Twitter-style operator parsing ----------------------------------------------------------
+  //   "exact phrase"   must contain it verbatim (case-insensitive, NO fuzzy)
+  //   -word  -"..."    exclude chunks containing the word (boundary-checked) / phrase
+  //   since:/until:    date range, each YYYY | YYYY-MM | YYYY-MM-DD (inclusive, prefix semantics)
+  //   date:YYYY-MM-DD  exact date (also: a bare 19xx/20xx ISO date token acts as date:)
+  //   plain words      fuzzy-matched as before
+  const phrases = [], notPhrases = [], notWords = [];
+  let dateFrom = "", dateTo = "";
+  let rest = q.toLowerCase()
+    .replace(/(-?)"([^"]*)"/g, (m, neg, p) => { p = p.trim().replace(/\s+/g, " "); if (p) (neg ? notPhrases : phrases).push(p); return " "; })
+    .replace(/(?:^|\s)(?:since|from|after):((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)/g, (m, d) => { dateFrom = d; return " "; })
+    .replace(/(?:^|\s)(?:until|to|before):((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)/g, (m, d) => { dateTo = d; return " "; })
+    .replace(/(?:^|\s)(?:date|on):((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)/g, (m, d) => { dateFrom = d; dateTo = d; return " "; })
+    .replace(/(^|\s)((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)(?=\s|$)/g, (m, sp, d) => { dateFrom = d; dateTo = d; return sp; })
+    .replace(/(^|\s)-([a-z0-9']+)/g, (m, sp, w) => { notWords.push(w); return sp; });
+  const toks = rest.split(/[^a-z0-9']+/).filter((w) => w.length >= 2);
+  const dateOk = (d) => (!year || d.startsWith(year)) &&
+    (!dateFrom || d.slice(0, dateFrom.length) >= dateFrom) &&
+    (!dateTo || d.slice(0, dateTo.length) <= dateTo);
+  const hasWord = (t, w) => { let i = 0;
+    while ((i = t.indexOf(w, i)) >= 0) {
+      const b = i === 0 || !/[a-z0-9]/.test(t[i - 1]), a = i + w.length >= t.length || !/[a-z0-9]/.test(t[i + w.length]);
+      if (b && a) return true; i += 1; }
+    return false; };
+  const excluded = (t) => notWords.some((w) => hasWord(t, w)) || notPhrases.some((p) => t.includes(p));
+
+  // date-only query (no words, no phrases): LIST the videos in that range, like a filtered browse
+  if (!toks.length && !phrases.length) {
+    if (dateFrom || dateTo) {
+      let idx = ensureDateIdx().filter((i) => dateOk(videos[i].d));
+      if (sort === "old") idx = [...idx].reverse();
+      postMessage({ type: "results", id, hits: [], vids: idx.slice(0, 60).map(vmeta), vtotal: idx.length, terms: [], total: 0, dateOnly: true });
+    } else postMessage({ type: "results", id, hits: [], vids: [] });
+    return;
+  }
+
+  // matchers per fuzzy token: exact first, then bounded-edit-distance alternates from the vocab
   const matchers = toks.map((tok) => {
     const m = [{ w: tok, s: 3 }];
     for (const a of altsFor(tok)) m.push({ w: a.w, s: 2 - (a.d - 1) * 0.6 });
     return m;
   });
-  const phrase = toks.length > 1 ? ql.replace(/\s+/g, " ") : null;
-  const terms = [];
+  const terms = [...phrases];
   for (const mlist of matchers) for (const m of mlist) terms.push(m.w);
+  // a chunk/title qualifies if it has EVERY quoted phrase, NO excluded terms, and enough fuzzy tokens
+  const need = toks.length <= 2 ? toks.length : Math.ceil(toks.length * 0.6);
+  const qualifies = (t) => {
+    if (phrases.some((p) => !t.includes(p))) return -1;
+    if (excluded(t)) return -1;
+    const [score, matched] = scoreText(t, matchers);
+    if (matched < need) return -1;
+    return score + phrases.length * 8 + (toks.length && matched === toks.length ? 2 : 0);
+  };
 
-  // ---- title search (scope all/title): match VIDEO TITLES; results are whole videos ----
+  // ---- title search (scope all/title): whole videos --------------------------------------------
   let titleHits = [];
   if (scope !== "text") {
-    const needT = Math.max(1, toks.length - (toks.length >= 3 ? 1 : 0));   // titles are short: require (nearly) all tokens
+    const needT = toks.length ? Math.max(1, toks.length - (toks.length >= 3 ? 1 : 0)) : 0;
     for (let vi = 0; vi < videos.length; vi++) {
       const v = videos[vi];
-      if (year && !v.d.startsWith(year)) continue;
-      const [score, matched] = scoreText(v.t.toLowerCase(), matchers);
+      if (!dateOk(v.d)) continue;
+      const t = v.t.toLowerCase();
+      if (phrases.some((p) => !t.includes(p))) continue;
+      if (excluded(t)) continue;
+      const [score, matched] = scoreText(t, matchers);
       if (matched < needT) continue;
-      titleHits.push([score + (matched === toks.length ? 2 : 0), vi]);
+      if (!toks.length && !phrases.length) continue;
+      titleHits.push([score + phrases.length * 8 + (toks.length && matched === toks.length ? 2 : 0), vi]);
     }
     if (sort === "new" || sort === "old") titleHits.sort((a, b) => { const c0 = sort === "new"
       ? videos[b[1]].d.localeCompare(videos[a[1]].d) : videos[a[1]].d.localeCompare(videos[b[1]].d); return c0 || b[0] - a[0]; });
@@ -155,17 +201,12 @@ function query(q, id, opts = {}) {
   const vids = titleHits.slice(0, scope === "title" ? 60 : 5).map(([score, vi]) => vmeta(vi));
   if (scope === "title") { postMessage({ type: "results", id, hits: [], vids, vtotal, terms, total: 0 }); return; }
 
-  // ---- passage search (scope all/text) ----
-  const need = toks.length <= 2 ? toks.length : Math.ceil(toks.length * 0.6);  // long queries: allow some misses
+  // ---- passage search (scope all/text) ----------------------------------------------------------
   const scored = [];
   for (let c = 0; c < lower.length; c++) {
-    if (year && !videos[chunkV[c]].d.startsWith(year)) continue;
-    const [score0, matched] = scoreText(lower[c], matchers);
-    if (matched < need) continue;
-    let score = score0;
-    if (matched === toks.length) score += 2;
-    if (phrase && lower[c].includes(phrase)) score += 8;
-    scored.push([score, c]);
+    if (!dateOk(videos[chunkV[c]].d)) continue;
+    const score = qualifies(lower[c]);
+    if (score >= 0) scored.push([score, c]);
   }
   if (sort === "new" || sort === "old") scored.sort((a, b) => { const da = videos[chunkV[a[1]]].d, db = videos[chunkV[b[1]]].d;
     const c0 = sort === "new" ? db.localeCompare(da) : da.localeCompare(db); return c0 || b[0] - a[0]; });
