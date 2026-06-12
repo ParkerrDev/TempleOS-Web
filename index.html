@@ -198,6 +198,22 @@
     #homeList li { padding:1px 2px; }
     #diskStatus { color:var(--red); font-size:16px; min-height:1.4em; padding:6px 2px 0; }
 
+    /* Terry transcript search window */
+    #tsWin { display:flex; flex-direction:column; gap:8px; width:min(860px,94vw); height:min(82vh,720px); margin:0; padding:10px; }
+    #tsBar { display:flex; gap:8px; align-items:center; flex:0 0 auto; }
+    #tsQ { flex:1 1 auto; min-width:0; font-family:'dos_vga','TempleOS',monospace; font-size:16px; color:#000; background:#fff;
+           border:2px solid #fff; outline:2px solid #000; padding:4px 8px; }
+    #tsStatus { flex:0 0 auto; color:var(--blue); font-size:16px; padding:0 2px; min-height:1.3em; }
+    #tsOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); padding:6px; }
+    .ts-hit { display:block; text-decoration:none; background:#fff; margin:0 0 6px; padding:5px 8px; border:2px solid #fff; }
+    .ts-hit:hover { border-color:yellow; }
+    .ts-t { color:var(--red); font-weight:bold; font-size:16px; margin-right:8px; }
+    .ts-m { color:var(--blue); font-size:16px; white-space:nowrap; }
+    .ts-x { display:block; color:#16163a; font-size:16px; line-height:1.3; margin-top:2px; word-break:break-word; }
+    .ts-x b { color:#fff; background:var(--red); font-weight:normal; padding:0 1px; }
+    .ts-none { color:#fff; font-size:16px; padding:8px; }
+    #tsFoot { flex:0 0 auto; color:var(--blue); font-size:16px; padding:1px 2px 0; }
+
     /* ---- responsive: phones & narrow windows ---- */
     /* stacked layout — applied by JS when effective (zoom-divided) width < 980px */
     body.stack .desktop-row { flex-direction:column; align-items:center; }
@@ -246,6 +262,7 @@
         <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed"><span class="ico">⌨︎</span> HolyC Editor</button>
         <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
         <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico">▤</span> Disk &amp; Save</button>
+        <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video — 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico">⌕</span> Terry Search</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico">✛</span> Touch controls</button>
       </div>
       <div class="win keyswin" data-title="Keys"><span class="close">[X]</span><div id="keysbar"></div></div>
@@ -362,6 +379,20 @@
         </div>
         <div id="diskStatus"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Terry transcript search overlay: every word from 3,679 archived videos, fuzzy-searched
+       client-side (prebuilt shards + a zero-dependency worker — still a static site). Each hit
+       links to ITS SOURCE VIDEO on archive.org, seeked to the matching moment. -->
+  <div id="tsOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Terry A. Davis transcript search">
+    <div class="win" id="tsWin" data-title="Terry Search · every word he said on video">
+      <span class="close" id="tsClose" title="Close">[X]</span>
+      <div id="tsBar"><input id="tsQ" type="search" placeholder="search Terry's transcripts… (typos OK)"
+        autocomplete="off" autocapitalize="off" spellcheck="false" /></div>
+      <div id="tsStatus">open to load transcripts…</div>
+      <div id="tsOut"></div>
+      <div id="tsFoot">Whisper transcripts of the <a href="https://archive.org/details/TerryADavis_TempleOS_Archive" target="_blank" rel="noopener">TerryADavis_TempleOS_Archive</a> — click any result to watch that video at that moment.</div>
     </div>
   </div>
 
@@ -930,6 +961,46 @@ I64 GodDoodleGen(I64 strokes)
       const close = () => ov.classList.remove("open");
       $("godBtn").addEventListener("click", open);
       $("godClose").addEventListener("click", close);
+    }
+
+    // ---- Terry Search: fuzzy search over every transcribed video (static site — the shards are
+    //      prebuilt by build-transcripts.mjs; transearch.js scores them in a worker). Each hit
+    //      links to its source video on archive.org seeked to the hit's timestamp. ----
+    { const ov = $("tsOverlay"), out = $("tsOut"), q = $("tsQ"), st = $("tsStatus");
+      const ARCH = "https://archive.org/details/TerryADavis_TempleOS_Archive/";
+      let w = null, qid = 0, deb = null;
+      const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+      const hms = (s) => { s = Math.max(0, s | 0); const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
+        return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(ss).padStart(2, "0"); };
+      // highlight matched terms (longest first; sentinel chars so replacements can't corrupt the HTML)
+      const hi = (text, terms) => { let h = esc(text);
+        for (const term of [...new Set(terms || [])].sort((a, b) => b.length - a.length).slice(0, 12)) {
+          if (term.length < 2) continue;
+          h = h.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), (x) => "\u0001" + x + "\u0002"); }
+        return h.replace(/\u0001/g, "<b>").replace(/\u0002/g, "</b>"); };
+      const render = (m) => {
+        out.innerHTML = m.hits.map((h) => {
+          const url = ARCH + h.f.split("/").map(encodeURIComponent).join("/") + "?start=" + Math.max(0, h.sec - 2);
+          return `<a class="ts-hit" href="${url}" target="_blank" rel="noopener" title="watch on archive.org at ${hms(h.sec)}">` +
+            `<span class="ts-t">${esc(h.t)}</span><span class="ts-m">${esc(h.d)} · ▶ ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
+            `<span class="ts-x">${hi(h.text, m.terms)}</span></a>`; }).join("") ||
+          (q.value.trim() ? `<div class="ts-none">no matches — typos are OK, but he may never have said it</div>` : "");
+        if (m.hits.length) st.textContent = `${m.total} matching passages — top ${m.hits.length} shown, click to watch`;
+      };
+      const ask = () => { if (w) { qid++; w.postMessage({ type: "query", q: q.value, id: qid }); } };
+      const init = () => { if (w) return;
+        w = new Worker("./transearch.js");
+        st.textContent = "loading transcripts…";
+        w.onmessage = (e) => { const m = e.data;
+          if (m.type === "progress") st.textContent = `loading transcripts… ${m.loaded}/${m.total} shards · ${m.videos} videos`;
+          else if (m.type === "ready") { st.textContent = `${m.videos.toLocaleString()} videos · ${m.chunks.toLocaleString()} passages · ${m.words.toLocaleString()} distinct words — type to search`; if (q.value.trim()) ask(); }
+          else if (m.type === "error") st.textContent = "failed to load transcripts: " + m.message;
+          else if (m.type === "results" && m.id === qid) render(m); };
+        w.postMessage({ type: "load", base: "./assets/transcripts/" }); };
+      q.addEventListener("input", () => { clearTimeout(deb); deb = setTimeout(ask, 250); });
+      ov.addEventListener("pointerdown", (e) => { if (e.target === ov) ov.classList.remove("open"); });
+      $("tsBtn").addEventListener("click", () => { ov.classList.add("open"); init(); setTimeout(() => q.focus(), 50); });
+      $("tsClose").addEventListener("click", () => ov.classList.remove("open"));
     }
 
     // ---- TempleOS window chrome + dragging: every [data-title] window gets a bar with a
