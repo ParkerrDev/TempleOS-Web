@@ -228,6 +228,13 @@
     .ts-seg button + button { border-left:0; }
     .ts-seg button.on { background:var(--blue); color:#fff; }
     #tsCtl select { font-family:inherit; font-size:16px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:2px 6px; }
+    #tsYearWrap { position:relative; }
+    #tsYearBtn { width:auto; font-size:16px; padding:2px 10px; }
+    #tsYearPanel { display:none; position:absolute; left:0; top:calc(100% + 4px); z-index:6; background:#fff;
+                   border:3px double var(--blue); padding:6px 12px; min-width:130px; max-height:280px; overflow:auto; }
+    #tsYearPanel.open { display:block; }
+    #tsYearPanel label { display:flex; gap:8px; align-items:center; color:var(--blue); font-size:16px; padding:1px 0; white-space:nowrap; }
+    #tsYearPanel button { width:100%; margin-top:5px; font-size:16px; padding:1px 6px; }
     .ts-sec { color:#fff; font-size:16px; padding:2px 2px 5px; }
     #tsMore { width:100%; margin-top:2px; }
     #tsStatus { flex:0 0 auto; color:var(--blue); font-size:16px; padding:0 2px; min-height:1.3em; }
@@ -440,14 +447,18 @@
     <div class="win" id="tsWin" data-title="Terry Search · every word he said on video">
       <span class="close" id="tsClose" title="Close">[X]</span>
       <div id="tsBar"><span id="tsQwrap"><input id="tsQ" type="search" placeholder="search Terry's transcripts… (typos OK)"
-        title="operators: &quot;exact phrase&quot; · -exclude · since:2017-06 · until:2017-11-19 · 2017-11-19"
+        title="-word excludes · since:/until: day-precision date ranges · quotes force an exact phrase"
         autocomplete="off" autocapitalize="off" spellcheck="false" /><button id="tsClear" title="clear the search">×</button></span>
         <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button></div>
       <div id="tsCtl">
         <span class="ts-seg" title="what to search">
           <button data-sc="all" class="on">All</button><button data-sc="title">Titles</button><button data-sc="text">Transcript</button>
         </span>
-        <select id="tsYear" title="only this year"><option value="">any year</option></select>
+        <select id="tsMatch" title="how your words match">
+          <option value="fuzzy">fuzzy match</option><option value="exact">exact match</option>
+        </select>
+        <span id="tsYearWrap"><button id="tsYearBtn" title="filter by year — pick as many as you like">any year ▾</button>
+          <div id="tsYearPanel"></div></span>
         <select id="tsSort" title="result order">
           <option value="rel">best match</option><option value="new">newest first</option><option value="old">oldest first</option>
         </select>
@@ -455,7 +466,7 @@
       <div id="tsStatus">open to load transcripts…</div>
       <div id="tsOut"></div>
       <div id="tsFoot">Whisper transcripts of the <a href="https://archive.org/details/TerryADavis_TempleOS_Archive" target="_blank" rel="noopener">TerryADavis_TempleOS_Archive</a> — click any result to watch that video at that moment.<br>
-        Operators: "exact phrase" · -exclude · since:2017-06 · until:2017-11-19 · date:2018 · bare dates work too (2017-11-19)</div>
+        Extras: -word excludes · since:2017-06 until:2017-11-19 for day-precision ranges · "quotes" force an exact phrase</div>
     </div>
   </div>
 
@@ -1041,7 +1052,8 @@ I64 GodDoodleGen(I64 strokes)
     { const ov = $("tsOverlay"), out = $("tsOut"), q = $("tsQ"), st = $("tsStatus");
       const ARCH = "https://archive.org/details/TerryADavis_TempleOS_Archive/";
       let w = null, qid = 0, vid = 0, deb = null, lastHits = [], lastTerms = [], lastTotal = 0;
-      let scope = "all", year = "", sortBy = "rel";          // the filter row's state
+      let scope = "all", sortBy = "rel", exact = false;      // the controls ARE the query: match mode +
+      const years = new Set();                               // multi-year filter + scope + sort
       let lastVids = [], browseTotal = 0, lastMsg = null, lastView = null;
       const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const hms = (s) => { s = Math.max(0, s | 0); const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
@@ -1167,8 +1179,8 @@ I64 GodDoodleGen(I64 strokes)
         lastHits = []; lastView = renderBrowse;
         out.innerHTML = lastVids.map((v, j) => vidCard(v, j)).join("") +
           (lastVids.length < browseTotal ? `<button id="tsMore">↓ more (${(browseTotal - lastVids.length).toLocaleString()} older videos)</button>` : "");
-        const mb = $("tsMore"); if (mb) mb.addEventListener("click", () => { qid++; w.postMessage({ type: "browse", id: qid, year, sort: sortBy, offset: lastVids.length }); });
-        st.textContent = `${browseTotal.toLocaleString()} videos · ${sortBy === "old" ? "oldest" : "newest"} first${year ? " · " + year : ""} — type to search, ▶ plays, click a card for the transcript`;
+        const mb = $("tsMore"); if (mb) mb.addEventListener("click", () => { qid++; w.postMessage({ type: "browse", id: qid, years: [...years], sort: sortBy, offset: lastVids.length }); });
+        st.textContent = `${browseTotal.toLocaleString()} videos · ${sortBy === "old" ? "oldest" : "newest"} first${years.size ? " · " + [...years].sort().join(", ") : ""} — type to search, ▶ plays, click a card for the transcript`;
       };
       const render = (m) => {
         lastHits = m.hits; lastTerms = m.terms || []; lastTotal = m.total || 0;
@@ -1241,21 +1253,40 @@ I64 GodDoodleGen(I64 strokes)
           : `Terry A. Davis archive — ${lastVids.length} of ${browseTotal} videos\n\n`) + lastVids.map(vidText).join("\n"), e.target); });
       const ask = () => { if (!w) return; qid++;
         const qq = q.value.trim();
-        if (!qq) w.postMessage({ type: "browse", id: qid, year, sort: sortBy, offset: 0 });
-        else w.postMessage({ type: "query", q: qq, id: qid, scope, year, sort: sortBy }); };
+        if (!qq) w.postMessage({ type: "browse", id: qid, years: [...years], sort: sortBy, offset: 0 });
+        else w.postMessage({ type: "query", q: qq, id: qid, scope, years: [...years], sort: sortBy, exact }); };
       for (const b of document.querySelectorAll(".ts-seg button")) b.addEventListener("click", () => {
         scope = b.dataset.sc;
         for (const x of b.parentNode.children) x.classList.toggle("on", x === b);
         ask(); });
-      $("tsYear").addEventListener("change", () => { year = $("tsYear").value; ask(); });
+      $("tsMatch").addEventListener("change", () => { exact = $("tsMatch").value === "exact"; ask(); });
       $("tsSort").addEventListener("change", () => { sortBy = $("tsSort").value; ask(); });
+      // multi-year picker: a dropdown of checkboxes; the button shows the active selection
+      { const btn = $("tsYearBtn"), panel = $("tsYearPanel");
+        const label = () => { btn.textContent = (years.size ? [...years].sort().join(", ") : "any year") + " ▾"; };
+        window.__tsYearFill = (ys) => {
+          panel.innerHTML = "";
+          for (const y of ys) {
+            const l = document.createElement("label"), c = document.createElement("input");
+            c.type = "checkbox"; c.value = y;
+            c.addEventListener("change", () => { c.checked ? years.add(y) : years.delete(y); label(); ask(); });
+            l.append(c, document.createTextNode(y)); panel.appendChild(l);
+          }
+          const any = document.createElement("button"); any.textContent = "any year";
+          any.addEventListener("click", () => { years.clear();
+            for (const c of panel.querySelectorAll("input")) c.checked = false; label(); ask(); });
+          panel.appendChild(any);
+        };
+        btn.addEventListener("click", () => panel.classList.toggle("open"));
+        document.addEventListener("pointerdown", (e) => { if (!e.target.closest("#tsYearWrap")) panel.classList.remove("open"); });
+      }
       const init = () => { if (w) return;
         w = new Worker("./transearch.js");
         st.textContent = "loading transcripts…";
         w.onmessage = (e) => { const m = e.data;
           if (m.type === "progress") st.textContent = `loading transcripts… ${m.loaded}/${m.total} shards · ${m.videos} videos`;
           else if (m.type === "ready") { st.textContent = `${m.videos.toLocaleString()} videos · ${m.chunks.toLocaleString()} passages · ${m.words.toLocaleString()} distinct words — type to search`;
-            if (m.years) for (const y of m.years) { const o = document.createElement("option"); o.value = y; o.textContent = y; $("tsYear").appendChild(o); }
+            if (m.years) window.__tsYearFill(m.years);
             ask(); }                                         // empty query -> browse: the LATEST videos show by default
           else if (m.type === "error") st.textContent = "failed to load transcripts: " + m.message;
           else if (m.type === "results" && m.id === qid) render(m);

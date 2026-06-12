@@ -182,15 +182,36 @@ console.log("  back to results OK");
   if (!(t.vids > 0 && t.nonVids === 0)) throw new Error("titles scope wrong");
 
   await page.click('.ts-seg button[data-sc="all"]');
-  await page.selectOption("#tsYear", "2017");
+  const openPanel = async () => { if (!(await page.$eval("#tsYearPanel", (p) => p.classList.contains("open")))) await page.click("#tsYearBtn"); };
+  await openPanel();
+  await page.click('#tsYearPanel input[value="2017"]');
   await page.fill("#tsQ", "glow in the dark");
   await page.waitForFunction(() => /matching passages/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
   await page.waitForTimeout(300);
   const yr = await page.$$eval("#tsOut .ts-hit:not(.ts-vidcard) .ts-m", (es) => es.map((e) => e.textContent.slice(0, 4)));
   console.log("== year filter == hits:", yr.length, "non-2017:", yr.filter((y) => y !== "2017").length);
   if (!(yr.length > 0 && yr.every((y) => y === "2017"))) throw new Error("year filter wrong");
+  if (!/2017 ▾/.test(await page.$eval("#tsYearBtn", (b) => b.textContent))) throw new Error("year button label wrong");
 
-  await page.selectOption("#tsYear", "");
+  // MULTI-year: add 2012 on top of 2017
+  await openPanel(); await page.click('#tsYearPanel input[value="2012"]');
+  await page.fill("#tsQ", "god");
+  await page.waitForFunction(() => /matching/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
+  await page.waitForTimeout(300);
+  const yr2 = await page.$$eval("#tsOut .ts-hit .ts-m", (es) => es.map((e) => e.textContent.slice(0, 4)));
+  if (!(yr2.length > 0 && yr2.every((y) => y === "2012" || y === "2017"))) throw new Error("multi-year wrong: " + JSON.stringify([...new Set(yr2)]));
+  console.log("== multi-year == 2012+2017:", yr2.length, "hits, years:", JSON.stringify([...new Set(yr2)]));
+
+  // EXACT mode via the dropdown: typo must NOT match; real phrase must
+  await openPanel(); await page.click("#tsYearPanel button");   // any year
+  await page.selectOption("#tsMatch", "exact");
+  await page.fill("#tsQ", "idoit admires complexty");
+  await page.waitForSelector("#tsOut .ts-none", { timeout: 15000 });   // exact mode: the typo matches NOTHING
+  await page.fill("#tsQ", "i do a round robin");
+  await page.waitForFunction(() => /matching passages/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
+  console.log("== exact mode == typo rejected, verbatim phrase matches");
+  await page.selectOption("#tsMatch", "fuzzy");
+
   await page.fill("#tsQ", "");
   await page.selectOption("#tsSort", "old");
   await page.waitForFunction(() => /oldest first/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
