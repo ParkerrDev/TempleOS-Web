@@ -29,7 +29,7 @@
 
     /* header shares the centered content width of the desktop row below it */
     header { display:flex; align-items:stretch; gap:10px; padding:4px 8px 1px;
-             width:100%; max-width:calc(clamp(300px, min(calc(72vh * var(--zi)), calc((100vw * var(--zi) - 690px) * 3 / 4)), 600px) * 4 / 3 + 594px); margin:0 auto; }
+             width:100%; max-width:calc(clamp(300px, min(calc(72vh * var(--zi)), calc((100vw * var(--zi) - 690px) * 3 / 4)), 600px) * 4 / 3 + 598px); margin:0 auto; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
                    background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
@@ -41,7 +41,7 @@
        from the framebuffer: V double = 2W 2B 1W 2B 1W, H double = 2W 1B 1W 1B 3W; singles when
        unfocused) is painted into a border-image at runtime. No outline halo — the cell's outer
        2px of white IS the margin, as measured. */
-    .win, #frame { position:relative; background:#fff; color:var(--blue); border:12px solid #fff;
+    .win, #frame { position:relative; background:#fff; color:var(--blue); border:14px solid #fff;
                    margin:3px 5px; overflow:visible; }
     .win { padding:.7em; }
     /* TempleOS window bar: rides ON the top border line (slight overhang only), like the real
@@ -50,29 +50,29 @@
     /* the border row, TempleOS-style: one text-cell-high bar CENTERED on the double lines
        (border box is 6px tall at y 0..6 -> 13px bar spans -4..9, equal overhang).
        Layout per DocBorderNew: MENU(+LX, $$BK$$) | border line | title(+CX+IV, capped) hex | [X](+RX) */
-    .wbar { position:absolute; top:-12px; left:0; right:0; height:12px; display:flex; align-items:center;
+    .wbar { position:absolute; top:-14px; left:0; right:0; height:14px; display:flex; align-items:center;
             background:transparent; z-index:2; overflow:hidden; user-select:none; }
-    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:8px; line-height:12px; padding:0 2px;
+    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:8px; line-height:14px; padding:0 3px;
              animation:menuBlink 1s step-start infinite; }
     @keyframes menuBlink { 50% { background:var(--blue); color:#fff; } }
     .wgap { flex:1 1 auto; }                       /* transparent — the double lines show through */
-    .wtitle { flex:0 1 auto; min-width:64px; max-width:46%; overflow:hidden; height:12px; font-size:8px;
-              line-height:12px; white-space:nowrap; background:var(--blue); color:#fff; }
+    .wtitle { flex:0 1 auto; min-width:64px; max-width:46%; overflow:hidden; height:14px; font-size:8px;
+              line-height:14px; white-space:nowrap; background:var(--blue); color:#fff; }
     .wtitle > span { display:inline-block; white-space:pre; animation:wscroll linear infinite; }
     @keyframes wscroll { to { transform:translateX(-50%); } }
-    .whex { flex:0 0 auto; color:var(--blue); background:#fff; font-size:8px; line-height:12px; }
+    .whex { flex:0 0 auto; color:var(--blue); background:#fff; font-size:8px; line-height:14px; }
     /* vertical doc-name list ON the left border column (DocBorderLstDraw: TextChar at x=-1):
        one 8px text cell, centered over the 6px double lines, white only where glyphs sit */
-    .wvert { position:absolute; top:0; bottom:12px; left:-12px; width:12px; overflow:visible; z-index:2;
+    .wvert { position:absolute; top:0; bottom:14px; left:-14px; width:14px; overflow:visible; z-index:2;
              writing-mode:vertical-rl; text-orientation:upright; background:transparent; color:var(--blue);
-             font-size:8px; line-height:12px; letter-spacing:0; text-align:start; user-select:none; }
+             font-size:8px; line-height:14px; letter-spacing:0; text-align:start; user-select:none; }
     .wvert > span { background:#fff; }            /* white only where the glyphs are */
-    .close { flex:0 0 auto; font-size:8px; line-height:12px; padding:0 2px; color:var(--blue); background:#fff; }
+    .close { flex:0 0 auto; font-size:8px; line-height:14px; padding:0 3px; color:var(--blue); background:#fff; }
     /* yellow corner handles on the focused window, like the real WinMgr */
-    .wcorn { position:absolute; width:12px; height:12px; background:yellow; z-index:3; display:none; pointer-events:none; }
-    .wcorn::after { content:""; position:absolute; inset:4px; background:var(--blue); }
+    .wcorn { position:absolute; width:14px; height:14px; background:yellow; z-index:3; display:none; pointer-events:none; }
+    .wcorn::after { content:""; position:absolute; inset:5px; background:var(--blue); }
     .active > .wcorn { display:block; }
-    .wcorn.tl { top:-12px; left:-12px; } .wcorn.br { bottom:-12px; right:-12px; }
+    .wcorn.tl { top:-14px; left:-14px; } .wcorn.br { bottom:-14px; right:-14px; }
     .win-ph { visibility:hidden; }   /* placeholder keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
@@ -885,34 +885,34 @@ I64 GodDoodleGen(I64 strokes)
         // Corners are proper 90-degree JOINS (the lines turn, they never cross):
         // outer stroke turns at its own offset, inner stroke at its deeper offset.
         const mk = (focused) => {
-          const c = document.createElement("canvas"); c.width = c.height = 36;
+          const c = document.createElement("canvas"); c.width = c.height = 42;
           const g = c.getContext("2d");
-          g.fillStyle = "#fff"; g.fillRect(0, 0, 36, 36);
+          g.fillStyle = "#fff"; g.fillRect(0, 0, 42, 42);
           g.fillStyle = "#0000A8";
           // [offset, thickness] from the outside. V = vertical strokes (2px), H = horizontal (1px).
-          const V = focused ? [[3, 3], [8, 3]] : [[4, 3]];
-          const H = focused ? [[3, 2], [7, 2]] : [[4, 2]];
+          const V = focused ? [[3, 3], [8, 3]] : [[5, 3]];
+          const H = focused ? [[3, 2], [7, 2]] : [[5, 2]];
           // edge bands (the middle 8px slice of each side)
-          for (const [o, t] of H) { g.fillRect(12, o, 12, t); g.fillRect(12, 36 - o - t, 12, t); }
-          for (const [o, t] of V) { g.fillRect(o, 12, t, 12); g.fillRect(36 - o - t, 12, t, 12); }
+          for (const [o, t] of H) { g.fillRect(14, o, 14, t); g.fillRect(14, 42 - o - t, 14, t); }
+          for (const [o, t] of V) { g.fillRect(o, 14, t, 14); g.fillRect(42 - o - t, 14, t, 14); }
           // corners: each V/H stroke pair turns at the SAME rank (outer with outer, inner with inner)
           for (let i = 0; i < V.length; i++) {
             const [vo, vt] = V[i], [ho, ht] = H[i];
             // top-left: vertical run from the horizontal stroke down; horizontal run from the vertical stroke right
-            g.fillRect(vo, ho, vt, 24 - ho);               // down into the left edge band
-            g.fillRect(vo, ho, 24 - vo, ht);               // right into the top edge band
-            g.fillRect(36 - vo - vt, ho, vt, 24 - ho);     // top-right
-            g.fillRect(12, ho, 24 - vo, ht);
-            g.fillRect(vo, 12, vt, 24 - ho);               // bottom-left
-            g.fillRect(vo, 36 - ho - ht, 24 - vo, ht);
-            g.fillRect(36 - vo - vt, 12, vt, 24 - ho);     // bottom-right
-            g.fillRect(12, 36 - ho - ht, 24 - vo, ht);
+            g.fillRect(vo, ho, vt, 28 - ho);               // down into the left edge band
+            g.fillRect(vo, ho, 28 - vo, ht);               // right into the top edge band
+            g.fillRect(42 - vo - vt, ho, vt, 28 - ho);     // top-right
+            g.fillRect(14, ho, 28 - vo, ht);
+            g.fillRect(vo, 14, vt, 28 - ho);               // bottom-left
+            g.fillRect(vo, 42 - ho - ht, 28 - vo, ht);
+            g.fillRect(42 - vo - vt, 14, vt, 28 - ho);     // bottom-right
+            g.fillRect(14, 42 - ho - ht, 28 - vo, ht);
           }
           return c.toDataURL();
         };
         const st = document.createElement("style");
-        st.textContent = `.win, #frame { border-image:url("${mk(0)}") 12 fill / 12px repeat; }
-.win.active, #frame.active { border-image:url("${mk(1)}") 12 fill / 12px repeat; }`;
+        st.textContent = `.win, #frame { border-image:url("${mk(0)}") 14 fill / 14px repeat; }
+.win.active, #frame.active { border-image:url("${mk(1)}") 14 fill / 14px repeat; }`;
         document.head.appendChild(st);
       }
       const setActive = (w) => { for (const a of document.querySelectorAll(".active")) a.classList.remove("active"); w.classList.add("active"); };
