@@ -3,7 +3,7 @@
 import { chromium } from "playwright-core";
 const EXE = process.env.HOME + "/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome";
 const BASE = "http://localhost:" + (process.env.PORT || 8099) + "/index.html";
-const browser = await chromium.launch({ headless: true, executablePath: EXE, args: ["--no-sandbox"] });
+const browser = await chromium.launch({ headless: true, executablePath: EXE, args: ["--no-sandbox", "--autoplay-policy=no-user-gesture-required"] });
 const ctx = await browser.newContext({ viewport: { width: 1366, height: 980 }, permissions: ["clipboard-read", "clipboard-write"] });
 const page = await ctx.newPage();
 page.on("pageerror", (e) => console.log("[pageerror]", e.message));
@@ -45,6 +45,23 @@ const linkAudit = await page.$$eval("#tsOut a[href*='archive.org'], #tsOut a[hre
 });
 console.log(`\n== link audit == details:${linkAudit.det} mini-player:${linkAudit.mini} malformed:${linkAudit.bad.length}`, linkAudit.bad);
 if (linkAudit.bad.length) throw new Error("malformed links");
+
+// INLINE player: click ▶ on the top hit — the video must stream inside the overlay (no new page)
+{
+  await page.click("#tsOut .ts-hit .ts-pl");
+  let st2 = null;
+  for (let i = 0; i < 45; i++) {
+    st2 = await page.evaluate(() => { const v = document.querySelector("#tsOut .ts-vid video");
+      return v ? { ready: v.readyState, t: Math.round(v.currentTime), err: !!v.error } : { none: true }; });
+    if ((st2.ready ?? 0) >= 2 || st2.err) break;
+    await page.waitForTimeout(1000);
+  }
+  console.log("\n== inline player ==", JSON.stringify(st2));
+  if (!((st2.ready ?? 0) >= 2)) throw new Error("inline player failed: " + JSON.stringify(st2));
+  console.log("  PLAYS INSIDE THE OVERLAY");
+  await page.screenshot({ path: "/tmp/ts_inline.png" });
+  await page.click("#tsOut .ts-vbar button");        // ✕ close
+}
 
 // mini-player: actually STREAM a .mkv original from archive.org (Chromium demuxes Matroska natively)
 {

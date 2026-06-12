@@ -1,10 +1,9 @@
-# Cross-origin isolation enables SharedArrayBuffer, which QEMU-WASM's threads need.
-# Netlify / Cloudflare Pages format. (GitHub Pages can't set custom headers — the
-# bundled coi-serviceworker.js provides the same isolation on those hosts instead.)
-/*
-  Cross-Origin-Opener-Policy: same-origin
-  Cross-Origin-Embedder-Policy: require-corp
-  Cross-Origin-Resource-Policy: same-origin
+# NO cross-origin isolation: it was only ever for QEMU-WASM's SharedArrayBuffer threads,
+# and QEMU is gone — the deployed HEMU engine uses plain (unshared) WASM memory and
+# postMessage. Staying un-isolated lets Terry Search stream archive.org video INLINE
+# (their download nodes send no CORS/CORP, which COEP would block). If SMP (shared
+# guest RAM) ever ships, isolation must come back — and inline playback must move to
+# the COEP-exempt player.html pattern (see git history at 73dc575).
 
 # Long-cache the big immutable build artifacts (cache-busted by the ?v= query).
 /vendor/*
@@ -31,10 +30,3 @@
   Cache-Control: no-cache
 /holyc-wasm/*
   Cache-Control: no-cache
-
-# player.html streams cross-origin video straight from archive.org (no CORP/CORS on their
-# download nodes), so it must NOT be COEP-isolated. It uses no SharedArrayBuffer. Netlify
-# applies the most specific matching path's value for a duplicated header, overriding /*.
-/player.html
-  Cross-Origin-Embedder-Policy: unsafe-none
-  Cross-Origin-Resource-Policy: cross-origin
