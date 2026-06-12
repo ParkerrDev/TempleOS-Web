@@ -157,6 +157,9 @@
        (and the OS) stay fully interactive behind it */
     .overlay.free { background:transparent; pointer-events:none; }
     .overlay.free > .win { pointer-events:auto; }
+    .ovfree { position:absolute; top:8px; right:10px; width:auto; font-size:16px; padding:3px 10px; pointer-events:auto; }
+    .ovfree::after { content:"[_] hide backdrop"; }
+    .overlay.free .ovfree::after { content:"[▣] show backdrop"; }
     .overlay .close { cursor:pointer; }
     .overlay .close:hover { color:#fff; background:var(--blue); }
     #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }
@@ -351,7 +354,6 @@
         <button id="edSave" title="Download the source as a .HC file">↓ Save</button>
         <button id="edOpen" title="Open a .HC file from your computer">↥ Open</button>
         <button id="edToDisk" title="Write the source to /Home on the C: drive so TempleOS can run it">➜ To C:/Home</button>
-        <button id="edUndock" title="remove the dark backdrop — this window joins the desktop">Detach</button>
         <span id="status">ready</span>
       </div>
       <div class="ed-body">
@@ -382,7 +384,6 @@
         <button id="godSong">♪ Song</button>
         <button id="godDoodle">✎ Doodle</button>
         <button id="godClear">Clear</button>
-        <button id="godUndock" title="remove the dark backdrop — this window joins the desktop">Detach</button>
       </div>
     </div>
   </div>
@@ -417,7 +418,6 @@
           </div>
           <ul id="homeList"></ul>
         </div>
-        <div class="disk-row" style="padding-top:8px"><button id="diskUndock" title="remove the dark backdrop — this window joins the desktop">Detach</button></div>
         <div id="diskStatus"></div>
       </div>
     </div>
@@ -432,8 +432,7 @@
       <div id="tsBar"><input id="tsQ" type="search" placeholder="search Terry's transcripts… (typos OK)"
         autocomplete="off" autocapitalize="off" spellcheck="false" />
         <button id="tsClear" title="clear the search">×</button>
-        <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button>
-        <button id="tsUndock" title="remove the dark backdrop — this window joins the desktop and the OS stays usable behind it">Detach</button></div>
+        <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button></div>
       <div id="tsCtl">
         <span class="ts-seg" title="what to search">
           <button data-sc="all" class="on">All</button><button data-sc="title">Titles</button><button data-sc="text">Transcript</button>
@@ -1365,13 +1364,14 @@ I64 GodDoodleGen(I64 strokes)
       requestAnimationFrame(() => { for (const w of wins) sizeMarquee(w); });
       winChrome = { dress, sizeMarquee, setActive, raise };
       window.__winChrome = winChrome;                       // the editor overlay lives in a separate classic script
-      // Detach buttons (in each overlay window's own button row — the chrome stays authentic):
-      // toggle the dark backdrop; closing the window resets to modal, so the label tracks the class.
-      for (const [bid, oid] of [["tsUndock", "tsOverlay"], ["godUndock", "godOverlay"], ["diskUndock", "diskOverlay"], ["edUndock", "editorOverlay"]]) {
-        const bt = $(bid), ov = $(oid); if (!bt || !ov) continue;
-        bt.addEventListener("click", () => { const free = ov.classList.toggle("free"); raise(ov); bt.textContent = free ? "Re-dock" : "Detach"; });
-        new MutationObserver(() => { if (!ov.classList.contains("free") && bt.textContent !== "Detach") bt.textContent = "Detach"; })
-          .observe(ov, { attributes: true, attributeFilter: ["class"] });
+      // corner-of-screen backdrop toggle on every overlay: drop the dark backdrop so the popup
+      // window joins the desktop (page + OS interactive behind it); click again to restore.
+      for (const ov of document.querySelectorAll(".overlay")) {
+        const b = document.createElement("button");
+        b.className = "ovfree";
+        b.title = "drop the dark backdrop — the window joins the desktop; click again to restore";
+        b.addEventListener("click", () => { ov.classList.toggle("free"); raise(ov); });
+        ov.appendChild(b);
       }
     }
 
