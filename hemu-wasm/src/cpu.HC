@@ -1078,7 +1078,7 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
       g_hpet_acc += g_hpet_q16 * skip; hpet_ctr += g_hpet_acc >> 16; g_hpet_acc &= 0xFFFF; g_tsc_acc  += g_tsc_q16  * skip; tsc      += g_tsc_acc  >> 16; g_tsc_acc  &= 0xFFFF; icount += skip;
       if ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask)) {     // an IRQ is now pending
         if (rfl & F_IF) { halted = 0; CheckIrq(); }                 // IF=1: wake + service it
-        else { irq_stall += skip; if (irq_stall > 2000000) { irq_stall = 0; rfl |= F_IF; halted = 0; CheckIrq(); } } }
+        else { irq_stall += skip; if (irq_stall > 800000000) { irq_stall = 0; halted = 0; CheckIrq(); } } }   // HLT-with-IF=0 watchdog: same fix (high threshold, no forced IF)
       continue; }
     // Run a BATCH of instructions, then tick the devices once. Advancing PIT/TSC/HPET and checking
     // IRQs on every single instruction was ~20% of the loop; the guest only needs ~us device
@@ -1108,12 +1108,16 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
     if (pit_div) { pit_counter -= b; if (pit_counter <= 0) { pit_counter += pit_div; pic1_irr |= 1; } }  // PIT -> IRQ0
     if (halted) continue;                                                     // HLT/fault: let the outer loop handle it
     if ((rfl & F_IF) && ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask))) CheckIrq();
-    // Deadlock watchdog: a snapshot resumed mid-CLI can leave a task CLI-spinning to acquire a
-    // lock held by another (now de-scheduled) task; with IF=0 the PIT IRQ0 can't fire to run the
-    // holder -> permanent stall. If IRQ0 has been pending+blocked too long, force one delivery
-    // (safe: a spin-acquire holds nothing yet) so the scheduler runs the holder and the lock frees.
+    // Deadlock watchdog (LAST RESORT): a snapshot resumed mid-CLI can leave a task CLI-spinning to
+    // acquire a lock held by another (now de-scheduled) task; with IF=0 the PIT IRQ0 can't fire to run
+    // the holder -> PERMANENT stall. Only a permanent deadlock needs this; a slow-but-progressing wait
+    // (e.g. GodSong's CLI'd timed wait, which the JIT delivers IRQs to ~40% slower than the interp) must
+    // NOT trip it. The old 2M threshold did, and force-firing an IRQ mid task-switch corrupted it (the
+    // ret resumed at a bogus address -> #UD). Fix: (1) a much higher threshold so legitimate waits finish
+    // first (a real deadlock is infinite, so any finite bound still recovers it); (2) DON'T force IF=1 —
+    // DoInt then saves the guest's real flags, so a preempted critical section resumes correctly.
     else if ((pic1_irr & 1) && !(pic1_mask & 1)) { irq_stall += b;
-      if (irq_stall > 2000000) { irq_stall = 0; rfl |= F_IF; CheckIrq(); } }
+      if (irq_stall > 800000000) { irq_stall = 0; CheckIrq(); } }
     else irq_stall = 0;                                                       // deadlock watchdog
   } }
 
