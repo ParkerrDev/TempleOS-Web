@@ -33,17 +33,39 @@ const b = await ask("idoit admires complexty", "typo'd (fuzzy)");
 await ask("CIA glow in the dark", "phrase");
 
 // link-form audit: /details/ links must use the player's double-decoded form (+ for spaces, %252B
-// for '+', never %20); non-playlist videos must use /download/ instead of a bouncing /details/ link
-const linkAudit = await page.$$eval("#tsOut a[href*='archive.org']", (as) => {
-  let det = 0, dl = 0, bad = [];
+// for '+', never %20); non-playlist videos must route through our mini-player (player.html)
+const linkAudit = await page.$$eval("#tsOut a[href*='archive.org'], #tsOut a[href*='player.html']", (as) => {
+  let det = 0, mini = 0, bad = [];
   for (const a of as) {
     if (a.href.includes("/details/")) { det++; if (a.href.includes("%20") || !a.href.includes("?start=")) bad.push(a.href.slice(0, 120)); }
-    else if (a.href.includes("/download/")) dl++;
+    else if (a.href.includes("player.html?f=")) mini++;
+    else bad.push("unexpected: " + a.href.slice(0, 120));
   }
-  return { det, dl, bad: bad.slice(0, 3) };
+  return { det, mini, bad: bad.slice(0, 3) };
 });
-console.log(`\n== link audit == details:${linkAudit.det} download:${linkAudit.dl} malformed:${linkAudit.bad.length}`, linkAudit.bad);
-if (linkAudit.bad.length) throw new Error("malformed details links");
+console.log(`\n== link audit == details:${linkAudit.det} mini-player:${linkAudit.mini} malformed:${linkAudit.bad.length}`, linkAudit.bad);
+if (linkAudit.bad.length) throw new Error("malformed links");
+
+// mini-player: actually STREAM a .mkv original from archive.org (Chromium demuxes Matroska natively)
+{
+  const mini = await page.$eval("#tsOut a[href*='player.html']", (a) => a.href).catch(() => null);
+  const pp = await browser.newPage();
+  const target = mini || "http://localhost:" + (process.env.PORT || 8099) + "/player.html?f=" +
+    encodeURIComponent("videos/2007/2007-09-30T07:00:00+00:00 - Songs by God #1 (9i0pMO697Zk).mkv") + "&t=30&n=test";
+  console.log("\n== mini-player == " + decodeURIComponent(target).slice(0, 130));
+  await pp.goto(target, { waitUntil: "domcontentloaded", timeout: 30000 });
+  let state = null;
+  for (let i = 0; i < 45; i++) {
+    state = await pp.evaluate(() => { const v = document.querySelector("video");
+      return { ready: v ? v.readyState : -1, t: v ? Math.round(v.currentTime) : -1, err: !!(v && v.error), msg: document.getElementById("msg").style.display === "block" }; });
+    if (state.ready >= 2 || state.err || state.msg) break;
+    await pp.waitForTimeout(1000);
+  }
+  console.log("  video state:", JSON.stringify(state));
+  if (!(state.ready >= 2)) throw new Error("mini-player did not reach playable state: " + JSON.stringify(state));
+  console.log("  STREAMS — no download needed");
+  await pp.close();
+}
 
 // --- copy a single passage ---
 await page.click("#tsOut .ts-hit .ts-cp");

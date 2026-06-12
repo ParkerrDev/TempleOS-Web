@@ -31,3 +31,10 @@
   Cache-Control: no-cache
 /holyc-wasm/*
   Cache-Control: no-cache
+
+# player.html streams cross-origin video straight from archive.org (no CORP/CORS on their
+# download nodes), so it must NOT be COEP-isolated. It uses no SharedArrayBuffer. Netlify
+# applies the most specific matching path's value for a duplicated header, overriding /*.
+/player.html
+  Cross-Origin-Embedder-Policy: unsafe-none
+  Cross-Origin-Resource-Policy: cross-origin
