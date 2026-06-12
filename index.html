@@ -41,20 +41,26 @@
     /* TempleOS window bar: rides ON the top border line (slight overhang only), like the real
        WinMgr's  ≡MENU————— title —————[X]≡  row. Chips paint white over the border; the
        scrolling title's own background sweeps the full width between the corners. */
-    .wbar { position:absolute; top:-5px; left:8px; right:8px; height:15px; display:flex; align-items:center;
+    .wbar { position:absolute; top:-5px; left:2px; right:2px; height:15px; display:flex; align-items:center;
             background:transparent; z-index:2; overflow:hidden; user-select:none; }
     .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:13px; padding:0 3px;
-             animation:menuBlink 1s step-start infinite; }
+             animation:menuBlink 1s step-start infinite; }   /* $$BK,1$$ MENU at extreme left (DocBorderNew) */
     @keyframes menuBlink { 50% { background:var(--blue); color:#fff; } }
+    /* the title entry is +IV inverted (white on blue) and +CX cycles "title..." with no gaps */
     .wtitle { flex:1 1 auto; min-width:0; overflow:hidden; height:13px; font-size:11px; line-height:13px;
-              white-space:nowrap; margin:0 3px; color:var(--blue); }
-    .wtitle > span { display:inline-block; padding:0 5px 0 100%; background:#fff; animation:wscroll 9s linear infinite; }
-    @keyframes wscroll { to { transform:translateX(-100%); } }
-    /* vertical task name ON the left border line */
-    .wvert { position:absolute; top:14px; bottom:8px; left:-5px; width:12px; overflow:hidden; z-index:2;
+              white-space:nowrap; margin:0 2px; background:var(--blue); color:#fff; }
+    .wtitle > span { display:inline-block; white-space:pre; animation:wscroll linear infinite; }
+    @keyframes wscroll { to { transform:translateX(-50%); } }
+    /* vertical doc-name list ON the left border column (DocBorderLstDraw: TextChar at x=-1) */
+    .wvert { position:absolute; top:14px; bottom:8px; left:-4px; width:10px; overflow:hidden; z-index:2;
              writing-mode:vertical-rl; text-orientation:upright; background:#fff; color:var(--blue);
-             font-size:9px; line-height:12px; letter-spacing:-2px; user-select:none; }
+             font-size:8px; line-height:10px; letter-spacing:-1px; user-select:none; }
     .close { flex:0 0 auto; font-size:11px; line-height:13px; padding:0 2px; color:var(--blue); background:#fff; }
+    /* yellow corner handles on the focused window, like the real WinMgr */
+    .wcorn { position:absolute; width:7px; height:7px; background:yellow; z-index:3; display:none; pointer-events:none; }
+    .active > .wcorn { display:block; }
+    .wcorn.tl { top:-5px; left:-5px; } .wcorn.tr { top:-5px; right:-5px; }
+    .wcorn.bl { bottom:-5px; left:-5px; } .wcorn.br { bottom:-5px; right:-5px; }
     .win-ph { visibility:hidden; }   /* placeholder keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
@@ -851,21 +857,43 @@ I64 GodDoodleGen(I64 strokes)
           e.preventDefault();
         });
       };
-      for (const w of document.querySelectorAll("[data-title]")) {
+      const setActive = (w) => { for (const a of document.querySelectorAll(".active")) a.classList.remove("active"); w.classList.add("active"); };
+      const wins = [...document.querySelectorAll("[data-title]")];
+      for (const w of wins) {
         const bar = document.createElement("div"); bar.className = "wbar";
         const mn = document.createElement("span"); mn.className = "wmenu"; mn.textContent = "MENU";
         const ti = document.createElement("div"); ti.className = "wtitle";
-        const ts = document.createElement("span"); ts.textContent = w.dataset.title + "   ";
-        ti.appendChild(ts); bar.append(mn, ti);
+        const ts = document.createElement("span"); ti.appendChild(ts); bar.append(mn, ti);
         let x = w.querySelector(":scope > .close");
         if (x) bar.appendChild(x);
         if (x && w.id !== "frame" && !w.closest(".overlay")) x.addEventListener("click", () => closeWin(w));
         const v = document.createElement("span"); v.className = "wvert";
         v.textContent = w.dataset.title.split("·")[0].trim();
+        for (const c of ["tl", "tr", "bl", "br"]) { const d = document.createElement("div"); d.className = "wcorn " + c; w.appendChild(d); }
         w.prepend(v); w.prepend(bar);
-        w.removeAttribute("data-title");
+        w._title = w.dataset.title; w.removeAttribute("data-title");
+        w.addEventListener("pointerdown", () => setActive(w), true);
         makeDraggable(w, bar);
       }
+      setActive($("frame"));
+      // cycling border titles, DocBorderNew-style: "title..." repeated with NO whitespace, scrolled
+      // seamlessly (content = 2x a repeated unit, animate to -50%). Sized after layout.
+      requestAnimationFrame(() => {
+        const meas = document.createElement("span");
+        meas.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-size:11px";
+        document.body.appendChild(meas);
+        for (const w of wins) {
+          const ti = w.querySelector(".wtitle"), ts = ti && ti.firstChild;
+          if (!ts) continue;
+          const unit = w._title + "...";
+          meas.textContent = unit;
+          const upx = Math.max(20, meas.getBoundingClientRect().width);
+          const n = Math.max(2, Math.ceil((ti.getBoundingClientRect().width || 400) / upx) + 1);
+          ts.textContent = unit.repeat(n * 2);
+          ts.style.animationDuration = ((upx * n) / 26).toFixed(2) + "s";
+        }
+        meas.remove();
+      });
     }
 
     // ---- Terry window: gif sequence forwards/backwards ----
