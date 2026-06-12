@@ -250,6 +250,11 @@
     .vidwin .ts-verr { background:#000; }
     .ts-verr { color:#fff; padding:12px; font-size:16px; line-height:1.4; }
     .ts-verr a { color:yellow; }
+    .ts-verr button, .ts-convbar button { width:auto; font-size:16px; padding:2px 10px; }
+    .ts-convst { color:yellow; min-height:1.3em; margin-top:8px; }
+    .ts-convdone video { display:block; width:100%; max-height:62vh; background:#000; }
+    .ts-convbar { display:flex; gap:10px; align-items:center; background:#000; color:#fff; font-size:16px; padding:4px 8px; }
+    .ts-convbar span:last-child { color:yellow; }
     #tsFoot { flex:0 0 auto; color:var(--blue); font-size:16px; padding:1px 2px 0; }
     /* links sitting on WHITE window backgrounds: red + underline (gold is for the blue/black surfaces) */
     #tsFoot a, #guide a, .disk-sec a, .ed-foot a, .ts-hit .ts-t { color:var(--red); text-decoration:underline; }
@@ -1067,13 +1072,40 @@ I64 GodDoodleGen(I64 strokes)
         v.addEventListener("loadedmetadata", () => { if (t0 && Math.abs(v.currentTime - t0) > 2) { try { v.currentTime = t0; } catch {} } });
         v.addEventListener("error", () => {
           const ext = (h.f.split(".").pop() || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-          const purl = new URL("player.html?f=" + encodeURIComponent(h.f) + (sec ? "&t=" + Math.max(0, sec - 2) : "") +
-            "&n=" + encodeURIComponent(h.t || "") + "&conv=1", location.href).href;
           const er = document.createElement("div"); er.className = "ts-verr";
-          er.innerHTML = `this browser can't decode the .${ext} original (archive.org never web-encoded it) — ` +
-            `<a href="${purl}" target="_blank" rel="noopener">convert &amp; play it here</a> (in-browser ffmpeg) or ` +
-            `<a href="${dl(h)}" download>download</a> for VLC/mpv (moment: ${hms(sec || 0)}).`;
+          er.innerHTML = `this browser can't decode the .${ext} original (archive.org never web-encoded it).<br>` +
+            `<button class="ts-conv">▶ Convert &amp; play here</button> — in-browser ffmpeg, nothing uploaded — ` +
+            `or <a href="${dl(h)}" download>download</a> for VLC/mpv (moment: ${hms(sec || 0)}).` +
+            `<div class="ts-convst"></div>`;
           v.replaceWith(er);
+          const stl = er.querySelector(".ts-convst"), go = er.querySelector(".ts-conv");
+          // convert a window from the searched moment and play it RIGHT IN THIS WINDOW
+          const doConvert = async (startSec) => {
+            const { convertVideo } = await import("./convert.js");
+            const r = await convertVideo({ f: h.f, start: startSec, win: window.__convWin || 600,
+              onStatus: (m) => { stl.textContent = m; } });
+            const nv = document.createElement("video");
+            nv.controls = true; nv.autoplay = true; nv.playsInline = true; nv.src = r.blobUrl;
+            const off = Math.max(0, (sec || 0) - r.start);
+            nv.addEventListener("loadedmetadata", () => { if (off > 1 && off < (nv.duration || 1e9)) { try { nv.currentTime = off; } catch {} } }, { once: true });
+            const box = document.createElement("div");
+            box.appendChild(nv);
+            if (r.windowed) {
+              const bar = document.createElement("div"); bar.className = "ts-convbar";
+              const lbl = document.createElement("span"); lbl.textContent = `converted ${hms(r.start)} – ${hms(r.start + r.win)}`;
+              const nx = document.createElement("button"); nx.textContent = `⏭ next ${r.win >= 120 ? Math.round(r.win / 60) + " min" : r.win + " s"}`;
+              const nst = document.createElement("span");
+              nx.addEventListener("click", () => { nx.disabled = true;
+                doConvert(r.start + r.win).catch((e) => { nst.textContent = "✗ " + e.message; nx.disabled = false; }); });
+              bar.append(lbl, nx, nst); box.appendChild(bar);
+            }
+            const cur = w.querySelector("video, .ts-verr, .ts-convdone");
+            box.className = "ts-convdone";
+            if (cur && cur.parentNode) { const old = w.querySelector("video"); if (old && old.src.startsWith("blob:")) URL.revokeObjectURL(old.src); cur.replaceWith(box); }
+            w._tsVideo = nv;                                   // transcript [h:mm:ss] seeking targets the new video
+          };
+          go.addEventListener("click", () => { go.disabled = true;
+            doConvert(Math.max(0, (sec || 0) - 5)).catch((e) => { stl.textContent = "✗ " + e.message; go.disabled = false; }); });
         });
         w.append(x, v);
         document.body.appendChild(w);
@@ -1085,7 +1117,9 @@ I64 GodDoodleGen(I64 strokes)
         w.style.top = (84 + n * 28) + "px";
         w._tsF = h.f; w._tsVideo = v;
         vidWins.add(w);
-        const destroy = () => { v.pause(); v.removeAttribute("src"); v.load(); w.remove(); vidWins.delete(w); };
+        const destroy = () => { const vv = w.querySelector("video") || v;
+          try { vv.pause(); if (vv.src && vv.src.startsWith("blob:")) URL.revokeObjectURL(vv.src); vv.removeAttribute("src"); vv.load(); } catch {}
+          w.remove(); vidWins.delete(w); };
         winChrome.dress(w, { onClose: destroy });
         winChrome.sizeMarquee(w); winChrome.setActive(w);   // setActive also raises to the front
         return w;
