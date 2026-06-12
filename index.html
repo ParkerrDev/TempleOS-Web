@@ -41,20 +41,25 @@
     /* TempleOS window bar: rides ON the top border line (slight overhang only), like the real
        WinMgr's  ≡MENU————— title —————[X]≡  row. Chips paint white over the border; the
        scrolling title's own background sweeps the full width between the corners. */
-    .wbar { position:absolute; top:-5px; left:2px; right:2px; height:15px; display:flex; align-items:center;
+    /* the border row, TempleOS-style: one text-cell-high bar CENTERED on the double lines
+       (border box is 6px tall at y 0..6 -> 13px bar spans -4..9, equal overhang).
+       Layout per DocBorderNew: MENU(+LX, $$BK$$) | border line | title(+CX+IV, capped) hex | [X](+RX) */
+    .wbar { position:absolute; top:-4px; left:2px; right:2px; height:13px; display:flex; align-items:stretch;
             background:transparent; z-index:2; overflow:hidden; user-select:none; }
     .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:13px; padding:0 3px;
-             animation:menuBlink 1s step-start infinite; }   /* $$BK,1$$ MENU at extreme left (DocBorderNew) */
+             animation:menuBlink 1s step-start infinite; }
     @keyframes menuBlink { 50% { background:var(--blue); color:#fff; } }
-    /* the title entry is +IV inverted (white on blue) and +CX cycles "title..." with no gaps */
-    .wtitle { flex:1 1 auto; min-width:0; overflow:hidden; height:13px; font-size:11px; line-height:13px;
-              white-space:nowrap; margin:0 2px; background:var(--blue); color:#fff; }
+    .wgap { flex:1 1 auto; }                       /* transparent — the double lines show through */
+    .wtitle { flex:0 1 auto; min-width:70px; max-width:46%; overflow:hidden; height:13px; font-size:11px;
+              line-height:13px; white-space:nowrap; background:var(--blue); color:#fff; }
     .wtitle > span { display:inline-block; white-space:pre; animation:wscroll linear infinite; }
     @keyframes wscroll { to { transform:translateX(-50%); } }
-    /* vertical doc-name list ON the left border column (DocBorderLstDraw: TextChar at x=-1) */
-    .wvert { position:absolute; top:14px; bottom:8px; left:-4px; width:10px; overflow:hidden; z-index:2;
+    .whex { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:13px; }
+    /* vertical doc-name list ON the left border column (DocBorderLstDraw: TextChar at x=-1):
+       one 8px text cell, centered over the 6px double lines, white only where glyphs sit */
+    .wvert { position:absolute; top:12px; bottom:8px; left:-1px; width:8px; overflow:hidden; z-index:2;
              writing-mode:vertical-rl; text-orientation:upright; background:#fff; color:var(--blue);
-             font-size:8px; line-height:10px; letter-spacing:-1px; user-select:none; }
+             font-size:8px; line-height:8px; letter-spacing:0; text-align:start; user-select:none; }
     .close { flex:0 0 auto; font-size:11px; line-height:13px; padding:0 2px; color:var(--blue); background:#fff; }
     /* yellow corner handles on the focused window, like the real WinMgr */
     .wcorn { position:absolute; width:7px; height:7px; background:yellow; z-index:3; display:none; pointer-events:none; }
@@ -862,8 +867,17 @@ I64 GodDoodleGen(I64 strokes)
       for (const w of wins) {
         const bar = document.createElement("div"); bar.className = "wbar";
         const mn = document.createElement("span"); mn.className = "wmenu"; mn.textContent = "MENU";
+        const gap = document.createElement("span"); gap.className = "wgap";
         const ti = document.createElement("div"); ti.className = "wtitle";
-        const ts = document.createElement("span"); ti.appendChild(ts); bar.append(mn, ti);
+        const ts = document.createElement("span"); ti.appendChild(ts);
+        bar.append(mn, gap, ti);
+        // DocBorderNew prints "%X",Fs after the title — only where the bar has room for it
+        if (w.offsetWidth === 0 || w.offsetWidth >= 380) {
+          const hx = document.createElement("span"); hx.className = "whex";
+          let hsh = 0x10E00000; for (const ch of w.dataset.title) hsh = (hsh + ch.charCodeAt(0) * 2654435761) >>> 0;
+          hx.textContent = "=" + (0x10000000 + (hsh % 0x0FFFFFF8)).toString(16).toUpperCase();
+          bar.append(hx);
+        }
         let x = w.querySelector(":scope > .close");
         if (x) bar.appendChild(x);
         if (x && w.id !== "frame" && !w.closest(".overlay")) x.addEventListener("click", () => closeWin(w));
