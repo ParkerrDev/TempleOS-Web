@@ -52,27 +52,27 @@
        Layout per DocBorderNew: MENU(+LX, $$BK$$) | border line | title(+CX+IV, capped) hex | [X](+RX) */
     .wbar { position:absolute; top:-14px; left:0; right:0; height:14px; display:flex; align-items:center;
             background:transparent; z-index:2; overflow:hidden; user-select:none; }
-    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:8px; line-height:14px; padding:0 3px;
-             animation:menuBlink 1s step-start infinite; }
+    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:12px; line-height:14px; padding:0 1px;
+             animation:menuBlink .4s step-start infinite; }   /* Blink(Hz=2.5) -> 400ms period */
     @keyframes menuBlink { 50% { background:var(--blue); color:#fff; } }
     .wgap { flex:1 1 auto; }                       /* transparent — the double lines show through */
-    .wtitle { flex:0 1 auto; min-width:64px; max-width:46%; overflow:hidden; height:14px; font-size:8px;
+    .wtitle { flex:0 1 auto; min-width:64px; max-width:46%; overflow:hidden; height:14px; font-size:12px;
               line-height:14px; white-space:nowrap; background:var(--blue); color:#fff; }
     .wtitle > span { display:inline-block; white-space:pre; animation:wscroll linear infinite; }
     @keyframes wscroll { to { transform:translateX(-50%); } }
-    .whex { flex:0 0 auto; color:var(--blue); background:#fff; font-size:8px; line-height:14px; }
+    .whex { flex:0 0 auto; color:var(--blue); background:#fff; font-size:12px; line-height:14px; }
     /* vertical doc-name list ON the left border column (DocBorderLstDraw: TextChar at x=-1):
        one 8px text cell, centered over the 6px double lines, white only where glyphs sit */
     .wvert { position:absolute; top:0; bottom:14px; left:-14px; width:14px; overflow:visible; z-index:2;
              writing-mode:vertical-rl; text-orientation:upright; background:transparent; color:var(--blue);
-             font-size:8px; line-height:14px; letter-spacing:0; text-align:start; user-select:none; }
+             font-size:12px; line-height:14px; letter-spacing:0; text-align:start; user-select:none; }
     .wvert > span { background:#fff; }            /* white only where the glyphs are */
-    .close { flex:0 0 auto; font-size:8px; line-height:14px; padding:0 3px; color:var(--blue); background:#fff; }
+    .close { flex:0 0 auto; font-size:12px; line-height:14px; padding:0 1px; color:var(--blue); background:#fff; }
     /* yellow corner handles on the focused window, like the real WinMgr */
     .wcorn { position:absolute; width:14px; height:14px; background:yellow; z-index:3; display:none; pointer-events:none; }
     .wcorn::after { content:""; position:absolute; inset:5px; background:var(--blue); }
     .active > .wcorn { display:block; }
-    .wcorn.tl { top:-14px; left:-14px; } .wcorn.br { bottom:-14px; right:-14px; }
+    .wcorn.tr { top:0; right:-14px; } .wcorn.bl { bottom:-14px; left:0; }
     .win-ph { visibility:hidden; }   /* placeholder keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
@@ -938,7 +938,7 @@ I64 GodDoodleGen(I64 strokes)
         const v = document.createElement("span"); v.className = "wvert";
         const vs = document.createElement("span"); vs.textContent = w.dataset.title.split("·")[0].trim();
         v.appendChild(vs);
-        for (const c of ["tl", "br"]) { const d = document.createElement("div"); d.className = "wcorn " + c; w.appendChild(d); }
+        for (const c of ["tr", "bl"]) { const d = document.createElement("div"); d.className = "wcorn " + c; w.appendChild(d); }
         w.prepend(v); w.prepend(bar);
         w._title = w.dataset.title; w.removeAttribute("data-title");
         w.addEventListener("pointerdown", () => setActive(w), true);
@@ -949,7 +949,7 @@ I64 GodDoodleGen(I64 strokes)
       // seamlessly (content = 2x a repeated unit, animate to -50%). Sized after layout.
       requestAnimationFrame(() => {
         const meas = document.createElement("span");
-        meas.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-size:8px;font-family:'TempleOS',monospace";
+        meas.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-size:12px;font-family:'TempleOS',monospace";
         document.body.appendChild(meas);
         for (const w of wins) {
           const ti = w.querySelector(".wtitle"), ts = ti && ti.firstChild;
@@ -959,7 +959,7 @@ I64 GodDoodleGen(I64 strokes)
           const upx = Math.max(20, meas.getBoundingClientRect().width);
           const n = Math.max(2, Math.ceil((ti.getBoundingClientRect().width || 400) / upx) + 1);
           ts.textContent = unit.repeat(n * 2);
-          ts.style.animationDuration = ((upx * n) / 26).toFixed(2) + "s";
+          ts.style.animationDuration = ((upx * n) / 64).toFixed(2) + "s";   // DOC_SCROLL_SPEED(8) * FONT_WIDTH(8) = 64 px/s
         }
         meas.remove();
       });
