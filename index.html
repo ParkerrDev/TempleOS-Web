@@ -20,8 +20,8 @@
     a { color:var(--gold); }
 
     /* live top status bar (always visible — survives fullscreen games, unlike the in-OS wallpaper bar) */
-    #topbar { display:flex; line-height:1; justify-content:space-between; align-items:center; gap:10px;
-              background:var(--blue); color:#fff; padding:2px 8px 1px; font-size:16px; }
+    #topbar { display:flex; line-height:16px; justify-content:space-between; align-items:center; gap:10px;
+              background:var(--blue); color:#fff; padding:0 8px; font-size:16px; }
     #topbar .status { display:flex; flex-wrap:wrap; }
     #topbar .status > span { white-space:nowrap; }
     #topbar .status > span:not(:last-child) { margin-right:16px; }
@@ -212,8 +212,9 @@
     <div class="status">
       <span id="tb-date">…</span>
       <span id="tb-time">…</span>
-      <span id="tb-fps">starting…</span>
-      <span>engine: <span class="y">HEMU</span></span>
+      <span id="tb-fps">FPS: …</span>
+      <span id="tb-cores">Cores: …</span>
+      <span>Engine: <span class="y">HEMU</span></span>
     </div>
     <p id="tb-key"></p>
   </div>
@@ -390,10 +391,13 @@
       setTimeout(() => send(null, gx, gy, 0), t);
     }
     let notifyInput = () => {};
-    let engineLabel = "…";
+    let engineLabel = "…";   // core count, e.g. "2"
     const FIXED_B = +((new URLSearchParams(location.search)).get("b")) || 0;
     { let t0 = performance.now();
-      setInterval(() => { const n = performance.now(); tbFps.textContent = `${(blitCount * 1000 / (n - t0)).toFixed(0)} fps · ${engineLabel}`; blitCount = 0; t0 = n; }, 500); }
+      setInterval(() => { const n = performance.now();
+        tbFps.textContent = `FPS: ${(blitCount * 1000 / (n - t0)).toFixed(0)}`;
+        $("tb-cores").textContent = `Cores: ${engineLabel}`;
+        blitCount = 0; t0 = n; }, 500); }
 
     // ---- input: a host-owned cursor + a set-1 scancode queue, pulled by snapshot.HC each frame ----
     let msX = 320, msY = 240, msB = 0, wheelZ = 0;
@@ -639,7 +643,7 @@
     function runWorker() {
       let worker, watchdog, alive = false;
       try { worker = new Worker("./hemu-worker.js", { type: "module" }); } catch (e) { return false; }
-      engineLabel = "2 cores";
+      engineLabel = "2";
       notifyInput = () => worker?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0) });
       const fallback = (why) => {
         if (!worker) return;
@@ -681,7 +685,7 @@
       const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm", { cache: "no-cache" })).arrayBuffer());
       let disk = null;
       loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => { disk = d; dbg("C: disk image ready"); }).catch(() => disk = null);
-      engineLabel = "1 core";
+      engineLabel = "1";
       let curBudget = FIXED_B || 1500000, dtMs = 16;
       const host = createHost({
         onText: (s) => { if (s && s.indexOf("BADOP") >= 0) dbg("[guest] " + s.trim(), true); }, snd: { tone: (f) => snd(Number(f)) },
@@ -975,7 +979,7 @@ I64 GodDoodleGen(I64 strokes)
     // ---- topbar: last key pressed (capture state text is owned by pointerlockchange) ----
     addEventListener("keydown", (e) => {
       if (locked) return;
-      let k = e.key; if (k === " ") k = "SPACE"; else if (k.length === 1) k = k.toUpperCase();
+      let k = e.key; if (k === " ") k = "SPACE"; else if (k === "Meta") k = "WINDOWS"; else if (k.length === 1) k = k.toUpperCase();
       tbKey.textContent = k;
     }, true);
   </script>
