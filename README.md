@@ -71,30 +71,26 @@ for file I/O. (The `.gz` assets are decompressed in the browser.)
 ## Running locally
 
 ```bash
-# 1) the bundled zero-dependency server (sets COOP/COEP for you)
-node server.mjs            # → http://localhost:8080
-
-# 2) any static server — the bundled coi-serviceworker.js adds the headers itself
-python3 -m http.server 8080   # then open http://localhost:8080
+node server.mjs               # → http://localhost:8080  (zero-dependency)
+# or any static server:
+python3 -m http.server 8080
 ```
 
 ## Deploying
 
-It's all static files; the only requirement is cross‑origin isolation.
-
-- **Netlify / Cloudflare Pages / Vercel** — the included [`_headers`](./_headers) sets
-  `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp`.
-- **GitHub Pages / any host without header control** — handled automatically by the bundled
-  [`coi-serviceworker.js`](./coi-serviceworker.js) (registers a service worker that injects
-  the headers and reloads once on first visit). Paths are deployment‑relative, so it works at
-  a domain root *or* a project subpath like `/TempleOS-wasm/`.
+It's all static files — any static host works (no special headers required; the
+included [`_headers`](./_headers) only tunes caching). Paths are deployment-relative,
+so it works at a domain root *or* a project subpath like `/TempleOS-wasm/`.
 
 ## Credits & licenses
 
 - **TempleOS** — created by **Terry A. Davis**. Public domain. The disk image and snapshot
   contain TempleOS V5.03.
 - **holyc-wasm, HEMU, the JIT** — written for this project; same repository.
-- **coi-serviceworker** — © Guido Zuidhof and contributors, **MIT**.
+- **ffmpeg.wasm** (`vendor/ffmpeg/`, powers the in-browser video converter) — FFmpeg (GPL) compiled
+  to WebAssembly by the [ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm) project (MIT wrapper).
+- **Transcripts** — Whisper (large-v3-turbo) transcriptions of the
+  [TerryADavis_TempleOS_Archive](https://archive.org/details/TerryADavis_TempleOS_Archive) item.
 - **Theme & assets** — the TempleOS‑desktop look (cursor, the Terry GIF) is from
   [afterdavis](https://github.com/ParkerrDev/afterdavis); the TempleOS font and the window
   chrome styling (vertical border titles, scrolling title marquee, blinking MENU chip) are
