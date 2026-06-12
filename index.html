@@ -206,6 +206,14 @@
     #tsBar { display:flex; gap:8px; align-items:center; flex:0 0 auto; }
     #tsQ { flex:1 1 auto; min-width:0; font-family:'dos_vga','TempleOS',monospace; font-size:16px; color:#000; background:#fff;
            border:2px solid #fff; outline:2px solid #000; padding:4px 8px; }
+    #tsCtl { display:flex; gap:10px; align-items:center; flex:0 0 auto; flex-wrap:wrap; }
+    .ts-seg { display:flex; }
+    .ts-seg button { width:auto; font-size:16px; padding:2px 10px; background:#fff; color:var(--blue); border:2px solid var(--blue); }
+    .ts-seg button + button { border-left:0; }
+    .ts-seg button.on { background:var(--blue); color:#fff; }
+    #tsCtl select { font-family:inherit; font-size:16px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:2px 6px; }
+    .ts-sec { color:#fff; font-size:16px; padding:2px 2px 5px; }
+    #tsMore { width:100%; margin-top:2px; }
     #tsStatus { flex:0 0 auto; color:var(--blue); font-size:16px; padding:0 2px; min-height:1.3em; }
     #tsOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); padding:6px; }
     #tsWin button { width:auto; font-size:16px; padding:2px 8px; }
@@ -413,6 +421,15 @@
       <div id="tsBar"><input id="tsQ" type="search" placeholder="search Terry's transcripts… (typos OK)"
         autocomplete="off" autocapitalize="off" spellcheck="false" />
         <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button></div>
+      <div id="tsCtl">
+        <span class="ts-seg" title="what to search">
+          <button data-sc="all" class="on">All</button><button data-sc="title">Titles</button><button data-sc="text">Transcript</button>
+        </span>
+        <select id="tsYear" title="only this year"><option value="">any year</option></select>
+        <select id="tsSort" title="result order">
+          <option value="rel">best match</option><option value="new">newest first</option><option value="old">oldest first</option>
+        </select>
+      </div>
       <div id="tsStatus">open to load transcripts…</div>
       <div id="tsOut"></div>
       <div id="tsFoot">Whisper transcripts of the <a href="https://archive.org/details/TerryADavis_TempleOS_Archive" target="_blank" rel="noopener">TerryADavis_TempleOS_Archive</a> — click any result to watch that video at that moment.</div>
@@ -995,6 +1012,8 @@ I64 GodDoodleGen(I64 strokes)
     { const ov = $("tsOverlay"), out = $("tsOut"), q = $("tsQ"), st = $("tsStatus");
       const ARCH = "https://archive.org/details/TerryADavis_TempleOS_Archive/";
       let w = null, qid = 0, vid = 0, deb = null, lastHits = [], lastTerms = [], lastTotal = 0;
+      let scope = "all", year = "", sortBy = "rel";          // the filter row's state
+      let lastVids = [], browseTotal = 0, lastMsg = null, lastView = null;
       const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const hms = (s) => { s = Math.max(0, s | 0); const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
         return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(ss).padStart(2, "0"); };
@@ -1075,17 +1094,44 @@ I64 GodDoodleGen(I64 strokes)
         if (btn) { const old = btn.textContent; btn.textContent = "✓ copied"; btn.disabled = true;
           setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 900); } };
       const hitText = (h) => `“${h.text}”\n— Terry A. Davis, ${h.t} (${h.d}), at ${hms(h.sec)}\n${url(h, h.sec)}`;
+      const vidText = (v) => `${v.t} (${v.d})${v.n ? " · " + hms(v.n) : ""} — Terry A. Davis\n${url(v)}`;
+      // a VIDEO card (browse mode + title matches): same chrome as a passage card, teaser instead of a quote
+      const vidCard = (v, j) =>
+        `<div class="ts-hit ts-vidcard" data-v="${j}">` +
+          `<div class="ts-row"><a class="ts-t" href="${url(v, 0)}" target="_blank" rel="noopener" title="${v.p ? "watch on archive.org" : "archive.org never web-encoded this original — opens our player page"}">${esc(v.t)}</a>` +
+          `<span class="ts-m">${esc(v.d)}${v.n ? " · " + hms(v.n) : ""} · ${v.k} passages</span>` +
+          `<span class="ts-act"><button class="ts-pl" data-v="${j}" title="play in a window">▶</button>` +
+          `<button class="ts-cp" data-v="${j}" title="copy title + link">⧉</button></span></div>` +
+          (v.x ? `<span class="ts-x" title="click to expand the full transcript">${esc(v.x)}…</span>` : "") + `</div>`;
+      const renderBrowse = () => {
+        lastHits = []; lastView = renderBrowse;
+        out.innerHTML = lastVids.map((v, j) => vidCard(v, j)).join("") +
+          (lastVids.length < browseTotal ? `<button id="tsMore">↓ more (${(browseTotal - lastVids.length).toLocaleString()} older videos)</button>` : "");
+        const mb = $("tsMore"); if (mb) mb.addEventListener("click", () => { qid++; w.postMessage({ type: "browse", id: qid, year, sort: sortBy, offset: lastVids.length }); });
+        st.textContent = `${browseTotal.toLocaleString()} videos · ${sortBy === "old" ? "oldest" : "newest"} first${year ? " · " + year : ""} — type to search, ▶ plays, click a card for the transcript`;
+      };
       const render = (m) => {
         lastHits = m.hits; lastTerms = m.terms || []; lastTotal = m.total || 0;
-        out.innerHTML = m.hits.map((h, i) =>
+        lastVids = m.vids || []; lastMsg = m; lastView = () => render(lastMsg);
+        let html = "";
+        if (lastVids.length) {
+          html += `<div class="ts-sec">${m.vtotal === lastVids.length ? m.vtotal : `top ${lastVids.length} of ${m.vtotal}`} matching title${m.vtotal === 1 ? "" : "s"}</div>` +
+            lastVids.map((v, j) => vidCard(v, j)).join("");
+          if (m.hits.length) html += `<div class="ts-sec">matching passages</div>`;
+        }
+        html += m.hits.map((h, i) =>
           `<div class="ts-hit" data-i="${i}">` +
             `<div class="ts-row"><a class="ts-t" href="${url(h, h.sec)}" target="_blank" rel="noopener" title="${h.p ? `watch on archive.org at ${hms(h.sec)}` : `archive.org never web-encoded this original — plays in our mini-player at ${hms(h.sec)}`}">${esc(h.t)}</a>` +
             `<span class="ts-m">${esc(h.d)} · ▶ ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
             `<span class="ts-act"><button class="ts-pl" data-i="${i}" title="play in a window, from ${hms(h.sec)}">▶</button>` +
             `<button class="ts-cp" data-i="${i}" title="copy this passage (with video + timestamp + link)">⧉</button></span></div>` +
-            `<span class="ts-x" title="click to expand the full transcript">${hi(h.text, m.terms)}</span></div>`).join("") ||
+            `<span class="ts-x" title="click to expand the full transcript">${hi(h.text, m.terms)}</span></div>`).join("");
+        out.innerHTML = html ||
           (q.value.trim() ? `<div class="ts-none">no matches — typos are OK, but he may never have said it</div>` : "");
-        if (m.hits.length) st.textContent = `${m.total} matching passages — top ${m.hits.length} shown · ▶ plays in a window, ⧉ copies, click a card for the full transcript`;
+        const bits = [];
+        if (scope !== "title") bits.push(`${m.total} matching passages`);
+        if (m.vtotal) bits.push(`${m.vtotal} matching title${m.vtotal === 1 ? "" : "s"}`);
+        if (m.hits.length || lastVids.length) st.textContent = bits.join(" · ") + " — ▶ plays in a window, ⧉ copies, click a card for the full transcript";
       };
       // full-transcript view for one video: back / copy-all / download .txt / watch, then every passage
       const transcriptText = (v) => `${v.t} (${v.d}) — Terry A. Davis\n${url(v)}\n\n` +
@@ -1102,7 +1148,7 @@ I64 GodDoodleGen(I64 strokes)
         out.scrollTop = 0;
         $("tsPlHere").addEventListener("click", () => {
           if (!seekOpenWindow(v.f, v.s[0] ? v.s[0][0] : 0)) openVideoWindow(v, v.s[0] ? v.s[0][0] : 0); });
-        $("tsBack").addEventListener("click", () => { curTrF = null; render({ hits: lastHits, terms: lastTerms, total: lastTotal }); });
+        $("tsBack").addEventListener("click", () => { curTrF = null; if (lastView) lastView(); });
         $("tsCpTr").addEventListener("click", (e) => copy(transcriptText(v), e.target));
         $("tsDlTr").addEventListener("click", () => {
           const a = document.createElement("a");
@@ -1111,30 +1157,46 @@ I64 GodDoodleGen(I64 strokes)
           a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); });
       };
       const expand = (h) => { if (h && w) { vid++; w.postMessage({ type: "video", f: h.f, id: vid }); } };
+      const refOf = (el) => el.dataset.v !== undefined ? lastVids[+el.dataset.v] : lastHits[+el.dataset.i];   // video card or passage hit
       out.addEventListener("click", (e) => {
         const pl = e.target.closest(".ts-pl");
-        if (pl) { const h = lastHits[+pl.dataset.i]; if (h) openVideoWindow(h, h.sec); return; }
+        if (pl) { const h = refOf(pl); if (h) openVideoWindow(h, h.sec || 0); return; }
         const cp = e.target.closest(".ts-cp");
-        if (cp) { const h = lastHits[+cp.dataset.i]; if (h) copy(hitText(h), cp); return; }
+        if (cp) { const h = refOf(cp); if (h) copy(h.sec !== undefined ? hitText(h) : vidText(h), cp); return; }
         const ts = e.target.closest(".ts-ts");
         if (ts) {                                            // transcript timestamps SEEK an open window of this video
           if (seekOpenWindow(curTrF, +ts.dataset.s)) e.preventDefault();
           return; }
         if (e.target.closest("a, button")) return;           // the red title link (and any other control) keeps its own behavior
         const card = e.target.closest(".ts-hit");
-        if (card) expand(lastHits[+card.dataset.i]); });     // clicking the card expands the full transcript
-      $("tsCopyAll").addEventListener("click", (e) => { if (!lastHits.length) return;
-        copy(`Terry Search: "${q.value.trim()}" — top ${lastHits.length} of ${lastTotal} matching passages\n\n` +
-          lastHits.map(hitText).join("\n\n"), e.target); });
-      const ask = () => { if (w) { qid++; w.postMessage({ type: "query", q: q.value, id: qid }); } };
+        if (card) expand(refOf(card)); });                   // clicking the card expands the full transcript
+      $("tsCopyAll").addEventListener("click", (e) => {
+        const qq = q.value.trim();
+        if (lastHits.length) copy(`Terry Search: "${qq}" — top ${lastHits.length} of ${lastTotal} matching passages\n\n` +
+          lastHits.map(hitText).join("\n\n"), e.target);
+        else if (lastVids.length) copy((qq ? `Terry Search: "${qq}" — ${lastVids.length} videos\n\n`
+          : `Terry A. Davis archive — ${lastVids.length} of ${browseTotal} videos\n\n`) + lastVids.map(vidText).join("\n"), e.target); });
+      const ask = () => { if (!w) return; qid++;
+        const qq = q.value.trim();
+        if (!qq) w.postMessage({ type: "browse", id: qid, year, sort: sortBy, offset: 0 });
+        else w.postMessage({ type: "query", q: qq, id: qid, scope, year, sort: sortBy }); };
+      for (const b of document.querySelectorAll(".ts-seg button")) b.addEventListener("click", () => {
+        scope = b.dataset.sc;
+        for (const x of b.parentNode.children) x.classList.toggle("on", x === b);
+        ask(); });
+      $("tsYear").addEventListener("change", () => { year = $("tsYear").value; ask(); });
+      $("tsSort").addEventListener("change", () => { sortBy = $("tsSort").value; ask(); });
       const init = () => { if (w) return;
         w = new Worker("./transearch.js");
         st.textContent = "loading transcripts…";
         w.onmessage = (e) => { const m = e.data;
           if (m.type === "progress") st.textContent = `loading transcripts… ${m.loaded}/${m.total} shards · ${m.videos} videos`;
-          else if (m.type === "ready") { st.textContent = `${m.videos.toLocaleString()} videos · ${m.chunks.toLocaleString()} passages · ${m.words.toLocaleString()} distinct words — type to search`; if (q.value.trim()) ask(); }
+          else if (m.type === "ready") { st.textContent = `${m.videos.toLocaleString()} videos · ${m.chunks.toLocaleString()} passages · ${m.words.toLocaleString()} distinct words — type to search`;
+            if (m.years) for (const y of m.years) { const o = document.createElement("option"); o.value = y; o.textContent = y; $("tsYear").appendChild(o); }
+            ask(); }                                         // empty query -> browse: the LATEST videos show by default
           else if (m.type === "error") st.textContent = "failed to load transcripts: " + m.message;
           else if (m.type === "results" && m.id === qid) render(m);
+          else if (m.type === "browse" && m.id === qid) { browseTotal = m.total; lastVids = m.offset ? lastVids.concat(m.vids) : m.vids; renderBrowse(); }
           else if (m.type === "video" && m.id === vid && m.video) renderTranscript(m.video); };
         w.postMessage({ type: "load", base: "./assets/transcripts/" }); };
       q.addEventListener("input", () => { clearTimeout(deb); deb = setTimeout(ask, 250); });
