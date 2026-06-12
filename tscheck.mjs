@@ -32,6 +32,19 @@ const a = await ask("an idiot admires complexity", "exact");
 const b = await ask("idoit admires complexty", "typo'd (fuzzy)");
 await ask("CIA glow in the dark", "phrase");
 
+// link-form audit: /details/ links must use the player's double-decoded form (+ for spaces, %252B
+// for '+', never %20); non-playlist videos must use /download/ instead of a bouncing /details/ link
+const linkAudit = await page.$$eval("#tsOut a[href*='archive.org']", (as) => {
+  let det = 0, dl = 0, bad = [];
+  for (const a of as) {
+    if (a.href.includes("/details/")) { det++; if (a.href.includes("%20") || !a.href.includes("?start=")) bad.push(a.href.slice(0, 120)); }
+    else if (a.href.includes("/download/")) dl++;
+  }
+  return { det, dl, bad: bad.slice(0, 3) };
+});
+console.log(`\n== link audit == details:${linkAudit.det} download:${linkAudit.dl} malformed:${linkAudit.bad.length}`, linkAudit.bad);
+if (linkAudit.bad.length) throw new Error("malformed details links");
+
 // --- copy a single passage ---
 await page.click("#tsOut .ts-hit .ts-cp");
 await page.waitForTimeout(300);

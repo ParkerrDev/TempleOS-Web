@@ -125,7 +125,7 @@ function query(q, id) {
     if (nVid >= 3) continue;
     perVid.set(vi, nVid + 1);
     const [sec, text] = v.s[chunkI[c]];
-    hits.push({ score, t: v.t, d: v.d, f: v.f, n: v.n, sec, text });
+    hits.push({ score, t: v.t, d: v.d, f: v.f, n: v.n, p: v.p, sec, text });
     if (hits.length >= 60) break;
   }
   postMessage({ type: "results", id, hits, terms, total: scored.length });
