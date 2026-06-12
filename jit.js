@@ -89,7 +89,7 @@ let JITRIP = 0, JITN = 0, RUNTBL = null, RUNDISP = null, RASTERHLE = null;
 // already advanced past the call, continue) or 0=fall through (exit so the interpreter runs the real fn).
 function buildRuntime() {
   if (!RIP || !JITRIP || !MEM) return; const rm = new Module();
-  if (MEM && MEM.buffer instanceof SharedArrayBuffer) rm.importMemory("env", "mem", 1, 8192, true);   // shared guest RAM (SMP): import must declare shared (+max)
+  if (MEM && typeof SharedArrayBuffer !== "undefined" && MEM.buffer instanceof SharedArrayBuffer) rm.importMemory("env", "mem", 1, 8192, true);   // shared guest RAM (SMP): import must declare shared (+max). typeof-guard: without cross-origin isolation the global does not EXIST and instanceof throws
   else rm.importMemory("env", "mem", 1);
   const HLE = RASTERHLE != null, RH = HLE ? rm.importFunc("env", "RasterHLE", [], [VT.i64]) : 0;   // imports MUST precede defined funcs -> import first
   rm.setTable(65536); rm.exportTable("tbl");
@@ -210,7 +210,7 @@ export function jitCompile(rip) {
     return e.ninstr; }
   FLAGPEND = null; rcUsed = 0; rcDirty = 0; rcX87 = 0;
   const m = new Module();                                 // build module + imports first so RD_IDX/WR_IDX are known
-  if (MEM && MEM.buffer instanceof SharedArrayBuffer) m.importMemory("env", "mem", 1, 8192, true);    // shared guest RAM (SMP)
+  if (MEM && typeof SharedArrayBuffer !== "undefined" && MEM.buffer instanceof SharedArrayBuffer) m.importMemory("env", "mem", 1, 8192, true);    // shared guest RAM (SMP; typeof-guard — see buildRuntime)
   else m.importMemory("env", "mem", 1); RD_IDX = m.importFunc("env", "RdMem", [VT.i64, VT.i64], [VT.i64]); WR_IDX = m.importFunc("env", "WrMem", [VT.i64, VT.i64, VT.i64], []);
   const blk = m.func([], [VT.i32], "blk");   // returns instr count (i32 -> JS number, no BigInt in the dispatch loop)
   const f = new Func();

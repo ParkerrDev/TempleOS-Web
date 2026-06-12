@@ -33,17 +33,16 @@ const MIME = {
 };
 
 createServer(async (req, res) => {
-  let path0 = decodeURIComponent((req.url || "/").split("?")[0]);
-  // cross-origin isolation — the whole point of needing a special server.
-  // EXCEPT player.html: it streams cross-origin video from archive.org (no CORP/CORS there),
-  // which COEP would block. Mirrors the /player.html override in _headers (Netlify).
-  if (path0 !== "/player.html") {
+  // Cross-origin isolation is OFF by default — parity with the deployed _headers (the site
+  // no longer uses SharedArrayBuffer; inline archive.org video streaming needs no COEP).
+  // COI=1 re-enables it for local SMP/shared-memory experiments.
+  if (process.env.COI) {
     res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
     res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
     res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
   }
 
-  let path = path0;
+  let path = decodeURIComponent((req.url || "/").split("?")[0]);
   if (path === "/") path = "/index.html";
   if (path === "/hemu" || path === "/hemu/") path = "/hemu.html";
   // contain to ROOT (no path traversal)
