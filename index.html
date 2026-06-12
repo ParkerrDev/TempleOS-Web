@@ -44,7 +44,7 @@
     /* the border row, TempleOS-style: one text-cell-high bar CENTERED on the double lines
        (border box is 6px tall at y 0..6 -> 13px bar spans -4..9, equal overhang).
        Layout per DocBorderNew: MENU(+LX, $$BK$$) | border line | title(+CX+IV, capped) hex | [X](+RX) */
-    .wbar { position:absolute; top:-4px; left:2px; right:2px; height:13px; display:flex; align-items:stretch;
+    .wbar { position:absolute; top:-7px; left:2px; right:2px; height:13px; display:flex; align-items:stretch;
             background:transparent; z-index:2; overflow:hidden; user-select:none; }
     .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:13px; padding:0 3px;
              animation:menuBlink 1s step-start infinite; }
@@ -62,10 +62,10 @@
              font-size:8px; line-height:8px; letter-spacing:0; text-align:start; user-select:none; }
     .close { flex:0 0 auto; font-size:11px; line-height:13px; padding:0 2px; color:var(--blue); background:#fff; }
     /* yellow corner handles on the focused window, like the real WinMgr */
-    .wcorn { position:absolute; width:7px; height:7px; background:yellow; z-index:3; display:none; pointer-events:none; }
+    .wcorn { position:absolute; width:11px; height:11px; background:yellow; z-index:3; display:none; pointer-events:none; }
+    .wcorn::after { content:""; position:absolute; inset:3px; background:var(--blue); }
     .active > .wcorn { display:block; }
-    .wcorn.tl { top:-5px; left:-5px; } .wcorn.tr { top:-5px; right:-5px; }
-    .wcorn.bl { bottom:-5px; left:-5px; } .wcorn.br { bottom:-5px; right:-5px; }
+    .wcorn.tl { top:-7px; left:-7px; } .wcorn.br { bottom:-7px; right:-7px; }
     .win-ph { visibility:hidden; }   /* placeholder keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
@@ -878,12 +878,13 @@ I64 GodDoodleGen(I64 strokes)
           hx.textContent = "=" + (0x10000000 + (hsh % 0x0FFFFFF8)).toString(16).toUpperCase();
           bar.append(hx);
         }
+        const gap2 = document.createElement("span"); gap2.className = "wgap"; bar.appendChild(gap2);
         let x = w.querySelector(":scope > .close");
         if (x) bar.appendChild(x);
         if (x && w.id !== "frame" && !w.closest(".overlay")) x.addEventListener("click", () => closeWin(w));
         const v = document.createElement("span"); v.className = "wvert";
         v.textContent = w.dataset.title.split("·")[0].trim();
-        for (const c of ["tl", "tr", "bl", "br"]) { const d = document.createElement("div"); d.className = "wcorn " + c; w.appendChild(d); }
+        for (const c of ["tl", "br"]) { const d = document.createElement("div"); d.className = "wcorn " + c; w.appendChild(d); }
         w.prepend(v); w.prepend(bar);
         w._title = w.dataset.title; w.removeAttribute("data-title");
         w.addEventListener("pointerdown", () => setActive(w), true);
