@@ -178,15 +178,16 @@ console.log("  back to results OK");
 
 // DETACH [_]: the dark backdrop goes away, the window joins the desktop, OS keys flow again
 {
-  await page.click("#tsWin .undock");
+  await page.click("#tsUndock");
   const f = await page.evaluate(() => { const ov = document.getElementById("tsOverlay");
-    return { free: ov.classList.contains("free"), bg: getComputedStyle(ov).backgroundColor, pe: getComputedStyle(ov).pointerEvents }; });
+    return { free: ov.classList.contains("free"), bg: getComputedStyle(ov).backgroundColor, pe: getComputedStyle(ov).pointerEvents,
+      label: document.getElementById("tsUndock").textContent, chrome: !!document.querySelector("#tsWin .wbar .undock") }; });
   console.log("\n== detach ==", JSON.stringify(f));
-  if (!(f.free && f.pe === "none" && /rgba\(0, 0, 0, 0\)|transparent/.test(f.bg))) throw new Error("detach wrong");
-  await page.click("#tsWin .undock");                              // re-dock
-  const f2 = await page.evaluate(() => document.getElementById("tsOverlay").classList.contains("free"));
-  if (f2) throw new Error("re-dock failed");
-  console.log("  DETACH/REDOCK OK (backdrop off, clicks pass through)");
+  if (!(f.free && f.pe === "none" && /rgba\(0, 0, 0, 0\)|transparent/.test(f.bg) && f.label === "Re-dock" && !f.chrome)) throw new Error("detach wrong");
+  await page.click("#tsUndock");                                   // re-dock
+  const f2 = await page.evaluate(() => ({ free: document.getElementById("tsOverlay").classList.contains("free"), label: document.getElementById("tsUndock").textContent }));
+  if (f2.free || f2.label !== "Detach") throw new Error("re-dock failed: " + JSON.stringify(f2));
+  console.log("  DETACH/REDOCK OK (button row, not the decorations; backdrop off, clicks pass through)");
 }
 
 // × clear button (replaces the browser's native search-cancel)

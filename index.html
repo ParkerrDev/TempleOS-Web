@@ -344,7 +344,6 @@
   <!-- HolyC -> WebAssembly editor overlay -->
   <div id="editorOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="HolyC to WebAssembly editor">
     <div class="win" id="editorWin" data-title="HolyC → WebAssembly Editor">
-      <span class="undock" title="detach: remove the dark backdrop so this window joins the desktop">[_]</span>
       <span class="close" id="editorClose" title="Close editor">[X]</span>
       <div class="ed-bar">
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
@@ -352,6 +351,7 @@
         <button id="edSave" title="Download the source as a .HC file">↓ Save</button>
         <button id="edOpen" title="Open a .HC file from your computer">↥ Open</button>
         <button id="edToDisk" title="Write the source to /Home on the C: drive so TempleOS can run it">➜ To C:/Home</button>
+        <button id="edUndock" title="remove the dark backdrop — this window joins the desktop">Detach</button>
         <span id="status">ready</span>
       </div>
       <div class="ed-body">
@@ -374,7 +374,6 @@
        semantics compiled in-browser by holyc-wasm; entropy pooled from your input timing + CSPRNG. -->
   <div id="godOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="God Tools">
     <div class="win" id="godWin" data-title="God Tools · Adam/God · holyc-wasm">
-      <span class="undock" title="detach: remove the dark backdrop so this window joins the desktop">[_]</span>
       <span class="close" id="godClose" title="Close">[X]</span>
       <div id="godOut"></div>
       <div id="godBar">
@@ -383,6 +382,7 @@
         <button id="godSong">♪ Song</button>
         <button id="godDoodle">✎ Doodle</button>
         <button id="godClear">Clear</button>
+        <button id="godUndock" title="remove the dark backdrop — this window joins the desktop">Detach</button>
       </div>
     </div>
   </div>
@@ -390,7 +390,6 @@
   <!-- Disk & Save overlay -->
   <div id="diskOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Disk and Save">
     <div class="win" id="diskWin" data-title="Disk &amp; Save">
-      <span class="undock" title="detach: remove the dark backdrop so this window joins the desktop">[_]</span>
       <span class="close" id="diskClose" title="Close">[X]</span>
       <div class="disk-body">
         <div class="disk-sec">
@@ -418,6 +417,7 @@
           </div>
           <ul id="homeList"></ul>
         </div>
+        <div class="disk-row" style="padding-top:8px"><button id="diskUndock" title="remove the dark backdrop — this window joins the desktop">Detach</button></div>
         <div id="diskStatus"></div>
       </div>
     </div>
@@ -428,12 +428,12 @@
        links to ITS SOURCE VIDEO on archive.org, seeked to the matching moment. -->
   <div id="tsOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Terry A. Davis transcript search">
     <div class="win" id="tsWin" data-title="Terry Search · every word he said on video">
-      <span class="undock" title="detach: remove the dark backdrop so this window joins the desktop">[_]</span>
       <span class="close" id="tsClose" title="Close">[X]</span>
       <div id="tsBar"><input id="tsQ" type="search" placeholder="search Terry's transcripts… (typos OK)"
         autocomplete="off" autocapitalize="off" spellcheck="false" />
         <button id="tsClear" title="clear the search">×</button>
-        <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button></div>
+        <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button>
+        <button id="tsUndock" title="remove the dark backdrop — this window joins the desktop and the OS stays usable behind it">Detach</button></div>
       <div id="tsCtl">
         <span class="ts-seg" title="what to search">
           <button data-sc="all" class="on">All</button><button data-sc="title">Titles</button><button data-sc="text">Transcript</button>
@@ -1236,7 +1236,7 @@ I64 GodDoodleGen(I64 strokes)
         handle.style.touchAction = "none";
         w.addEventListener("pointerdown", () => { if (w.dataset.floating) raise(); }, true);
         handle.addEventListener("pointerdown", (e) => {
-          if (e.target.closest(".close,.undock,button,select,a,input,textarea")) return;
+          if (e.target.closest(".close,button,select,a,input,textarea")) return;
           const r = w.getBoundingClientRect();
           if (!w.dataset.floating) {
             if (!w.closest(".overlay")) {                       // overlays are already fixed-context
@@ -1319,9 +1319,6 @@ I64 GodDoodleGen(I64 strokes)
         const ts = document.createElement("span"); ti.appendChild(ts);
         bar.append(mn, gap, ti);
         const gap2 = document.createElement("span"); gap2.className = "wgap"; bar.appendChild(gap2);
-        const u = w.querySelector(":scope > .undock");
-        if (u) { bar.appendChild(u);
-          u.addEventListener("click", () => { const ov = w.closest(".overlay"); if (ov) { ov.classList.toggle("free"); raise(ov); } }); }
         let x = w.querySelector(":scope > .close");
         if (x) bar.appendChild(x);
         if (x && opts.onClose) x.addEventListener("click", opts.onClose);
@@ -1368,6 +1365,14 @@ I64 GodDoodleGen(I64 strokes)
       requestAnimationFrame(() => { for (const w of wins) sizeMarquee(w); });
       winChrome = { dress, sizeMarquee, setActive, raise };
       window.__winChrome = winChrome;                       // the editor overlay lives in a separate classic script
+      // Detach buttons (in each overlay window's own button row — the chrome stays authentic):
+      // toggle the dark backdrop; closing the window resets to modal, so the label tracks the class.
+      for (const [bid, oid] of [["tsUndock", "tsOverlay"], ["godUndock", "godOverlay"], ["diskUndock", "diskOverlay"], ["edUndock", "editorOverlay"]]) {
+        const bt = $(bid), ov = $(oid); if (!bt || !ov) continue;
+        bt.addEventListener("click", () => { const free = ov.classList.toggle("free"); raise(ov); bt.textContent = free ? "Re-dock" : "Detach"; });
+        new MutationObserver(() => { if (!ov.classList.contains("free") && bt.textContent !== "Detach") bt.textContent = "Detach"; })
+          .observe(ov, { attributes: true, attributeFilter: ["class"] });
+      }
     }
 
     // ---- Pause / Play ----
