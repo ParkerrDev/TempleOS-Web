@@ -354,14 +354,14 @@
 
     // ---- integer page zoom: the only scaling that keeps the 8px grid un-anti-aliased.
     //      zoom multiplies viewport-unit lengths too, so vh/vw rules carry a *var(--zi) inverse. ----
-    { const saved = +localStorage.getItem("tos-zoom") || (innerWidth >= 1280 ? 2 : 1);
+    { const saved = +localStorage.getItem("tos-zoom-v2") || 1;   // 1x default — zoom is opt-in
       let Z = Math.max(1, Math.min(3, saved | 0));
       const apply = () => {
         document.documentElement.style.zoom = Z;
         document.documentElement.style.setProperty("--zi", (1 / Z).toString());
         document.body.classList.toggle("stack", innerWidth / Z < 980 || document.body.classList.contains("touch"));
         const b = $("zoomBtn"); if (b) b.textContent = "🔍 Zoom: " + (Z === 3 ? "1×" : (Z + 1) + "×");
-        localStorage.setItem("tos-zoom", Z);
+        localStorage.setItem("tos-zoom-v2", Z);
       };
       $("zoomBtn").addEventListener("click", () => { Z = Z >= 3 ? 1 : Z + 1; apply(); });
       addEventListener("resize", apply);
