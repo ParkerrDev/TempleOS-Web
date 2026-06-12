@@ -214,9 +214,14 @@
     /* Terry transcript search window */
     #tsWin { display:flex; flex-direction:column; gap:8px; width:min(860px,94vw); height:min(82vh,720px); margin:0; padding:10px; }
     #tsBar { display:flex; gap:8px; align-items:center; flex:0 0 auto; }
-    #tsQ { flex:1 1 auto; min-width:0; font-family:'dos_vga','TempleOS',monospace; font-size:16px; color:#000; background:#fff;
-           border:2px solid #fff; outline:2px solid #000; padding:4px 8px; }
+    #tsQwrap { position:relative; flex:1 1 auto; min-width:0; display:flex; }
+    #tsQ { width:100%; min-width:0; font-family:'dos_vga','TempleOS',monospace; font-size:16px; color:#000; background:#fff;
+           border:2px solid #fff; outline:2px solid #000; padding:4px 36px 4px 8px; }
     #tsQ::-webkit-search-cancel-button { -webkit-appearance:none; appearance:none; display:none; }   /* the browser's emoji-ish ✕ */
+    #tsClear { position:absolute; right:3px; top:50%; transform:translateY(-50%); width:auto; border:0; outline:0;
+               background:transparent; color:var(--blue); font-size:20px; line-height:1; padding:2px 8px; }
+    #tsClear:hover { color:#fff; background:var(--red); }
+    #tsQ:placeholder-shown + #tsClear { display:none; }   /* only show when there's something to clear */
     #tsCtl { display:flex; gap:10px; align-items:center; flex:0 0 auto; flex-wrap:wrap; }
     .ts-seg { display:flex; }
     .ts-seg button { width:auto; font-size:16px; padding:2px 10px; background:#fff; color:var(--blue); border:2px solid var(--blue); }
@@ -434,9 +439,9 @@
   <div id="tsOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Terry A. Davis transcript search">
     <div class="win" id="tsWin" data-title="Terry Search · every word he said on video">
       <span class="close" id="tsClose" title="Close">[X]</span>
-      <div id="tsBar"><input id="tsQ" type="search" placeholder="search Terry's transcripts… (typos OK)"
-        autocomplete="off" autocapitalize="off" spellcheck="false" />
-        <button id="tsClear" title="clear the search">×</button>
+      <div id="tsBar"><span id="tsQwrap"><input id="tsQ" type="search" placeholder="search Terry's transcripts… (typos OK)"
+        title="operators: &quot;exact phrase&quot; · -exclude · since:2017-06 · until:2017-11-19 · 2017-11-19"
+        autocomplete="off" autocapitalize="off" spellcheck="false" /><button id="tsClear" title="clear the search">×</button></span>
         <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button></div>
       <div id="tsCtl">
         <span class="ts-seg" title="what to search">
@@ -449,7 +454,8 @@
       </div>
       <div id="tsStatus">open to load transcripts…</div>
       <div id="tsOut"></div>
-      <div id="tsFoot">Whisper transcripts of the <a href="https://archive.org/details/TerryADavis_TempleOS_Archive" target="_blank" rel="noopener">TerryADavis_TempleOS_Archive</a> — click any result to watch that video at that moment.</div>
+      <div id="tsFoot">Whisper transcripts of the <a href="https://archive.org/details/TerryADavis_TempleOS_Archive" target="_blank" rel="noopener">TerryADavis_TempleOS_Archive</a> — click any result to watch that video at that moment.<br>
+        Operators: "exact phrase" · -exclude · since:2017-06 · until:2017-11-19 · date:2018 · bare dates work too (2017-11-19)</div>
     </div>
   </div>
 
@@ -1169,7 +1175,9 @@ I64 GodDoodleGen(I64 strokes)
         lastVids = m.vids || []; lastMsg = m; lastView = () => render(lastMsg);
         let html = "";
         if (lastVids.length) {
-          html += `<div class="ts-sec">${m.vtotal === lastVids.length ? m.vtotal : `top ${lastVids.length} of ${m.vtotal}`} matching title${m.vtotal === 1 ? "" : "s"}</div>` +
+          html += `<div class="ts-sec">${m.dateOnly
+              ? `${m.vtotal} video${m.vtotal === 1 ? "" : "s"} in this date range${m.vtotal > lastVids.length ? ` · top ${lastVids.length}` : ""}`
+              : `${m.vtotal === lastVids.length ? m.vtotal : `top ${lastVids.length} of ${m.vtotal}`} matching title${m.vtotal === 1 ? "" : "s"}`}</div>` +
             lastVids.map((v, j) => vidCard(v, j)).join("");
           if (m.hits.length) html += `<div class="ts-sec">matching passages</div>`;
         }
@@ -1183,8 +1191,9 @@ I64 GodDoodleGen(I64 strokes)
         out.innerHTML = html ||
           (q.value.trim() ? `<div class="ts-none">no matches — typos are OK, but he may never have said it</div>` : "");
         const bits = [];
-        if (scope !== "title") bits.push(`${m.total} matching passages`);
-        if (m.vtotal) bits.push(`${m.vtotal} matching title${m.vtotal === 1 ? "" : "s"}`);
+        if (m.dateOnly) bits.push(`${m.vtotal} video${m.vtotal === 1 ? "" : "s"} in range`);
+        else { if (scope !== "title") bits.push(`${m.total} matching passages`);
+               if (m.vtotal) bits.push(`${m.vtotal} matching title${m.vtotal === 1 ? "" : "s"}`); }
         if (m.hits.length || lastVids.length) st.textContent = bits.join(" · ") + " — ▶ plays in a window, ⧉ copies, click a card for the full transcript";
       };
       // full-transcript view for one video: back / copy-all / download .txt / watch, then every passage

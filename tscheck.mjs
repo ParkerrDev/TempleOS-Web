@@ -146,6 +146,31 @@ await page.screenshot({ path: "/tmp/ts_transcript.png" });
 await page.click("#tsBack");
 await page.waitForSelector("#tsOut .ts-hit", { timeout: 5000 });
 console.log("  back to results OK");
+// OPERATORS: exact phrases, exclusion, full dates, ranges, date-only listing
+{
+  const q = async (text, wait = "matching") => { await page.fill("#tsQ", text);
+    await page.waitForFunction((w) => new RegExp(w).test(document.getElementById("tsStatus").textContent) || document.querySelector("#tsOut .ts-none"), wait, { timeout: 15000 });
+    await page.waitForTimeout(300);
+    return page.evaluate(() => ({ st: document.getElementById("tsStatus").textContent,
+      none: !!document.querySelector("#tsOut .ts-none"),
+      texts: [...document.querySelectorAll("#tsOut .ts-hit:not(.ts-vidcard) .ts-x")].slice(0, 8).map((e) => e.textContent.toLowerCase()),
+      dates: [...document.querySelectorAll("#tsOut .ts-hit .ts-m")].slice(0, 60).map((e) => e.textContent.slice(0, 10)) })); };
+
+  const ex = await q('"i do a round robin"');
+  if (ex.none || !ex.texts.some((t) => t.includes("i do a round robin"))) throw new Error("exact phrase failed");
+  const exneg = await q('"idoit admires complexty"', "matching|videos ·");   // typo INSIDE quotes = NO fuzzy = no matches
+  if (!exneg.none) throw new Error("quoted typo should NOT fuzzy-match: " + exneg.st);
+  const minus = await q('"round robin" -priorities');
+  if (minus.none || minus.texts.some((t) => t.includes("priorities"))) throw new Error("exclusion failed");
+  const day = await q("2017-11-19 glow");
+  if (day.none || !day.dates.length || !day.dates.every((d) => d === "2017-11-19")) throw new Error("full-date filter failed: " + JSON.stringify(day.dates.slice(0, 3)));
+  const range = await q("since:2017-10 until:2017-11 glow in the dark");
+  if (range.none || !range.dates.length || !range.dates.every((d) => d >= "2017-10" && d.slice(0, 7) <= "2017-11")) throw new Error("range failed: " + JSON.stringify(range.dates.slice(0, 3)));
+  const donly = await q("since:2018-08", "in range");
+  if (!/in range/.test(donly.st) || !donly.dates.length || !donly.dates.every((d) => d >= "2018-08")) throw new Error("date-only listing failed: " + donly.st);
+  console.log("\n== operators == exact ✓ quoted-typo-rejected ✓ -exclude ✓ day ✓ range ✓ date-only(" + donly.dates.length + " vids) ✓");
+}
+
 // FILTERS: titles scope, year filter, sort
 {
   await page.click('.ts-seg button[data-sc="title"]');
@@ -191,8 +216,15 @@ console.log("  back to results OK");
   console.log("  DETACH OK (one-way [X]; close+reopen restores the backdrop)");
 }
 
-// × clear button (replaces the browser's native search-cancel)
+// × clear button (inside the input; hidden when empty)
 {
+  await page.fill("#tsQ", "something");
+  await page.waitForTimeout(400);
+  const hiddenWhenEmpty = await page.evaluate(() => { const i = document.getElementById("tsQ"); i.value = "";
+    i.dispatchEvent(new Event("input", { bubbles: true }));
+    return getComputedStyle(document.getElementById("tsClear")).display === "none"; });
+  if (!hiddenWhenEmpty) throw new Error("clear × should hide when the input is empty");
+  await page.fill("#tsQ", "something");
   await page.click("#tsClear");
   await page.waitForFunction(() => /videos ·/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
   const v = await page.$eval("#tsQ", (e) => e.value);
