@@ -3,3 +3,4 @@ node_modules/
 /tmp/
 # NOTE: vendor/**/*.wasm is intentionally committed — the site needs it.
 reference/
+TerryADavis-archive-transcriber/
