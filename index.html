@@ -107,9 +107,12 @@
                          display:flex; align-items:center; justify-content:center; }
     body.fakefs #frame .wbar, body.fakefs #frame .wvert, body.fakefs #frame .cap, body.fakefs #loadui { display:none; }
     body.fakefs canvas#canvas { height:min(calc(100dvh * var(--zi)), calc(75vw * var(--zi))); width:auto; max-width:calc(100vw * var(--zi)); }
+    /* REAL fullscreen: kill the window chrome's white border-image fill — the letterbox around
+       the 4:3 canvas must be plain black (fakefs below already does this) */
+    #frame.fsmode { border-image:none !important; background:#000; }
     #fsExit { display:none; position:absolute; top:6px; right:8px; z-index:7; width:auto; font-size:15px;
               padding:4px 9px; opacity:.88; }
-    #frame.fsmode #fsExit { display:block; }   /* mouse is free in fullscreen now, so the button is reachable everywhere */
+    body.touch #frame.fsmode #fsExit { display:block; }   /* touch only: desktop fullscreen confines the mouse to the OS (Esc exits) */
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
     #ldtext { font-size:16px; max-width:560px; line-height:1.5; min-height:2.4em; }
@@ -150,6 +153,10 @@
     /* ---- overlays (HolyC editor / God Words): a window floating over the desktop ---- */
     .overlay { position:fixed; inset:0; z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,.66); }
     .overlay.open { display:flex; }
+    /* detached ([_]): the dark backdrop goes away and the window joins the desktop — the page
+       (and the OS) stay fully interactive behind it */
+    .overlay.free { background:transparent; pointer-events:none; }
+    .overlay.free > .win { pointer-events:auto; }
     .overlay .close { cursor:pointer; }
     .overlay .close:hover { color:#fff; background:var(--blue); }
     #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }
@@ -206,6 +213,7 @@
     #tsBar { display:flex; gap:8px; align-items:center; flex:0 0 auto; }
     #tsQ { flex:1 1 auto; min-width:0; font-family:'dos_vga','TempleOS',monospace; font-size:16px; color:#000; background:#fff;
            border:2px solid #fff; outline:2px solid #000; padding:4px 8px; }
+    #tsQ::-webkit-search-cancel-button { -webkit-appearance:none; appearance:none; display:none; }   /* the browser's emoji-ish ✕ */
     #tsCtl { display:flex; gap:10px; align-items:center; flex:0 0 auto; flex-wrap:wrap; }
     .ts-seg { display:flex; }
     .ts-seg button { width:auto; font-size:16px; padding:2px 10px; background:#fff; color:var(--blue); border:2px solid var(--blue); }
@@ -308,7 +316,7 @@
           <div id="tL" class="tbtn">L</div>
           <div id="tR" class="tbtn">R</div>
         </div>
-        <button id="fsExit" type="button" title="exit fullscreen">✕ exit</button>
+        <button id="fsExit" type="button" title="exit fullscreen">× exit</button>
         <div id="loadui">
           <div id="ldtext">loading hemu…</div>
           <div class="ldbarwrap"><i id="ldbar"></i></div>
@@ -336,6 +344,7 @@
   <!-- HolyC -> WebAssembly editor overlay -->
   <div id="editorOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="HolyC to WebAssembly editor">
     <div class="win" id="editorWin" data-title="HolyC → WebAssembly Editor">
+      <span class="undock" title="detach: remove the dark backdrop so this window joins the desktop">[_]</span>
       <span class="close" id="editorClose" title="Close editor">[X]</span>
       <div class="ed-bar">
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
@@ -365,6 +374,7 @@
        semantics compiled in-browser by holyc-wasm; entropy pooled from your input timing + CSPRNG. -->
   <div id="godOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="God Tools">
     <div class="win" id="godWin" data-title="God Tools · Adam/God · holyc-wasm">
+      <span class="undock" title="detach: remove the dark backdrop so this window joins the desktop">[_]</span>
       <span class="close" id="godClose" title="Close">[X]</span>
       <div id="godOut"></div>
       <div id="godBar">
@@ -380,6 +390,7 @@
   <!-- Disk & Save overlay -->
   <div id="diskOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Disk and Save">
     <div class="win" id="diskWin" data-title="Disk &amp; Save">
+      <span class="undock" title="detach: remove the dark backdrop so this window joins the desktop">[_]</span>
       <span class="close" id="diskClose" title="Close">[X]</span>
       <div class="disk-body">
         <div class="disk-sec">
@@ -417,9 +428,11 @@
        links to ITS SOURCE VIDEO on archive.org, seeked to the matching moment. -->
   <div id="tsOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Terry A. Davis transcript search">
     <div class="win" id="tsWin" data-title="Terry Search · every word he said on video">
+      <span class="undock" title="detach: remove the dark backdrop so this window joins the desktop">[_]</span>
       <span class="close" id="tsClose" title="Close">[X]</span>
       <div id="tsBar"><input id="tsQ" type="search" placeholder="search Terry's transcripts… (typos OK)"
         autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <button id="tsClear" title="clear the search">×</button>
         <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button></div>
       <div id="tsCtl">
         <span class="ts-seg" title="what to search">
@@ -556,9 +569,15 @@
 
     canvas.addEventListener("mousedown", e => { if (document.body.classList.contains("touch")) return;
       setFocused(true); msB |= btnBit(e); e.preventDefault(); notifyInput(); });
+    // fullscreen: clicks on the letterbox act IN the OS (clamped to the canvas edge), never on the page
+    $("frame").addEventListener("mousedown", e => { if (document.body.classList.contains("touch")) return;
+      if (!$("frame").classList.contains("fsmode") || e.target === canvas || e.target.closest("#fsExit")) return;
+      setFocused(true); mapAbs(e, canvas.getBoundingClientRect()); msB |= btnBit(e); e.preventDefault(); notifyInput(); });
     document.addEventListener("mouseup", e => { if (msB && !document.body.classList.contains("touch")) { msB &= ~btnBit(e); notifyInput(); } });
     document.addEventListener("mousemove", e => { if (document.body.classList.contains("touch")) return;
-      const r = overCanvas(e); if (r) { mapAbs(e, r); notifyInput(); } });   // absolute over the canvas = auto re-align
+      const r = overCanvas(e); if (r) { mapAbs(e, r); notifyInput(); }       // absolute over the canvas = auto re-align
+      // fullscreen: the mouse can't LEAVE the OS — positions over the letterbox clamp to the canvas edge
+      else if ($("frame").classList.contains("fsmode")) { mapAbs(e, canvas.getBoundingClientRect()); notifyInput(); } });
     document.addEventListener("mousedown", e => {                            // focus bookkeeping for clicks anywhere
       if (releasesFocus(e.target)) setFocused(false);
       else if (!keepsFocus(e.target)) setFocused(false);                     // clicked page content -> release
@@ -568,7 +587,7 @@
 
     const keysToOS = (e) => {
       if (e && e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return false;
-      if (document.querySelector(".overlay.open")) return false;
+      if (document.querySelector(".overlay.open:not(.free)")) return false;   // a DETACHED overlay doesn't swallow OS keys
       return focused || document.body.classList.contains("touch");
     };
     addEventListener("keydown", e => {
@@ -997,8 +1016,8 @@ I64 GodDoodleGen(I64 strokes)
         cx2.putImageData(im, 0, 0); append(c); });
       $("godClear").addEventListener("click", () => { out.textContent = ""; });
       ov.addEventListener("pointerdown", (e) => { if (e.target === ov) close(); });
-      const open = () => { ov.classList.add("open"); init(); };
-      const close = () => ov.classList.remove("open");
+      const open = () => { ov.classList.add("open"); winChrome && winChrome.raise(ov); init(); };
+      const close = () => ov.classList.remove("open", "free");
       $("godBtn").addEventListener("click", open);
       $("godClose").addEventListener("click", close);
     }
@@ -1035,7 +1054,7 @@ I64 GodDoodleGen(I64 strokes)
       //      <video> just works; .mkv plays in Chromium-family; undecodable formats fall back). ----
       const DLBASE = "https://archive.org/download/TerryADavis_TempleOS_Archive/";
       const dl = (h, sec) => DLBASE + h.f.split("/").map(encodeURIComponent).join("/") + (sec ? "#t=" + Math.max(0, sec - 2) : "");
-      let vidZ = 1200, vidN = 0;
+      let vidN = 0;
       const vidWins = new Set();
       const openVideoWindow = (h, sec) => {
         const w = document.createElement("div");
@@ -1059,15 +1078,15 @@ I64 GodDoodleGen(I64 strokes)
         document.body.appendChild(w);
         const n = vidN++ % 7;                                  // cascade new windows
         w.dataset.floating = "1";
-        w.style.position = "fixed"; w.style.zIndex = ++vidZ;
+        w.style.position = "fixed";
         w.style.width = "min(560px, 92vw)";
         w.style.left = Math.max(8, innerWidth / 2 - 280 + n * 30) + "px";
         w.style.top = (84 + n * 28) + "px";
         w._tsF = h.f; w._tsVideo = v;
         vidWins.add(w);
         const destroy = () => { v.pause(); v.removeAttribute("src"); v.load(); w.remove(); vidWins.delete(w); };
-        winChrome.dress(w, { onClose: destroy, raise: () => { w.style.zIndex = ++vidZ; } });
-        winChrome.sizeMarquee(w); winChrome.setActive(w);
+        winChrome.dress(w, { onClose: destroy });
+        winChrome.sizeMarquee(w); winChrome.setActive(w);   // setActive also raises to the front
         return w;
       };
       // a transcript [h:mm:ss] click seeks an open window of that same video (raising it)
@@ -1075,7 +1094,7 @@ I64 GodDoodleGen(I64 strokes)
         for (const w of vidWins) if (w._tsF === f && w.isConnected) {
           const v = w._tsVideo; if (!v || !v.src) continue;
           v.currentTime = Math.max(0, sec - 2); v.play().catch(() => {});
-          w.style.zIndex = ++vidZ; winChrome.setActive(w);
+          winChrome.setActive(w);
           return true;
         }
         return false;
@@ -1200,23 +1219,24 @@ I64 GodDoodleGen(I64 strokes)
           else if (m.type === "video" && m.id === vid && m.video) renderTranscript(m.video); };
         w.postMessage({ type: "load", base: "./assets/transcripts/" }); };
       q.addEventListener("input", () => { clearTimeout(deb); deb = setTimeout(ask, 250); });
+      $("tsClear").addEventListener("click", () => { q.value = ""; ask(); q.focus(); });
       ov.addEventListener("pointerdown", (e) => { if (e.target === ov) ov.classList.remove("open"); });
-      $("tsBtn").addEventListener("click", () => { ov.classList.add("open"); init(); setTimeout(() => q.focus(), 50); });
-      $("tsClose").addEventListener("click", () => ov.classList.remove("open"));
+      $("tsBtn").addEventListener("click", () => { ov.classList.add("open"); winChrome && winChrome.raise(ov); init(); setTimeout(() => q.focus(), 50); });
+      $("tsClose").addEventListener("click", () => ov.classList.remove("open", "free"));
     }
 
     // ---- TempleOS window chrome + dragging: every [data-title] window gets a bar with a
     //      blinking MENU chip, a scrolling title marquee, its [X], and a vertical title up the
     //      left border; the bar drags the window (pointer events: mouse AND touch), windows
     //      raise on press, stay partly on-screen, and leave a placeholder so the layout holds. ----
-    { let zTop = 60;
+    { let zTop = 1000;   // shared by EVERYTHING (desktop windows, overlays, video windows): whatever you focus comes to the front
       const closeWin = (w) => { w.style.display = "none"; if (w._ph) { w._ph.remove(); w._ph = null; } };
       const makeDraggable = (w, handle, raiseFn) => {
         const raise = raiseFn || (() => { w.style.zIndex = ++zTop; });
         handle.style.touchAction = "none";
         w.addEventListener("pointerdown", () => { if (w.dataset.floating) raise(); }, true);
         handle.addEventListener("pointerdown", (e) => {
-          if (e.target.closest(".close,button,select,a,input,textarea")) return;
+          if (e.target.closest(".close,.undock,button,select,a,input,textarea")) return;
           const r = w.getBoundingClientRect();
           if (!w.dataset.floating) {
             if (!w.closest(".overlay")) {                       // overlays are already fixed-context
@@ -1280,7 +1300,13 @@ I64 GodDoodleGen(I64 strokes)
 .win.active, #frame.active { border-image:url("${mk(1)}") 14 fill / 14px repeat; }`;
         document.head.appendChild(st);
       }
-      const setActive = (w) => { for (const a of document.querySelectorAll(".active")) a.classList.remove("active"); w.classList.add("active"); };
+      const setActive = (w) => { for (const a of document.querySelectorAll(".active")) a.classList.remove("active"); w.classList.add("active");
+        // ...and RAISE it: a window inside an overlay raises the overlay (its stacking context);
+        // a static-flow window gets position:relative so z-index applies without moving it.
+        const ov = w.closest(".overlay");
+        if (ov) ov.style.zIndex = ++zTop;
+        else { if (getComputedStyle(w).position === "static") w.style.position = "relative"; w.style.zIndex = ++zTop; } };
+      const raise = (el) => { el.style.zIndex = ++zTop; };
       // dress(): give ANY element the full TempleOS window chrome (bar, marquee, vertical title,
       // corner handles, dragging). opts.menuReopen = the static-desktop close behavior (hide +
       // reopen button in Menu); opts.onClose = custom [X] handler (e.g. video windows DESTROY);
@@ -1293,6 +1319,9 @@ I64 GodDoodleGen(I64 strokes)
         const ts = document.createElement("span"); ti.appendChild(ts);
         bar.append(mn, gap, ti);
         const gap2 = document.createElement("span"); gap2.className = "wgap"; bar.appendChild(gap2);
+        const u = w.querySelector(":scope > .undock");
+        if (u) { bar.appendChild(u);
+          u.addEventListener("click", () => { const ov = w.closest(".overlay"); if (ov) { ov.classList.toggle("free"); raise(ov); } }); }
         let x = w.querySelector(":scope > .close");
         if (x) bar.appendChild(x);
         if (x && opts.onClose) x.addEventListener("click", opts.onClose);
@@ -1337,7 +1366,8 @@ I64 GodDoodleGen(I64 strokes)
       for (const w of wins) dress(w, { menuReopen: true });
       setActive($("frame"));
       requestAnimationFrame(() => { for (const w of wins) sizeMarquee(w); });
-      winChrome = { dress, sizeMarquee, setActive };
+      winChrome = { dress, sizeMarquee, setActive, raise };
+      window.__winChrome = winChrome;                       // the editor overlay lives in a separate classic script
     }
 
     // ---- Pause / Play ----
@@ -1404,8 +1434,8 @@ I64 GodDoodleGen(I64 strokes)
       });
       $("lsHome").addEventListener("click", () => { say("reading /Home…"); engine.post({ cmd: "listDir", dir: "Home" }); });
 
-      const open = () => { ov.classList.add("open"); st.textContent = engine.kind ? "" : "engine not ready yet"; };
-      const close = () => ov.classList.remove("open");
+      const open = () => { ov.classList.add("open"); winChrome && winChrome.raise(ov); st.textContent = engine.kind ? "" : "engine not ready yet"; };
+      const close = () => ov.classList.remove("open", "free");
       $("diskBtn").addEventListener("click", open);
       $("diskClose").addEventListener("click", close);
       ov.addEventListener("pointerdown", (e) => { if (e.target === ov) close(); });
@@ -1438,6 +1468,7 @@ I64 GodDoodleGen(I64 strokes)
       let loaded = false;
       function open() {
         ov.classList.add("open");
+        if (window.__winChrome) window.__winChrome.raise(ov);
         if (!loaded) {
           loaded = true;
           import("./native/app.js")
@@ -1446,7 +1477,7 @@ I64 GodDoodleGen(I64 strokes)
         }
       }
       function close() {
-        ov.classList.remove("open");
+        ov.classList.remove("open", "free");
         if (window.__holycEditor) window.__holycEditor.stop();
       }
       openBtn.addEventListener("click", open);
