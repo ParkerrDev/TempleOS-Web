@@ -1,9 +1,9 @@
 <!doctype html>
-<!-- player.html — mini-player for archive.org videos that AREN'T in the item's web player
-     (no derivative was ever made: .mkv/.avi/.wmv originals). Chromium plays Matroska natively,
-     so streaming the original beats forcing a download for 93% of these. This page must stay
-     OUTSIDE the site's COEP isolation (see _headers /player.html override + server.mjs): the
-     cross-origin video stream has no CORP/CORS headers, so a COEP'd page would block it. -->
+<!-- player.html — standalone player page. Reached ONLY from a result's red title link when the
+     video can't be played on archive.org (no web derivative: .mkv/.avi/.wmv originals), and from
+     copied/shared links. Chromium plays Matroska natively, so streaming the original beats a
+     download for most of these. ?f=<path within the item>&t=<seconds>&n=<title>&p=1 (p=1 -> the
+     file IS in archive.org's web player, so offer "Open in Archive.org"). -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -16,29 +16,30 @@
     html,body { height:100%; }
     body { background:var(--blue); color:#fff; font-family:'dos_vga','TempleOS',monospace; font-size:16px;
            display:flex; flex-direction:column; gap:10px; padding:14px; }
+    #bar { display:flex; gap:14px; align-items:center; }
+    a.btn, button.btn { background:#fff; color:#000; text-decoration:none; padding:3px 10px; border:2px solid #fff;
+                        font-family:inherit; font-size:16px; }
+    a.btn:hover, button.btn:hover { border-color:yellow; }
+    #dl { margin-left:auto; }
     h1 { font-size:16px; font-weight:normal; color:yellow; word-break:break-word; }
-    h1 small { color:#fff; }
     #wrap { flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; background:#000;
             border:4px double #fff; }
     video { max-width:100%; max-height:100%; outline:none; background:#000; }
     #msg { display:none; padding:24px; max-width:640px; line-height:1.5; }
     #msg b { color:yellow; }
-    #bar { display:flex; gap:14px; flex-wrap:wrap; }
     a { color:yellow; }
-    a.btn { background:#fff; color:#000; text-decoration:none; padding:3px 10px; border:2px solid #fff; }
-    a.btn:hover { border-color:yellow; }
   </style>
 </head>
 <body>
+  <div id="bar">
+    <button class="btn" id="back" title="back">←</button>
+    <a class="btn" id="arch" href="#" target="_blank" rel="noopener" style="display:none">Open in Archive.org</a>
+    <a class="btn" id="dl" href="#" download>↓ Download video</a>
+  </div>
   <h1 id="title">…</h1>
   <div id="wrap">
     <video id="v" controls autoplay playsinline preload="metadata"></video>
     <div id="msg"></div>
-  </div>
-  <div id="bar">
-    <a class="btn" id="dl" href="#" download>↓ download the file</a>
-    <a class="btn" href="https://archive.org/details/TerryADavis_TempleOS_Archive" target="_blank" rel="noopener">archive.org item</a>
-    <a class="btn" href="./">← TempleOS-wasm</a>
   </div>
   <script>
     const P = new URLSearchParams(location.search);
@@ -50,6 +51,15 @@
     document.getElementById("title").textContent = name + (t ? " — from " + hms(t) : "");
     document.title = name + " — Terry A. Davis";
     document.getElementById("dl").href = src;
+    document.getElementById("back").addEventListener("click", () => {
+      if (history.length > 1) history.back(); else location.href = "./"; });
+    if (P.get("p") === "1" && f) {        // playable on archive.org too -> offer their player (double-decoded path form)
+      const a = document.getElementById("arch");
+      a.href = "https://archive.org/details/TerryADavis_TempleOS_Archive/" +
+        f.split("/").map(encodeURIComponent).join("/").replace(/%2B/g, "%252B").replace(/%20/g, "+") +
+        (t ? "?start=" + t : "");
+      a.style.display = "";
+    }
     if (!f) { v.style.display = "none"; msg.style.display = "block"; msg.textContent = "no video specified."; }
     else {
       v.src = src + (t ? "#t=" + t : "");
@@ -61,7 +71,7 @@
         msg.innerHTML = "<b>This browser can't decode this file.</b><br><br>" +
           "It's a <b>." + ext.replace(/[^a-z0-9]/g, "") + "</b> original from the archive — archive.org never " +
           "transcoded it for the web, and this container needs Chrome / Edge (Matroska) or a media player. " +
-          "Use <b>↓ download the file</b> below and open it in VLC or mpv — the timestamp you wanted is <b>" + hms(t) + "</b>.";
+          "Use <b>↓ Download video</b> above and open it in VLC or mpv — the timestamp you wanted is <b>" + hms(t) + "</b>.";
       });
     }
   </script>
