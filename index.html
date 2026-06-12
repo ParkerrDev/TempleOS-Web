@@ -205,13 +205,23 @@
            border:2px solid #fff; outline:2px solid #000; padding:4px 8px; }
     #tsStatus { flex:0 0 auto; color:var(--blue); font-size:16px; padding:0 2px; min-height:1.3em; }
     #tsOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); padding:6px; }
-    .ts-hit { display:block; text-decoration:none; background:#fff; margin:0 0 6px; padding:5px 8px; border:2px solid #fff; }
+    #tsWin button { width:auto; font-size:16px; padding:2px 8px; }
+    .ts-hit { display:block; background:#fff; margin:0 0 6px; padding:5px 8px; border:2px solid #fff; }
     .ts-hit:hover { border-color:yellow; }
-    .ts-t { color:var(--red); font-weight:bold; font-size:16px; margin-right:8px; }
+    .ts-row { display:flex; align-items:baseline; gap:8px; }
+    .ts-t { color:var(--red); font-weight:bold; font-size:16px; text-decoration:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ts-t:hover { text-decoration:underline; }
     .ts-m { color:var(--blue); font-size:16px; white-space:nowrap; }
-    .ts-x { display:block; color:#16163a; font-size:16px; line-height:1.3; margin-top:2px; word-break:break-word; }
+    .ts-act { margin-left:auto; display:flex; gap:4px; flex:0 0 auto; }
+    .ts-act button { padding:0 6px; line-height:1.3; }
+    .ts-x { display:block; color:#16163a; font-size:16px; line-height:1.3; margin-top:2px; word-break:break-word; text-decoration:none; }
     .ts-x b { color:#fff; background:var(--red); font-weight:normal; padding:0 1px; }
     .ts-none { color:#fff; font-size:16px; padding:8px; }
+    .ts-trh { display:flex; gap:6px; align-items:center; flex-wrap:wrap; position:sticky; top:-6px; background:var(--blue); padding:6px 0; z-index:1; }
+    .ts-trh a { color:yellow; font-size:16px; }
+    .ts-line { background:#fff; color:#16163a; font-size:16px; line-height:1.35; padding:2px 8px; word-break:break-word; }
+    .ts-line .ts-ts { color:var(--blue); text-decoration:none; margin-right:6px; }
+    .ts-line .ts-ts:hover { text-decoration:underline; }
     #tsFoot { flex:0 0 auto; color:var(--blue); font-size:16px; padding:1px 2px 0; }
 
     /* ---- responsive: phones & narrow windows ---- */
@@ -389,7 +399,8 @@
     <div class="win" id="tsWin" data-title="Terry Search · every word he said on video">
       <span class="close" id="tsClose" title="Close">[X]</span>
       <div id="tsBar"><input id="tsQ" type="search" placeholder="search Terry's transcripts… (typos OK)"
-        autocomplete="off" autocapitalize="off" spellcheck="false" /></div>
+        autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button></div>
       <div id="tsStatus">open to load transcripts…</div>
       <div id="tsOut"></div>
       <div id="tsFoot">Whisper transcripts of the <a href="https://archive.org/details/TerryADavis_TempleOS_Archive" target="_blank" rel="noopener">TerryADavis_TempleOS_Archive</a> — click any result to watch that video at that moment.</div>
@@ -965,28 +976,67 @@ I64 GodDoodleGen(I64 strokes)
 
     // ---- Terry Search: fuzzy search over every transcribed video (static site — the shards are
     //      prebuilt by build-transcripts.mjs; transearch.js scores them in a worker). Each hit
-    //      links to its source video on archive.org seeked to the hit's timestamp. ----
+    //      links to its source video on archive.org seeked to the hit's timestamp, and everything
+    //      is copyable: one passage, all shown results, or a video's FULL transcript (copy / .txt). ----
     { const ov = $("tsOverlay"), out = $("tsOut"), q = $("tsQ"), st = $("tsStatus");
       const ARCH = "https://archive.org/details/TerryADavis_TempleOS_Archive/";
-      let w = null, qid = 0, deb = null;
+      let w = null, qid = 0, vid = 0, deb = null, lastHits = [], lastTerms = [], lastTotal = 0;
       const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const hms = (s) => { s = Math.max(0, s | 0); const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
         return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(ss).padStart(2, "0"); };
+      const url = (f, sec) => ARCH + f.split("/").map(encodeURIComponent).join("/") + (sec != null ? "?start=" + Math.max(0, sec - 2) : "");
       // highlight matched terms (longest first; sentinel chars so replacements can't corrupt the HTML)
       const hi = (text, terms) => { let h = esc(text);
         for (const term of [...new Set(terms || [])].sort((a, b) => b.length - a.length).slice(0, 12)) {
           if (term.length < 2) continue;
           h = h.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), (x) => "\u0001" + x + "\u0002"); }
         return h.replace(/\u0001/g, "<b>").replace(/\u0002/g, "</b>"); };
+      // clipboard with button feedback (navigator.clipboard needs https/localhost; textarea fallback otherwise)
+      const copy = async (text, btn) => {
+        try { await navigator.clipboard.writeText(text); }
+        catch { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+          document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch {} ta.remove(); }
+        if (btn) { const old = btn.textContent; btn.textContent = "✓ copied"; btn.disabled = true;
+          setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 900); } };
+      const hitText = (h) => `“${h.text}”\n— Terry A. Davis, ${h.t} (${h.d}), at ${hms(h.sec)}\n${url(h.f, h.sec)}`;
       const render = (m) => {
-        out.innerHTML = m.hits.map((h) => {
-          const url = ARCH + h.f.split("/").map(encodeURIComponent).join("/") + "?start=" + Math.max(0, h.sec - 2);
-          return `<a class="ts-hit" href="${url}" target="_blank" rel="noopener" title="watch on archive.org at ${hms(h.sec)}">` +
-            `<span class="ts-t">${esc(h.t)}</span><span class="ts-m">${esc(h.d)} · ▶ ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
-            `<span class="ts-x">${hi(h.text, m.terms)}</span></a>`; }).join("") ||
+        lastHits = m.hits; lastTerms = m.terms || []; lastTotal = m.total || 0;
+        out.innerHTML = m.hits.map((h, i) =>
+          `<div class="ts-hit">` +
+            `<div class="ts-row"><a class="ts-t" href="${url(h.f, h.sec)}" target="_blank" rel="noopener" title="watch on archive.org at ${hms(h.sec)}">${esc(h.t)}</a>` +
+            `<span class="ts-m">${esc(h.d)} · ▶ ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
+            `<span class="ts-act"><button class="ts-cp" data-i="${i}" title="copy this passage (with video + timestamp + link)">⧉</button>` +
+            `<button class="ts-tr" data-i="${i}" title="full transcript of this video">≡</button></span></div>` +
+            `<a class="ts-x" href="${url(h.f, h.sec)}" target="_blank" rel="noopener">${hi(h.text, m.terms)}</a></div>`).join("") ||
           (q.value.trim() ? `<div class="ts-none">no matches — typos are OK, but he may never have said it</div>` : "");
-        if (m.hits.length) st.textContent = `${m.total} matching passages — top ${m.hits.length} shown, click to watch`;
+        if (m.hits.length) st.textContent = `${m.total} matching passages — top ${m.hits.length} shown · click to watch, ⧉ copies, ≡ full transcript`;
       };
+      // full-transcript view for one video: back / copy-all / download .txt / watch, then every passage
+      const transcriptText = (v) => `${v.t} (${v.d}) — Terry A. Davis\n${url(v.f)}\n\n` +
+        v.s.map(([sec, text]) => `[${hms(sec)}] ${text}`).join("\n");
+      const renderTranscript = (v) => {
+        st.textContent = `${v.t} — full transcript, ${v.s.length} passages${v.n ? ", " + hms(v.n) : ""}`;
+        out.innerHTML = `<div class="ts-trh"><button id="tsBack">← results</button>` +
+          `<button id="tsCpTr">⧉ Copy transcript</button><button id="tsDlTr">↓ .txt</button>` +
+          `<a href="${url(v.f, 0)}" target="_blank" rel="noopener">▶ watch on archive.org</a></div>` +
+          v.s.map(([sec, text]) => `<div class="ts-line"><a class="ts-ts" href="${url(v.f, sec)}" target="_blank" rel="noopener">[${hms(sec)}]</a>${esc(text)}</div>`).join("");
+        out.scrollTop = 0;
+        $("tsBack").addEventListener("click", () => { render({ hits: lastHits, terms: lastTerms, total: lastTotal }); });
+        $("tsCpTr").addEventListener("click", (e) => copy(transcriptText(v), e.target));
+        $("tsDlTr").addEventListener("click", () => {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(new Blob([transcriptText(v)], { type: "text/plain" }));
+          a.download = (`${v.d} - ${v.t}`).replace(/[\\/:*?"<>|]/g, "_").slice(0, 120) + ".txt";
+          a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); });
+      };
+      out.addEventListener("click", (e) => {
+        const cp = e.target.closest(".ts-cp");
+        if (cp) { const h = lastHits[+cp.dataset.i]; if (h) copy(hitText(h), cp); return; }
+        const tr = e.target.closest(".ts-tr");
+        if (tr) { const h = lastHits[+tr.dataset.i]; if (h && w) { vid++; w.postMessage({ type: "video", f: h.f, id: vid }); } } });
+      $("tsCopyAll").addEventListener("click", (e) => { if (!lastHits.length) return;
+        copy(`Terry Search: "${q.value.trim()}" — top ${lastHits.length} of ${lastTotal} matching passages\n\n` +
+          lastHits.map(hitText).join("\n\n"), e.target); });
       const ask = () => { if (w) { qid++; w.postMessage({ type: "query", q: q.value, id: qid }); } };
       const init = () => { if (w) return;
         w = new Worker("./transearch.js");
@@ -995,7 +1045,8 @@ I64 GodDoodleGen(I64 strokes)
           if (m.type === "progress") st.textContent = `loading transcripts… ${m.loaded}/${m.total} shards · ${m.videos} videos`;
           else if (m.type === "ready") { st.textContent = `${m.videos.toLocaleString()} videos · ${m.chunks.toLocaleString()} passages · ${m.words.toLocaleString()} distinct words — type to search`; if (q.value.trim()) ask(); }
           else if (m.type === "error") st.textContent = "failed to load transcripts: " + m.message;
-          else if (m.type === "results" && m.id === qid) render(m); };
+          else if (m.type === "results" && m.id === qid) render(m);
+          else if (m.type === "video" && m.id === vid && m.video) renderTranscript(m.video); };
         w.postMessage({ type: "load", base: "./assets/transcripts/" }); };
       q.addEventListener("input", () => { clearTimeout(deb); deb = setTimeout(ask, 250); });
       ov.addEventListener("pointerdown", (e) => { if (e.target === ov) ov.classList.remove("open"); });
