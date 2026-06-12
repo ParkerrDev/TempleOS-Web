@@ -157,9 +157,9 @@
        (and the OS) stay fully interactive behind it */
     .overlay.free { background:transparent; pointer-events:none; }
     .overlay.free > .win { pointer-events:auto; }
-    .ovfree { position:absolute; top:8px; right:10px; width:auto; font-size:16px; padding:3px 10px; pointer-events:auto; }
-    .ovfree::after { content:"[_] hide backdrop"; }
-    .overlay.free .ovfree::after { content:"[▣] show backdrop"; }
+    .ovfree { position:absolute; top:8px; right:10px; width:auto; font-size:16px; padding:3px 8px; pointer-events:auto; }
+    .ovfree::after { content:"[X]"; }
+    .overlay.free .ovfree { display:none; }   /* one-way: close + reopen the popup to get the backdrop back */
     .overlay .close { cursor:pointer; }
     .overlay .close:hover { color:#fff; background:var(--blue); }
     #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }
@@ -1364,13 +1364,13 @@ I64 GodDoodleGen(I64 strokes)
       requestAnimationFrame(() => { for (const w of wins) sizeMarquee(w); });
       winChrome = { dress, sizeMarquee, setActive, raise };
       window.__winChrome = winChrome;                       // the editor overlay lives in a separate classic script
-      // corner-of-screen backdrop toggle on every overlay: drop the dark backdrop so the popup
-      // window joins the desktop (page + OS interactive behind it); click again to restore.
+      // corner-of-screen [X] on every overlay backdrop: closes the DARK BACKDROP (not the window),
+      // so the popup joins the desktop. One-way — close and reopen the popup to get it back.
       for (const ov of document.querySelectorAll(".overlay")) {
         const b = document.createElement("button");
         b.className = "ovfree";
-        b.title = "drop the dark backdrop — the window joins the desktop; click again to restore";
-        b.addEventListener("click", () => { ov.classList.toggle("free"); raise(ov); });
+        b.title = "close the dark backdrop — the window joins the desktop (reopen the window to restore)";
+        b.addEventListener("click", () => { ov.classList.add("free"); raise(ov); });
         ov.appendChild(b);
       }
     }
