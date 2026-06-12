@@ -53,7 +53,7 @@ host.env.__jit_dispatch = (b) => { const n = jit.jitDispatch(Number(b));
     } }
   return BigInt(n); };
 host.env.__jit_chain = (a, b) => {};      // disable native chaining so every break is observable in JS
-host.env.__jit_seg = (a, b, c) => jit.jitSeg(Number(a), Number(b), Number(c));
+host.env.__jit_seg = (...a) => jit.jitSeg(...a.map(Number));
 jit.jitReset();
 inst = await WebAssembly.instantiate(mod, { env: host.env }); host.attach(inst); inst.exports.__rt_init();
 const dv = () => new DataView(inst.exports.memory.buffer);

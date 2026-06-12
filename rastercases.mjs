@@ -41,7 +41,7 @@ host.env.__jit_dispatch = (b) => { const n = jit.jitDispatch(Number(b));
   }
   return BigInt(n); };
 host.env.__jit_chain = (a, b) => jit.jitChain(a, b);   // native chaining (fast); RASTER stays unjittable -> RUNDISP breaks there each call
-host.env.__jit_seg = (a, b, c) => jit.jitSeg(Number(a), Number(b), Number(c));
+host.env.__jit_seg = (...a) => jit.jitSeg(...a.map(Number));
 jit.jitReset();
 inst = await WebAssembly.instantiate(mod, { env: host.env }); host.attach(inst); inst.exports.__rt_init();
 // REG base: g_cpu_st[0].f_reg (reg[4]=rsp). The dispatch wrapper above needs REGOFF; recompute the real hook here.

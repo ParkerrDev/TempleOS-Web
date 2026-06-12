@@ -21,7 +21,7 @@ host.env.__host_msx = () => 0n; host.env.__host_msy = () => 0n; host.env.__host_
 host.env.__host_key = () => -1n; host.env.__host_budget = () => 1000000n; host.env.__host_dt = () => 33n; host.env.__host_prof = () => {}; host.env.__host_time = () => 0n;
 host.env.__jit_state = (rg, fl, rp) => { REG = Number(rg); RFL = Number(fl); RIP = Number(rp); HALTED = Number(rp) + 16; jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem); return 1n; };
 host.env.__jit_compile = (rip) => BigInt(jit.jitCompile(Number(rip))); host.env.__jit_run = (rip) => BigInt(jit.jitRun(Number(rip)));
-host.env.__jit_x87 = (a, b, c) => { FPR = Number(a); FSP = Number(b); X87 = Number(c); jit.jitX87(a, b, c); }; host.env.__jit_dispatch = (b) => BigInt(jit.jitDispatch(Number(b))); host.env.__jit_chain = (a, b) => jit.jitChain(a, b); host.env.__jit_seg = (fs, gs, tsc) => jit.jitSeg(Number(fs), Number(gs), Number(tsc));
+host.env.__jit_x87 = (a, b, c) => { FPR = Number(a); FSP = Number(b); X87 = Number(c); jit.jitX87(a, b, c); }; host.env.__jit_dispatch = (b) => BigInt(jit.jitDispatch(Number(b))); host.env.__jit_chain = (a, b) => jit.jitChain(a, b); host.env.__jit_seg = (...a) => jit.jitSeg(...a.map(Number));
 inst = await WebAssembly.instantiate(mod, { env: host.env }); host.attach(inst); inst.exports.__rt_init();
 // boot the OS until the snapshot loads (snapLoad sets gBase + mem_size); else the interp MMIO-routes scratch RAM
 for (let i = 0; i < 12 && gBase === 0; i++) inst.exports.__main();

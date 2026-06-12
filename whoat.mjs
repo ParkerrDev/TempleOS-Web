@@ -84,21 +84,25 @@ for (let tries = 0; tries < 8; tries++) {               // settle until the SHEL
   if (/C:\/[A-Za-z]*>/.test(txt)) { console.error(`prompt ready after ${tries + 1} settle round(s)`); break; }
   if (tries === 7) { console.error("NO PROMPT FOUND; last screen:\n" + txt.split("\n").slice(-12).join("\n")); process.exit(2); }
 }
-const names = process.argv.slice(2).length ? process.argv.slice(2) : ["JobQue", "Spawn", "mp_cnt"];
+// addrs to resolve: ask the OS itself via FunSegFind (returns CHash*; ->str is the symbol name)
+const addrs = process.argv.slice(2).length ? process.argv.slice(2).map(s => parseInt(s, 16)) : [0xfa24, 0xcace, 0xcbe2, 0xcc08, 0xaa7b];
 const out = {};
-for (let k = 0; k < names.length; k++) {
-  const slot = MBOX + 16 + k * 8;
-  dv().setBigUint64(gBase + slot, 0xDEADBEEFn, true);   // sentinel so we can tell the poke landed
-  // *(0xADDR)(I64*) = &Name;
+const rdStr = (at) => { const m = new Uint8Array(inst.exports.memory.buffer); let s = ""; for (let i = 0; i < 64; i++) { const c = m[gBase + at + i]; if (!c) break; s += String.fromCharCode(c); } return s; };
+for (let k = 0; k < addrs.length; k++) {
+  const nameSlot = MBOX + 0x100, offSlot = MBOX + 0x200, okSlot = MBOX + 0x300;
+  dv().setBigUint64(gBase + okSlot, 0xDEADBEEFn, true);
+  dv().setBigUint64(gBase + nameSlot, 0n, true);
+  const A = "0x" + addrs[k].toString(16).toUpperCase();
   for (let attempt = 0; attempt < 4; attempt++) {
-    typeStr(`*(0x${slot.toString(16).toUpperCase()})(I64*)=&${names[k]};\n`);
-    run(500);                                           // let the shell JIT + run the line
-    if (dv().getBigUint64(gBase + slot, true) !== 0xDEADBEEFn) break;
-    keyq.push(0x01); keyq.push(0x81); run(120);         // a popup (AutoComplete) ate the line — dismiss + retry
+    typeStr(`CHash *h_=FunSegFind(${A},0x${offSlot.toString(16).toUpperCase()});if(h_)StrCpy(0x${nameSlot.toString(16).toUpperCase()},h_->str);*(0x${okSlot.toString(16).toUpperCase()})(I64*)=h_;\n`);
+    run(600);
+    if (dv().getBigUint64(gBase + okSlot, true) !== 0xDEADBEEFn) break;
+    keyq.push(0x01); keyq.push(0x81); run(120);
   }
-  const v = dv().getBigUint64(gBase + slot, true);
-  out[names[k]] = v === 0xDEADBEEFn ? null : "0x" + v.toString(16);
-  console.error(`${names[k].padEnd(18)} -> ${out[names[k]] ?? "FAILED (sentinel intact)"}`);
-  if (out[names[k]] === null || process.env.SCREEN) { console.error("---- screen ----"); console.error(screenText().split("\n").slice(-14).join("\n")); }
+  const hv = dv().getBigUint64(gBase + okSlot, true);
+  const off = Number(dv().getBigUint64(gBase + offSlot, true));
+  const nm = hv && hv !== 0xDEADBEEFn ? rdStr(nameSlot) : null;
+  out[A] = nm ? `${nm}+0x${off.toString(16)}` : (hv === 0xDEADBEEFn ? "QUERY-FAILED" : "NOT-FOUND");
+  console.error(`${A.padEnd(10)} -> ${out[A]}`);
 }
 console.log(JSON.stringify(out));

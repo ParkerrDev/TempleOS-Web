@@ -59,9 +59,18 @@ U0 WakeTasks(I64 do_wake)               // scan tasks (g_game_running) and optio
     // uses TaskExe(WAKE_MASTER), which SUSPENDS the master until the popup's job (e.g. a game launched
     // from the Ctrl+M menu) finishes. Force-waking it makes TaskExe return early -> JobResScan sees the
     // job unfinished -> PopUp Kills the still-running servant -> the game never appears. Leaving these
-    // suspended lets the popup run to completion, exactly as on real hardware. A suspended popup-master
-    // also means a fullscreen popup/game is up, so g_game_running gates the hidden-desktop-redraw skip.
-    if (*(U64 *)(mem + t + 0x450)) game = 1;
+    // suspended lets the popup run to completion, exactly as on real hardware.
+    // g_game_running (gates the hidden-desktop-redraw skip) needs MORE than "a popup exists": a small
+    // modal popup (GodSong's PopUpForm, PopUpMenu...) leaves the desktop VISIBLE — skipping the text
+    // redraw then blanks every window body (the F6 "blank glitched windows" bug). Only a popup whose
+    // window actually COVERS the screen (a fullscreen game) hides the desktop, so only then skip:
+    // servant CTask win_left/right/top/bottom @ +0x48/0x50/0x58/0x60 (text cells, 80x60 screen).
+    U64 pu = *(U64 *)(mem + t + 0x450);
+    if (pu) {
+      if (pu < 0x18000000) {
+        I64 wl = *(I64 *)(mem + pu + 0x48), wr = *(I64 *)(mem + pu + 0x50);
+        I64 wt = *(I64 *)(mem + pu + 0x58), wb = *(I64 *)(mem + pu + 0x60);
+        if (wr - wl >= 70 && wb - wt >= 50) game = 1; } }
     else if (do_wake) { *(U64 *)(mem + t + 0x18) &= ~0x204; *(U64 *)(mem + t + 0x10) = 0; }
     t = *(U64 *)(mem + t + 0x80); n++; if (!t || t >= 0x18000000 || t == head) break; }
   g_game_running = game; }
@@ -197,7 +206,7 @@ U0 Main()                              // host calls __main once per display fra
     g_jiffies0 = *(U64*)(mem + 0xBD98); // base jiffies; the RTC clock = base + (jiffies-base)/1000 sec
     g_jit_on = __jit_state(&reg[0], &rfl, &rip);   // hand over CPU-state offsets; host returns 1 to enable the JIT
     __jit_x87(&fpr[0], &fsp, &x87_sw);             // hand over the x87 FPU state offsets (for JIT'd float blocks)
-    __jit_seg(&msr_fsbase, &msr_gsbase, &tsc);     // per-core FS/GS base + TSC addresses (JIT adds them to EAs)
+    __jit_seg(&msr_fsbase, &msr_gsbase, &tsc, &x87_cw, &xmm_lo[0], &xmm_hi[0]);   // FS/GS/TSC (EAs) + FPU/XMM offsets (lets the JIT compile FXSAVE/FXRSTOR — the context-switch hot pair)
     __jit_chain(&g_jit_rip[0], &g_jit_n[0]);       // let the JIT build its native dispatch-loop module (chains blocks)
     g_inited = 1;                       // (pit_div/tsc_rate/hpet are set per-frame by Frame() for wall-clock pacing)
   }

@@ -11,6 +11,7 @@
 import { Module, Func, OP, VT, sleb } from "./holyc-wasm/src/wasm/emitter.js";   // relative so it loads in the browser (deploy) AND node; the deploy's emitter is kept in sync with the canonical
 let REG = 0, RFL = 0, RIP = 0, GBASE = 0, MEM = null, U8 = null, RDMEM = null, WRMEM = null;
 let MSRFS = 0, MSRGS = 0, SEG = 0, TSC = 0; // FS/GS base + tsc global offsets (via jitSeg); SEG = current insn's seg prefix (0/1=FS/2=GS)
+let X87CW = 0, XMMLO = 0, XMMHI = 0;        // x87 control word + xmm_lo[16]/xmm_hi[16] offsets (via jitSeg) — gate FXSAVE/FXRSTOR compilation
 let RD_IDX = 0, WR_IDX = 1;                // imported func indices (RdMem, WrMem) within each JIT module
 const MEMSIZE = 402653184;                 // guest RAM size; ea >= this is MMIO/alias -> route to hemu's RdMem/WrMem
 const MEMM = { isMem: true };              // synthetic "memory operand" so rdRM/wrRM route a register-computed addr (local 3) through the MMIO check (string ops)
@@ -19,7 +20,8 @@ const blockFn = new Array(65536).fill(null);   // fast dispatch arrays, indexed 
 const blockRip = new Int32Array(65536).fill(-1);
 const slotOf = (r) => (r ^ (r >>> 16)) & 0xFFFF;   // MUST match cpu.HC/snapshot.HC: hash (not low bits) so 0x10000-multiple-apart code copies don't fight over one slot
 export function jitState(reg, rfl, rip, gbase, memObj, rdMem, wrMem, rasterHLE) { REG = Number(reg); RFL = Number(rfl); RIP = Number(rip); GBASE = Number(gbase); MEM = memObj; U8 = new Uint8Array(memObj.buffer); RDMEM = rdMem; WRMEM = wrMem; if (rasterHLE) RASTERHLE = rasterHLE; }
-export function jitSeg(fs, gs, tsc) { MSRFS = Number(fs); MSRGS = Number(gs); TSC = Number(tsc) || 0; }   // FS/GS base + tsc global byte-offsets (from the compiler's globals map)
+export function jitSeg(fs, gs, tsc, cw, xlo, xhi) { MSRFS = Number(fs); MSRGS = Number(gs); TSC = Number(tsc) || 0;
+  X87CW = Number(cw) || 0; XMMLO = Number(xlo) || 0; XMMHI = Number(xhi) || 0; }   // FS/GS base + tsc byte-offsets; optional FPU-cw/XMM offsets gate FXSAVE/FXRSTOR compilation (older 3-arg callers just leave FX ops interp'd)
 export function jitReset() { blocks.clear(); blockFn.fill(null); blockRip.fill(-1); }
 export function jitInspect(rip) { const e = blocks.get(rip); return { cached: !!e, failed: !!e && !e.fn, ninstr: e ? e.ninstr : -1, slotRip: blockRip[(rip ^ (rip >>> 16)) & 0xFFFF] }; }  // debug: why isn't this rip running natively?
 // ---- emit helpers (append into Func body f) ----
@@ -94,23 +96,34 @@ function buildRuntime() {
   const bt = rm.typeIndex([], [VT.i32]);                              // JIT block func type ([]->i32 count)
   const { index, setBody } = rm.func([VT.i32], [VT.i32], "dispatch"); // (budget) -> instr count ran
   const f = new Func(); i32c(f, 0); f.local_set(1);
+  // break-on-IF mode: cpu.HC passes a NEGATIVE budget when an IRQ is pending but IF=0 (a CLI'd wait/critical
+  // section). Blocks ending on STI/POPF/IRET return count|bit30; in break-mode the chain exits at such a
+  // block so cpu.HC can deliver the IRQ in the now-open IF=1 window. Normal mode ignores the flag (no cost).
+  // local6 = brk (1 in break-mode), local5 = bud = |budget|.
+  f.local_get(0); i32c(f, 31); f.op("i32_shr_u"); f.local_set(6);
+  f.local_get(0); i32c(f, 31); f.op("i32_shr_s"); f.local_set(5);
+  f.local_get(0); f.local_get(5); f.op("i32_xor"); f.local_get(5); f.op("i32_sub"); f.local_set(5);
   if (HLE) f.block(0x40);                                             // outer block: an HLE fall-through (RasterHLE->0) exits here
   f.loop(0x40);
     i32c(f, RIP); f.load("i32_load", 0, 2); f.local_set(2); f.local_get(2); f.local_get(2); i32c(f, 16); f.op("i32_shr_u"); f.op("i32_xor"); i32c(f, 0xFFFF); f.op("i32_and"); f.local_set(3); i32c(f, JITRIP); f.local_get(3); i32c(f, 8); f.op("i32_mul"); f.op("i32_add"); f.load("i32_load", 0, 2); f.local_get(2); f.op("i32_eq");
     i32c(f, JITN); f.local_get(3); i32c(f, 8); f.op("i32_mul"); f.op("i32_add"); f.load("i32_load", 0, 2); i32c(f, 0); f.op("i32_gt_s"); f.op("i32_and"); // && g_jit_n[slot] > 0
-    f.local_get(1); f.local_get(0); f.op("i32_lt_s"); f.op("i32_and"); f.if_(0x40);
-      f.local_get(3); f.call_indirect(bt, 0); f.local_set(4); f.local_get(1); f.local_get(4); f.op("i32_add"); f.local_set(1); f.local_get(4); f.br_if(1);
+    f.local_get(1); f.local_get(5); f.op("i32_lt_s"); f.op("i32_and"); f.if_(0x40);
+      f.local_get(3); f.call_indirect(bt, 0); f.local_set(4);
+      f.local_get(1); f.local_get(4); i32c(f, 0x3FFFFFFF); f.op("i32_and"); f.op("i32_add"); f.local_set(1);            // ran += count (flag stripped)
+      f.local_get(4); i32c(f, 0x3FFFFFFF); f.op("i32_and"); i32c(f, 0); f.op("i32_ne");                                 // count != 0
+      f.local_get(6); f.local_get(4); i32c(f, 30); f.op("i32_shr_u"); i32c(f, 1); f.op("i32_and"); f.op("i32_and"); f.op("i32_eqz");   // !(brk && IF-window flag)
+      f.op("i32_and"); f.br_if(1);                                                                                      // chain on; else fall out (cpu.HC delivers)
     f.end();
-    if (HLE) {                                                        // PATH 2: g_jit_rip[slot]==rip && g_jit_n[slot]==-2 && ran<budget -> RasterHLE() inline
+    if (HLE) {                                                        // PATH 2: g_jit_rip[slot]==rip && g_jit_n[slot]==-2 && ran<bud -> RasterHLE() inline
       i32c(f, JITRIP); f.local_get(3); i32c(f, 8); f.op("i32_mul"); f.op("i32_add"); f.load("i32_load", 0, 2); f.local_get(2); f.op("i32_eq");
       i32c(f, JITN); f.local_get(3); i32c(f, 8); f.op("i32_mul"); f.op("i32_add"); f.load("i32_load", 0, 2); i32c(f, -2); f.op("i32_eq"); f.op("i32_and");
-      f.local_get(1); f.local_get(0); f.op("i32_lt_s"); f.op("i32_and"); f.if_(0x40);
+      f.local_get(1); f.local_get(5); f.op("i32_lt_s"); f.op("i32_and"); f.if_(0x40);
         f.call(RH); f.op("i32_wrap_i64"); f.local_set(4); f.local_get(1); f.local_get(4); f.op("i32_add"); f.local_set(1); f.local_get(4); f.br_if(1); f.br(2);   // handled(1)->continue loop ; fall-through(0)->exit outer block
       f.end();
     }
   f.end();                                                           // loop
   if (HLE) f.end();                                                  // outer block
-  f.local_get(1); setBody([{ count: 4, vt: VT.i32 }], f); rm.exportFunc("dispatch", index);
+  f.local_get(1); setBody([{ count: 6, vt: VT.i32 }], f); rm.exportFunc("dispatch", index);
   const inst = new WebAssembly.Instance(new WebAssembly.Module(Uint8Array.from(rm.emit())), { env: HLE ? { mem: MEM, RasterHLE: RASTERHLE } : { mem: MEM } }); RUNTBL = inst.exports.tbl; RUNDISP = inst.exports.dispatch; }
 export function jitChain(jitRipOff, jitNOff) { JITRIP = Number(jitRipOff); JITN = Number(jitNOff); buildRuntime(); }
 // read / write a decoded r/m operand (reg or mem) at size sz. For mem, emitEA(f,m,endRip) must run first.
@@ -202,6 +215,7 @@ export function jitCompile(rip) {
   const blk = m.func([], [VT.i32], "blk");   // returns instr count (i32 -> JS number, no BigInt in the dispatch loop)
   const f = new Func();
   let i = GBASE + rip, n = 0, term = false, loopT = null;   // loopT set if the block is a self-loop (jcc back to entry); REP string ops emit their own native loop + end the block via the normal terminator path
+  let ifbrk = false;   // block ends on an instruction that can OPEN an IF=1 window (STI/POPF/IRET): its return count carries bit30 so the dispatcher's break-on-IF mode can hand back for an IRQ delivery
   for (; n < 400;) {
     let j = i, rexW = 0, rexR = 0, rexX = 0, rexB = 0, rex = 0, pfx66 = 0, two = 0, rep = 0; SEG = 0;
     for (;;) {                                            // prefixes
@@ -311,7 +325,17 @@ export function jitCompile(rip) {
       } else if (op === 0x9C) {                                              // PUSHFQ: rsp-=8; [rsp]=rfl
         materialize(f); rspAdj(f, -8); spAddr(f); i32c(f, RFL); ld64(f); f.store("i64_store", 0, 3); handled = true;
       } else if (op === 0x9D) {                                              // POPFQ: rfl = ([rsp] & ~0x10000) | 2; rsp+=8
-        FLAGPEND = null; i32c(f, RFL); spAddr(f); f.load("i64_load", 0, 3); i64c(f, ~0x10000); f.op("i64_and"); i64c(f, 2); f.op("i64_or"); st64(f); rspAdj(f, 8); handled = true;
+        FLAGPEND = null; i32c(f, RFL); spAddr(f); f.load("i64_load", 0, 3); i64c(f, ~0x10000); f.op("i64_and"); i64c(f, 2); f.op("i64_or"); st64(f); rspAdj(f, 8);
+        i64c(f, j - GBASE); ifbrk = term = true; n++; i = j; break;          // POPF can set IF -> end the block + mark the IF window (PUSHFD/CLI/.../POPFD critical-section exits)
+      } else if (op === 0xCF) {                                              // IRETQ (cpu.HC DoIret): rip=[rsp]; rfl=[rsp+16]; rsp=[rsp+24]
+        // g_cs/g_ss ([rsp+8]/[rsp+32]) intentionally skipped: TempleOS runs one flat 64-bit CS/SS forever,
+        // so the cpu.HC globals already hold the only values that ever round-trip through an IRET frame.
+        FLAGPEND = null;                                                     // rfl is overwritten wholesale (like POPF) — discard deferred flags
+        i32c(f, RFL); spAddr(f); f.load("i64_load", 16, 3); st64(f);         // rfl = [rsp+16] (raw, matches DoIret)
+        spAddr(f); f.load("i64_load", 0, 3); f.local_set(0);                 // new rip
+        spAddr(f); f.load("i64_load", 24, 3); f.local_set(1);                // new rsp (load BEFORE rsp changes)
+        wrReg(f, 4, 8, true, () => f.local_get(1));
+        f.local_get(0); ifbrk = term = true; n++; i = j; break;              // IRET can restore IF=1 -> IF-window flag; keeps context switches native (was an interp punt)
       } else if (op === 0x8F) {                                             // POP r/m64: v=[rsp]; rsp+=8; r/m=v (ea uses OLD rsp)
         const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; if (mm.isMem) emitEA(f, mm, j - GBASE); spAddr(f); f.load("i64_load", 0, 3); f.local_set(0); rspAdj(f, 8); wrRM(f, mm, 8, true, () => f.local_get(0)); handled = true;
       } else if (op === 0x69 || op === 0x6B) {                              // IMUL r, r/m, imm (no flags; result masked to sz, matches cpu.HC)
@@ -354,7 +378,9 @@ export function jitCompile(rip) {
         const bit = op <= 0xFB ? 0x200 : 0x400;                             // IF or DF
         materialize(f); i32c(f, RFL); i32c(f, RFL); ld64(f);
         if (op & 1) { i64c(f, bit); f.op("i64_or"); } else { i64c(f, ~bit); f.op("i64_and"); }
-        st64(f); handled = true;
+        st64(f);
+        if (op === 0xFB) { i64c(f, j - GBASE); ifbrk = term = true; n++; i = j; break; }   // STI opens an IF=1 window -> end the block + mark it (a CLI'd timed wait's STI...CLI window was invisible inside a block, starving IRQ delivery)
+        handled = true;
       } else if (op === 0xC0 || op === 0xC1 || op === 0xD0 || op === 0xD1) { // grp2 shift by imm8 / by 1
         const sz = (op & 1) ? szV : 1, byOne = op >= 0xD0; const opn = (U8[j] >> 3) & 7; const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; let cnt = byOne ? 1 : (U8[j] & (sz === 8 ? 63 : 31)); if (!byOne) j += 1; if (mm.isMem) emitEA(f, mm, j - GBASE);
         if ((opn === 4 || opn === 5 || opn === 7) && cnt !== 0) {            // SHL/SHR/SAR (rotates deferred)
@@ -501,6 +527,44 @@ export function jitCompile(rip) {
             if (which === 1) wrReg(f, mm.rm, szV, rex, () => { rdReg(f, mm.rm, szV, rex); i64c(f, mb); f.op("i64_or"); }); else if (which === 2) wrReg(f, mm.rm, szV, rex, () => { rdReg(f, mm.rm, szV, rex); i64c(f, ~mb); f.op("i64_and"); }); else if (which === 3) wrReg(f, mm.rm, szV, rex, () => { rdReg(f, mm.rm, szV, rex); i64c(f, mb); f.op("i64_xor"); }); }
           handled = true; }
       } else if (op === 0x1F) { const m = decodeModRM(j, rexR, rexX, rexB); j = m.j; handled = true; }  // nop r/m
+      else if (op === 0xAE && X87CW && X87SW && FPR && XMMLO && XMMHI) {     // 0F AE: FXSAVE (/0) / FXRSTOR (/1) — mirror cpu.HC DoFxsave/DoFxrstor exactly.
+        // These bracket EVERY task switch (Sched.HC TASK_CONTEXT_SAVE/RESTORE); as interp punts they broke
+        // the native chain twice per switch, which is what made Yield-churn (e.g. AutoComplete's DocLock
+        // spin while a PopUpForm holds the master's doc) collapse the JIT budget. The fpu_mmx area is
+        // plain task RAM -> direct loads/stores (same assumption class as knownRam).
+        const ext = (U8[j] >> 3) & 7; const mm = decodeModRM(j, rexR, rexX, rexB);
+        if ((ext === 0 || ext === 1) && mm.isMem) {
+          j = mm.j; emitEA(f, mm, j - GBASE);
+          if (ext === 0) {                                                   // FXSAVE: cw@+0 sw@+2 mxcsr@+24; fpr F64-bits @32+i*16; xmm @160+i*16
+            memAddr(f); i32c(f, X87CW); ld64(f); f.store("i64_store16", 0, 1);
+            memAddr(f); i32c(f, X87SW); ld64(f); f.store("i64_store16", 2, 1);
+            memAddr(f); i64c(f, 0x1F80); f.store("i64_store32", 24, 2);
+            for (let k = 0; k < 8; k++) { memAddr(f); i32c(f, FPR + k * 8); f.load("i64_load", 0, 3); f.store("i64_store", 32 + k * 16, 3); }
+            for (let k = 0; k < 16; k++) {
+              memAddr(f); i32c(f, XMMLO + k * 8); ld64(f); f.store("i64_store", 160 + k * 16, 3);
+              memAddr(f); i32c(f, XMMHI + k * 8); ld64(f); f.store("i64_store", 160 + k * 16 + 8, 3); }
+          } else {                                                           // FXRSTOR (no MXCSR read, matches DoFxrstor)
+            i32c(f, X87CW); memAddr(f); f.load("i64_load16_u", 0, 1); st64(f);
+            i32c(f, X87SW); memAddr(f); f.load("i64_load16_u", 2, 1); st64(f);
+            for (let k = 0; k < 8; k++) { i32c(f, FPR + k * 8); memAddr(f); f.load("i64_load", 32 + k * 16, 3); st64(f); }
+            for (let k = 0; k < 16; k++) {
+              i32c(f, XMMLO + k * 8); memAddr(f); f.load("i64_load", 160 + k * 16, 3); st64(f);
+              i32c(f, XMMHI + k * 8); memAddr(f); f.load("i64_load", 160 + k * 16 + 8, 3); st64(f); } }
+          handled = true; }
+      }
+      else if (op === 0x30 && MSRFS && MSRGS) {                              // WRMSR (cpu.HC WrMsr): ECX selects, val=EDX:EAX
+        // FS/GS base (SET_FS_BASE in every task switch — the Yield-churn hot path) handled natively; any
+        // other MSR (kgsbase/star/efer — boot-time only) exits with rip AT the wrmsr so the interp runs it.
+        materialize(f);
+        rdReg(f, 2, 4, true); i64c(f, 32); f.op("i64_shl"); rdReg(f, 0, 4, true); f.op("i64_or"); f.local_set(0);   // val = EDX:EAX
+        rdReg(f, 1, 4, true); f.local_set(1);                                                                       // ecx32
+        f.local_get(1); i64c(f, 0xC0000100); f.op("i64_eq"); f.if_(0x40); i32c(f, MSRFS); f.local_get(0); st64(f); f.end();
+        f.local_get(1); i64c(f, 0xC0000101); f.op("i64_eq"); f.if_(0x40); i32c(f, MSRGS); f.local_get(0); st64(f); f.end();
+        i64c(f, j - GBASE); i64c(f, i - GBASE);                              // exit rip: next if FS/GS handled, else THIS wrmsr (interp re-runs it; icount counts it twice — boot-only, harmless)
+        f.local_get(1); i64c(f, 0xC0000100); f.op("i64_eq"); f.local_get(1); i64c(f, 0xC0000101); f.op("i64_eq"); f.op("i32_or");
+        f.op("select");
+        term = true; n++; i = j; break;
+      }
     }
     if (!handled) { if (globalThis.__JITSTATS) globalThis.__JITSTATS[(two ? "0F " : "") + op.toString(16)] = (globalThis.__JITSTATS[(two ? "0F " : "") + op.toString(16)] || 0) + 1; break; }   // unknown op: end block (interpreter resumes here)
     i = j; n++; }
@@ -515,7 +579,7 @@ export function jitCompile(rip) {
   } else {
     if (term) { f.local_set(3); i32c(f, RIP); f.local_get(3); st64(f); }   // terminator left exit rip on the stack (already materialized before the push)
     else { materialize(f); i32c(f, RIP); i64c(f, i - GBASE); st64(f); }    // fall-through: flush deferred flags so the interpreter sees correct rfl
-    wbDirty(f); i32c(f, n); }
+    wbDirty(f); i32c(f, ifbrk ? (n | (1 << 30)) : n); }                    // bit30 = ended on STI/POPF/IRET (an IF-window): break-on-IF dispatch hands back there
   // ENTRY: load every used guest reg from reg[] memory into its cache local. Prepended LAST so the loads
   // sit BEFORE the loopT loop opcode (outside the loop) — register reads inside a 1024-iteration loop
   // never touch memory, which is the main in-game speedup.
@@ -526,13 +590,14 @@ export function jitCompile(rip) {
   blocks.set(rip, { fn: inst.exports.run, ninstr: n }); blockFn[slotOf(rip)] = inst.exports.run; blockRip[slotOf(rip)] = rip;
   if (RUNTBL) RUNTBL.set(slotOf(rip), inst.exports.run);                    // + the WASM dispatch table (call_indirect)
   return n; }
-export function jitRun(rip) { const b = blocks.get(rip); return (b && b.fn) ? b.fn() : 0; }  // runs the block (it writes rip); returns instr count
+export function jitRun(rip) { const b = blocks.get(rip); return ((b && b.fn) ? b.fn() : 0) & 0x3FFFFFFF; }  // runs the block (it writes rip); returns instr count (bit30 IF-window flag stripped)
 // Chain JIT'd blocks back-to-back without returning to the interpreter+host each block: each block
 // writes the next rip to shared memory and returns its instr count; the native WASM dispatch loop keeps
 // running while the next rip is also a JIT'd block (one host round-trip covers a whole hot loop).
 export function jitDispatch(budget) {
   if (RUNDISP) return RUNDISP(budget);
   const ripV = new Int32Array(MEM.buffer, RIP, 1);      // fallback (no runtime module yet)
+  const brk = budget < 0, bud = brk ? -budget : budget; // negative budget = break-on-IF mode (see buildRuntime)
   let ran = 0;
-  while (ran < budget) { const rip = ripV[0], slot = slotOf(rip); if (blockRip[slot] !== rip) break; const fn = blockFn[slot]; if (!fn) break; const c = fn(); ran += c; if (c === 0) break; }
+  while (ran < bud) { const rip = ripV[0], slot = slotOf(rip); if (blockRip[slot] !== rip) break; const fn = blockFn[slot]; if (!fn) break; const r = fn(); const c = r & 0x3FFFFFFF; ran += c; if (c === 0) break; if (brk && (r & 0x40000000)) break; }
   return ran; }

@@ -83,7 +83,7 @@ export const HOST_IMPORTS = {
   __jit_x87:     { params: [I, I, I], results: [] },       // (fprOff,fspOff,swOff) — JIT learns the x87 FPU state offsets
   __jit_dispatch:{ params: [I], results: [I] },            // (budget) -> instr count: run a CHAIN of JIT'd blocks (amortizes the host round-trip)
   __jit_chain:   { params: [I, I], results: [] },
-  __jit_seg:     { params: [I, I, I], results: [] },       // (fsbaseAddr,gsbaseAddr,tscAddr) — per-core FS/GS base + TSC addresses          // (jitRipOff,jitNOff) — JIT builds its native dispatch-loop module
+  __jit_seg:     { params: [I, I, I, I, I, I], results: [] },   // (fsbaseAddr,gsbaseAddr,tscAddr,x87cwAddr,xmmLoAddr,xmmHiAddr) — FS/GS/TSC for EAs + FPU/XMM offsets so the JIT can compile FXSAVE/FXRSTOR
 
   __snd:         { params: [F], results: [] },           // freq Hz (0 = off)
   __play_note:   { params: [F, I], results: [] },        // freq, ms (blocks)
