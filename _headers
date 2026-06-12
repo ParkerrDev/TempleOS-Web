@@ -1,9 +1,14 @@
-# NO cross-origin isolation: it was only ever for QEMU-WASM's SharedArrayBuffer threads,
-# and QEMU is gone — the deployed HEMU engine uses plain (unshared) WASM memory and
-# postMessage. Staying un-isolated lets Terry Search stream archive.org video INLINE
-# (their download nodes send no CORS/CORP, which COEP would block). If SMP (shared
-# guest RAM) ever ships, isolation must come back — and inline playback must move to
-# the COEP-exempt player.html pattern (see git history at 73dc575).
+# COEP: credentialless — the best of both worlds:
+#  * SharedArrayBuffer works (the HolyC editor runs blocking programs in a worker with a
+#    shared framebuffer + Atomics input — it NEEDS isolation),
+#  * cross-origin <video>/<img> still load (Terry Search streams archive.org originals
+#    inline; their download nodes send no CORS/CORP, which require-corp would block —
+#    credentialless allows no-cors media, just sent without credentials).
+# Safari doesn't support credentialless: it ignores it -> not isolated -> everything works
+# except the editor's runner, which already shows its own graceful warning there.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
 
 # Long-cache the big immutable build artifacts (cache-busted by the ?v= query).
 /vendor/*
@@ -17,13 +22,9 @@
   Cache-Control: no-cache
 /hemu-worker.js
   Cache-Control: no-cache
-/hemu-wasm/snapshot.wasm
+/hemu-wasm/*
   Cache-Control: no-cache
-/hemu-wasm/live.bin.gz
-  Cache-Control: no-cache
-# jit.js + the compiler modules it imports must move in lockstep with snapshot.wasm's
+# hemu-wasm/jit.js + the compiler modules it imports must move in lockstep with snapshot.wasm's
 # global offsets (G_FS/G_GS/G_TSC) — a stale jit.js corrupts segment bases (BADOP crash).
-/jit.js
-  Cache-Control: no-cache
 /holyc-wasm/*
   Cache-Control: no-cache

@@ -68,19 +68,31 @@ exactly like the TSC sampling on real hardware.
 The desktop appears after the 5 MB snapshot loads; the disk image streams in the background
 for file I/O. (The `.gz` assets are decompressed in the browser.)
 
+## Repository layout (4 repos)
+
+| repo | what | consumed how |
+|---|---|---|
+| **TempleOS-web** (this) | the site: pages, search, video windows, converter, assets | deployed on Netlify |
+| [holyc-wasm](https://github.com/ParkerrDev/holyc-wasm) | HolyC→WASM compiler + runtime + the editor app | cloned into `./holyc-wasm` at build time |
+| [hemu-wasm](https://github.com/ParkerrDev/hemu-wasm) | the emulator: `snapshot.wasm`, the JIT, disk plumbing, engine harnesses | cloned into `./hemu-wasm` at build time |
+| [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline — its output is baked into `assets/transcripts/` by `build-transcripts.mjs` |
+
+`netlify.toml`'s build command `git clone --depth 1`s the two sibling repos, so **every
+deploy ships their latest main** — no submodule pins, no packages. To auto-redeploy when
+*they* change, create one Netlify build hook (Site settings → Build & deploy → Build hooks)
+and add its URL as a plain push webhook on both repos.
+
 ## Running locally
 
 ```bash
+git clone https://github.com/ParkerrDev/TempleOS-web && cd TempleOS-web
+git clone --depth 1 https://github.com/ParkerrDev/holyc-wasm     # same layout the build creates
+git clone --depth 1 https://github.com/ParkerrDev/hemu-wasm
 node server.mjs               # → http://localhost:8080  (zero-dependency)
-# or any static server:
-python3 -m http.server 8080
 ```
 
-## Deploying
-
-It's all static files — any static host works (no special headers required; the
-included [`_headers`](./_headers) only tunes caching). Paths are deployment-relative,
-so it works at a domain root *or* a project subpath like `/TempleOS-wasm/`.
+(For hacking on the engine/compiler, clone them as siblings and symlink instead:
+`ln -s ../holyc-wasm ../hemu-wasm .`)
 
 ## Credits & licenses
 

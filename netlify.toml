@@ -1,0 +1,9 @@
+# TempleOS-web assembles its sibling repos at BUILD TIME, so every deploy ships their
+# latest main — no submodule pins, no packages, no bots:
+#   holyc-wasm  → ./holyc-wasm   (HolyC→WASM compiler + runtime + the editor app)
+#   hemu-wasm   → ./hemu-wasm    (the emulator: snapshot.wasm, JIT, disk plumbing)
+# To redeploy automatically when THOSE repos change, add a Netlify build hook
+# (Site settings → Build & deploy → Build hooks) as a push webhook on each repo.
+[build]
+  command = "rm -rf holyc-wasm hemu-wasm && git clone --depth 1 https://github.com/ParkerrDev/holyc-wasm && git clone --depth 1 https://github.com/ParkerrDev/hemu-wasm"
+  publish = "."
