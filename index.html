@@ -339,7 +339,7 @@
     const setLoad = (s, pct) => { ldtext.textContent = s; if (pct != null) ldbar.style.width = pct + "%"; };
 
     // ---- stacked layout on narrow viewports / touch ----
-    { const apply = () => document.body.classList.toggle("stack", innerWidth < 980 || document.body.classList.contains("touch"));
+    { const apply = () => document.body.classList.toggle("stack", innerWidth < 980);   // touch overlays never re-stack a desktop layout
       addEventListener("resize", apply);
       window.__restack = apply;
       apply();
@@ -529,7 +529,7 @@
     // ---- touch controls: direct touch = absolute cursor + tap-to-click; joystick = fine relative
     //      moves; L/R = holdable mouse buttons (drags); ⌨ opens the device keyboard. ----
     if (navigator.maxTouchPoints > 0 || "ontouchstart" in window) document.body.classList.add("touch");
-    $("touchBtn").addEventListener("click", () => { document.body.classList.toggle("touch"); window.__restack?.(); });
+    $("touchBtn").addEventListener("click", () => document.body.classList.toggle("touch"));
     { // direct canvas touch: move cursor absolutely; quick tap = left click; long-press = right click
       let t0 = 0, moved = 0, lpTimer = 0;
       const pos = (t) => { const r = canvas.getBoundingClientRect();
