@@ -988,12 +988,13 @@ I64 GodDoodleGen(I64 strokes)
       // player DOUBLE-decodes its sub-file path, so the form that selects the right track is:
       // spaces -> "+", literal "+" -> "%252B" — a plain %2B/%20 encoding silently bounces to a
       // DIFFERENT video (verified against the live player). Videos whose original isn't in the
-      // player's playlist (718 .wmv/.mkv, p:0 from the build) link the direct /download/ file
-      // instead, with #t= so browsers that can stream the format start at the right moment.
-      const DL = "https://archive.org/download/TerryADavis_TempleOS_Archive/";
+      // player's playlist (718 originals — 669 .mkv — that archive.org never web-encoded; p:0
+      // from the build) open OUR mini-player (player.html, COEP-exempt) which streams the original
+      // straight from archive.org — Chromium plays Matroska natively; it falls back to a download
+      // UI only for the ~49 .avi/.wmv no browser can decode.
       const url = (h, sec) => h.p
         ? ARCH + h.f.split("/").map(encodeURIComponent).join("/").replace(/%2B/g, "%252B").replace(/%20/g, "+") + (sec != null ? "?start=" + Math.max(0, sec - 2) : "")
-        : DL + h.f.split("/").map(encodeURIComponent).join("/") + (sec ? "#t=" + Math.max(0, sec - 2) : "");
+        : new URL("player.html?f=" + encodeURIComponent(h.f) + (sec ? "&t=" + Math.max(0, sec - 2) : "") + "&n=" + encodeURIComponent(h.t || ""), location.href).href;
       // highlight matched terms (longest first; sentinel chars so replacements can't corrupt the HTML)
       const hi = (text, terms) => { let h = esc(text);
         for (const term of [...new Set(terms || [])].sort((a, b) => b.length - a.length).slice(0, 12)) {
@@ -1012,8 +1013,8 @@ I64 GodDoodleGen(I64 strokes)
         lastHits = m.hits; lastTerms = m.terms || []; lastTotal = m.total || 0;
         out.innerHTML = m.hits.map((h, i) =>
           `<div class="ts-hit">` +
-            `<div class="ts-row"><a class="ts-t" href="${url(h, h.sec)}" target="_blank" rel="noopener" title="${h.p ? `watch on archive.org at ${hms(h.sec)}` : "this original isn't in archive.org's web player — links download the video file"}">${esc(h.t)}</a>` +
-            `<span class="ts-m">${esc(h.d)} · ${h.p ? "▶" : "⇣"} ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
+            `<div class="ts-row"><a class="ts-t" href="${url(h, h.sec)}" target="_blank" rel="noopener" title="${h.p ? `watch on archive.org at ${hms(h.sec)}` : `archive.org never web-encoded this original — plays in our mini-player at ${hms(h.sec)}`}">${esc(h.t)}</a>` +
+            `<span class="ts-m">${esc(h.d)} · ▶ ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
             `<span class="ts-act"><button class="ts-cp" data-i="${i}" title="copy this passage (with video + timestamp + link)">⧉</button>` +
             `<button class="ts-tr" data-i="${i}" title="full transcript of this video">≡</button></span></div>` +
             `<a class="ts-x" href="${url(h, h.sec)}" target="_blank" rel="noopener">${hi(h.text, m.terms)}</a></div>`).join("") ||
@@ -1027,7 +1028,7 @@ I64 GodDoodleGen(I64 strokes)
         st.textContent = `${v.t} — full transcript, ${v.s.length} passages${v.n ? ", " + hms(v.n) : ""}`;
         out.innerHTML = `<div class="ts-trh"><button id="tsBack">← results</button>` +
           `<button id="tsCpTr">⧉ Copy transcript</button><button id="tsDlTr">↓ .txt</button>` +
-          `<a href="${url(v, 0)}" target="_blank" rel="noopener">${v.p ? "▶ watch on archive.org" : "⇣ download the video (not in the web player)"}</a></div>` +
+          `<a href="${url(v, 0)}" target="_blank" rel="noopener">${v.p ? "▶ watch on archive.org" : "▶ play in the mini-player (original was never web-encoded)"}</a></div>` +
           v.s.map(([sec, text]) => `<div class="ts-line"><a class="ts-ts" href="${url(v, sec)}" target="_blank" rel="noopener">[${hms(sec)}]</a>${esc(text)}</div>`).join("");
         out.scrollTop = 0;
         $("tsBack").addEventListener("click", () => { render({ hits: lastHits, terms: lastTerms, total: lastTotal }); });
