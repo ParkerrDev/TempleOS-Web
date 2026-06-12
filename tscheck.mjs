@@ -235,15 +235,14 @@ console.log("  back to results OK");
   if (!synced || unsynced) throw new Error("typed date: operator must sync the checkboxes");
   console.log("== two-way sync == typing date:2014 checks the 2014 box");
 
-  // EXACT mode via the single results dropdown: typo must NOT match; real phrase must
+  // Google-style OR: total(a OR b) >= max(total(a), total(b))
   await openPanel(); await page.click("#tsYearPanel button");   // any year
-  await page.selectOption("#tsMode", "exact");
-  await page.fill("#tsQ", "idoit admires complexty");
-  await page.waitForSelector("#tsOut .ts-none", { timeout: 15000 });   // exact mode: the typo matches NOTHING
-  await page.fill("#tsQ", "i do a round robin");
-  await page.waitForFunction(() => /matching passages/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
-  console.log("== exact mode == typo rejected, verbatim phrase matches");
-  await page.selectOption("#tsMode", "fuzzy");
+  const totalOf = async (qq) => { await page.fill("#tsQ", qq);
+    await page.waitForTimeout(1400);                 // debounce (250ms) + worker round-trip, with margin
+    return +(await page.$eval("#tsStatus", (e) => (e.textContent.match(/(\d+) matching passages/) || [0, 0])[1])); };
+  const tA = await totalOf("hyperthread"), tB = await totalOf("gigahertz"), tOR = await totalOf("hyperthread OR gigahertz");
+  if (!(tOR >= Math.max(tA, tB) && tOR > 0)) throw new Error(`OR wrong: ${tA} / ${tB} / OR=${tOR}`);
+  console.log("== OR == hyperthread:" + tA, "gigahertz:" + tB, "OR:" + tOR);
 
   await page.fill("#tsQ", "");
   await page.selectOption("#tsMode", "old");
@@ -251,7 +250,7 @@ console.log("  back to results OK");
   const olds = await page.$$eval("#tsOut .ts-vidcard .ts-m", (es) => es.slice(0, 3).map((e) => e.textContent.slice(0, 10)));
   console.log("== sort oldest ==", JSON.stringify(olds));
   if (!(olds.length && olds[0] <= olds[1])) throw new Error("oldest sort wrong");
-  await page.selectOption("#tsMode", "fuzzy");
+  await page.selectOption("#tsMode", "rel");
   console.log("  FILTERS OK (titles scope · year-operators · sort)");
 }
 
