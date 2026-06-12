@@ -20,6 +20,12 @@ hottest render routines.
 - **Ctrl+M** opens the personal menu — click a game sprite (Varoom, BlackDiamond, …) to play.
 - **↻ Restart** reloads the clean snapshot any time the OS gets into a weird state.
 - **⌨ HolyC Editor** — write & run TempleOS HolyC compiled *natively* to WASM (no emulation).
+  Save/open `.HC` files, or write your source straight into `C:/Home` for the OS to run.
+- **⏸ Pause** — freeze and resume the OS (guest time stops too).
+- **💾 Disk & Save** — export a **snapshot** (the whole running OS — reload it later to resume
+  exactly where you were) or your **C: disk image** (including files you saved in TempleOS);
+  import either one back; or upload any file straight into `C:/Home`. This is how you save your
+  progress, share programs/games, or boot a custom/modified TempleOS disk.
 - **✞ God Words** — TempleOS's divine word oracle on the page itself: GodBits/GodPick
   compiled in‑browser by holyc-wasm, entropy from your keystroke timing.
 - On phones: an on‑screen joystick + L/R mouse buttons + a keyboard summon button appear,

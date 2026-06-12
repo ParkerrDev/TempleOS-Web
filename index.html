@@ -183,6 +183,20 @@
     #godBar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     #godBar button { width:auto; }
 
+    /* Disk & Save window */
+    #diskWin { display:flex; flex-direction:column; width:min(560px,94vw); max-height:88vh; margin:0; padding:10px; }
+    .disk-body { overflow:auto; }
+    .disk-sec { border-top:2px solid var(--blue); padding:8px 2px; }
+    .disk-sec:first-child { border-top:0; }
+    .disk-sec h3 { color:var(--red); font-size:16px; font-weight:normal; margin-bottom:3px; }
+    .disk-sec p { color:var(--blue); font-size:16px; line-height:1.25; margin-bottom:6px; }
+    .disk-sec kbd { background:var(--blue); color:#fff; padding:0 4px; }
+    .disk-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .disk-row button { width:auto; }
+    #homeList { list-style:none; margin:6px 0 0; padding:0; max-height:120px; overflow:auto; color:var(--blue); font-size:16px; }
+    #homeList li { padding:1px 2px; }
+    #diskStatus { color:var(--red); font-size:16px; min-height:1.4em; padding:6px 2px 0; }
+
     /* ---- responsive: phones & narrow windows ---- */
     /* stacked layout — applied by JS when effective (zoom-divided) width < 980px */
     body.stack .desktop-row { flex-direction:column; align-items:center; }
@@ -225,10 +239,12 @@
     <div class="col-left">
       <div class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
+        <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico">⏸</span> Pause</button>
         <button id="restartBtn" title="Reload the clean desktop snapshot (~4s)"><span class="ico">↻</span> Restart</button>
         <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS"><span class="ico">⛶</span> Fullscreen</button>
         <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed"><span class="ico">⌨</span> HolyC Editor</button>
         <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
+        <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico">💾</span> Disk &amp; Save</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico">🕹</span> Touch controls</button>
       </div>
       <div class="win keyswin" data-title="Keys"><span class="close">[X]</span><div id="keysbar"></div></div>
@@ -276,6 +292,9 @@
       <div class="ed-bar">
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
         <button id="runBtn">▶ Run</button>
+        <button id="edSave" title="Download the source as a .HC file">💾 Save</button>
+        <button id="edOpen" title="Open a .HC file from your computer">📂 Open</button>
+        <button id="edToDisk" title="Write the source to /Home on the C: drive so TempleOS can run it">➜ To C:/Home</button>
         <span id="status">ready</span>
       </div>
       <div class="ed-body">
@@ -306,6 +325,41 @@
         <button id="godSong">♪ Song</button>
         <button id="godDoodle">✎ Doodle</button>
         <button id="godClear">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disk & Save overlay -->
+  <div id="diskOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Disk and Save">
+    <div class="win" id="diskWin" data-title="Disk &amp; Save">
+      <span class="close" id="diskClose" title="Close">[X]</span>
+      <div class="disk-body">
+        <div class="disk-sec">
+          <h3>Save your progress</h3>
+          <p>A <b>snapshot</b> captures the entire running OS (memory + state) — reload it later to resume exactly where you left off. A <b>disk image</b> is your whole C: drive, including files you saved in TempleOS.</p>
+          <div class="disk-row">
+            <button id="dlSnap">⬆ Export snapshot</button>
+            <button id="dlDisk">⬆ Export C: disk</button>
+          </div>
+        </div>
+        <div class="disk-sec">
+          <h3>Load / import</h3>
+          <p>Boot from a snapshot you exported before, or mount a custom / previously-saved C: disk image (raw or qcow2, optionally gzipped). Importing reloads the page.</p>
+          <div class="disk-row">
+            <button id="ulSnap">⬇ Import snapshot</button>
+            <button id="ulDisk">⬇ Import C: disk</button>
+          </div>
+        </div>
+        <div class="disk-sec">
+          <h3>Upload a file to C:/Home</h3>
+          <p>Drop a <b>.HC</b> program/game (or any file) straight into TempleOS's <kbd>/Home</kbd>. Run it in the OS with <kbd>#include "Name"</kbd> or by clicking it in a <kbd>Dir</kbd> listing.</p>
+          <div class="disk-row">
+            <button id="ulFile">📎 Choose file…</button>
+            <button id="lsHome">↻ List /Home</button>
+          </div>
+          <ul id="homeList"></ul>
+        </div>
+        <div id="diskStatus"></div>
       </div>
     </div>
   </div>
@@ -607,24 +661,47 @@
             osc.type = "square"; gain.gain.value = 0; osc.connect(gain).connect(actx.destination); osc.start(); } catch {}
     });
 
-    // ---- load the compressed RAM snapshot ----
-    setLoad("downloading TempleOS RAM snapshot (~5 MB)…", 5);
-    const gz = await fetch("./hemu-wasm/live.bin.gz", { cache: "no-cache" });
-    if (!gz.ok) { setLoad("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
-    const total = +(gz.headers.get("content-length") || 5222517);
-    const reader = gz.body.getReader(); const chunks = []; let got = 0;
-    for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.length; setLoad(`downloading snapshot… ${(got/1048576).toFixed(1)} MB`, 5 + 45 * got / total); }
-    let gzBytes = await new Blob(chunks).arrayBuffer();
-    chunks.length = 0;
-    dbg(`snapshot downloaded (${(got/1048576).toFixed(1)} MB)`);
+    // ---- one-shot import handoff (IndexedDB survives the reload an import triggers) ----
+    const idb = {
+      open: () => new Promise((res, rej) => { const r = indexedDB.open("hemu", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }),
+      get: async (k) => { const db = await idb.open(); return new Promise((res) => { const t = db.transaction("kv").objectStore("kv").get(k); t.onsuccess = () => res(t.result || null); t.onerror = () => res(null); }); },
+      set: async (k, v) => { const db = await idb.open(); return new Promise((res) => { const t = db.transaction("kv", "readwrite").objectStore("kv").put(v, k); t.onsuccess = res; t.onerror = res; }); },
+      del: async (k) => { const db = await idb.open(); return new Promise((res) => { const t = db.transaction("kv", "readwrite").objectStore("kv").delete(k); t.onsuccess = res; t.onerror = res; }); },
+    };
+    window.__idb = idb;
+    const importedSnap = await idb.get("importSnap").catch(() => null);
+    const importedDisk = await idb.get("importDisk").catch(() => null);
+    if (importedSnap) await idb.del("importSnap");
+    if (importedDisk) { await idb.del("importDisk"); window.__importDisk = importedDisk; }   // raw bytes -> worker init
+
+    // ---- load the compressed RAM snapshot (imported, or the default) ----
+    let gzBytes;
+    if (importedSnap) { gzBytes = importedSnap; dbg(`booting imported snapshot (${(importedSnap.byteLength/1048576).toFixed(1)} MB)`); setLoad("loading imported snapshot…", 50); }
+    else {
+      setLoad("downloading TempleOS RAM snapshot (~5 MB)…", 5);
+      const gz = await fetch("./hemu-wasm/live.bin.gz", { cache: "no-cache" });
+      if (!gz.ok) { setLoad("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
+      const total = +(gz.headers.get("content-length") || 5222517);
+      const reader = gz.body.getReader(); const chunks = []; let got = 0;
+      for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.length; setLoad(`downloading snapshot… ${(got/1048576).toFixed(1)} MB`, 5 + 45 * got / total); }
+      gzBytes = await new Blob(chunks).arrayBuffer();
+      chunks.length = 0;
+      dbg(`snapshot downloaded (${(got/1048576).toFixed(1)} MB)`);
+    }
 
     $("restartBtn").addEventListener("click", () => location.reload());
+
+    // a place for the Disk/Save UI to reach whichever engine is running (worker or inline)
+    const engine = { post: () => {}, kind: null };
 
     // ---- engine: multi-core worker, single-thread inline fallback ----
     function runWorker() {
       let worker, watchdog, alive = false;
       try { worker = new Worker("./hemu-worker.js", { type: "module" }); } catch (e) { return false; }
       engineLabel = "2";
+      engine.kind = "worker"; engine.post = (m, t) => worker?.postMessage(m, t || []);
+      window.__diskMsg = null;   // Disk UI sets a handler; worker replies route to it
       notifyInput = () => worker?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0) });
       const fallback = (why) => {
         if (!worker) return;
@@ -650,8 +727,10 @@
         else if (m.cmd === "snd") snd(m.f);
         else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
         else if (m.cmd === "error") fallback(m.msg);
+        else if (window.__diskMsg) window.__diskMsg(m);   // paused/exportResult/fileResult/dirList/diskInfo
       };
-      worker.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: "./hemu-wasm/snapshot.wasm", fixedB: FIXED_B });
+      worker.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: "./hemu-wasm/snapshot.wasm", fixedB: FIXED_B, diskBytes: window.__importDisk || null }, window.__importDisk ? [window.__importDisk] : []);
+      window.__importDisk = null;
       watchdog = setTimeout(() => { if (!alive) fallback("no frame in 10s"); }, 10000);
       return true;
     }
@@ -664,13 +743,15 @@
         for (;;) { const { done, value } = await rd.read(); if (done) break; snap.set(value, off); off += value.length; } }
       setLoad("starting hemu (HolyC → WASM x86-64 core)…", 88);
       const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm", { cache: "no-cache" })).arrayBuffer());
-      let disk = null;
-      loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => { disk = d; dbg("C: disk image ready"); }).catch(() => disk = null);
+      const { makeDisk, fat32Upload, fat32List } = await import("./qcow2.js");
+      let disk = null, gBaseI = 0;
+      if (window.__importDisk) { try { disk = makeDisk(new Uint8Array(window.__importDisk)); } catch {} window.__importDisk = null; }
+      else loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => { disk = d; dbg("C: disk image ready"); }).catch(() => disk = null);
       engineLabel = "1";
       let curBudget = FIXED_B || 1500000, dtMs = 16;
       const host = createHost({
         onText: (s) => { if (s && s.indexOf("BADOP") >= 0) dbg("[guest] " + s.trim(), true); }, snd: { tone: (f) => snd(Number(f)) },
-        snapLoad: (base, u8) => { u8.set(snap, base); },
+        snapLoad: (base, u8) => { gBaseI = base; u8.set(snap, base); },
         diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },
         diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },
         present: (addr, w, h, u8) => blit(u8.subarray(addr, addr + w * h), w, h),
@@ -682,9 +763,36 @@
       host.env.__host_dt = () => BigInt(dtMs | 0);
       const inst = await WebAssembly.instantiate(mod, { env: host.env });
       host.attach(inst); inst.exports.__rt_init();
+      // the inline engine answers the same Disk/Save messages the worker does
+      const BLKDEV = 0xBC18;
+      const invalidate = () => { if (!disk) return; const m = new DataView(inst.exports.memory.buffer);
+        const u64 = (a) => Number(m.getBigUint64(gBaseI + a, true)), w64 = (a, v) => m.setBigUint64(gBaseI + a, BigInt(v), true);
+        const base = u64(BLKDEV + 40), ht = u64(BLKDEV + 56), size = u64(BLKDEV + 64); if (!base || !ht || !size) return;
+        const cnt = Math.floor(size / 560);
+        for (let i = 0; i < cnt; i++) { const e = base + i * 560; w64(e + 16, e); w64(e + 24, e); w64(e + 32, 0); w64(e + 40, 0); }
+        for (let k = 0; k < 0x2000; k++) { const bkt = ht + k * 16; w64(bkt, bkt); w64(bkt + 8, bkt); } };
+      engine.kind = "inline";
+      engine.post = async (msg) => { const reply = (m) => window.__diskMsg && window.__diskMsg(m);
+        try {
+          if (msg.cmd === "pause") { window.__inlinePaused = msg.value; }
+          else if (msg.cmd === "exportSnapshot") { const ram = new Uint8Array(inst.exports.memory.buffer, gBaseI, 402653184);
+            const gz = await new Response(new Blob([ram]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
+            reply({ cmd: "exportResult", kind: "snapshot", ok: true, buf: gz }); }
+          else if (msg.cmd === "exportDisk") { if (!disk) return reply({ cmd: "exportResult", kind: "disk", ok: false, msg: "disk not loaded" });
+            const total = disk.virtualSize || 0x4000000, SEC = 512, parts = []; const secs = Math.ceil(total / SEC);
+            for (let lba = 0; lba < secs; lba += 2048) { const n = Math.min(2048, secs - lba); const b = new Uint8Array(n * SEC); disk.readInto(lba, n, b, 0); parts.push(b); }
+            const gz = await new Response(new Blob(parts).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
+            reply({ cmd: "exportResult", kind: "disk", ok: true, buf: gz }); }
+          else if (msg.cmd === "uploadFile") { if (!disk) throw new Error("disk not loaded yet");
+            const r = fat32Upload(disk, msg.name, new Uint8Array(msg.bytes), msg.dir || "Home"); invalidate();
+            reply({ cmd: "fileResult", ok: true, msg: `wrote ${msg.name} to /${msg.dir || "Home"} (${r.clusters} clusters)` }); }
+          else if (msg.cmd === "listDir") reply({ cmd: "dirList", ok: true, dir: msg.dir, files: disk ? fat32List(disk, msg.dir || "Home").map(e => ({ name: e.name, size: e.size, dir: !!(e.attr & 0x10) })) : [] });
+        } catch (err) { reply({ cmd: msg.cmd === "uploadFile" ? "fileResult" : "exportResult", ok: false, msg: String(err.message || err), kind: msg.cmd === "exportDisk" ? "disk" : "snapshot" }); }
+      };
       let lastT = performance.now();
       function loop() {
         const now = performance.now();
+        if (window.__inlinePaused) { lastT = now; requestAnimationFrame(loop); return; }
         dtMs = Math.max(1, Math.min(100, now - lastT)); lastT = now;
         try { inst.exports.__main(); } catch (e) { setLoad("hemu trap: " + e.message); dbg("hemu trap: " + e.message, true); return; }
         const work = performance.now() - now;
@@ -951,6 +1059,80 @@ I64 GodDoodleGen(I64 strokes)
       });
     }
 
+    // ---- Pause / Play ----
+    { let paused = false;
+      const btn = $("pauseBtn");
+      btn.addEventListener("click", () => { paused = !paused;
+        engine.post({ cmd: "pause", value: paused });
+        if (engine.kind === "inline") window.__inlinePaused = paused;   // inline loop reads this flag
+        btn.innerHTML = paused ? '<span class="ico">▶</span> Play' : '<span class="ico">⏸</span> Pause';
+        engineLabel = engineLabel; });
+    }
+
+    // ---- Disk & Save window ----
+    { const ov = $("diskOverlay"), st = $("diskStatus");
+      const say = (s) => { st.textContent = s; dbg("disk: " + s); };
+      const dl = (bytes, name, type) => { const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([bytes], { type: type || "application/octet-stream" }));
+        a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+      const pickFile = (accept) => new Promise((res) => { const i = document.createElement("input"); i.type = "file"; if (accept) i.accept = accept;
+        i.onchange = () => res(i.files[0] || null); i.click(); });
+      const maybeGunzip = async (buf) => { const u = new Uint8Array(buf);
+        if (u[0] === 0x1f && u[1] === 0x8b) return new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+        return u; };
+
+      // worker replies land here
+      window.__diskMsg = (m) => {
+        if (m.cmd === "exportResult") {
+          if (!m.ok) { say("export failed: " + m.msg); return; }
+          const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+          if (m.kind === "snapshot") dl(m.buf, `templeos-${stamp}.hemu.gz`), say("snapshot exported");
+          else dl(m.buf, `templeos-C-${stamp}.img.gz`, "application/gzip"), say("C: disk exported");
+        }
+        else if (m.cmd === "fileResult") say(m.ok ? "✓ " + m.msg : "✗ " + m.msg);
+        else if (m.cmd === "diskInfo") say(m.ok ? "✓ " + m.msg : "✗ " + m.msg);
+        else if (m.cmd === "dirList") {
+          const ul = $("homeList"); ul.innerHTML = "";
+          if (!m.ok) { say("list failed: " + m.msg); return; }
+          for (const f of m.files) { const li = document.createElement("li"); li.textContent = (f.dir ? "📁 " : "📄 ") + f.name + (f.dir ? "" : "  " + f.size + "b"); ul.appendChild(li); }
+          say(m.files.length + " entries in /" + (m.dir || "Home"));
+        }
+      };
+
+      $("dlSnap").addEventListener("click", () => { say("compressing 384 MB… (a few seconds)"); engine.post({ cmd: "exportSnapshot" }); });
+      $("dlDisk").addEventListener("click", () => { say("reading + compressing C:…"); engine.post({ cmd: "exportDisk" }); });
+      $("ulSnap").addEventListener("click", async () => {
+        const f = await pickFile(".gz,.hemu,application/gzip"); if (!f) return;
+        say("storing snapshot, reloading…");
+        await window.__idb.set("importSnap", await f.arrayBuffer());
+        location.reload();
+      });
+      $("ulDisk").addEventListener("click", async () => {
+        const f = await pickFile(".img,.raw,.qcow2,.gz"); if (!f) return;
+        say("decompressing disk image…");
+        const bytes = await maybeGunzip(await f.arrayBuffer());
+        await window.__idb.set("importDisk", bytes.buffer);
+        say("stored, reloading…"); location.reload();
+      });
+      $("ulFile").addEventListener("click", async () => {
+        const f = await pickFile(); if (!f) return;
+        const name = f.name.length > 37 ? f.name.slice(0, 37) : f.name;
+        const bytes = new Uint8Array(await f.arrayBuffer());
+        say("writing " + name + " to C:/Home…");
+        engine.post({ cmd: "uploadFile", name, dir: "Home", bytes: bytes.buffer }, [bytes.buffer]);
+      });
+      $("lsHome").addEventListener("click", () => { say("reading /Home…"); engine.post({ cmd: "listDir", dir: "Home" }); });
+
+      const open = () => { ov.classList.add("open"); st.textContent = engine.kind ? "" : "engine not ready yet"; };
+      const close = () => ov.classList.remove("open");
+      $("diskBtn").addEventListener("click", open);
+      $("diskClose").addEventListener("click", close);
+      ov.addEventListener("pointerdown", (e) => { if (e.target === ov) close(); });
+      // let the Disk window also write the editor's current source to C:/Home
+      window.__uploadToHome = (name, text) => { const b = new TextEncoder().encode(text);
+        engine.post({ cmd: "uploadFile", name, dir: "Home", bytes: b.buffer }, [b.buffer]); say("writing " + name + "…"); };
+    }
+
     // ---- Terry window: gif sequence forwards/backwards ----
     { const img2 = document.querySelector(".terrywin img");
       const seq = [["assets/terrydancing.gif", 7200], ["assets/terrydancing-rev.gif", 7200], ["assets/terry.gif", 2840], ["assets/terry-rev.gif", 2840]];
@@ -989,6 +1171,26 @@ I64 GodDoodleGen(I64 strokes)
       openBtn.addEventListener("click", open);
       closeBtn.addEventListener("click", close);
       ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(); });
+
+      // ---- editor Save (.HC download) / Open (.HC upload) / To C:/Home ----
+      const ta = document.getElementById("editor");
+      const setStatus = (s) => { const st = document.getElementById("status"); if (st) st.textContent = s; };
+      const curName = () => { const sel = document.getElementById("demoSelect");
+        const v = sel && sel.value ? sel.value.split("/").pop() : ""; return (v && /\.HC$/i.test(v)) ? v : "MyProgram.HC"; };
+      document.getElementById("edSave").addEventListener("click", () => {
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([ta.value], { type: "text/plain" }));
+        a.download = curName(); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); setStatus("saved " + a.download);
+      });
+      document.getElementById("edOpen").addEventListener("click", () => {
+        const i = document.createElement("input"); i.type = "file"; i.accept = ".HC,.hc,.txt,text/plain";
+        i.onchange = async () => { const f = i.files[0]; if (!f) return; ta.value = await f.text();
+          ta.dispatchEvent(new Event("input")); setStatus("opened " + f.name); }; i.click();
+      });
+      document.getElementById("edToDisk").addEventListener("click", () => {
+        const name = prompt("Write to C:/Home as:", curName()); if (!name) return;
+        if (window.__uploadToHome) { window.__uploadToHome(name, ta.value); setStatus("writing " + name + " to C:/Home…"); }
+        else setStatus("engine not ready");
+      });
     })();
 
     // ---- lightweight HolyC syntax highlighter for the editor ----
