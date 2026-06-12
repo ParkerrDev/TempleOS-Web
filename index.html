@@ -82,6 +82,7 @@
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
     .toolbar button { font-size:16px; padding:4px 6px; }
+    .toolbar button .ico { display:inline-block; width:24px; font-size:18px; line-height:16px; text-align:center; vertical-align:-2px; }
     button { font-family:'dos_vga','TempleOS',monospace; font-size:16px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
@@ -103,10 +104,6 @@
                          display:flex; align-items:center; justify-content:center; }
     body.fakefs #frame .wbar, body.fakefs #frame .wvert, body.fakefs #frame .cap, body.fakefs #loadui { display:none; }
     body.fakefs canvas#canvas { height:min(calc(100dvh * var(--zi)), calc(75vw * var(--zi))); width:auto; max-width:calc(100vw * var(--zi)); }
-    /* in either fullscreen mode: keys bar floats over the top, exit button top-right */
-    #frame.fsmode #keysbar { position:absolute; top:4px; left:50%; transform:translateX(-50%); z-index:6;
-                             max-width:100vw; margin:0; padding:4px; opacity:.88; }
-    #frame.fsmode #keysbar button { font-size:12px; padding:3px 5px; }
     #fsExit { display:none; position:absolute; top:6px; right:8px; z-index:7; width:auto; font-size:15px;
               padding:4px 9px; opacity:.88; }
     body.touch #frame.fsmode #fsExit { display:block; }   /* desktop: pointer is locked in fullscreen — a button is unreachable */
@@ -234,11 +231,11 @@
     <div class="col-left">
       <div class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
-        <button id="restartBtn" title="Reload the clean desktop snapshot (~4s)">↻ Restart</button>
-        <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS">⛶ Fullscreen</button>
-        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed">⌨ HolyC Editor</button>
-        <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser">✞ God Tools</button>
-        <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)">🕹 Touch controls</button>
+        <button id="restartBtn" title="Reload the clean desktop snapshot (~4s)"><span class="ico">↻</span> Restart</button>
+        <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS"><span class="ico">⛶</span> Fullscreen</button>
+        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed"><span class="ico">⌨</span> HolyC Editor</button>
+        <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
+        <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico">🕹</span> Touch controls</button>
       </div>
       <div class="win dbgw" data-title="Debug"><span class="close">[X]</span><pre id="dbg"></pre>
         <div class="dbgnote">Bug? Idea? <a href="https://github.com/ParkerrDev/TempleOS-wasm/issues/new" target="_blank" rel="noopener">Open a GitHub issue</a></div></div>
@@ -479,16 +476,12 @@
       const fsUi = (on) => {
         frame.classList.toggle("fsmode", on);
         if (on) {
-          frame.appendChild(keysbar);                    // keysbar rides inside the fullscreen element
           if (frame.dataset.floating) {                  // a dragged frame has inline pos that fights fullscreen
             frame._fsSaved = { left: frame.style.left, top: frame.style.top, width: frame.style.width, height: frame.style.height };
             frame.style.left = frame.style.top = frame.style.width = frame.style.height = "";
           }
-        } else {
-          colCenter.appendChild(keysbar);
-          if (frame.dataset.floating && frame._fsSaved) {
-            Object.assign(frame.style, frame._fsSaved); frame._fsSaved = null;
-          }
+        } else if (frame.dataset.floating && frame._fsSaved) {
+          Object.assign(frame.style, frame._fsSaved); frame._fsSaved = null;
         }
       };
       const fauxOn = () => { fake = true; document.body.classList.add("fakefs"); fsUi(true); scrollTo(0, 0); };
@@ -938,7 +931,15 @@ I64 GodDoodleGen(I64 strokes)
         const gap2 = document.createElement("span"); gap2.className = "wgap"; bar.appendChild(gap2);
         let x = w.querySelector(":scope > .close");
         if (x) bar.appendChild(x);
-        if (x && w.id !== "frame" && !w.closest(".overlay")) x.addEventListener("click", () => closeWin(w));
+        if (x && w.id !== "frame" && !w.closest(".overlay") && !w.classList.contains("toolbar")) {
+          // closing reveals a reopen button in the Menu window; reopening hides it again
+          const rb = document.createElement("button");
+          rb.style.display = "none";
+          rb.innerHTML = '<span class="ico">▣</span> ' + w.dataset.title;
+          document.querySelector(".toolbar").appendChild(rb);
+          x.addEventListener("click", () => { closeWin(w); rb.style.display = ""; });
+          rb.addEventListener("click", () => { w.style.display = ""; rb.style.display = "none"; w.classList.add("active"); });
+        }
         const v = document.createElement("span"); v.className = "wvert";
         const vs = document.createElement("span"); vs.textContent = w.dataset.title.split("·")[0].trim();
         v.appendChild(vs);
