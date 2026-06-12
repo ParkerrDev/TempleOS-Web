@@ -60,19 +60,100 @@
         (t ? "?start=" + t : "");
       a.style.display = "";
     }
+    // ---- in-browser converter (ffmpeg.wasm, vendored ~31 MB, single-thread — no isolation needed).
+    //      The bytes come from archive.org's /cors/ endpoint (the /download/ nodes send no CORS, so
+    //      fetch() can't read them — but /cors/ does, verified). Unsupported formats (.wmv/.avi/…)
+    //      re-encode a WINDOW from the wanted timestamp (x264 ultrafast 480p); .mkv/.mov first try
+    //      a fast stream-copy remux (no re-encode) for Firefox/Safari.
+    const CORS = "https://archive.org/cors/TerryADavis_TempleOS_Archive/" + f.split("/").map(encodeURIComponent).join("/");
+    const WIN = Math.max(5, Number(P.get("win")) || 600);    // seconds per converted window (?win= for tests)
+    const ext = (f.split(".").pop() || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    let ff = null, inLoaded = false, winStart = 0, blobUrl = null;
+    const stEl = () => document.getElementById("convSt");
+    const say = (m) => { const e = stEl(); if (e) e.textContent = m; };
+    async function ffmpegInit() {
+      if (ff) return ff;
+      say("loading converter (31 MB, one-time)…");
+      const { FFmpeg } = await import("./vendor/ffmpeg/ffmpeg/index.js");
+      ff = new FFmpeg();
+      await ff.load({ coreURL: new URL("vendor/ffmpeg/core/ffmpeg-core.js", location.href).href,
+                      wasmURL: new URL("vendor/ffmpeg/core/ffmpeg-core.wasm", location.href).href });
+      return ff;
+    }
+    async function fetchInput() {
+      if (inLoaded) return;
+      const resp = await fetch(CORS);
+      if (!resp.ok) throw new Error("archive.org fetch failed (" + resp.status + ")");
+      const total = Number(resp.headers.get("content-length")) || 0;
+      if (total > 400e6) throw new Error("file too large to convert in-browser (" + (total / 1e6 | 0) + " MB > 400 MB) — use ↓ Download video");
+      const rd = resp.body.getReader(), parts = []; let got = 0;
+      for (;;) { const { done, value } = await rd.read(); if (done) break;
+        parts.push(value); got += value.length;
+        say("downloading video… " + (total ? Math.round(got * 100 / total) + "%" : (got / 1e6 | 0) + " MB")); }
+      const all = new Uint8Array(got); let o = 0; for (const p of parts) { all.set(p, o); o += p.length; }
+      await ff.writeFile("in", all);
+      inLoaded = true;
+    }
+    async function convert(start) {
+      winStart = start;
+      await ffmpegInit();
+      await fetchInput();
+      try { await ff.deleteFile("out.mp4"); } catch {}
+      ff.on("progress", ({ time }) => { const sec = (time || 0) / 1e6;
+        say("converting… " + Math.min(100, Math.round(sec * 100 / WIN)) + "%"); });
+      let done = false;
+      if ((ext === "mkv" || ext === "mov") && start === 0) {       // fast path: stream-copy remux (h264/aac mkv plays everywhere as mp4)
+        say("remuxing (no re-encode)…");
+        const rc = await ff.exec(["-i", "in", "-c", "copy", "-movflags", "faststart", "out.mp4"]);
+        done = rc === 0;
+      }
+      if (!done) {
+        say("converting… 0%");
+        const rc = await ff.exec(["-ss", String(start), "-i", "in", "-t", String(WIN),
+          "-vf", "scale=-2:480", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+          "-c:a", "aac", "-b:a", "96k", "-movflags", "faststart", "out.mp4"]);
+        if (rc !== 0) throw new Error("conversion failed (ffmpeg rc " + rc + ") — use ↓ Download video");
+      }
+      const out = await ff.readFile("out.mp4");
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      blobUrl = URL.createObjectURL(new Blob([out.buffer], { type: "video/mp4" }));
+      msg.style.display = "none"; v.style.display = "";
+      v.onerror = null;                                            // a converted-output error shouldn't reopen the converter UI
+      v.src = blobUrl;
+      const off = Math.max(0, t - start);                          // wanted moment, relative to this window
+      v.addEventListener("loadedmetadata", () => { if (off > 1 && off < (v.duration || 1e9)) { try { v.currentTime = off; } catch {} } }, { once: true });
+      v.play().catch(() => {});
+      document.getElementById("title").textContent = name + " — converted in your browser" +
+        (done ? "" : " (" + hms(start) + " – " + hms(start + WIN) + ")");
+      const nx = document.getElementById("convNext");
+      if (nx) nx.style.display = done ? "none" : "";
+    }
+    window.__convert = convert;                                    // ⏭ button + tests
+    function showFallback() {
+      v.style.display = "none"; msg.style.display = "block";
+      msg.innerHTML = "<b>This browser can't decode this ." + (ext || "?") + " file natively</b> — archive.org never " +
+        "web-encoded it. You can convert it RIGHT HERE (ffmpeg compiled to WebAssembly, runs locally, " +
+        "nothing uploaded):<br><br>" +
+        "<button class='btn' id='convGo'>▶ Convert &amp; play here</button> " +
+        "<button class='btn' id='convNext' style='display:none'>⏭ next " + Math.round(WIN / 60) + " min</button>" +
+        "<div id='convSt' style='margin-top:10px'></div><br>" +
+        "Unsupported formats convert a <b>" + Math.round(WIN / 60) + "-minute window</b> from <b>" + hms(t) + "</b> " +
+        "(x264 ultrafast — expect slower than realtime). Or <b>↓ Download video</b> above for VLC/mpv.";
+      document.getElementById("convGo").addEventListener("click", () => {
+        document.getElementById("convGo").disabled = true;
+        convert(Math.max(0, t - 5)).catch((e) => { say("✗ " + e.message); document.getElementById("convGo").disabled = false; });
+      });
+      document.getElementById("convNext").addEventListener("click", () => {
+        convert(winStart + WIN).catch((e) => { say("✗ " + e.message); });
+      });
+    }
     if (!f) { v.style.display = "none"; msg.style.display = "block"; msg.textContent = "no video specified."; }
     else {
       v.src = src + (t ? "#t=" + t : "");
       // some servers ignore media fragments on this container — seek again once metadata is in
       v.addEventListener("loadedmetadata", () => { if (t && Math.abs(v.currentTime - t) > 2) { try { v.currentTime = t; } catch {} } });
-      v.addEventListener("error", () => {
-        v.style.display = "none"; msg.style.display = "block";
-        const ext = (f.split(".").pop() || "").toLowerCase();
-        msg.innerHTML = "<b>This browser can't decode this file.</b><br><br>" +
-          "It's a <b>." + ext.replace(/[^a-z0-9]/g, "") + "</b> original from the archive — archive.org never " +
-          "transcoded it for the web, and this container needs Chrome / Edge (Matroska) or a media player. " +
-          "Use <b>↓ Download video</b> above and open it in VLC or mpv — the timestamp you wanted is <b>" + hms(t) + "</b>.";
-      });
+      v.onerror = showFallback;                                    // property (not addEventListener) so convert() can detach it
+      if (P.get("conv") === "1") { try { v.removeAttribute("src"); } catch {} showFallback(); }   // force the converter UI (tests / unsupported-everywhere formats)
     }
   </script>
 </body>
