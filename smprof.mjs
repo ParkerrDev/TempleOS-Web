@@ -29,7 +29,7 @@ host.env.__jit_run = (rip) => BigInt(jit.jitRun(Number(rip)));
 host.env.__jit_x87 = (a, b, c) => jit.jitX87(a, b, c);
 host.env.__jit_dispatch = (b) => { if (measuring) { const rip = Number(new DataView(inst.exports.memory.buffer).getBigUint64(RIPOFF, true)); hist.set(rip, (hist.get(rip) || 0) + 1); } return BigInt(jit.jitDispatch(Number(b))); };
 host.env.__jit_chain = () => {};   // no RUNDISP -> JS dispatch -> every chain entry observable
-host.env.__jit_seg = (a, b, c) => jit.jitSeg(Number(a), Number(b), Number(c));
+host.env.__jit_seg = (...a) => jit.jitSeg(...a.map(Number));
 jit.jitReset();
 inst = await WebAssembly.instantiate(mod, { env: host.env }); host.attach(inst); inst.exports.__rt_init();
 const run = (n) => { for (let i = 0; i < n; i++) inst.exports.__main(); };

@@ -1092,7 +1092,9 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
       I64 slot = (rip ^ (rip >> 16)) & 0xFFFF;
       // run a CHAIN of JIT'd blocks natively (one host round-trip). Cap the chain to one PIT period so
       // IRQ0 still fires on time -- otherwise a guest spin-wait on the timer never wakes (games freeze).
-      if (g_jit_rip[slot] == rip && g_jit_n[slot] > 0) { I64 cap = maxi - icount; if (pit_div > 0 && pit_counter > 0 && cap > pit_counter) cap = pit_counter; b = __jit_dispatch(cap); }
+      if (g_jit_rip[slot] == rip && g_jit_n[slot] > 0) { I64 cap = maxi - icount; if (pit_div > 0 && pit_counter > 0 && cap > pit_counter) cap = pit_counter;
+        if (((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask)) && !(rfl & F_IF)) cap = -cap;   // IRQ pending but IF=0: NEGATIVE cap = break-on-IF -> the chain hands back at the guest's next STI/POPF/IRET (those end blocks flagged bit30) so the IRQ is delivered in the open window below — the JIT-side fix for CLI'd waits (GodSong) instead of the slow single-step escape
+        b = __jit_dispatch(cap); }
       else { if (g_jit_rip[slot] != rip) { g_jit_rip[slot] = rip; g_jit_hot[slot] = 0; g_jit_n[slot] = -1; } if (g_jit_n[slot] < 0) { g_jit_hot[slot]++; if (g_jit_hot[slot] > 64) g_jit_n[slot] = __jit_compile(rip); } } }
     if (!b) {                                                                 // not a JIT'd block: interpret a batch
       I64 batch = 64; if (batch > maxi - icount) batch = maxi - icount;
@@ -1121,7 +1123,7 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
     // (a CLI-spin on a lock; RSP is a valid stack there) never re-opens IF -> after a long guard we force
     // one delivery as the genuine last resort. GodSong escapes in a few hundred steps; the desktop never trips.
     else if ((pic1_irr & 1) && !(pic1_mask & 1)) { irq_stall += b;
-      if (irq_stall > 120000) { irq_stall = 0; I64 g = 0;
+      if (irq_stall > 2000000) { irq_stall = 0; I64 g = 0;
         while (g < 3000000 && halted < 2) {
           Step(); icount++; g++;
           g_hpet_acc += g_hpet_q16; hpet_ctr += g_hpet_acc >> 16; g_hpet_acc &= 0xFFFF; g_tsc_acc += g_tsc_q16; tsc += g_tsc_acc >> 16; g_tsc_acc &= 0xFFFF;

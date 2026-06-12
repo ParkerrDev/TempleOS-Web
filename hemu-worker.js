@@ -124,7 +124,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes }) {
     host.env.__jit_x87 = (a, b, c) => jit.jitX87(a, b, c);
     host.env.__jit_dispatch = (b) => BigInt(jit.jitDispatch(Number(b)));
     host.env.__jit_chain = (a, b) => jit.jitChain(a, b);
-    host.env.__jit_seg = (a, b, c) => jit.jitSeg(Number(a), Number(b), Number(c));
+    host.env.__jit_seg = (...a) => jit.jitSeg(...a.map(Number));
     jit.jitReset();
     console.log("[hemu] JIT enabled (x86-64 -> WASM)");
   } else console.log("[hemu] JIT disabled (?nojit) — pure interpreter");

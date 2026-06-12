@@ -91,7 +91,7 @@ for (let k = 0; k < names.length; k++) {
   dv().setBigUint64(gBase + slot, 0xDEADBEEFn, true);   // sentinel so we can tell the poke landed
   // *(0xADDR)(I64*) = &Name;
   for (let attempt = 0; attempt < 4; attempt++) {
-    typeStr(`*(0x${slot.toString(16).toUpperCase()})(I64*)=&${names[k]};\n`);
+    typeStr(`*(0x${slot.toString(16).toUpperCase()})(I64*)=${names[k]};\n`);
     run(500);                                           // let the shell JIT + run the line
     if (dv().getBigUint64(gBase + slot, true) !== 0xDEADBEEFn) break;
     keyq.push(0x01); keyq.push(0x81); run(120);         // a popup (AutoComplete) ate the line — dismiss + retry

@@ -38,7 +38,7 @@ async function boot(armHLE) {
   host.env.__jit_x87 = (a, b, c) => jit.jitX87(a, b, c);
   host.env.__jit_dispatch = (b) => BigInt(jit.jitDispatch(Number(b)));
   host.env.__jit_chain = (a, b) => jit.jitChain(a, b);
-  host.env.__jit_seg = (a, b, c) => jit.jitSeg(Number(a), Number(b), Number(c));
+  host.env.__jit_seg = (...a) => jit.jitSeg(...a.map(Number));
   jit.jitReset();
   inst = await WebAssembly.instantiate(mod, { env: host.env }); host.attach(inst); inst.exports.__rt_init();
   const dv = () => new DataView(inst.exports.memory.buffer);
