@@ -106,7 +106,7 @@
     body.fakefs canvas#canvas { height:min(calc(100dvh * var(--zi)), calc(75vw * var(--zi))); width:auto; max-width:calc(100vw * var(--zi)); }
     #fsExit { display:none; position:absolute; top:6px; right:8px; z-index:7; width:auto; font-size:15px;
               padding:4px 9px; opacity:.88; }
-    body.touch #frame.fsmode #fsExit { display:block; }   /* desktop: pointer is locked in fullscreen — a button is unreachable */
+    #frame.fsmode #fsExit { display:block; }   /* mouse is free in fullscreen now, so the button is reachable everywhere */
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
     #ldtext { font-size:16px; max-width:560px; line-height:1.5; min-height:2.4em; }
@@ -465,47 +465,44 @@
     // ---- mouse capture: click captures; Esc releases (browser behavior) AND is forwarded to the
     //      OS so games/menus exit. In fullscreen, navigator.keyboard.lock keeps Esc from breaking
     //      capture, so it purely acts in-OS there. ----
-    let locked = false, sawEscDown = 0;
+    // ---- focus model (no Pointer Lock): clicking the canvas routes the KEYBOARD to the OS, but the
+    //      mouse stays free to roam the page — so you can leave the canvas and click the Keys-window
+    //      buttons while keystrokes still reach TempleOS. Over the canvas the mouse maps 1:1 to the OS
+    //      cursor (absolute), so it RE-ALIGNS automatically whenever it comes back. Focus persists
+    //      through the Keys window + menu buttons; clicking page content (or a text field) releases it.
+    let focused = false, sawEscDown = 0;
     const btnBit = e => e.button === 0 ? 1 : e.button === 2 ? 2 : 0;
-    canvas.addEventListener("click", () => { if (!locked && !document.body.classList.contains("touch")) canvas.requestPointerLock(); });
-    document.addEventListener("pointerlockchange", () => {
-      const was = locked;
-      locked = document.pointerLockElement === canvas;
-      tbKey.textContent = locked ? "captured · Esc releases" : "click to capture";
-      if (was && !locked && performance.now() - sawEscDown > 250) {
-        // browser force-release (Esc) that we did NOT see as a keydown:
-        // the user meant "Esc" — deliver it to the OS so games/menus still exit.
-        tapKey(0x01);
-      }
-    });
-    document.addEventListener("mousemove", e => {
-      if (!locked) return;
-      msX = Math.max(0, Math.min(639, msX + e.movementX));
-      msY = Math.max(0, Math.min(479, msY + e.movementY));
-      notifyInput();
-    });
-    document.addEventListener("mousedown", e => { if (locked) { msB |= btnBit(e); e.preventDefault(); notifyInput(); } });
-    document.addEventListener("mouseup",   e => { if (locked) { msB &= ~btnBit(e); e.preventDefault(); notifyInput(); } });
+    const setFocused = (on) => { if (focused === on) return; focused = on;
+      tbKey.textContent = on ? "focused · keys → OS · Esc to OS" : "click the screen to use the OS"; };
+    // map an absolute mouse event over the canvas into 0..639 / 0..479
+    const overCanvas = (e) => { const r = canvas.getBoundingClientRect();
+      return e.clientX >= r.left && e.clientX < r.right && e.clientY >= r.top && e.clientY < r.bottom ? r : null; };
+    const mapAbs = (e, r) => { msX = Math.max(0, Math.min(639, Math.round((e.clientX - r.left) / r.width * 640)));
+      msY = Math.max(0, Math.min(479, Math.round((e.clientY - r.top) / r.height * 480))); };
+    // does a click target keep OS focus? (canvas, the Keys window, any toolbar button)
+    const keepsFocus = (t) => t && (t.closest("#frame") || t.closest(".keyswin") || t.closest("#keysbar") || (t.tagName === "BUTTON" && t.closest(".toolbar")));
+    const releasesFocus = (t) => t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT" || t.tagName === "SELECT" || t.closest(".overlay"));
+
+    canvas.addEventListener("mousedown", e => { if (document.body.classList.contains("touch")) return;
+      setFocused(true); msB |= btnBit(e); e.preventDefault(); notifyInput(); });
+    document.addEventListener("mouseup", e => { if (msB && !document.body.classList.contains("touch")) { msB &= ~btnBit(e); notifyInput(); } });
+    document.addEventListener("mousemove", e => { if (document.body.classList.contains("touch")) return;
+      const r = overCanvas(e); if (r) { mapAbs(e, r); notifyInput(); } });   // absolute over the canvas = auto re-align
+    document.addEventListener("mousedown", e => {                            // focus bookkeeping for clicks anywhere
+      if (releasesFocus(e.target)) setFocused(false);
+      else if (!keepsFocus(e.target)) setFocused(false);                     // clicked page content -> release
+    }, true);
     canvas.addEventListener("contextmenu", e => e.preventDefault());
-    canvas.addEventListener("wheel", e => {
-      if (!locked) return;
-      wheelZ += e.deltaY > 0 ? 1 : -1; e.preventDefault(); notifyInput();
-    }, { passive: false });
+    canvas.addEventListener("wheel", e => { if (!focused) return; wheelZ += e.deltaY > 0 ? 1 : -1; e.preventDefault(); notifyInput(); }, { passive: false });
 
     const keysToOS = (e) => {
       if (e && e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return false;
       if (document.querySelector(".overlay.open")) return false;
-      return locked || document.body.classList.contains("touch");
+      return focused || document.body.classList.contains("touch");
     };
     addEventListener("keydown", e => {
       if (!keysToOS(e)) return;
-      if (e.code === "Escape") {
-        // Send Esc as a complete make+break NOW: outside fullscreen the browser force-releases
-        // pointer lock on Esc and our keyup gate closes — a make-only Esc would stick in the OS.
-        sawEscDown = performance.now();
-        if (!e.repeat) { pushKey(0x01); pushKey(0x81); }
-        e.preventDefault(); return;
-      }
+      if (e.code === "Escape") { sawEscDown = performance.now(); if (!e.repeat) { pushKey(0x01); pushKey(0x81); } e.preventDefault(); return; }
       if (e.ctrlKey && e.code === "BracketLeft") { pushKey(0x01); pushKey(0x81); e.preventDefault(); return; }  // legacy in-OS Esc
       const s = SC[e.code]; if (s !== undefined) { if (!e.repeat) pushKey(s); e.preventDefault(); }
     });
@@ -547,7 +544,7 @@
         if (el === frame) {
           fsUi(true);
           try { await navigator.keyboard?.lock?.(); dbg("keyboard locked (Esc stays in the OS)"); } catch {}
-          if (!document.body.classList.contains("touch")) canvas.requestPointerLock();
+          if (!document.body.classList.contains("touch")) setFocused(true);   // route keys to the OS in fullscreen
         } else if (!fake) { fsUi(false); try { navigator.keyboard?.unlock?.(); } catch {} }
       };
       document.addEventListener("fullscreenchange", onFsChange);
@@ -1141,9 +1138,9 @@ I64 GodDoodleGen(I64 strokes)
       let i = 0;
       (function next() { img2.src = seq[i][0]; const d = seq[i][1]; i = (i + 1) % seq.length; setTimeout(next, d); })(); }
 
-    // ---- topbar: last key pressed (capture state text is owned by pointerlockchange) ----
+    // ---- topbar: last key pressed (focus-state text is owned by setFocused) ----
     addEventListener("keydown", (e) => {
-      if (locked) return;
+      if (focused) return;
       let k = e.key; if (k === " ") k = "SPACE"; else if (k === "Meta") k = "WINDOWS"; else if (k.length === 1) k = k.toUpperCase();
       tbKey.textContent = k;
     }, true);
