@@ -183,43 +183,53 @@ console.log("  back to results OK");
 
   await page.click('.ts-seg button[data-sc="all"]');
   const openPanel = async () => { if (!(await page.$eval("#tsYearPanel", (p) => p.classList.contains("open")))) await page.click("#tsYearBtn"); };
-  await openPanel();
-  await page.click('#tsYearPanel input[value="2017"]');
   await page.fill("#tsQ", "glow in the dark");
+  await openPanel();
+  await page.click('#tsYearPanel label:has(input[value="2017"]) .cb');
   await page.waitForFunction(() => /matching passages/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
   await page.waitForTimeout(300);
+  const qv = await page.$eval("#tsQ", (e) => e.value);
+  if (!qv.includes("date:2017")) throw new Error("checking a year must add date:2017 to the query, got: " + qv);
   const yr = await page.$$eval("#tsOut .ts-hit:not(.ts-vidcard) .ts-m", (es) => es.map((e) => e.textContent.slice(0, 4)));
-  console.log("== year filter == hits:", yr.length, "non-2017:", yr.filter((y) => y !== "2017").length);
+  console.log("== year filter == query:", JSON.stringify(qv), "hits:", yr.length, "non-2017:", yr.filter((y) => y !== "2017").length);
   if (!(yr.length > 0 && yr.every((y) => y === "2017"))) throw new Error("year filter wrong");
-  if (!/2017 ▾/.test(await page.$eval("#tsYearBtn", (b) => b.textContent))) throw new Error("year button label wrong");
+  if (!/year \(1\) ▾/.test(await page.$eval("#tsYearBtn", (b) => b.textContent))) throw new Error("year button label wrong");
 
-  // MULTI-year: add 2012 on top of 2017
-  await openPanel(); await page.click('#tsYearPanel input[value="2012"]');
-  await page.fill("#tsQ", "god");
-  await page.waitForFunction(() => /matching/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
-  await page.waitForTimeout(300);
+  // MULTI-year via GUI -> second operator in the box
+  await openPanel(); await page.click('#tsYearPanel label:has(input[value="2012"]) .cb');
+  await page.waitForTimeout(600);
+  const qv2 = await page.$eval("#tsQ", (e) => e.value);
+  if (!(qv2.includes("date:2017") && qv2.includes("date:2012"))) throw new Error("multi-year operators missing: " + qv2);
   const yr2 = await page.$$eval("#tsOut .ts-hit .ts-m", (es) => es.map((e) => e.textContent.slice(0, 4)));
   if (!(yr2.length > 0 && yr2.every((y) => y === "2012" || y === "2017"))) throw new Error("multi-year wrong: " + JSON.stringify([...new Set(yr2)]));
-  console.log("== multi-year == 2012+2017:", yr2.length, "hits, years:", JSON.stringify([...new Set(yr2)]));
+  console.log("== multi-year == query:", JSON.stringify(qv2.slice(-30)), yr2.length, "hits, years:", JSON.stringify([...new Set(yr2)]));
 
-  // EXACT mode via the dropdown: typo must NOT match; real phrase must
+  // typing an operator must check the box (two-way sync)
+  await page.fill("#tsQ", "date:2014 something");
+  await page.waitForTimeout(300);
+  const synced = await page.$eval('#tsYearPanel input[value="2014"]', (c) => c.checked);
+  const unsynced = await page.$eval('#tsYearPanel input[value="2017"]', (c) => c.checked);
+  if (!synced || unsynced) throw new Error("typed date: operator must sync the checkboxes");
+  console.log("== two-way sync == typing date:2014 checks the 2014 box");
+
+  // EXACT mode via the single results dropdown: typo must NOT match; real phrase must
   await openPanel(); await page.click("#tsYearPanel button");   // any year
-  await page.selectOption("#tsMatch", "exact");
+  await page.selectOption("#tsMode", "exact");
   await page.fill("#tsQ", "idoit admires complexty");
   await page.waitForSelector("#tsOut .ts-none", { timeout: 15000 });   // exact mode: the typo matches NOTHING
   await page.fill("#tsQ", "i do a round robin");
   await page.waitForFunction(() => /matching passages/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
   console.log("== exact mode == typo rejected, verbatim phrase matches");
-  await page.selectOption("#tsMatch", "fuzzy");
+  await page.selectOption("#tsMode", "fuzzy");
 
   await page.fill("#tsQ", "");
-  await page.selectOption("#tsSort", "old");
+  await page.selectOption("#tsMode", "old");
   await page.waitForFunction(() => /oldest first/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
   const olds = await page.$$eval("#tsOut .ts-vidcard .ts-m", (es) => es.slice(0, 3).map((e) => e.textContent.slice(0, 10)));
   console.log("== sort oldest ==", JSON.stringify(olds));
   if (!(olds.length && olds[0] <= olds[1])) throw new Error("oldest sort wrong");
-  await page.selectOption("#tsSort", "rel");
-  console.log("  FILTERS OK (titles scope · year · sort)");
+  await page.selectOption("#tsMode", "fuzzy");
+  console.log("  FILTERS OK (titles scope · year-operators · sort)");
 }
 
 // DETACH [_]: the dark backdrop goes away, the window joins the desktop, OS keys flow again
