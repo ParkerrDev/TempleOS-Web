@@ -20,6 +20,14 @@ const SHARD_RAW_BYTES = 2 * 1024 * 1024;   // split shards at ~2MB raw JSON (~60
 const files = readdirSync(SRC).filter((f) => f.endsWith(".json")).sort();
 console.log(`${files.length} transcript JSONs from ${SRC}`);
 
+// Which files can archive.org's web player actually play? Its playlist is the ground truth (the
+// item holds ~29k files but only ~3.8k playable tracks; .wmv/.mkv originals without derivatives are
+// absent). Videos NOT in it get p:0 and the site links their direct /download/ URL instead — a
+// /details/<id>/<file> deep link for a non-playlist file silently bounces to a DIFFERENT video.
+const PL = "https://archive.org/embed/TerryADavis_TempleOS_Archive?playlist=1&output=json";
+const playable = new Set((await (await fetch(PL)).json()).map((e) => e.orig));
+console.log(`archive.org player playlist: ${playable.size} tracks`);
+
 // collapse "X. X. X. X." runs inside one segment to a single X (whisper loop hallucination)
 function collapseLoops(text) {
   const parts = text.split(/(?<=[.!?])\s+/);
@@ -61,7 +69,7 @@ for (const f of files) {
   }
   flush();
   chunksOut += chunks.length;
-  if (chunks.length) videos.push({ t: title, d: date, f: path, n: dur, s: chunks });
+  if (chunks.length) videos.push({ t: title, d: date, f: path, n: dur, p: playable.has(path) ? 1 : 0, s: chunks });
 }
 videos.sort((a, b) => (a.d + a.t).localeCompare(b.d + b.t));
 console.log(`${videos.length} videos kept (${skipped} unparsable), ${segsIn} segments -> ${chunksOut} chunks`);

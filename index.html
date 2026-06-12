@@ -984,7 +984,16 @@ I64 GodDoodleGen(I64 strokes)
       const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const hms = (s) => { s = Math.max(0, s | 0); const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
         return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(ss).padStart(2, "0"); };
-      const url = (f, sec) => ARCH + f.split("/").map(encodeURIComponent).join("/") + (sec != null ? "?start=" + Math.max(0, sec - 2) : "");
+      // archive.org URL builder (takes a hit/video object: .f path + .p playable flag). The /details/
+      // player DOUBLE-decodes its sub-file path, so the form that selects the right track is:
+      // spaces -> "+", literal "+" -> "%252B" — a plain %2B/%20 encoding silently bounces to a
+      // DIFFERENT video (verified against the live player). Videos whose original isn't in the
+      // player's playlist (718 .wmv/.mkv, p:0 from the build) link the direct /download/ file
+      // instead, with #t= so browsers that can stream the format start at the right moment.
+      const DL = "https://archive.org/download/TerryADavis_TempleOS_Archive/";
+      const url = (h, sec) => h.p
+        ? ARCH + h.f.split("/").map(encodeURIComponent).join("/").replace(/%2B/g, "%252B").replace(/%20/g, "+") + (sec != null ? "?start=" + Math.max(0, sec - 2) : "")
+        : DL + h.f.split("/").map(encodeURIComponent).join("/") + (sec ? "#t=" + Math.max(0, sec - 2) : "");
       // highlight matched terms (longest first; sentinel chars so replacements can't corrupt the HTML)
       const hi = (text, terms) => { let h = esc(text);
         for (const term of [...new Set(terms || [])].sort((a, b) => b.length - a.length).slice(0, 12)) {
@@ -998,28 +1007,28 @@ I64 GodDoodleGen(I64 strokes)
           document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch {} ta.remove(); }
         if (btn) { const old = btn.textContent; btn.textContent = "✓ copied"; btn.disabled = true;
           setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 900); } };
-      const hitText = (h) => `“${h.text}”\n— Terry A. Davis, ${h.t} (${h.d}), at ${hms(h.sec)}\n${url(h.f, h.sec)}`;
+      const hitText = (h) => `“${h.text}”\n— Terry A. Davis, ${h.t} (${h.d}), at ${hms(h.sec)}\n${url(h, h.sec)}`;
       const render = (m) => {
         lastHits = m.hits; lastTerms = m.terms || []; lastTotal = m.total || 0;
         out.innerHTML = m.hits.map((h, i) =>
           `<div class="ts-hit">` +
-            `<div class="ts-row"><a class="ts-t" href="${url(h.f, h.sec)}" target="_blank" rel="noopener" title="watch on archive.org at ${hms(h.sec)}">${esc(h.t)}</a>` +
-            `<span class="ts-m">${esc(h.d)} · ▶ ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
+            `<div class="ts-row"><a class="ts-t" href="${url(h, h.sec)}" target="_blank" rel="noopener" title="${h.p ? `watch on archive.org at ${hms(h.sec)}` : "this original isn't in archive.org's web player — links download the video file"}">${esc(h.t)}</a>` +
+            `<span class="ts-m">${esc(h.d)} · ${h.p ? "▶" : "⇣"} ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
             `<span class="ts-act"><button class="ts-cp" data-i="${i}" title="copy this passage (with video + timestamp + link)">⧉</button>` +
             `<button class="ts-tr" data-i="${i}" title="full transcript of this video">≡</button></span></div>` +
-            `<a class="ts-x" href="${url(h.f, h.sec)}" target="_blank" rel="noopener">${hi(h.text, m.terms)}</a></div>`).join("") ||
+            `<a class="ts-x" href="${url(h, h.sec)}" target="_blank" rel="noopener">${hi(h.text, m.terms)}</a></div>`).join("") ||
           (q.value.trim() ? `<div class="ts-none">no matches — typos are OK, but he may never have said it</div>` : "");
         if (m.hits.length) st.textContent = `${m.total} matching passages — top ${m.hits.length} shown · click to watch, ⧉ copies, ≡ full transcript`;
       };
       // full-transcript view for one video: back / copy-all / download .txt / watch, then every passage
-      const transcriptText = (v) => `${v.t} (${v.d}) — Terry A. Davis\n${url(v.f)}\n\n` +
+      const transcriptText = (v) => `${v.t} (${v.d}) — Terry A. Davis\n${url(v)}\n\n` +
         v.s.map(([sec, text]) => `[${hms(sec)}] ${text}`).join("\n");
       const renderTranscript = (v) => {
         st.textContent = `${v.t} — full transcript, ${v.s.length} passages${v.n ? ", " + hms(v.n) : ""}`;
         out.innerHTML = `<div class="ts-trh"><button id="tsBack">← results</button>` +
           `<button id="tsCpTr">⧉ Copy transcript</button><button id="tsDlTr">↓ .txt</button>` +
-          `<a href="${url(v.f, 0)}" target="_blank" rel="noopener">▶ watch on archive.org</a></div>` +
-          v.s.map(([sec, text]) => `<div class="ts-line"><a class="ts-ts" href="${url(v.f, sec)}" target="_blank" rel="noopener">[${hms(sec)}]</a>${esc(text)}</div>`).join("");
+          `<a href="${url(v, 0)}" target="_blank" rel="noopener">${v.p ? "▶ watch on archive.org" : "⇣ download the video (not in the web player)"}</a></div>` +
+          v.s.map(([sec, text]) => `<div class="ts-line"><a class="ts-ts" href="${url(v, sec)}" target="_blank" rel="noopener">[${hms(sec)}]</a>${esc(text)}</div>`).join("");
         out.scrollTop = 0;
         $("tsBack").addEventListener("click", () => { render({ hits: lastHits, terms: lastTerms, total: lastTotal }); });
         $("tsCpTr").addEventListener("click", (e) => copy(transcriptText(v), e.target));
