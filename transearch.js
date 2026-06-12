@@ -57,8 +57,7 @@ function browse(m) {
   if (!ready) { postMessage({ type: "browse", id: m.id, vids: [], total: 0, offset: 0 }); return; }
   let idx = ensureDateIdx();
   if (m.sort === "old") idx = [...idx].reverse();
-  const years = Array.isArray(m.years) ? m.years : [];
-  if (years.length) idx = idx.filter((i) => years.some((y) => videos[i].d.startsWith(y)));
+
   const offset = m.offset || 0, limit = m.limit || 40;
   postMessage({ type: "browse", id: m.id, total: idx.length, offset, vids: idx.slice(offset, offset + limit).map(vmeta) });
 }
@@ -124,7 +123,6 @@ function altsFor(tok) {
 function query(q, id, opts = {}) {
   if (!ready) { postMessage({ type: "results", id, hits: [], vids: [], note: "loading" }); return; }
   const scope = opts.scope || "all", sort = opts.sort || "rel";
-  const years = Array.isArray(opts.years) ? opts.years : [];
 
   // ---- Twitter-style operator parsing ----------------------------------------------------------
   //   "exact phrase"   must contain it verbatim (case-insensitive, NO fuzzy)
@@ -132,14 +130,14 @@ function query(q, id, opts = {}) {
   //   since:/until:    date range, each YYYY | YYYY-MM | YYYY-MM-DD (inclusive, prefix semantics)
   //   date:YYYY-MM-DD  exact date (also: a bare 19xx/20xx ISO date token acts as date:)
   //   plain words      fuzzy-matched as before
-  const phrases = [], notPhrases = [], notWords = [];
+  const phrases = [], notPhrases = [], notWords = [], dateAny = [];
   let dateFrom = "", dateTo = "";
   let rest = q.toLowerCase()
     .replace(/(-?)"([^"]*)"/g, (m, neg, p) => { p = p.trim().replace(/\s+/g, " "); if (p) (neg ? notPhrases : phrases).push(p); return " "; })
     .replace(/(?:^|\s)(?:since|from|after):((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)/g, (m, d) => { dateFrom = d; return " "; })
     .replace(/(?:^|\s)(?:until|to|before):((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)/g, (m, d) => { dateTo = d; return " "; })
-    .replace(/(?:^|\s)(?:date|on):((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)/g, (m, d) => { dateFrom = d; dateTo = d; return " "; })
-    .replace(/(^|\s)((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)(?=\s|$)/g, (m, sp, d) => { dateFrom = d; dateTo = d; return sp; })
+    .replace(/(?:^|\s)(?:date|on|year):((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)/g, (m, d) => { dateAny.push(d); return " "; })
+    .replace(/(^|\s)((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)(?=\s|$)/g, (m, sp, d) => { dateAny.push(d); return sp; })
     .replace(/(^|\s)-([a-z0-9']+)/g, (m, sp, w) => { notWords.push(w); return sp; });
   let toks = rest.split(/[^a-z0-9']+/).filter((w) => w.length >= 2);
   if (opts.exact) {                                  // GUI exact mode: the typed text must appear VERBATIM (no fuzzy)
@@ -147,7 +145,8 @@ function query(q, id, opts = {}) {
     if (restNorm) phrases.push(restNorm);
     toks = [];
   }
-  const dateOk = (d) => (!years.length || years.some((y) => d.startsWith(y))) &&
+  // multiple date:/bare dates UNION (any of them); since:/until: bound the range (inclusive prefixes)
+  const dateOk = (d) => (!dateAny.length || dateAny.some((p) => d.startsWith(p))) &&
     (!dateFrom || d.slice(0, dateFrom.length) >= dateFrom) &&
     (!dateTo || d.slice(0, dateTo.length) <= dateTo);
   const hasWord = (t, w) => { let i = 0;
@@ -159,7 +158,7 @@ function query(q, id, opts = {}) {
 
   // date-only query (no words, no phrases): LIST the videos in that range, like a filtered browse
   if (!toks.length && !phrases.length) {
-    if (dateFrom || dateTo) {
+    if (dateAny.length || dateFrom || dateTo) {
       let idx = ensureDateIdx().filter((i) => dateOk(videos[i].d));
       if (sort === "old") idx = [...idx].reverse();
       postMessage({ type: "results", id, hits: [], vids: idx.slice(0, 60).map(vmeta), vtotal: idx.length, terms: [], total: 0, dateOnly: true });
