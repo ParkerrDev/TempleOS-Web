@@ -122,7 +122,8 @@ function altsFor(tok) {
 
 function query(q, id, opts = {}) {
   if (!ready) { postMessage({ type: "results", id, hits: [], vids: [], note: "loading" }); return; }
-  const scope = opts.scope || "all", sort = opts.sort || "rel";
+  const sort = opts.sort || "rel";
+  let scope = opts.scope || "all";                 // in:titles / in:transcript operators override below
 
   // ---- Twitter-style operator parsing ----------------------------------------------------------
   //   "exact phrase"   must contain it verbatim (case-insensitive, NO fuzzy)
@@ -132,12 +133,23 @@ function query(q, id, opts = {}) {
   //   plain words      fuzzy-matched as before
   const phrases = [], notPhrases = [], notWords = [], dateAny = [];
   let dateFrom = "", dateTo = "";
+  // date grammar: an ITEM is a year range (2012-2014), or a date prefix (2017 / 2017-11 / 2017-11-19);
+  // a LIST is comma-separated items (date:2012-2014,2017). Bare lists work without the prefix.
+  const YR = "(?:19|20)\\d{2}";
+  const ITEM = `${YR}-${YR}|${YR}(?:-\\d{2}(?:-\\d{2})?)?`;
+  const LIST = `(?:${ITEM})(?:,(?:${ITEM}))*`;
+  const pushDates = (list) => { for (const it of list.split(",")) {
+    const r = it.match(new RegExp(`^(${YR})-(${YR})$`));
+    if (r) { let a = +r[1], b = +r[2]; if (a > b) [a, b] = [b, a]; b = Math.min(b, a + 50);
+      for (let y = a; y <= b; y++) dateAny.push(String(y)); }
+    else dateAny.push(it); } };
   let rest = q.toLowerCase()
     .replace(/(-?)"([^"]*)"/g, (m, neg, p) => { p = p.trim().replace(/\s+/g, " "); if (p) (neg ? notPhrases : phrases).push(p); return " "; })
-    .replace(/(?:^|\s)(?:since|from|after):((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)/g, (m, d) => { dateFrom = d; return " "; })
-    .replace(/(?:^|\s)(?:until|to|before):((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)/g, (m, d) => { dateTo = d; return " "; })
-    .replace(/(?:^|\s)(?:date|on|year):((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)/g, (m, d) => { dateAny.push(d); return " "; })
-    .replace(/(^|\s)((?:19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?)(?=\s|$)/g, (m, sp, d) => { dateAny.push(d); return sp; })
+    .replace(/(?:^|\s)(?:in|scope):(titles?|transcripts?|text|all)(?=\s|$)/g, (m, sc) => { scope = sc.startsWith("title") ? "title" : sc === "all" ? "all" : "text"; return " "; })
+    .replace(new RegExp(`(?:^|\\s)(?:since|from|after):(${ITEM})(?=\\s|$)`, "g"), (m, d) => { dateFrom = d.split("-").length === 2 && d.length === 9 ? d.slice(0, 4) : d; return " "; })
+    .replace(new RegExp(`(?:^|\\s)(?:until|to|before):(${ITEM})(?=\\s|$)`, "g"), (m, d) => { dateTo = d.split("-").length === 2 && d.length === 9 ? d.slice(5) : d; return " "; })
+    .replace(new RegExp(`(?:^|\\s)(?:date|on|year):(${LIST})(?=\\s|$)`, "g"), (m, l) => { pushDates(l); return " "; })
+    .replace(new RegExp(`(^|\\s)(${LIST})(?=\\s|$)`, "g"), (m, sp, l) => { pushDates(l); return sp; })
     .replace(/(^|\s)-([a-z0-9']+)/g, (m, sp, w) => { notWords.push(w); return sp; });
   let toks = rest.split(/[^a-z0-9']+/).filter((w) => w.length >= 2);
   if (opts.exact) {                                  // GUI exact mode: the typed text must appear VERBATIM (no fuzzy)

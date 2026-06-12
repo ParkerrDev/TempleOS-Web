@@ -173,13 +173,21 @@ console.log("  back to results OK");
 
 // FILTERS: titles scope, year filter, sort
 {
-  await page.click('.ts-seg button[data-sc="title"]');
   await page.fill("#tsQ", "god song");
+  await page.click('.ts-seg button[data-sc="title"]');             // writes " in:titles" into the box
   await page.waitForFunction(() => /matching title/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
+  const tq = await page.$eval("#tsQ", (e) => e.value);
+  if (!tq.includes("in:titles")) throw new Error("scope button must write in:titles, got: " + tq);
   const t = await page.evaluate(() => ({ vids: document.querySelectorAll("#tsOut .ts-vidcard").length,
     nonVids: document.querySelectorAll("#tsOut .ts-hit:not(.ts-vidcard)").length }));
-  console.log("\n== titles scope ==", JSON.stringify(t));
+  console.log("\n== titles scope ==", JSON.stringify(t), "query:", JSON.stringify(tq));
   if (!(t.vids > 0 && t.nonVids === 0)) throw new Error("titles scope wrong");
+  // two-way: TYPING the operator highlights the button
+  await page.fill("#tsQ", "god song in:transcript");
+  await page.waitForTimeout(350);
+  const segOn = await page.$eval('.ts-seg button[data-sc="text"]', (b) => b.classList.contains("on"));
+  if (!segOn) throw new Error("typed in:transcript must highlight the Transcript button");
+  console.log("== scope sync == typed in:transcript highlights the button");
 
   await page.click('.ts-seg button[data-sc="all"]');
   const openPanel = async () => { if (!(await page.$eval("#tsYearPanel", (p) => p.classList.contains("open")))) await page.click("#tsYearBtn"); };
@@ -199,10 +207,25 @@ console.log("  back to results OK");
   await openPanel(); await page.click('#tsYearPanel label:has(input[value="2012"]) .cb');
   await page.waitForTimeout(600);
   const qv2 = await page.$eval("#tsQ", (e) => e.value);
-  if (!(qv2.includes("date:2017") && qv2.includes("date:2012"))) throw new Error("multi-year operators missing: " + qv2);
+  if (!qv2.includes("date:2012,2017")) throw new Error("multi-year must compact to a comma list: " + qv2);
   const yr2 = await page.$$eval("#tsOut .ts-hit .ts-m", (es) => es.map((e) => e.textContent.slice(0, 4)));
   if (!(yr2.length > 0 && yr2.every((y) => y === "2012" || y === "2017"))) throw new Error("multi-year wrong: " + JSON.stringify([...new Set(yr2)]));
   console.log("== multi-year == query:", JSON.stringify(qv2.slice(-30)), yr2.length, "hits, years:", JSON.stringify([...new Set(yr2)]));
+
+  // consecutive years collapse to a RANGE: +2013,+2014 -> date:2012-2014,2017
+  await openPanel();
+  await page.click('#tsYearPanel label:has(input[value="2013"]) .cb');
+  await page.click('#tsYearPanel label:has(input[value="2014"]) .cb');
+  await page.waitForTimeout(600);
+  const qv3 = await page.$eval("#tsQ", (e) => e.value);
+  if (!qv3.includes("date:2012-2014,2017")) throw new Error("consecutive years must compact to a range: " + qv3);
+  console.log("== range compaction ==", JSON.stringify(qv3.slice(-30)));
+  // and a typed RANGE checks all its boxes
+  await page.fill("#tsQ", "glow date:2015-2017");
+  await page.waitForTimeout(350);
+  const checked = await page.$$eval("#tsYearPanel input", (cs) => cs.filter((c) => c.checked).map((c) => c.value));
+  if (JSON.stringify(checked) !== JSON.stringify(["2015", "2016", "2017"])) throw new Error("typed range must check 2015-2017: " + JSON.stringify(checked));
+  console.log("== typed range == date:2015-2017 checks the three boxes");
 
   // typing an operator must check the box (two-way sync)
   await page.fill("#tsQ", "date:2014 something");
