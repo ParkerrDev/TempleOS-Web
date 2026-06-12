@@ -180,13 +180,15 @@ console.log("  back to results OK");
 {
   await page.click("#tsOverlay .ovfree");
   const f = await page.evaluate(() => { const ov = document.getElementById("tsOverlay");
-    return { free: ov.classList.contains("free"), bg: getComputedStyle(ov).backgroundColor, pe: getComputedStyle(ov).pointerEvents }; });
+    return { free: ov.classList.contains("free"), bg: getComputedStyle(ov).backgroundColor, pe: getComputedStyle(ov).pointerEvents,
+      btnGone: !document.querySelector("#tsOverlay .ovfree").offsetParent }; });
   console.log("\n== detach ==", JSON.stringify(f));
-  if (!(f.free && f.pe === "none" && /rgba\(0, 0, 0, 0\)|transparent/.test(f.bg))) throw new Error("detach wrong");
-  await page.click("#tsOverlay .ovfree");                          // re-dock
+  if (!(f.free && f.pe === "none" && /rgba\(0, 0, 0, 0\)|transparent/.test(f.bg) && f.btnGone)) throw new Error("detach wrong");
+  await page.click("#tsClose");                                    // backdrop comes back via close + reopen
+  await page.click("#tsBtn");
   const f2 = await page.evaluate(() => document.getElementById("tsOverlay").classList.contains("free"));
-  if (f2) throw new Error("re-dock failed");
-  console.log("  DETACH/REDOCK OK (backdrop off, clicks pass through)");
+  if (f2) throw new Error("close+reopen should restore the backdrop");
+  console.log("  DETACH OK (one-way [X]; close+reopen restores the backdrop)");
 }
 
 // × clear button (replaces the browser's native search-cancel)
