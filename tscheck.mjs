@@ -4,7 +4,8 @@ import { chromium } from "playwright-core";
 const EXE = process.env.HOME + "/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome";
 const BASE = "http://localhost:" + (process.env.PORT || 8099) + "/index.html";
 const browser = await chromium.launch({ headless: true, executablePath: EXE, args: ["--no-sandbox"] });
-const page = await browser.newPage({ viewport: { width: 1366, height: 980 } });
+const ctx = await browser.newContext({ viewport: { width: 1366, height: 980 }, permissions: ["clipboard-read", "clipboard-write"] });
+const page = await ctx.newPage();
 page.on("pageerror", (e) => console.log("[pageerror]", e.message));
 page.on("console", (m) => { const t = m.text(); if (/error|failed/i.test(t)) console.log("[console]", t.slice(0, 160)); });
 await page.goto(BASE, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -20,7 +21,7 @@ const ask = async (q, label) => {
   await page.waitForTimeout(400);
   const hits = await page.$$eval("#tsOut .ts-hit", (as) => as.slice(0, 3).map((a) => ({
     title: a.querySelector(".ts-t").textContent, meta: a.querySelector(".ts-m").textContent,
-    text: a.querySelector(".ts-x").textContent.slice(0, 110), href: a.href.slice(0, 130) })));
+    text: a.querySelector(".ts-x").textContent.slice(0, 110), href: a.querySelector(".ts-t").href.slice(0, 130) })));
   const n = await page.$eval("#tsStatus", (e) => e.textContent);
   console.log(`\n== ${label}: "${q}" -> ${n}`);
   for (const h of hits) console.log(`  [${h.meta}] ${h.title}\n    ${h.text}\n    -> ${h.href}`);
@@ -30,6 +31,34 @@ const ask = async (q, label) => {
 const a = await ask("an idiot admires complexity", "exact");
 const b = await ask("idoit admires complexty", "typo'd (fuzzy)");
 await ask("CIA glow in the dark", "phrase");
+
+// --- copy a single passage ---
+await page.click("#tsOut .ts-hit .ts-cp");
+await page.waitForTimeout(300);
+let clip = await page.evaluate(() => navigator.clipboard.readText());
+console.log("\n== copy one passage ==\n" + clip.split("\n").map((l) => "  | " + l.slice(0, 100)).join("\n"));
+
+// --- copy all results ---
+await page.click("#tsCopyAll");
+await page.waitForTimeout(300);
+clip = await page.evaluate(() => navigator.clipboard.readText());
+console.log(`\n== copy all results == ${clip.length} chars, ${clip.split("“").length - 1} passages; head:\n  | ` + clip.split("\n")[0]);
+
+// --- full transcript view + copy ---
+await page.click("#tsOut .ts-hit .ts-tr");
+await page.waitForSelector("#tsCpTr", { timeout: 15000 });
+const nLines = await page.$$eval("#tsOut .ts-line", (d) => d.length);
+console.log(`\n== full transcript view == ${nLines} passages rendered; status: ` + await page.$eval("#tsStatus", (e) => e.textContent));
+await page.click("#tsCpTr");
+await page.waitForTimeout(400);
+clip = await page.evaluate(() => navigator.clipboard.readText());
+console.log(`  transcript copied: ${clip.length} chars; first lines:\n` + clip.split("\n").slice(0, 4).map((l) => "  | " + l.slice(0, 100)).join("\n"));
+await page.screenshot({ path: "/tmp/ts_transcript.png" });
+await page.click("#tsBack");
+await page.waitForSelector("#tsOut .ts-hit", { timeout: 5000 });
+console.log("  back to results OK");
+await page.fill("#tsQ", "an idiot admires complexity");
+await page.waitForTimeout(800);
 await page.screenshot({ path: "/tmp/ts_search.png" });
-console.log("\nfuzzy works:", b.length > 0 ? "YES" : "NO", "· screenshot /tmp/ts_search.png");
+console.log("\nfuzzy works:", b.length > 0 ? "YES" : "NO", "· screenshots /tmp/ts_search.png /tmp/ts_transcript.png");
 await browser.close();

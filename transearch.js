@@ -16,7 +16,12 @@ onmessage = (e) => {
   const m = e.data;
   if (m.type === "load") load(m.base).catch((err) => postMessage({ type: "error", message: String(err && err.message || err) }));
   else if (m.type === "query") query(String(m.q || ""), m.id);
+  else if (m.type === "video") {                 // full transcript of one video (for the copy/transcript view)
+    const v = videos[byPath.get(m.f)];
+    postMessage({ type: "video", id: m.id, video: v || null });
+  }
 };
+const byPath = new Map();                        // archive path -> videos[] index
 
 async function load(base) {
   const man = await (await fetch(base + "manifest.json")).json();
@@ -25,7 +30,7 @@ async function load(base) {
     if (!resp.ok) throw new Error("shard fetch " + resp.status);
     const arr = JSON.parse(await new Response(resp.body.pipeThrough(new DecompressionStream("gzip"))).text());
     for (const v of arr) {
-      const vi = videos.length; videos.push(v);
+      const vi = videos.length; videos.push(v); byPath.set(v.f, vi);
       for (let i = 0; i < v.s.length; i++) { chunkV.push(vi); chunkI.push(i); lower.push(v.s[i][1].toLowerCase()); }
     }
     postMessage({ type: "progress", loaded: k + 1, total: man.shards.length, videos: videos.length, chunks: lower.length });
