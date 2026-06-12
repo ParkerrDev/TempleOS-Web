@@ -1078,7 +1078,7 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
       g_hpet_acc += g_hpet_q16 * skip; hpet_ctr += g_hpet_acc >> 16; g_hpet_acc &= 0xFFFF; g_tsc_acc  += g_tsc_q16  * skip; tsc      += g_tsc_acc  >> 16; g_tsc_acc  &= 0xFFFF; icount += skip;
       if ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask)) {     // an IRQ is now pending
         if (rfl & F_IF) { halted = 0; CheckIrq(); }                 // IF=1: wake + service it
-        else { irq_stall += skip; if (irq_stall > 800000000) { irq_stall = 0; halted = 0; CheckIrq(); } } }   // HLT-with-IF=0 watchdog: same fix (high threshold, no forced IF)
+        else { irq_stall += skip; if (irq_stall > 800000000) { irq_stall = 0; halted = 0; CheckIrq(); } } }   // HLT-with-IF=0: the guest halted at a stable point (RSP valid), so a high-threshold wake is safe
       continue; }
     // Run a BATCH of instructions, then tick the devices once. Advancing PIT/TSC/HPET and checking
     // IRQs on every single instruction was ~20% of the loop; the guest only needs ~us device
@@ -1108,17 +1108,29 @@ U0 Run(I64 maxi)                       // run until icount==maxi (or a fault hal
     if (pit_div) { pit_counter -= b; if (pit_counter <= 0) { pit_counter += pit_div; pic1_irr |= 1; } }  // PIT -> IRQ0
     if (halted) continue;                                                     // HLT/fault: let the outer loop handle it
     if ((rfl & F_IF) && ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask))) CheckIrq();
-    // Deadlock watchdog (LAST RESORT): a snapshot resumed mid-CLI can leave a task CLI-spinning to
-    // acquire a lock held by another (now de-scheduled) task; with IF=0 the PIT IRQ0 can't fire to run
-    // the holder -> PERMANENT stall. Only a permanent deadlock needs this; a slow-but-progressing wait
-    // (e.g. GodSong's CLI'd timed wait, which the JIT delivers IRQs to ~40% slower than the interp) must
-    // NOT trip it. The old 2M threshold did, and force-firing an IRQ mid task-switch corrupted it (the
-    // ret resumed at a bogus address -> #UD). Fix: (1) a much higher threshold so legitimate waits finish
-    // first (a real deadlock is infinite, so any finite bound still recovers it); (2) DON'T force IF=1 —
-    // DoInt then saves the guest's real flags, so a preempted critical section resumes correctly.
+    // IRQ0 pending+unmasked but IF=0: a possible stall. Two very different cases share this state and the
+    // old watchdog (force one IRQ when irq_stall crosses a threshold) handled them BOTH the same way --
+    // wrongly. A force-fire mid task-switch corrupted the saved frame (the scheduler transiently parks RSP
+    // in a CTask struct, so DoInt pushed the IRET frame over task fields -> ret to a bogus addr -> #UD); the
+    // GodSong PopUpForm spawn hit exactly that. Why the JIT and not the interp: the interp checks IRQs every
+    // step and so delivers during the guest's brief STI/POPF windows; the JIT toggles IF *inside* a compiled
+    // block and chains past those windows, so they're invisible here and the IRQ never lands -> stall.
+    // FIX: when stalled past a normal critical section, ESCAPE by single-step interpreting until the guest
+    // itself re-opens IF -- the interp catches that window at single-instruction granularity and CheckIrq
+    // then delivers with IF=1 (the safe, normal path: no mid-switch corruption). A true permanent deadlock
+    // (a CLI-spin on a lock; RSP is a valid stack there) never re-opens IF -> after a long guard we force
+    // one delivery as the genuine last resort. GodSong escapes in a few hundred steps; the desktop never trips.
     else if ((pic1_irr & 1) && !(pic1_mask & 1)) { irq_stall += b;
-      if (irq_stall > 800000000) { irq_stall = 0; CheckIrq(); } }
-    else irq_stall = 0;                                                       // deadlock watchdog
+      if (irq_stall > 120000) { irq_stall = 0; I64 g = 0;
+        while (g < 3000000 && halted < 2) {
+          Step(); icount++; g++;
+          g_hpet_acc += g_hpet_q16; hpet_ctr += g_hpet_acc >> 16; g_hpet_acc &= 0xFFFF; g_tsc_acc += g_tsc_q16; tsc += g_tsc_acc >> 16; g_tsc_acc &= 0xFFFF;
+          if (pit_div) { pit_counter--; if (pit_counter <= 0) { pit_counter += pit_div; pic1_irr |= 1; } }
+          if (halted) break;
+          if ((rfl & F_IF) && ((pic1_irr & ~pic1_mask) || (pic2_irr & ~pic2_mask))) { CheckIrq(); break; }   // IF re-opened: SAFE delivery
+          if (!((pic1_irr & 1) && !(pic1_mask & 1))) break; }                  // IRQ0 cleared/masked elsewhere: stall gone
+        if (g >= 3000000 && (pic1_irr & 1) && !(pic1_mask & 1)) CheckIrq(); } } // never re-opened IF: genuine deadlock, force it
+    else irq_stall = 0;
   } }
 
 U0 Reset()
