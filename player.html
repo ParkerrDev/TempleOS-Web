@@ -28,6 +28,21 @@
     #msg { display:none; padding:24px; max-width:640px; line-height:1.5; }
     #msg b { color:yellow; }
     a { color:yellow; }
+
+    /* ---- TempleOS scrollbars: chunky squares, blue-on-white, arrow endcaps ---- */
+    ::-webkit-scrollbar { width:14px; height:14px; }
+    ::-webkit-scrollbar-track { background:#fff; }
+    ::-webkit-scrollbar-thumb { background:var(--blue); border:2px solid #fff; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--red); }
+    ::-webkit-scrollbar-corner { background:#fff; }
+    ::-webkit-scrollbar-button { background:#fff; width:14px; height:14px; }
+    ::-webkit-scrollbar-button:vertical:decrement { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 1 L9 8 H1 Z' fill='%230000aa'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
+    ::-webkit-scrollbar-button:vertical:increment { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 9 L9 2 H1 Z' fill='%230000aa'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
+    ::-webkit-scrollbar-button:horizontal:decrement { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M1 5 L8 1 V9 Z' fill='%230000aa'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
+    ::-webkit-scrollbar-button:horizontal:increment { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M9 5 L2 1 V9 Z' fill='%230000aa'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
+    @supports not selector(::-webkit-scrollbar) {   /* Firefox: closest equivalent */
+      * { scrollbar-color: var(--blue) #fff; scrollbar-width: auto; }
+    }
   </style>
 </head>
 <body>
