@@ -65,7 +65,7 @@
     @keyframes wscroll { to { transform:translateX(-50%); } }
     /* vertical doc-name list ON the left border column (DocBorderLstDraw: TextChar at x=-1):
        one 8px text cell, centered over the 6px double lines, white only where glyphs sit */
-    .wvert { position:absolute; top:0; bottom:14px; left:-14px; width:14px; overflow:visible; z-index:2;
+    .wvert { position:absolute; top:0; bottom:14px; left:-14px; width:14px; overflow:hidden; z-index:2;
              writing-mode:vertical-rl; text-orientation:upright; background:transparent; color:var(--blue);
              font-size:12px; line-height:14px; letter-spacing:0; text-align:start; user-select:none; }
     .wvert > span { background:#fff; }            /* white only where the glyphs are */
@@ -1244,7 +1244,8 @@ I64 GodDoodleGen(I64 strokes)
           rb.addEventListener("click", () => { w.style.display = ""; rb.style.display = "none"; w.classList.add("active"); });
         }
         const v = document.createElement("span"); v.className = "wvert";
-        const vs = document.createElement("span"); vs.textContent = w.dataset.title.split("·")[0].trim();
+        const vt = w.dataset.title.split("·")[0].trim();
+        const vs = document.createElement("span"); vs.textContent = vt.length > 16 ? vt.slice(0, 15).trimEnd() + "…" : vt;   // long video titles would run down the whole border
         v.appendChild(vs);
         for (const c of ["tr", "bl"]) { const d = document.createElement("div"); d.className = "wcorn " + c; w.appendChild(d); }
         w.prepend(v); w.prepend(bar);
