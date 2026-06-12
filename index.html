@@ -13,13 +13,13 @@
     :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; }
     * { margin:0; padding:0; box-sizing:border-box; font-family:'TempleOS','dos_vga',"Courier New",monospace; cursor:url('assets/cursor.png'),auto; }
     html { overflow-y:auto; }
-    body { background:var(--blue); color:#fff; font-size:14px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
+    body { background:var(--blue); color:#fff; font-size:12px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
     ::selection { background:#000; color:yellow; }
     a { color:var(--gold); }
 
     /* live top status bar (always visible — survives fullscreen games, unlike the in-OS wallpaper bar) */
     #topbar { display:flex; line-height:1; justify-content:space-between; align-items:center; gap:10px;
-              background:var(--blue); color:#fff; padding:3px 8px 2px; }
+              background:var(--blue); color:#fff; padding:2px 8px 1px; font-size:12px; }
     #topbar .status { display:flex; flex-wrap:wrap; }
     #topbar .status > span { white-space:nowrap; }
     #topbar .status > span:not(:last-child) { margin-right:16px; }
@@ -27,32 +27,34 @@
 
     /* header shares the centered content width of the desktop row below it */
     header { display:flex; align-items:stretch; gap:10px; padding:4px 8px 1px;
-             width:100%; max-width:calc(clamp(300px, min(72vh, (100vw - 690px) * 3 / 4), 600px) * 4 / 3 + 550px); margin:0 auto; }
+             width:100%; max-width:calc(clamp(300px, min(72vh, (100vw - 690px) * 3 / 4), 600px) * 4 / 3 + 538px); margin:0 auto; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
                    background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
-    header h1 { font-size:17px; font-weight:normal; color:#fff; }
+    header h1 { font-size:15px; font-weight:normal; color:#fff; }
     header p { font-size:11px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
 
     /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X] */
     .win, #frame { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue);
                    outline:4px solid #fff; margin:3px 5px; overflow:visible; }
-    .win { padding:.7em; padding-top:24px; padding-left:18px; }
-    /* TempleOS window bar: blinking MENU chip + scrolling title marquee + [X]; drag handle */
-    .wbar { position:absolute; top:0; left:14px; right:2px; height:19px; display:flex; align-items:center; gap:5px;
-            background:#fff; z-index:2; overflow:hidden; user-select:none; }
-    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:13px; padding:1px 3px 0;
+    .win { padding:.7em; padding-top:12px; }
+    /* TempleOS window bar: rides ON the top border line (slight overhang only), like the real
+       WinMgr's  ≡MENU————— title —————[X]≡  row. Chips paint white over the border; the
+       scrolling title's own background sweeps the full width between the corners. */
+    .wbar { position:absolute; top:-5px; left:8px; right:8px; height:15px; display:flex; align-items:center;
+            background:transparent; z-index:2; overflow:hidden; user-select:none; }
+    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:13px; padding:0 3px;
              animation:menuBlink 1s step-start infinite; }
     @keyframes menuBlink { 50% { background:var(--blue); color:#fff; } }
-    .wtitle { flex:1 1 auto; min-width:0; overflow:hidden; background:var(--blue); color:#fff; height:15px;
-              font-size:13px; line-height:15px; white-space:nowrap; }
-    .wtitle > span { display:inline-block; padding-left:100%; animation:wscroll 8s linear infinite; }
+    .wtitle { flex:1 1 auto; min-width:0; overflow:hidden; height:13px; font-size:11px; line-height:13px;
+              white-space:nowrap; margin:0 3px; color:var(--blue); }
+    .wtitle > span { display:inline-block; padding:0 5px 0 100%; background:#fff; animation:wscroll 9s linear infinite; }
     @keyframes wscroll { to { transform:translateX(-100%); } }
-    /* vertical title running up the left border, like the real WinMgr */
-    .wvert { position:absolute; top:20px; bottom:4px; left:1px; width:14px; overflow:hidden; z-index:2;
+    /* vertical task name ON the left border line */
+    .wvert { position:absolute; top:14px; bottom:8px; left:-5px; width:12px; overflow:hidden; z-index:2;
              writing-mode:vertical-rl; text-orientation:upright; background:#fff; color:var(--blue);
-             font-size:11px; line-height:13px; letter-spacing:-2px; user-select:none; }
-    .close { flex:0 0 auto; font-size:14px; padding:1px 2px 0; color:var(--blue); background:#fff; }
+             font-size:9px; line-height:12px; letter-spacing:-2px; user-select:none; }
+    .close { flex:0 0 auto; font-size:11px; line-height:13px; padding:0 2px; color:var(--blue); background:#fff; }
     .win-ph { visibility:hidden; }   /* placeholder keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
@@ -61,12 +63,13 @@
     .col-right { display:flex; flex-direction:column; gap:16px; width:268px; flex:0 0 auto; }
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
-    button { font-family:'TempleOS','dos_vga',monospace; font-size:13px; color:#000; background:#fff;
+    .toolbar button { font-size:11px; padding:4px 5px; }
+    button { font-family:'TempleOS','dos_vga',monospace; font-size:12px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
 
-    #frame { padding:5px; padding-top:21px; padding-left:16px; }
+    #frame { padding:5px; padding-top:12px; }
     canvas#canvas { display:block; height:clamp(300px, min(72vh, (100vw - 690px) * 3 / 4), 600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
     /* fullscreen: black letterbox, centered 4:3 screen, window chrome hidden */
     #frame:fullscreen { display:flex; align-items:center; justify-content:center; background:#000; border:0; outline:0; margin:0; padding:0 !important; }
@@ -89,7 +92,7 @@
     #fsExit { display:none; position:absolute; top:6px; right:8px; z-index:7; width:auto; font-size:15px;
               padding:4px 9px; opacity:.88; }
     body.touch #frame.fsmode #fsExit { display:block; }   /* desktop: pointer is locked in fullscreen — a button is unreachable */
-    #loadui { position:absolute; inset:21px 5px 5px 16px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    #loadui { position:absolute; inset:12px 5px 5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
     #ldtext { font-size:17px; max-width:560px; line-height:1.5; min-height:2.4em; }
     .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#0a0a0a; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
@@ -98,7 +101,7 @@
 
     /* on-screen function/modifier keys — works on desktop and mobile; modifiers latch (✱) */
     #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; padding:4px 2px 0; width:0; min-width:100%; }  /* preferred width 0: the FRAME sizes the column, keys wrap to it */
-    #keysbar button { width:auto; font-size:11px; padding:3px 5px; text-align:center; }
+    #keysbar button { width:auto; font-size:10px; padding:3px 5px; text-align:center; }
     #keysbar button.mod.on { color:#fff; background:var(--red); border-color:var(--red); }
     #frame .cap { text-align:center; font-size:13px; color:var(--blue); padding-top:3px; }
 
@@ -117,9 +120,9 @@
     #tKb { right:18px; bottom:92px; width:54px; height:42px; border-radius:8px; font-size:18px; }
     #mobInput { position:fixed; left:-30px; bottom:0; width:20px; height:20px; opacity:.01; font-size:16px; }
 
-    .col-right #guide { font-size:12px; }
+    .col-right #guide { font-size:11px; }
     #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
-    .dbgw { padding:3px; padding-top:22px; padding-left:17px; }
+    .dbgw { padding:3px; padding-top:12px; }
     #dbg { height:170px; overflow:auto; background:#000; color:#7fe07f; padding:6px; margin:0;
            font-size:11px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
     #dbg .err { color:#ff8a8a; }
@@ -127,7 +130,7 @@
     .terrywin { padding:6px; text-align:center; }
     .terrywin img { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
-    footer { text-align:center; padding:4px; font-size:12px; color:#cfe; opacity:.85; }
+    footer { text-align:center; padding:4px; font-size:11px; color:#cfe; opacity:.85; }
     footer a { color:var(--gold); }
 
     /* ---- overlays (HolyC editor / God Words): a window floating over the desktop ---- */
@@ -161,7 +164,7 @@
 
     /* God Tools window */
     #godWin { display:flex; flex-direction:column; gap:8px; width:min(680px,94vw); height:min(74vh,620px); margin:0; padding:10px; }
-    #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:16px; line-height:1.6; word-break:break-word; }
+    #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:14px; line-height:1.6; word-break:break-word; }
     #godOut .w { color:yellow; margin-right:.55em; }
     #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:12px; line-height:1.45; white-space:pre-wrap; }
     #godOut .p .ref { color:#7fe07f; }
@@ -177,7 +180,7 @@
       .col-center { order:-1; width:100%; }
       #frame { margin:3px auto; max-width:98vw; }
       canvas#canvas { width:min(100vw - 58px, 640px); height:auto; }
-      header { max-width:none; } header h1 { font-size:18px; } header p { font-size:13px; }
+      header { max-width:none; } header h1 { font-size:14px; } header p { font-size:11px; }
       #topbar { font-size:14px; }
       .terrywin img { height:120px; }
       #keysbar { min-width:96vw; }
