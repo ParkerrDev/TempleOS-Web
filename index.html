@@ -32,7 +32,7 @@
              width:fit-content; max-width:96vw; margin:0 auto; text-align:left; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
-                   background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
+                   background:#55FFFF; object-fit:contain; }
     header h1 { font-size:16px; font-weight:normal; color:#fff; font-family:'TempleOS','dos_vga',monospace; }
     header p { font-size:16px; color:#dfe6ff; max-width:1000px; line-height:1.25; }
 
@@ -211,7 +211,7 @@
   </div>
 
   <header>
-    <div class="logo" role="img" aria-label="TempleOS" title="TempleOS"></div>
+    <img class="logo" src="assets/TempleOS.svg" alt="TempleOS" title="TempleOS" />
     <div class="htxt">
       <h1>TempleOS — the real 64-bit OS, booting in your browser</h1>
       <p>The <b>complete, unmodified TempleOS V5.03</b> on <b>HEMU</b> — a clean-room x86-64 emulator written in
