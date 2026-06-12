@@ -81,7 +81,8 @@
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
     .toolbar button { font-size:16px; padding:4px 6px; }
-    .toolbar button .ico { display:inline-block; width:24px; font-size:18px; line-height:16px; text-align:center; vertical-align:-2px; }
+    .toolbar button .ico { display:inline-block; width:22px; font-size:16px; line-height:16px; text-align:center; vertical-align:-1px; }
+    button, .tbtn, #homeList li, .ico { font-variant-emoji:text; }
     button { font-family:'dos_vga','TempleOS',monospace; font-size:16px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
@@ -178,7 +179,7 @@
     #godOut .w { color:yellow; margin-right:.55em; }
     #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:16px; line-height:1.25; white-space:pre-wrap; }
     #godOut .p .ref { color:#7fe07f; }
-    #godOut .s { display:block; color:#7fe07f; font-size:16px; margin:6px 0; }
+    #godOut .s { display:block; color:#7fe07f; font-size:16px; margin:6px 0; font-variant-emoji:text; }
     #godOut canvas { display:block; width:320px; max-width:100%; image-rendering:pixelated; background:#fff; margin:8px 0; border:2px solid #fff; }
     #godBar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     #godBar button { width:auto; }
@@ -239,13 +240,13 @@
     <div class="col-left">
       <div class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
-        <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico">⏸</span> Pause</button>
+        <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico">⏸︎</span> Pause</button>
         <button id="restartBtn" title="Reload the clean desktop snapshot (~4s)"><span class="ico">↻</span> Restart</button>
         <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS"><span class="ico">⛶</span> Fullscreen</button>
-        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed"><span class="ico">⌨</span> HolyC Editor</button>
+        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed"><span class="ico">⌨︎</span> HolyC Editor</button>
         <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
-        <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico">💾</span> Disk &amp; Save</button>
-        <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico">🕹</span> Touch controls</button>
+        <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico">▤</span> Disk &amp; Save</button>
+        <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico">✛</span> Touch controls</button>
       </div>
       <div class="win keyswin" data-title="Keys"><span class="close">[X]</span><div id="keysbar"></div></div>
     </div>
@@ -256,7 +257,7 @@
         <canvas id="canvas" width="640" height="480" tabindex="0"></canvas>
         <div id="touchui">
           <div id="joy"><div id="joyk"></div></div>
-          <div id="tKb" class="tbtn" title="open keyboard">⌨</div>
+          <div id="tKb" class="tbtn" title="open keyboard">⌨︎</div>
           <div id="tL" class="tbtn">L</div>
           <div id="tR" class="tbtn">R</div>
         </div>
@@ -292,8 +293,8 @@
       <div class="ed-bar">
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
         <button id="runBtn">▶ Run</button>
-        <button id="edSave" title="Download the source as a .HC file">💾 Save</button>
-        <button id="edOpen" title="Open a .HC file from your computer">📂 Open</button>
+        <button id="edSave" title="Download the source as a .HC file">↓ Save</button>
+        <button id="edOpen" title="Open a .HC file from your computer">↥ Open</button>
         <button id="edToDisk" title="Write the source to /Home on the C: drive so TempleOS can run it">➜ To C:/Home</button>
         <span id="status">ready</span>
       </div>
@@ -321,7 +322,7 @@
       <div id="godOut"></div>
       <div id="godBar">
         <button id="godWord">✞ Word</button>
-        <button id="godPassage">📖 Passage</button>
+        <button id="godPassage">≡ Passage</button>
         <button id="godSong">♪ Song</button>
         <button id="godDoodle">✎ Doodle</button>
         <button id="godClear">Clear</button>
@@ -338,23 +339,23 @@
           <h3>Save your progress</h3>
           <p>A <b>snapshot</b> captures the entire running OS (memory + state) — reload it later to resume exactly where you left off. A <b>disk image</b> is your whole C: drive, including files you saved in TempleOS.</p>
           <div class="disk-row">
-            <button id="dlSnap">⬆ Export snapshot</button>
-            <button id="dlDisk">⬆ Export C: disk</button>
+            <button id="dlSnap">↑ Export snapshot</button>
+            <button id="dlDisk">↑ Export C: disk</button>
           </div>
         </div>
         <div class="disk-sec">
           <h3>Load / import</h3>
           <p>Boot from a snapshot you exported before, or mount a custom / previously-saved C: disk image (raw or qcow2, optionally gzipped). Importing reloads the page.</p>
           <div class="disk-row">
-            <button id="ulSnap">⬇ Import snapshot</button>
-            <button id="ulDisk">⬇ Import C: disk</button>
+            <button id="ulSnap">↓ Import snapshot</button>
+            <button id="ulDisk">↓ Import C: disk</button>
           </div>
         </div>
         <div class="disk-sec">
           <h3>Upload a file to C:/Home</h3>
           <p>Drop a <b>.HC</b> program/game (or any file) straight into TempleOS's <kbd>/Home</kbd>. Run it in the OS with <kbd>#include "Name"</kbd> or by clicking it in a <kbd>Dir</kbd> listing.</p>
           <div class="disk-row">
-            <button id="ulFile">📎 Choose file…</button>
+            <button id="ulFile">↥ Choose file…</button>
             <button id="lsHome">↻ List /Home</button>
           </div>
           <ul id="homeList"></ul>
@@ -1065,7 +1066,7 @@ I64 GodDoodleGen(I64 strokes)
       btn.addEventListener("click", () => { paused = !paused;
         engine.post({ cmd: "pause", value: paused });
         if (engine.kind === "inline") window.__inlinePaused = paused;   // inline loop reads this flag
-        btn.innerHTML = paused ? '<span class="ico">▶</span> Play' : '<span class="ico">⏸</span> Pause';
+        btn.innerHTML = paused ? '<span class="ico">▶︎</span> Play' : '<span class="ico">⏸︎</span> Pause';
         engineLabel = engineLabel; });
     }
 
@@ -1094,7 +1095,7 @@ I64 GodDoodleGen(I64 strokes)
         else if (m.cmd === "dirList") {
           const ul = $("homeList"); ul.innerHTML = "";
           if (!m.ok) { say("list failed: " + m.msg); return; }
-          for (const f of m.files) { const li = document.createElement("li"); li.textContent = (f.dir ? "📁 " : "📄 ") + f.name + (f.dir ? "" : "  " + f.size + "b"); ul.appendChild(li); }
+          for (const f of m.files) { const li = document.createElement("li"); li.textContent = (f.dir ? "[D] " : "    ") + f.name + (f.dir ? "" : "  " + f.size + "b"); ul.appendChild(li); }
           say(m.files.length + " entries in /" + (m.dir || "Home"));
         }
       };
