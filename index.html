@@ -29,7 +29,7 @@
 
     /* header shares the centered content width of the desktop row below it */
     header { display:flex; align-items:stretch; gap:10px; padding:4px 8px 1px;
-             width:fit-content; max-width:96vw; margin:0 auto; }
+             width:fit-content; max-width:96vw; margin:0 auto; text-align:left; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
                    background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
@@ -114,6 +114,7 @@
     .ldbarwrap::after { content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(90deg, transparent 0 22px, #0a0a0a 22px 24px); }
 
     /* on-screen function/modifier keys — works on desktop and mobile; modifiers latch (✱) */
+    #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; }
     #keysbar button { width:auto; font-size:16px; padding:2px 5px; text-align:center; }
     #keysbar button.mod.on { color:#fff; background:var(--red); border-color:var(--red); }
     #frame .cap { text-align:center; font-size:13px; color:var(--blue); padding-top:3px; }
@@ -135,15 +136,7 @@
 
     .col-right #guide { font-size:16px; }
     #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
-    .godwin { display:flex; flex-direction:column; gap:6px; }
-    #godOut { height:176px; overflow:auto; background:var(--blue); color:#fff; padding:6px 8px; font-size:16px; line-height:1.25; word-break:break-word; }
-    #godOut .w { color:yellow; margin-right:.55em; }
-    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:4px 8px; margin:6px 0; font-size:16px; line-height:1.25; white-space:pre-wrap; }
-    #godOut .s { display:block; color:#7fe07f; font-size:16px; margin:4px 0; }
-    #godOut canvas { display:block; width:100%; image-rendering:pixelated; background:#fff; margin:6px 0; border:2px solid #fff; }
-    #godBar { display:flex; gap:4px; flex-wrap:wrap; }
-    #godBar button { width:auto; font-size:16px; padding:2px 4px; flex:1 1 auto; text-align:center; }
-    .keyswin #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; width:100%; min-width:0; padding:0; }
+    .keyswin { padding:8px 6px 6px; }
     .terrywin { padding:6px; text-align:center; }
     .terrywin img { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
@@ -179,6 +172,16 @@
     #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:16px; line-height:1.25; white-space:pre-wrap; word-break:break-word; }
     .ed-foot { flex:0 0 auto; color:var(--blue); font-size:16px; padding:1px 2px 0; }
 
+    /* God Tools window */
+    #godWin { display:flex; flex-direction:column; gap:8px; width:min(680px,94vw); height:min(74vh,620px); margin:0; padding:10px; }
+    #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:16px; line-height:1.6; word-break:break-word; }
+    #godOut .w { color:yellow; margin-right:.55em; }
+    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:16px; line-height:1.25; white-space:pre-wrap; }
+    #godOut .p .ref { color:#7fe07f; }
+    #godOut .s { display:block; color:#7fe07f; font-size:16px; margin:6px 0; }
+    #godOut canvas { display:block; width:320px; max-width:100%; image-rendering:pixelated; background:#fff; margin:8px 0; border:2px solid #fff; }
+    #godBar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    #godBar button { width:auto; }
 
     /* ---- responsive: phones & narrow windows ---- */
     /* stacked layout — applied by JS when effective (zoom-divided) width < 980px */
@@ -225,23 +228,10 @@
         <button id="restartBtn" title="Reload the clean desktop snapshot (~4s)"><span class="ico">↻</span> Restart</button>
         <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS"><span class="ico">⛶</span> Fullscreen</button>
         <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed"><span class="ico">⌨</span> HolyC Editor</button>
+        <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico">🕹</span> Touch controls</button>
       </div>
-      <div class="win godwin" data-title="God Tools">
-        <span class="close">[X]</span>
-        <div id="godOut"></div>
-        <div id="godBar">
-          <button id="godWord">✞ Word</button>
-          <button id="godPassage">📖 Passage</button>
-          <button id="godSong">♪ Song</button>
-          <button id="godDoodle">✎ Doodle</button>
-          <button id="godClear">Clear</button>
-        </div>
-      </div>
-      <div class="win keyswin" data-title="Keys">
-        <span class="close">[X]</span>
-        <div id="keysbar"></div>
-      </div>
+      <div class="win keyswin" data-title="Keys"><span class="close">[X]</span><div id="keysbar"></div></div>
     </div>
 
     <div class="col-center">
@@ -275,8 +265,7 @@
   </div>
 
   <footer>
-    <p>Made with ♥ by <a href="https://parkerhunt.me">parkerhunt.me</a> — R.I.P. Terry A. Davis (1969–2018), “the smartest programmer that's ever lived.” ·
-       <a href="https://github.com/ParkerrDev/TempleOS-wasm/issues/new" target="_blank" rel="noopener">bug? idea?</a></p>
+    <p>Made with ♥ by <a href="https://parkerhunt.me">parkerhunt.me</a> — R.I.P. Terry A. Davis (1969–2018), “the smartest programmer that's ever lived.” · <a href="https://github.com/ParkerrDev/TempleOS-wasm/issues/new" target="_blank" rel="noopener">bug? idea?</a></p>
   </footer>
   </main>
 
@@ -305,6 +294,22 @@
     </div>
   </div>
 
+  <!-- God Tools overlay: the Adam/God suite (Word / Bible Passage / Song / Doodle), GodBits/GodPick
+       semantics compiled in-browser by holyc-wasm; entropy pooled from your input timing + CSPRNG. -->
+  <div id="godOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="God Tools">
+    <div class="win" id="godWin" data-title="God Tools · Adam/God · holyc-wasm">
+      <span class="close" id="godClose" title="Close">[X]</span>
+      <div id="godOut"></div>
+      <div id="godBar">
+        <button id="godWord">✞ Word</button>
+        <button id="godPassage">📖 Passage</button>
+        <button id="godSong">♪ Song</button>
+        <button id="godDoodle">✎ Doodle</button>
+        <button id="godClear">Clear</button>
+      </div>
+    </div>
+  </div>
+
   <input id="mobInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" aria-hidden="true" tabindex="-1" />
 
   <script type="module">
@@ -313,6 +318,7 @@
 
     const $ = (id) => document.getElementById(id);
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
+    dbg("hemu host starting…");
     addEventListener("error", (e) => dbg("JS: " + e.message, true));
 
     const PALETTE = [
@@ -698,7 +704,7 @@
     // ---- God Tools window: the Adam/God suite — Word, Bible Passage, Song, Doodle — with the
     //      GodBits/GodPick machinery written in HolyC and compiled in-browser by holyc-wasm.
     //      The entropy pool feeds itself: CSPRNG seed + every keystroke/click's timing. ----
-    { const out = $("godOut");
+    { const ov = $("godOverlay"), out = $("godOut");
       let god = null, godMem = null, gG = null, words = null, kjv = null, loading = false;
       const GOD_HC = `// TempleOS Adam/God semantics: a bit-per-byte fifo, LSB first; GodPick redraws until in range.
 U8 fifo[16384];
@@ -770,14 +776,14 @@ I64 GodDoodleGen(I64 strokes)
       const feed = () => { if (god) god.GodBitsIns(24n, BigInt(((performance.now() * 1000) >>> 0) ^ ((Math.random() * 0x1000000) | 0))); };
       addEventListener("keydown", feed, true);
       addEventListener("pointerdown", feed, true);
-      const ensure = async (n) => { if (!god) await init(); if (!god) return false;
+      const ensure = (n) => { if (!god) return false;
         while (Number(god.GodBitCnt()) < n) { const v = crypto.getRandomValues(new Uint32Array(1))[0]; god.GodBitsIns(32n, BigInt(v >>> 0)); }
         return true; };
       const append = (el) => { out.appendChild(el); out.scrollTop = out.scrollHeight; };
-      $("godWord").addEventListener("click", async () => { if (!await ensure(64) || !words) return;
+      $("godWord").addEventListener("click", () => { if (!ensure(64) || !words) return;
         const i = Number(god.GodPick(BigInt(words.length))); if (i < 0) return;
         const sp = document.createElement("span"); sp.className = "w"; sp.textContent = words[i]; append(sp); });
-      $("godPassage").addEventListener("click", async () => { if (!await ensure(96)) return;
+      $("godPassage").addEventListener("click", async () => { if (!ensure(96)) return;
         if (!kjv) { $("godPassage").disabled = true;
           kjv = (await (await fetch("./assets/kjv.txt", { cache: "force-cache" })).text()).split("\n");
           $("godPassage").disabled = false; dbg("KJV loaded: " + kjv.length + " lines"); }
@@ -785,7 +791,7 @@ I64 GodDoodleGen(I64 strokes)
         const sp = document.createElement("span"); sp.className = "p";
         sp.textContent = kjv.slice(i, i + 10).join("\n").replace(/\n{3,}/g, "\n\n").trim();
         append(sp); });
-      $("godSong").addEventListener("click", async () => { if (!await ensure(256)) return;
+      $("godSong").addEventListener("click", () => { if (!ensure(256)) return;
         const n = Number(god.GodSongGen(16n)); if (!n) return;
         const dvg = new DataView(godMem.buffer), base = gG("g_notes");
         const PENT = [0, 2, 4, 7, 9], NAME = ["C", "D", "E", "G", "A"];
@@ -805,7 +811,7 @@ I64 GodDoodleGen(I64 strokes)
             o.frequency.setValueAtTime(q.f, t); g.gain.setValueAtTime(0.05, t); g.gain.setValueAtTime(0, t + d - 0.03); t += d; }
           o.stop(t + 0.1); o.onended = () => ac.close();
         } catch {} });
-      $("godDoodle").addEventListener("click", async () => { if (!await ensure(512)) return;
+      $("godDoodle").addEventListener("click", () => { if (!ensure(512)) return;
         const n = Number(god.GodDoodleGen(24n)); if (!n) return;
         const c = document.createElement("canvas"); c.width = 160; c.height = 120;
         const cx2 = c.getContext("2d"), im = cx2.createImageData(160, 120), o32 = new Uint32Array(im.data.buffer);
@@ -813,6 +819,11 @@ I64 GodDoodleGen(I64 strokes)
         for (let i = 0; i < 19200; i++) o32[i] = pal32[px[i] & 15];
         cx2.putImageData(im, 0, 0); append(c); });
       $("godClear").addEventListener("click", () => { out.textContent = ""; });
+      ov.addEventListener("pointerdown", (e) => { if (e.target === ov) close(); });
+      const open = () => { ov.classList.add("open"); init(); };
+      const close = () => ov.classList.remove("open");
+      $("godBtn").addEventListener("click", open);
+      $("godClose").addEventListener("click", close);
     }
 
     // ---- TempleOS window chrome + dragging: every [data-title] window gets a bar with a
@@ -837,7 +848,7 @@ I64 GodDoodleGen(I64 strokes)
             w.dataset.floating = "1";
             w.style.position = "fixed"; w.style.margin = "0";
             w.style.left = r.left + "px"; w.style.top = r.top + "px";
-            w.style.width = r.width + "px";   // height stays fluid: content (e.g. Menu reopen buttons) can grow
+            w.style.width = r.width + "px";   // height stays auto so content can grow (e.g. Menu's reopen buttons)
           }
           w.style.zIndex = ++zTop;
           const sx = e.clientX - parseFloat(w.style.left), sy = e.clientY - parseFloat(w.style.top);
