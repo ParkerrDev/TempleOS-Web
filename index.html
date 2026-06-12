@@ -10,17 +10,17 @@
     /* afterdavis theme: the TempleOS desktop look. */
     @font-face { font-family:'TempleOS'; src:url('fonts/templeos_font.woff') format('woff'), url('fonts/templeos_font.ttf') format('truetype'); font-weight:normal; font-style:normal; }
     @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); font-weight:normal; font-style:normal; }
-    :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; --zi:1; }
+    :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; }
     * { margin:0; padding:0; box-sizing:border-box; font-family:'TempleOS','dos_vga',"Courier New",monospace; cursor:url('assets/cursor.png'),auto;
         -webkit-font-smoothing:none; font-smooth:never; text-rendering:optimizeSpeed; }
     html { overflow-y:auto; }
-    body { background:var(--blue); color:#fff; font-size:8px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
+    body { background:var(--blue); color:#fff; font-size:16px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
     ::selection { background:#000; color:yellow; }
     a { color:var(--gold); }
 
     /* live top status bar (always visible — survives fullscreen games, unlike the in-OS wallpaper bar) */
     #topbar { display:flex; line-height:1; justify-content:space-between; align-items:center; gap:10px;
-              background:var(--blue); color:#fff; padding:3px 8px 2px; font-size:8px; }
+              background:var(--blue); color:#fff; padding:3px 8px 2px; font-size:16px; }
     #topbar .status { display:flex; flex-wrap:wrap; }
     #topbar .status > span { white-space:nowrap; }
     #topbar .status > span:not(:last-child) { margin-right:16px; }
@@ -28,19 +28,19 @@
 
     /* header shares the centered content width of the desktop row below it */
     header { display:flex; align-items:stretch; gap:10px; padding:4px 8px 1px;
-             width:100%; max-width:calc(clamp(300px, min(calc(72vh * var(--zi)), calc((100vw * var(--zi) - 690px) * 3 / 4)), 600px) * 4 / 3 + 542px); margin:0 auto; }
+             width:100%; max-width:calc(clamp(300px, min(72vh, (100vw - 830px) * 3 / 4), 600px) * 4 / 3 + 698px); margin:0 auto; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
                    background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
-    header h1 { font-size:16px; font-weight:normal; color:#fff; }
-    header p { font-size:8px; color:#dfe6ff; max-width:1000px; line-height:1.5; }
+    header h1 { font-size:24px; font-weight:normal; color:#fff; }
+    header p { font-size:16px; color:#dfe6ff; max-width:1400px; line-height:1.25; }
 
     /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X] */
     /* one 8px border cell per side, exactly like the OS text border; the pattern (measured 1:1
        from the framebuffer: V double = 2W 2B 1W 2B 1W, H double = 2W 1B 1W 1B 3W; singles when
        unfocused) is painted into a border-image at runtime. No outline halo — the cell's outer
        2px of white IS the margin, as measured. */
-    .win, #frame { position:relative; background:#fff; color:var(--blue); border:8px solid #fff;
+    .win, #frame { position:relative; background:#fff; color:var(--blue); border:16px solid #fff;
                    margin:3px 5px; overflow:visible; }
     .win { padding:.7em; }
     /* TempleOS window bar: rides ON the top border line (slight overhang only), like the real
@@ -49,59 +49,59 @@
     /* the border row, TempleOS-style: one text-cell-high bar CENTERED on the double lines
        (border box is 6px tall at y 0..6 -> 13px bar spans -4..9, equal overhang).
        Layout per DocBorderNew: MENU(+LX, $$BK$$) | border line | title(+CX+IV, capped) hex | [X](+RX) */
-    .wbar { position:absolute; top:-8px; left:0; right:0; height:8px; display:flex; align-items:center;
-            background:transparent; z-index:2; overflow:visible; user-select:none; }
-    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:8px; line-height:8px; padding:0 2px;
+    .wbar { position:absolute; top:-16px; left:0; right:0; height:16px; display:flex; align-items:center;
+            background:transparent; z-index:2; overflow:hidden; user-select:none; }
+    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:16px; line-height:16px; padding:0;
              animation:menuBlink 1s step-start infinite; }
     @keyframes menuBlink { 50% { background:var(--blue); color:#fff; } }
     .wgap { flex:1 1 auto; }                       /* transparent — the double lines show through */
-    .wtitle { flex:0 1 auto; min-width:64px; max-width:46%; overflow:hidden; height:12px; font-size:8px;
-              line-height:12px; white-space:nowrap; background:var(--blue); color:#fff; }
+    .wtitle { flex:0 1 auto; min-width:128px; max-width:46%; overflow:hidden; height:16px; font-size:16px;
+              line-height:16px; white-space:nowrap; background:var(--blue); color:#fff; }
     .wtitle > span { display:inline-block; white-space:pre; animation:wscroll linear infinite; }
     @keyframes wscroll { to { transform:translateX(-50%); } }
-    .whex { flex:0 0 auto; color:var(--blue); background:#fff; font-size:8px; line-height:8px; }
+    .whex { flex:0 0 auto; color:var(--blue); background:#fff; font-size:16px; line-height:16px; }
     /* vertical doc-name list ON the left border column (DocBorderLstDraw: TextChar at x=-1):
        one 8px text cell, centered over the 6px double lines, white only where glyphs sit */
-    .wvert { position:absolute; top:0; bottom:8px; left:-8px; width:8px; overflow:visible; z-index:2;
+    .wvert { position:absolute; top:0; bottom:16px; left:-16px; width:16px; overflow:visible; z-index:2;
              writing-mode:vertical-rl; text-orientation:upright; background:transparent; color:var(--blue);
-             font-size:8px; line-height:8px; letter-spacing:0; text-align:start; user-select:none; }
+             font-size:16px; line-height:16px; letter-spacing:0; text-align:start; user-select:none; }
     .wvert > span { background:#fff; }            /* white only where the glyphs are */
-    .close { flex:0 0 auto; font-size:8px; line-height:8px; padding:0 2px; color:var(--blue); background:#fff; }
+    .close { flex:0 0 auto; font-size:16px; line-height:16px; padding:0; color:var(--blue); background:#fff; }
     /* yellow corner handles on the focused window, like the real WinMgr */
-    .wcorn { position:absolute; width:8px; height:8px; background:yellow; z-index:3; display:none; pointer-events:none; }
-    .wcorn::after { content:""; position:absolute; inset:3px; background:var(--blue); }
+    .wcorn { position:absolute; width:16px; height:16px; background:yellow; z-index:3; display:none; pointer-events:none; }
+    .wcorn::after { content:""; position:absolute; inset:5px; background:var(--blue); }
     .active > .wcorn { display:block; }
-    .wcorn.tl { top:-8px; left:-8px; } .wcorn.br { bottom:-8px; right:-8px; }
+    .wcorn.tl { top:-16px; left:-16px; } .wcorn.br { bottom:-16px; right:-16px; }
     .win-ph { visibility:hidden; }   /* placeholder keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
     .desktop-row { display:flex; gap:8px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px; }
-    .col-left { display:flex; flex-direction:column; gap:16px; width:232px; flex:0 0 auto; }
-    .col-right { display:flex; flex-direction:column; gap:16px; width:268px; flex:0 0 auto; }
+    .col-left { display:flex; flex-direction:column; gap:16px; width:320px; flex:0 0 auto; }
+    .col-right { display:flex; flex-direction:column; gap:16px; width:320px; flex:0 0 auto; }
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
-    .toolbar button { font-size:8px; padding:5px 4px; }
-    button { font-family:'TempleOS','dos_vga',monospace; font-size:8px; color:#000; background:#fff;
+    .toolbar button { font-size:16px; padding:6px 6px; }
+    button { font-family:'TempleOS','dos_vga',monospace; font-size:16px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
 
     #frame { padding:5px; }
-    canvas#canvas { display:block; height:clamp(300px, min(calc(72vh * var(--zi)), calc((100vw * var(--zi) - 690px) * 3 / 4)), 600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
+    canvas#canvas { display:block; height:clamp(300px, min(72vh, (100vw - 830px) * 3 / 4), 600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
     /* fullscreen: black letterbox, centered 4:3 screen, window chrome hidden */
     #frame:fullscreen { display:flex; align-items:center; justify-content:center; background:#000; border:0; border-image:none; outline:0; margin:0; padding:0 !important; }
-    #frame:fullscreen canvas#canvas { height:min(calc(100vh * var(--zi)), calc(75vw * var(--zi))); width:auto; max-width:calc(100vw * var(--zi)); }
+    #frame:fullscreen canvas#canvas { height:min(100vh,75vw); width:auto; max-width:100vw; }
     #frame:fullscreen .wbar, #frame:fullscreen .wvert, #frame:fullscreen .cap, #frame:fullscreen #loadui { display:none; }
     #frame::backdrop { background:#000; }
     #frame:-webkit-full-screen { display:flex; align-items:center; justify-content:center; background:#000; border:0; outline:0; margin:0; padding:0; }
-    #frame:-webkit-full-screen canvas#canvas { height:min(calc(100vh * var(--zi)), calc(75vw * var(--zi))); width:auto; max-width:calc(100vw * var(--zi)); }
+    #frame:-webkit-full-screen canvas#canvas { height:min(100vh,75vw); width:auto; max-width:100vw; }
     #frame:-webkit-full-screen .wbar, #frame:-webkit-full-screen .wvert, #frame:-webkit-full-screen .cap { display:none; }
     /* faux fullscreen — iPhone Safari has no element-fullscreen API; pin the frame over the viewport */
     body.fakefs { overflow:hidden; }
     body.fakefs #frame { position:fixed; inset:0; z-index:500; margin:0; padding:0 !important; border:0; border-image:none; outline:0; background:#000;
                          display:flex; align-items:center; justify-content:center; }
     body.fakefs #frame .wbar, body.fakefs #frame .wvert, body.fakefs #frame .cap, body.fakefs #loadui { display:none; }
-    body.fakefs canvas#canvas { height:min(calc(100dvh * var(--zi)), calc(75vw * var(--zi))); width:auto; max-width:calc(100vw * var(--zi)); }
+    body.fakefs canvas#canvas { height:min(100dvh,75vw); width:auto; max-width:100vw; }
     /* in either fullscreen mode: keys bar floats over the top, exit button top-right */
     #frame.fsmode #keysbar { position:absolute; top:4px; left:50%; transform:translateX(-50%); z-index:6;
                              max-width:100vw; margin:0; padding:4px; opacity:.88; }
@@ -117,8 +117,8 @@
     .ldbarwrap::after { content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(90deg, transparent 0 22px, #0a0a0a 22px 24px); }
 
     /* on-screen function/modifier keys — works on desktop and mobile; modifiers latch (✱) */
-    #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; padding:4px 2px 0; width:0; min-width:100%; }  /* preferred width 0: the FRAME sizes the column, keys wrap to it */
-    #keysbar button { width:auto; font-size:8px; padding:3px 4px; text-align:center; }
+    #keysbar { display:flex; flex-wrap:wrap; gap:2px; justify-content:center; padding:3px 0 0; width:0; min-width:100%; }  /* preferred width 0: the FRAME sizes the column, keys wrap to it */
+    #keysbar button { width:auto; font-size:16px; padding:2px 4px; text-align:center; }
     #keysbar button.mod.on { color:#fff; background:var(--red); border-color:var(--red); }
     #frame .cap { text-align:center; font-size:13px; color:var(--blue); padding-top:3px; }
 
@@ -137,17 +137,17 @@
     #tKb { right:18px; bottom:92px; width:54px; height:42px; border-radius:8px; font-size:18px; }
     #mobInput { position:fixed; left:-30px; bottom:0; width:20px; height:20px; opacity:.01; font-size:16px; }
 
-    .col-right #guide { font-size:8px; }
+    .col-right #guide { font-size:16px; }
     #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
     .dbgw { padding:4px; }
-    #dbg { height:170px; overflow:auto; background:#000; color:#7fe07f; padding:6px; margin:0;
-           font-size:8px; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+    #dbg { height:192px; overflow:auto; background:#000; color:#7fe07f; padding:6px; margin:0;
+           font-size:16px; line-height:1.25; white-space:pre-wrap; word-break:break-word; }
     #dbg .err { color:#ff8a8a; }
-    .dbgnote { font-size:8px; padding:4px 2px 1px; color:var(--blue); }
+    .dbgnote { font-size:16px; padding:6px 2px 2px; color:var(--blue); }
     .terrywin { padding:6px; text-align:center; }
-    .terrywin img { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
+    .terrywin img { display:block; height:160px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
-    footer { text-align:center; padding:4px; font-size:8px; color:#cfe; opacity:.85; }
+    footer { text-align:center; padding:4px; font-size:16px; color:#cfe; opacity:.85; }
     footer a { color:var(--gold); }
 
     /* ---- overlays (HolyC editor / God Words): a window floating over the desktop ---- */
@@ -183,27 +183,26 @@
     #godWin { display:flex; flex-direction:column; gap:8px; width:min(680px,94vw); height:min(74vh,620px); margin:0; padding:10px; }
     #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:16px; line-height:1.6; word-break:break-word; }
     #godOut .w { color:yellow; margin-right:.55em; }
-    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:8px; line-height:1.45; white-space:pre-wrap; }
+    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:16px; line-height:1.45; white-space:pre-wrap; }
     #godOut .p .ref { color:#7fe07f; }
-    #godOut .s { display:block; color:#7fe07f; font-size:8px; margin:6px 0; }
+    #godOut .s { display:block; color:#7fe07f; font-size:16px; margin:6px 0; }
     #godOut canvas { display:block; width:320px; max-width:100%; image-rendering:pixelated; background:#fff; margin:8px 0; border:2px solid #fff; }
     #godBar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     #godBar button { width:auto; }
 
     /* ---- responsive: phones & narrow windows ---- */
-    /* stacked layout — applied by JS when effective (zoom-divided) width < 980px */
-    body.stack .desktop-row { flex-direction:column; align-items:center; }
-    body.stack .col-left, body.stack .col-right { width:min(calc(96vw * var(--zi)), 560px); flex-direction:column; }
-    body.stack .col-center { order:-1; width:100%; }
-    body.stack #frame { margin:3px auto; max-width:calc(98vw * var(--zi)); }
-    body.stack canvas#canvas { width:min(calc(100vw * var(--zi) - 58px), 640px); height:auto; }
-    body.stack header { max-width:none; }
-    body.stack #topbar { font-size:8px; }
-    body.stack .terrywin img { height:120px; }
-    body.stack #keysbar { min-width:calc(96vw * var(--zi)); }
-    body.stack .ed-body { flex-direction:column; }
-    body.stack #editorWin { height:calc(94vh * var(--zi)); }
-    body.stack #editorWin #screen { height:calc(34vh * var(--zi)); }
+    @media (max-width:980px) {
+      .desktop-row { flex-direction:column; align-items:center; }
+      .col-left, .col-right { width:min(96vw,560px); flex-direction:column; }
+      .col-center { order:-1; width:100%; }
+      #frame { margin:3px auto; max-width:98vw; }
+      canvas#canvas { width:min(100vw - 58px, 640px); height:auto; }
+      header { max-width:none; } header h1 { font-size:24px; } header p { font-size:16px; }
+      #topbar { font-size:14px; }
+      .terrywin img { height:120px; }
+      #keysbar { min-width:96vw; }
+      .ed-body { flex-direction:column; } #editorWin { height:94vh; } #editorWin #screen { height:34vh; }
+    }
   </style>
 </head>
 <body>
@@ -221,9 +220,9 @@
     <div class="logo" role="img" aria-label="TempleOS" title="TempleOS"></div>
     <div class="htxt">
       <h1>TempleOS — the real 64-bit OS, booting in your browser</h1>
-      <p>The <b>complete, unmodified TempleOS V5.03</b> on <b>HEMU</b> — a clean-room x86-64 emulator written in
-         HolyC, compiled to WebAssembly. Real kernel, HolyC JIT, graphics, games, keyboard &amp; mouse.
-         <a href="https://github.com/ParkerrDev/TempleOS-wasm">source &amp; build notes →</a></p>
+      <p>The <b>complete, unmodified TempleOS V5.03</b> on <b>HEMU</b> — a clean-room x86-64 emulator
+         in HolyC, compiled to WebAssembly.
+         <a href="https://github.com/ParkerrDev/TempleOS-wasm">source →</a></p>
     </div>
   </header>
 
@@ -232,7 +231,6 @@
     <div class="col-left">
       <div class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
-        <button id="zoomBtn" title="Integer zoom keeps the 8px grid pixel-perfect (no anti-aliasing)">🔍 Zoom: 2×</button>
         <button id="restartBtn" title="Reload the clean desktop snapshot (~4s)">↻ Restart</button>
         <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS">⛶ Fullscreen</button>
         <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed">⌨ HolyC Editor</button>
@@ -265,17 +263,16 @@
     <div class="col-right">
       <div id="guide" class="win" data-title="Help">
         <span class="close">[X]</span>
-        <b>Click the screen</b>, then move the mouse and type — you're using the real OS.
-        <b>Esc</b> releases the mouse and is also sent to TempleOS, so it exits games and menus too.
-        Press <kbd>Ctrl+M</kbd> for the games menu, click a sprite to play. <kbd>F7</kbd> draws a God word.
-        Fullscreen keeps every key (even Esc) inside the OS.
+        <b>Click the screen</b> — you're using the real OS. <b>Esc</b> releases the mouse
+        and exits games. <kbd>Ctrl+M</kbd> opens the games menu. <kbd>F7</kbd> draws a God
+        word. Fullscreen keeps every key in the OS.
       </div>
       <div class="win terrywin" data-title="Terry"><span class="close">[X]</span><img src="assets/terrydancing.gif" alt="Terry A. Davis"></div>
     </div>
   </div>
 
   <footer>
-    <p>Made with ♥ by <a href="https://parkerhunt.me">parkerhunt.me</a> — R.I.P. Terry A. Davis (1969–2018), “the smartest programmer that's ever lived.”</p>
+    <p>Made with ♥ by <a href="https://parkerhunt.me">parkerhunt.me</a> — R.I.P. Terry A. Davis (1969–2018)</p>
   </footer>
   </main>
 
@@ -351,23 +348,6 @@
     const ld = $("loadui"), ldtext = $("ldtext"), ldbar = $("ldbar");
     const tbFps = $("tb-fps"), tbKey = $("tb-key");
     const setLoad = (s, pct) => { ldtext.textContent = s; if (pct != null) ldbar.style.width = pct + "%"; };
-
-    // ---- integer page zoom: the only scaling that keeps the 8px grid un-anti-aliased.
-    //      zoom multiplies viewport-unit lengths too, so vh/vw rules carry a *var(--zi) inverse. ----
-    { const saved = +localStorage.getItem("tos-zoom-v2") || 1;   // 1x default — zoom is opt-in
-      let Z = Math.max(1, Math.min(3, saved | 0));
-      const apply = () => {
-        document.documentElement.style.zoom = Z;
-        document.documentElement.style.setProperty("--zi", (1 / Z).toString());
-        document.body.classList.toggle("stack", innerWidth / Z < 980 || document.body.classList.contains("touch"));
-        const b = $("zoomBtn"); if (b) b.textContent = "🔍 Zoom: " + (Z === 3 ? "1×" : (Z + 1) + "×");
-        localStorage.setItem("tos-zoom-v2", Z);
-      };
-      $("zoomBtn").addEventListener("click", () => { Z = Z >= 3 ? 1 : Z + 1; apply(); });
-      addEventListener("resize", apply);
-      window.__zoomApply = apply;
-      apply();
-    }
 
     // ---- live topbar clock (the OS RTC is synced to the host clock, so this matches the OS) ----
     { const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], p2 = (n) => String(n).padStart(2, "0");
@@ -552,7 +532,7 @@
     // ---- touch controls: direct touch = absolute cursor + tap-to-click; joystick = fine relative
     //      moves; L/R = holdable mouse buttons (drags); ⌨ opens the device keyboard. ----
     if (navigator.maxTouchPoints > 0 || "ontouchstart" in window) document.body.classList.add("touch");
-    $("touchBtn").addEventListener("click", () => { document.body.classList.toggle("touch"); window.__zoomApply?.(); });
+    $("touchBtn").addEventListener("click", () => document.body.classList.toggle("touch"));
     { // direct canvas touch: move cursor absolutely; quick tap = left click; long-press = right click
       let t0 = 0, moved = 0, lpTimer = 0;
       const pos = (t) => { const r = canvas.getBoundingClientRect();
@@ -893,37 +873,34 @@ I64 GodDoodleGen(I64 strokes)
         // Corners are proper 90-degree JOINS (the lines turn, they never cross):
         // outer stroke turns at its own offset, inner stroke at its deeper offset.
         const mk = (focused) => {
-          const c = document.createElement("canvas"); c.width = c.height = 24;
+          const c = document.createElement("canvas"); c.width = c.height = 48;
           const g = c.getContext("2d");
-          g.fillStyle = "#fff"; g.fillRect(0, 0, 24, 24);
+          g.fillStyle = "#fff"; g.fillRect(0, 0, 48, 48);
           g.fillStyle = "#0000A8";
           // [offset, thickness] from the outside. V = vertical strokes (2px), H = horizontal (1px).
-          const V = focused ? [[2, 2], [5, 2]] : [[3, 2]];
-          const H = focused ? [[2, 1], [4, 1]] : [[3, 1]];
+          const V = focused ? [[4, 4], [10, 4]] : [[6, 4]];
+          const H = focused ? [[4, 2], [8, 2]] : [[6, 2]];
           // edge bands (the middle 8px slice of each side)
-          for (const [o, t] of H) { g.fillRect(8, o, 8, t); g.fillRect(8, 24 - o - t, 8, t); }
-          for (const [o, t] of V) { g.fillRect(o, 8, t, 8); g.fillRect(24 - o - t, 8, t, 8); }
+          for (const [o, t] of H) { g.fillRect(16, o, 16, t); g.fillRect(16, 48 - o - t, 16, t); }
+          for (const [o, t] of V) { g.fillRect(o, 16, t, 16); g.fillRect(48 - o - t, 16, t, 16); }
           // corners: each V/H stroke pair turns at the SAME rank (outer with outer, inner with inner)
           for (let i = 0; i < V.length; i++) {
             const [vo, vt] = V[i], [ho, ht] = H[i];
             // top-left: vertical run from the horizontal stroke down; horizontal run from the vertical stroke right
-            g.fillRect(vo, ho, vt, 8 + 8 - ho);            // down into the left edge band
-            g.fillRect(vo, ho, 8 + 8 - vo, ht);            // right into the top edge band
-            // top-right
-            g.fillRect(24 - vo - vt, ho, vt, 16 - ho);
-            g.fillRect(8, ho, 16 - vo, ht);
-            // bottom-left
-            g.fillRect(vo, 8, vt, 16 - ho);
-            g.fillRect(vo, 24 - ho - ht, 16 - vo, ht);
-            // bottom-right
-            g.fillRect(24 - vo - vt, 8, vt, 16 - ho);
-            g.fillRect(8, 24 - ho - ht, 16 - vo, ht);
+            g.fillRect(vo, ho, vt, 32 - ho);               // down into the left edge band
+            g.fillRect(vo, ho, 32 - vo, ht);               // right into the top edge band
+            g.fillRect(48 - vo - vt, ho, vt, 32 - ho);     // top-right
+            g.fillRect(16, ho, 32 - vo, ht);
+            g.fillRect(vo, 16, vt, 32 - ho);               // bottom-left
+            g.fillRect(vo, 48 - ho - ht, 32 - vo, ht);
+            g.fillRect(48 - vo - vt, 16, vt, 32 - ho);     // bottom-right
+            g.fillRect(16, 48 - ho - ht, 32 - vo, ht);
           }
           return c.toDataURL();
         };
         const st = document.createElement("style");
-        st.textContent = `.win, #frame { border-image:url("${mk(0)}") 8 fill / 8px repeat; }
-.win.active, #frame.active { border-image:url("${mk(1)}") 8 fill / 8px repeat; }`;
+        st.textContent = `.win, #frame { border-image:url("${mk(0)}") 16 fill / 16px repeat; }
+.win.active, #frame.active { border-image:url("${mk(1)}") 16 fill / 16px repeat; }`;
         document.head.appendChild(st);
       }
       const setActive = (w) => { for (const a of document.querySelectorAll(".active")) a.classList.remove("active"); w.classList.add("active"); };
@@ -960,7 +937,7 @@ I64 GodDoodleGen(I64 strokes)
       // seamlessly (content = 2x a repeated unit, animate to -50%). Sized after layout.
       requestAnimationFrame(() => {
         const meas = document.createElement("span");
-        meas.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-size:8px";
+        meas.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-size:16px";
         document.body.appendChild(meas);
         for (const w of wins) {
           const ti = w.querySelector(".wtitle"), ts = ti && ti.firstChild;
