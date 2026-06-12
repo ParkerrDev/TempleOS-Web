@@ -15,9 +15,21 @@ console.log("opened Terry Search; waiting for shards…");
 await page.waitForFunction(() => /type to search/.test(document.getElementById("tsStatus").textContent), { timeout: 120000 });
 console.log("ready:", await page.$eval("#tsStatus", (e) => e.textContent));
 
+// DEFAULT VIEW: no query -> the latest videos, newest first
+await page.waitForSelector("#tsOut .ts-vidcard", { timeout: 15000 });
+{
+  const b = await page.evaluate(() => ({
+    cards: document.querySelectorAll("#tsOut .ts-vidcard").length,
+    dates: [...document.querySelectorAll("#tsOut .ts-vidcard .ts-m")].slice(0, 5).map((e) => e.textContent.slice(0, 10)),
+    status: document.getElementById("tsStatus").textContent }));
+  console.log("\n== default browse ==", JSON.stringify(b));
+  if (!(b.cards > 10 && b.dates[0] >= b.dates[1] && /newest first/.test(b.status))) throw new Error("default browse wrong");
+  console.log("  LATEST VIDEOS BY DEFAULT (newest first)");
+}
+
 const ask = async (q, label) => {
   await page.fill("#tsQ", q);
-  await page.waitForFunction(() => document.querySelectorAll("#tsOut .ts-hit").length > 0 || document.querySelector("#tsOut .ts-none"), { timeout: 20000 });
+  await page.waitForFunction(() => /matching/.test(document.getElementById("tsStatus").textContent) || document.querySelector("#tsOut .ts-none"), { timeout: 20000 });
   await page.waitForTimeout(400);
   const hits = await page.$$eval("#tsOut .ts-hit", (as) => as.slice(0, 3).map((a) => ({
     title: a.querySelector(".ts-t").textContent, meta: a.querySelector(".ts-m").textContent,
@@ -120,6 +132,36 @@ await page.screenshot({ path: "/tmp/ts_transcript.png" });
 await page.click("#tsBack");
 await page.waitForSelector("#tsOut .ts-hit", { timeout: 5000 });
 console.log("  back to results OK");
+// FILTERS: titles scope, year filter, sort
+{
+  await page.click('.ts-seg button[data-sc="title"]');
+  await page.fill("#tsQ", "god song");
+  await page.waitForFunction(() => /matching title/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
+  const t = await page.evaluate(() => ({ vids: document.querySelectorAll("#tsOut .ts-vidcard").length,
+    nonVids: document.querySelectorAll("#tsOut .ts-hit:not(.ts-vidcard)").length }));
+  console.log("\n== titles scope ==", JSON.stringify(t));
+  if (!(t.vids > 0 && t.nonVids === 0)) throw new Error("titles scope wrong");
+
+  await page.click('.ts-seg button[data-sc="all"]');
+  await page.selectOption("#tsYear", "2017");
+  await page.fill("#tsQ", "glow in the dark");
+  await page.waitForFunction(() => /matching passages/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
+  await page.waitForTimeout(300);
+  const yr = await page.$$eval("#tsOut .ts-hit:not(.ts-vidcard) .ts-m", (es) => es.map((e) => e.textContent.slice(0, 4)));
+  console.log("== year filter == hits:", yr.length, "non-2017:", yr.filter((y) => y !== "2017").length);
+  if (!(yr.length > 0 && yr.every((y) => y === "2017"))) throw new Error("year filter wrong");
+
+  await page.selectOption("#tsYear", "");
+  await page.fill("#tsQ", "");
+  await page.selectOption("#tsSort", "old");
+  await page.waitForFunction(() => /oldest first/.test(document.getElementById("tsStatus").textContent), { timeout: 15000 });
+  const olds = await page.$$eval("#tsOut .ts-vidcard .ts-m", (es) => es.slice(0, 3).map((e) => e.textContent.slice(0, 10)));
+  console.log("== sort oldest ==", JSON.stringify(olds));
+  if (!(olds.length && olds[0] <= olds[1])) throw new Error("oldest sort wrong");
+  await page.selectOption("#tsSort", "rel");
+  console.log("  FILTERS OK (titles scope · year · sort)");
+}
+
 await page.fill("#tsQ", "an idiot admires complexity");
 await page.waitForTimeout(800);
 await page.screenshot({ path: "/tmp/ts_search.png" });
