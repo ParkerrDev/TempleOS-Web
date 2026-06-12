@@ -450,16 +450,15 @@
     <div class="win" id="tsWin" data-title="Terry Search · every word he said on video">
       <span class="close" id="tsClose" title="Close">[X]</span>
       <div id="tsBar"><span id="tsQwrap"><input id="tsQ" type="search" placeholder="search Terry's transcripts… (typos OK)"
-        title="-word excludes · since:/until: day-precision date ranges · quotes force an exact phrase"
+        title="Google-style: &quot;exact phrase&quot; · -exclude · terry OR dave · date:2012-2014 · in:titles · since:/until:"
         autocomplete="off" autocapitalize="off" spellcheck="false" /><button id="tsClear" title="clear the search">X</button></span>
         <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button></div>
       <div id="tsCtl">
         <span class="ts-seg" title="what to search">
           <button data-sc="all" class="on">All</button><button data-sc="title">Titles</button><button data-sc="text">Transcript</button>
         </span>
-        <select id="tsMode" title="how results match and sort">
-          <option value="fuzzy">fuzzy match</option>
-          <option value="exact">exact match</option>
+        <select id="tsMode" title="result order">
+          <option value="rel">best match</option>
           <option value="new">newest first</option>
           <option value="old">oldest first</option>
         </select>
@@ -469,7 +468,7 @@
       <div id="tsStatus">open to load transcripts…</div>
       <div id="tsOut"></div>
       <div id="tsFoot">Whisper transcripts of the <a href="https://archive.org/details/TerryADavis_TempleOS_Archive" target="_blank" rel="noopener">TerryADavis_TempleOS_Archive</a> — click any result to watch that video at that moment.<br>
-        Extras: -word excludes · date:2012-2014,2017 · in:titles · since:2017-06 until:2017-11-19 · "quotes" force an exact phrase</div>
+        Google-style: "exact phrase" · -exclude · terry OR dave · date:2012-2014,2017 · in:titles · since:2017-06 until:2017-11-19</div>
     </div>
   </div>
 
@@ -1055,7 +1054,7 @@ I64 GodDoodleGen(I64 strokes)
     { const ov = $("tsOverlay"), out = $("tsOut"), q = $("tsQ"), st = $("tsStatus");
       const ARCH = "https://archive.org/details/TerryADavis_TempleOS_Archive/";
       let w = null, qid = 0, vid = 0, deb = null, lastHits = [], lastTerms = [], lastTotal = 0;
-      let scope = "all", sortBy = "rel", exact = false;      // derived from the single results dropdown
+      let scope = "all", sortBy = "rel";                     // scope mirrors the in: operator; sortBy = the dropdown
       let lastVids = [], browseTotal = 0, lastMsg = null, lastView = null;
       const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const hms = (s) => { s = Math.max(0, s | 0); const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
@@ -1256,7 +1255,7 @@ I64 GodDoodleGen(I64 strokes)
       const ask = () => { if (!w) return; qid++;
         const qq = q.value.trim();
         if (!qq) w.postMessage({ type: "browse", id: qid, sort: sortBy, offset: 0 });
-        else w.postMessage({ type: "query", q: qq, id: qid, sort: sortBy, exact }); };   // scope rides IN the query (in:titles / in:transcript)
+        else w.postMessage({ type: "query", q: qq, id: qid, sort: sortBy }); };   // everything else rides IN the query (Google-style operators)
       // ---- the GUI writes the query: scope buttons and the year picker EDIT the search text, and
       //      typing the operators updates the GUI right back (one source of truth: the box). ----
       const YRRE = "(?:19|20)\\d{2}";
@@ -1297,9 +1296,7 @@ I64 GodDoodleGen(I64 strokes)
         if (b.dataset.sc === "title") v += " in:titles";
         else if (b.dataset.sc === "text") v += " in:transcript";
         rewrite(v); });
-      // ONE results dropdown: fuzzy/exact set the match mode (relevance order); newest/oldest set the order
-      $("tsMode").addEventListener("change", () => { const v = $("tsMode").value;
-        exact = v === "exact"; sortBy = (v === "new" || v === "old") ? v : "rel"; ask(); });
+      $("tsMode").addEventListener("change", () => { sortBy = $("tsMode").value; ask(); });
       { const btn = $("tsYearBtn"), panel = $("tsYearPanel");
         const setYears = (ys) => { let v = stripYearOps(q.value);
           if (ys.size) v += " date:" + compactYears(ys);

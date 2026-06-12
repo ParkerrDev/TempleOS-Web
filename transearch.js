@@ -133,6 +133,7 @@ function query(q, id, opts = {}) {
   //   plain words      fuzzy-matched as before
   const phrases = [], notPhrases = [], notWords = [], dateAny = [];
   let dateFrom = "", dateTo = "";
+  q = q.replace(/(\s)OR(\s)/g, "$1\u0001$2");      // Google-style OR (uppercase only) -> marker that survives lowercasing
   // date grammar: an ITEM is a year range (2012-2014), or a date prefix (2017 / 2017-11 / 2017-11-19);
   // a LIST is comma-separated items (date:2012-2014,2017). Bare lists work without the prefix.
   const YR = "(?:19|20)\\d{2}";
@@ -151,12 +152,19 @@ function query(q, id, opts = {}) {
     .replace(new RegExp(`(?:^|\\s)(?:date|on|year):(${LIST})(?=\\s|$)`, "g"), (m, l) => { pushDates(l); return " "; })
     .replace(new RegExp(`(^|\\s)(${LIST})(?=\\s|$)`, "g"), (m, sp, l) => { pushDates(l); return sp; })
     .replace(/(^|\s)-([a-z0-9']+)/g, (m, sp, w) => { notWords.push(w); return sp; });
-  let toks = rest.split(/[^a-z0-9']+/).filter((w) => w.length >= 2);
-  if (opts.exact) {                                  // GUI exact mode: the typed text must appear VERBATIM (no fuzzy)
-    const restNorm = rest.replace(/\s+/g, " ").trim();
-    if (restNorm) phrases.push(restNorm);
-    toks = [];
-  }
+  // tokenize into OR-groups: "terry OR dave linux" -> [[terry,dave],[linux]] — a group matches
+  // if ANY member (or its fuzzy alternates) hits; plain tokens are single-member groups.
+  const groups = [];
+  { let joinNext = false;
+    for (const wRaw of rest.split(/\s+/)) {
+      if (wRaw === "\u0001") { joinNext = groups.length > 0; continue; }
+      const w = wRaw.replace(/[^a-z0-9']/g, "");
+      if (w.length < 2) { joinNext = false; continue; }
+      if (joinNext) groups[groups.length - 1].push(w);
+      else groups.push([w]);
+      joinNext = false;
+    } }
+  const toks = groups.map((g) => g[0]);              // representative per group (counts/need thresholds)
   // multiple date:/bare dates UNION (any of them); since:/until: bound the range (inclusive prefixes)
   const dateOk = (d) => (!dateAny.length || dateAny.some((p) => d.startsWith(p))) &&
     (!dateFrom || d.slice(0, dateFrom.length) >= dateFrom) &&
@@ -178,10 +186,11 @@ function query(q, id, opts = {}) {
     return;
   }
 
-  // matchers per fuzzy token: exact first, then bounded-edit-distance alternates from the vocab
-  const matchers = toks.map((tok) => {
-    const m = [{ w: tok, s: 3 }];
-    for (const a of altsFor(tok)) m.push({ w: a.w, s: 2 - (a.d - 1) * 0.6 });
+  // matchers per GROUP: each member token exact first, then its bounded-edit-distance alternates
+  const matchers = groups.map((g) => {
+    const m = [];
+    for (const tok of g) m.push({ w: tok, s: 3 });
+    for (const tok of g) for (const a of altsFor(tok)) m.push({ w: a.w, s: 2 - (a.d - 1) * 0.6 });
     return m;
   });
   const terms = [...phrases];
