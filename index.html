@@ -35,37 +35,42 @@
     header p { font-size:11px; color:#dfe6ff; max-width:1000px; line-height:1.3; }
 
     /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X] */
-    .win, #frame { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue);
-                   outline:2px solid #fff; margin:3px 5px; overflow:visible; }
-    .win { padding:.7em; padding-top:12px; }
+    /* one 8px border cell per side, exactly like the OS text border; the pattern (measured 1:1
+       from the framebuffer: V double = 2W 2B 1W 2B 1W, H double = 2W 1B 1W 1B 3W; singles when
+       unfocused) is painted into a border-image at runtime. No outline halo — the cell's outer
+       2px of white IS the margin, as measured. */
+    .win, #frame { position:relative; background:#fff; color:var(--blue); border:8px solid #fff;
+                   margin:3px 5px; overflow:visible; }
+    .win { padding:.7em; padding-top:9px; }
     /* TempleOS window bar: rides ON the top border line (slight overhang only), like the real
        WinMgr's  ≡MENU————— title —————[X]≡  row. Chips paint white over the border; the
        scrolling title's own background sweeps the full width between the corners. */
     /* the border row, TempleOS-style: one text-cell-high bar CENTERED on the double lines
        (border box is 6px tall at y 0..6 -> 13px bar spans -4..9, equal overhang).
        Layout per DocBorderNew: MENU(+LX, $$BK$$) | border line | title(+CX+IV, capped) hex | [X](+RX) */
-    .wbar { position:absolute; top:-10px; left:2px; right:2px; height:13px; display:flex; align-items:stretch;
+    .wbar { position:absolute; top:-11px; left:2px; right:2px; height:11px; display:flex; align-items:stretch;
             background:transparent; z-index:2; overflow:hidden; user-select:none; }
-    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:13px; padding:0 3px;
+    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:11px; padding:0 2px;
              animation:menuBlink 1s step-start infinite; }
     @keyframes menuBlink { 50% { background:var(--blue); color:#fff; } }
     .wgap { flex:1 1 auto; }                       /* transparent — the double lines show through */
-    .wtitle { flex:0 1 auto; min-width:70px; max-width:46%; overflow:hidden; height:13px; font-size:11px;
-              line-height:13px; white-space:nowrap; background:var(--blue); color:#fff; }
+    .wtitle { flex:0 1 auto; min-width:70px; max-width:46%; overflow:hidden; height:11px; font-size:11px;
+              line-height:11px; white-space:nowrap; background:var(--blue); color:#fff; }
     .wtitle > span { display:inline-block; white-space:pre; animation:wscroll linear infinite; }
     @keyframes wscroll { to { transform:translateX(-50%); } }
-    .whex { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:13px; }
+    .whex { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:11px; }
     /* vertical doc-name list ON the left border column (DocBorderLstDraw: TextChar at x=-1):
        one 8px text cell, centered over the 6px double lines, white only where glyphs sit */
-    .wvert { position:absolute; top:8px; bottom:8px; left:-7px; width:8px; overflow:hidden; z-index:2;
-             writing-mode:vertical-rl; text-orientation:upright; background:#fff; color:var(--blue);
-             font-size:8px; line-height:8px; letter-spacing:0; text-align:start; user-select:none; }
-    .close { flex:0 0 auto; font-size:11px; line-height:13px; padding:0 2px; color:var(--blue); background:#fff; }
+    .wvert { position:absolute; top:6px; bottom:8px; left:-8px; width:8px; overflow:visible; z-index:2;
+             writing-mode:vertical-rl; text-orientation:upright; background:transparent; color:var(--blue);
+             font-size:10px; line-height:8px; letter-spacing:0; text-align:start; user-select:none; }
+    .wvert > span { background:#fff; }            /* white only where the glyphs are */
+    .close { flex:0 0 auto; font-size:11px; line-height:11px; padding:0 2px; color:var(--blue); background:#fff; }
     /* yellow corner handles on the focused window, like the real WinMgr */
     .wcorn { position:absolute; width:11px; height:11px; background:yellow; z-index:3; display:none; pointer-events:none; }
     .wcorn::after { content:""; position:absolute; inset:3px; background:var(--blue); }
     .active > .wcorn { display:block; }
-    .wcorn.tl { top:-9px; left:-9px; } .wcorn.br { bottom:-9px; right:-9px; }
+    .wcorn.tl { top:-10px; left:-10px; } .wcorn.br { bottom:-10px; right:-10px; }
     .win-ph { visibility:hidden; }   /* placeholder keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
@@ -80,10 +85,10 @@
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
 
-    #frame { padding:5px; padding-top:12px; }
+    #frame { padding:5px; padding-top:9px; }
     canvas#canvas { display:block; height:clamp(300px, min(72vh, (100vw - 690px) * 3 / 4), 600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
     /* fullscreen: black letterbox, centered 4:3 screen, window chrome hidden */
-    #frame:fullscreen { display:flex; align-items:center; justify-content:center; background:#000; border:0; outline:0; margin:0; padding:0 !important; }
+    #frame:fullscreen { display:flex; align-items:center; justify-content:center; background:#000; border:0; border-image:none; outline:0; margin:0; padding:0 !important; }
     #frame:fullscreen canvas#canvas { height:min(100vh,75vw); width:auto; max-width:100vw; }
     #frame:fullscreen .wbar, #frame:fullscreen .wvert, #frame:fullscreen .cap, #frame:fullscreen #loadui { display:none; }
     #frame::backdrop { background:#000; }
@@ -92,7 +97,7 @@
     #frame:-webkit-full-screen .wbar, #frame:-webkit-full-screen .wvert, #frame:-webkit-full-screen .cap { display:none; }
     /* faux fullscreen — iPhone Safari has no element-fullscreen API; pin the frame over the viewport */
     body.fakefs { overflow:hidden; }
-    body.fakefs #frame { position:fixed; inset:0; z-index:500; margin:0; padding:0 !important; border:0; outline:0; background:#000;
+    body.fakefs #frame { position:fixed; inset:0; z-index:500; margin:0; padding:0 !important; border:0; border-image:none; outline:0; background:#000;
                          display:flex; align-items:center; justify-content:center; }
     body.fakefs #frame .wbar, body.fakefs #frame .wvert, body.fakefs #frame .cap, body.fakefs #loadui { display:none; }
     body.fakefs canvas#canvas { height:min(100dvh,75vw); width:auto; max-width:100vw; }
@@ -103,7 +108,7 @@
     #fsExit { display:none; position:absolute; top:6px; right:8px; z-index:7; width:auto; font-size:15px;
               padding:4px 9px; opacity:.88; }
     body.touch #frame.fsmode #fsExit { display:block; }   /* desktop: pointer is locked in fullscreen — a button is unreachable */
-    #loadui { position:absolute; inset:12px 5px 5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    #loadui { position:absolute; inset:9px 5px 5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
     #ldtext { font-size:17px; max-width:560px; line-height:1.5; min-height:2.4em; }
     .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#0a0a0a; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
@@ -133,7 +138,7 @@
 
     .col-right #guide { font-size:11px; }
     #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
-    .dbgw { padding:3px; padding-top:12px; }
+    .dbgw { padding:3px; padding-top:9px; }
     #dbg { height:170px; overflow:auto; background:#000; color:#7fe07f; padding:6px; margin:0;
            font-size:11px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
     #dbg .err { color:#ff8a8a; }
@@ -862,6 +867,24 @@ I64 GodDoodleGen(I64 strokes)
           e.preventDefault();
         });
       };
+      // border-image cells, painted to the EXACT framebuffer-measured patterns.
+      // focused (double): V = 2W 2B 1W 2B 1W · H = 2W 1B 1W 1B 3W; unfocused (single): centered strokes.
+      { const mk = (focused) => {
+          const c = document.createElement("canvas"); c.width = c.height = 24;
+          const g = c.getContext("2d");
+          g.fillStyle = "#fff"; g.fillRect(0, 0, 24, 24);
+          g.fillStyle = "#0000A8";
+          const hRows = focused ? [2, 4] : [3];           // top edge stroke rows (out -> in)
+          const vCols = focused ? [[2, 2], [5, 2]] : [[3, 2]];   // [start,width] from outside
+          for (const r of hRows) { g.fillRect(0, r, 24, 1); g.fillRect(0, 23 - r, 24, 1); }
+          for (const [s, ww] of vCols) { g.fillRect(s, 0, ww, 24); g.fillRect(24 - s - ww, 0, ww, 24); }
+          return c.toDataURL();
+        };
+        const st = document.createElement("style");
+        st.textContent = `.win, #frame { border-image:url("${mk(0)}") 8 fill / 8px repeat; }
+.win.active, #frame.active { border-image:url("${mk(1)}") 8 fill / 8px repeat; }`;
+        document.head.appendChild(st);
+      }
       const setActive = (w) => { for (const a of document.querySelectorAll(".active")) a.classList.remove("active"); w.classList.add("active"); };
       const wins = [...document.querySelectorAll("[data-title]")];
       for (const w of wins) {
@@ -883,7 +906,8 @@ I64 GodDoodleGen(I64 strokes)
         if (x) bar.appendChild(x);
         if (x && w.id !== "frame" && !w.closest(".overlay")) x.addEventListener("click", () => closeWin(w));
         const v = document.createElement("span"); v.className = "wvert";
-        v.textContent = w.dataset.title.split("·")[0].trim();
+        const vs = document.createElement("span"); vs.textContent = w.dataset.title.split("·")[0].trim();
+        v.appendChild(vs);
         for (const c of ["tl", "br"]) { const d = document.createElement("div"); d.className = "wcorn " + c; w.appendChild(d); }
         w.prepend(v); w.prepend(bar);
         w._title = w.dataset.title; w.removeAttribute("data-title");
