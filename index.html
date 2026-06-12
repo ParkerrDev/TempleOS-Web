@@ -225,12 +225,10 @@
     .ts-line { background:#fff; color:#16163a; font-size:16px; line-height:1.35; padding:2px 8px; word-break:break-word; }
     .ts-line .ts-ts { color:var(--red); text-decoration:underline; margin-right:6px; }
     .ts-line .ts-ts:hover { color:#fff; background:var(--red); }
-    .ts-vid { background:#000; border:2px solid #fff; margin-top:5px; }
-    .ts-trh + .ts-vid { position:sticky; top:30px; z-index:1; margin-top:0; }   /* transcript view: video stays pinned while the text scrolls; timestamps seek it */
-    .ts-vid video { display:block; width:100%; max-height:380px; background:#000; }
-    .ts-vbar { display:flex; gap:14px; align-items:center; padding:3px 8px; background:#000; }
-    .ts-vbar a, .ts-vbar button { color:yellow; background:none; border:0; outline:0; font-family:inherit; font-size:16px; padding:0; text-decoration:underline; }
-    .ts-vbar a:hover, .ts-vbar button:hover { color:#fff; }
+    /* floating video windows (▶ in Terry Search): real TempleOS chrome via dress(); many at once */
+    .vidwin { padding:6px; }
+    .vidwin video { display:block; width:100%; max-height:62vh; background:#000; }
+    .vidwin .ts-verr { background:#000; }
     .ts-verr { color:#fff; padding:12px; font-size:16px; line-height:1.4; }
     .ts-verr a { color:yellow; }
     #tsFoot { flex:0 0 auto; color:var(--blue); font-size:16px; padding:1px 2px 0; }
@@ -988,6 +986,8 @@ I64 GodDoodleGen(I64 strokes)
       $("godClose").addEventListener("click", close);
     }
 
+    let winChrome = null;   // { dress, sizeMarquee, setActive } — assigned by the window-chrome block below
+
     // ---- Terry Search: fuzzy search over every transcribed video (static site — the shards are
     //      prebuilt by build-transcripts.mjs; transearch.js scores them in a worker). Each hit
     //      links to its source video on archive.org seeked to the hit's timestamp, and everything
@@ -1009,17 +1009,20 @@ I64 GodDoodleGen(I64 strokes)
       const url = (h, sec) => h.p
         ? ARCH + h.f.split("/").map(encodeURIComponent).join("/").replace(/%2B/g, "%252B").replace(/%20/g, "+") + (sec != null ? "?start=" + Math.max(0, sec - 2) : "")
         : new URL("player.html?f=" + encodeURIComponent(h.f) + (sec ? "&t=" + Math.max(0, sec - 2) : "") + "&n=" + encodeURIComponent(h.t || ""), location.href).href;
-      // ---- INLINE player: stream the original right inside the overlay (no isolation on this
-      //      site, so cross-origin <video> from archive.org's download nodes just works). One
-      //      player at a time; .mkv plays in Chromium-family; undecodable formats fall back. ----
+      // ---- VIDEO WINDOWS: each ▶ opens the video in its own draggable TempleOS window (real
+      //      chrome via winChrome.dress); any number can play at once. They stack in their own
+      //      z tier ABOVE the search overlay, persist after it closes, and [X] destroys them.
+      //      Streams the original from archive.org (no isolation on this site, so cross-origin
+      //      <video> just works; .mkv plays in Chromium-family; undecodable formats fall back). ----
       const DLBASE = "https://archive.org/download/TerryADavis_TempleOS_Archive/";
       const dl = (h, sec) => DLBASE + h.f.split("/").map(encodeURIComponent).join("/") + (sec ? "#t=" + Math.max(0, sec - 2) : "");
-      let curVid = null;
-      const closeVid = () => { if (!curVid) return; const v = curVid.querySelector("video");
-        if (v) { v.pause(); v.removeAttribute("src"); v.load(); } curVid.remove(); curVid = null; };
-      const openVidAfter = (el, h, sec) => {
-        closeVid();
-        const d = document.createElement("div"); d.className = "ts-vid";
+      let vidZ = 1200, vidN = 0;
+      const vidWins = new Set();
+      const openVideoWindow = (h, sec) => {
+        const w = document.createElement("div");
+        w.className = "win vidwin";
+        w.dataset.title = `${h.t} · ${h.d}`;
+        const x = document.createElement("span"); x.className = "close"; x.textContent = "[X]";
         const v = document.createElement("video");
         v.controls = true; v.autoplay = true; v.playsInline = true; v.preload = "metadata";
         v.src = dl(h, sec);
@@ -1033,14 +1036,30 @@ I64 GodDoodleGen(I64 strokes)
             `<a href="${dl(h)}" download>download</a> and jump to ${hms(sec || 0)} in VLC/mpv.`;
           v.replaceWith(er);
         });
-        const bar = document.createElement("div"); bar.className = "ts-vbar";
-        const a = document.createElement("a"); a.href = url(h, sec); a.target = "_blank"; a.rel = "noopener";
-        a.textContent = h.p ? "open on archive.org" : "open in the mini-player";
-        const x = document.createElement("button"); x.textContent = "✕ close";
-        x.addEventListener("click", closeVid);
-        bar.append(a, x); d.append(v, bar);
-        el.after(d); curVid = d;
-        return v;
+        w.append(x, v);
+        document.body.appendChild(w);
+        const n = vidN++ % 7;                                  // cascade new windows
+        w.dataset.floating = "1";
+        w.style.position = "fixed"; w.style.zIndex = ++vidZ;
+        w.style.width = "min(560px, 92vw)";
+        w.style.left = Math.max(8, innerWidth / 2 - 280 + n * 30) + "px";
+        w.style.top = (84 + n * 28) + "px";
+        w._tsF = h.f; w._tsVideo = v;
+        vidWins.add(w);
+        const destroy = () => { v.pause(); v.removeAttribute("src"); v.load(); w.remove(); vidWins.delete(w); };
+        winChrome.dress(w, { onClose: destroy, raise: () => { w.style.zIndex = ++vidZ; } });
+        winChrome.sizeMarquee(w); winChrome.setActive(w);
+        return w;
+      };
+      // a transcript [h:mm:ss] click seeks an open window of that same video (raising it)
+      const seekOpenWindow = (f, sec) => {
+        for (const w of vidWins) if (w._tsF === f && w.isConnected) {
+          const v = w._tsVideo; if (!v || !v.src) continue;
+          v.currentTime = Math.max(0, sec - 2); v.play().catch(() => {});
+          w.style.zIndex = ++vidZ; winChrome.setActive(w);
+          return true;
+        }
+        return false;
       };
       // highlight matched terms (longest first; sentinel chars so replacements can't corrupt the HTML)
       const hi = (text, terms) => { let h = esc(text);
@@ -1057,34 +1076,33 @@ I64 GodDoodleGen(I64 strokes)
           setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 900); } };
       const hitText = (h) => `“${h.text}”\n— Terry A. Davis, ${h.t} (${h.d}), at ${hms(h.sec)}\n${url(h, h.sec)}`;
       const render = (m) => {
-        closeVid();
         lastHits = m.hits; lastTerms = m.terms || []; lastTotal = m.total || 0;
         out.innerHTML = m.hits.map((h, i) =>
-          `<div class="ts-hit">` +
+          `<div class="ts-hit" data-i="${i}">` +
             `<div class="ts-row"><a class="ts-t" href="${url(h, h.sec)}" target="_blank" rel="noopener" title="${h.p ? `watch on archive.org at ${hms(h.sec)}` : `archive.org never web-encoded this original — plays in our mini-player at ${hms(h.sec)}`}">${esc(h.t)}</a>` +
             `<span class="ts-m">${esc(h.d)} · ▶ ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
-            `<span class="ts-act"><button class="ts-pl" data-i="${i}" title="play right here, from ${hms(h.sec)}">▶</button>` +
-            `<button class="ts-cp" data-i="${i}" title="copy this passage (with video + timestamp + link)">⧉</button>` +
-            `<button class="ts-tr" data-i="${i}" title="full transcript of this video">≡</button></span></div>` +
-            `<a class="ts-x" href="${url(h, h.sec)}" target="_blank" rel="noopener">${hi(h.text, m.terms)}</a></div>`).join("") ||
+            `<span class="ts-act"><button class="ts-pl" data-i="${i}" title="play in a window, from ${hms(h.sec)}">▶</button>` +
+            `<button class="ts-cp" data-i="${i}" title="copy this passage (with video + timestamp + link)">⧉</button></span></div>` +
+            `<span class="ts-x" title="click to expand the full transcript">${hi(h.text, m.terms)}</span></div>`).join("") ||
           (q.value.trim() ? `<div class="ts-none">no matches — typos are OK, but he may never have said it</div>` : "");
-        if (m.hits.length) st.textContent = `${m.total} matching passages — top ${m.hits.length} shown · click to watch, ⧉ copies, ≡ full transcript`;
+        if (m.hits.length) st.textContent = `${m.total} matching passages — top ${m.hits.length} shown · ▶ plays in a window, ⧉ copies, click a card for the full transcript`;
       };
       // full-transcript view for one video: back / copy-all / download .txt / watch, then every passage
       const transcriptText = (v) => `${v.t} (${v.d}) — Terry A. Davis\n${url(v)}\n\n` +
         v.s.map(([sec, text]) => `[${hms(sec)}] ${text}`).join("\n");
+      let curTrF = null;                                     // file path shown in the transcript view (timestamp clicks seek its window)
       const renderTranscript = (v) => {
-        closeVid();
+        curTrF = v.f;
         st.textContent = `${v.t} — full transcript, ${v.s.length} passages${v.n ? ", " + hms(v.n) : ""}`;
         out.innerHTML = `<div class="ts-trh"><button id="tsBack">← results</button>` +
-          `<button id="tsPlHere" title="play this video here — the [h:mm:ss] timestamps below seek it">▶ Play</button>` +
+          `<button id="tsPlHere" title="play this video in a window — the [h:mm:ss] timestamps below seek it">▶ Play</button>` +
           `<button id="tsCpTr">⧉ Copy transcript</button><button id="tsDlTr">↓ .txt</button>` +
           `<a href="${url(v, 0)}" target="_blank" rel="noopener">${v.p ? "watch on archive.org" : "open in the mini-player"}</a></div>` +
           v.s.map(([sec, text]) => `<div class="ts-line"><a class="ts-ts" data-s="${sec}" href="${url(v, sec)}" target="_blank" rel="noopener">[${hms(sec)}]</a>${esc(text)}</div>`).join("");
         out.scrollTop = 0;
-        $("tsPlHere").addEventListener("click", () => { const trh = out.querySelector(".ts-trh");
-          if (curVid && curVid.previousElementSibling === trh) closeVid(); else openVidAfter(trh, v, v.s[0] ? v.s[0][0] : 0); });
-        $("tsBack").addEventListener("click", () => { render({ hits: lastHits, terms: lastTerms, total: lastTotal }); });
+        $("tsPlHere").addEventListener("click", () => {
+          if (!seekOpenWindow(v.f, v.s[0] ? v.s[0][0] : 0)) openVideoWindow(v, v.s[0] ? v.s[0][0] : 0); });
+        $("tsBack").addEventListener("click", () => { curTrF = null; render({ hits: lastHits, terms: lastTerms, total: lastTotal }); });
         $("tsCpTr").addEventListener("click", (e) => copy(transcriptText(v), e.target));
         $("tsDlTr").addEventListener("click", () => {
           const a = document.createElement("a");
@@ -1092,18 +1110,19 @@ I64 GodDoodleGen(I64 strokes)
           a.download = (`${v.d} - ${v.t}`).replace(/[\\/:*?"<>|]/g, "_").slice(0, 120) + ".txt";
           a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); });
       };
+      const expand = (h) => { if (h && w) { vid++; w.postMessage({ type: "video", f: h.f, id: vid }); } };
       out.addEventListener("click", (e) => {
         const pl = e.target.closest(".ts-pl");
-        if (pl) { const h = lastHits[+pl.dataset.i], card = pl.closest(".ts-hit");
-          if (h) { if (curVid && curVid.previousElementSibling === card) closeVid(); else openVidAfter(card, h, h.sec); } return; }
+        if (pl) { const h = lastHits[+pl.dataset.i]; if (h) openVideoWindow(h, h.sec); return; }
         const cp = e.target.closest(".ts-cp");
         if (cp) { const h = lastHits[+cp.dataset.i]; if (h) copy(hitText(h), cp); return; }
-        const tr = e.target.closest(".ts-tr");
-        if (tr) { const h = lastHits[+tr.dataset.i]; if (h && w) { vid++; w.postMessage({ type: "video", f: h.f, id: vid }); } return; }
         const ts = e.target.closest(".ts-ts");
-        if (ts && curVid) {                                  // transcript timestamps SEEK the open inline player
-          const v = curVid.querySelector("video");
-          if (v && v.src) { e.preventDefault(); v.currentTime = Math.max(0, +ts.dataset.s - 2); v.play().catch(() => {}); } } });
+        if (ts) {                                            // transcript timestamps SEEK an open window of this video
+          if (seekOpenWindow(curTrF, +ts.dataset.s)) e.preventDefault();
+          return; }
+        if (e.target.closest("a, button")) return;           // the red title link (and any other control) keeps its own behavior
+        const card = e.target.closest(".ts-hit");
+        if (card) expand(lastHits[+card.dataset.i]); });     // clicking the card expands the full transcript
       $("tsCopyAll").addEventListener("click", (e) => { if (!lastHits.length) return;
         copy(`Terry Search: "${q.value.trim()}" — top ${lastHits.length} of ${lastTotal} matching passages\n\n` +
           lastHits.map(hitText).join("\n\n"), e.target); });
@@ -1130,9 +1149,10 @@ I64 GodDoodleGen(I64 strokes)
     //      raise on press, stay partly on-screen, and leave a placeholder so the layout holds. ----
     { let zTop = 60;
       const closeWin = (w) => { w.style.display = "none"; if (w._ph) { w._ph.remove(); w._ph = null; } };
-      const makeDraggable = (w, handle) => {
+      const makeDraggable = (w, handle, raiseFn) => {
+        const raise = raiseFn || (() => { w.style.zIndex = ++zTop; });
         handle.style.touchAction = "none";
-        w.addEventListener("pointerdown", () => { if (w.dataset.floating) w.style.zIndex = ++zTop; }, true);
+        w.addEventListener("pointerdown", () => { if (w.dataset.floating) raise(); }, true);
         handle.addEventListener("pointerdown", (e) => {
           if (e.target.closest(".close,button,select,a,input,textarea")) return;
           const r = w.getBoundingClientRect();
@@ -1148,7 +1168,7 @@ I64 GodDoodleGen(I64 strokes)
             w.style.left = r.left + "px"; w.style.top = r.top + "px";
             w.style.width = r.width + "px";   // height stays auto so content can grow (e.g. Menu's reopen buttons)
           }
-          w.style.zIndex = ++zTop;
+          raise();
           const sx = e.clientX - parseFloat(w.style.left), sy = e.clientY - parseFloat(w.style.top);
           const move = (ev) => {
             w.style.left = Math.max(40 - w.offsetWidth, Math.min(innerWidth - 40, ev.clientX - sx)) + "px";
@@ -1199,8 +1219,11 @@ I64 GodDoodleGen(I64 strokes)
         document.head.appendChild(st);
       }
       const setActive = (w) => { for (const a of document.querySelectorAll(".active")) a.classList.remove("active"); w.classList.add("active"); };
-      const wins = [...document.querySelectorAll("[data-title]")];
-      for (const w of wins) {
+      // dress(): give ANY element the full TempleOS window chrome (bar, marquee, vertical title,
+      // corner handles, dragging). opts.menuReopen = the static-desktop close behavior (hide +
+      // reopen button in Menu); opts.onClose = custom [X] handler (e.g. video windows DESTROY);
+      // opts.raise = custom z-raise (video windows stack in their own tier above the overlay).
+      const dress = (w, opts = {}) => {
         const bar = document.createElement("div"); bar.className = "wbar";
         const mn = document.createElement("span"); mn.className = "wmenu"; mn.textContent = "MENU";
         const gap = document.createElement("span"); gap.className = "wgap";
@@ -1210,7 +1233,8 @@ I64 GodDoodleGen(I64 strokes)
         const gap2 = document.createElement("span"); gap2.className = "wgap"; bar.appendChild(gap2);
         let x = w.querySelector(":scope > .close");
         if (x) bar.appendChild(x);
-        if (x && w.id !== "frame" && !w.closest(".overlay") && !w.classList.contains("toolbar")) {
+        if (x && opts.onClose) x.addEventListener("click", opts.onClose);
+        else if (x && opts.menuReopen && w.id !== "frame" && !w.closest(".overlay") && !w.classList.contains("toolbar")) {
           // closing reveals a reopen button in the Menu window; reopening hides it again
           const rb = document.createElement("button");
           rb.style.display = "none";
@@ -1226,18 +1250,17 @@ I64 GodDoodleGen(I64 strokes)
         w.prepend(v); w.prepend(bar);
         w._title = w.dataset.title; w.removeAttribute("data-title");
         w.addEventListener("pointerdown", () => setActive(w), true);
-        makeDraggable(w, bar);
-      }
-      setActive($("frame"));
+        makeDraggable(w, bar, opts.raise);
+        return w;
+      };
       // cycling border titles, DocBorderNew-style: "title..." repeated with NO whitespace, scrolled
-      // seamlessly (content = 2x a repeated unit, animate to -50%). Sized after layout.
-      requestAnimationFrame(() => {
+      // seamlessly (content = 2x a repeated unit, animate to -50%). Size AFTER layout.
+      const sizeMarquee = (w) => {
         const meas = document.createElement("span");
         meas.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-size:12px;font-family:'TempleOS',monospace";
         document.body.appendChild(meas);
-        for (const w of wins) {
-          const ti = w.querySelector(".wtitle"), ts = ti && ti.firstChild;
-          if (!ts) continue;
+        const ti = w.querySelector(".wtitle"), ts = ti && ti.firstChild;
+        if (ts) {
           const unit = w._title + "...";
           meas.textContent = unit;
           const upx = Math.max(20, meas.getBoundingClientRect().width);
@@ -1246,7 +1269,12 @@ I64 GodDoodleGen(I64 strokes)
           ts.style.animationDuration = ((upx * n) / 64).toFixed(2) + "s";   // DOC_SCROLL_SPEED(8) * FONT_WIDTH(8) = 64 px/s
         }
         meas.remove();
-      });
+      };
+      const wins = [...document.querySelectorAll("[data-title]")];
+      for (const w of wins) dress(w, { menuReopen: true });
+      setActive($("frame"));
+      requestAnimationFrame(() => { for (const w of wins) sizeMarquee(w); });
+      winChrome = { dress, sizeMarquee, setActive };
     }
 
     // ---- Pause / Play ----
