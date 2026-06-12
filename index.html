@@ -498,7 +498,7 @@
 
   <script type="module">
     import { createHost } from "./holyc-wasm/src/runtime/host.js";
-    import { loadDisk } from "./qcow2.js";
+    import { loadDisk } from "./hemu-wasm/qcow2.js";
 
     const $ = (id) => document.getElementById(id);
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
@@ -876,7 +876,7 @@
         for (;;) { const { done, value } = await rd.read(); if (done) break; snap.set(value, off); off += value.length; } }
       setLoad("starting hemu (HolyC → WASM x86-64 core)…", 88);
       const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm", { cache: "no-cache" })).arrayBuffer());
-      const { makeDisk, fat32Upload, fat32List } = await import("./qcow2.js");
+      const { makeDisk, fat32Upload, fat32List } = await import("./hemu-wasm/qcow2.js");
       let disk = null, gBaseI = 0;
       if (window.__importDisk) { try { disk = makeDisk(new Uint8Array(window.__importDisk)); } catch {} window.__importDisk = null; }
       else loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => { disk = d; dbg("C: disk image ready"); }).catch(() => disk = null);
@@ -1611,7 +1611,7 @@ I64 GodDoodleGen(I64 strokes)
         if (window.__winChrome) window.__winChrome.raise(ov);
         if (!loaded) {
           loaded = true;
-          import("./native/app.js")
+          import("./holyc-wasm/native/app.js")
             .then(() => { if (window.__holycEditor) window.__holycEditor.run(); })
             .catch((e) => { const s = document.getElementById("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); });
         }

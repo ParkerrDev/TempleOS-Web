@@ -102,13 +102,15 @@ if (linkAudit.bad.length) throw new Error("malformed links");
   const target = mini || "http://localhost:" + (process.env.PORT || 8099) + "/player.html?f=" +
     encodeURIComponent("videos/2007/2007-09-30T07:00:00+00:00 - Songs by God #1 (9i0pMO697Zk).mkv") + "&t=30&n=test";
   console.log("\n== mini-player == " + decodeURIComponent(target).slice(0, 130));
-  await pp.goto(target, { waitUntil: "domcontentloaded", timeout: 30000 });
   let state = null;
-  for (let i = 0; i < 45; i++) {
-    state = await pp.evaluate(() => { const v = document.querySelector("video");
-      return { ready: v ? v.readyState : -1, t: v ? Math.round(v.currentTime) : -1, err: !!(v && v.error), msg: document.getElementById("msg").style.display === "block" }; });
-    if (state.ready >= 2 || state.err || state.msg) break;
-    await pp.waitForTimeout(1000);
+  for (let attempt = 0; attempt < 2 && !(state && state.ready >= 2); attempt++) {   // archive.org drops a stream now and then
+    await pp.goto(target, { waitUntil: "domcontentloaded", timeout: 30000 });
+    for (let i = 0; i < 45; i++) {
+      state = await pp.evaluate(() => { const v = document.querySelector("video");
+        return { ready: v ? v.readyState : -1, t: v ? Math.round(v.currentTime) : -1, err: !!(v && v.error), msg: document.getElementById("msg").style.display === "block" }; });
+      if (state.ready >= 2 || state.err || state.msg) break;
+      await pp.waitForTimeout(1000);
+    }
   }
   console.log("  video state:", JSON.stringify(state));
   if (!(state.ready >= 2)) throw new Error("mini-player did not reach playable state: " + JSON.stringify(state));

@@ -33,14 +33,12 @@ const MIME = {
 };
 
 createServer(async (req, res) => {
-  // Cross-origin isolation is OFF by default — parity with the deployed _headers (the site
-  // no longer uses SharedArrayBuffer; inline archive.org video streaming needs no COEP).
-  // COI=1 re-enables it for local SMP/shared-memory experiments.
-  if (process.env.COI) {
-    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-    res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
-  }
+  // Parity with the deployed _headers: COEP credentialless = SharedArrayBuffer for the
+  // editor AND cross-origin archive.org media for Terry Search. COI=1 switches to the
+  // strict require-corp mode (for SMP/shared-memory experiments).
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", process.env.COI ? "require-corp" : "credentialless");
+  if (process.env.COI) res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
 
   let path = decodeURIComponent((req.url || "/").split("?")[0]);
   if (path === "/") path = "/index.html";
