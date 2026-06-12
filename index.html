@@ -1067,10 +1067,12 @@ I64 GodDoodleGen(I64 strokes)
         v.addEventListener("loadedmetadata", () => { if (t0 && Math.abs(v.currentTime - t0) > 2) { try { v.currentTime = t0; } catch {} } });
         v.addEventListener("error", () => {
           const ext = (h.f.split(".").pop() || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+          const purl = new URL("player.html?f=" + encodeURIComponent(h.f) + (sec ? "&t=" + Math.max(0, sec - 2) : "") +
+            "&n=" + encodeURIComponent(h.t || "") + "&conv=1", location.href).href;
           const er = document.createElement("div"); er.className = "ts-verr";
           er.innerHTML = `this browser can't decode the .${ext} original (archive.org never web-encoded it) — ` +
-            `<a href="${url(h, sec)}" target="_blank" rel="noopener">open it</a> or ` +
-            `<a href="${dl(h)}" download>download</a> and jump to ${hms(sec || 0)} in VLC/mpv.`;
+            `<a href="${purl}" target="_blank" rel="noopener">convert &amp; play it here</a> (in-browser ffmpeg) or ` +
+            `<a href="${dl(h)}" download>download</a> for VLC/mpv (moment: ${hms(sec || 0)}).`;
           v.replaceWith(er);
         });
         w.append(x, v);
