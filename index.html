@@ -36,7 +36,7 @@
 
     /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X] */
     .win, #frame { position:relative; background:#fff; color:var(--blue); border:6px double var(--blue);
-                   outline:4px solid #fff; margin:3px 5px; overflow:visible; }
+                   outline:2px solid #fff; margin:3px 5px; overflow:visible; }
     .win { padding:.7em; padding-top:12px; }
     /* TempleOS window bar: rides ON the top border line (slight overhang only), like the real
        WinMgr's  ≡MENU————— title —————[X]≡  row. Chips paint white over the border; the
@@ -44,7 +44,7 @@
     /* the border row, TempleOS-style: one text-cell-high bar CENTERED on the double lines
        (border box is 6px tall at y 0..6 -> 13px bar spans -4..9, equal overhang).
        Layout per DocBorderNew: MENU(+LX, $$BK$$) | border line | title(+CX+IV, capped) hex | [X](+RX) */
-    .wbar { position:absolute; top:-7px; left:2px; right:2px; height:13px; display:flex; align-items:stretch;
+    .wbar { position:absolute; top:-10px; left:2px; right:2px; height:13px; display:flex; align-items:stretch;
             background:transparent; z-index:2; overflow:hidden; user-select:none; }
     .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:13px; padding:0 3px;
              animation:menuBlink 1s step-start infinite; }
@@ -57,7 +57,7 @@
     .whex { flex:0 0 auto; color:var(--blue); background:#fff; font-size:11px; line-height:13px; }
     /* vertical doc-name list ON the left border column (DocBorderLstDraw: TextChar at x=-1):
        one 8px text cell, centered over the 6px double lines, white only where glyphs sit */
-    .wvert { position:absolute; top:12px; bottom:8px; left:-1px; width:8px; overflow:hidden; z-index:2;
+    .wvert { position:absolute; top:8px; bottom:8px; left:-7px; width:8px; overflow:hidden; z-index:2;
              writing-mode:vertical-rl; text-orientation:upright; background:#fff; color:var(--blue);
              font-size:8px; line-height:8px; letter-spacing:0; text-align:start; user-select:none; }
     .close { flex:0 0 auto; font-size:11px; line-height:13px; padding:0 2px; color:var(--blue); background:#fff; }
@@ -65,7 +65,7 @@
     .wcorn { position:absolute; width:11px; height:11px; background:yellow; z-index:3; display:none; pointer-events:none; }
     .wcorn::after { content:""; position:absolute; inset:3px; background:var(--blue); }
     .active > .wcorn { display:block; }
-    .wcorn.tl { top:-7px; left:-7px; } .wcorn.br { bottom:-7px; right:-7px; }
+    .wcorn.tl { top:-9px; left:-9px; } .wcorn.br { bottom:-9px; right:-9px; }
     .win-ph { visibility:hidden; }   /* placeholder keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
