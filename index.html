@@ -11,16 +11,17 @@
     @font-face { font-family:'TempleOS'; src:url('fonts/templeos_font.woff') format('woff'), url('fonts/templeos_font.ttf') format('truetype'); font-weight:normal; font-style:normal; }
     @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); font-weight:normal; font-style:normal; }
     :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; --zi:1; }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'TempleOS','dos_vga',"Courier New",monospace; cursor:url('assets/cursor.png'),auto;
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga','TempleOS',"Courier New",monospace; cursor:url('assets/cursor.png'),auto;
         -webkit-font-smoothing:none; font-smooth:never; text-rendering:optimizeSpeed; }
+    .wbar, .wbar *, .wvert, .wvert * { font-family:'TempleOS','dos_vga',monospace; }
     html { overflow-y:auto; }
-    body { background:var(--blue); color:#fff; font-size:8px; line-height:1.4; min-height:100vh; display:flex; flex-direction:column; }
+    body { background:var(--blue); color:#fff; font-size:16px; line-height:1.25; min-height:100vh; display:flex; flex-direction:column; }
     ::selection { background:#000; color:yellow; }
     a { color:var(--gold); }
 
     /* live top status bar (always visible — survives fullscreen games, unlike the in-OS wallpaper bar) */
     #topbar { display:flex; line-height:1; justify-content:space-between; align-items:center; gap:10px;
-              background:var(--blue); color:#fff; padding:3px 8px 2px; font-size:8px; }
+              background:var(--blue); color:#fff; padding:2px 8px 1px; font-size:16px; }
     #topbar .status { display:flex; flex-wrap:wrap; }
     #topbar .status > span { white-space:nowrap; }
     #topbar .status > span:not(:last-child) { margin-right:16px; }
@@ -32,8 +33,8 @@
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
                    background:url('assets/TempleOS.svg') center/contain no-repeat #55FFFF; }
-    header h1 { font-size:16px; font-weight:normal; color:#fff; }
-    header p { font-size:8px; color:#dfe6ff; max-width:1000px; line-height:1.5; }
+    header h1 { font-size:16px; font-weight:normal; color:#fff; font-family:'TempleOS','dos_vga',monospace; }
+    header p { font-size:16px; color:#dfe6ff; max-width:1000px; line-height:1.25; }
 
     /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X] */
     /* one 8px border cell per side, exactly like the OS text border; the pattern (measured 1:1
@@ -80,8 +81,8 @@
     .col-right { display:flex; flex-direction:column; gap:16px; width:268px; flex:0 0 auto; }
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
-    .toolbar button { font-size:8px; padding:5px 4px; }
-    button { font-family:'TempleOS','dos_vga',monospace; font-size:8px; color:#000; background:#fff;
+    .toolbar button { font-size:16px; padding:4px 6px; }
+    button { font-family:'dos_vga','TempleOS',monospace; font-size:16px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
@@ -118,7 +119,7 @@
 
     /* on-screen function/modifier keys — works on desktop and mobile; modifiers latch (✱) */
     #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; padding:4px 2px 0; width:0; min-width:100%; }  /* preferred width 0: the FRAME sizes the column, keys wrap to it */
-    #keysbar button { width:auto; font-size:8px; padding:3px 4px; text-align:center; }
+    #keysbar button { width:auto; font-size:16px; padding:2px 5px; text-align:center; }
     #keysbar button.mod.on { color:#fff; background:var(--red); border-color:var(--red); }
     #frame .cap { text-align:center; font-size:13px; color:var(--blue); padding-top:3px; }
 
@@ -137,17 +138,17 @@
     #tKb { right:18px; bottom:92px; width:54px; height:42px; border-radius:8px; font-size:18px; }
     #mobInput { position:fixed; left:-30px; bottom:0; width:20px; height:20px; opacity:.01; font-size:16px; }
 
-    .col-right #guide { font-size:8px; }
+    .col-right #guide { font-size:16px; }
     #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
     .dbgw { padding:4px; }
     #dbg { height:170px; overflow:auto; background:#000; color:#7fe07f; padding:6px; margin:0;
-           font-size:8px; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+           font-size:16px; line-height:1.25; white-space:pre-wrap; word-break:break-word; }
     #dbg .err { color:#ff8a8a; }
-    .dbgnote { font-size:8px; padding:4px 2px 1px; color:var(--blue); }
+    .dbgnote { font-size:16px; padding:6px 2px 2px; color:var(--blue); }
     .terrywin { padding:6px; text-align:center; }
     .terrywin img { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
-    footer { text-align:center; padding:4px; font-size:8px; color:#cfe; opacity:.85; }
+    footer { text-align:center; padding:4px; font-size:16px; color:#cfe; opacity:.85; }
     footer a { color:var(--gold); }
 
     /* ---- overlays (HolyC editor / God Words): a window floating over the desktop ---- */
@@ -159,13 +160,13 @@
     .ed-bar { display:flex; gap:7px; align-items:center; flex:0 0 auto; }
     #editorWin .ed-bar button { width:auto; text-align:center; }
     #editorWin select { width:auto; max-width:300px; font-size:16px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:4px 6px; }
-    #editorWin #status { margin-left:auto; color:var(--blue); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:42%; }
+    #editorWin #status { margin-left:auto; color:var(--blue); font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:42%; }
     .ed-body { flex:1 1 auto; min-height:0; display:flex; gap:6px; }
     .ed-pane { flex:1 1 0; min-width:0; display:flex; flex-direction:column; border:3px double var(--blue); background:#fff; }
-    .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:13px; letter-spacing:.08em; }
+    .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:16px; letter-spacing:0; }
     .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }
     #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;
-        font-family:'TempleOS','dos_vga',monospace; font-size:15px; line-height:1.35; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
+        font-family:'dos_vga','TempleOS',monospace; font-size:16px; line-height:1.25; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
     #editorHL { z-index:0; pointer-events:none; overflow:hidden; color:#16163a; background:transparent; }
     #editor { z-index:1; resize:none; outline:none; color:transparent; background:transparent; caret-color:#16163a; }
     #editor::selection { background:rgba(110,160,255,.4); }
@@ -176,16 +177,16 @@
     #editorHL .tco{ color:#b35a00; }  #editorHL .tn{ color:#b35a00; }  #editorHL .tp{ color:#0a6a8a; }
     .ed-screenwrap { flex:0 0 auto; background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
     #editorWin #screen { display:block; height:min(44vh,430px); width:auto; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; background:#000; }
-    #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:13px; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
-    .ed-foot { flex:0 0 auto; color:var(--blue); font-size:13px; padding:1px 2px 0; }
+    #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:16px; line-height:1.25; white-space:pre-wrap; word-break:break-word; }
+    .ed-foot { flex:0 0 auto; color:var(--blue); font-size:16px; padding:1px 2px 0; }
 
     /* God Tools window */
     #godWin { display:flex; flex-direction:column; gap:8px; width:min(680px,94vw); height:min(74vh,620px); margin:0; padding:10px; }
     #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:16px; line-height:1.6; word-break:break-word; }
     #godOut .w { color:yellow; margin-right:.55em; }
-    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:8px; line-height:1.45; white-space:pre-wrap; }
+    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:16px; line-height:1.25; white-space:pre-wrap; }
     #godOut .p .ref { color:#7fe07f; }
-    #godOut .s { display:block; color:#7fe07f; font-size:8px; margin:6px 0; }
+    #godOut .s { display:block; color:#7fe07f; font-size:16px; margin:6px 0; }
     #godOut canvas { display:block; width:320px; max-width:100%; image-rendering:pixelated; background:#fff; margin:8px 0; border:2px solid #fff; }
     #godBar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     #godBar button { width:auto; }
@@ -198,7 +199,7 @@
     body.stack #frame { margin:3px auto; max-width:calc(98vw * var(--zi)); }
     body.stack canvas#canvas { width:min(calc(100vw * var(--zi) - 58px), 640px); height:auto; }
     body.stack header { max-width:none; }
-    body.stack #topbar { font-size:8px; }
+    body.stack #topbar { font-size:16px; }
     body.stack .terrywin img { height:120px; }
     body.stack #keysbar { min-width:calc(96vw * var(--zi)); }
     body.stack .ed-body { flex-direction:column; }
@@ -232,7 +233,6 @@
     <div class="col-left">
       <div class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
-        <button id="zoomBtn" title="Integer zoom keeps the 8px grid pixel-perfect (no anti-aliasing)">🔍 Zoom: 2×</button>
         <button id="restartBtn" title="Reload the clean desktop snapshot (~4s)">↻ Restart</button>
         <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS">⛶ Fullscreen</button>
         <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed">⌨ HolyC Editor</button>
@@ -352,22 +352,14 @@
     const tbFps = $("tb-fps"), tbKey = $("tb-key");
     const setLoad = (s, pct) => { ldtext.textContent = s; if (pct != null) ldbar.style.width = pct + "%"; };
 
-    // ---- integer page zoom: the only scaling that keeps the 8px grid un-anti-aliased.
-    //      zoom multiplies viewport-unit lengths too, so vh/vw rules carry a *var(--zi) inverse. ----
-    { const saved = +localStorage.getItem("tos-zoom-v2") || 1;   // 1x default — zoom is opt-in
-      let Z = Math.max(1, Math.min(3, saved | 0));
-      const apply = () => {
-        document.documentElement.style.zoom = Z;
-        document.documentElement.style.setProperty("--zi", (1 / Z).toString());
-        document.body.classList.toggle("stack", innerWidth / Z < 980 || document.body.classList.contains("touch"));
-        const b = $("zoomBtn"); if (b) b.textContent = "🔍 Zoom: " + (Z === 3 ? "1×" : (Z + 1) + "×");
-        localStorage.setItem("tos-zoom-v2", Z);
-      };
-      $("zoomBtn").addEventListener("click", () => { Z = Z >= 3 ? 1 : Z + 1; apply(); });
+    // ---- stacked layout on narrow viewports / touch ----
+    { const apply = () => document.body.classList.toggle("stack", innerWidth < 980 || document.body.classList.contains("touch"));
       addEventListener("resize", apply);
-      window.__zoomApply = apply;
+      window.__restack = apply;
       apply();
     }
+    document.documentElement.style.zoom = "";   // clear any zoom saved by older builds
+    try { localStorage.removeItem("tos-zoom"); localStorage.removeItem("tos-zoom-v2"); } catch {}
 
     // ---- live topbar clock (the OS RTC is synced to the host clock, so this matches the OS) ----
     { const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], p2 = (n) => String(n).padStart(2, "0");
@@ -552,7 +544,7 @@
     // ---- touch controls: direct touch = absolute cursor + tap-to-click; joystick = fine relative
     //      moves; L/R = holdable mouse buttons (drags); ⌨ opens the device keyboard. ----
     if (navigator.maxTouchPoints > 0 || "ontouchstart" in window) document.body.classList.add("touch");
-    $("touchBtn").addEventListener("click", () => { document.body.classList.toggle("touch"); window.__zoomApply?.(); });
+    $("touchBtn").addEventListener("click", () => { document.body.classList.toggle("touch"); window.__restack?.(); });
     { // direct canvas touch: move cursor absolutely; quick tap = left click; long-press = right click
       let t0 = 0, moved = 0, lpTimer = 0;
       const pos = (t) => { const r = canvas.getBoundingClientRect();
