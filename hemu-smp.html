@@ -51,6 +51,7 @@ const [wasmBytes, sc, snapGz] = await Promise.all([
   fetch("./hemu-wasm/live-smp.bin.gz", { cache: "no-cache" }).then(r => r.arrayBuffer()),
 ]);
 sc.ncore = N;
+sc.game = new URLSearchParams(location.search).get("game") || "";   // ?game=Talons -> BSP auto-launches it after boot
 
 // ---- shared memory + control region; spawn one worker per core ----
 const mem = new WebAssembly.Memory({ initial: 512, maximum: 8192, shared: true });
