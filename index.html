@@ -104,15 +104,29 @@
     #frame:-webkit-full-screen .wbar, #frame:-webkit-full-screen .wvert, #frame:-webkit-full-screen .cap { display:none; }
     /* faux fullscreen — iPhone Safari has no element-fullscreen API; pin the frame over the viewport */
     body.fakefs { overflow:hidden; }
-    body.fakefs #frame { position:fixed; inset:0; z-index:500; margin:0; padding:0 !important; border:0; border-image:none; outline:0; background:#000;
+    /* z-index MUST beat any window's raised inline z-index (setActive uses zTop ≥ 1000) AND the
+       overlays (1000) — otherwise a tapped Menu/Help window pokes through the black letterbox.
+       !important is required because the raise sets an INLINE z-index on #frame. */
+    body.fakefs #frame { position:fixed; inset:0; z-index:2147483647 !important; margin:0; padding:0 !important; border:0; border-image:none; outline:0; background:#000;
                          display:flex; align-items:center; justify-content:center; }
     body.fakefs #frame .wbar, body.fakefs #frame .wvert, body.fakefs #frame .cap, body.fakefs #loadui { display:none; }
-    body.fakefs canvas#canvas { height:min(calc(100dvh * var(--zi)), calc(75vw * var(--zi))); width:auto; max-width:calc(100vw * var(--zi)); }
+    /* #frame qualifier raises specificity to TWO ids so this beats `body.stack canvas#canvas`
+       (line below, same specificity but later source) — otherwise fullscreen gets the small
+       stacked size (capped ~332px on a phone, and overflowing the screen in landscape). */
+    body.fakefs #frame canvas#canvas { height:min(calc(100dvh * var(--zi)), calc(75vw * var(--zi))); width:auto; max-width:calc(100vw * var(--zi)); }
     /* REAL fullscreen: kill the window chrome's white border-image fill — the letterbox around
        the 4:3 canvas must be plain black (fakefs below already does this) */
     #frame.fsmode { border-image:none !important; background:#000; }
+    /* mobile/touch fullscreen: pin the OS to the TOP so the on-screen keyboard (which opens over the
+       bottom) never covers the screen; the black letterbox fills the space below. Desktop stays
+       centered. (:fullscreen and :-webkit-full-screen MUST be separate rules — one unknown pseudo
+       in a selector list drops the whole rule.) */
+    body.touch #frame:fullscreen { align-items:flex-start; }
+    body.touch #frame:-webkit-full-screen { align-items:flex-start; }
+    body.touch.fakefs #frame { align-items:flex-start; }
     #fsExit { display:none; position:absolute; top:6px; right:8px; z-index:7; width:auto; font-size:15px;
-              padding:4px 9px; opacity:.88; }
+              padding:4px 9px; opacity:.92; }
+    body.touch #fsExit { font-size:18px; padding:6px 11px; opacity:1; }   /* bigger tap target on phones */
     body.touch #frame.fsmode #fsExit { display:block; }   /* touch only: desktop fullscreen confines the mouse to the OS (Esc exits) */
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
@@ -301,7 +315,10 @@
     body.stack .desktop-row { flex-direction:column; align-items:center; }
     body.stack .col-left, body.stack .col-right { width:min(calc(96vw * var(--zi)), 560px); flex-direction:column; }
     body.stack .col-center { order:-1; width:100%; }
-    body.stack #frame { margin:3px auto; max-width:calc(98vw * var(--zi)); }
+    /* :not(.fsmode) so this small-screen sizing never fights fullscreen — otherwise its margin +
+       98vw max-width clamp the fullscreen frame, leaving blue (body bg) strips at the screen edges.
+       .fsmode is set on the frame in BOTH real and faux fullscreen. */
+    body.stack #frame:not(.fsmode) { margin:3px auto; max-width:calc(98vw * var(--zi)); }
     body.stack canvas#canvas { width:min(calc(100vw * var(--zi) - 58px), 640px); height:auto; }
     body.stack header { max-width:none; }
     body.stack #topbar { font-size:16px; }
@@ -360,7 +377,7 @@
           <div id="tL" class="tbtn">L</div>
           <div id="tR" class="tbtn">R</div>
         </div>
-        <button id="fsExit" type="button" title="exit fullscreen">× exit</button>
+        <button id="fsExit" type="button" title="exit fullscreen" aria-label="exit fullscreen">[X]</button>
         <div id="loadui">
           <div id="ldtext">loading hemu…</div>
           <div class="ldbarwrap"><i id="ldbar"></i></div>
