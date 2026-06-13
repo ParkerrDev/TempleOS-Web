@@ -124,8 +124,12 @@
     body.touch #frame:fullscreen { align-items:flex-start; }
     body.touch #frame:-webkit-full-screen { align-items:flex-start; }
     body.touch.fakefs #frame { align-items:flex-start; }
-    #fsExit { display:none; position:absolute; top:var(--fsx-top, 6px); right:8px; z-index:8; width:auto; font-size:15px;
+    #fsExit { display:none; position:absolute; top:var(--fsx-top, 6px); left:8px; z-index:8; width:auto; font-size:15px;
               padding:4px 9px; opacity:.92; transition:top .18s ease; }
+    /* portrait: the OS has a black letterbox beneath it → center the [X] there, clear of the
+       right-side keyboard/mouse buttons. (Landscape has no room below the OS, so it stays top-left
+       in the side bar — set by JS via the absence of .fsx-mid.) */
+    #frame.fsx-mid #fsExit { left:50%; transform:translateX(-50%); }
     body.touch #fsExit { font-size:18px; padding:6px 11px; opacity:1; }   /* bigger tap target on phones */
     body.touch #frame.fsmode #fsExit { display:block; }   /* touch only: desktop fullscreen confines the mouse to the OS (Esc exits) */
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -672,14 +676,18 @@
       const vv = window.visualViewport;
       const layoutFs = () => {
         const onFs = document.body.classList.contains("touch") && frame.classList.contains("fsmode");
-        if (!onFs) { frame.style.removeProperty("--kbinset"); frame.style.removeProperty("--fsx-top"); return; }
+        if (!onFs) { frame.style.removeProperty("--kbinset"); frame.style.removeProperty("--fsx-top"); frame.classList.remove("fsx-mid"); return; }
         const kb = vv ? Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) : 0;   // ≈ keyboard height
         const lift = Math.min(kb, Math.max(0, innerHeight - 140));        // keep the 124px joystick fully on-screen
         frame.style.setProperty("--kbinset", lift + "px");               // lifts joystick + L/R + ⌨ above the keyboard
         const kbTop = innerHeight - kb, cr = canvas.getBoundingClientRect();
-        // [X] stays OUT of the OS: portrait has a black letterbox below the canvas (sit just under it,
-        // but never beneath the keyboard); landscape fills the height, so the top-right is a side bar.
-        const top = (innerHeight - cr.bottom >= 44) ? Math.min(cr.bottom + 6, kbTop - 44) : 6;
+        // [X] stays OUT of the OS AND clear of the right-side buttons. Portrait: there's a black
+        // letterbox below the canvas → center it there (.fsx-mid), just under the OS but never under
+        // the keyboard. Landscape: the canvas fills the height → no room below, so it sits top-left
+        // in the side bar (.fsx-mid off).
+        const belowOS = innerHeight - cr.bottom >= 44;
+        frame.classList.toggle("fsx-mid", belowOS);
+        const top = belowOS ? Math.min(cr.bottom + 6, kbTop - 44) : 6;
         frame.style.setProperty("--fsx-top", Math.max(6, Math.round(top)) + "px");
       };
       const fsUi = (on) => {
