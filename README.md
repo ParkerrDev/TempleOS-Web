@@ -73,8 +73,8 @@ for file I/O. (The `.gz` assets are decompressed in the browser.)
 | repo | what | consumed how |
 |---|---|---|
 | **TempleOS-web** (this) | the site: pages, search, video windows, converter, assets | deployed on Netlify |
-| [holyc-wasm](https://github.com/ParkerrDev/holyc-wasm) | HolyC→WASM compiler + runtime + the editor app | cloned into `./holyc-wasm` at build time |
-| [hemu-wasm](https://github.com/ParkerrDev/hemu-wasm) | the emulator: `snapshot.wasm`, the JIT, disk plumbing, engine harnesses | cloned into `./hemu-wasm` at build time |
+| [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | HolyC→WASM compiler + runtime + the editor app | cloned into `./holyc-wasm` at build time |
+| [hemu-wasm](https://github.com/ParkerrDev/Hemu-wasm) | the emulator: `snapshot.wasm`, the JIT, disk plumbing, engine harnesses | cloned into `./hemu-wasm` at build time |
 | [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline — its output is baked into `assets/transcripts/` by `build-transcripts.mjs` |
 
 `netlify.toml`'s build command `git clone --depth 1`s the two sibling repos, so **every
@@ -85,9 +85,9 @@ and add its URL as a plain push webhook on both repos.
 ## Running locally
 
 ```bash
-git clone https://github.com/ParkerrDev/TempleOS-web && cd TempleOS-web
-git clone --depth 1 https://github.com/ParkerrDev/holyc-wasm     # same layout the build creates
-git clone --depth 1 https://github.com/ParkerrDev/hemu-wasm
+git clone https://github.com/ParkerrDev/TempleOS-Web && cd TempleOS-web
+git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm   # same layout the build creates
+git clone --depth 1 https://github.com/ParkerrDev/Hemu-wasm hemu-wasm
 node server.mjs               # → http://localhost:8080  (zero-dependency)
 ```
 

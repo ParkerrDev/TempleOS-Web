@@ -5,5 +5,5 @@
 # To redeploy automatically when THOSE repos change, add a Netlify build hook
 # (Site settings → Build & deploy → Build hooks) as a push webhook on each repo.
 [build]
-  command = "rm -rf holyc-wasm hemu-wasm && git clone --depth 1 https://github.com/ParkerrDev/holyc-wasm && git clone --depth 1 https://github.com/ParkerrDev/hemu-wasm"
+  command = "rm -rf holyc-wasm hemu-wasm && git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm && git clone --depth 1 https://github.com/ParkerrDev/Hemu-wasm hemu-wasm"
   publish = "."
