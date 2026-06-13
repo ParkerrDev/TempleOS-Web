@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TempleOS HEMU — SMP (experimental, multi-core)</title>
+<style>
+  html,body { margin:0; background:#000; color:#9ad; font:13px/1.4 monospace; }
+  header { padding:8px 12px; background:#001; color:#7af; }
+  header b { color:#fff; } header a { color:#7fa; }
+  #wrap { display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; }
+  canvas { image-rendering:pixelated; background:#000; border:2px solid #224; width:640px; height:480px; max-width:98vw; height:auto; aspect-ratio:4/3; }
+  #status { min-height:1.4em; color:#7af; }
+  #log { width:640px; max-width:98vw; height:120px; overflow:auto; background:#001; border:1px solid #224; padding:4px 8px; white-space:pre-wrap; color:#576; }
+  .hint { color:#578; max-width:640px; }
+  kbd { background:#113; border:1px solid #335; border-radius:3px; padding:0 4px; color:#9bd; }
+</style>
+</head>
+<body>
+<header>
+  <b>TempleOS HEMU · SMP</b> — real multi-core (Web Workers + shared memory). Experimental; the
+  <a href="./index.html">single-core site</a> is the default. Cores: <span id="ncore">4</span> (set <code>?smp=N</code>).
+</header>
+<div id="wrap">
+  <div id="status">starting…</div>
+  <canvas id="canvas" width="640" height="480"></canvas>
+  <div class="hint">Click the canvas to capture mouse + keyboard. To run an SMP game, type at the shell, e.g.
+    <kbd>#include "::/Demo/Games/Talons";</kbd> then <kbd>Enter</kbd> to start a round. Talons/Varoom use all cores.</div>
+  <div id="log"></div>
+</div>
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const N = Math.max(1, Math.min(8, parseInt(new URLSearchParams(location.search).get("smp")) || 4));
+$("ncore").textContent = N;
+const status = (s) => { $("status").textContent = s; };
+const log = (s) => { const el = $("log"); el.textContent += s + "\n"; el.scrollTop = el.scrollHeight; };
+
+if (!self.crossOriginIsolated) { status("ERROR: not cross-origin isolated — SharedArrayBuffer unavailable (need COOP/COEP headers)."); throw new Error("no SAB"); }
+
+// ---- canvas blit (TempleOS 16-color palette -> RGBA) ----
+const PALETTE = [[0,0,0],[0,0,0xaa],[0,0xaa,0],[0,0xaa,0xaa],[0xaa,0,0],[0xaa,0,0xaa],[0xaa,0x55,0],[0xaa,0xaa,0xaa],[0x55,0x55,0x55],[0x55,0x55,0xff],[0x55,0xff,0x55],[0x55,0xff,0xff],[0xff,0x55,0x55],[0xff,0x55,0xff],[0xff,0xff,0x55],[0xff,0xff,0xff]];
+const pal32 = new Uint32Array(16); for (let i=0;i<16;i++){ const [r,g,b]=PALETTE[i]; pal32[i]=(255<<24)|(b<<16)|(g<<8)|r; }
+const canvas = $("canvas"), ctx = canvas.getContext("2d"), img = ctx.createImageData(640,480), out32 = new Uint32Array(img.data.buffer);
+function blit(idx, w, h) { const n = Math.min(w*h, out32.length); for (let i=0;i<n;i++) out32[i] = pal32[idx[i]&15]; ctx.putImageData(img, 0, 0); }
+
+// ---- fetch the SMP engine + sidecar + multi-core snapshot ----
+status("fetching SMP engine + snapshot…");
+const [wasmBytes, sc, snapGz] = await Promise.all([
+  fetch("./hemu-wasm/snapshot-smp.wasm", { cache: "no-cache" }).then(r => r.arrayBuffer()),
+  fetch("./hemu-wasm/snapshot-smp.json", { cache: "no-cache" }).then(r => r.json()),
+  fetch("./hemu-wasm/live-smp.bin.gz", { cache: "no-cache" }).then(r => r.arrayBuffer()),
+]);
+sc.ncore = N;
+
+// ---- shared memory + control region; spawn one worker per core ----
+const mem = new WebAssembly.Memory({ initial: 512, maximum: 8192, shared: true });
+const ctrl = new SharedArrayBuffer(64);
+let bsp = null; const workers = [];
+status(`booting ${N} cores (BSP loads the snapshot, ~10 MB)…`);
+for (let k = 0; k < N; k++) {
+  const w = new Worker("./hemu-smp-worker.js", { type: "module" });
+  w.onmessage = (e) => {
+    const m = e.data;
+    if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h); w.postMessage({ cmd: "ack" }); }
+    else if (m.cmd === "ready") status(`SMP up — ${N} cores. Click to capture input; type a game at the shell.`);
+    else if (m.cmd === "log") log(m.msg);
+    else if (m.cmd === "error") { status("core error: " + m.msg); log("ERROR " + m.msg); }
+  };
+  const msg = k === 0 ? { cmd:"init", role:"bsp", core:0, mem, ctrl, sc, wasmBytes, snapGz, fixedB:0 }
+                      : { cmd:"init", role:"ap",  core:k, mem, ctrl, sc, wasmBytes };
+  w.postMessage(msg, k === 0 ? [snapGz] : []);          // transfer the snapshot to the BSP (APs share via `mem`)
+  if (k === 0) bsp = w; workers.push(w);
+}
+
+// ---- input -> BSP: host-owned cursor + a set-1 scancode queue (matches snapshot.HC's host hooks) ----
+let msX = 320, msY = 240, msB = 0, captured = false;
+const sendInput = (keys) => bsp && bsp.postMessage({ cmd: "input", x: msX|0, y: msY|0, b: msB|0, keys });
+canvas.addEventListener("click", () => { captured = true; canvas.style.outline = "2px solid #5f5"; status("input captured — type at the shell."); });
+canvas.addEventListener("mousemove", (e) => { const r = canvas.getBoundingClientRect(); msX = (e.clientX-r.left)/r.width*640; msY = (e.clientY-r.top)/r.height*480; sendInput(); });
+canvas.addEventListener("mousedown", (e) => { msB |= (e.button===0?1:e.button===2?2:0); sendInput(); e.preventDefault(); });
+canvas.addEventListener("mouseup",   (e) => { msB &= ~(e.button===0?1:e.button===2?2:0); sendInput(); });
+canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+// e.code -> set-1 make scancode (release = make | 0x80). Extended (arrows) prefixed 0xE0.
+const SC = { Escape:0x01,Digit1:0x02,Digit2:0x03,Digit3:0x04,Digit4:0x05,Digit5:0x06,Digit6:0x07,Digit7:0x08,Digit8:0x09,Digit9:0x0A,Digit0:0x0B,Minus:0x0C,Equal:0x0D,Backspace:0x0E,Tab:0x0F,
+  KeyQ:0x10,KeyW:0x11,KeyE:0x12,KeyR:0x13,KeyT:0x14,KeyY:0x15,KeyU:0x16,KeyI:0x17,KeyO:0x18,KeyP:0x19,BracketLeft:0x1A,BracketRight:0x1B,Enter:0x1C,ControlLeft:0x1D,
+  KeyA:0x1E,KeyS:0x1F,KeyD:0x20,KeyF:0x21,KeyG:0x22,KeyH:0x23,KeyJ:0x24,KeyK:0x25,KeyL:0x26,Semicolon:0x27,Quote:0x28,Backquote:0x29,ShiftLeft:0x2A,Backslash:0x2B,
+  KeyZ:0x2C,KeyX:0x2D,KeyC:0x2E,KeyV:0x2F,KeyB:0x30,KeyN:0x31,KeyM:0x32,Comma:0x33,Period:0x34,Slash:0x35,ShiftRight:0x36,AltLeft:0x38,Space:0x39 };
+const EXT = { ArrowUp:0x48, ArrowDown:0x50, ArrowLeft:0x4B, ArrowRight:0x4D, Delete:0x53, Home:0x47, End:0x4F, PageUp:0x49, PageDown:0x51 };
+addEventListener("keydown", (e) => { if (!captured) return; if (EXT[e.code]!==undefined){bsp.postMessage({cmd:"keys",keys:[0xE0,EXT[e.code]]});} else if (SC[e.code]!==undefined){bsp.postMessage({cmd:"keys",keys:[SC[e.code]]});} else return; e.preventDefault(); });
+addEventListener("keyup",   (e) => { if (!captured) return; if (EXT[e.code]!==undefined){bsp.postMessage({cmd:"keys",keys:[0xE0,EXT[e.code]|0x80]});} else if (SC[e.code]!==undefined){bsp.postMessage({cmd:"keys",keys:[SC[e.code]|0x80]});} else return; e.preventDefault(); });
+</script>
+</body>
+</html>
