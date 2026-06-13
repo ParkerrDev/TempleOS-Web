@@ -394,7 +394,8 @@
         <span class="close">[X]</span>
         <b>Click the screen</b>, then move the mouse and type — you're using the real OS.
         <b>Esc</b> releases the mouse and is also sent to TempleOS, so it exits games and menus too.
-        Press <kbd>Ctrl+M</kbd> for the games menu, click a sprite to play. <kbd>F7</kbd> draws a God word.
+        Press <kbd>Ctrl+M</kbd> for the games menu, click a sprite to play — many games open on a title/setup
+        screen, so press <kbd>Space</kbd> or <kbd>Enter</kbd> to start (both are in the Keys window for touch). <kbd>F7</kbd> draws a God word.
         Fullscreen keeps every key (even Esc) inside the OS.
       </div>
       <div class="win terrywin" data-title="Terry"><span class="close">[X]</span><img src="assets/terrydancing.gif" alt="Terry A. Davis"></div>
@@ -738,6 +739,7 @@
       const E0 = "E0";   // marker: extended scancode
       const KEYS = [["Esc",0x01],["F1",0x3B],["F2",0x3C],["F3",0x3D],["F4",0x3E],["F5",0x3F],["F6",0x40],["F7",0x41],
                     ["F8",0x42],["F9",0x43],["F10",0x44],["F11",0x57],["F12",0x58],
+                    ["Enter",0x1C],["Space",0x39],   // many games wait on Enter/Space at a title/setup screen — reachable on touch too
                     ["Tab",0x0F],["Ctrl",0x1D,"mod"],["Alt",0x38,"mod"],["Shift",0x2A,"mod"],["Win",0x5B,"mod",E0],
                     ["Ins",0x52],["Del",0x53],["Home",0x47],["End",0x4F],["PgUp",0x49],["PgDn",0x51]];
       const latched = new Map();   // sc -> {e0}
