@@ -1362,15 +1362,16 @@ I64 GodDoodleGen(I64 strokes)
 
     // ---- TempleOS window chrome + dragging: every [data-title] window gets a bar with a
     //      blinking MENU chip, a scrolling title marquee, its [X], and a vertical title up the
-    //      left border; the bar drags the window (pointer events: mouse AND touch), windows
-    //      raise on press, stay partly on-screen, and leave a placeholder so the layout holds. ----
+    //      left border; the bar drags the window (mouse/pen only — touch pans the page so
+    //      mobile just scrolls), windows raise on press, stay partly on-screen, and leave a
+    //      placeholder so the layout holds. ----
     { let zTop = 1000;   // shared by EVERYTHING (desktop windows, overlays, video windows): whatever you focus comes to the front
       const closeWin = (w) => { w.style.display = "none"; if (w._ph) { w._ph.remove(); w._ph = null; } };
       const makeDraggable = (w, handle, raiseFn) => {
         const raise = raiseFn || (() => { w.style.zIndex = ++zTop; });
-        handle.style.touchAction = "none";
         w.addEventListener("pointerdown", () => { if (w.dataset.floating) raise(); }, true);
         handle.addEventListener("pointerdown", (e) => {
+          if (e.pointerType === "touch") return;   // touch never moves windows; the bar pans the page like everything else
           if (e.target.closest(".close,button,select,a,input,textarea")) return;
           const r = w.getBoundingClientRect();
           if (!w.dataset.floating) {
