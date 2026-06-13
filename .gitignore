@@ -7,3 +7,5 @@ TerryADavis-archive-transcriber/
 # sibling repos, assembled here at build time (Netlify) / symlinked for local dev
 holyc-wasm
 hemu-wasm
+package.json
+package-lock.json
