@@ -339,7 +339,7 @@
       <div class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
         <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico">⏸︎</span> Pause</button>
-        <button id="restartBtn" title="Reload the clean desktop snapshot (~4s)"><span class="ico">↻</span> Restart</button>
+        <button id="restartBtn" title="Reload TempleOS in place — keeps your other windows open"><span class="ico">↻</span> Restart</button>
         <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS"><span class="ico">⛶</span> Fullscreen</button>
         <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed"><span class="ico">⌨︎</span> HolyC Editor</button>
         <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
@@ -811,20 +811,39 @@
 
     // ---- load the compressed RAM snapshot (imported, or the default) ----
     let gzBytes;
-    if (importedSnap) { gzBytes = importedSnap; dbg(`booting imported snapshot (${(importedSnap.byteLength/1048576).toFixed(1)} MB)`); setLoad("loading imported snapshot…", 50); }
-    else {
+    async function downloadSnapshot() {                    // reused by ↻ Restart when gzBytes was freed (phones)
       setLoad("downloading TempleOS RAM snapshot (~5 MB)…", 5);
       const gz = await fetch("./hemu-wasm/live.bin.gz", { cache: "no-cache" });
       if (!gz.ok) { setLoad("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
       const total = +(gz.headers.get("content-length") || 5222517);
       const reader = gz.body.getReader(); const chunks = []; let got = 0;
       for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.length; setLoad(`downloading snapshot… ${(got/1048576).toFixed(1)} MB`, 5 + 45 * got / total); }
-      gzBytes = await new Blob(chunks).arrayBuffer();
-      chunks.length = 0;
+      const buf = await new Blob(chunks).arrayBuffer();
       dbg(`snapshot downloaded (${(got/1048576).toFixed(1)} MB)`);
+      return buf;
     }
+    if (importedSnap) { gzBytes = importedSnap; dbg(`booting imported snapshot (${(importedSnap.byteLength/1048576).toFixed(1)} MB)`); setLoad("loading imported snapshot…", 50); }
+    else gzBytes = await downloadSnapshot();
 
-    $("restartBtn").addEventListener("click", () => location.reload());
+    // ↻ Restart: reload the OS in place — tear down the running engine and re-boot it from the
+    // snapshot WITHOUT reloading the page, so the user's other windows (videos, search, God Tools)
+    // are left exactly as they are. A page reload reset the disk to pristine anyway; so does this —
+    // disk writes still persist only via Export, same as before.
+    let restarting = false;
+    async function restartOS() {
+      if (restarting) return; restarting = true;
+      try {
+        dbg("↻ restarting TempleOS (reloading the OS, keeping your windows)…");
+        engine.stop?.();                                   // terminate the worker / halt the inline loop
+        window.__inlinePaused = false; window.__resetPause?.();
+        started = false; ld.style.display = "";            // let firstFrame() hide the loader again
+        setLoad("restarting TempleOS…", 0);
+        if (!gzBytes) gzBytes = await downloadSnapshot();  // phones free the snapshot after boot — re-fetch
+        bootEngine();
+      } catch (e) { setLoad("restart failed: " + (e.message || e)); dbg("restart failed: " + (e.message || e), true); }
+      finally { restarting = false; }
+    }
+    $("restartBtn").addEventListener("click", restartOS);
 
     // a place for the Disk/Save UI to reach whichever engine is running (worker or inline)
     const engine = { post: () => {}, kind: null };
@@ -835,6 +854,7 @@
       try { worker = new Worker("./hemu-worker.js", { type: "module" }); } catch (e) { return false; }
       engineLabel = "2";
       engine.kind = "worker"; engine.post = (m, t) => worker?.postMessage(m, t || []);
+      engine.stop = () => { try { clearTimeout(watchdog); } catch {} try { worker?.terminate(); } catch {} worker = null; notifyInput = () => {}; };
       window.__diskMsg = null;   // Disk UI sets a handler; worker replies route to it
       notifyInput = () => worker?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0) });
       const fallback = (why) => {
@@ -906,6 +926,8 @@
         for (let i = 0; i < cnt; i++) { const e = base + i * 560; w64(e + 16, e); w64(e + 24, e); w64(e + 32, 0); w64(e + 40, 0); }
         for (let k = 0; k < 0x2000; k++) { const bkt = ht + k * 16; w64(bkt, bkt); w64(bkt + 8, bkt); } };
       engine.kind = "inline";
+      let stopped = false;
+      engine.stop = () => { stopped = true; notifyInput = () => {}; };   // halts loop() on its next frame
       engine.post = async (msg) => { const reply = (m) => window.__diskMsg && window.__diskMsg(m);
         try {
           if (msg.cmd === "pause") { window.__inlinePaused = msg.value; }
@@ -925,6 +947,7 @@
       };
       let lastT = performance.now();
       function loop() {
+        if (stopped) return;                         // ↻ Restart tore this engine down
         const now = performance.now();
         if (window.__inlinePaused) { lastT = now; requestAnimationFrame(loop); return; }
         dtMs = Math.max(1, Math.min(100, now - lastT)); lastT = now;
@@ -941,7 +964,8 @@
       requestAnimationFrame(loop);
     }
 
-    if (location.search.includes("single") || !runWorker()) runInline();
+    function bootEngine() { if (location.search.includes("single") || !runWorker()) runInline(); }
+    bootEngine();
 
     // ---- God Tools window: the Adam/God suite — Word, Bible Passage, Song, Doodle — with the
     //      GodBits/GodPick machinery written in HolyC and compiled in-browser by holyc-wasm.
@@ -1520,6 +1544,7 @@ I64 GodDoodleGen(I64 strokes)
         if (engine.kind === "inline") window.__inlinePaused = paused;   // inline loop reads this flag
         btn.innerHTML = paused ? '<span class="ico">▶︎</span> Play' : '<span class="ico">⏸︎</span> Pause';
         engineLabel = engineLabel; });
+      window.__resetPause = () => { paused = false; btn.innerHTML = '<span class="ico">⏸︎</span> Pause'; };   // ↻ Restart boots unpaused
     }
 
     // ---- Disk & Save window ----
