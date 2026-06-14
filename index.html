@@ -1004,7 +1004,7 @@
         };
         for (let k = 1; k < SMP_N; k++) {                  // AP workers: share `mem`, barrier-wait on `ctrl`, RunCore in parallel
           const ap = new Worker("./hemu-smp-worker.js", { type: "module" });
-          ap.onmessage = (e) => { const m = e.data; if (m.cmd === "error") dbg("[smp] AP" + k + ": " + m.msg, true); };
+          ap.onmessage = (e) => { const m = e.data; if (m.cmd === "error") dbg("[smp] AP" + k + ": " + m.msg, true); else if (m.cmd === "log") { dbg("[smp] " + m.msg); console.log("[smp]", m.msg); } };
           ap.onerror = (ev) => dbg("[smp] AP" + k + " worker error: " + (ev.message || ""), true);
           ap.postMessage({ cmd: "init", role: "ap", core: k, mem, ctrl, sc, wasmBytes });
           aps.push(ap);
