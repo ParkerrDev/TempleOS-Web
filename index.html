@@ -585,11 +585,31 @@
     let notifyInput = () => {};
     let engineLabel = "…";   // core count, e.g. "2"
     const FIXED_B = +((new URLSearchParams(location.search)).get("b")) || 0;
-    { let t0 = performance.now();
+    { let t0 = performance.now(), staleBlits = 0;
       setInterval(() => { const n = performance.now();
         tbFps.textContent = `FPS: ${(blitCount * 1000 / (n - t0)).toFixed(0)}`;
         $("tb-cores").textContent = `Cores: ${engineLabel}`;
+        // beep watchdog: if the guest froze mid-tone (e.g. a game that hangs on launch), the PC-speaker
+        // oscillator is stuck on with no Snd(0) coming — mute it after ~1.5s of no new frames.
+        // And: a hang on the single-core engine usually means a multi-core game (Talons/Varoom) — once
+        // we've been frozen ~3s, offer to reload on the real multi-core engine (?smp), where it works.
+        if (blitCount === 0) { if (++staleBlits >= 3 && gain && gain.gain.value > 0) gain.gain.value = 0;
+                               if (staleBlits >= 6 && started && !useSMP) try { showSmpPrompt(); } catch {} }
+        else staleBlits = 0;
         blitCount = 0; t0 = n; }, 500); }
+    // one-time banner shown when a heavy game freezes the single-core engine -> 1-click switch to multi-core
+    let smpPrompted = false;
+    function showSmpPrompt() {
+      if (smpPrompted) return; smpPrompted = true;
+      const d = document.createElement("div");
+      d.style.cssText = "position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2147483647;background:#001;color:#9bd;border:2px solid #5af;border-radius:8px;padding:10px 14px;font:13px/1.4 monospace;max-width:92vw;text-align:center;box-shadow:0 4px 24px #0008";
+      d.innerHTML = 'This game needs <b>multi-core</b> (it spreads work across CPUs). ' +
+        '<button id="smpGo" style="margin-left:8px;background:#5af;color:#001;border:0;border-radius:5px;padding:5px 10px;font:inherit;font-weight:bold;cursor:pointer">▶ Switch to multi-core</button> ' +
+        '<button id="smpNo" style="margin-left:4px;background:#113;color:#9bd;border:1px solid #335;border-radius:5px;padding:5px 8px;font:inherit;cursor:pointer">Dismiss</button>';
+      document.body.appendChild(d);
+      d.querySelector("#smpGo").onclick = () => { const u = new URL(location.href); u.searchParams.set("smp", "4"); location.href = u.toString(); };
+      d.querySelector("#smpNo").onclick = () => d.remove();
+    }
 
     // ---- input: a host-owned cursor + a set-1 scancode queue, pulled by snapshot.HC each frame ----
     let msX = 320, msY = 240, msB = 0, wheelZ = 0;
@@ -856,11 +876,18 @@
     if (importedSnap) await idb.del("importSnap");
     if (importedDisk) { await idb.del("importDisk"); window.__importDisk = importedDisk; }   // raw bytes -> worker init
 
-    // ---- load the compressed RAM snapshot (imported, or the default) ----
+    // ---- SMP (real multi-core) is OPT-IN via ?smp: it runs the OS across N Web Workers over one shared
+    //      WebAssembly.Memory, so games that spawn parallel jobs (Talons, Varoom) actually complete.
+    //      Default (no ?smp) = the proven single-core engine, unchanged. To make SMP the default, flip
+    //      `useSMP` to `self.crossOriginIsolated && !/[?&](single|nosmp)\b/.test(location.search)`. ----
+    let useSMP = self.crossOriginIsolated && /[?&]smp\b/.test(location.search);
+    const SMP_N = Math.max(2, Math.min(8, +((new URLSearchParams(location.search)).get("smp")) || 4));
+
+    // ---- load the compressed RAM snapshot (imported, or the default; the SMP snapshot when ?smp) ----
     let gzBytes;
     async function downloadSnapshot() {                    // reused by ↻ Restart when gzBytes was freed (phones)
       setLoad("downloading TempleOS RAM snapshot (~5 MB)…", 5);
-      const gz = await fetch("./hemu-wasm/live.bin.gz", { cache: "no-cache" });
+      const gz = await fetch(useSMP ? "./hemu-wasm/live-smp.bin.gz" : "./hemu-wasm/live.bin.gz", { cache: "no-cache" });
       if (!gz.ok) { setLoad("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
       const total = +(gz.headers.get("content-length") || 5222517);
       const reader = gz.body.getReader(); const chunks = []; let got = 0;
@@ -934,6 +961,58 @@
       window.__importDisk = null;
       watchdog = setTimeout(() => { if (!alive) fallback("no frame in 10s"); }, 10000);
       return true;
+    }
+
+    // ---- SMP engine (?smp): the BSP is hemu-worker.js over a SHARED memory + N-1 AP workers running
+    //      RunCore in parallel. Same BSP message protocol as runWorker, so the whole UI works unchanged. ----
+    async function runSMP() {
+      let bsp = null, aps = [], watchdog, alive = false;
+      try {
+        setLoad("starting multi-core engine…", 90);
+        const [wasmBytes, sc] = await Promise.all([
+          fetch("./hemu-wasm/snapshot-smp.wasm", { cache: "no-cache" }).then(r => r.arrayBuffer()),
+          fetch("./hemu-wasm/snapshot-smp.json", { cache: "no-cache" }).then(r => r.json()),
+        ]);
+        sc.ncore = SMP_N;
+        const mem = new WebAssembly.Memory({ initial: 512, maximum: 8192, shared: true });
+        const ctrl = new SharedArrayBuffer(64);
+        bsp = new Worker("./hemu-worker.js", { type: "module" });
+        engineLabel = String(SMP_N);
+        engine.kind = "smp"; engine.post = (m, t) => bsp?.postMessage(m, t || []);
+        engine.stop = () => { try { clearTimeout(watchdog); } catch {} try { const c = new Int32Array(ctrl); Atomics.store(c, 1, 1); Atomics.notify(c, 1); } catch {} try { bsp?.terminate(); } catch {} for (const a of aps) { try { a.terminate(); } catch {} } bsp = null; aps = []; notifyInput = () => {}; };
+        window.__diskMsg = null;
+        notifyInput = () => bsp?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0) });
+        const fallback = (why) => {
+          if (!bsp && !aps.length) return;
+          engine.stop();
+          if (alive) { dbg("SMP engine crashed after boot (" + why + ")", true); ld.style.display = ""; setLoad("The emulator stopped (" + why + "). Tap ↻ Restart.", 0); return; }
+          dbg("SMP engine failed (" + why + ") — falling back to single core", true);
+          useSMP = false; downloadSnapshot().then(b => { gzBytes = b; if (!runWorker()) runInline(); }).catch(() => runInline());
+        };
+        bsp.onerror = (e) => fallback(e.message || "bsp error");
+        bsp.onmessage = (e) => {
+          if (!bsp) return; const m = e.data;
+          if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h); bsp.postMessage({ cmd: "ack" }); alive = true; firstFrame(); }
+          else if (m.cmd === "snd") snd(m.f);
+          else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
+          else if (m.cmd === "smpReady") dbg("SMP: " + m.ncore + " cores running in parallel");
+          else if (m.cmd === "error") fallback(m.msg);
+          else if (window.__diskMsg) window.__diskMsg(m);
+        };
+        for (let k = 1; k < SMP_N; k++) {                  // AP workers: share `mem`, barrier-wait on `ctrl`, RunCore in parallel
+          const ap = new Worker("./hemu-smp-worker.js", { type: "module" });
+          ap.onmessage = (e) => { const m = e.data; if (m.cmd === "error") dbg("[smp] AP" + k + ": " + m.msg, true); };
+          ap.onerror = (ev) => dbg("[smp] AP" + k + " worker error: " + (ev.message || ""), true);
+          ap.postMessage({ cmd: "init", role: "ap", core: k, mem, ctrl, sc, wasmBytes });
+          aps.push(ap);
+        }
+        bsp.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: "./hemu-wasm/snapshot-smp.wasm", fixedB: FIXED_B,
+          diskBytes: window.__importDisk || null, smp: { mem, ctrl, ipiAddr: sc.globals.g_ipi_pending, ncore: SMP_N } },
+          window.__importDisk ? [window.__importDisk] : []);
+        window.__importDisk = null;
+        watchdog = setTimeout(() => { if (!alive) fallback("no frame in 15s"); }, 15000);
+        return true;
+      } catch (e) { dbg("SMP init threw: " + (e.message || e), true); return false; }
     }
 
     async function runInline() {
@@ -1011,7 +1090,10 @@
       requestAnimationFrame(loop);
     }
 
-    function bootEngine() { if (location.search.includes("single") || !runWorker()) runInline(); }
+    function bootEngine() {
+      if (useSMP) { runSMP(); return; }                 // ?smp: real multi-core (BSP + AP workers); has its own single-core fallback
+      if (location.search.includes("single") || !runWorker()) runInline();
+    }
     bootEngine();
 
     // ---- God Tools window: the Adam/God suite — Word, Bible Passage, Song, Doodle — with the

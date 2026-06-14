@@ -82,7 +82,14 @@ async function gunzipInto(gz, size) {
   return out;
 }
 
-async function boot({ gz, wasmUrl, fixedB, diskBytes }) {
+// `smp` (optional) = { mem: shared WebAssembly.Memory, ctrl: SharedArrayBuffer, ipiAddr, ncore } — when
+// present this worker is the SMP BSP (core 0): it instantiates the shared-memory engine over `mem`, and
+// after the desktop settles it releases the AP workers (which run RunCore over the same memory) so games
+// that spawn parallel jobs (Talons, Varoom) actually complete. No `smp` => the original single-core path,
+// byte-for-byte unchanged.
+let smpCfg = null, apsReleased = false, bootFrames = 0;
+async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
+  smpCfg = smp || null;
   if (fixedB) curBudget = fixedB;
   postMessage({ cmd: "progress", text: "decompressing snapshot (→ 384 MB)…", pct: 60 });
   snap = await gunzipInto(gz, 402653184);
@@ -129,6 +136,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes }) {
     console.log("[hemu] JIT enabled (x86-64 -> WASM)");
   } else console.log("[hemu] JIT disabled (?nojit) — pure interpreter");
 
+  if (smpCfg) host.env.mem = smpCfg.mem;                          // SMP BSP: instantiate over the shared memory (snapshot-smp.wasm imports env.mem)
   inst = await WebAssembly.instantiate(mod, { env: host.env });
   instRef = inst;
   host.attach(inst);
@@ -160,6 +168,12 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes }) {
     if (paused) { await sleep(80); lastT = performance.now(); dtAcc = 0; continue; }   // ⏸ freeze guest time too
     try { inst.exports.__main(); }                                 // emulate one TempleOS frame (+ present via the host)
     catch (err) { postMessage({ cmd: "error", msg: "hemu trap: " + err.message }); return; }
+    if (smpCfg && !apsReleased && ++bootFrames > 120) {            // desktop settled -> release the AP workers (parallel from here)
+      const dvm = new DataView(smpCfg.mem.buffer);
+      for (let k = 1; k < smpCfg.ncore; k++) dvm.setBigUint64(smpCfg.ipiAddr + k * 8, 0n, true);   // drop stale boot-IPIs
+      const c = new Int32Array(smpCfg.ctrl); Atomics.store(c, 0, 1); Atomics.notify(c, 0);          // CTRL.READY = 1
+      apsReleased = true; postMessage({ cmd: "smpReady", ncore: smpCfg.ncore });
+    }
     if (!loaded) { loaded = true; snap = null;                     // snapshot now in WASM RAM — free the 384 MB copy
       // Load the C: disk AFTER boot settles (file I/O works once it lands; the desktop runs from
       // cached RAM). Deferring it keeps the disk decompress out of the boot memory spike — the
