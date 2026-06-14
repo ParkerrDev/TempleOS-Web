@@ -880,10 +880,13 @@
     //      WebAssembly.Memory, so games that spawn parallel jobs (Talons, Varoom) actually complete.
     //      Default (no ?smp) = the proven single-core engine, unchanged. To make SMP the default, flip
     //      `useSMP` to `self.crossOriginIsolated && !/[?&](single|nosmp)\b/.test(location.search)`. ----
-    // SMP (real multi-core) is OPT-IN via ?smp while the real-parallel display race is being fixed — the
-    // single-core default is stable everywhere. Heavy games (Talons/Varoom) that freeze single-core show
-    // a banner offering ?smp. (Was briefly default-on-desktop; reverted after a white-screen report.)
-    let useSMP = self.crossOriginIsolated && /[?&]smp\b/.test(location.search);
+    // Real multi-core is the DEFAULT on desktop (so Talons/Varoom just work when clicked). Reliability
+    // nets: present-sync handshake gives consistent frames (fixed the games white-screen), AP faults
+    // auto-recover, and ANY SMP failure (no frame in 15s, instantiate error) auto-falls-back to single
+    // core. Mobile stays single-core (phone memory/perf); ?nosmp / ?single force single-core; ?smp forces on.
+    const isMobileDev = (navigator.maxTouchPoints > 1) || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || "");
+    let useSMP = self.crossOriginIsolated && !/[?&](single|nosmp)\b/.test(location.search)
+                 && (/[?&]smp\b/.test(location.search) || !isMobileDev);
     const SMP_N = Math.max(2, Math.min(8, +((new URLSearchParams(location.search)).get("smp")) || 4));
 
     // ---- load the compressed RAM snapshot (imported, or the default; the SMP snapshot when ?smp) ----
