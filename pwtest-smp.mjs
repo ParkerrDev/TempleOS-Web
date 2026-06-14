@@ -75,7 +75,15 @@ if (GAME && result.nonblack > 15) {
       let cyan = 0; for (let i = 0; i < d.length; i += 4) if (d[i] < 120 && d[i+1] > 180 && d[i+2] > 180) cyan++;   // cyan = Talons sky
       return { cyan: 100 * cyan / (d.length / 4) }; });
     console.log(`  t=${(i+1)*2}s  cyan(sky) ${r.cyan.toFixed(1)}%`);
-    if (r.cyan > 8) { stableHi++; if (stableHi >= 2) { gameOk = true; console.log("  >>> game terrain (cyan sky) rendered on the 4-core engine"); break; } } else stableHi = 0;
+    if (r.cyan > 8) { stableHi++; if (stableHi >= 2) { gameOk = true; console.log(`  >>> ${GAME} rendering after ~${(i+1)*2}s init`);
+      // measure gameplay: distinct frames over 8s = FPS
+      const hashes = new Set(); const t0 = Date.now(); let samples = 0;
+      while (Date.now() - t0 < 8000) { samples++;
+        const h = await page.evaluate(() => { const c = document.getElementById("canvas"); const d = c.getContext("2d").getImageData(0,0,c.width,c.height).data; let s = 0; for (let i = 0; i < d.length; i += 257) s = (s * 31 + d[i]) >>> 0; return s; });
+        hashes.add(h); }
+      console.log(`  (sampled ${samples}x in 8s = ${(samples/8).toFixed(0)} Hz sampling)`);
+      console.log(`  gameplay: ${hashes.size} distinct frames / ${((Date.now()-t0)/1000).toFixed(1)}s = ~${(hashes.size/((Date.now()-t0)/1000)).toFixed(0)} fps`);
+      break; } } else stableHi = 0;
   }
   await page.screenshot({ path: "/tmp/smp_browser_game.png" });
   console.log(`  wrote /tmp/smp_browser_game.png`);
