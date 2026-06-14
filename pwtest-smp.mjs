@@ -23,7 +23,8 @@ const server = http.createServer(async (req, res) => {
 await new Promise(r => server.listen(0, r));
 const port = server.address().port;
 const GAME = process.env.GAME || "";
-const url = `http://localhost:${port}/hemu-smp.html?smp=4${GAME ? "&game=" + GAME : ""}`;
+const url = process.env.PAGE ? `http://localhost:${port}/${process.env.PAGE}`
+                            : `http://localhost:${port}/hemu-smp.html?smp=4${GAME ? "&game=" + GAME : ""}`;
 console.log("serving", ROOT, "->", url);
 
 const browser = await chromium.launch({ args: ["--enable-features=SharedArrayBuffer", "--no-sandbox"] });
@@ -50,6 +51,20 @@ await page.screenshot({ path: "/tmp/smp_browser.png" });
 console.log(result.nonblack > 15 ? `=== BROWSER SMP desktop rendered (${result.nonblack.toFixed(1)}% non-black) ===`
                                  : `=== BROWSER SMP FAIL: canvas ${result.nonblack.toFixed(1)}% non-black — ${result.status} ===`);
 
+if (process.env.CTRLM && result.nonblack > 15) {                  // snap the Ctrl+M games menu (to locate sprites)
+  await page.waitForTimeout(1500);
+  await page.mouse.click(640, 320);                               // focus the OS canvas (center of the page canvas)
+  await page.waitForTimeout(300);
+  await page.keyboard.press("KeyN"); await page.waitForTimeout(800);          // dismiss "Take Tour(y or n)?"
+  await page.keyboard.press("Escape"); await page.waitForTimeout(600);
+  await page.keyboard.down("ControlLeft"); await page.keyboard.press("KeyM"); await page.keyboard.up("ControlLeft");
+  await page.waitForTimeout(2000);
+  for (let s = 0; s < (+process.env.SCROLL || 0); s++) { await page.mouse.move(640, 360); await page.mouse.wheel(0, 240); await page.waitForTimeout(500); }
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: "/tmp/smp_menu.png" });
+  console.log("wrote /tmp/smp_menu.png (Ctrl+M menu, scroll=" + (+process.env.SCROLL||0) + ")");
+  await browser.close(); server.close(); process.exit(0);
+}
 let gameOk = !GAME;
 if (GAME && result.nonblack > 15) {
   console.log(`--- ${GAME} auto-launched by the BSP (?game=); watching for parallel init + terrain (~90s) ---`);
