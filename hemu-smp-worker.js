@@ -140,7 +140,13 @@ async function runAp() {
   jit.jitSeg(oc(cc.fsbase), oc(cc.gsbase), g.tsc, oc(cc.x87_cw), g.g_xmm_lo + core * sc.xmmStride, g.g_xmm_hi + core * sc.xmmStride);
   postMessage({ cmd: "log", msg: `AP${core} parallel` });
   const APB = 2000000n; let spins = 0;
+  const PAUSE_REQ = 2, PAUSE_ACK = 3;                         // ctrl indices (BSP pauses APs to capture a consistent frame)
   while (!Atomics.load(ctrl, CTRL.STOP)) {
+    if (Atomics.load(ctrl, PAUSE_REQ)) {                      // BSP is capturing a frame -> hold still (no concurrent writes)
+      Atomics.add(ctrl, PAUSE_ACK, 1);                        // ack: the seq-cst handshake also RELEASES our writes to the BSP
+      while (Atomics.load(ctrl, PAUSE_REQ) && !Atomics.load(ctrl, CTRL.STOP)) Atomics.wait(ctrl, PAUSE_REQ, 1, 20);
+      continue;
+    }
     const before = rd(g.icount);
     inst.exports.RunCore(APB);
     const did = rd(g.icount) - before;

@@ -106,8 +106,16 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
     diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },  // ATA writes -> in-session overlay
     present: (addr, w, h, u8) => {
       if (outstanding >= 2) return;                       // main hasn't caught up — drop, keep emulating
+      // SMP: stop-the-world for the frame copy. Pause the AP cores via an atomic handshake, which (a) stops
+      // concurrent writes so the captured frame isn't torn, and (b) makes the BSP ACQUIRE the APs' writes
+      // (seq-cst) so the frame isn't a stale/blank buffer (the white-screen race). Timeout -> never hangs.
+      let pc = null;
+      if (smpCfg) { pc = new Int32Array(smpCfg.ctrl); Atomics.store(pc, 2, 1);   // PAUSE_REQ
+        const dl = performance.now() + 6;
+        while (Atomics.load(pc, 3) < smpCfg.ncore - 1 && performance.now() < dl) { /* spin until APs ack (or timeout) */ } }
       const buf = new Uint8Array(w * h);
       buf.set(u8.subarray(addr, addr + w * h));           // copy the finished frame out of WASM memory
+      if (pc) { Atomics.store(pc, 3, 0); Atomics.store(pc, 2, 0); Atomics.notify(pc, 2); }   // resume APs
       outstanding++;
       postMessage({ cmd: "frame", buf: buf.buffer, w, h }, [buf.buffer]);
     },
