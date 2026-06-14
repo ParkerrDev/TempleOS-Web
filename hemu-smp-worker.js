@@ -139,7 +139,7 @@ async function runAp() {
   jit.jitX87(oc(cc.fpr), oc(cc.fsp), oc(cc.x87_sw));
   jit.jitSeg(oc(cc.fsbase), oc(cc.gsbase), g.tsc, oc(cc.x87_cw), g.g_xmm_lo + core * sc.xmmStride, g.g_xmm_hi + core * sc.xmmStride);
   postMessage({ cmd: "log", msg: `AP${core} parallel` });
-  const APB = 2000000n; let spins = 0;
+  const APB = 2000000n; let spins = 0, apFaulted = false;
   const PAUSE_REQ = 2, PAUSE_ACK = 3;                         // ctrl indices (BSP pauses APs to capture a consistent frame)
   while (!Atomics.load(ctrl, CTRL.STOP)) {
     if (Atomics.load(ctrl, PAUSE_REQ)) {                      // BSP is capturing a frame -> hold still (no concurrent writes)
@@ -150,6 +150,9 @@ async function runAp() {
     const before = rd(g.icount);
     inst.exports.RunCore(APB);
     const did = rd(g.icount) - before;
+    const halted = rd(oc(144));                              // f_halted: >=2 means this AP faulted (bad op / #DE)
+    if (halted >= 2 && !apFaulted) { apFaulted = true; postMessage({ cmd: "log", msg: `AP${core} FAULTED halted=${halted} rip=0x${rd(oc(cc.rip)).toString(16)} — recovering` });
+      dv().setBigUint64(oc(144), 0n, true); }              // clear the fault so the AP keeps serving jobs instead of dying (best-effort recovery)
     if (did < 1000) { spins++; if (spins > 4) { await sleep(0); spins = 0; } }   // idle -> yield (don't pin a core)
     else { spins = 0; if (Math.random() < 0.003) await sleep(0); }
   }
