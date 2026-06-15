@@ -12,12 +12,13 @@
   <script>navigator.serviceWorker && navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister())).catch(() => {});</script>
   <style>
     /* afterdavis theme: the TempleOS desktop look. */
-    @font-face { font-family:'TempleOS'; src:url('fonts/templeos_font.woff') format('woff'), url('fonts/templeos_font.ttf') format('truetype'); font-weight:normal; font-style:normal; }
+    /* (removed the 'TempleOS' webfont — its OS/2 table is malformed so the browser rejected it with an
+       OTS error; 'dos_vga' below was already the effective font everywhere via fallback.) */
     @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); font-weight:normal; font-style:normal; }
     :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; --zi:1; }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga','TempleOS',"Courier New",monospace; cursor:url('assets/cursor.png'),auto;
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'dos_vga',"Courier New",monospace; cursor:url('assets/cursor.png'),auto;
         -webkit-font-smoothing:none; font-smooth:never; text-rendering:optimizeSpeed; }
-    .wbar, .wbar *, .wvert, .wvert * { font-family:'TempleOS','dos_vga',monospace; }
+    .wbar, .wbar *, .wvert, .wvert * { font-family:'dos_vga',monospace; }
     html { overflow-y:auto; }
     body { background:var(--blue); color:#fff; font-size:16px; line-height:1.25; min-height:100vh; display:flex; flex-direction:column; }
     ::selection { background:#000; color:yellow; }
@@ -37,7 +38,7 @@
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
                    background:#55FFFF; object-fit:contain; }
-    header h1 { font-size:16px; font-weight:normal; color:#fff; font-family:'TempleOS','dos_vga',monospace; }
+    header h1 { font-size:16px; font-weight:normal; color:#fff; font-family:'dos_vga',monospace; }
     header p { font-size:16px; color:#dfe6ff; max-width:1000px; line-height:1.25; }
 
     /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X] */
@@ -87,7 +88,7 @@
     .toolbar button { font-size:16px; padding:4px 6px; }
     .toolbar button .ico { display:inline-block; width:22px; font-size:16px; line-height:16px; text-align:center; vertical-align:-1px; }
     button, .tbtn, #homeList li, .ico { font-variant-emoji:text; }
-    button { font-family:'dos_vga','TempleOS',monospace; font-size:16px; color:#000; background:#fff;
+    button { font-family:'dos_vga',monospace; font-size:16px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
@@ -191,7 +192,7 @@
     .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:16px; letter-spacing:0; }
     .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }
     #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;
-        font-family:'dos_vga','TempleOS',monospace; font-size:16px; line-height:1.25; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
+        font-family:'dos_vga',monospace; font-size:16px; line-height:1.25; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
     #editorHL { z-index:0; pointer-events:none; overflow:hidden; color:#16163a; background:transparent; }
     #editor { z-index:1; resize:none; outline:none; color:transparent; background:transparent; caret-color:#16163a; }
     #editor::selection { background:rgba(110,160,255,.4); }
@@ -234,7 +235,7 @@
     #tsWin { display:flex; flex-direction:column; gap:8px; width:min(860px,94vw); height:min(82vh,720px); margin:0; padding:10px; }
     #tsBar { display:flex; gap:8px; align-items:center; flex:0 0 auto; }
     #tsQwrap { position:relative; flex:1 1 auto; min-width:0; display:flex; }
-    #tsQ { width:100%; min-width:0; font-family:'dos_vga','TempleOS',monospace; font-size:16px; color:#000; background:#fff;
+    #tsQ { width:100%; min-width:0; font-family:'dos_vga',monospace; font-size:16px; color:#000; background:#fff;
            border:2px solid #fff; outline:2px solid #000; padding:4px 36px 4px 8px; }
     #tsQ::-webkit-search-cancel-button { -webkit-appearance:none; appearance:none; display:none; }   /* the browser's emoji-ish ✕ */
     #tsClear { position:absolute; right:3px; top:50%; transform:translateY(-50%); width:auto; border:0; outline:0;
@@ -1641,7 +1642,7 @@ I64 GodDoodleGen(I64 strokes)
       // seamlessly (content = 2x a repeated unit, animate to -50%). Size AFTER layout.
       const sizeMarquee = (w) => {
         const meas = document.createElement("span");
-        meas.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-size:12px;font-family:'TempleOS',monospace";
+        meas.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-size:12px;font-family:'dos_vga',monospace";
         document.body.appendChild(meas);
         const ti = w.querySelector(".wtitle"), ts = ti && ti.firstChild;
         if (ts) {
