@@ -24,13 +24,13 @@
         -webkit-font-smoothing:none; font-smooth:never; text-rendering:optimizeSpeed; }
     .wbar, .wbar *, .wvert, .wvert * { font-family:'TempleOS','dos_vga',monospace; }
     html { overflow-y:auto; }
-    body { background:var(--blue); color:#fff; font-size:16px; line-height:1.0; min-height:100vh; display:flex; flex-direction:column; }
+    body { background:var(--blue); color:#fff; font-size:12px; line-height:1.0; min-height:100vh; display:flex; flex-direction:column; }
     ::selection { background:#000; color:yellow; }
     a { color:var(--gold); }
 
     /* live top status bar (always visible — survives fullscreen games, unlike the in-OS wallpaper bar) */
     #topbar { display:flex; line-height:16px; justify-content:space-between; align-items:center; gap:10px;
-              background:var(--blue); color:#fff; padding:0; font-size:16px; }
+              background:var(--blue); color:#fff; padding:0; font-size:12px; }
     #topbar .status { display:flex; flex-wrap:wrap; }
     #topbar .status > span { white-space:nowrap; }
     #topbar .status > span:not(:last-child) { margin-right:16px; }
@@ -42,8 +42,8 @@
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; border:2px solid #fff;
                    background:#55FFFF; object-fit:contain; }
-    header h1 { font-size:16px; font-weight:normal; color:#fff; font-family:'TempleOS','dos_vga',monospace; }
-    header p { font-size:16px; color:#dfe6ff; max-width:1000px; line-height:1.0; }
+    header h1 { font-size:12px; font-weight:normal; color:#fff; font-family:'TempleOS','dos_vga',monospace; }
+    header p { font-size:12px; color:#dfe6ff; max-width:1000px; line-height:1.0; }
 
     /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X] */
     /* one 8px border cell per side, exactly like the OS text border; the pattern (measured 1:1
@@ -85,14 +85,14 @@
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
     .desktop-row { display:flex; gap:8px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px; }
-    .col-left { display:flex; flex-direction:column; gap:16px; width:288px; flex:0 0 auto; }
+    .col-left { display:flex; flex-direction:column; gap:16px; width:256px; flex:0 0 auto; }
     .col-right { display:flex; flex-direction:column; gap:16px; width:288px; flex:0 0 auto; }
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
-    .toolbar button { font-size:13px; padding:4px 6px; }
-    .toolbar button .ico { display:inline-block; width:22px; font-size:16px; line-height:16px; text-align:center; vertical-align:-1px; }
+    .toolbar button { font-size:11px; padding:4px 6px; }
+    .toolbar button .ico { display:inline-block; width:20px; font-size:14px; line-height:14px; text-align:center; vertical-align:-1px; }
     button, .tbtn, #homeList li, .ico { font-variant-emoji:text; }
-    button { font-family:'TempleOS','dos_vga',monospace; font-size:16px; color:#000; background:#fff;
+    button { font-family:'TempleOS','dos_vga',monospace; font-size:12px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
     button:disabled { opacity:.4; }
@@ -139,14 +139,14 @@
     body.touch #frame.fsmode #fsExit { display:block; }   /* touch only: desktop fullscreen confines the mouse to the OS (Esc exits) */
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
-    #ldtext { font-size:16px; max-width:560px; line-height:1.0; min-height:2.4em; }
+    #ldtext { font-size:12px; max-width:560px; line-height:1.0; min-height:2.4em; }
     .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#0a0a0a; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
     .ldbarwrap > i { display:block; height:100%; width:0; transition:width .2s; background:var(--green); }
     .ldbarwrap::after { content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(90deg, transparent 0 22px, #0a0a0a 22px 24px); }
 
     /* on-screen function/modifier keys — works on desktop and mobile; modifiers latch (✱) */
     #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; }
-    #keysbar button { width:auto; font-size:16px; padding:2px 5px; text-align:center; }
+    #keysbar button { width:auto; font-size:12px; padding:2px 5px; text-align:center; }
     #keysbar button.mod.on { color:#fff; background:var(--red); border-color:var(--red); }
     #frame .cap { text-align:center; font-size:13px; color:var(--blue); padding-top:3px; }
 
@@ -163,15 +163,15 @@
     .tbtn:active, .tbtn.on { background:var(--red); color:#fff; }
     #tL { right:96px; bottom:calc(14px + var(--kbinset, 0px)); } #tR { right:18px; bottom:calc(14px + var(--kbinset, 0px)); }
     #tKb { right:18px; bottom:calc(92px + var(--kbinset, 0px)); width:54px; height:42px; border-radius:8px; font-size:18px; }
-    #mobInput { position:fixed; left:-30px; bottom:0; width:20px; height:20px; opacity:.01; font-size:16px; }
+    #mobInput { position:fixed; left:-30px; bottom:0; width:20px; height:20px; opacity:.01; font-size:12px; }
 
-    .col-right #guide { font-size:16px; }
+    .col-right #guide { font-size:12px; }
     #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
     .keyswin { padding:8px 6px 6px; }
     .terrywin { padding:6px; text-align:center; }
     .terrywin img { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
-    footer { text-align:center; padding:4px; font-size:16px; color:#cfe; opacity:.85; }
+    footer { text-align:center; padding:4px; font-size:12px; color:#cfe; opacity:.85; }
     footer a { color:var(--gold); }
 
     /* ---- overlays (HolyC editor / God Words): a window floating over the desktop ---- */
@@ -181,7 +181,7 @@
        (and the OS) stay fully interactive behind it */
     .overlay.free { background:transparent; pointer-events:none; }
     .overlay.free > .win { pointer-events:auto; }
-    .ovfree { position:absolute; top:8px; right:10px; width:auto; font-size:16px; padding:3px 8px; pointer-events:auto; }
+    .ovfree { position:absolute; top:8px; right:10px; width:auto; font-size:12px; padding:3px 8px; pointer-events:auto; }
     .ovfree::after { content:"[X]"; }
     .overlay.free .ovfree { display:none; }   /* one-way: close + reopen the popup to get the backdrop back */
     .overlay .close { cursor:pointer; }
@@ -189,14 +189,14 @@
     #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }
     .ed-bar { display:flex; gap:7px; align-items:center; flex:0 0 auto; }
     #editorWin .ed-bar button { width:auto; text-align:center; }
-    #editorWin select { width:auto; max-width:300px; font-size:16px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:4px 6px; }
-    #editorWin #status { margin-left:auto; color:var(--blue); font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:42%; }
+    #editorWin select { width:auto; max-width:300px; font-size:12px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:4px 6px; }
+    #editorWin #status { margin-left:auto; color:var(--blue); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:42%; }
     .ed-body { flex:1 1 auto; min-height:0; display:flex; gap:6px; }
     .ed-pane { flex:1 1 0; min-width:0; display:flex; flex-direction:column; border:3px double var(--blue); background:#fff; }
-    .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:16px; letter-spacing:0; }
+    .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:12px; letter-spacing:0; }
     .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }
     #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;
-        font-family:'TempleOS','dos_vga',monospace; font-size:16px; line-height:1.0; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
+        font-family:'TempleOS','dos_vga',monospace; font-size:12px; line-height:1.0; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
     #editorHL { z-index:0; pointer-events:none; overflow:hidden; color:#16163a; background:transparent; }
     #editor { z-index:1; resize:none; outline:none; color:transparent; background:transparent; caret-color:#16163a; }
     #editor::selection { background:rgba(110,160,255,.4); }
@@ -207,16 +207,16 @@
     #editorHL .tco{ color:#b35a00; }  #editorHL .tn{ color:#b35a00; }  #editorHL .tp{ color:#0a6a8a; }
     .ed-screenwrap { flex:0 0 auto; background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
     #editorWin #screen { display:block; height:min(44vh,430px); width:auto; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; background:#000; }
-    #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:16px; line-height:1.0; white-space:pre-wrap; word-break:break-word; }
-    .ed-foot { flex:0 0 auto; color:var(--blue); font-size:16px; padding:1px 2px 0; }
+    #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:12px; line-height:1.0; white-space:pre-wrap; word-break:break-word; }
+    .ed-foot { flex:0 0 auto; color:var(--blue); font-size:12px; padding:1px 2px 0; }
 
     /* God Tools window */
     #godWin { display:flex; flex-direction:column; gap:8px; width:min(680px,94vw); height:min(74vh,620px); margin:0; padding:10px; }
-    #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:16px; line-height:1.0; word-break:break-word; }
+    #godOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:10px 12px; font-size:12px; line-height:1.0; word-break:break-word; }
     #godOut .w { color:yellow; margin-right:.55em; }
-    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:16px; line-height:1.0; white-space:pre-wrap; }
+    #godOut .p { display:block; color:#fff; background:rgba(0,0,0,.25); border-left:4px solid yellow; padding:6px 10px; margin:8px 0; font-size:12px; line-height:1.0; white-space:pre-wrap; }
     #godOut .p .ref { color:#7fe07f; }
-    #godOut .s { display:block; color:#7fe07f; font-size:16px; margin:6px 0; font-variant-emoji:text; }
+    #godOut .s { display:block; color:#7fe07f; font-size:12px; margin:6px 0; font-variant-emoji:text; }
     #godOut canvas { display:block; width:320px; max-width:100%; image-rendering:pixelated; background:#fff; margin:8px 0; border:2px solid #fff; }
     #godBar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     #godBar button { width:auto; }
@@ -226,78 +226,78 @@
     .disk-body { overflow:auto; }
     .disk-sec { border-top:2px solid var(--blue); padding:8px 2px; }
     .disk-sec:first-child { border-top:0; }
-    .disk-sec h3 { color:var(--red); font-size:16px; font-weight:normal; margin-bottom:3px; }
-    .disk-sec p { color:var(--blue); font-size:16px; line-height:1.0; margin-bottom:6px; }
+    .disk-sec h3 { color:var(--red); font-size:12px; font-weight:normal; margin-bottom:3px; }
+    .disk-sec p { color:var(--blue); font-size:12px; line-height:1.0; margin-bottom:6px; }
     .disk-sec kbd { background:var(--blue); color:#fff; padding:0 4px; }
     .disk-row { display:flex; gap:8px; flex-wrap:wrap; }
     .disk-row button { width:auto; }
-    #homeList { list-style:none; margin:6px 0 0; padding:0; max-height:120px; overflow:auto; color:var(--blue); font-size:16px; }
+    #homeList { list-style:none; margin:6px 0 0; padding:0; max-height:120px; overflow:auto; color:var(--blue); font-size:12px; }
     #homeList li { padding:1px 2px; }
-    #diskStatus { color:var(--red); font-size:16px; min-height:1.4em; padding:6px 2px 0; }
+    #diskStatus { color:var(--red); font-size:12px; min-height:1.4em; padding:6px 2px 0; }
 
     /* Terry transcript search window */
     #tsWin { display:flex; flex-direction:column; gap:8px; width:min(860px,94vw); height:min(82vh,720px); margin:0; padding:10px; }
     #tsBar { display:flex; gap:8px; align-items:center; flex:0 0 auto; }
     #tsQwrap { position:relative; flex:1 1 auto; min-width:0; display:flex; }
-    #tsQ { width:100%; min-width:0; font-family:'TempleOS','dos_vga',monospace; font-size:16px; color:#000; background:#fff;
+    #tsQ { width:100%; min-width:0; font-family:'TempleOS','dos_vga',monospace; font-size:12px; color:#000; background:#fff;
            border:2px solid #fff; outline:2px solid #000; padding:4px 36px 4px 8px; }
     #tsQ::-webkit-search-cancel-button { -webkit-appearance:none; appearance:none; display:none; }   /* the browser's emoji-ish ✕ */
     #tsClear { position:absolute; right:3px; top:50%; transform:translateY(-50%); width:auto; border:0; outline:0;
-               background:transparent; color:var(--blue); font-family:inherit; font-size:16px; line-height:1; padding:3px 8px; }
+               background:transparent; color:var(--blue); font-family:inherit; font-size:12px; line-height:1; padding:3px 8px; }
     #tsClear:hover { color:#fff; background:var(--red); }
     #tsQ:placeholder-shown + #tsClear { display:none; }   /* only show when there's something to clear */
     #tsCtl { display:flex; gap:10px; align-items:center; flex:0 0 auto; flex-wrap:wrap; }
     .ts-seg { display:flex; }
-    .ts-seg button { width:auto; font-size:16px; padding:2px 10px; background:#fff; color:var(--blue); border:2px solid var(--blue); }
+    .ts-seg button { width:auto; font-size:12px; padding:2px 10px; background:#fff; color:var(--blue); border:2px solid var(--blue); }
     .ts-seg button + button { border-left:0; }
     .ts-seg button.on { background:var(--blue); color:#fff; }
-    #tsCtl select { font-family:inherit; font-size:16px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:2px 6px; }
+    #tsCtl select { font-family:inherit; font-size:12px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:2px 6px; }
     #tsYearWrap { position:relative; }
-    #tsYearBtn { width:auto; font-size:16px; padding:2px 10px; }
+    #tsYearBtn { width:auto; font-size:12px; padding:2px 10px; }
     #tsYearPanel { display:none; position:absolute; left:0; top:calc(100% + 4px); z-index:6; background:#fff;
                    border:3px double var(--blue); padding:6px 12px; min-width:130px; max-height:280px; overflow:auto; }
     #tsYearPanel.open { display:block; }
-    #tsYearPanel label { display:flex; gap:6px; align-items:center; color:var(--blue); font-size:16px; padding:1px 0; white-space:nowrap; cursor:inherit; }
+    #tsYearPanel label { display:flex; gap:6px; align-items:center; color:var(--blue); font-size:12px; padding:1px 0; white-space:nowrap; cursor:inherit; }
     #tsYearPanel input { position:absolute; opacity:0; pointer-events:none; }   /* the [ ]/[X] text IS the checkbox (TempleOS style) */
     #tsYearPanel .cb::before { content:"[ ]"; white-space:pre; }
     #tsYearPanel input:checked + .cb::before { content:"[X]"; }
-    #tsYearPanel button { width:100%; margin-top:5px; font-size:16px; padding:1px 6px; }
-    .ts-sec { color:#fff; font-size:16px; padding:2px 2px 5px; }
+    #tsYearPanel button { width:100%; margin-top:5px; font-size:12px; padding:1px 6px; }
+    .ts-sec { color:#fff; font-size:12px; padding:2px 2px 5px; }
     #tsMore { width:100%; margin-top:2px; }
-    #tsStatus { flex:0 0 auto; color:var(--blue); font-size:16px; padding:0 2px; min-height:1.3em; }
+    #tsStatus { flex:0 0 auto; color:var(--blue); font-size:12px; padding:0 2px; min-height:1.3em; }
     #tsOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); padding:6px; }
-    #tsWin button { width:auto; font-size:16px; padding:2px 8px; }
+    #tsWin button { width:auto; font-size:12px; padding:2px 8px; }
     .ts-hit { display:block; background:#fff; margin:0 0 6px; padding:5px 8px; border:2px solid #fff; }
     .ts-hit:hover { border-color:yellow; }
     .ts-row { display:flex; align-items:baseline; gap:8px; }
-    .ts-t { color:var(--red); font-weight:bold; font-size:16px; text-decoration:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ts-t { color:var(--red); font-weight:bold; font-size:12px; text-decoration:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .ts-t:hover { text-decoration:underline; }
-    .ts-m { color:var(--blue); font-size:16px; white-space:nowrap; }
+    .ts-m { color:var(--blue); font-size:12px; white-space:nowrap; }
     .ts-act { margin-left:auto; display:flex; gap:4px; flex:0 0 auto; }
     .ts-act button { padding:0 6px; line-height:1.0; }
-    .ts-x { display:block; color:#16163a; font-size:16px; line-height:1.0; margin-top:2px; word-break:break-word; text-decoration:none; }
+    .ts-x { display:block; color:#16163a; font-size:12px; line-height:1.0; margin-top:2px; word-break:break-word; text-decoration:none; }
     .ts-x b { color:#fff; background:var(--red); font-weight:normal; padding:0 1px; }
-    .ts-none { color:#fff; font-size:16px; padding:8px; }
+    .ts-none { color:#fff; font-size:12px; padding:8px; }
     .ts-trh { display:flex; gap:6px; align-items:center; flex-wrap:wrap; position:sticky; top:-6px; background:var(--blue); padding:6px 0; z-index:1; }
-    .ts-trh a { color:yellow; font-size:16px; }
-    .ts-line { background:#fff; color:#16163a; font-size:16px; line-height:1.0; padding:2px 8px; word-break:break-word; }
+    .ts-trh a { color:yellow; font-size:12px; }
+    .ts-line { background:#fff; color:#16163a; font-size:12px; line-height:1.0; padding:2px 8px; word-break:break-word; }
     .ts-line .ts-ts { color:var(--red); text-decoration:underline; margin-right:6px; }
     .ts-line .ts-ts:hover { color:#fff; background:var(--red); }
     /* floating video windows (▶ in Terry Search): real TempleOS chrome via dress(); many at once */
     .vidwin { padding:6px; }
     .vidwin video { display:block; width:100%; max-height:62vh; background:#000; }
     .vidwin .ts-verr { background:#000; }
-    .ts-verr { color:#fff; padding:12px; font-size:16px; line-height:1.0; }
+    .ts-verr { color:#fff; padding:12px; font-size:12px; line-height:1.0; }
     .ts-verr a { color:yellow; }
-    .ts-verr button, .ts-convbar button { width:auto; font-size:16px; padding:2px 10px; }
+    .ts-verr button, .ts-convbar button { width:auto; font-size:12px; padding:2px 10px; }
     .ts-convst { color:yellow; min-height:1.3em; margin-top:8px; }
     .ts-convdone video { display:block; width:100%; max-height:62vh; background:#000; }
-    .ts-convbar { display:flex; gap:10px; align-items:center; background:#000; color:#fff; font-size:16px; padding:4px 8px; }
+    .ts-convbar { display:flex; gap:10px; align-items:center; background:#000; color:#fff; font-size:12px; padding:4px 8px; }
     .ts-convbar span:last-child { color:yellow; }
     /* [?] hover help: attribution + the operator cheatsheet, only when you ask for it */
-    #tsHelp { margin-left:auto; position:relative; color:var(--blue); font-size:16px; padding:2px 4px; user-select:none; }
+    #tsHelp { margin-left:auto; position:relative; color:var(--blue); font-size:12px; padding:2px 4px; user-select:none; }
     #tsHelpPop { display:none; position:absolute; right:0; top:calc(100% + 4px); z-index:7; width:min(430px, 80vw);
-                 background:#fff; border:3px double var(--blue); color:var(--blue); font-size:16px; line-height:1.0; padding:8px 12px; }
+                 background:#fff; border:3px double var(--blue); color:var(--blue); font-size:12px; line-height:1.0; padding:8px 12px; }
     #tsHelp:hover #tsHelpPop, #tsHelp.open #tsHelpPop { display:block; }
     /* links sitting on WHITE window backgrounds: red + underline (gold is for the blue/black surfaces) */
     #tsHelpPop a, #guide a, .disk-sec a, .ed-foot a, .ts-hit .ts-t { color:var(--red); text-decoration:underline; }
@@ -330,7 +330,7 @@
     body.stack #frame:not(.fsmode) { margin:3px auto; max-width:calc(98vw * var(--zi)); }
     body.stack canvas#canvas { width:min(calc(100vw * var(--zi) - 58px), 640px); height:auto; }
     body.stack header { max-width:none; }
-    body.stack #topbar { font-size:16px; }
+    body.stack #topbar { font-size:12px; }
     body.stack .terrywin img { height:120px; }
     body.stack .ed-body { flex-direction:column; }
     body.stack #editorWin { height:calc(94vh * var(--zi)); }
