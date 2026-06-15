@@ -24,20 +24,24 @@ for (let g = 0; g < 256; g++) for (let r = 0; r < 8; r++) if (rowByte(g, r) !== 
 console.log(mism === 0 ? "cross-check OK: FontStd.HC matches hemu font.js (authentic)" : `WARN: ${mism} byte mismatches vs font.js`);
 
 // --- build the TTF ---
-const EM = 1024, PX = EM / 8;                       // 8x8 cell scaled to a 1024 em (128 units/pixel)
-const rect = (path, x0, x1, yTop) => { const y0 = (7 - yTop) * PX, y1 = (8 - yTop) * PX; // row index -> font y (baseline at cell bottom)
+// SCALE makes the 8x8 cell occupy SCALE of the em, so it renders at SCALE x the CSS font-size — sized to
+// match the dos_vga it replaces (~0.56 em wide) instead of filling the whole em (which was ~1.8x too big).
+// Baseline sits at the bottom of row 6, so row 7 is the descender (g/p/y/; hang below) — natural metrics.
+const EM = 1024, SCALE = +(process.argv[3]) || 0.5625, PX = Math.round(EM / 8 * SCALE);  // 72 units/pixel
+const ADV = 8 * PX, ASC = 7 * PX, DESC = -PX;
+const rect = (path, x0, x1, r) => { const y0 = (6 - r) * PX, y1 = (7 - r) * PX;          // row r -> font y (baseline = bottom of row 6)
   path.moveTo(x0 * PX, y0); path.lineTo(x1 * PX, y0); path.lineTo(x1 * PX, y1); path.lineTo(x0 * PX, y1); path.close(); };
 const glyphFor = (g) => { const path = new opentype.Path();
   for (let r = 0; r < 8; r++) { const b = rowByte(g, r); let c = 0;
     while (c < 8) { if (b & (1 << c)) { let e = c; while (e < 8 && (b & (1 << e))) e++; rect(path, c, e, r); c = e; } else c++; } }
   return path; };
 
-const glyphs = [new opentype.Glyph({ name: ".notdef", unicode: 0, advanceWidth: EM, path: new opentype.Path() })];
+const glyphs = [new opentype.Glyph({ name: ".notdef", unicode: 0, advanceWidth: ADV, path: new opentype.Path() })];
 for (let c = 0x20; c <= 0x7e; c++)                  // printable ASCII (covers all site UI text)
-  glyphs.push(new opentype.Glyph({ name: "u" + c.toString(16), unicode: c, advanceWidth: EM, path: glyphFor(c) }));
+  glyphs.push(new opentype.Glyph({ name: "u" + c.toString(16), unicode: c, advanceWidth: ADV, path: glyphFor(c) }));
 
 const font = new opentype.Font({ familyName: "TempleOS", styleName: "Regular", unitsPerEm: EM,
-  ascender: EM, descender: 0, glyphs });
+  ascender: ASC, descender: DESC, glyphs });
 const ttf = Buffer.from(font.toArrayBuffer());
 writeFileSync("fonts/templeos.ttf", ttf);
 console.log(`wrote fonts/templeos.ttf (${ttf.length} bytes, ${glyphs.length} glyphs)`);
