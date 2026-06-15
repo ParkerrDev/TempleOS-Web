@@ -27,7 +27,7 @@ console.log(mism === 0 ? "cross-check OK: FontStd.HC matches hemu font.js (authe
 // SCALE makes the 8x8 cell occupy SCALE of the em, so it renders at SCALE x the CSS font-size — sized to
 // match the dos_vga it replaces (~0.56 em wide) instead of filling the whole em (which was ~1.8x too big).
 // Baseline sits at the bottom of row 6, so row 7 is the descender (g/p/y/; hang below) — natural metrics.
-const EM = 1024, SCALE = +(process.argv[3]) || 0.5625, PX = Math.round(EM / 8 * SCALE);  // 72 units/pixel
+const EM = 1024, SCALE = +(process.argv[3]) || 1.0, PX = Math.round(EM / 8 * SCALE);     // 128 units/pixel — matches the old templeos_font (advance/em = 1.0)
 const ADV = 8 * PX, ASC = 7 * PX, DESC = -PX;
 const rect = (path, x0, x1, r) => { const y0 = (6 - r) * PX, y1 = (7 - r) * PX;          // row r -> font y (baseline = bottom of row 6)
   path.moveTo(x0 * PX, y0); path.lineTo(x1 * PX, y0); path.lineTo(x1 * PX, y1); path.lineTo(x0 * PX, y1); path.close(); };
