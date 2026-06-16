@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HolyC Formatter · holyc-fmt</title>
+<meta name="description" content="Format HolyC source to the canonical TempleOS style, in your browser. Powered by holyc-fmt — a formatter written in HolyC and run via the holyc-wasm compiler." />
+<style>
+  @font-face { font-family:'TempleOS'; src:url('fonts/templeos.ttf?v=4') format('truetype'); }
+  @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); }
+  :root { --blue:#0000A8; --red:rgb(161,6,8); }
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'TempleOS','dos_vga',"Courier New",monospace;
+      -webkit-font-smoothing:none; text-rendering:optimizeSpeed; }
+  body { background:var(--blue); color:#fff; font-size:12px; line-height:1.0; min-height:100vh; padding:14px; }
+  a { color:yellow; }
+  header { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  header h1 { font-size:16px; font-weight:normal; }
+  header .sub { color:#cdd6ff; }
+  header .home { margin-left:auto; }
+  .bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+  button, .filelbl { font-size:12px; height:26px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000;
+      padding:0 9px; cursor:pointer; display:inline-flex; align-items:center; white-space:nowrap; }
+  button:hover:not(:disabled), .filelbl:hover { color:#fff; background:#000; }
+  button:disabled { opacity:.45; cursor:default; }
+  button.go { background:var(--red); color:#fff; border-color:var(--red); outline-color:#000; }
+  select { font-size:12px; height:26px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:0 4px; }
+  label.opt { color:#cdd6ff; }
+  #file { display:none; }
+  .panes { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:760px){ .panes{ grid-template-columns:1fr; } }
+  .pane { display:flex; flex-direction:column; min-width:0; border:3px double #fff; background:#fff; }
+  .pane .h { background:var(--blue); color:#fff; padding:3px 8px; display:flex; justify-content:space-between; }
+  textarea { flex:1 1 auto; min-height:62vh; width:100%; resize:vertical; border:0; outline:none; padding:8px;
+      font-family:'TempleOS','dos_vga',monospace; font-size:13px; line-height:1.0; color:#16163a; background:#fff;
+      white-space:pre; overflow:auto; tab-size:2; }
+  #out { background:#f4f6ff; }
+  .pane.drop { outline:3px dashed yellow; outline-offset:-6px; }
+  #status { color:yellow; min-height:1em; margin-top:8px; }
+  /* the inverting TempleOS pointer (same as the main site) */
+  #xcursor { position:fixed; left:0; top:0; width:18px; height:18px; z-index:2147483647; pointer-events:none;
+      display:none; will-change:transform; image-rendering:pixelated; background:url('assets/cursor.png') no-repeat top left;
+      filter:brightness(0) invert(1); mix-blend-mode:difference; }
+  body.xc #xcursor { display:block; } body.xc, body.xc * { cursor:none !important; }
+</style>
+</head>
+<body>
+<div id="xcursor" aria-hidden="true"></div>
+<header>
+  <h1>HolyC Formatter</h1>
+  <span class="sub">holyc-fmt — a formatter written in HolyC, run in your browser</span>
+  <span class="home"><a href="index.html">← TempleOS</a></span>
+</header>
+
+<div class="bar">
+  <label class="filelbl" for="file">↥ Open .HC</label>
+  <input id="file" type="file" accept=".HC,.hc,.txt,text/plain" />
+  <button id="sample">Load sample</button>
+  <span style="flex:1"></span>
+  <label class="opt">Indent:
+    <select id="indent">
+      <option value="2">2 spaces</option>
+      <option value="4">4 spaces</option>
+      <option value="tab">tabs</option>
+    </select>
+  </label>
+  <button id="fmt" class="go">⊹ Format →</button>
+</div>
+
+<div class="panes">
+  <div class="pane" id="inPane">
+    <div class="h"><span>HolyC source</span><span class="sub" id="inInfo">paste, or drop a .HC file</span></div>
+    <textarea id="in" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"
+      placeholder="// paste HolyC here, Open a .HC file, or drop one onto this box"></textarea>
+  </div>
+  <div class="pane">
+    <div class="h"><span>Formatted</span><span><button id="copy" style="height:20px;padding:0 6px">⧉ Copy</button> <button id="dl" style="height:20px;padding:0 6px">↓ Save</button></span></div>
+    <textarea id="out" spellcheck="false" readonly wrap="off" placeholder="formatted output appears here"></textarea>
+  </div>
+</div>
+<div id="status"></div>
+
+<script type="module">
+  import { formatHolyC } from "./holyfmt.js";
+  const $ = (id) => document.getElementById(id);
+  const inp = $("in"), out = $("out"), st = $("status");
+  const setSt = (s, err) => { st.textContent = s; st.style.color = err ? "#ff8" : "yellow"; };
+
+  const SAMPLE =
+`// messy indentation/spacing — Format fixes it (2-space grid, if/switch spacing, case)
+U0 Fib(I64 n)
+{
+I64 a=0,b=1,t,i;
+for(i=0;i<n;i++){
+"%d\\n",a;
+t=a+b;
+a=b;
+b=t;
+}
+switch(n){
+case 0:
+"zero\\n";
+break;
+default:
+"n=%d\\n",n;
+}
+}
+Fib(10);`;
+  $("sample").addEventListener("click", () => { inp.value = SAMPLE; setSt("loaded sample"); });
+
+  const opts = () => { const v = $("indent").value; return v === "tab" ? { tabs:true } : { indent:+v }; };
+
+  async function doFormat() {
+    const src = inp.value;
+    if (!src.trim()) { setSt("nothing to format"); return; }
+    const btn = $("fmt"); btn.disabled = true; setSt("formatting…");
+    try {
+      const t = performance.now();
+      out.value = await formatHolyC(src, opts());
+      setSt(`formatted in ${Math.round(performance.now()-t)} ms · ${out.value.split(String.fromCharCode(10)).length} lines`);
+    } catch (e) { setSt("error: " + e.message, true); }
+    finally { btn.disabled = false; }
+  }
+  $("fmt").addEventListener("click", doFormat);
+
+  // file open + drag/drop
+  const loadFile = async (f) => {
+    if (!f) return;
+    const txt = await f.text();
+    if (txt.indexOf(String.fromCharCode(0)) !== -1) { setSt("that file has embedded binary (DolDoc sprite) — text only", true); return; }
+    inp.value = txt; $("inInfo").textContent = f.name; setSt("opened " + f.name);
+  };
+  $("file").addEventListener("change", (e) => loadFile(e.target.files[0]));
+  const pane = $("inPane");
+  pane.addEventListener("dragover", (e) => { e.preventDefault(); pane.classList.add("drop"); });
+  pane.addEventListener("dragleave", () => pane.classList.remove("drop"));
+  pane.addEventListener("drop", (e) => { e.preventDefault(); pane.classList.remove("drop"); loadFile(e.dataTransfer.files[0]); });
+
+  // copy / download
+  $("copy").addEventListener("click", async () => {
+    if (!out.value) return;
+    try { await navigator.clipboard.writeText(out.value); setSt("copied"); }
+    catch { out.select(); document.execCommand("copy"); setSt("copied"); }
+  });
+  $("dl").addEventListener("click", () => {
+    if (!out.value) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([out.value], { type:"text/plain" }));
+    a.download = "Formatted.HC"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); setSt("saved Formatted.HC");
+  });
+
+  // Ctrl/Cmd+Enter to format
+  inp.addEventListener("keydown", (e) => { if ((e.ctrlKey||e.metaKey) && e.key === "Enter") { e.preventDefault(); doFormat(); } });
+
+  // the inverting TempleOS pointer (desktop)
+  if (!(navigator.maxTouchPoints > 0 || "ontouchstart" in window)) {
+    const xc = $("xcursor"); document.body.classList.add("xc");
+    addEventListener("mousemove", (e) => { xc.style.transform = `translate(${e.clientX}px,${e.clientY}px)`; }, true);
+    document.addEventListener("mouseleave", () => xc.style.visibility = "hidden");
+    document.addEventListener("mouseenter", () => xc.style.visibility = "visible");
+  }
+</script>
+</body>
+</html>

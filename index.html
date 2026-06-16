@@ -431,6 +431,7 @@
       <div class="ed-bar">
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
         <button id="runBtn">▶ Run</button>
+        <button id="edFmt" title="Reformat to the canonical TempleOS style with holyc-fmt (a HolyC formatter, run in-browser)">⊹ Format</button>
         <button id="edSave" title="Download the source as a .HC file">↓ Save</button>
         <button id="edOpen" title="Open a .HC file from your computer">↥ Open</button>
         <button id="edToDisk" title="Write the source to /Home on the C: drive so TempleOS can run it">➜ To C:/Home</button>
@@ -448,7 +449,7 @@
           <pre id="console"></pre>
         </section>
       </div>
-      <div class="ed-foot">Click the screen to enable sound &amp; send keyboard/mouse to the program. Compiled with holyc-wasm — no emulation.</div>
+      <div class="ed-foot">Click the screen to enable sound &amp; send keyboard/mouse to the program. Compiled with holyc-wasm — no emulation. · <a href="format.html" target="_blank" rel="noopener" style="color:yellow">Formatter page ↗</a></div>
     </div>
   </div>
 
@@ -1836,6 +1837,21 @@ I64 GodDoodleGen(I64 strokes)
         const name = prompt("Write to C:/Home as:", curName()); if (!name) return;
         if (window.__uploadToHome) { window.__uploadToHome(name, ta.value); setStatus("writing " + name + " to C:/Home…"); }
         else setStatus("engine not ready");
+      });
+      // Format: reformat the editor source with holyc-fmt (the HolyC formatter, run in-browser)
+      const fmtBtn = document.getElementById("edFmt");
+      fmtBtn.addEventListener("click", async () => {
+        if (fmtBtn.disabled) return;
+        const src = ta.value;
+        if (!src.trim()) { setStatus("nothing to format"); return; }
+        fmtBtn.disabled = true; setStatus("formatting…");
+        try {
+          const { formatHolyC } = await import("./holyfmt.js");   // holyc-fmt, compiled+run in-browser
+          const out = await formatHolyC(src, { indent: 2 });
+          if (out && out !== src) { ta.value = out; ta.dispatchEvent(new Event("input")); setStatus("formatted ✓"); }
+          else setStatus("already formatted ✓");
+        } catch (e) { setStatus("format error: " + e.message); }
+        finally { fmtBtn.disabled = false; }
       });
     })();
 
