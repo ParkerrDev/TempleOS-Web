@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "disk-fix-5 (run cmd uses relative name, no ~ tilde)";
+    window.__BUILD = "paste-1 (Ctrl/Cmd+V pastes clipboard into the OS as scancodes)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -698,7 +698,7 @@
     let focused = false, sawEscDown = 0;
     const btnBit = e => e.button === 0 ? 1 : e.button === 2 ? 2 : 0;
     const setFocused = (on) => { if (focused === on) return; focused = on;
-      tbKey.textContent = on ? "focused · keys → OS · Esc to OS" : "click the screen to use the OS"; };
+      tbKey.textContent = on ? "focused · keys → OS · Ctrl+V pastes · Esc to OS" : "click the screen to use the OS"; };
     // map an absolute mouse event over the canvas into 0..639 / 0..479
     const overCanvas = (e) => { const r = canvas.getBoundingClientRect();
       return e.clientX >= r.left && e.clientX < r.right && e.clientY >= r.top && e.clientY < r.bottom ? r : null; };
@@ -733,11 +733,54 @@
     };
     addEventListener("keydown", e => {
       if (!keysToOS(e)) return;
+      if ((e.ctrlKey || e.metaKey) && e.code === "KeyV") return;   // Ctrl/Cmd+V: don't send a V scancode — let the browser's paste event fire (handled below)
       if (e.code === "Escape") { sawEscDown = performance.now(); if (!e.repeat) { pushKey(0x01); pushKey(0x81); } e.preventDefault(); return; }
       if (e.ctrlKey && e.code === "BracketLeft") { pushKey(0x01); pushKey(0x81); e.preventDefault(); return; }  // legacy in-OS Esc
       const s = SC[e.code]; if (s !== undefined) { if (!e.repeat) pushKey(s); e.preventDefault(); }
     });
     addEventListener("keyup", e => { if (!keysToOS(e)) return; const s = SC[e.code]; if (s !== undefined && e.code !== "Escape") { pushKey(s | 0x80); e.preventDefault(); } });
+
+    // ---- paste INTO the OS (Ctrl/Cmd+V): convert clipboard text to US-layout set-1 scancodes and feed
+    //      the key queue. This types each char EXACTLY (incl. ~, ", etc.) regardless of the user's real
+    //      keyboard layout — the fix for "~ comes out as a quote" and for pasting commands/code. ----
+    const CHAR2SC = (() => {
+      const m = {}, L = { a:0x1E,b:0x30,c:0x2E,d:0x20,e:0x12,f:0x21,g:0x22,h:0x23,i:0x17,j:0x24,k:0x25,l:0x26,m:0x32,n:0x31,o:0x18,p:0x19,q:0x10,r:0x13,s:0x1F,t:0x14,u:0x16,v:0x2F,w:0x11,x:0x2D,y:0x15,z:0x2C };
+      for (const c in L) { m[c] = [L[c], 0]; m[c.toUpperCase()] = [L[c], 1]; }                 // letters (+ Shift for caps)
+      const DSC = [0x0B,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A], DSH = ")!@#$%^&*(";      // digits + their shifted symbols
+      for (let i = 0; i < 10; i++) { m[String(i)] = [DSC[i], 0]; m[DSH[i]] = [DSC[i], 1]; }
+      Object.assign(m, { "-":[0x0C,0],"_":[0x0C,1],"=":[0x0D,0],"+":[0x0D,1],"[":[0x1A,0],"{":[0x1A,1],"]":[0x1B,0],"}":[0x1B,1],
+        ";":[0x27,0],":":[0x27,1],"'":[0x28,0],'"':[0x28,1],"`":[0x29,0],"~":[0x29,1],"\\":[0x2B,0],"|":[0x2B,1],
+        ",":[0x33,0],"<":[0x33,1],".":[0x34,0],">":[0x34,1],"/":[0x35,0],"?":[0x35,1]," ":[0x39,0],"\t":[0x0F,0] });
+      return m;
+    })();
+    let pasting = false;
+    async function pasteToOS(text) {
+      if (!text || pasting) return;
+      pasting = true;
+      keyq.push(0x9D | ent(), 0xAA | ent(), 0xB6 | ent()); notifyInput();   // release Ctrl/Shift held from the Ctrl+V chord
+      await new Promise((r) => setTimeout(r, 250));            // let the prompt/AutoComplete settle before the first key
+      for (const ch of text) {
+        if (ch === "\n" || ch === "\r") keyq.push(0x1C | ent(), 0x9C | ent());   // newline -> Enter
+        else { const e = CHAR2SC[ch]; if (!e) continue;        // skip anything we can't map
+          const sc = e[0];
+          if (e[1]) keyq.push(0x2A | ent());                   // Shift down
+          keyq.push(sc | ent()); notifyInput();                // key DOWN
+          await new Promise((r) => setTimeout(r, 45));         // hold the key a human-ish moment before release
+          keyq.push((sc | 0x80) | ent());                      // key UP
+          if (e[1]) keyq.push(0xAA | ent()); }                 // Shift up
+        notifyInput();
+        await new Promise((r) => setTimeout(r, 65));           // gap between chars — a scancode burst overruns the OS line-editor/AutoComplete ("#include"->"slude")
+      }
+      pasting = false;
+    }
+    addEventListener("paste", (e) => {
+      if (!keysToOS(e)) return;                                 // only when keystrokes are routed to the OS (not the editor/search box)
+      const cd = e.clipboardData || window.clipboardData;
+      const text = cd && cd.getData("text");
+      if (!text) return;
+      e.preventDefault();
+      pasteToOS(text);
+    });
 
     // ---- fullscreen, mobile included. Real Fullscreen API where available; iPhone Safari has
     //      none for elements, so we pin the frame over the viewport ("fakefs"). In either mode
