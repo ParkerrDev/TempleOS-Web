@@ -220,8 +220,9 @@
     #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:12px; line-height:1.0; white-space:pre-wrap; word-break:break-word; }
     .ed-foot { flex:0 0 auto; color:var(--blue); font-size:12px; padding:1px 2px 0; }
     /* ---- game mode: editor overlay shows just a big canvas (driven by the Games launcher) ---- */
-    #gameBack { display:none; width:auto; } #gameTitle { display:none; color:var(--blue); align-self:center; padding:0 6px; }
+    #gameBack, #gameToDisk { display:none; width:auto; } #gameTitle { display:none; color:var(--blue); align-self:center; padding:0 6px; }
     #editorOverlay.gamemode #gameBack { display:inline-flex; }
+    #editorOverlay.gamemode #gameToDisk { display:inline-flex; }
     #editorOverlay.gamemode #gameTitle { display:inline; }
     #editorOverlay.gamemode #demoSelect, #editorOverlay.gamemode #edFmt, #editorOverlay.gamemode #edSave,
     #editorOverlay.gamemode #edOpen, #editorOverlay.gamemode #edToDisk { display:none; }
@@ -448,6 +449,7 @@
       <span class="close" id="editorClose" title="Close editor">[X]</span>
       <div class="ed-bar">
         <button id="gameBack" title="Back to the games list">← Games</button>
+        <button id="gameToDisk" title="Write this game to the real TempleOS C: drive (with TOS_NATIVE) so you can run it in the OS itself">▤ To TempleOS disk</button>
         <span id="gameTitle"></span>
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
         <button id="runBtn">▶ Run</button>
@@ -1915,6 +1917,8 @@ I64 GodDoodleGen(I64 strokes)
         b.addEventListener("click", () => play(g));
         c.appendChild(b); grid.appendChild(c);
       }
+      let curGame = null;
+      const setStatus = (s) => { const st = document.getElementById("status"); if (st) st.textContent = s; };
       function openGames() { ovG.classList.add("open"); if (window.__winChrome) window.__winChrome.raise(ovG); }
       function closeGames() { ovG.classList.remove("open"); }
       document.getElementById("gamesBtn").addEventListener("click", openGames);
@@ -1922,7 +1926,7 @@ I64 GodDoodleGen(I64 strokes)
       ovG.addEventListener("mousedown", (e) => { if (e.target === ovG) closeGames(); });
 
       async function play(g) {
-        const setStatus = (s) => { const st = document.getElementById("status"); if (st) st.textContent = s; };
+        curGame = g;
         closeGames();
         ovE.classList.add("open", "gamemode");
         if (window.__winChrome) window.__winChrome.raise(ovE);
@@ -1941,6 +1945,45 @@ I64 GodDoodleGen(I64 strokes)
           }, 80);
         } catch (e) { setStatus("install failed: " + e.message); }
       }
+
+      // a small TempleOS-styled toast — the game loop rewrites #status every second,
+      // so the "how to run it" instruction needs its own durable, dismissable home.
+      function toast(html, ms = 11000) {
+        let t = document.getElementById("gmToast");
+        if (!t) {
+          t = document.createElement("div"); t.id = "gmToast";
+          t.style.cssText = "position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:99999;"
+            + "max-width:min(680px,92vw);background:#fff;color:var(--blue);border:3px double var(--blue);"
+            + "box-shadow:0 6px 26px rgba(0,0,0,.45);padding:10px 34px 11px 14px;font-size:13px;line-height:1.4;";
+          const x = document.createElement("button");
+          x.textContent = "✕"; x.title = "dismiss";
+          x.style.cssText = "position:absolute;top:3px;right:5px;min-width:0;border:0;outline:0;background:transparent;color:var(--blue);font-size:14px;line-height:1;padding:2px 4px;";
+          x.addEventListener("click", () => t.remove());
+          const body = document.createElement("div"); body.id = "gmToastBody";
+          t.appendChild(x); t.appendChild(body); document.body.appendChild(t);
+        }
+        document.getElementById("gmToastBody").innerHTML = html;
+        clearTimeout(t._timer); t._timer = setTimeout(() => t.remove(), ms);
+      }
+
+      // write the running game to the real TempleOS C: drive, with TOS_NATIVE defined so it
+      // compiles against the OS's own graphics (dc->body) and runs in HEMU.
+      document.getElementById("gameToDisk").addEventListener("click", () => {
+        if (!curGame) return;
+        const base = curGame.file.replace(/\.HC$/i, "");
+        const src = "#define TOS_NATIVE 1\n" + document.getElementById("editor").value;
+        if (window.__uploadToHome) {
+          window.__uploadToHome(curGame.file, src);
+          toast('Wrote <b>~/' + curGame.file + '</b> to the TempleOS C: drive.<br>'
+            + 'Switch to the OS window, then run:<br>'
+            + '<code style="display:inline-block;margin-top:5px;background:var(--blue);color:#fff;padding:2px 7px">'
+            + '#include "~/' + base + '"</code>');
+          setStatus('wrote ~/' + curGame.file + ' to C:');
+        } else {
+          toast("The TempleOS engine isn't ready yet — open the <b>Disk</b> window and let the OS finish booting, then try again.");
+          setStatus("OS engine not ready");
+        }
+      });
     })();
 
     // ---- lightweight HolyC syntax highlighter for the editor ----

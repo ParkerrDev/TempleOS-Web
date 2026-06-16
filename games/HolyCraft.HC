@@ -1,25 +1,41 @@
-// HolyCraft — a tiny voxel sandbox (Minecraft-ish) written in HolyC, compiled to
-// WebAssembly by holyc-wasm and run in the browser.
+// HolyCraft — a tiny voxel sandbox (Minecraft-ish) written in HolyC.
 //
 // Everything is CPU-bound (software rendering, single thread), so it is built for
 // speed: a per-pixel voxel raycaster (3D DDA, Amanatides & Woo) renders into a small
-// 8-bit indexed buffer in WASM memory with NO host calls in the hot loop, then one
-// GrSprite() blits that buffer scaled to fill the 640x480 screen each frame.
-//   128*5 = 640, 96*5 = 480  -> the low-res frame fills the screen exactly.
+// 8-bit indexed buffer in memory with NO host calls in the hot loop, then that buffer
+// is blitted scaled to fill the 640x480 screen each frame.
 //
-// Controls:  W/S move   A/D strafe   R/F up/down   J/L turn   I/K look
-//            move the MOUSE to look · LEFT-click break · RIGHT-click place
-//            1..7 pick block   Esc quit
-
-#define RES_W   128          // internal render width  (x5 = 640)
-#define RES_H   96           // internal render height (x5 = 480)
+// Controls:  W/S move   A/D strafe   R/F up/down (toggle fly with G)   J/L turn   I/K look
+//            (in the browser you can also LOOK with the MOUSE)
+//            LEFT-click break · RIGHT-click place · 1..7 pick block · Esc quit
+//
+// Two build targets, picked by #ifdef TOS_NATIVE:
+//   default          -> holyc-wasm (the in-browser Games launcher): present via GrSprite,
+//                       look with the mouse, input via ScanChar/KeyGet.
+//   #define TOS_NATIVE -> real TempleOS (run from the C: disk in HEMU): renders through the
+//                       standard Fs->draw_it callback (like Demo/Games/Halogen.HC), input via
+//                       ScanMsg(MSG_KEY_DOWN); look with J/L/I/K or the arrow keys. A smaller
+//                       frame because the x86 emulator is much slower than native WASM.
+#ifdef TOS_NATIVE
+#define RES_W   80           // x8 = 640
+#define RES_H   60           // x8 = 480
+#define SCALE   8
+#else
+#define RES_W   128          // x5 = 640
+#define RES_H   96           // x5 = 480
 #define SCALE   5
-#define WX      64           // world size
-#define WZ      64
+#endif
+#define WX      128           // world size
+#define WZ      128
 #define WY      40
 #define WATER   5
-#define RDIST   24.0         // render distance (ray units) -> fog horizon
-#define MAXSTEP 96           // DDA step cap per ray
+#define RDIST   36.0         // render distance (WORLD units) -> fog horizon
+#define FOGMID  12.0         // start side-face darkening
+#define FOGFAR  22.0         // far -> darkest tone
+#define MAXSTEP 110          // DDA step cap per ray
+#define EYE     1.62         // eye height above the feet
+#define GRAV    0.020        // gravity per frame
+#define JUMP    0.33         // jump impulse
 
 U8  *g_world = NULL;         // WX*WZ*WY voxels, 0 = air
 U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame
@@ -30,6 +46,9 @@ I64  g_sel  = 1;             // selected block to place
 I64  g_plb  = 0, g_prb = 0;  // previous mouse button states (edge detect)
 // movement timers (refreshed by key events, decay each frame -> smooth hold via key-repeat)
 I64  g_tf,g_tb,g_tl,g_tr,g_tu,g_td,g_tjl,g_tjr,g_tpu,g_tpd;
+F64  g_vy = 0.0;             // vertical velocity (gravity)
+I64  g_fly = 0;             // creative fly toggle ('g')
+I64  g_onground = 0, g_quit = 0;
 
 I64 WIdx(I64 x, I64 y, I64 z)
 {
@@ -102,16 +121,11 @@ U0 Init()
   g_ramp  = MAlloc(8*3);
   SetRamp();
   GenWorld();
-  // spawn on the highest column near the middle so you start on land with a view
-  I64 sx,sz,bestx=WX/2,bestz=WZ/2,besth=0;
-  for (sx=WX/2-12; sx<WX/2+12; sx++)
-    for (sz=WZ/2-12; sz<WZ/2+12; sz++) {
-      I64 hh=HeightAt(sx,sz);
-      if (hh>besth) { besth=hh; bestx=sx; bestz=sz; }
-    }
-  g_px = bestx+0.5; g_pz = bestz+0.5;
-  g_py = besth + 1.7;
-  g_yaw = 0.7; g_pitch = -0.18;
+  // spawn standing in the middle: drop in from just above the ground, gravity settles you
+  g_px = WX/2 + 0.5; g_pz = WZ/2 + 0.5;
+  g_py = HeightAt(WX/2, WZ/2) + EYE + 3.0;
+  g_vy = 0.0; g_fly = 0; g_onground = 0;
+  g_yaw = 0.7; g_pitch = -0.06;
 }
 
 // ----- the renderer: one 3D-DDA ray per pixel into g_fb -----
@@ -135,6 +149,8 @@ U0 RenderFrame()
     for (sx=0; sx<RES_W; sx++) {
       F64 dx=bx+rgx*cx, dy=by, dz=bz+rgz*cx;
       cx+=cstep;
+      F64 ln=Sqrt(dx*dx+dy*dy+dz*dz);   // normalize so t == true world distance
+      dx=dx/ln; dy=dy/ln; dz=dz/ln;     // (else fog/render-distance wobble per column -> sky strips)
       // 3D DDA setup
       I64 ix=bix, iy=biy, iz=biz;
       F64 adx=Abs(dx), ady=Abs(dy), adz=Abs(dz);
@@ -165,7 +181,7 @@ U0 RenderFrame()
         I64 tone;
         if (axis==1) { if (sty<0) tone=0; else tone=2; }   // top bright, bottom dark
         else tone=1;                                        // x/z side
-        if (t>15.0) tone=2; else if (t>8.0 && tone<1) tone=1;   // distance darkening
+        if (t>FOGFAR) tone=2; else if (t>FOGMID && tone<1) tone=1;   // distance darkening
         col=g_ramp[bt*3+tone];
       } else col=skytone;
       g_fb[row+sx]=col;
@@ -215,40 +231,65 @@ I64 PickTarget()
   return 0;
 }
 
-U0 TryMove(F64 mx, F64 my, F64 mz)
+I64 PlayerHits(F64 fx, F64 fy, F64 fz)
+{//does the player (eye at fx,fy,fz; ~1.7 tall) overlap a solid voxel?
+  I64 cx=Floor(fx), cz=Floor(fz);
+  if (Solid(cx, Floor(fy-EYE),     cz)) return 1;   // feet
+  if (Solid(cx, Floor(fy-EYE+1.5), cz)) return 1;   // chest/head
+  return 0;
+}
+
+// one character keystroke -> game action (shared by both input back-ends)
+U0 KeyDown(I64 ch)
 {
-  if (!Solid(Floor(g_px+mx), Floor(g_py), Floor(g_pz))) g_px+=mx;
-  if (!Solid(Floor(g_px), Floor(g_py), Floor(g_pz+mz))) g_pz+=mz;
-  if (!Solid(Floor(g_px), Floor(g_py+my), Floor(g_pz))) g_py+=my;
+  if (ch=='w') g_tf=4;  else if (ch=='s') g_tb=4;
+  else if (ch=='a') g_tl=4;  else if (ch=='d') g_tr=4;
+  else if (ch=='j') g_tjl=4; else if (ch=='l') g_tjr=4;
+  else if (ch=='i') g_tpu=4; else if (ch=='k') g_tpd=4;
+  else if (ch=='r') g_tu=4;  else if (ch=='f') g_td=4;        // fly up/down (press 'g' to fly)
+  else if (ch==' ') { if (g_onground && !g_fly) { g_vy=JUMP; g_onground=0; } }   // jump
+  else if (ch=='g') { g_fly=1-g_fly; g_vy=0.0; }              // toggle creative fly
+  else if ('1'<=ch<='7') g_sel=ch-'0';
+  else if (ch==0x1b) g_quit=1;                                // Esc (CH_ESC) quits
 }
 
 U0 HandleInput()
 {
   I64 ch;
+#ifdef TOS_NATIVE
+  // real TempleOS: drain the message queue (non-blocking). Letters carry a char (arg1);
+  // arrow keys carry char 0 + a scancode (arg2) -> use them to look/turn. We pump KEY_UP too
+  // (and ignore it) so released-key messages don't pile up in the task queue. Movement is
+  // held via key-repeat refreshing the per-direction timers, like the browser build.
+  I64 a1, a2, msg;
+  while (msg = ScanMsg(&a1, &a2, 1<<MSG_KEY_DOWN | 1<<MSG_KEY_UP)) {
+    if (msg==MSG_KEY_DOWN) {
+      ch = a1;
+      if (ch) KeyDown(ch);
+      else {
+        I64 sc = a2.u8[0];
+        if      (sc==SC_CURSOR_LEFT)  g_tjl=4;
+        else if (sc==SC_CURSOR_RIGHT) g_tjr=4;
+        else if (sc==SC_CURSOR_UP)    g_tpu=4;
+        else if (sc==SC_CURSOR_DOWN)  g_tpd=4;
+      }
+      if (g_quit) return;
+    }
+  }
+#else
   while (ScanChar()) {            // peek (ScanChar does NOT consume in this runtime)...
     ch = KeyGet();               // ...so KeyGet() consumes the char (won't block, one is ready)
-    if (ch=='w') g_tf=4;  else if (ch=='s') g_tb=4;
-    else if (ch=='a') g_tl=4;  else if (ch=='d') g_tr=4;
-    else if (ch=='r') g_tu=4;  else if (ch=='f') g_td=4;
-    else if (ch=='j') g_tjl=4; else if (ch=='l') g_tjr=4;
-    else if (ch=='i') g_tpu=4; else if (ch=='k') g_tpd=4;
-    else if ('1'<=ch<='7') g_sel=ch-'0';
-    else if (ch==0x1b) { g_py=-9999.0; return; }   // Esc -> sentinel to quit
+    KeyDown(ch);
+    if (g_quit) return;
   }
-  // mouse look: rate by distance from screen centre (dead zone)
-  I64 mx=ms.pos.x, my=ms.pos.y;
-  F64 dxm=(mx-320)/320.0, dym=(my-240)/240.0;
-  if (dxm>0.12||dxm<-0.12) g_yaw   += dxm*0.06;
-  if (dym>0.12||dym<-0.12) g_pitch -= dym*0.05;
+  // mouse look (browser): turn/pitch rate by distance from screen centre (dead zone)
+  F64 dxm=(ms.pos.x-320)/320.0, dym=(ms.pos.y-240)/240.0;
+  if (dxm>0.14||dxm<-0.14) g_yaw   += dxm*0.06;
+  if (dym>0.14||dym<-0.14) g_pitch -= dym*0.05;
+#endif
 
-  F64 spd=0.18, rot=0.05;
-  F64 cy=Cos(g_yaw), sy=Sin(g_yaw);
-  if (g_tf>0){TryMove(sy*spd,0,cy*spd);  g_tf--;}
-  if (g_tb>0){TryMove(-sy*spd,0,-cy*spd);g_tb--;}
-  if (g_tl>0){TryMove(-cy*spd,0,sy*spd); g_tl--;}
-  if (g_tr>0){TryMove(cy*spd,0,-sy*spd); g_tr--;}
-  if (g_tu>0){TryMove(0,spd,0);  g_tu--;}
-  if (g_td>0){TryMove(0,-spd,0); g_td--;}
+  // ---- everything below is shared ----
+  F64 rot=0.05;
   if (g_tjl>0){g_yaw-=rot; g_tjl--;}
   if (g_tjr>0){g_yaw+=rot; g_tjr--;}
   if (g_tpu>0){g_pitch+=rot; g_tpu--;}
@@ -256,27 +297,99 @@ U0 HandleInput()
   if (g_pitch>1.45) g_pitch=1.45;
   if (g_pitch<-1.45) g_pitch=-1.45;
 
-  // break / place on mouse click edges
+  // walk in the yaw plane, per-axis collision
+  F64 spd=0.12, cy=Cos(g_yaw), sy=Sin(g_yaw), mvx=0.0, mvz=0.0;
+  if (g_tf>0){mvx+=sy; mvz+=cy; g_tf--;}
+  if (g_tb>0){mvx-=sy; mvz-=cy; g_tb--;}
+  if (g_tl>0){mvx-=cy; mvz+=sy; g_tl--;}
+  if (g_tr>0){mvx+=cy; mvz-=sy; g_tr--;}
+  if (!PlayerHits(g_px+mvx*spd, g_py, g_pz)) g_px+=mvx*spd;
+  if (!PlayerHits(g_px, g_py, g_pz+mvz*spd)) g_pz+=mvz*spd;
+
+  // vertical: creative fly, or gravity + ground/ceiling collision
+  if (g_fly) {
+    if (g_tu>0){ if (!PlayerHits(g_px,g_py+0.16,g_pz)) g_py+=0.16; g_tu--; }
+    if (g_td>0){ if (!PlayerHits(g_px,g_py-0.16,g_pz)) g_py-=0.16; g_td--; }
+    g_vy=0.0; g_onground=0;
+  } else {
+    g_vy -= GRAV; if (g_vy<-0.7) g_vy=-0.7;
+    F64 ny=g_py+g_vy;
+    if (g_vy<=0.0) {
+      if (PlayerHits(g_px,ny,g_pz)) { g_py=Floor(ny-EYE)+1.0+EYE; g_vy=0.0; g_onground=1; }
+      else { g_py=ny; g_onground=0; }
+    } else {
+      if (PlayerHits(g_px,ny,g_pz)) g_vy=0.0; else g_py=ny;
+    }
+  }
+
+  // break / place on mouse click edges (PickTarget raycasts from the crosshair, not the cursor)
   I64 lb=ms.lb, rb=ms.rb;
   if (lb && !g_plb) if (PickTarget()) g_world[WIdx(g_hx,g_hy,g_hz)]=0;
   if (rb && !g_prb) if (PickTarget()) g_world[WIdx(g_bx,g_by,g_bz)]=g_sel;
   g_plb=lb; g_prb=rb;
 }
 
+#ifdef TOS_NATIVE
+// real TempleOS calls this each refresh with the screen DC: blit g_fb scaled, centered.
+U0 DrawIt(CTask *task, CDC *dc)
+{
+  I64 w=dc->width_internal, sw=task->pix_width, sh=task->pix_height;
+  I64 ox=(sw-RES_W*SCALE)/2, oy=(sh-RES_H*SCALE)/2;
+  if (ox<0) ox=0;
+  if (oy<0) oy=0;
+  I64 x,y,sx2,sy2, c, base;
+  if (!g_fb) return;
+  for (y=0; y<RES_H; y++)
+    for (x=0; x<RES_W; x++) {
+      c=g_fb[y*RES_W+x];
+      base=(oy+y*SCALE)*w + ox+x*SCALE;
+      for (sy2=0; sy2<SCALE; sy2++)
+        for (sx2=0; sx2<SCALE; sx2++) dc->body[base+sy2*w+sx2]=c;
+    }
+}
+#else
+U0 Present(CDC *dc)
+{
+  GrSprite(dc, 0, 0, g_fb, RES_W, RES_H, SCALE);   // holyc-wasm blits the 8-bit buffer
+}
+#endif
+
 U0 HolyCraft()
 {
-  CDC *dc=DCAlias;
+#ifdef TOS_NATIVE
+  SettingsPush;
+  AutoComplete(OFF);            // don't pop the completion box while we read keys
+  WinBorder(OFF);
+  WinMax;
+  DocCursor(OFF);
+  DocClear;
   Init();
-  while (TRUE) {
+  Fs->draw_it=&DrawIt;          // the OS now composites our frame every refresh
+  try {
+    while (!g_quit) {
+      HandleInput();
+      RenderFrame();
+      DrawHUD();
+      Sleep(16);
+    }
+  } catch
+    PutExcept;
+  Fs->draw_it=NULL;
+  DocClear;
+  SettingsPop;
+#else
+  Init();
+  CDC *dc=DCAlias;
+  while (!g_quit) {
     HandleInput();
-    if (g_py<-9000.0) break;        // Esc
     RenderFrame();
     DrawHUD();
-    GrSprite(dc, 0, 0, g_fb, RES_W, RES_H, SCALE);
+    Present(dc);
     Sleep(16);
   }
   DCFill(dc, BLACK);
   "HolyCraft: thanks for playing!\n";
+#endif
 }
 
 HolyCraft;
