@@ -75,6 +75,17 @@ I64 Solid(I64 x, I64 y, I64 z)
   return g_world[WIdx(x,y,z)];
 }
 
+// TRUE floor. HEMU's built-in Flr() is actually ROUND-TO-NEAREST (Flr(5.98)==6, Flr(2.5)==3) —
+// an x87 FRNDINT rounding-mode bug — which broke collision (the player rested on an integer block
+// boundary, the rounding "lost" the ground, and gravity made him bounce / sink through). An (I64) cast
+// truncates correctly (verified), so this floors properly for both signs.
+I64 Flr(F64 v)
+{
+  I64 i=v;
+  if (i>v) i--;
+  return i;
+}
+
 I64 HeightAt(I64 x, I64 z)
 {
   F64 h = 14.0 + 4.0*Sin(x*0.16) + 4.0*Cos(z*0.15) + 2.5*Sin((x+z)*0.08) + 2.0*Cos((x-z)*0.11);
@@ -162,7 +173,7 @@ U0 SetupCam()
   g_rgx=cy;               g_rgz=-sy;          // right (rgy is always 0)
   g_upx=-sy*sp; g_upy=cp; g_upz=-cy*sp;       // up
   g_cox=g_px; g_coy=g_py; g_coz=g_pz;
-  g_bix=Floor(g_px); g_biy=Floor(g_py); g_biz=Floor(g_pz);
+  g_bix=Flr(g_px); g_biy=Flr(g_py); g_biz=Flr(g_pz);
 }
 
 U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g_fb (reads the basis globals)
@@ -273,7 +284,7 @@ I64 PickTarget()
   F64 cp=Cos(g_pitch), sp=Sin(g_pitch), cy=Cos(g_yaw), sy=Sin(g_yaw);
   F64 dx=sy*cp, dy=sp, dz=cy*cp;
   F64 ox=g_px, oy=g_py, oz=g_pz;
-  I64 ix=Floor(ox), iy=Floor(oy), iz=Floor(oz), px=ix,py=iy,pz=iz;
+  I64 ix=Flr(ox), iy=Flr(oy), iz=Flr(oz), px=ix,py=iy,pz=iz;
   F64 adx=Abs(dx),ady=Abs(dy),adz=Abs(dz);
   I64 stx,sty,stz; F64 tdx,tdy,tdz,tmx,tmy,tmz;
   if (dx>0.0){stx=1;tdx=1.0/adx;tmx=(ix+1-ox)*tdx;}else if(dx<0.0){stx=-1;tdx=1.0/adx;tmx=(ox-ix)*tdx;}else{stx=0;tdx=1000000.0;tmx=1000000.0;}
@@ -293,9 +304,9 @@ I64 PickTarget()
 
 I64 PlayerHits(F64 fx, F64 fy, F64 fz)
 {//does the player (eye at fx,fy,fz; ~1.7 tall) overlap a solid voxel?
-  I64 cx=Floor(fx), cz=Floor(fz);
-  if (Solid(cx, Floor(fy-EYE),     cz)) return 1;   // feet
-  if (Solid(cx, Floor(fy-EYE+1.5), cz)) return 1;   // chest/head
+  I64 cx=Flr(fx), cz=Flr(fz);
+  if (Solid(cx, Flr(fy-EYE),     cz)) return 1;   // feet
+  if (Solid(cx, Flr(fy-EYE+1.5), cz)) return 1;   // chest/head
   return 0;
 }
 
@@ -375,7 +386,7 @@ U0 HandleInput()
     g_vy -= GRAV; if (g_vy<-0.7) g_vy=-0.7;
     F64 ny=g_py+g_vy;
     if (g_vy<=0.0) {
-      if (PlayerHits(g_px,ny,g_pz)) { g_py=Floor(ny-EYE)+1.0+EYE; g_vy=0.0; g_onground=1; }
+      if (PlayerHits(g_px,ny,g_pz)) { g_py=Flr(ny-EYE)+1.0+EYE; g_vy=0.0; g_onground=1; }
       else { g_py=ny; g_onground=0; }
     } else {
       if (PlayerHits(g_px,ny,g_pz)) g_vy=0.0; else g_py=ny;
