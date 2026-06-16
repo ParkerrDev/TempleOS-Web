@@ -17,21 +17,34 @@
 //                       ScanMsg(MSG_KEY_DOWN); look with J/L/I/K or the arrow keys. A smaller
 //                       frame because the x86 emulator is much slower than native WASM.
 #ifdef TOS_NATIVE
-#define RES_W   128          // raycaster resolution; DrawIt SCALES it to fill the whole window
-#define RES_H   96           // (decoupled from the window size, which is 640x472 — minus the menu bar)
+// The x86 emulator is MUCH slower than native WASM, so the native build is tuned HARD for frame rate.
+// RES 80x59 x SCALE 8 == 640x472 EXACTLY (the maximized borderless window minus the 8px menu bar), and
+// 80/59 == 640/472 so the aspect is exact (no distortion). The integer block-fill (DrawIt) then reads
+// each of the 4720 source pixels ONCE and writes its 8x8 block — ~3x cheaper than per-pixel scaling,
+// which read all ~302K screen pixels every OS refresh and was the real "barely crawling" cost.
+// 80×59 ×8 == 640×472 (the maximized window), 80/59 == 640/472 -> exact aspect, square pixels.
+// Finer resolutions are too heavy for the per-pixel software raycaster even split across all 4 SMP
+// cores (160×118 measured ~3fps), so this is the resolution/fps sweet spot in the x86 emulator.
+#define RES_W   80
+#define RES_H   59
+#define SCALE   8
+#define RDIST   32.0         // fog horizon (WORLD units)
+#define FOGMID  11.0
+#define FOGFAR  22.0
+#define MAXSTEP 80           // DDA step cap (>= steps to reach RDIST diagonally)
 #else
 #define RES_W   128          // x5 = 640
 #define RES_H   96           // x5 = 480
 #define SCALE   5
+#define RDIST   36.0         // render distance (WORLD units) -> fog horizon
+#define FOGMID  12.0         // start side-face darkening
+#define FOGFAR  22.0         // far -> darkest tone
+#define MAXSTEP 110          // DDA step cap per ray
 #endif
 #define WX      128           // world size
 #define WZ      128
 #define WY      40
 #define WATER   5
-#define RDIST   36.0         // render distance (WORLD units) -> fog horizon
-#define FOGMID  12.0         // start side-face darkening
-#define FOGFAR  22.0         // far -> darkest tone
-#define MAXSTEP 110          // DDA step cap per ray
 #define EYE     1.62         // eye height above the feet
 #define GRAV    0.020        // gravity per frame
 #define JUMP    0.33         // jump impulse
@@ -133,18 +146,33 @@ U0 Init()
   g_yaw = 0.7; g_pitch = -0.06;
 }
 
-// ----- the renderer: one 3D-DDA ray per pixel into g_fb -----
-U0 RenderFrame()
+// ----- the renderer: one 3D-DDA ray per pixel into g_fb. On SMP the scanlines are SPLIT across all
+//       CPU cores (the TempleOS JobQue pattern, like Demo/Graphics/PredatorPrey.HC) -> ~Nx the fps. -----
+// camera basis, computed once per frame into globals so every core's slice reads the same view.
+F64 g_fwx,g_fwy,g_fwz, g_rgx,g_rgz, g_upx,g_upy,g_upz, g_cox,g_coy,g_coz;
+I64 g_bix,g_biy,g_biz;
+#ifdef TOS_NATIVE
+I64 g_mpdone;                  // SMP: one bit per core, cleared (atomically) when that core's rows are done
+#endif
+
+U0 SetupCam()
 {
   F64 cp=Cos(g_pitch), sp=Sin(g_pitch), cy=Cos(g_yaw), sy=Sin(g_yaw);
-  F64 fwx=sy*cp, fwy=sp,  fwz=cy*cp;          // forward
-  F64 rgx=cy,    rgy=0.0, rgz=-sy;             // right
-  F64 upx=-sy*sp,upy=cp,  upz=-cy*sp;          // up
-  F64 fov=0.85, asp=1.0*RES_W/RES_H;
-  F64 ox=g_px, oy=g_py, oz=g_pz;
-  I64 bix=Floor(ox), biy=Floor(oy), biz=Floor(oz);
+  g_fwx=sy*cp; g_fwy=sp;  g_fwz=cy*cp;        // forward
+  g_rgx=cy;               g_rgz=-sy;          // right (rgy is always 0)
+  g_upx=-sy*sp; g_upy=cp; g_upz=-cy*sp;       // up
+  g_cox=g_px; g_coy=g_py; g_coz=g_pz;
+  g_bix=Floor(g_px); g_biy=Floor(g_py); g_biz=Floor(g_pz);
+}
+
+U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g_fb (reads the basis globals)
+{
+  F64 fwx=g_fwx,fwy=g_fwy,fwz=g_fwz, rgx=g_rgx,rgz=g_rgz, upx=g_upx,upy=g_upy,upz=g_upz;
+  F64 fov=1.05, asp=1.0*RES_W/RES_H;          // wider field of view (was 0.85)
+  F64 ox=g_cox, oy=g_coy, oz=g_coz;
+  I64 bix=g_bix, biy=g_biy, biz=g_biz;
   I64 sx,syy;
-  for (syy=0; syy<RES_H; syy++) {
+  for (syy=y0; syy<y1; syy++) {
     F64 vy=(1.0 - 2.0*syy/RES_H)*fov;
     F64 bx=fwx+upx*vy, by=fwy+upy*vy, bz=fwz+upz*vy;   // row base dir (cx=0)
     F64 cstep=2.0/RES_W*asp*fov;
@@ -192,6 +220,33 @@ U0 RenderFrame()
       g_fb[row+sx]=col;
     }
   }
+}
+
+#ifdef TOS_NATIVE
+I64 RenderSlice(U8 *data)        // a Seth job: render THIS core's band of scanlines, then clear its flag bit
+{
+  I64 n=Gs->num;                 // the core this job runs on (0..mp_cnt-1) == its slice index
+  RenderRows(n*RES_H/mp_cnt, (n+1)*RES_H/mp_cnt);
+  LBtr(&g_mpdone, n);            // atomic: signal "core n done" (releases this core's pixel writes)
+  return 0;
+}
+#endif
+
+U0 RenderFrame()
+{
+  SetupCam();
+#ifdef TOS_NATIVE
+  if (mp_cnt>1) {                // SMP: hand each core a horizontal band, wait for all (PredatorPrey pattern)
+    I64 i, spins=0;
+    g_mpdone=(1<<mp_cnt)-1;      // one set bit per core
+    for (i=0; i<mp_cnt; i++) JobQue(&RenderSlice, NULL, i);
+    do { Yield; spins++; } while (g_mpdone && spins<400000);   // wait for every slice (cap so a lost job never hangs)
+    LBts(&g_mpdone,31); LBtr(&g_mpdone,31);                    // atomic fence: acquire all cores' pixel writes before we read g_fb
+  } else
+    RenderRows(0, RES_H);
+#else
+  RenderRows(0, RES_H);
+#endif
 }
 
 U0 DrawHUD()
@@ -335,28 +390,26 @@ U0 HandleInput()
 }
 
 #ifdef TOS_NATIVE
-I64 g_colmap[640];           // screen column -> source column; rebuilt only when the window width changes
-I64 g_colmap_sw = 0;
-// real TempleOS calls this each refresh with the screen DC. We scale the RES_W x RES_H frame to FILL the
-// ENTIRE window (whatever size it is: 640x472 with the menu bar, or any other), nearest-neighbor. Reading
-// g_show (the published frame, never the one RenderFrame is mid-writing) makes it tear-free. Drawing to
-// the real sw x sh (not a hardcoded 640x480) means no overflow past the window body and no flicker border.
+// real TempleOS calls this each refresh with the screen DC. CHEAP integer block-fill: each of the 4720
+// source pixels is read ONCE and written as its SCALE×SCALE block. RES*SCALE == 640×472 fills the
+// maximized window exactly (oy/ox=0, no overflow); a smaller window centers with a stable black border.
+// Reads g_show (the published frame, never the one RenderFrame is mid-writing) -> tear-free.
 U0 DrawIt(CTask *task, CDC *dc)
 {
   U8 *fb=g_show;
   if (!fb) return;
   I64 w=dc->width_internal, sw=task->pix_width, sh=task->pix_height;
-  I64 x,y,srow,drow;
-  if (sw>640) sw=640;
-  if (sw!=g_colmap_sw) {                       // window resized -> rebuild the column map (one divide per col, once)
-    for (x=0; x<sw; x++) g_colmap[x]=x*RES_W/sw;
-    g_colmap_sw=sw;
-  }
-  for (y=0; y<sh; y++) {
-    srow=(y*RES_H/sh)*RES_W;                    // source row (one divide per row)
-    drow=y*w;
-    for (x=0; x<sw; x++) dc->body[drow+x]=fb[srow+g_colmap[x]];
-  }
+  I64 ox=(sw-RES_W*SCALE)/2, oy=(sh-RES_H*SCALE)/2;
+  if (ox<0) ox=0;
+  if (oy<0) oy=0;
+  I64 x,y,sx2,sy2,c,base;
+  for (y=0; y<RES_H; y++)
+    for (x=0; x<RES_W; x++) {
+      c=fb[y*RES_W+x];
+      base=(oy+y*SCALE)*w + ox+x*SCALE;
+      for (sy2=0; sy2<SCALE; sy2++)
+        for (sx2=0; sx2<SCALE; sx2++) dc->body[base+sy2*w+sx2]=c;
+    }
 }
 #else
 U0 Present(CDC *dc)
