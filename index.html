@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "disk-fix-3 (LRU dv=NULL invalidate; #include needs .HC)";
+    window.__BUILD = "disk-fix-4 (targeted sector refresh + diag; editor-empty fallback)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -1125,11 +1125,17 @@
       // walking the LRU ring from cache_ctrl@blkdev+48 and touching ONLY dv@+32 — never the hash/LRU
       // links, so the cache can't be corrupted (a hand-rebuilt version broke Dir/file reads).
       const BLKDEV = 0xBC18;   // cache_ctrl@+48 = LRU-ring sentinel (verified live)
-      const invalidate = () => { if (!disk) return; const m = new DataView(inst.exports.memory.buffer), cap = m.byteLength;
+      const invalidate = (lbas) => { if (!disk) return 0; const want = (lbas && lbas.length) ? new Set(lbas) : null;
+        const m = new DataView(inst.exports.memory.buffer), cap = m.byteLength;
         const rd = (a) => (a >= 0 && gBaseI + a + 8 <= cap) ? Number(m.getBigUint64(gBaseI + a, true)) : 0;
         const clr = (a) => { if (a >= 0 && gBaseI + a + 8 <= cap) m.setBigUint64(gBaseI + a, 0n, true); };
-        const ctrl = rd(BLKDEV + 48); if (!ctrl) return;
-        let p = rd(ctrl), n = 0; while (p && p !== ctrl && n < (1 << 20)) { clr(p + 32); p = rd(p); n++; } };   // dv=NULL on each block
+        const ctrl = rd(BLKDEV + 48); if (!ctrl) return 0;
+        let p = rd(ctrl), n = 0, cleared = 0; const sample = [];
+        while (p && p !== ctrl && n < (1 << 20)) { const blk = rd(p + 40);
+          if (rd(p + 32) && sample.length < 8) sample.push(blk);
+          if (!want || want.has(blk)) { clr(p + 32); cleared++; } p = rd(p); n++; }
+        if (want) console.log("[hemu] cacherefresh: changedLBAs=[" + [...want].slice(0, 6) + "] sampleCachedBlks=[" + sample + "] cleared=" + cleared + "/" + want.size);
+        return cleared; };
       engine.kind = "inline";
       let stopped = false;
       engine.stop = () => { stopped = true; notifyInput = () => {}; };   // halts loop() on its next frame
@@ -1145,8 +1151,11 @@
             const gz = await new Response(new Blob(parts).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
             reply({ cmd: "exportResult", kind: "disk", ok: true, buf: gz }); }
           else if (msg.cmd === "uploadFile") { if (!disk) throw new Error("disk not loaded yet");
-            const r = fat32Upload(disk, msg.name, new Uint8Array(msg.bytes), msg.dir || "Home"); invalidate();
-            reply({ cmd: "fileResult", ok: true, msg: `wrote ${msg.name} to /${msg.dir || "Home"} (${r.clusters} clusters)` }); }
+            const before = new Set(disk.overlay.keys());
+            const r = fat32Upload(disk, msg.name, new Uint8Array(msg.bytes), msg.dir || "Home");
+            const changed = []; for (const k of disk.overlay.keys()) if (!before.has(k)) changed.push(k);
+            const cleared = invalidate(changed);
+            reply({ cmd: "fileResult", ok: true, msg: `wrote ${msg.name} to /${msg.dir || "Home"} (${r.clusters} clusters; ${changed.length} sectors, ${cleared} cached refreshed)` }); }
           else if (msg.cmd === "listDir") reply({ cmd: "dirList", ok: true, dir: msg.dir, files: disk ? fat32List(disk, msg.dir || "Home").map(e => ({ name: e.name, size: e.size, dir: !!(e.attr & 0x10) })) : [] });
         } catch (err) { reply({ cmd: msg.cmd === "uploadFile" ? "fileResult" : "exportResult", ok: false, msg: String(err.message || err), kind: msg.cmd === "exportDisk" ? "disk" : "snapshot" }); }
       };
@@ -1988,7 +1997,14 @@ I64 GodDoodleGen(I64 strokes)
       // compiles against the OS's own graphics (dc->body) and runs in HEMU.
       document.getElementById("gameToDisk").addEventListener("click", async () => {
         if (!curGame) return;
-        const src = "#define TOS_NATIVE 1\n" + document.getElementById("editor").value;
+        // Use the editor's text, but if it's empty/not-yet-loaded, fetch the canonical game source so
+        // we never write a near-empty file (that "1 clusters" bug where the editor wasn't populated).
+        let raw = document.getElementById("editor").value || "";
+        if (raw.trim().length < 200) {
+          raw = await fetch("games/" + curGame.file, { cache: "no-cache" }).then((r) => r.ok ? r.text() : "").catch(() => "");
+        }
+        if (raw.trim().length < 50) { toast("Couldn't read the game source to send — try again in a moment."); return; }
+        const src = "#define TOS_NATIVE 1\n" + raw;
         if (!window.__uploadToHome) {
           toast("The TempleOS engine isn't ready yet — open the <b>Disk</b> window and let the OS finish booting, then try again.");
           setStatus("OS engine not ready"); return;
