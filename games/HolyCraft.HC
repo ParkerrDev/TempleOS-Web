@@ -28,17 +28,13 @@
 #define RES_W   80
 #define RES_H   59
 #define SCALE   8
-#define RDIST   32.0         // fog horizon (WORLD units)
-#define FOGMID  11.0
-#define FOGFAR  22.0
+#define RDIST   32.0         // render distance (WORLD units)
 #define MAXSTEP 80           // DDA step cap (>= steps to reach RDIST diagonally)
 #else
-#define RES_W   160          // x4 = 640 (finer than the old 128x96 — native WASM affords it; the dither
-#define RES_H   120          // x4 = 480  shader makes the extra detail read smoother still)
-#define SCALE   4
-#define RDIST   36.0         // render distance (WORLD units) -> fog horizon
-#define FOGMID  12.0         // start side-face darkening
-#define FOGFAR  22.0         // far -> darkest tone
+#define RES_W   320          // x2 = 640 (high-res: native WASM affords it; keeps the live dither cells small)
+#define RES_H   240          // x2 = 480
+#define SCALE   2
+#define RDIST   36.0         // render distance (WORLD units)
 #define MAXSTEP 110          // DDA step cap per ray
 #endif
 #define WX      128           // world size
@@ -48,18 +44,17 @@
 #define EYE     1.62         // eye height above the feet
 #define GRAV    0.020        // gravity per frame
 #define JUMP    0.33         // jump impulse
-#define DITHER  8.0          // surface-dither cells per world unit (fine: 2 Bayer tiles per block edge)
 
 U8  *g_world = NULL;         // WX*WZ*WY voxels, 0 = air
 U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame — RenderFrame/DrawHUD's render target
 U8  *g_show  = NULL;         // the published frame DrawIt reads (native: a 2nd buffer, swapped each
                             // frame so DrawIt never blits a half-rendered frame; browser: == g_fb)
 U8  *g_ramp  = NULL;         // [block*3 + tone] -> palette index  (tone 0 top,1 side,2 dark/far)
-U8   g_bayer[16];            // 4x4 ordered-dither matrix: a fine "static" blend of two palette colors
 U8   g_skyr[3];             // sky gradient ramp (blue zenith -> ltblue -> ltcyan horizon)
 U8   g_lr[8*4];             // per-block brightness ramp, 4 levels dark->bright (block 0=air unused)
-U8   g_flo[8*6], g_fhi[8*6], g_fthr[8*6];  // per (block,face): the 2 ramp colors bracketing that face's
-                            // light-direction shade + a dither threshold (0..16). 6 faces -> 6 shades/block.
+U8   g_flo[8*6], g_fhi[8*6];   // per (block,face): the 2 ramp colors bracketing that face's light shade
+I64  g_fthr[8*6];           // per (block,face): probability 0..65536 for the LIVE "static" dither blend
+I64  g_frame = 0;           // frame counter -> reseeds the dither each frame so it animates (like Varoom)
 F64  g_px, g_py, g_pz;       // camera position
 F64  g_yaw, g_pitch;         // camera angles
 I64  g_sel  = 1;             // selected block to place
@@ -100,19 +95,14 @@ U0 SetRamp()
   g_ramp[6*3+0]=14; g_ramp[6*3+1]=6;  g_ramp[6*3+2]=6;   // sand   YELLOW
   g_ramp[7*3+0]=11; g_ramp[7*3+1]=9;  g_ramp[7*3+2]=1;   // water  LTCYAN/LTBLUE/BLUE
   g_skyr[0]=1; g_skyr[1]=9; g_skyr[2]=11;                 // sky: blue -> ltblue -> ltcyan
-  // Bayer 4x4 thresholds (0..15). A pixel takes the *darker* neighbouring tone when bayer < frac*16,
-  // so a fractional shade between two of the 16 palette colours is rendered as a fine "static" mix.
-  g_bayer[0] =0;  g_bayer[1] =8;  g_bayer[2] =2;  g_bayer[3] =10;
-  g_bayer[4] =12; g_bayer[5] =4;  g_bayer[6] =14; g_bayer[7] =6;
-  g_bayer[8] =3;  g_bayer[9] =11; g_bayer[10]=1;  g_bayer[11]=9;
-  g_bayer[12]=15; g_bayer[13]=7;  g_bayer[14]=13; g_bayer[15]=5;
-  // per-block brightness ramp, 4 levels dark->bright. Face lighting picks a position in this ramp and
-  // the dither blends the two bracketing colors, so each block reads as up to 6 shades of one material.
-  g_lr[1*4+0]=8;  g_lr[1*4+1]=2;  g_lr[1*4+2]=10; g_lr[1*4+3]=10;   // grass  dkgray->green->ltgreen
-  g_lr[2*4+0]=8;  g_lr[2*4+1]=6;  g_lr[2*4+2]=6;  g_lr[2*4+3]=14;   // dirt   dkgray->brown->yellow
+  // Per-block brightness ramp, 4 levels dark->bright. Face lighting picks a position in this ramp and the
+  // live dither blends the two bracketing colors. Darken with BLACK (0), not gray, so shading stays a
+  // shade of the MATERIAL'S colour (grass darkens to dark-green, not gray). Stone is the only gray one.
+  g_lr[1*4+0]=0;  g_lr[1*4+1]=2;  g_lr[1*4+2]=10; g_lr[1*4+3]=10;   // grass  black->green->ltgreen
+  g_lr[2*4+0]=0;  g_lr[2*4+1]=6;  g_lr[2*4+2]=6;  g_lr[2*4+3]=14;   // dirt   black->brown->yellow
   g_lr[3*4+0]=0;  g_lr[3*4+1]=8;  g_lr[3*4+2]=7;  g_lr[3*4+3]=15;   // stone  black->dkgray->ltgray->white
-  g_lr[4*4+0]=8;  g_lr[4*4+1]=6;  g_lr[4*4+2]=6;  g_lr[4*4+3]=14;   // wood
-  g_lr[5*4+0]=8;  g_lr[5*4+1]=2;  g_lr[5*4+2]=10; g_lr[5*4+3]=10;   // leaves
+  g_lr[4*4+0]=0;  g_lr[4*4+1]=6;  g_lr[4*4+2]=6;  g_lr[4*4+3]=14;   // wood
+  g_lr[5*4+0]=0;  g_lr[5*4+1]=2;  g_lr[5*4+2]=10; g_lr[5*4+3]=10;   // leaves
   g_lr[6*4+0]=6;  g_lr[6*4+1]=14; g_lr[6*4+2]=14; g_lr[6*4+3]=15;   // sand   brown->yellow->white
   g_lr[7*4+0]=1;  g_lr[7*4+1]=9;  g_lr[7*4+2]=11; g_lr[7*4+3]=11;   // water  blue->ltblue->ltcyan
 }
@@ -135,7 +125,7 @@ U0 BuildFaceShades()
     for (bt=1; bt<=7; bt++) {
       g_flo[bt*6+f] =g_lr[bt*4+lo];
       g_fhi[bt*6+f] =g_lr[bt*4+lo+1];
-      g_fthr[bt*6+f]=fr*16.0;
+      g_fthr[bt*6+f]=fr*65536.0;            // probability the pixel takes the brighter color (live dither)
     }
   }
 }
@@ -218,16 +208,19 @@ U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g
   F64 ox=g_cox, oy=g_coy, oz=g_coz;
   I64 bix=g_bix, biy=g_biy, biz=g_biz;
   I64 sx,syy;
+  // LIVE "static" dither RNG (a 64-bit LCG). Seeded from g_frame so the noise re-randomizes every frame
+  // (animated, like TempleOS's RandU16 probability dither / the Varoom car), and from y0 so SMP slices differ.
+  U64 rng = (g_frame*2654435761 + y0*2246822519 + 12345) | 1;
   for (syy=y0; syy<y1; syy++) {
     F64 vy=(1.0 - 2.0*syy/RES_H)*fov;
     F64 bx=fwx+upx*vy, by=fwy+upy*vy, bz=fwz+upz*vy;   // row base dir (cx=0)
     F64 cstep=2.0/RES_W*asp*fov;
     F64 cx=-asp*fov;
     I64 row=syy*RES_W;
-    // per-row dither setup: sky gradient position, this row's Bayer offset, and the fog rate
+    // per-row sky gradient: position in the 3-colour ramp + dither probability toward the next colour
     F64 skp=2.0*syy/RES_H; if (skp>1.999) skp=1.999;
-    I64 sklv=skp, skb=g_skyr[sklv], skb2=g_skyr[sklv+1]; F64 skfr=skp-sklv;
-    I64 brow=(syy&3)<<2;
+    I64 sklv=skp, skb=g_skyr[sklv], skb2=g_skyr[sklv+1];
+    I64 skthr=(skp-sklv)*65536.0;
     for (sx=0; sx<RES_W; sx++) {
       F64 dx=bx+rgx*cx, dy=by, dz=bz+rgz*cx;
       cx+=cstep;
@@ -258,27 +251,19 @@ U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g
         bt=g_world[WIdx(ix,iy,iz)];
         if (bt) { hit=1; break; }
       }
-      I64 col;
+      rng = rng*6364136223846793005 + 1442695040888963407;   // advance the LCG (one random value per pixel)
+      I64 rv = (rng>>48)&0xFFFF, col;                         // 0..65535
       if (hit) {
-        // which of the 6 cube faces (DDA step axis + sign) -> its precomputed light-direction shade.
+        // which of the 6 cube faces (DDA step axis + sign) -> its precomputed light-direction shade,
+        // then a LIVE probability dither (rv<threshold) blends toward the brighter ramp colour.
         // (no ternary -- real TempleOS HolyC has none; holyc-wasm tolerates it but the OS compiler errors.)
-        I64 faceid, k;
+        I64 faceid;
         if (axis==0)      { if (stx>0) faceid=0; else faceid=1; }   // hit -X vs +X face
         else if (axis==1) { if (sty>0) faceid=2; else faceid=3; }   // -Y (bottom) vs +Y (top)
         else              { if (stz>0) faceid=4; else faceid=5; }   // -Z vs +Z
-        k=bt*6+faceid;
-        col=g_flo[k];
-        if (g_fthr[k]) {
-          // blend toward the brighter ramp color with a FINE surface-locked dither (indexed by the hit
-          // point ON the face -> sticks to the block, like a painted CColorROP material, not the screen).
-          F64 hu, hv; I64 du, dv;
-          if (axis==0)      { hu=oy+dy*t; hv=oz+dz*t; }
-          else if (axis==1) { hu=ox+dx*t; hv=oz+dz*t; }
-          else              { hu=ox+dx*t; hv=oy+dy*t; }
-          du=hu*DITHER; dv=hv*DITHER;
-          if (g_bayer[((dv&3)<<2)|(du&3)] < g_fthr[k]) col=g_fhi[k];
-        }
-      } else if (g_bayer[brow|(sx&3)] < skfr*16.0) col=skb2; else col=skb;   // sky: screen-vertical gradient
+        I64 k=bt*6+faceid;
+        if (rv < g_fthr[k]) col=g_fhi[k]; else col=g_flo[k];
+      } else if (rv < skthr) col=skb2; else col=skb;          // sky gradient (also dithered)
       g_fb[row+sx]=col;
     }
   }
@@ -296,6 +281,7 @@ I64 RenderSlice(U8 *data)        // a Seth job: render THIS core's band of scanl
 
 U0 RenderFrame()
 {
+  g_frame++;                       // advance the live-dither seed so the "static" re-randomizes each frame
   SetupCam();
 #ifdef TOS_NATIVE
   if (mp_cnt>1) {                // SMP: hand each core a horizontal band, wait for all (PredatorPrey pattern)

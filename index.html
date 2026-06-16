@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-7 (HolyCraft: per-FACE directional lighting — 6 precomputed shades/block from face-normal·light, fine surface dither blends between palette colors; cheaper hot loop)";
+    window.__BUILD = "render-8 (HolyCraft: per-face lighting + LIVE probability dither like Varoom — animated 'static' blend, darkens via black not gray; browser framebuffer 320x240 for fine cells)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
