@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-6 (HolyCraft: dither shader is now SURFACE-LOCKED — indexed by the hit point's world position on the face, like TempleOS CColorROP/Varoom, so shading is a property of the surface not the screen)";
+    window.__BUILD = "render-7 (HolyCraft: per-FACE directional lighting — 6 precomputed shades/block from face-normal·light, fine surface dither blends between palette colors; cheaper hot loop)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
