@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-1 (HolyCraft 128x96 tear-free fills window; SMP tear-free present fixes the flicker)";
+    window.__BUILD = "render-2 (HolyCraft renders across all 4 SMP cores ~3x fps + wider FOV; SMP tear-free present)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
