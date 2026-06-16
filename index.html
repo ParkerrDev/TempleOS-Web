@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "paste-1 (Ctrl/Cmd+V pastes clipboard into the OS as scancodes)";
+    window.__BUILD = "oswrite-1 (To-Disk writes via the OS's own FileWrite — no cache poke; games auto-launch)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -1182,8 +1182,31 @@
       engine.kind = "inline";
       let stopped = false;
       engine.stop = () => { stopped = true; notifyInput = () => {}; };   // halts loop() on its next frame
+      // type a command into the running OS (inline): push scancodes onto keyq, paced; the rAF loop
+      // runs __main frames and consumes them. Same idea as the worker's osWrite typing.
+      const _wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const osType = async (s, perKeyMs = 55) => { for (const ch of s) {
+        if (ch === "\n" || ch === "\r") keyq.push(0x1C, 0x9C);
+        else if (ch === "\x1b") keyq.push(0x01, 0x81);
+        else { const e = CHAR2SC[ch]; if (!e) continue; if (e[1]) keyq.push(0x2A); keyq.push(e[0], e[0] | 0x80); if (e[1]) keyq.push(0xAA); }
+        await _wait(perKeyMs); } };
       engine.post = async (msg) => { const reply = (m) => window.__diskMsg && window.__diskMsg(m);
         try {
+          if (msg.cmd === "osWrite") {        // write to C:/Home via the OS's own FileWrite (no cache poking)
+            if (!disk) return reply({ cmd: "fileResult", ok: false, msg: "disk not loaded yet" });
+            const data = new Uint8Array(msg.bytes), dvw = new DataView(inst.exports.memory.buffer), SCRATCH = 0x16800000, MBOX = 0x16700000;
+            if (gBaseI + SCRATCH + data.length > dvw.byteLength) return reply({ cmd: "fileResult", ok: false, msg: "file too large to stage" });
+            new Uint8Array(inst.exports.memory.buffer).set(data, gBaseI + SCRATCH);
+            await osType("\x1b", 120); await _wait(250);
+            const path = "C:/Home/" + msg.name, hx = "0x" + SCRATCH.toString(16).toUpperCase(), mb = "0x" + MBOX.toString(16).toUpperCase();
+            dvw.setBigUint64(gBaseI + MBOX, 0n, true);     // capture FileWrite's return (first cluster: non-zero ok, 0 fail)
+            await osType(`*(${mb})(I64*)=FileWrite("${path}",${hx},${data.length});\n`);
+            await _wait(1800);                              // write-back cache: file is in cache (Dir/#include see it) before it hits the disk image
+            const ok = dvw.getBigInt64(gBaseI + MBOX, true) !== 0n;
+            reply({ cmd: "fileResult", ok, msg: ok ? `wrote ${msg.name} to C:/Home via the OS (${data.length} b)` : `the OS did not write ${msg.name} — make sure TempleOS is at a shell prompt, then try again` });
+            if (ok && msg.run) { await _wait(300); await osType(`#include "${path}";\n`); }
+            return;
+          }
           if (msg.cmd === "pause") { window.__inlinePaused = msg.value; }
           else if (msg.cmd === "exportSnapshot") { const ram = new Uint8Array(inst.exports.memory.buffer, gBaseI, 402653184);
             const gz = await new Response(new Blob([ram]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
@@ -1858,7 +1881,7 @@ I64 GodDoodleGen(I64 strokes)
         const name = f.name.length > 37 ? f.name.slice(0, 37) : f.name;
         const bytes = new Uint8Array(await f.arrayBuffer());
         say("writing " + name + " to C:/Home…");
-        engine.post({ cmd: "uploadFile", name, dir: "Home", bytes: bytes.buffer }, [bytes.buffer]);
+        engine.post({ cmd: "osWrite", name, run: false, bytes: bytes.buffer }, [bytes.buffer]);   // OS-side FileWrite (no host cache poke)
       });
       $("lsHome").addEventListener("click", () => { say("reading /Home…"); engine.post({ cmd: "listDir", dir: "Home" }); });
 
@@ -1870,14 +1893,14 @@ I64 GodDoodleGen(I64 strokes)
       // let the Disk window also write the editor's current source to C:/Home.
       // Returns a Promise<{ok,msg}> that resolves with the engine's real fileResult (or a timeout),
       // so callers can report success/failure truthfully instead of assuming it worked.
-      window.__uploadToHome = (name, text) => { const b = new TextEncoder().encode(text);
+      window.__uploadToHome = (name, text, run) => { const b = new TextEncoder().encode(text);
         return new Promise((resolve) => {
           if (!engine.kind) { resolve({ ok: false, msg: "disk not loaded yet" }); return; }   // engine not up — fail fast so the caller retries
           let done = false;
           const finish = (m) => { if (done) return; done = true; resolve(m); };
           uploadWaiters.push(finish);
-          setTimeout(() => { const i = uploadWaiters.indexOf(finish); if (i >= 0) uploadWaiters.splice(i, 1); finish({ ok: false, msg: "no response from engine (still booting?)" }); }, 15000);   // generous: under SMP+game load the reply round-trip can take several seconds
-          engine.post({ cmd: "uploadFile", name, dir: "Home", bytes: b.buffer }, [b.buffer]); say("writing " + name + "…");
+          setTimeout(() => { const i = uploadWaiters.indexOf(finish); if (i >= 0) uploadWaiters.splice(i, 1); finish({ ok: false, msg: "no response from engine (still booting?)" }); }, 20000);   // osWrite types FileWrite into the OS + verifies — allow several seconds
+          engine.post({ cmd: "osWrite", name, run: !!run, bytes: b.buffer }, [b.buffer]); say("writing " + name + "…");   // OS-side FileWrite (no cache poke); run -> #include it
         });
       };
     }
@@ -2055,21 +2078,24 @@ I64 GodDoodleGen(I64 strokes)
         // The C: disk is decompressed/mounted a few seconds AFTER the desktop boots, so an upload can
         // legitimately fail with "disk not loaded yet" right after launch. Wait for the REAL result and
         // retry while it's still loading — and only claim success when the engine confirms the write.
-        toast("Writing <b>" + curGame.file + "</b> to the TempleOS C: drive…", 60000);
+        // run:true -> the engine writes it via the OS's own FileWrite (cache stays consistent), then
+        // #includes it, so the game launches in TempleOS automatically — no manual typing needed.
+        toast("Installing <b>" + curGame.file + "</b> on the TempleOS C: drive…", 60000);
         setStatus("writing " + curGame.file + " to C:…");
         let r, tries = 0;
         do {
-          r = await window.__uploadToHome(curGame.file, src);
+          r = await window.__uploadToHome(curGame.file, src, true);
           if (r && r.ok) break;
           if (!/disk not loaded/i.test(r && r.msg || "")) break;   // not the "still mounting" case — a real error, stop
           await new Promise((res) => setTimeout(res, 1500));        // disk still mounting — wait & retry
         } while (++tries < 20);
         if (r && r.ok) {
-          toast('Wrote <b>C:/Home/' + curGame.file + '</b> to the TempleOS C: drive.<br>'
-            + 'Switch to the OS window and run (keep the <b>.HC</b>; no <code>~</code> — type it exactly):<br>'
-            + '<code style="display:inline-block;margin-top:5px;background:var(--blue);color:#fff;padding:2px 7px">'
+          toast('Installed <b>C:/Home/' + curGame.file + '</b> and launching it in TempleOS…<br>'
+            + 'Click the OS screen to play. Press <b>Esc</b> to quit back to the prompt.<br>'
+            + '<span style="opacity:.75">To re-run later, type</span> '
+            + '<code style="display:inline-block;background:var(--blue);color:#fff;padding:2px 7px">'
             + '#include "' + curGame.file + '"</code>');
-          setStatus('wrote C:/Home/' + curGame.file + ' to C:');
+          setStatus('launching ' + curGame.file + ' in TempleOS');
         } else {
           toast("Couldn't write <b>" + curGame.file + "</b> to the C: drive: " + ((r && r.msg) || "unknown error")
             + "<br>The OS may still be booting — give it a few seconds and try again.");
