@@ -88,11 +88,10 @@ U0 PlantTree(I64 x, I64 top, I64 z)
     if (top+dy<WY) g_world[WIdx(x,top+dy,z)]=4;            // trunk
   for (ly=top+3; ly<=top+5; ly++)
     for (lx=x-2; lx<=x+2; lx++)
-      for (lz=z-2; lz<=z+2; lz++) {
-        if (Solid(lx,ly,lz)) continue;
-        if ((lx-x)*(lx-x)+(lz-z)*(lz-z)+(ly-top-4)*(ly-top-4) <= 6)
-          if (lx>=0 && lx<WX && lz>=0 && lz<WZ && ly<WY) g_world[WIdx(lx,ly,lz)]=5;
-      }
+      for (lz=z-2; lz<=z+2; lz++)              // (no `continue` — TempleOS HolyC has no such keyword)
+        if (!Solid(lx,ly,lz))
+          if ((lx-x)*(lx-x)+(lz-z)*(lz-z)+(ly-top-4)*(ly-top-4) <= 6)
+            if (lx>=0 && lx<WX && lz>=0 && lz<WZ && ly<WY) g_world[WIdx(lx,ly,lz)]=5;
 }
 
 U0 GenWorld()
