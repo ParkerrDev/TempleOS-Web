@@ -48,15 +48,18 @@
 #define EYE     1.62         // eye height above the feet
 #define GRAV    0.020        // gravity per frame
 #define JUMP    0.33         // jump impulse
-#define DITHER  4.0          // surface-dither cells per world unit (the 4x4 Bayer tile spans one block)
+#define DITHER  8.0          // surface-dither cells per world unit (fine: 2 Bayer tiles per block edge)
 
 U8  *g_world = NULL;         // WX*WZ*WY voxels, 0 = air
 U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame — RenderFrame/DrawHUD's render target
 U8  *g_show  = NULL;         // the published frame DrawIt reads (native: a 2nd buffer, swapped each
                             // frame so DrawIt never blits a half-rendered frame; browser: == g_fb)
 U8  *g_ramp  = NULL;         // [block*3 + tone] -> palette index  (tone 0 top,1 side,2 dark/far)
-U8   g_bayer[16];            // 4x4 ordered-dither matrix: a "static" blend of two palette colors per pixel
+U8   g_bayer[16];            // 4x4 ordered-dither matrix: a fine "static" blend of two palette colors
 U8   g_skyr[3];             // sky gradient ramp (blue zenith -> ltblue -> ltcyan horizon)
+U8   g_lr[8*4];             // per-block brightness ramp, 4 levels dark->bright (block 0=air unused)
+U8   g_flo[8*6], g_fhi[8*6], g_fthr[8*6];  // per (block,face): the 2 ramp colors bracketing that face's
+                            // light-direction shade + a dither threshold (0..16). 6 faces -> 6 shades/block.
 F64  g_px, g_py, g_pz;       // camera position
 F64  g_yaw, g_pitch;         // camera angles
 I64  g_sel  = 1;             // selected block to place
@@ -103,6 +106,38 @@ U0 SetRamp()
   g_bayer[4] =12; g_bayer[5] =4;  g_bayer[6] =14; g_bayer[7] =6;
   g_bayer[8] =3;  g_bayer[9] =11; g_bayer[10]=1;  g_bayer[11]=9;
   g_bayer[12]=15; g_bayer[13]=7;  g_bayer[14]=13; g_bayer[15]=5;
+  // per-block brightness ramp, 4 levels dark->bright. Face lighting picks a position in this ramp and
+  // the dither blends the two bracketing colors, so each block reads as up to 6 shades of one material.
+  g_lr[1*4+0]=8;  g_lr[1*4+1]=2;  g_lr[1*4+2]=10; g_lr[1*4+3]=10;   // grass  dkgray->green->ltgreen
+  g_lr[2*4+0]=8;  g_lr[2*4+1]=6;  g_lr[2*4+2]=6;  g_lr[2*4+3]=14;   // dirt   dkgray->brown->yellow
+  g_lr[3*4+0]=0;  g_lr[3*4+1]=8;  g_lr[3*4+2]=7;  g_lr[3*4+3]=15;   // stone  black->dkgray->ltgray->white
+  g_lr[4*4+0]=8;  g_lr[4*4+1]=6;  g_lr[4*4+2]=6;  g_lr[4*4+3]=14;   // wood
+  g_lr[5*4+0]=8;  g_lr[5*4+1]=2;  g_lr[5*4+2]=10; g_lr[5*4+3]=10;   // leaves
+  g_lr[6*4+0]=6;  g_lr[6*4+1]=14; g_lr[6*4+2]=14; g_lr[6*4+3]=15;   // sand   brown->yellow->white
+  g_lr[7*4+0]=1;  g_lr[7*4+1]=9;  g_lr[7*4+2]=11; g_lr[7*4+3]=11;   // water  blue->ltblue->ltcyan
+}
+
+U0 BuildFaceShades()
+{   // Directional per-face lighting: dot each of the 6 cube-face normals with a fixed light direction to
+    // get 6 brightness levels, and resolve each to (two ramp colors + dither threshold). Done ONCE -> the
+    // hot loop is a single table lookup per pixel. Face order: 0=-X 1=+X 2=-Y 3=+Y 4=-Z 5=+Z.
+  F64 Lx=0.394, Ly=0.788, Lz=0.473, amb=0.30;   // light dir (above + +x/+z), pre-normalized
+  I64 f, bt;
+  for (f=0; f<6; f++) {
+    F64 d;
+    if      (f==0) d=-Lx; else if (f==1) d=Lx;
+    else if (f==2) d=-Ly; else if (f==3) d=Ly;
+    else if (f==4) d=-Lz; else          d=Lz;
+    if (d<0.0) d=0.0;
+    F64 p=(amb+(1.0-amb)*d)*3.0;          // brightness 0..1 -> ramp position 0..3
+    I64 lo=p; if (lo>2) lo=2;
+    F64 fr=p-lo; if (fr<0.0) fr=0.0; if (fr>1.0) fr=1.0;
+    for (bt=1; bt<=7; bt++) {
+      g_flo[bt*6+f] =g_lr[bt*4+lo];
+      g_fhi[bt*6+f] =g_lr[bt*4+lo+1];
+      g_fthr[bt*6+f]=fr*16.0;
+    }
+  }
 }
 
 U0 PlantTree(I64 x, I64 top, I64 z)
@@ -148,6 +183,7 @@ U0 Init()
 #endif
   g_ramp  = MAlloc(8*3);
   SetRamp();
+  BuildFaceShades();
   GenWorld();
   // spawn standing in the middle: drop in from just above the ground, gravity settles you
   g_px = WX/2 + 0.5; g_pz = WZ/2 + 0.5;
@@ -192,7 +228,6 @@ U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g
     F64 skp=2.0*syy/RES_H; if (skp>1.999) skp=1.999;
     I64 sklv=skp, skb=g_skyr[sklv], skb2=g_skyr[sklv+1]; F64 skfr=skp-sklv;
     I64 brow=(syy&3)<<2;
-    F64 fograte=2.8/RDIST;
     for (sx=0; sx<RES_W; sx++) {
       F64 dx=bx+rgx*cx, dy=by, dz=bz+rgz*cx;
       cx+=cstep;
@@ -225,21 +260,23 @@ U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g
       }
       I64 col;
       if (hit) {
-        // continuous shade = face base (top bright .. bottom dark) + distance fog
-        F64 tp; if (axis==1) { if (sty<0) tp=0.0; else tp=2.0; } else tp=0.92;
-        tp += t*fograte; if (tp>2.0) tp=2.0;
-        I64 lvl=tp, base=bt*3+lvl;
-        col=g_ramp[base];
-        if (lvl<2) {
-          // ORDERED-DITHER between the two nearest palette tones, indexed by the hit point's position
-          // ON THE FACE (world tangent coords) -> the dither is a property of the SURFACE and moves with
-          // the block, like TempleOS's CColorROP dithered colours (Varoom's car) -- NOT screen static.
+        // which of the 6 cube faces (DDA step axis + sign) -> its precomputed light-direction shade.
+        // (no ternary -- real TempleOS HolyC has none; holyc-wasm tolerates it but the OS compiler errors.)
+        I64 faceid, k;
+        if (axis==0)      { if (stx>0) faceid=0; else faceid=1; }   // hit -X vs +X face
+        else if (axis==1) { if (sty>0) faceid=2; else faceid=3; }   // -Y (bottom) vs +Y (top)
+        else              { if (stz>0) faceid=4; else faceid=5; }   // -Z vs +Z
+        k=bt*6+faceid;
+        col=g_flo[k];
+        if (g_fthr[k]) {
+          // blend toward the brighter ramp color with a FINE surface-locked dither (indexed by the hit
+          // point ON the face -> sticks to the block, like a painted CColorROP material, not the screen).
           F64 hu, hv; I64 du, dv;
-          if (axis==0)      { hu=oy+dy*t; hv=oz+dz*t; }   // x-face: y,z tangents
-          else if (axis==1) { hu=ox+dx*t; hv=oz+dz*t; }   // y-face: x,z tangents
-          else              { hu=ox+dx*t; hv=oy+dy*t; }   // z-face: x,y tangents
-          du=hu*DITHER; dv=hv*DITHER;                     // world coords are >=0 so the cast floors
-          if (g_bayer[((dv&3)<<2)|(du&3)] < (tp-lvl)*16.0) col=g_ramp[base+1];
+          if (axis==0)      { hu=oy+dy*t; hv=oz+dz*t; }
+          else if (axis==1) { hu=ox+dx*t; hv=oz+dz*t; }
+          else              { hu=ox+dx*t; hv=oy+dy*t; }
+          du=hu*DITHER; dv=hv*DITHER;
+          if (g_bayer[((dv&3)<<2)|(du&3)] < g_fthr[k]) col=g_fhi[k];
         }
       } else if (g_bayer[brow|(sx&3)] < skfr*16.0) col=skb2; else col=skb;   // sky: screen-vertical gradient
       g_fb[row+sx]=col;
