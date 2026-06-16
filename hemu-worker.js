@@ -17,30 +17,21 @@ let paused = false;
 const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
 // JIT segment/TSC addresses now flow from the guest at runtime via __jit_seg (per-core CCpuState) — no hardcoded offsets to drift.
 
-const BLKDEV = 0xBC18;                       // CBlkDevGlbls in this snapshot (verified live: cache_base@+40, cache_hash_table@+56, cache_size@+64)
-const CCBLK = 560;                           // sizeof(CCacheBlk) = 48-byte header + BLK_SIZE(512) body (verified: blk stride 560)
-const BLK_SIZE = 512;                        // cache_size = blk_cnt*BLK_SIZE  (DskCacheInit, Kernel/BlkDev/DskCache.HC)
-const DSK_CACHE_HASH_SIZE = 0x2000;          // 8192 buckets, each {next_hash,last_hash} = 16 bytes
-// Reset the guest disk cache to the empty DskCacheInit state so a host-side disk write is seen live.
-// (Was buggy: cnt used size/560 -> missed ~8.6% of blocks; hash buckets pointed to themselves
-// instead of their header (off by offset(next_hash)=16) -> corrupted chains -> DskCacheFind walked
-// into garbage. Verified against the live snapshot: cache_ctrl@blkdev+48 LRU ring = size/512 blocks.)
+const BLKDEV = 0xBC18;                       // CBlkDevGlbls in this snapshot (verified live: cache_ctrl@+48 is the LRU-ring sentinel)
+// Make a host-side disk write visible to the running OS: mark every cached block "unowned" (dv=NULL)
+// so the next guest read of any block MISSES the cache (DskCacheFind compares dv) and re-reads from
+// disk. We walk the LRU ring from cache_ctrl and touch ONLY dv@+32 — we do NOT rewrite the hash
+// chains, hash buckets, or LRU links, so the cache structure can't be corrupted (an earlier version
+// rebuilt those by hand and broke `Dir`/file reads). CCacheBlk: next_lru@0, ..., dv@32.
 function invalidateGuestCache() {
   if (!instRef || !disk) return;
-  const m = new DataView(instRef.exports.memory.buffer);
-  const u64 = (a) => Number(m.getBigUint64(gBase + a, true));
-  const w64 = (a, v) => m.setBigUint64(gBase + a, BigInt(v), true);
-  const base = u64(BLKDEV + 40), ht = u64(BLKDEV + 56), size = u64(BLKDEV + 64);
-  if (!base || !ht || !size) return;
-  const cnt = Math.floor(size / BLK_SIZE);                 // cache_size/BLK_SIZE == number of CCacheBlk
-  for (let i = 0; i < cnt; i++) { const e = base + i * CCBLK;
-    w64(e + 16, e); w64(e + 24, e);                        // next_hash=last_hash=self (out of every hash chain)
-    w64(e + 32, 0); w64(e + 40, 0);                        // dv=NULL, blk=0 -> DskCacheFind never matches -> re-read from disk
-  }
-  for (let k = 0; k < DSK_CACHE_HASH_SIZE; k++) {          // each empty bucket points to its own header
-    const slot = ht + k * 16, hdr = slot - 16;             // header = hash_table+k*16 - offset(CCacheBlk.next_hash)
-    w64(slot, hdr); w64(slot + 8, hdr);
-  }
+  const dvw = new DataView(instRef.exports.memory.buffer), cap = dvw.byteLength;
+  const rd = (a) => (a >= 0 && gBase + a + 8 <= cap) ? Number(dvw.getBigUint64(gBase + a, true)) : 0;
+  const clr = (a) => { if (a >= 0 && gBase + a + 8 <= cap) dvw.setBigUint64(gBase + a, 0n, true); };
+  const ctrl = rd(BLKDEV + 48);                            // cache_ctrl (LRU ring sentinel)
+  if (!ctrl) return;
+  let p = rd(ctrl), n = 0;                                 // first block via next_lru (offset 0)
+  while (p && p !== ctrl && n < (1 << 20)) { clr(p + 32); p = rd(p); n++; }   // dv = NULL on each block
 }
 
 onmessage = (e) => {
