@@ -22,17 +22,16 @@
     :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; --zi:1; --ctlh:26px; }
     * { margin:0; padding:0; box-sizing:border-box; font-family:'TempleOS','dos_vga',"Courier New",monospace; cursor:url('assets/cursor.png'),auto;
         -webkit-font-smoothing:none; font-smooth:never; text-rendering:optimizeSpeed; }
-    /* TempleOS-style XOR cursor (desktop, opt-in): reuse the cursor.png arrow, recolor it
-       white, then mix-blend-mode:difference inverts the pixels under it — the browser
-       equivalent of TempleOS's ROP_XOR mouse (Adam/Win.HC DrawMs: dest palette index ^= 15). */
-    #xcursor { position:fixed; left:0; top:0; width:16px; height:16px; z-index:2147483647;
-        pointer-events:none; display:none; will-change:transform;
-        background:url('assets/cursor.png') no-repeat center/contain;
+    /* The mouse is the real TempleOS pointer: the cursor.png arrow is reconstructed pixel-for-pixel
+       from GrArrow3 (Adam/Gr/GrComposites.HC, what DrawStdMs draws), recolored white and composited
+       with mix-blend-mode:difference so it XOR-inverts the pixels under it — exactly like the OS's
+       ROP_XOR mouse (Adam/Win.HC DrawMs: dest palette index ^= 15). Auto-on for desktop (mice). */
+    #xcursor { position:fixed; left:0; top:0; width:18px; height:18px; z-index:2147483647;
+        pointer-events:none; display:none; will-change:transform; image-rendering:pixelated;
+        background:url('assets/cursor.png') no-repeat top left;
         filter:brightness(0) invert(1); mix-blend-mode:difference; }
     body.xcursor #xcursor { display:block; }
-    body.xcursor, body.xcursor * { cursor:none !important; }   /* the DOM arrow replaces the native cursor */
-    .toolbar button.on { color:#fff; background:#000; }        /* a toolbar toggle that is ON */
-    body.touch #xcursorBtn { display:none; }                   /* XOR cursor is desktop only */
+    body.xcursor, body.xcursor * { cursor:none !important; }   /* the inverting arrow replaces the native cursor */
     .wbar, .wbar *, .wvert, .wvert * { font-family:'TempleOS','dos_vga',monospace; }
     html { overflow-y:auto; }
     body { background:var(--blue); color:#fff; font-size:12px; line-height:1.0; min-height:100vh; display:flex; flex-direction:column; }
@@ -385,7 +384,6 @@
         <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico">▤</span> Disk &amp; Save</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video — 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico">⌕</span> Terry Search</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico">✛</span> Touch controls</button>
-        <button id="xcursorBtn" title="TempleOS-style cursor that XOR-inverts the colors underneath it (like the real OS)"><span class="ico">◧</span> XOR cursor</button>
       </div>
       <div class="win keyswin" data-title="Keys"><span class="close">[X]</span><div id="keysbar"></div></div>
     </div>
@@ -804,25 +802,20 @@
     //      moves; L/R = holdable mouse buttons (drags); ⌨ opens the device keyboard. ----
     if (navigator.maxTouchPoints > 0 || "ontouchstart" in window) document.body.classList.add("touch");
     $("touchBtn").addEventListener("click", () => document.body.classList.toggle("touch"));
-    { // TempleOS-style XOR cursor: a white arrow whose mix-blend-mode:difference inverts the
-      // colors under it — the browser equivalent of the OS's ROP_XOR mouse. Desktop only, opt-in.
-      const xc = $("xcursor"), xcBtn = $("xcursorBtn");
-      let xcOn = false;
-      const setXC = (on) => {
-        xcOn = on && !document.body.classList.contains("touch");
-        document.body.classList.toggle("xcursor", xcOn);
-        xcBtn.classList.toggle("on", xcOn);
-        try { localStorage.setItem("tos-xcursor", xcOn ? "1" : "0"); } catch {}
-      };
-      xcBtn.addEventListener("click", () => setXC(!xcOn));
-      addEventListener("mousemove", (e) => {
-        if (!xcOn) return;
-        xc.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
-        // over the emulator canvas TempleOS already draws its OWN inverting cursor — don't double it
-        xc.style.visibility = (e.target && e.target.id === "canvas") ? "hidden" : "visible";
-      }, true);
-      document.addEventListener("mouseleave", () => xc.style.visibility = "hidden");
-      try { if (localStorage.getItem("tos-xcursor") === "1") setXC(true); } catch {}
+    { // The mouse: the real TempleOS pointer. The cursor.png arrow (recolored white) rides the
+      // pointer and mix-blend-mode:difference inverts the pixels under it — the browser equivalent
+      // of the OS's ROP_XOR mouse. On automatically for desktop (mice); touch keeps its own UI.
+      const xc = $("xcursor");
+      const xcOn = !document.body.classList.contains("touch");
+      document.body.classList.toggle("xcursor", xcOn);
+      if (xcOn) {
+        addEventListener("mousemove", (e) => {
+          xc.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
+          // over the emulator canvas TempleOS already draws its OWN inverting cursor — don't double it
+          xc.style.visibility = (e.target && e.target.id === "canvas") ? "hidden" : "visible";
+        }, true);
+        document.addEventListener("mouseleave", () => xc.style.visibility = "hidden");
+      }
     }
     { // direct canvas touch: move cursor absolutely; quick tap = left click; long-press = right click
       let t0 = 0, moved = 0, lpTimer = 0;
