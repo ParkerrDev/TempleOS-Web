@@ -33,9 +33,9 @@
 #define FOGFAR  22.0
 #define MAXSTEP 80           // DDA step cap (>= steps to reach RDIST diagonally)
 #else
-#define RES_W   128          // x5 = 640
-#define RES_H   96           // x5 = 480
-#define SCALE   5
+#define RES_W   160          // x4 = 640 (finer than the old 128x96 — native WASM affords it; the dither
+#define RES_H   120          // x4 = 480  shader makes the extra detail read smoother still)
+#define SCALE   4
 #define RDIST   36.0         // render distance (WORLD units) -> fog horizon
 #define FOGMID  12.0         // start side-face darkening
 #define FOGFAR  22.0         // far -> darkest tone
@@ -54,6 +54,8 @@ U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame — RenderFrame/DrawHU
 U8  *g_show  = NULL;         // the published frame DrawIt reads (native: a 2nd buffer, swapped each
                             // frame so DrawIt never blits a half-rendered frame; browser: == g_fb)
 U8  *g_ramp  = NULL;         // [block*3 + tone] -> palette index  (tone 0 top,1 side,2 dark/far)
+U8   g_bayer[16];            // 4x4 ordered-dither matrix: a "static" blend of two palette colors per pixel
+U8   g_skyr[3];             // sky gradient ramp (blue zenith -> ltblue -> ltcyan horizon)
 F64  g_px, g_py, g_pz;       // camera position
 F64  g_yaw, g_pitch;         // camera angles
 I64  g_sel  = 1;             // selected block to place
@@ -93,6 +95,13 @@ U0 SetRamp()
   g_ramp[5*3+0]=10; g_ramp[5*3+1]=2;  g_ramp[5*3+2]=2;   // leaves
   g_ramp[6*3+0]=14; g_ramp[6*3+1]=6;  g_ramp[6*3+2]=6;   // sand   YELLOW
   g_ramp[7*3+0]=11; g_ramp[7*3+1]=9;  g_ramp[7*3+2]=1;   // water  LTCYAN/LTBLUE/BLUE
+  g_skyr[0]=1; g_skyr[1]=9; g_skyr[2]=11;                 // sky: blue -> ltblue -> ltcyan
+  // Bayer 4x4 thresholds (0..15). A pixel takes the *darker* neighbouring tone when bayer < frac*16,
+  // so a fractional shade between two of the 16 palette colours is rendered as a fine "static" mix.
+  g_bayer[0] =0;  g_bayer[1] =8;  g_bayer[2] =2;  g_bayer[3] =10;
+  g_bayer[4] =12; g_bayer[5] =4;  g_bayer[6] =14; g_bayer[7] =6;
+  g_bayer[8] =3;  g_bayer[9] =11; g_bayer[10]=1;  g_bayer[11]=9;
+  g_bayer[12]=15; g_bayer[13]=7;  g_bayer[14]=13; g_bayer[15]=5;
 }
 
 U0 PlantTree(I64 x, I64 top, I64 z)
@@ -178,7 +187,11 @@ U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g
     F64 cstep=2.0/RES_W*asp*fov;
     F64 cx=-asp*fov;
     I64 row=syy*RES_W;
-    I64 skytone=9; if (syy<RES_H*3/8) skytone=1; else if (syy<RES_H/2) skytone=9; else skytone=11;
+    // per-row dither setup: sky gradient position, this row's Bayer offset, and the fog rate
+    F64 skp=2.0*syy/RES_H; if (skp>1.999) skp=1.999;
+    I64 sklv=skp, skb=g_skyr[sklv], skb2=g_skyr[sklv+1]; F64 skfr=skp-sklv;
+    I64 brow=(syy&3)<<2;
+    F64 fograte=2.8/RDIST;
     for (sx=0; sx<RES_W; sx++) {
       F64 dx=bx+rgx*cx, dy=by, dz=bz+rgz*cx;
       cx+=cstep;
@@ -209,14 +222,16 @@ U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g
         bt=g_world[WIdx(ix,iy,iz)];
         if (bt) { hit=1; break; }
       }
-      I64 col;
+      I64 col, dth=g_bayer[brow|(sx&3)];
       if (hit) {
-        I64 tone;
-        if (axis==1) { if (sty<0) tone=0; else tone=2; }   // top bright, bottom dark
-        else tone=1;                                        // x/z side
-        if (t>FOGFAR) tone=2; else if (t>FOGMID && tone<1) tone=1;   // distance darkening
-        col=g_ramp[bt*3+tone];
-      } else col=skytone;
+        // continuous shade = face base (top bright .. bottom dark) + distance fog, then ORDERED-DITHER
+        // between the two nearest palette tones so the 16 colours read as a smooth gradient.
+        F64 tp; if (axis==1) { if (sty<0) tp=0.0; else tp=2.0; } else tp=0.92;
+        tp += t*fograte; if (tp>2.0) tp=2.0;
+        I64 lvl=tp, base=bt*3+lvl;
+        col=g_ramp[base];
+        if (lvl<2 && dth < (tp-lvl)*16.0) col=g_ramp[base+1];   // mix toward the darker tone
+      } else if (dth < skfr*16.0) col=skb2; else col=skb;       // dithered sky gradient
       g_fb[row+sx]=col;
     }
   }

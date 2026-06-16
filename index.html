@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-4 (engine: FRNDINT/FIST honor the x87 rounding-control bits — Floor/Ceil/Round now correct; HolyCraft camera no longer sinks/bounces, no per-game workaround)";
+    window.__BUILD = "render-5 (HolyCraft: ordered-dither 'static' shader blends the 16 colors into smooth gradients + finer 160x120 browser framebuffer — less banding/pixelation)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
