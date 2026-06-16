@@ -42,10 +42,62 @@ function invalidateGuestCache(lbas) {
   return cleared;
 }
 
+// ---- type a command into the running OS (used by osWrite to drive FileWrite + #include) ----
+// Push set-1 scancodes onto keyq, paced in wall-clock time; the main loop runs __main frames
+// concurrently (it awaits each iteration) and consumes them via __host_key. Pacing matters: a
+// scancode BURST overruns the line-editor/AutoComplete and drops keys ("#include"->"slude").
+const _SC = {a:0x1E,b:0x30,c:0x2E,d:0x20,e:0x12,f:0x21,g:0x22,h:0x23,i:0x17,j:0x24,k:0x25,l:0x26,m:0x32,n:0x31,o:0x18,p:0x19,q:0x10,r:0x13,s:0x1F,t:0x14,u:0x16,v:0x2F,w:0x11,x:0x2D,y:0x15,z:0x2C,"0":0x0B,"1":0x02,"2":0x03,"3":0x04,"4":0x05,"5":0x06,"6":0x07,"7":0x08,"8":0x09,"9":0x0A," ":0x39,"=":0x0D,";":0x27,",":0x33,".":0x34,"/":0x35,"-":0x0C,"'":0x28,"[":0x1A,"]":0x1B,"\\":0x2B};
+const _SH = {"*":"8","(":"9",")":"0","&":"7","_":"-","+":"=",":":";","\"":"'","{":"[","}":"]","|":"\\","<":",",">":".","?":"/","!":"1","@":"2","#":"3","$":"4","%":"5","^":"6"};
+const _wait = (ms) => new Promise(r => setTimeout(r, ms));
+async function _typeInto(s, perKeyMs = 55) {
+  for (const ch of s) {
+    if (ch === "\n" || ch === "\r") keyq.push(0x1C, 0x9C);                 // Enter
+    else if (ch === "\x1b") keyq.push(0x01, 0x81);                          // Esc
+    else {
+      const sh = _SH[ch] !== undefined || (ch >= "A" && ch <= "Z");
+      const base = _SH[ch] !== undefined ? _SH[ch] : ch.toLowerCase();
+      const code = _SC[base]; if (code === undefined) continue;
+      if (sh) keyq.push(0x2A);
+      keyq.push(code, code | 0x80);
+      if (sh) keyq.push(0x2A | 0x80);
+    }
+    await _wait(perKeyMs);
+  }
+}
+
+// Write a file to C:/Home THROUGH THE OS's own filesystem. The bytes are staged in a high scratch
+// region of guest RAM, then we type a FileWrite() call at the shell prompt. Because the OS does the
+// write itself, the disk image AND the guest's disk cache stay consistent — unlike the host-side
+// fat32Upload + cache-poke (uploadFile), which corrupted Dir/file reads. run=true then #includes it.
+// We capture FileWrite's return value (the file's first cluster — non-zero on success, 0 on failure)
+// in a mailbox and read it back: the OS's own verdict. (Don't verify with fat32List — TempleOS's disk
+// cache is WRITE-BACK, so a just-written file isn't on the disk image yet, only in the cache.)
+const OSW_SCRATCH = 0x16800000;                 // ~360 MB into the 384 MB guest RAM — free scratch (proven in the headless rig)
+const OSW_MBOX    = 0x16700000;                 // FileWrite's return value lands here so the host can read it
+async function osWrite({ name, bytes, run }) {
+  if (!instRef) throw new Error("engine not ready");
+  if (!disk) throw new Error("disk not loaded yet — wait a moment after boot");
+  const data = new Uint8Array(bytes);
+  const dvw = new DataView(instRef.exports.memory.buffer);
+  if (gBase + OSW_SCRATCH + data.length > dvw.byteLength) throw new Error("file too large to stage");
+  new Uint8Array(instRef.exports.memory.buffer).set(data, gBase + OSW_SCRATCH);   // 1. stage bytes in guest RAM
+  await _typeInto("\x1b", 120); await _wait(250);                                  // 2. clear any AutoComplete popup / leave a menu
+  const path = "C:/Home/" + name, hx = "0x" + OSW_SCRATCH.toString(16).toUpperCase(), mb = "0x" + OSW_MBOX.toString(16).toUpperCase();
+  dvw.setBigUint64(gBase + OSW_MBOX, 0n, true);                                    // 3. drive the OS's own FileWrite, capturing its return
+  await _typeInto(`*(${mb})(I64*)=FileWrite("${path}",${hx},${data.length});\n`);
+  await _wait(1800);
+  const ok = dvw.getBigInt64(gBase + OSW_MBOX, true) !== 0n;                       // non-zero first cluster == success
+  postMessage({ cmd: "fileResult", ok, msg: ok
+    ? `wrote ${name} to C:/Home via the OS (${data.length} b)`
+    : `the OS did not write ${name} — make sure TempleOS is at a shell prompt, then try again` });
+  if (ok && run) { await _wait(300); await _typeInto(`#include "${path}";\n`); }   // 4. run it
+}
+
 onmessage = (e) => {
   const m = e.data;
   if (m.cmd === "init") boot(m).catch(err => postMessage({ cmd: "error", msg: String(err?.message || err) }));
   else if (m.cmd === "input") { msX = m.x; msY = m.y; msB = m.b; if (m.wheel !== undefined) wheel = m.wheel; if (m.keys) for (const k of m.keys) keyq.push(k); }
+  else if (m.cmd === "osWrite") osWrite(m).catch(err => postMessage({ cmd: "fileResult", ok: false, msg: String(err?.message || err) }));
   else if (m.cmd === "ack") outstanding--;   // main finished a frame — release a flow-control slot
   else if (m.cmd === "pause") { paused = m.value; postMessage({ cmd: "paused", value: paused }); }
   else if (m.cmd === "exportSnapshot") exportSnapshot();
