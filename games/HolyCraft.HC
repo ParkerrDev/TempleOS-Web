@@ -48,6 +48,7 @@
 #define EYE     1.62         // eye height above the feet
 #define GRAV    0.020        // gravity per frame
 #define JUMP    0.33         // jump impulse
+#define DITHER  4.0          // surface-dither cells per world unit (the 4x4 Bayer tile spans one block)
 
 U8  *g_world = NULL;         // WX*WZ*WY voxels, 0 = air
 U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame — RenderFrame/DrawHUD's render target
@@ -222,16 +223,25 @@ U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g
         bt=g_world[WIdx(ix,iy,iz)];
         if (bt) { hit=1; break; }
       }
-      I64 col, dth=g_bayer[brow|(sx&3)];
+      I64 col;
       if (hit) {
-        // continuous shade = face base (top bright .. bottom dark) + distance fog, then ORDERED-DITHER
-        // between the two nearest palette tones so the 16 colours read as a smooth gradient.
+        // continuous shade = face base (top bright .. bottom dark) + distance fog
         F64 tp; if (axis==1) { if (sty<0) tp=0.0; else tp=2.0; } else tp=0.92;
         tp += t*fograte; if (tp>2.0) tp=2.0;
         I64 lvl=tp, base=bt*3+lvl;
         col=g_ramp[base];
-        if (lvl<2 && dth < (tp-lvl)*16.0) col=g_ramp[base+1];   // mix toward the darker tone
-      } else if (dth < skfr*16.0) col=skb2; else col=skb;       // dithered sky gradient
+        if (lvl<2) {
+          // ORDERED-DITHER between the two nearest palette tones, indexed by the hit point's position
+          // ON THE FACE (world tangent coords) -> the dither is a property of the SURFACE and moves with
+          // the block, like TempleOS's CColorROP dithered colours (Varoom's car) -- NOT screen static.
+          F64 hu, hv; I64 du, dv;
+          if (axis==0)      { hu=oy+dy*t; hv=oz+dz*t; }   // x-face: y,z tangents
+          else if (axis==1) { hu=ox+dx*t; hv=oz+dz*t; }   // y-face: x,z tangents
+          else              { hu=ox+dx*t; hv=oy+dy*t; }   // z-face: x,y tangents
+          du=hu*DITHER; dv=hv*DITHER;                     // world coords are >=0 so the cast floors
+          if (g_bayer[((dv&3)<<2)|(du&3)] < (tp-lvl)*16.0) col=g_ramp[base+1];
+        }
+      } else if (g_bayer[brow|(sx&3)] < skfr*16.0) col=skb2; else col=skb;   // sky: screen-vertical gradient
       g_fb[row+sx]=col;
     }
   }
