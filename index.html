@@ -219,6 +219,23 @@
     #editorWin #screen { display:block; height:min(44vh,430px); width:auto; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; background:#000; }
     #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:12px; line-height:1.0; white-space:pre-wrap; word-break:break-word; }
     .ed-foot { flex:0 0 auto; color:var(--blue); font-size:12px; padding:1px 2px 0; }
+    /* ---- game mode: editor overlay shows just a big canvas (driven by the Games launcher) ---- */
+    #gameBack { display:none; width:auto; } #gameTitle { display:none; color:var(--blue); align-self:center; padding:0 6px; }
+    #editorOverlay.gamemode #gameBack { display:inline-flex; }
+    #editorOverlay.gamemode #gameTitle { display:inline; }
+    #editorOverlay.gamemode #demoSelect, #editorOverlay.gamemode #edFmt, #editorOverlay.gamemode #edSave,
+    #editorOverlay.gamemode #edOpen, #editorOverlay.gamemode #edToDisk { display:none; }
+    #editorOverlay.gamemode .ed-pane:first-child { display:none; }      /* hide the source pane */
+    #editorOverlay.gamemode .ed-pane .ed-h, #editorOverlay.gamemode #console { display:none; }
+    #editorOverlay.gamemode .ed-pane { border:0; }
+    #editorOverlay.gamemode #screen { height:min(72vh,660px); }
+    /* ---- Games launcher ---- */
+    #gamesWin { width:min(740px,94vw); }
+    .gm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; padding:6px 2px; }
+    .gm-card { background:#fff; border:3px double var(--blue); color:var(--blue); padding:10px; display:flex; flex-direction:column; gap:6px; }
+    .gm-card h3 { font-size:14px; font-weight:normal; color:var(--red); }
+    .gm-card p { font-size:12px; line-height:1.1; flex:1 1 auto; }
+    .gm-card .gm-play { width:auto; align-self:flex-start; }
 
     /* God Tools window */
     #godWin { display:flex; flex-direction:column; gap:8px; width:min(680px,94vw); height:min(74vh,620px); margin:0; padding:10px; }
@@ -380,6 +397,7 @@
         <button id="restartBtn" title="Reload TempleOS in place — keeps your other windows open"><span class="ico">↻</span> Restart</button>
         <button id="fsBtn" title="Fullscreen captures every key — including Esc — for the OS"><span class="ico">⛶</span> Fullscreen</button>
         <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly — no emulation, native speed"><span class="ico">⌨︎</span> HolyC Editor</button>
+        <button id="gamesBtn" title="Play HolyC games compiled to WebAssembly — installed on demand (fetched only when you play)"><span class="ico">▦</span> Games</button>
         <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
         <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico">▤</span> Disk &amp; Save</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video — 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico">⌕</span> Terry Search</button>
@@ -429,6 +447,8 @@
     <div class="win" id="editorWin" data-title="HolyC → WebAssembly Editor">
       <span class="close" id="editorClose" title="Close editor">[X]</span>
       <div class="ed-bar">
+        <button id="gameBack" title="Back to the games list">← Games</button>
+        <span id="gameTitle"></span>
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
         <button id="runBtn">▶ Run</button>
         <button id="edFmt" title="Reformat to the canonical TempleOS style with holyc-fmt (a HolyC formatter, run in-browser)">⊹ Format</button>
@@ -450,6 +470,16 @@
         </section>
       </div>
       <div class="ed-foot">Click the screen to enable sound &amp; send keyboard/mouse to the program. Compiled with holyc-wasm — no emulation. · <a href="format.html" target="_blank" rel="noopener">Formatter page ↗</a></div>
+    </div>
+  </div>
+
+  <!-- Games launcher: each game's .HC is hosted statically under /games and fetched only
+       when you press Play (installed on demand), then compiled to WASM + run by holyc-wasm. -->
+  <div id="gamesOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Games">
+    <div class="win" id="gamesWin" data-title="Games · HolyC compiled to WebAssembly">
+      <span class="close" id="gamesClose" title="Close">[X]</span>
+      <div style="color:var(--blue);font-size:12px;padding:2px 2px 8px">Pick a game — it installs on demand (the code is fetched only when you play) and runs compiled to WebAssembly.</div>
+      <div class="gm-grid" id="gmGrid"></div>
     </div>
   </div>
 
@@ -1801,24 +1831,35 @@ I64 GodDoodleGen(I64 strokes)
       const ov = document.getElementById("editorOverlay");
       const openBtn = document.getElementById("editorBtn");
       const closeBtn = document.getElementById("editorClose");
-      let loaded = false;
+      // shared, memoized loader for the HolyC runtime (native/app.js) — used by the editor AND
+      // the Games launcher (which drives the same compile+worker+canvas+input machinery).
+      let appPromise = null, ranDefault = false;
+      window.__loadEditorApp = () => {
+        if (!appPromise) appPromise = import("./holyc-wasm/native/app.js")
+          .catch((e) => { appPromise = null; const s = document.getElementById("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); throw e; });
+        return appPromise;
+      };
       function open() {
         ov.classList.add("open");
+        ov.classList.remove("gamemode");          // full editor, not a game view
         if (window.__winChrome) window.__winChrome.raise(ov);
-        if (!loaded) {
-          loaded = true;
-          import("./holyc-wasm/native/app.js")
-            .then(() => { if (window.__holycEditor) window.__holycEditor.run(); })
-            .catch((e) => { const s = document.getElementById("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); });
-        }
+        window.__loadEditorApp().then(() => {
+          if (!ranDefault) { ranDefault = true; if (window.__holycEditor && !window.__holycEditor.isRunning()) window.__holycEditor.run(); }
+        }).catch(() => {});
       }
       function close() {
-        ov.classList.remove("open", "free");
+        ov.classList.remove("open", "free", "gamemode");
         if (window.__holycEditor) window.__holycEditor.stop();
       }
+      window.__editorClose = close;
       openBtn.addEventListener("click", open);
       closeBtn.addEventListener("click", close);
       ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(); });
+      document.getElementById("gameBack").addEventListener("click", () => {
+        if (window.__holycEditor) window.__holycEditor.stop();
+        ov.classList.remove("open", "free", "gamemode");
+        document.getElementById("gamesOverlay").classList.add("open");
+      });
 
       // ---- editor Save (.HC download) / Open (.HC upload) / To C:/Home ----
       const ta = document.getElementById("editor");
@@ -1854,6 +1895,52 @@ I64 GodDoodleGen(I64 strokes)
         } catch (e) { setStatus("format error: " + e.message); }
         finally { fmtBtn.disabled = false; }
       });
+    })();
+
+    // ---- Games launcher: install-on-demand HolyC games (fetched only on Play) ----
+    (function () {
+      const GAMES = [
+        { file: "HolyCraft.HC", name: "HolyCraft", blurb: "A 3D voxel sandbox — walk a blocky world, break & place blocks. A real-time raycaster in HolyC.",
+          how: "W/S move · A/D strafe · R/F up/down · move MOUSE or J/L/I/K to look · LEFT-click break · RIGHT-click place · 1-7 pick block · Esc quit" },
+        { file: "Snake.HC", name: "Snake", blurb: "The classic. Eat the apples, don't bite your tail.",
+          how: "W/A/S/D to steer · Esc to quit" },
+      ];
+      const ovG = document.getElementById("gamesOverlay");
+      const ovE = document.getElementById("editorOverlay");
+      const grid = document.getElementById("gmGrid");
+      for (const g of GAMES) {
+        const c = document.createElement("div"); c.className = "gm-card";
+        c.innerHTML = `<h3>${g.name}</h3><p>${g.blurb}</p>`;
+        const b = document.createElement("button"); b.className = "gm-play"; b.textContent = "▶ Play";
+        b.addEventListener("click", () => play(g));
+        c.appendChild(b); grid.appendChild(c);
+      }
+      function openGames() { ovG.classList.add("open"); if (window.__winChrome) window.__winChrome.raise(ovG); }
+      function closeGames() { ovG.classList.remove("open"); }
+      document.getElementById("gamesBtn").addEventListener("click", openGames);
+      document.getElementById("gamesClose").addEventListener("click", closeGames);
+      ovG.addEventListener("mousedown", (e) => { if (e.target === ovG) closeGames(); });
+
+      async function play(g) {
+        const setStatus = (s) => { const st = document.getElementById("status"); if (st) st.textContent = s; };
+        closeGames();
+        ovE.classList.add("open", "gamemode");
+        if (window.__winChrome) window.__winChrome.raise(ovE);
+        document.getElementById("gameTitle").textContent = g.name + " — " + g.how;
+        setStatus("installing " + g.name + " …");
+        try {
+          // install on demand: the .HC is hosted statically but fetched only now
+          const src = await fetch("games/" + g.file, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); });
+          await window.__loadEditorApp();
+          const ed = document.getElementById("editor");
+          ed.value = src; ed.dispatchEvent(new Event("input"));
+          if (window.__holycEditor.isRunning()) window.__holycEditor.stop();
+          setTimeout(() => {
+            window.__holycEditor.run();                       // compiles ed.value + runs in the worker
+            setTimeout(() => { const c = document.getElementById("screen"); if (c) c.focus(); }, 150);
+          }, 80);
+        } catch (e) { setStatus("install failed: " + e.message); }
+      }
     })();
 
     // ---- lightweight HolyC syntax highlighter for the editor ----
