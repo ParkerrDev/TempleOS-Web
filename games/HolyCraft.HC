@@ -17,9 +17,8 @@
 //                       ScanMsg(MSG_KEY_DOWN); look with J/L/I/K or the arrow keys. A smaller
 //                       frame because the x86 emulator is much slower than native WASM.
 #ifdef TOS_NATIVE
-#define RES_W   80           // x8 = 640
-#define RES_H   60           // x8 = 480
-#define SCALE   8
+#define RES_W   128          // raycaster resolution; DrawIt SCALES it to fill the whole window
+#define RES_H   96           // (decoupled from the window size, which is 640x472 — minus the menu bar)
 #else
 #define RES_W   128          // x5 = 640
 #define RES_H   96           // x5 = 480
@@ -38,7 +37,9 @@
 #define JUMP    0.33         // jump impulse
 
 U8  *g_world = NULL;         // WX*WZ*WY voxels, 0 = air
-U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame
+U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame — RenderFrame/DrawHUD's render target
+U8  *g_show  = NULL;         // the published frame DrawIt reads (native: a 2nd buffer, swapped each
+                            // frame so DrawIt never blits a half-rendered frame; browser: == g_fb)
 U8  *g_ramp  = NULL;         // [block*3 + tone] -> palette index  (tone 0 top,1 side,2 dark/far)
 F64  g_px, g_py, g_pz;       // camera position
 F64  g_yaw, g_pitch;         // camera angles
@@ -117,6 +118,11 @@ U0 Init()
 {
   g_world = MAlloc(WX*WZ*WY);
   g_fb    = MAlloc(RES_W*RES_H);
+#ifdef TOS_NATIVE
+  g_show  = MAlloc(RES_W*RES_H);   // second buffer: tear-free hand-off to DrawIt
+#else
+  g_show  = g_fb;
+#endif
   g_ramp  = MAlloc(8*3);
   SetRamp();
   GenWorld();
@@ -329,22 +335,28 @@ U0 HandleInput()
 }
 
 #ifdef TOS_NATIVE
-// real TempleOS calls this each refresh with the screen DC: blit g_fb scaled, centered.
+I64 g_colmap[640];           // screen column -> source column; rebuilt only when the window width changes
+I64 g_colmap_sw = 0;
+// real TempleOS calls this each refresh with the screen DC. We scale the RES_W x RES_H frame to FILL the
+// ENTIRE window (whatever size it is: 640x472 with the menu bar, or any other), nearest-neighbor. Reading
+// g_show (the published frame, never the one RenderFrame is mid-writing) makes it tear-free. Drawing to
+// the real sw x sh (not a hardcoded 640x480) means no overflow past the window body and no flicker border.
 U0 DrawIt(CTask *task, CDC *dc)
 {
+  U8 *fb=g_show;
+  if (!fb) return;
   I64 w=dc->width_internal, sw=task->pix_width, sh=task->pix_height;
-  I64 ox=(sw-RES_W*SCALE)/2, oy=(sh-RES_H*SCALE)/2;
-  if (ox<0) ox=0;
-  if (oy<0) oy=0;
-  I64 x,y,sx2,sy2, c, base;
-  if (!g_fb) return;
-  for (y=0; y<RES_H; y++)
-    for (x=0; x<RES_W; x++) {
-      c=g_fb[y*RES_W+x];
-      base=(oy+y*SCALE)*w + ox+x*SCALE;
-      for (sy2=0; sy2<SCALE; sy2++)
-        for (sx2=0; sx2<SCALE; sx2++) dc->body[base+sy2*w+sx2]=c;
-    }
+  I64 x,y,srow,drow;
+  if (sw>640) sw=640;
+  if (sw!=g_colmap_sw) {                       // window resized -> rebuild the column map (one divide per col, once)
+    for (x=0; x<sw; x++) g_colmap[x]=x*RES_W/sw;
+    g_colmap_sw=sw;
+  }
+  for (y=0; y<sh; y++) {
+    srow=(y*RES_H/sh)*RES_W;                    // source row (one divide per row)
+    drow=y*w;
+    for (x=0; x<sw; x++) dc->body[drow+x]=fb[srow+g_colmap[x]];
+  }
 }
 #else
 U0 Present(CDC *dc)
@@ -356,6 +368,7 @@ U0 Present(CDC *dc)
 U0 HolyCraft()
 {
 #ifdef TOS_NATIVE
+  U8 *tmp;
   SettingsPush;
   AutoComplete(OFF);            // don't pop the completion box while we read keys
   WinBorder(OFF);
@@ -367,8 +380,9 @@ U0 HolyCraft()
   try {
     while (!g_quit) {
       HandleInput();
-      RenderFrame();
+      RenderFrame();            // draw into g_fb (the back buffer)
       DrawHUD();
+      tmp=g_show; g_show=g_fb; g_fb=tmp;   // publish it for DrawIt (pointer swap = tear-free)
       Sleep(16);
     }
   } catch
