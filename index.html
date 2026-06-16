@@ -1001,7 +1001,9 @@
       engineLabel = "2";
       engine.kind = "worker"; engine.post = (m, t) => worker?.postMessage(m, t || []);
       engine.stop = () => { try { clearTimeout(watchdog); } catch {} try { worker?.terminate(); } catch {} worker = null; notifyInput = () => {}; };
-      window.__diskMsg = null;   // Disk UI sets a handler; worker replies route to it
+      // NOTE: do NOT null window.__diskMsg here — the Disk window installs its reply handler at page
+      // load, and this engine setup runs AFTER an async fetch (see runSMP), so nulling it would race-
+      // clobber the handler and drop every worker reply (fileResult/dirList/exportResult).
       notifyInput = () => worker?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0) });
       const fallback = (why) => {
         if (!worker) return;
@@ -1052,7 +1054,8 @@
         engineLabel = String(SMP_N);
         engine.kind = "smp"; engine.post = (m, t) => bsp?.postMessage(m, t || []);
         engine.stop = () => { try { clearTimeout(watchdog); } catch {} try { const c = new Int32Array(ctrl); Atomics.store(c, 1, 1); Atomics.notify(c, 1); } catch {} try { bsp?.terminate(); } catch {} for (const a of aps) { try { a.terminate(); } catch {} } bsp = null; aps = []; notifyInput = () => {}; };
-        window.__diskMsg = null;
+        // (do NOT null window.__diskMsg here — runSMP resumes after the await above, AFTER the Disk
+        //  window installed its handler, so nulling it dropped every worker reply. Bug fixed 2026-06-15.)
         notifyInput = () => bsp?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0) });
         const fallback = (why) => {
           if (!bsp && !aps.length) return;
@@ -1116,13 +1119,13 @@
       const inst = await WebAssembly.instantiate(mod, { env: host.env });
       host.attach(inst); inst.exports.__rt_init();
       // the inline engine answers the same Disk/Save messages the worker does
-      const BLKDEV = 0xBC18;
+      const BLKDEV = 0xBC18;   // cache_base@+40, cache_hash_table@+56, cache_size@+64 (verified live)
       const invalidate = () => { if (!disk) return; const m = new DataView(inst.exports.memory.buffer);
         const u64 = (a) => Number(m.getBigUint64(gBaseI + a, true)), w64 = (a, v) => m.setBigUint64(gBaseI + a, BigInt(v), true);
         const base = u64(BLKDEV + 40), ht = u64(BLKDEV + 56), size = u64(BLKDEV + 64); if (!base || !ht || !size) return;
-        const cnt = Math.floor(size / 560);
+        const cnt = Math.floor(size / 512);   // cache_size = cnt*BLK_SIZE(512); sizeof(CCacheBlk)=560 is the STRIDE, not the divisor
         for (let i = 0; i < cnt; i++) { const e = base + i * 560; w64(e + 16, e); w64(e + 24, e); w64(e + 32, 0); w64(e + 40, 0); }
-        for (let k = 0; k < 0x2000; k++) { const bkt = ht + k * 16; w64(bkt, bkt); w64(bkt + 8, bkt); } };
+        for (let k = 0; k < 0x2000; k++) { const slot = ht + k * 16, hdr = slot - 16; w64(slot, hdr); w64(slot + 8, hdr); } };   // empty bucket -> its header (off by offset(next_hash)=16 before)
       engine.kind = "inline";
       let stopped = false;
       engine.stop = () => { stopped = true; notifyInput = () => {}; };   // halts loop() on its next frame
@@ -1761,6 +1764,7 @@ I64 GodDoodleGen(I64 strokes)
         return u; };
 
       // worker replies land here
+      const uploadWaiters = [];   // FIFO of pending __uploadToHome() promises, resolved by the next fileResult
       window.__diskMsg = (m) => {
         if (m.cmd === "exportResult") {
           if (!m.ok) { say("export failed: " + m.msg); return; }
@@ -1768,7 +1772,7 @@ I64 GodDoodleGen(I64 strokes)
           if (m.kind === "snapshot") dl(m.buf, `templeos-${stamp}.hemu.gz`), say("snapshot exported");
           else dl(m.buf, `templeos-C-${stamp}.img.gz`, "application/gzip"), say("C: disk exported");
         }
-        else if (m.cmd === "fileResult") say(m.ok ? "✓ " + m.msg : "✗ " + m.msg);
+        else if (m.cmd === "fileResult") { say(m.ok ? "✓ " + m.msg : "✗ " + m.msg); const w = uploadWaiters.shift(); if (w) w(m); }
         else if (m.cmd === "diskInfo") say(m.ok ? "✓ " + m.msg : "✗ " + m.msg);
         else if (m.cmd === "dirList") {
           const ul = $("homeList"); ul.innerHTML = "";
@@ -1807,9 +1811,19 @@ I64 GodDoodleGen(I64 strokes)
       $("diskBtn").addEventListener("click", open);
       $("diskClose").addEventListener("click", close);
       ov.addEventListener("pointerdown", (e) => { if (e.target === ov) close(); });
-      // let the Disk window also write the editor's current source to C:/Home
+      // let the Disk window also write the editor's current source to C:/Home.
+      // Returns a Promise<{ok,msg}> that resolves with the engine's real fileResult (or a timeout),
+      // so callers can report success/failure truthfully instead of assuming it worked.
       window.__uploadToHome = (name, text) => { const b = new TextEncoder().encode(text);
-        engine.post({ cmd: "uploadFile", name, dir: "Home", bytes: b.buffer }, [b.buffer]); say("writing " + name + "…"); };
+        return new Promise((resolve) => {
+          if (!engine.kind) { resolve({ ok: false, msg: "disk not loaded yet" }); return; }   // engine not up — fail fast so the caller retries
+          let done = false;
+          const finish = (m) => { if (done) return; done = true; resolve(m); };
+          uploadWaiters.push(finish);
+          setTimeout(() => { const i = uploadWaiters.indexOf(finish); if (i >= 0) uploadWaiters.splice(i, 1); finish({ ok: false, msg: "no response from engine (still booting?)" }); }, 15000);   // generous: under SMP+game load the reply round-trip can take several seconds
+          engine.post({ cmd: "uploadFile", name, dir: "Home", bytes: b.buffer }, [b.buffer]); say("writing " + name + "…");
+        });
+      };
     }
 
     // ---- Terry window: gif sequence forwards/backwards ----
@@ -1968,20 +1982,35 @@ I64 GodDoodleGen(I64 strokes)
 
       // write the running game to the real TempleOS C: drive, with TOS_NATIVE defined so it
       // compiles against the OS's own graphics (dc->body) and runs in HEMU.
-      document.getElementById("gameToDisk").addEventListener("click", () => {
+      document.getElementById("gameToDisk").addEventListener("click", async () => {
         if (!curGame) return;
-        const base = curGame.file.replace(/\.HC$/i, "");
         const src = "#define TOS_NATIVE 1\n" + document.getElementById("editor").value;
-        if (window.__uploadToHome) {
-          window.__uploadToHome(curGame.file, src);
+        if (!window.__uploadToHome) {
+          toast("The TempleOS engine isn't ready yet — open the <b>Disk</b> window and let the OS finish booting, then try again.");
+          setStatus("OS engine not ready"); return;
+        }
+        // The C: disk is decompressed/mounted a few seconds AFTER the desktop boots, so an upload can
+        // legitimately fail with "disk not loaded yet" right after launch. Wait for the REAL result and
+        // retry while it's still loading — and only claim success when the engine confirms the write.
+        toast("Writing <b>" + curGame.file + "</b> to the TempleOS C: drive…", 60000);
+        setStatus("writing " + curGame.file + " to C:…");
+        let r, tries = 0;
+        do {
+          r = await window.__uploadToHome(curGame.file, src);
+          if (r && r.ok) break;
+          if (!/disk not loaded/i.test(r && r.msg || "")) break;   // not the "still mounting" case — a real error, stop
+          await new Promise((res) => setTimeout(res, 1500));        // disk still mounting — wait & retry
+        } while (++tries < 20);
+        if (r && r.ok) {
           toast('Wrote <b>~/' + curGame.file + '</b> to the TempleOS C: drive.<br>'
-            + 'Switch to the OS window, then run:<br>'
+            + 'Switch to the OS window, then run (keep the <b>.HC</b> — the OS adds <i>.HC.Z</i> otherwise):<br>'
             + '<code style="display:inline-block;margin-top:5px;background:var(--blue);color:#fff;padding:2px 7px">'
-            + '#include "~/' + base + '"</code>');
+            + '#include "~/' + curGame.file + '"</code>');
           setStatus('wrote ~/' + curGame.file + ' to C:');
         } else {
-          toast("The TempleOS engine isn't ready yet — open the <b>Disk</b> window and let the OS finish booting, then try again.");
-          setStatus("OS engine not ready");
+          toast("Couldn't write <b>" + curGame.file + "</b> to the C: drive: " + ((r && r.msg) || "unknown error")
+            + "<br>The OS may still be booting — give it a few seconds and try again.");
+          setStatus("disk write failed");
         }
       });
     })();

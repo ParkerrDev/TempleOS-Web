@@ -17,8 +17,14 @@ let paused = false;
 const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
 // JIT segment/TSC addresses now flow from the guest at runtime via __jit_seg (per-core CCpuState) — no hardcoded offsets to drift.
 
-const BLKDEV = 0xBC18;                       // CBlkDevGlbls in this snapshot (stable; see qcow2.js/git history)
-// Relink the guest disk cache to empty (DskCacheInvalidate2) so a host-side disk write is seen live.
+const BLKDEV = 0xBC18;                       // CBlkDevGlbls in this snapshot (verified live: cache_base@+40, cache_hash_table@+56, cache_size@+64)
+const CCBLK = 560;                           // sizeof(CCacheBlk) = 48-byte header + BLK_SIZE(512) body (verified: blk stride 560)
+const BLK_SIZE = 512;                        // cache_size = blk_cnt*BLK_SIZE  (DskCacheInit, Kernel/BlkDev/DskCache.HC)
+const DSK_CACHE_HASH_SIZE = 0x2000;          // 8192 buckets, each {next_hash,last_hash} = 16 bytes
+// Reset the guest disk cache to the empty DskCacheInit state so a host-side disk write is seen live.
+// (Was buggy: cnt used size/560 -> missed ~8.6% of blocks; hash buckets pointed to themselves
+// instead of their header (off by offset(next_hash)=16) -> corrupted chains -> DskCacheFind walked
+// into garbage. Verified against the live snapshot: cache_ctrl@blkdev+48 LRU ring = size/512 blocks.)
 function invalidateGuestCache() {
   if (!instRef || !disk) return;
   const m = new DataView(instRef.exports.memory.buffer);
@@ -26,9 +32,15 @@ function invalidateGuestCache() {
   const w64 = (a, v) => m.setBigUint64(gBase + a, BigInt(v), true);
   const base = u64(BLKDEV + 40), ht = u64(BLKDEV + 56), size = u64(BLKDEV + 64);
   if (!base || !ht || !size) return;
-  const cnt = Math.floor(size / 560);        // sizeof(CCacheBlk) = 560
-  for (let i = 0; i < cnt; i++) { const e = base + i * 560; w64(e + 16, e); w64(e + 24, e); w64(e + 32, 0); w64(e + 40, 0); }
-  for (let k = 0; k < 0x2000; k++) { const bkt = ht + k * 16; w64(bkt, bkt); w64(bkt + 8, bkt); }
+  const cnt = Math.floor(size / BLK_SIZE);                 // cache_size/BLK_SIZE == number of CCacheBlk
+  for (let i = 0; i < cnt; i++) { const e = base + i * CCBLK;
+    w64(e + 16, e); w64(e + 24, e);                        // next_hash=last_hash=self (out of every hash chain)
+    w64(e + 32, 0); w64(e + 40, 0);                        // dv=NULL, blk=0 -> DskCacheFind never matches -> re-read from disk
+  }
+  for (let k = 0; k < DSK_CACHE_HASH_SIZE; k++) {          // each empty bucket points to its own header
+    const slot = ht + k * 16, hdr = slot - 16;             // header = hash_table+k*16 - offset(CCacheBlk.next_hash)
+    w64(slot, hdr); w64(slot + 8, hdr);
+  }
 }
 
 onmessage = (e) => {
