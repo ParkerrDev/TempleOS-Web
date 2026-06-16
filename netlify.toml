@@ -2,8 +2,9 @@
 # latest main — no submodule pins, no packages, no bots:
 #   holyc-wasm  → ./holyc-wasm   (HolyC→WASM compiler + runtime + the editor app)
 #   hemu-wasm   → ./hemu-wasm    (the emulator: snapshot.wasm, JIT, disk plumbing)
+#   holyc-fmt   → ./holyc-fmt    (the HolyC formatter: HolyCFmt.HC, used by the Format button + /format.html)
 # To redeploy automatically when THOSE repos change, add a Netlify build hook
 # (Site settings → Build & deploy → Build hooks) as a push webhook on each repo.
 [build]
-  command = "rm -rf holyc-wasm hemu-wasm && git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm && git clone --depth 1 https://github.com/ParkerrDev/Hemu-wasm hemu-wasm"
+  command = "rm -rf holyc-wasm hemu-wasm holyc-fmt && git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm && git clone --depth 1 https://github.com/ParkerrDev/Hemu-wasm hemu-wasm && git clone --depth 1 https://github.com/ParkerrDev/HolyC-fmt holyc-fmt"
   publish = "."

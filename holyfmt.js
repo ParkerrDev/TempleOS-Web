@@ -1,4 +1,4 @@
-// holyfmt.js — run the REAL HolyC formatter (holyc-wasm/holyc-fmt/HolyCFmt.HC) in the
+// holyfmt.js — run the REAL HolyC formatter (holyc-fmt/HolyCFmt.HC) in the
 // browser. The .HC source is compiled to WASM by holyc-wasm, then the user's code is
 // written straight into the module's linear memory (above the heap) and HolyCFmtPrint
 // reads it and emits the formatted text via PutChars, which we capture. Feeding the
@@ -15,7 +15,7 @@ async function getModule(indent, tabs) {
   const key = indent + "|" + tabs;
   if (_mods.has(key)) return _mods.get(key);
   const { compileHolyC } = await import(U("./holyc-wasm/src/compiler.js"));
-  const core = await fetch(U("./holyc-wasm/holyc-fmt/HolyCFmt.HC"), { cache: "no-cache" }).then((r) => {
+  const core = await fetch(U("./holyc-fmt/HolyCFmt.HC"), { cache: "no-cache" }).then((r) => {
     if (!r.ok) throw new Error("could not load HolyCFmt.HC (" + r.status + ")");
     return r.text();
   });
