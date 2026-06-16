@@ -575,7 +575,9 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
+    window.__BUILD = "disk-fix-3 (LRU dv=NULL invalidate; #include needs .HC)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
+    console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
     addEventListener("error", (e) => dbg("JS: " + e.message, true));
 
