@@ -81,6 +81,7 @@
 
 <script type="module">
   import { formatHolyC } from "./holyfmt.js";
+  import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
   const $ = (id) => document.getElementById(id);
   const inp = $("in"), out = $("out"), st = $("status");
   const setSt = (s, err) => { st.textContent = s; st.style.color = err ? "#ff8" : "yellow"; };

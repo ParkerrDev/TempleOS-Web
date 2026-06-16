@@ -540,6 +540,7 @@
   <script type="module">
     import { createHost } from "./holyc-wasm/src/runtime/host.js";
     import { loadDisk } from "./hemu-wasm/qcow2.js";
+    import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
