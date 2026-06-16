@@ -1118,14 +1118,16 @@
       host.env.__host_dt = () => BigInt(dtMs | 0);
       const inst = await WebAssembly.instantiate(mod, { env: host.env });
       host.attach(inst); inst.exports.__rt_init();
-      // the inline engine answers the same Disk/Save messages the worker does
-      const BLKDEV = 0xBC18;   // cache_base@+40, cache_hash_table@+56, cache_size@+64 (verified live)
-      const invalidate = () => { if (!disk) return; const m = new DataView(inst.exports.memory.buffer);
-        const u64 = (a) => Number(m.getBigUint64(gBaseI + a, true)), w64 = (a, v) => m.setBigUint64(gBaseI + a, BigInt(v), true);
-        const base = u64(BLKDEV + 40), ht = u64(BLKDEV + 56), size = u64(BLKDEV + 64); if (!base || !ht || !size) return;
-        const cnt = Math.floor(size / 512);   // cache_size = cnt*BLK_SIZE(512); sizeof(CCacheBlk)=560 is the STRIDE, not the divisor
-        for (let i = 0; i < cnt; i++) { const e = base + i * 560; w64(e + 16, e); w64(e + 24, e); w64(e + 32, 0); w64(e + 40, 0); }
-        for (let k = 0; k < 0x2000; k++) { const slot = ht + k * 16, hdr = slot - 16; w64(slot, hdr); w64(slot + 8, hdr); } };   // empty bucket -> its header (off by offset(next_hash)=16 before)
+      // the inline engine answers the same Disk/Save messages the worker does.
+      // Make host writes visible to the OS by marking every cached block dv=NULL (forces re-read),
+      // walking the LRU ring from cache_ctrl@blkdev+48 and touching ONLY dv@+32 — never the hash/LRU
+      // links, so the cache can't be corrupted (a hand-rebuilt version broke Dir/file reads).
+      const BLKDEV = 0xBC18;   // cache_ctrl@+48 = LRU-ring sentinel (verified live)
+      const invalidate = () => { if (!disk) return; const m = new DataView(inst.exports.memory.buffer), cap = m.byteLength;
+        const rd = (a) => (a >= 0 && gBaseI + a + 8 <= cap) ? Number(m.getBigUint64(gBaseI + a, true)) : 0;
+        const clr = (a) => { if (a >= 0 && gBaseI + a + 8 <= cap) m.setBigUint64(gBaseI + a, 0n, true); };
+        const ctrl = rd(BLKDEV + 48); if (!ctrl) return;
+        let p = rd(ctrl), n = 0; while (p && p !== ctrl && n < (1 << 20)) { clr(p + 32); p = rd(p); n++; } };   // dv=NULL on each block
       engine.kind = "inline";
       let stopped = false;
       engine.stop = () => { stopped = true; notifyInput = () => {}; };   // halts loop() on its next frame
