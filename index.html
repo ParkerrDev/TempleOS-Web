@@ -239,6 +239,14 @@
     .gm-card p { font-size:12px; line-height:1.1; flex:1 1 auto; }
     .gm-btns { display:flex; flex-direction:column; gap:6px; }
     .gm-card .gm-play { width:100%; align-self:stretch; text-align:center; white-space:normal; font-size:11px; line-height:1.2; padding:5px 4px; height:auto; }
+    /* the Games window is a fixed-size dialog: search box on top, the grid scrolls below it */
+    #gamesWin { display:flex; flex-direction:column; width:min(880px,92vw); max-height:calc(100vh - 84px); }
+    .gm-search { flex:0 0 auto; box-sizing:border-box; width:100%; margin:2px 0 8px; padding:5px 9px;
+                 font-family:inherit; font-size:13px; background:#fff; color:var(--blue); border:3px double var(--blue); outline:none; }
+    .gm-search::placeholder { color:#88a; }
+    .gm-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; padding-right:2px; }
+    .gm-none { color:var(--red); font-size:13px; padding:14px 4px; }
+    .gm-card.gm-hide { display:none; }   /* search filter (beats .gm-card's display:flex) */
     .gamewin-screen { background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
     #gameWin { width:auto; margin:0; padding:8px; }
     #gameWinOverlay #screen { display:block; width:640px; height:480px; max-width:none; aspect-ratio:auto; image-rendering:pixelated; background:#000; }
@@ -486,7 +494,11 @@
   <div id="gamesOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Games">
     <div class="win" id="gamesWin" data-title="Games">
       <span class="close" id="gamesClose" title="Close">[X]</span>
-      <div class="gm-grid" id="gmGrid"></div>
+      <input type="search" id="gmSearch" class="gm-search" placeholder="Search games…" autocomplete="off" spellcheck="false" aria-label="Search games">
+      <div class="gm-scroll">
+        <div class="gm-grid" id="gmGrid"></div>
+        <div class="gm-none" id="gmNone" hidden>No games match your search.</div>
+      </div>
     </div>
   </div>
 
@@ -588,7 +600,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-21 (input rewrite + TinkerOS games: HolyCraft native now POLLS kbd.down_bitmap for held movement + sets Fs->win_inhibit (no window-close on click) + clears stuck launch keys + drains msgs (no input bleed); browser drops the key re-send ticker + always releases held keys. 30 stock OS games (Varoom, Talons, BlackDiamond…) added to the launcher, run straight from the disk so their DolDoc sprite art stays intact)";
+    window.__BUILD = "render-22 (Games window is now a fixed-size dialog: a live Search box filters the 32 games by name/description as you type, and the card grid scrolls. Plus render-21: input rewrite (poll kbd.down_bitmap + Fs->win_inhibit + drain msgs; browser drops the re-send ticker) and 30 stock OS games run from disk)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -2070,6 +2082,7 @@ I64 GodDoodleGen(I64 strokes)
         try { const c = localStorage.getItem(gameKey(g)); if (c != null && c.trim().length) return c; } catch {}
         return await fetch("games/" + g.file, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); });
       }
+      const cards = [];
       for (const g of GAMES) {
         const c = document.createElement("div"); c.className = "gm-card";
         c.innerHTML = `<h3>${g.name}</h3><p>${g.blurb}</p>`;
@@ -2080,10 +2093,21 @@ I64 GodDoodleGen(I64 strokes)
         }
         const bT = document.createElement("button"); bT.className = "gm-play"; bT.textContent = "Run in TempleOS"; bT.addEventListener("click", () => runInTempleOS(g));
         row.append(bT); c.appendChild(row); grid.appendChild(c);
+        cards.push({ el: c, hay: (g.name + " " + g.blurb).toLowerCase() });
       }
+      // ---- live search: filter the cards by name/description as you type ----
+      const gmSearch = document.getElementById("gmSearch"), gmNone = document.getElementById("gmNone");
+      const filterGames = () => {
+        const q = gmSearch.value.trim().toLowerCase(); let shown = 0;
+        for (const { el, hay } of cards) { const ok = !q || hay.includes(q); el.classList.toggle("gm-hide", !ok); if (ok) shown++; }
+        gmNone.hidden = shown > 0;
+      };
+      gmSearch.addEventListener("input", filterGames);
+      gmSearch.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (gmSearch.value) { gmSearch.value = ""; filterGames(); e.stopPropagation(); } } });
       let curGame = null;
       const setStatus = (s) => { const st = document.getElementById("status"); if (st) st.textContent = s; };
-      function openGames() { ovG.classList.add("open"); window.__gameActive = false; if (window.__winChrome) window.__winChrome.raise(ovG); }   // browsing games -> stop capturing the mouse
+      function openGames() { ovG.classList.add("open"); window.__gameActive = false; if (window.__winChrome) window.__winChrome.raise(ovG);   // browsing games -> stop capturing the mouse
+        setTimeout(() => { try { gmSearch.focus(); gmSearch.select(); } catch {} }, 0); }   // ready to type a search immediately
       function closeGames() { ovG.classList.remove("open"); }
       document.getElementById("gamesBtn").addEventListener("click", openGames);
       document.getElementById("gamesClose").addEventListener("click", closeGames);
