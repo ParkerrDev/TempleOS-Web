@@ -221,8 +221,9 @@
     #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:12px; line-height:1.0; white-space:pre-wrap; word-break:break-word; }
     .ed-foot { flex:0 0 auto; color:var(--blue); font-size:12px; padding:1px 2px 0; }
     /* ---- game mode: editor overlay shows just a big canvas (driven by the Games launcher) ---- */
-    #gameBack, #gameToDisk { display:none; width:auto; } #gameTitle { display:none; color:var(--blue); align-self:center; padding:0 6px; }
+    #gameBack, #gameRun, #gameToDisk { display:none; width:auto; } #gameTitle { display:none; color:var(--blue); align-self:center; padding:0 6px; }
     #editorOverlay.gamemode #gameBack { display:inline-flex; }
+    #editorOverlay.gamemode #gameRun { display:inline-flex; }
     #editorOverlay.gamemode #gameToDisk { display:inline-flex; }
     #editorOverlay.gamemode #gameTitle { display:inline; }
     #editorOverlay.gamemode #demoSelect, #editorOverlay.gamemode #edFmt, #editorOverlay.gamemode #edSave,
@@ -230,7 +231,7 @@
     #editorOverlay.gamemode .ed-pane:first-child { display:none; }      /* hide the source pane */
     #editorOverlay.gamemode .ed-pane .ed-h, #editorOverlay.gamemode #console { display:none; }
     #editorOverlay.gamemode .ed-pane { border:0; }
-    #editorOverlay.gamemode #screen { height:min(72vh,660px); }
+    #editorOverlay.gamemode #screen { width:640px; height:480px; max-width:none; aspect-ratio:auto; }   /* native 640x480 game window, like TempleOS */
     /* ---- Games launcher ---- */
     #gamesWin { width:min(740px,94vw); }
     .gm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; padding:6px 2px; }
@@ -450,6 +451,7 @@
       <span class="close" id="editorClose" title="Close editor">[X]</span>
       <div class="ed-bar">
         <button id="gameBack" title="Back to the games list">← Games</button>
+        <button id="gameRun" title="Compile this game with the in-browser HolyC compiler and run it here in a 640x480 window">▶ Run in browser</button>
         <button id="gameToDisk" title="Write this game to the real TempleOS C: drive (with TOS_NATIVE) so you can run it in the OS itself">▤ To TempleOS disk</button>
         <span id="gameTitle"></span>
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
@@ -576,7 +578,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-17 (input fixes: launching a game arms mouse-capture — click the OS screen to capture (cursor hidden, mouse looks, clicks place/break, no more clicking-out-of-window freezing the game); Esc releases. Held-key repeat is now MOVEMENT-only so arrow/q-e/number selection no longer spins. Normal OS use untouched until a game is launched)";
+    window.__BUILD = "render-18 (games: picking a game no longer auto-runs it — choose ▶ Run in browser (now a native 640x480 window) or ▤ To TempleOS disk. Capture clicks are sent at screen-centre so they no longer land on the menu/edge and freeze the game. Held-key repeat is movement-only)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -714,7 +716,8 @@
     canvas.addEventListener("mousedown", e => { if (document.body.classList.contains("touch")) return;
       setFocused(true);
       if (window.__gameActive && !document.pointerLockElement) { if (canvas.requestPointerLock) canvas.requestPointerLock(); }   // playing a game: this click GRABS the mouse (no place/break); locked clicks below place/break
-      else msB |= btnBit(e);
+      else { if (document.pointerLockElement === canvas) { msX = 320; msY = 240; }   // captured: send the click at SCREEN CENTRE so it never lands on the menu/edge (-> no more "clicks out of the window"); HolyCraft breaks/places via the centre crosshair anyway
+        msB |= btnBit(e); }
       e.preventDefault(); notifyInput(); });
     // fullscreen: clicks on the letterbox act IN the OS (clamped to the canvas edge), never on the page
     $("frame").addEventListener("mousedown", e => { if (document.body.classList.contains("touch")) return;
@@ -2041,6 +2044,13 @@ I64 GodDoodleGen(I64 strokes)
       document.getElementById("gamesBtn").addEventListener("click", openGames);
       document.getElementById("gamesClose").addEventListener("click", closeGames);
       ovG.addEventListener("mousedown", (e) => { if (e.target === ovG) closeGames(); });
+      document.getElementById("gameRun").addEventListener("click", () => {   // ▶ Run in browser (640x480 window) — user-initiated, not auto
+        if (!window.__holycEditor) return;
+        if (window.__holycEditor.isRunning()) window.__holycEditor.stop();
+        window.__holycEditor.run();
+        setStatus("running " + (curGame ? curGame.name : "game") + " in the browser");
+        setTimeout(() => { const c = document.getElementById("screen"); if (c) c.focus(); }, 150);
+      });
 
       async function play(g) {
         curGame = g;
@@ -2055,11 +2065,8 @@ I64 GodDoodleGen(I64 strokes)
           await window.__loadEditorApp();
           const ed = document.getElementById("editor");
           ed.value = src; ed.dispatchEvent(new Event("input"));
-          if (window.__holycEditor.isRunning()) window.__holycEditor.stop();
-          setTimeout(() => {
-            window.__holycEditor.run();                       // compiles ed.value + runs in the worker
-            setTimeout(() => { const c = document.getElementById("screen"); if (c) c.focus(); }, 150);
-          }, 80);
+          if (window.__holycEditor.isRunning()) window.__holycEditor.stop();   // DON'T auto-launch -> the user chooses how to run
+          setStatus("ready — click ▶ Run in browser, or ▤ To TempleOS disk to play it in the OS");
         } catch (e) { setStatus("install failed: " + e.message); }
       }
 
