@@ -481,6 +481,10 @@
     <div class="win" id="gamesWin" data-title="Games · HolyC compiled to WebAssembly">
       <span class="close" id="gamesClose" title="Close">[X]</span>
       <div style="color:var(--blue);font-size:12px;padding:2px 2px 8px">Pick a game — it installs on demand (the code is fetched only when you play) and runs compiled to WebAssembly.</div>
+      <label id="gmBypassRow" style="display:flex;align-items:flex-start;gap:7px;color:var(--blue);font-size:12px;padding:0 2px 9px;cursor:pointer" title="Run games compiled straight to WebAssembly on the canvas (fast, sharp) instead of inside the TempleOS x86 emulator (authentic, but a software raycaster in a software CPU is slow and low-res).">
+        <input type="checkbox" id="gmBypass" checked style="margin-top:2px">
+        <span><b>⚡ Native Game Bypass</b> — run games natively via HolyC-wasm (fast &amp; sharp). Uncheck to run authentically inside the TempleOS emulator (slower, lower-res).</span>
+      </label>
       <div class="gm-grid" id="gmGrid"></div>
     </div>
   </div>
@@ -575,7 +579,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-8 (HolyCraft: per-face lighting + LIVE probability dither like Varoom — animated 'static' blend, darkens via black not gray; browser framebuffer 320x240 for fine cells)";
+    window.__BUILD = "render-9 (Native Game Bypass toggle in the Games menu: Play runs games fast/sharp via HolyC-wasm by default; uncheck to run authentically inside the slow low-res x86 emulator)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -2018,9 +2022,16 @@ I64 GodDoodleGen(I64 strokes)
       document.getElementById("gamesClose").addEventListener("click", closeGames);
       ovG.addEventListener("mousedown", (e) => { if (e.target === ovG) closeGames(); });
 
+      function nativeBypass() { try { return localStorage.getItem("hc_native_bypass") !== "0"; } catch (e) { return true; } }
+      {
+        const cb = document.getElementById("gmBypass");
+        if (cb) { cb.checked = nativeBypass(); cb.addEventListener("change", () => { try { localStorage.setItem("hc_native_bypass", cb.checked ? "1" : "0"); } catch (e) {} }); }
+      }
+
       async function play(g) {
         curGame = g;
         closeGames();
+        if (!nativeBypass()) { launchOnDisk(g); return; }   // authentic path: run inside the TempleOS emulator
         ovE.classList.add("open", "gamemode");
         if (window.__winChrome) window.__winChrome.raise(ovE);
         document.getElementById("gameTitle").textContent = g.name + " — " + g.how;
@@ -2037,6 +2048,35 @@ I64 GodDoodleGen(I64 strokes)
             setTimeout(() => { const c = document.getElementById("screen"); if (c) c.focus(); }, 150);
           }, 80);
         } catch (e) { setStatus("install failed: " + e.message); }
+      }
+
+      // Authentic path (bypass OFF): write the game to the TempleOS C: drive and run it INSIDE the x86
+      // emulator. Needs the OS booted (open the Disk window first); fails gracefully if not.
+      async function launchOnDisk(g) {
+        ovE.classList.remove("open", "gamemode");          // the emulator owns the main screen, not #screen
+        const raw = await fetch("games/" + g.file, { cache: "no-cache" }).then((r) => r.ok ? r.text() : "").catch(() => "");
+        if (raw.trim().length < 50) { toast("Couldn't read the game source to send — try again in a moment."); return; }
+        if (!window.__uploadToHome) {
+          toast("The TempleOS engine isn't ready yet — open the <b>Disk</b> window and let the OS finish booting, then play again.");
+          setStatus("OS engine not ready"); return;
+        }
+        toast("Installing <b>" + g.file + "</b> on the TempleOS C: drive…", 60000);
+        setStatus("writing " + g.file + " to C:…");
+        let r, tries = 0;
+        do {
+          r = await window.__uploadToHome(g.file, "#define TOS_NATIVE 1\n" + raw, true);
+          if (r && r.ok) break;
+          if (!/disk not loaded/i.test(r && r.msg || "")) break;
+          await new Promise((res) => setTimeout(res, 1500));
+        } while (++tries < 20);
+        if (r && r.ok) {
+          toast('Launching <b>' + g.file + '</b> in TempleOS — click the OS screen to play, <b>Esc</b> to quit.');
+          setStatus('launching ' + g.file + ' in TempleOS');
+        } else {
+          toast("Couldn't write <b>" + g.file + "</b> to the C: drive: " + ((r && r.msg) || "unknown error")
+            + "<br>The OS may still be booting — open the <b>Disk</b> window, give it a few seconds, and try again.");
+          setStatus("disk write failed");
+        }
       }
 
       // a small TempleOS-styled toast — the game loop rewrites #status every second,
