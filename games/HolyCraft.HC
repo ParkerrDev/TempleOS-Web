@@ -253,8 +253,8 @@ U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g
         else                    { iz+=stz; t=tmz; tmz+=tdz; axis=2; }
         if (t>RDIST) break;
         if (ix<0||ix>=WX||iz<0||iz>=WZ||iy<0||iy>=WY) break;
-        bt=g_world[WIdx(ix,iy,iz)];
-        if (bt) { hit=1; break; }
+        bt=g_world[ix + WX*(iz + WZ*iy)];   // WIdx() inlined: TempleOS HolyC doesn't inline, and a CALL per
+        if (bt) { hit=1; break; }            // DDA step (~millions/frame) is brutal in the x86 emulator
       }
       rng = rng*6364136223846793005 + 1442695040888963407;   // advance the LCG (one random value per pixel)
       I64 rv = (rng>>48)&0xFFFF, col;                         // 0..65535
