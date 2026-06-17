@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-14 (HolyCraft: hotbar is now the 16 DISTINCT palette colours (8..23) — materials (which duplicated those hues) dropped from the placeable set; arrow keys cycle blocks; higher gravity + snappier move/turn for the low fps; native mouse-look (ms.pos))";
+    window.__BUILD = "render-15 (input: GAME MODE — double-click the OS screen to capture the mouse (Esc releases); while captured, held keys auto-repeat each tick so you can HOLD to move + press several keys at once (the browser only repeated the last key), and the mouse is relative (movementX/Y, decays to centre). Normal OS use untouched)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -666,6 +666,8 @@
 
     // ---- input: a host-owned cursor + a set-1 scancode queue, pulled by snapshot.HC each frame ----
     let msX = 320, msY = 240, msB = 0, wheelZ = 0;
+    const held = new Set();        // scancodes currently down (for hold-to-move + simultaneous keys in game mode)
+    let gameMode = false;          // true while the mouse is pointer-captured (FPS-style games)
     const keyq = [];
     const SC = {
       Escape:0x01,
@@ -715,7 +717,7 @@
       if (!$("frame").classList.contains("fsmode") || e.target === canvas || e.target.closest("#fsExit")) return;
       setFocused(true); mapAbs(e, canvas.getBoundingClientRect()); msB |= btnBit(e); e.preventDefault(); notifyInput(); });
     document.addEventListener("mouseup", e => { if (msB && !document.body.classList.contains("touch")) { msB &= ~btnBit(e); notifyInput(); } });
-    document.addEventListener("mousemove", e => { if (document.body.classList.contains("touch")) return;
+    document.addEventListener("mousemove", e => { if (document.body.classList.contains("touch") || gameMode) return;  // gameMode uses RELATIVE mouse (below)
       const r = overCanvas(e); if (r) { mapAbs(e, r); notifyInput(); }       // absolute over the canvas = auto re-align
       // fullscreen: the mouse can't LEAVE the OS — positions over the letterbox clamp to the canvas edge
       else if ($("frame").classList.contains("fsmode")) { mapAbs(e, canvas.getBoundingClientRect()); notifyInput(); } });
@@ -736,9 +738,26 @@
       if ((e.ctrlKey || e.metaKey) && e.code === "KeyV") return;   // Ctrl/Cmd+V: don't send a V scancode — let the browser's paste event fire (handled below)
       if (e.code === "Escape") { sawEscDown = performance.now(); if (!e.repeat) { pushKey(0x01); pushKey(0x81); } e.preventDefault(); return; }
       if (e.ctrlKey && e.code === "BracketLeft") { pushKey(0x01); pushKey(0x81); e.preventDefault(); return; }  // legacy in-OS Esc
-      const s = SC[e.code]; if (s !== undefined) { if (!e.repeat) pushKey(s); e.preventDefault(); }
+      const s = SC[e.code]; if (s !== undefined) { if (!e.repeat) pushKey(s); held.add(s); e.preventDefault(); }
     });
-    addEventListener("keyup", e => { if (!keysToOS(e)) return; const s = SC[e.code]; if (s !== undefined && e.code !== "Escape") { pushKey(s | 0x80); e.preventDefault(); } });
+    addEventListener("keyup", e => { if (!keysToOS(e)) return; const s = SC[e.code]; if (s !== undefined && e.code !== "Escape") { held.delete(s); pushKey(s | 0x80); e.preventDefault(); } });
+
+    // ---- GAME MODE: pointer-capture + hold-to-move + simultaneous keys (FPS-style games like HolyCraft) ----
+    // Double-click the screen to CAPTURE the mouse (Esc releases it). While captured: (1) every held key re-sends
+    // its make-code each tick, so you can HOLD to move and press several keys at once — the browser only
+    // auto-repeats the LAST key (and line above suppresses even that), which is why one make-then-silence felt
+    // like "press repeatedly"; (2) the mouse is RELATIVE (movementX/Y), decaying back to centre so the camera
+    // turns while you move the mouse and stops when you stop. Normal OS use is untouched (gameMode stays false).
+    const releaseHeld = () => { for (const s of held) pushKey(s | 0x80); held.clear(); };
+    canvas.addEventListener("dblclick", e => { if (document.body.classList.contains("touch")) return; setFocused(true); if (canvas.requestPointerLock) canvas.requestPointerLock(); e.preventDefault(); });
+    document.addEventListener("pointerlockchange", () => { gameMode = (document.pointerLockElement === canvas); if (!gameMode) releaseHeld(); });
+    document.addEventListener("mousemove", e => { if (!gameMode) return;
+      msX = Math.max(0, Math.min(639, msX + e.movementX)); msY = Math.max(0, Math.min(479, msY + e.movementY)); notifyInput(); });
+    addEventListener("blur", releaseHeld);
+    setInterval(() => { if (!gameMode || !focused) return;
+      for (const s of held) pushKey(s);                                                       // continuous makes -> hold + simultaneous
+      msX = 320 + ((msX - 320) * 0.45 | 0); msY = 240 + ((msY - 240) * 0.45 | 0); notifyInput();  // decay look toward centre
+    }, 40);
 
     // ---- paste INTO the OS (Ctrl/Cmd+V): convert clipboard text to US-layout set-1 scancodes and feed
     //      the key queue. This types each char EXACTLY (incl. ~, ", etc.) regardless of the user's real
