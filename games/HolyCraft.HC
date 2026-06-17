@@ -504,12 +504,12 @@ I64 ProjPt(F64 wxf, F64 wyf, F64 wzf, CD3I32 *p)
   return 1;
 }
 
-U0 DrawFace(I64 cx, I64 cy, I64 cz, I64 faceid, I64 bt)
-{//one cube face (cell cx,cy,cz; face 0=-X 1=+X 2=-Y 3=+Y 4=-Z 5=+Z) -> a filled, z-buffered quad.
+U0 DrawFace(I64 cx, I64 cy0, I64 cy1, I64 cz, I64 faceid, I64 bt)
+{//one face spanning cells cy0..cy1 vertically (cy0==cy1 = single cell). face 0=-X 1=+X 2=-Y 3=+Y 4=-Z 5=+Z.
   CD3I32 poly[4];
   F64 ax, ay, az, bx, by, bz;
   I64 ok=0;
-  ax=cx; ay=cy; az=cz; bx=cx+1; by=cy+1; bz=cz+1;
+  ax=cx; ay=cy0; az=cz; bx=cx+1; by=cy1+1; bz=cz+1;
   if      (faceid==3) { ok+=ProjPt(ax,by,az,&poly[0]); ok+=ProjPt(bx,by,az,&poly[1]); ok+=ProjPt(bx,by,bz,&poly[2]); ok+=ProjPt(ax,by,bz,&poly[3]); }
   else if (faceid==2) { ok+=ProjPt(ax,ay,az,&poly[0]); ok+=ProjPt(ax,ay,bz,&poly[1]); ok+=ProjPt(bx,ay,bz,&poly[2]); ok+=ProjPt(bx,ay,az,&poly[3]); }
   else if (faceid==0) { ok+=ProjPt(ax,ay,az,&poly[0]); ok+=ProjPt(ax,by,az,&poly[1]); ok+=ProjPt(ax,by,bz,&poly[2]); ok+=ProjPt(ax,ay,bz,&poly[3]); }
@@ -532,10 +532,30 @@ U0 DrawFace(I64 cx, I64 cy, I64 cz, I64 faceid, I64 bt)
   }
 }
 
+U0 SideRun(I64 x, I64 z, I64 h, I64 faceid, I64 noff)
+{//merge a vertical run of same-block faces (neighbour cell base+noff is air) into ONE tall quad -> far fewer
+ //GrFillPoly3 calls for trunks/cliffs/canopy sides. Caller already did the back-face (front-facing) test.
+  I64 y=0, y2, bt, base, b2;
+  while (y<=h) {
+    base = x + WX*(z + WZ*y);
+    bt = g_world[base];
+    if (bt && !g_world[base+noff]) {
+      y2=y;
+      while (y2+1<=h) {
+        b2 = x + WX*(z + WZ*(y2+1));
+        if (g_world[b2]==bt && !g_world[b2+noff]) y2=y2+1; else break;
+      }
+      DrawFace(x,y,y2,z,faceid,bt);
+      y=y2+1;
+    } else
+      y=y+1;
+  }
+}
+
 U0 RenderFaces(CDC *dc)
 {
   I64 need, R, bix, biz, xa, xb, za, zb, x, z, y, h, bt, bidx;
-  F64 hw, hh, rcx, rcz, fdc;
+  F64 hw, hh, rcx, rcz, fdc, prp;
   g_rdc = dc;
   SetupCam();                                   // camera basis + g_bix/g_biz (ProjPt reads the basis)
   g_sw=dc->width; g_sh=dc->height;
@@ -553,22 +573,23 @@ U0 RenderFaces(CDC *dc)
   if (za<1) za=1;  if (zb>WZ-2) zb=WZ-2;
   for (z=za; z<=zb; z++)
     for (x=xa; x<=xb; x++) {
-      rcx = x - g_px;  rcz = z - g_pz;            // coarse frustum cull: skip columns behind the camera
-      fdc = rcx*g_fwx + rcz*g_fwz;
-      if (fdc >= -2.0) {
+      rcx = x - g_px;  rcz = z - g_pz;            // frustum cull: skip columns behind OR well outside the FOV cone
+      fdc = rcx*g_fwx + rcz*g_fwz;                 //   forward distance (along the look direction)
+      prp = rcx*g_rgx + rcz*g_rgz; if (prp<0.0) prp=-prp;   // |sideways| distance (the right axis)
+      if (fdc >= -2.0 && prp <= fdc*3.0 + 8.0) {  // cone widens with distance (generous margin -> no edge pop)
         h = g_hm[x+WX*z];                          // top solid cell of this column (nothing solid above it)
-        for (y=0; y<=h; y++) {                     // FULL column scan -> draw EVERY exposed face. A "shell" band
-          bidx = x + WX*(z + WZ*y);                // missed faces inside tree canopies (air gap under floating
-          bt = g_world[bidx];                       // leaves); the buried interior cells here are just cheap reads.
-          if (bt) {                                // x in [1,WX-2], z in [1,WZ-2] -> all x/z neighbours in-bounds
-            if ((y>=WY-1 || !g_world[bidx + WX*WZ]) && g_py>y+1) DrawFace(x,y,z,3,bt);   // +Y top
-            if (y>0 && !g_world[bidx - WX*WZ]       && g_py<y)   DrawFace(x,y,z,2,bt);   // -Y bottom
-            if (!g_world[bidx - 1]  && g_px<x)                   DrawFace(x,y,z,0,bt);   // -X
-            if (!g_world[bidx + 1]  && g_px>x+1)                 DrawFace(x,y,z,1,bt);   // +X
-            if (!g_world[bidx - WX] && g_pz<z)                   DrawFace(x,y,z,4,bt);   // -Z
-            if (!g_world[bidx + WX] && g_pz>z+1)                 DrawFace(x,y,z,5,bt);   // +Z
+        for (y=0; y<=h; y++) {                     // TOP/BOTTOM faces per cell (horizontal -> can't vertical-merge)
+          bidx = x + WX*(z + WZ*y);                // (buried interior cells here are just cheap reads)
+          bt = g_world[bidx];
+          if (bt) {                                // x in [1,WX-2], z in [1,WZ-2] -> x/z neighbours in-bounds
+            if ((y>=WY-1 || !g_world[bidx + WX*WZ]) && g_py>y+1) DrawFace(x,y,y,z,3,bt);   // +Y top
+            if (y>0 && !g_world[bidx - WX*WZ]       && g_py<y)   DrawFace(x,y,y,z,2,bt);   // -Y bottom
           }
         }
+        if (g_px<x)   SideRun(x,z,h,0,-1);          // SIDE faces: merge each vertical run into ONE tall quad
+        if (g_px>x+1) SideRun(x,z,h,1,+1);          //   (-X +X -Z +Z; neighbour offset -1 +1 -WX +WX)
+        if (g_pz<z)   SideRun(x,z,h,4,-WX);
+        if (g_pz>z+1) SideRun(x,z,h,5,+WX);
       }
     }
   dc->depth_buf = NULL;                           // detach (the buffer is ours; DCDel must not free it)
