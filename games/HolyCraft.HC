@@ -42,8 +42,8 @@
 #define WY      40
 #define WATER   5
 #define EYE     1.62         // eye height above the feet
-#define GRAV    0.020        // gravity per frame
-#define JUMP    0.33         // jump impulse
+#define GRAV    0.050        // gravity per frame (HIGH -> fast, snappy jump arc to suit the low emulator fps)
+#define JUMP    0.46         // jump impulse (~2-block jump but a much shorter air time than the old 0.020/0.33)
 
 U8  *g_world = NULL;         // WX*WZ*WY voxels, 0 = air
 U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame — RenderFrame/DrawHUD's render target
@@ -57,7 +57,7 @@ U8  *g_hm    = NULL;         // per (x,z): top solid y (heightmap) -> bounds the
 I64  g_frame = 0;           // frame counter -> reseeds the dither each frame so it animates (like Varoom)
 F64  g_px, g_py, g_pz;       // camera position
 F64  g_yaw, g_pitch;         // camera angles
-I64  g_sel  = 1;             // selected block to place
+I64  g_sel  = 8;             // selected block to place (8..23 = the 16 palette-colour blocks)
 I64  g_plb  = 0, g_prb = 0;  // previous mouse button states (edge detect)
 // movement timers (refreshed by key events, decay each frame -> smooth hold via key-repeat)
 I64  g_tf,g_tb,g_tl,g_tr,g_tu,g_td,g_tjl,g_tjr,g_tpu,g_tpd;
@@ -107,8 +107,10 @@ U0 SetRamp()
   g_lr[5*4+0]=0;  g_lr[5*4+1]=2;  g_lr[5*4+2]=10; g_lr[5*4+3]=10;   // leaves
   g_lr[6*4+0]=6;  g_lr[6*4+1]=14; g_lr[6*4+2]=14; g_lr[6*4+3]=15;   // sand   brown->yellow->white
   g_lr[7*4+0]=1;  g_lr[7*4+1]=9;  g_lr[7*4+2]=11; g_lr[7*4+3]=11;   // water  blue->ltblue->ltcyan
-  // A BLOCK FOR EVERY SYSTEM COLOR: blocks 8..23 ARE palette colors 0..15, each shaded dark->color->light
-  // using the palette's natural dark/light pairs so they get the same directional + dither shading.
+  // The 16 system colours are blocks 8..23 (block 8+c = palette colour c) -> the placeable hotbar. These are
+  // the 16 DISTINCT colours; the 7 terrain materials (1..7) each duplicate one of these hues (grass/leaves=
+  // green, dirt/wood=brown, stone=gray, sand=yellow, water=cyan) so they're kept for terrain/trees but NOT
+  // shown in the hotbar (no duplicate swatches).
   dk[0] =0; dk[1] =0; dk[2] =0;  dk[3] =1;  dk[4] =0;  dk[5] =0;  dk[6] =0;  dk[7] =8;   // darker shade per color
   dk[8] =0; dk[9] =1; dk[10]=2;  dk[11]=9;  dk[12]=4;  dk[13]=5;  dk[14]=6;  dk[15]=7;
   lt[0] =8; lt[1] =9; lt[2] =10; lt[3] =11; lt[4] =12; lt[5] =13; lt[6] =14; lt[7] =15;  // brighter shade per color
@@ -133,7 +135,7 @@ U0 BuildFaceShades()
     F64 p=(amb+(1.0-amb)*d)*3.0;          // brightness 0..1 -> ramp position 0..3
     I64 lo=p; if (lo>2) lo=2;
     F64 fr=p-lo; if (fr<0.0) fr=0.0; if (fr>1.0) fr=1.0;
-    for (bt=1; bt<=23; bt++) {              // 7 materials + 16 system-color blocks
+    for (bt=1; bt<=23; bt++) {              // 7 materials (terrain) + the 16 palette-colour blocks (8..23)
       g_flo[bt*6+f] =g_lr[bt*4+lo];
       g_fhi[bt*6+f] =g_lr[bt*4+lo+1];
       g_fthr[bt*6+f]=fr*65536.0;            // probability the pixel takes the brighter color (live dither)
@@ -340,15 +342,15 @@ U0 DrawHUD()
   for (i=-ch; i<=ch; i++) { g_fb[cy*RES_W+cx+i]=15; g_fb[(cy+i)*RES_W+cx]=15; }
   // hotbar: 7 swatches along the bottom, sized RELATIVE to the resolution (so it isn't huge at low res
   // or invisible at high res). gap framing inside each cell; selected one framed white.
-  I64 nb=23, bw=RES_W/24, gap=bw/8, b;                       // 23 placeable blocks (7 materials + 16 system colors)
+  I64 nb=16, bw=RES_W/17, gap=bw/8, b;                       // 16 placeable blocks = the palette colours (8..23)
   if (gap<1) gap=1;
   I64 bh=bw*3/4, x0=(RES_W-nb*bw)/2, y0=RES_H-bh-bh/3;       // squarish swatches near the bottom
-  for (b=1; b<=nb; b++) {
-    I64 px=x0+(b-1)*bw, py, qx;
-    I64 c=g_lr[b*4+2];                                       // representative shade of the block
+  for (b=0; b<nb; b++) {
+    I64 blk=8+b, px=x0+b*bw, py, qx;
+    I64 c=g_lr[blk*4+2];                                     // representative shade of the colour block
     for (py=y0; py<y0+bh; py++)
       for (qx=px+gap; qx<px+bw-gap; qx++) g_fb[py*RES_W+qx]=c;
-    if (b==g_sel)
+    if (blk==g_sel)
       for (qx=px-1; qx<px+bw; qx++) { g_fb[(y0-1)*RES_W+qx]=15; g_fb[(y0+bh)*RES_W+qx]=15; }
   }
 }
@@ -397,9 +399,9 @@ U0 KeyDown(I64 ch)
   else if (ch=='r') g_tu=4;  else if (ch=='f') g_td=4;        // fly up/down (press 'g' to fly)
   else if (ch==' ') { if (g_onground && !g_fly) { g_vy=JUMP; g_onground=0; } }   // jump
   else if (ch=='g') { g_fly=1-g_fly; g_vy=0.0; }              // toggle creative fly
-  else if ('1'<=ch<='9') g_sel=ch-'0';                        // 1-9: quick-pick blocks 1..9
-  else if (ch=='q') { g_sel--; if (g_sel<1)  g_sel=23; }      // cycle the selected block (covers all 23,
-  else if (ch=='e') { g_sel++; if (g_sel>23) g_sel=1;  }      //   incl. the 16 system-colour blocks)
+  else if ('1'<=ch<='9') g_sel=7+ch-'0';                      // 1-9: quick-pick the first nine colour blocks (8..16)
+  else if (ch=='q') { g_sel--; if (g_sel<8)  g_sel=23; }      // cycle the selected colour (8..23); the ARROW
+  else if (ch=='e') { g_sel++; if (g_sel>23) g_sel=8;  }      //   keys do this too (see HandleInput)
   else if (ch==0x1b) g_quit=1;                                // Esc (CH_ESC) quits
 }
 
@@ -417,15 +419,20 @@ U0 HandleInput()
       ch = a1;
       if (ch) KeyDown(ch);
       else {
-        I64 sc = a2.u8[0];
-        if      (sc==SC_CURSOR_LEFT)  g_tjl=4;
-        else if (sc==SC_CURSOR_RIGHT) g_tjr=4;
-        else if (sc==SC_CURSOR_UP)    g_tpu=4;
-        else if (sc==SC_CURSOR_DOWN)  g_tpd=4;
+        I64 sc = a2.u8[0];                                    // arrow keys now CYCLE the selected block
+        if      (sc==SC_CURSOR_LEFT  || sc==SC_CURSOR_UP)   { g_sel--; if (g_sel<8)  g_sel=23; }
+        else if (sc==SC_CURSOR_RIGHT || sc==SC_CURSOR_DOWN) { g_sel++; if (g_sel>23) g_sel=8;  }
       }
       if (g_quit) return;
     }
   }
+  // mouse look (native/TempleOS): dead-zone steering off the OS cursor (ms.pos). With pointer-capture (host
+  // feeds recentred deltas) this reads as relative look; without it, steer by pushing the cursor to an edge.
+  F64 dxm, dym, dyaw, dpit;
+  dxm=(ms.pos.x-320)*0.003125; dym=(ms.pos.y-240)*0.004167;   // /320, /240 -> -1..1
+  dyaw=dxm*0.07; dpit=dym*0.05;
+  if (dxm>0.14 || dxm<-0.14) g_yaw   = g_yaw   + dyaw;
+  if (dym>0.14 || dym<-0.14) g_pitch = g_pitch - dpit;        // var - var (codegen-safe)
 #else
   while (ScanChar()) {            // peek (ScanChar does NOT consume in this runtime)...
     ch = KeyGet();               // ...so KeyGet() consumes the char (won't block, one is ready)
@@ -439,7 +446,7 @@ U0 HandleInput()
 #endif
 
   // ---- everything below is shared ----
-  F64 rot=0.05;
+  F64 rot=0.07;                  // snappier turn (bigger step/frame to suit the low emulator fps)
   if (g_tjl>0){g_yaw-=rot; g_tjl--;}
   if (g_tjr>0){g_yaw+=rot; g_tjr--;}
   if (g_tpu>0){g_pitch+=rot; g_tpu--;}
@@ -448,7 +455,7 @@ U0 HandleInput()
   if (g_pitch<-1.45) g_pitch=-1.45;
 
   // walk in the yaw plane, per-axis collision
-  F64 spd=0.12, cy=Cos(g_yaw), sy=Sin(g_yaw), mvx=0.0, mvz=0.0;
+  F64 spd=0.16, cy=Cos(g_yaw), sy=Sin(g_yaw), mvx=0.0, mvz=0.0;
   if (g_tf>0){mvx+=sy; mvz+=cy; g_tf--;}
   if (g_tb>0){mvx-=sy; mvz-=cy; g_tb--;}
   if (g_tl>0){mvx-=cy; mvz+=sy; g_tl--;}
@@ -601,14 +608,14 @@ U0 DrawHUDDC(CDC *dc)
   I64 W=dc->width, H=dc->height, st=dc->width_internal, cx=W/2, cy=H/2, i;
   I64 ch=W/100; if (ch<3) ch=3;
   for (i=-ch; i<=ch; i++) { b[cy*st+cx+i]=15; b[(cy+i)*st+cx]=15; }
-  I64 nb=23, bw=W/24, gap=bw/8, bsel;
+  I64 nb=16, bw=W/17, gap=bw/8, bsel;
   if (gap<1) gap=1;
   I64 bh=bw*3/4, x0=(W-nb*bw)/2, y0=H-bh-bh/3;
-  for (bsel=1; bsel<=nb; bsel++) {
-    I64 px=x0+(bsel-1)*bw, py, qx, c=g_lr[bsel*4+2];
+  for (bsel=0; bsel<nb; bsel++) {
+    I64 blk=8+bsel, px=x0+bsel*bw, py, qx, c=g_lr[blk*4+2];
     for (py=y0; py<y0+bh; py++)
       for (qx=px+gap; qx<px+bw-gap; qx++) b[py*st+qx]=c;
-    if (bsel==g_sel)
+    if (blk==g_sel)
       for (qx=px-1; qx<px+bw; qx++) { b[(y0-1)*st+qx]=15; b[(y0+bh)*st+qx]=15; }
   }
 }

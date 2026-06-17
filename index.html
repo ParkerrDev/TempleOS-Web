@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-13 (HolyCraft native face-rasterizer: vertical side-run merging + horizontal frustum cone cull; ~28fps at full 640x480. fps is now emulator-bound — the OS per-frame composite + 640x480 fill is ~46M of ~53M instr/frame; only ~7M is face-count-dependent (RDIST 32->12 = 7x fewer faces moved fps only 28->33))";
+    window.__BUILD = "render-14 (HolyCraft: hotbar is now the 16 DISTINCT palette colours (8..23) — materials (which duplicated those hues) dropped from the placeable set; arrow keys cycle blocks; higher gravity + snappier move/turn for the low fps; native mouse-look (ms.pos))";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
