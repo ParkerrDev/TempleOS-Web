@@ -72,6 +72,10 @@ I64  g_depthcap = 1024*768;   // z-buffer capacity in px (covers any sane screen
 F64  g_focal, g_cxc, g_cyc;   // perspective focal length (px) + screen centre (set per frame from the DC size)
 I64  g_sw, g_sh;              // screen width/height (px) -- for the off-screen face reject in DrawFace
 CDC *g_rdc = NULL;            // the DC the current frame's faces fill (set at the top of RenderFaces)
+// scancodes of the held-movement keys, precomputed once (Char2ScanCode is slow). On real TempleOS we
+// POLL kbd.down_bitmap each frame for these (robust held-key state, like Demo/Games/RainDrops.HC) instead
+// of tracking make/break messages — a lost KEY_UP can't leave you "stuck walking" that way.
+I64 g_scw,g_scs,g_sca,g_scd,g_scr,g_scf,g_scj,g_scl,g_sci,g_sck;
 #endif
 
 I64 WIdx(I64 x, I64 y, I64 z)
@@ -412,25 +416,43 @@ U0 HandleInput()
 {
   I64 ch;
 #ifdef TOS_NATIVE
-  // real TempleOS: drain the message queue (non-blocking). Letters carry a char (arg1);
-  // arrow keys carry char 0 + a scancode (arg2) -> use them to look/turn. We pump KEY_UP too
-  // (and ignore it) so released-key messages don't pile up in the task queue. Movement is
-  // held via key-repeat refreshing the per-direction timers, like the browser build.
+  // real TempleOS input (best practices from TinkerOS Demo/KeyBitMap.HC + Demo/MsgLoop.HC):
+  //  - HELD movement is POLLED from kbd.down_bitmap each frame (set g_t*=1 -> the shared block below
+  //    applies it this frame). The kernel sets/clears those bits on make/break, so a dropped KEY_UP
+  //    can't leave you "stuck walking" — and HolyCraft() clears them at startup so the launch keystrokes
+  //    ('a' in "HolyCraft.HC", etc.) don't have you strafing the moment you spawn.
+  //  - EDGE actions (jump/fly/select/quit) come from DRAINED KEY_DOWN messages — draining CONSUMES the
+  //    keys here so they don't leak to the shell/other windows behind the game.
   I64 a1, a2, msg;
   while (msg = ScanMsg(&a1, &a2, 1<<MSG_KEY_DOWN | 1<<MSG_KEY_UP)) {
     if (msg==MSG_KEY_DOWN) {
       ch = a1;
-      if (ch) KeyDown(ch);
-      else {
-        I64 sc = a2.u8[0];                                    // arrow keys now CYCLE the selected block
+      if      (ch==' ') { if (g_onground && !g_fly) { g_vy=JUMP; g_onground=0; } }   // jump (edge)
+      else if (ch=='g') { g_fly=1-g_fly; g_vy=0.0; }                                 // toggle creative fly
+      else if ('1'<=ch<='9') g_sel=7+ch-'0';                                         // quick-pick a colour block
+      else if (ch=='q') { g_sel--; if (g_sel<8)  g_sel=23; }                         // cycle selected block
+      else if (ch=='e') { g_sel++; if (g_sel>23) g_sel=8;  }
+      else if (ch==0x1b) { g_quit=1; return; }                                       // Esc quits
+      else if (!ch) {                                                                // arrows (char 0 + sc) cycle block
+        I64 sc = a2.u8[0];
         if      (sc==SC_CURSOR_LEFT  || sc==SC_CURSOR_UP)   { g_sel--; if (g_sel<8)  g_sel=23; }
         else if (sc==SC_CURSOR_RIGHT || sc==SC_CURSOR_DOWN) { g_sel++; if (g_sel>23) g_sel=8;  }
       }
-      if (g_quit) return;
     }
   }
-  // mouse look (native/TempleOS): dead-zone steering off the OS cursor (ms.pos). With pointer-capture (host
-  // feeds recentred deltas) this reads as relative look; without it, steer by pushing the cursor to an edge.
+  // held movement: poll the kernel key-down bitmap (one frame's worth -> g_t*=1; shared block consumes it)
+  if (Bt(kbd.down_bitmap,g_scw)) g_tf =1;
+  if (Bt(kbd.down_bitmap,g_scs)) g_tb =1;
+  if (Bt(kbd.down_bitmap,g_sca)) g_tl =1;
+  if (Bt(kbd.down_bitmap,g_scd)) g_tr =1;
+  if (Bt(kbd.down_bitmap,g_scj)) g_tjl=1;
+  if (Bt(kbd.down_bitmap,g_scl)) g_tjr=1;
+  if (Bt(kbd.down_bitmap,g_sci)) g_tpu=1;
+  if (Bt(kbd.down_bitmap,g_sck)) g_tpd=1;
+  if (Bt(kbd.down_bitmap,g_scr)) g_tu =1;
+  if (Bt(kbd.down_bitmap,g_scf)) g_td =1;
+  // mouse look (native/TempleOS): dead-zone steering off the OS cursor (ms.pos) — point toward an edge to
+  // turn, recentre to stop. win_inhibit (set in HolyCraft) stops the WM acting on clicks; ms.pos still updates.
   F64 dxm, dym, dyaw, dpit;
   dxm=(ms.pos.x-320)*0.003125; dym=(ms.pos.y-240)*0.004167;   // /320, /240 -> -1..1
   dyaw=dxm*0.07; dpit=dym*0.05;
@@ -650,7 +672,22 @@ U0 HolyCraft()
   WinMax;
   DocCursor(OFF);
   DocClear;
+  // Inhibit the window manager from acting on clicks (no window close/drag/menu/double-click) while we play
+  // — exactly what real-time apps do (reference ToTheFront.HC:135, MassSpring.HC). Clicks still set
+  // ms.lb/ms.rb so break/place keep working, but a stray click can no longer drop you out of the game.
+  Fs->win_inhibit|=WIF_SELF_MS_L|WIF_SELF_MS_R|WIG_DBL_CLICK;
   Init();
+  // precompute the held-key scancodes once (Char2ScanCode is slow), then CLEAR any of them the kernel still
+  // has marked "down" from the launch keystrokes (the 'a' in "HolyCraft.HC" etc.) and FLUSH their messages,
+  // so you spawn standing still instead of strafing. This is the base-TempleOS stand-in for KeyStateRst.
+  g_scw=Char2ScanCode('w'); g_scs=Char2ScanCode('s'); g_sca=Char2ScanCode('a'); g_scd=Char2ScanCode('d');
+  g_scr=Char2ScanCode('r'); g_scf=Char2ScanCode('f'); g_scj=Char2ScanCode('j'); g_scl=Char2ScanCode('l');
+  g_sci=Char2ScanCode('i'); g_sck=Char2ScanCode('k');
+  LBtr(kbd.down_bitmap,g_scw); LBtr(kbd.down_bitmap,g_scs); LBtr(kbd.down_bitmap,g_sca);
+  LBtr(kbd.down_bitmap,g_scd); LBtr(kbd.down_bitmap,g_scr); LBtr(kbd.down_bitmap,g_scf);
+  LBtr(kbd.down_bitmap,g_scj); LBtr(kbd.down_bitmap,g_scl); LBtr(kbd.down_bitmap,g_sci);
+  LBtr(kbd.down_bitmap,g_sck);
+  FlushMsgs;
   Fs->draw_it=&DrawIt;          // the WinMgr now renders the world (faces) to the screen DC every refresh
   try {
     while (!g_quit) {
@@ -660,6 +697,7 @@ U0 HolyCraft()
   } catch
     PutExcept;
   Fs->draw_it=NULL;
+  Fs->win_inhibit=WIG_USER_TASK_DFT;   // hand mouse handling back to the window manager
   DocClear;
   SettingsPop;
 #else
