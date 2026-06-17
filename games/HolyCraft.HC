@@ -53,8 +53,7 @@ U8   g_skyr[3];             // sky gradient ramp (blue zenith -> ltblue -> ltcya
 U8   g_lr[24*4];            // per-block ramp, 4 levels dark->bright. 0=air; 1-7 materials; 8-23 = the 16 system colors
 U8   g_flo[24*6], g_fhi[24*6]; // per (block,face): the 2 ramp colors bracketing that face's light shade
 I64  g_fthr[24*6];          // per (block,face): probability 0..65536 for the LIVE "static" dither blend
-U8   g_facecol[24*6];        // per (block,face): ONE solid directional shade (the native face-rasterizer fill colour)
-U8  *g_hm    = NULL;         // per (x,z): top solid y (heightmap) -> drives the native face-shell enumeration
+U8  *g_hm    = NULL;         // per (x,z): top solid y (heightmap) -> bounds the native exposed-face scan
 I64  g_frame = 0;           // frame counter -> reseeds the dither each frame so it animates (like Varoom)
 F64  g_px, g_py, g_pz;       // camera position
 F64  g_yaw, g_pitch;         // camera angles
@@ -138,9 +137,7 @@ U0 BuildFaceShades()
       g_flo[bt*6+f] =g_lr[bt*4+lo];
       g_fhi[bt*6+f] =g_lr[bt*4+lo+1];
       g_fthr[bt*6+f]=fr*65536.0;            // probability the pixel takes the brighter color (live dither)
-      // native face-rasterizer wants ONE solid colour per face -> the nearer ramp colour (6 directional levels)
-      if (fr >= 0.5) g_facecol[bt*6+f]=g_lr[bt*4+lo+1];
-      else           g_facecol[bt*6+f]=g_lr[bt*4+lo];
+      if (g_fthr[bt*6+f]>65535) g_fthr[bt*6+f]=65535;   // clamp for the U16 dither_probability field
     }
   }
 }
@@ -525,14 +522,19 @@ U0 DrawFace(I64 cx, I64 cy, I64 cz, I64 faceid, I64 bt)
     if (poly[0].x>=g_sw && poly[1].x>=g_sw && poly[2].x>=g_sw && poly[3].x>=g_sw) return;
     if (poly[0].y<0    && poly[1].y<0    && poly[2].y<0    && poly[3].y<0)    return;
     if (poly[0].y>=g_sh && poly[1].y>=g_sh && poly[2].y>=g_sh && poly[3].y>=g_sh) return;
-    g_rdc->color = g_facecol[bt*6+faceid];
+    // LIVE probability dither between the two ramp colours bracketing this face's light shade -- the OS's
+    // GrFillRow (HLE-accelerated) rolls RandU16<prob per pixel, EXACTLY like the browser raycaster's dither,
+    // so the native build gets the same >16-colour blended look. (canonical idiom: dither + c2<<16 + c1.)
+    I64 k = bt*6+faceid;
+    g_rdc->color = ROPF_PROBABILITY_DITHER + g_fhi[k] << 16 + g_flo[k];
+    g_rdc->dither_probability_u16 = g_fthr[k];
     GrFillPoly3(g_rdc, 4, poly);
   }
 }
 
 U0 RenderFaces(CDC *dc)
 {
-  I64 need, R, bix, biz, xa, xb, za, zb, x, z, y, h, nh, bt;
+  I64 need, R, bix, biz, xa, xb, za, zb, x, z, y, h, bt, bidx;
   F64 hw, hh, rcx, rcz, fdc;
   g_rdc = dc;
   SetupCam();                                   // camera basis + g_bix/g_biz (ProjPt reads the basis)
@@ -553,18 +555,20 @@ U0 RenderFaces(CDC *dc)
     for (x=xa; x<=xb; x++) {
       rcx = x - g_px;  rcz = z - g_pz;            // coarse frustum cull: skip columns behind the camera
       fdc = rcx*g_fwx + rcz*g_fwz;
-      h  = g_hm[x+WX*z];
-      bt = g_world[WIdx(x,h,z)];
-      if (bt && fdc >= -2.0) {
-        if (g_py > h+1) DrawFace(x,h,z,3,bt);    // TOP face (only the topmost cell has one)
-        nh = g_hm[(x-1)+WX*z];                    // -X side faces, down to the lower neighbour column
-        if (nh<h && g_px<x)   for (y=nh+1; y<=h; y++) { bt=g_world[WIdx(x,y,z)]; if (bt) DrawFace(x,y,z,0,bt); }
-        nh = g_hm[(x+1)+WX*z];                    // +X
-        if (nh<h && g_px>x+1) for (y=nh+1; y<=h; y++) { bt=g_world[WIdx(x,y,z)]; if (bt) DrawFace(x,y,z,1,bt); }
-        nh = g_hm[x+WX*(z-1)];                    // -Z
-        if (nh<h && g_pz<z)   for (y=nh+1; y<=h; y++) { bt=g_world[WIdx(x,y,z)]; if (bt) DrawFace(x,y,z,4,bt); }
-        nh = g_hm[x+WX*(z+1)];                    // +Z
-        if (nh<h && g_pz>z+1) for (y=nh+1; y<=h; y++) { bt=g_world[WIdx(x,y,z)]; if (bt) DrawFace(x,y,z,5,bt); }
+      if (fdc >= -2.0) {
+        h = g_hm[x+WX*z];                          // top solid cell of this column (nothing solid above it)
+        for (y=0; y<=h; y++) {                     // FULL column scan -> draw EVERY exposed face. A "shell" band
+          bidx = x + WX*(z + WZ*y);                // missed faces inside tree canopies (air gap under floating
+          bt = g_world[bidx];                       // leaves); the buried interior cells here are just cheap reads.
+          if (bt) {                                // x in [1,WX-2], z in [1,WZ-2] -> all x/z neighbours in-bounds
+            if ((y>=WY-1 || !g_world[bidx + WX*WZ]) && g_py>y+1) DrawFace(x,y,z,3,bt);   // +Y top
+            if (y>0 && !g_world[bidx - WX*WZ]       && g_py<y)   DrawFace(x,y,z,2,bt);   // -Y bottom
+            if (!g_world[bidx - 1]  && g_px<x)                   DrawFace(x,y,z,0,bt);   // -X
+            if (!g_world[bidx + 1]  && g_px>x+1)                 DrawFace(x,y,z,1,bt);   // +X
+            if (!g_world[bidx - WX] && g_pz<z)                   DrawFace(x,y,z,4,bt);   // -Z
+            if (!g_world[bidx + WX] && g_pz>z+1)                 DrawFace(x,y,z,5,bt);   // +Z
+          }
+        }
       }
     }
   dc->depth_buf = NULL;                           // detach (the buffer is ours; DCDel must not free it)

@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-11 (HolyCraft native: face-rasterizer — exposed block FACES drawn as z-buffered 3D quads via the OS's HLE-accelerated GrFillPoly3, ~36fps in HEMU at full 640x480, cubic + right-side up; browser keeps the per-pixel raycaster)";
+    window.__BUILD = "render-12 (HolyCraft native face-rasterizer: now LIVE-dithered per face (ROPF_PROBABILITY_DITHER, matches the browser raycaster's blended look) + FULL-column exposed-face scan so tree canopies/air-gaps no longer drop faces (no more cyan holes); ~27fps at full 640x480)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
