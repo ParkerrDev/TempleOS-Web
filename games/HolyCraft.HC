@@ -49,11 +49,10 @@ U8  *g_world = NULL;         // WX*WZ*WY voxels, 0 = air
 U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame — RenderFrame/DrawHUD's render target
 U8  *g_show  = NULL;         // the published frame DrawIt reads (native: a 2nd buffer, swapped each
                             // frame so DrawIt never blits a half-rendered frame; browser: == g_fb)
-U8  *g_ramp  = NULL;         // [block*3 + tone] -> palette index  (tone 0 top,1 side,2 dark/far)
 U8   g_skyr[3];             // sky gradient ramp (blue zenith -> ltblue -> ltcyan horizon)
-U8   g_lr[8*4];             // per-block brightness ramp, 4 levels dark->bright (block 0=air unused)
-U8   g_flo[8*6], g_fhi[8*6];   // per (block,face): the 2 ramp colors bracketing that face's light shade
-I64  g_fthr[8*6];           // per (block,face): probability 0..65536 for the LIVE "static" dither blend
+U8   g_lr[24*4];            // per-block ramp, 4 levels dark->bright. 0=air; 1-7 materials; 8-23 = the 16 system colors
+U8   g_flo[24*6], g_fhi[24*6]; // per (block,face): the 2 ramp colors bracketing that face's light shade
+I64  g_fthr[24*6];          // per (block,face): probability 0..65536 for the LIVE "static" dither blend
 I64  g_frame = 0;           // frame counter -> reseeds the dither each frame so it animates (like Varoom)
 F64  g_px, g_py, g_pz;       // camera position
 F64  g_yaw, g_pitch;         // camera angles
@@ -87,17 +86,10 @@ I64 HeightAt(I64 x, I64 z)
 
 U0 SetRamp()
 {
-  g_ramp[1*3+0]=10; g_ramp[1*3+1]=2;  g_ramp[1*3+2]=8;   // grass  LTGREEN/GREEN/DKGRAY
-  g_ramp[2*3+0]=6;  g_ramp[2*3+1]=6;  g_ramp[2*3+2]=8;   // dirt   BROWN
-  g_ramp[3*3+0]=7;  g_ramp[3*3+1]=7;  g_ramp[3*3+2]=8;   // stone  LTGRAY
-  g_ramp[4*3+0]=6;  g_ramp[4*3+1]=8;  g_ramp[4*3+2]=8;   // wood
-  g_ramp[5*3+0]=10; g_ramp[5*3+1]=2;  g_ramp[5*3+2]=2;   // leaves
-  g_ramp[6*3+0]=14; g_ramp[6*3+1]=6;  g_ramp[6*3+2]=6;   // sand   YELLOW
-  g_ramp[7*3+0]=11; g_ramp[7*3+1]=9;  g_ramp[7*3+2]=1;   // water  LTCYAN/LTBLUE/BLUE
+  I64 c; U8 dk[16], lt[16];
   g_skyr[0]=1; g_skyr[1]=9; g_skyr[2]=11;                 // sky: blue -> ltblue -> ltcyan
-  // Per-block brightness ramp, 4 levels dark->bright. Face lighting picks a position in this ramp and the
-  // live dither blends the two bracketing colors. Darken with BLACK (0), not gray, so shading stays a
-  // shade of the MATERIAL'S colour (grass darkens to dark-green, not gray). Stone is the only gray one.
+  // Materials (terrain). 4-level ramp dark->bright; face lighting + the live dither blend the two
+  // bracketing colors. Darken with BLACK (not gray) so shading stays the material's hue.
   g_lr[1*4+0]=0;  g_lr[1*4+1]=2;  g_lr[1*4+2]=10; g_lr[1*4+3]=10;   // grass  black->green->ltgreen
   g_lr[2*4+0]=0;  g_lr[2*4+1]=6;  g_lr[2*4+2]=6;  g_lr[2*4+3]=14;   // dirt   black->brown->yellow
   g_lr[3*4+0]=0;  g_lr[3*4+1]=8;  g_lr[3*4+2]=7;  g_lr[3*4+3]=15;   // stone  black->dkgray->ltgray->white
@@ -105,6 +97,15 @@ U0 SetRamp()
   g_lr[5*4+0]=0;  g_lr[5*4+1]=2;  g_lr[5*4+2]=10; g_lr[5*4+3]=10;   // leaves
   g_lr[6*4+0]=6;  g_lr[6*4+1]=14; g_lr[6*4+2]=14; g_lr[6*4+3]=15;   // sand   brown->yellow->white
   g_lr[7*4+0]=1;  g_lr[7*4+1]=9;  g_lr[7*4+2]=11; g_lr[7*4+3]=11;   // water  blue->ltblue->ltcyan
+  // A BLOCK FOR EVERY SYSTEM COLOR: blocks 8..23 ARE palette colors 0..15, each shaded dark->color->light
+  // using the palette's natural dark/light pairs so they get the same directional + dither shading.
+  dk[0] =0; dk[1] =0; dk[2] =0;  dk[3] =1;  dk[4] =0;  dk[5] =0;  dk[6] =0;  dk[7] =8;   // darker shade per color
+  dk[8] =0; dk[9] =1; dk[10]=2;  dk[11]=9;  dk[12]=4;  dk[13]=5;  dk[14]=6;  dk[15]=7;
+  lt[0] =8; lt[1] =9; lt[2] =10; lt[3] =11; lt[4] =12; lt[5] =13; lt[6] =14; lt[7] =15;  // brighter shade per color
+  lt[8] =7; lt[9] =11;lt[10]=15; lt[11]=15; lt[12]=14; lt[13]=15; lt[14]=15; lt[15]=15;
+  for (c=0; c<16; c++) {
+    g_lr[(8+c)*4+0]=dk[c]; g_lr[(8+c)*4+1]=c; g_lr[(8+c)*4+2]=c; g_lr[(8+c)*4+3]=lt[c];
+  }
 }
 
 U0 BuildFaceShades()
@@ -122,7 +123,7 @@ U0 BuildFaceShades()
     F64 p=(amb+(1.0-amb)*d)*3.0;          // brightness 0..1 -> ramp position 0..3
     I64 lo=p; if (lo>2) lo=2;
     F64 fr=p-lo; if (fr<0.0) fr=0.0; if (fr>1.0) fr=1.0;
-    for (bt=1; bt<=7; bt++) {
+    for (bt=1; bt<=23; bt++) {              // 7 materials + 16 system-color blocks
       g_flo[bt*6+f] =g_lr[bt*4+lo];
       g_fhi[bt*6+f] =g_lr[bt*4+lo+1];
       g_fthr[bt*6+f]=fr*65536.0;            // probability the pixel takes the brighter color (live dither)
@@ -171,7 +172,6 @@ U0 Init()
 #else
   g_show  = g_fb;
 #endif
-  g_ramp  = MAlloc(8*3);
   SetRamp();
   BuildFaceShades();
   GenWorld();
@@ -309,16 +309,16 @@ U0 DrawHUD()
   for (i=-ch; i<=ch; i++) { g_fb[cy*RES_W+cx+i]=15; g_fb[(cy+i)*RES_W+cx]=15; }
   // hotbar: 7 swatches along the bottom, sized RELATIVE to the resolution (so it isn't huge at low res
   // or invisible at high res). gap framing inside each cell; selected one framed white.
-  I64 bw=RES_W/18, gap=bw/8, b;                              // swatch pitch + inner margin
+  I64 nb=23, bw=RES_W/24, gap=bw/8, b;                       // 23 placeable blocks (7 materials + 16 system colors)
   if (gap<1) gap=1;
-  I64 bh=bw*3/4, x0=(RES_W-7*bw)/2, y0=RES_H-bh-bh/3;        // squarish swatches near the bottom
-  for (b=1; b<=7; b++) {
+  I64 bh=bw*3/4, x0=(RES_W-nb*bw)/2, y0=RES_H-bh-bh/3;       // squarish swatches near the bottom
+  for (b=1; b<=nb; b++) {
     I64 px=x0+(b-1)*bw, py, qx;
-    I64 c=g_ramp[b*3+0];
+    I64 c=g_lr[b*4+2];                                       // representative shade of the block
     for (py=y0; py<y0+bh; py++)
       for (qx=px+gap; qx<px+bw-gap; qx++) g_fb[py*RES_W+qx]=c;
     if (b==g_sel)
-      for (qx=px; qx<px+bw; qx++) { g_fb[(y0-1)*RES_W+qx]=15; g_fb[(y0+bh)*RES_W+qx]=15; }
+      for (qx=px-1; qx<px+bw; qx++) { g_fb[(y0-1)*RES_W+qx]=15; g_fb[(y0+bh)*RES_W+qx]=15; }
   }
 }
 
@@ -366,7 +366,9 @@ U0 KeyDown(I64 ch)
   else if (ch=='r') g_tu=4;  else if (ch=='f') g_td=4;        // fly up/down (press 'g' to fly)
   else if (ch==' ') { if (g_onground && !g_fly) { g_vy=JUMP; g_onground=0; } }   // jump
   else if (ch=='g') { g_fly=1-g_fly; g_vy=0.0; }              // toggle creative fly
-  else if ('1'<=ch<='7') g_sel=ch-'0';
+  else if ('1'<=ch<='9') g_sel=ch-'0';                        // 1-9: quick-pick blocks 1..9
+  else if (ch=='q') { g_sel--; if (g_sel<1)  g_sel=23; }      // cycle the selected block (covers all 23,
+  else if (ch=='e') { g_sel++; if (g_sel>23) g_sel=1;  }      //   incl. the 16 system-colour blocks)
   else if (ch==0x1b) g_quit=1;                                // Esc (CH_ESC) quits
 }
 
