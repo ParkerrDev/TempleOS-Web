@@ -234,12 +234,12 @@
     #editorOverlay.gamemode #screen { width:640px; height:480px; max-width:none; aspect-ratio:auto; }   /* native 640x480 game window, like TempleOS */
     /* ---- Games launcher ---- */
     #gamesWin { width:min(740px,94vw); }
-    .gm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; padding:6px 2px; }
+    .gm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; padding:6px 2px; }
     .gm-card { background:#fff; border:3px double var(--blue); color:var(--blue); padding:10px; display:flex; flex-direction:column; gap:6px; }
     .gm-card h3 { font-size:14px; font-weight:normal; color:var(--red); }
     .gm-card p { font-size:12px; line-height:1.1; flex:1 1 auto; }
     .gm-btns { display:flex; flex-direction:column; gap:6px; }
-    .gm-card .gm-play { width:100%; align-self:stretch; text-align:center; white-space:nowrap; }
+    .gm-card .gm-play { width:100%; align-self:stretch; text-align:center; white-space:normal; font-size:11px; line-height:1.2; padding:5px 4px; height:auto; }
     .gamewin-screen { background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
     #gameWin { width:auto; margin:0; padding:8px; }
     #gameWinOverlay #screen { display:block; width:640px; height:480px; max-width:none; aspect-ratio:auto; image-rendering:pixelated; background:#000; }
@@ -2050,8 +2050,8 @@ I64 GodDoodleGen(I64 strokes)
         const c = document.createElement("div"); c.className = "gm-card";
         c.innerHTML = `<h3>${g.name}</h3><p>${g.blurb}</p>`;
         const row = document.createElement("div"); row.className = "gm-btns";
-        const bB = document.createElement("button"); bB.className = "gm-play"; bB.textContent = "▶ Run in Browser"; bB.addEventListener("click", () => runInBrowser(g));
-        const bT = document.createElement("button"); bT.className = "gm-play"; bT.textContent = "▤ Run in TempleOS"; bT.addEventListener("click", () => runInTempleOS(g));
+        const bB = document.createElement("button"); bB.className = "gm-play"; bB.textContent = "Run in Browser"; bB.addEventListener("click", () => runInBrowser(g));
+        const bT = document.createElement("button"); bT.className = "gm-play"; bT.textContent = "Run in TempleOS"; bT.addEventListener("click", () => runInTempleOS(g));
         row.append(bB, bT); c.appendChild(row); grid.appendChild(c);
       }
       let curGame = null;
