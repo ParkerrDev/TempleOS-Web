@@ -32,12 +32,6 @@
         filter:brightness(0) invert(1); mix-blend-mode:difference; }
     body.xcursor #xcursor { display:block; }
     body.gamecapture #xcursor { display:none !important; }   /* mouse captured for a game -> hide the cursor (pointer-lock hides the native one) */
-    #gameWin { display:none; position:fixed; left:calc(50% - 323px); top:40px; z-index:100000; background:#fff; border:3px double var(--blue); box-shadow:0 8px 30px rgba(0,0,0,.55); }
-    #gameWin.open { display:block; }
-    #gameWinBar { background:var(--blue); color:#fff; font-family:'TempleOS','dos_vga',monospace; font-size:13px; padding:3px 6px; cursor:move; display:flex; justify-content:space-between; align-items:center; user-select:none; }
-    #gameWinBar button { background:none; border:0; color:#fff; cursor:pointer; font:inherit; padding:0 6px; }
-    #gameWinBody { width:640px; height:480px; background:#000; }
-    #gameScreen { width:640px; height:480px; image-rendering:pixelated; display:block; }
     body.xcursor, body.xcursor * { cursor:none !important; }   /* the inverting arrow replaces the native cursor */
     .wbar, .wbar *, .wvert, .wvert * { font-family:'TempleOS','dos_vga',monospace; }
     html { overflow-y:auto; }
@@ -232,9 +226,9 @@
     #editorOverlay.gamemode #gameRun { display:inline-flex; }
     #editorOverlay.gamemode #gameToDisk { display:inline-flex; }
     #editorOverlay.gamemode #gameTitle { display:inline; }
-    #editorOverlay.gamemode #demoSelect, #editorOverlay.gamemode #edFmt, #editorOverlay.gamemode #edSave, #editorOverlay.gamemode #runBtn,
+    #editorOverlay.gamemode #demoSelect, #editorOverlay.gamemode #edFmt, #editorOverlay.gamemode #edSave,
     #editorOverlay.gamemode #edOpen, #editorOverlay.gamemode #edToDisk { display:none; }
-    #editorOverlay.gamemode .ed-pane, #editorOverlay.gamemode .ed-foot { display:none; }   /* game plays in the popup window: no embedded canvas/source/console, no instructions/formatter note in the picker */
+    #editorOverlay.gamemode .ed-pane:first-child { display:none; }      /* hide the source pane */
     #editorOverlay.gamemode .ed-pane .ed-h, #editorOverlay.gamemode #console { display:none; }
     #editorOverlay.gamemode .ed-pane { border:0; }
     #editorOverlay.gamemode #screen { width:640px; height:480px; max-width:none; aspect-ratio:auto; }   /* native 640x480 game window, like TempleOS */
@@ -245,6 +239,9 @@
     .gm-card h3 { font-size:14px; font-weight:normal; color:var(--red); }
     .gm-card p { font-size:12px; line-height:1.1; flex:1 1 auto; }
     .gm-card .gm-play { width:auto; align-self:flex-start; }
+    .gamewin-screen { background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
+    #gameWin { width:auto; margin:0; padding:8px; }
+    #gameWinOverlay #screen { display:block; width:640px; height:480px; max-width:none; aspect-ratio:auto; image-rendering:pixelated; background:#000; }
 
     /* God Tools window */
     #godWin { display:flex; flex-direction:column; gap:8px; width:min(680px,94vw); height:min(74vh,620px); margin:0; padding:10px; }
@@ -376,12 +373,6 @@
 </head>
 <body>
 <div id="xcursor" aria-hidden="true"></div>
-
-  <!-- "Run in Browser" game window: a draggable, TempleOS-themed 640x480 window the bypass game plays in -->
-  <div id="gameWin" role="dialog" aria-label="game window">
-    <div id="gameWinBar"><span id="gameWinTitle">Game</span><button id="gameWinClose" title="Close">[X]</button></div>
-    <div id="gameWinBody"><canvas id="gameScreen" width="640" height="480" tabindex="0"></canvas></div>
-  </div>
   <div id="topbar">
     <div class="status">
       <span id="tb-date">…</span>
@@ -463,8 +454,8 @@
       <span class="close" id="editorClose" title="Close editor">[X]</span>
       <div class="ed-bar">
         <button id="gameBack" title="Back to the games list">← Games</button>
-        <button id="gameRun" title="Compile this game with the in-browser HolyC compiler and play it in its own 640x480 window">Run in Browser</button>
-        <button id="gameToDisk" title="Install this game on the TempleOS C: drive (with TOS_NATIVE) and run it inside the OS">Run in TempleOS</button>
+        <button id="gameRun" title="Compile this game with the in-browser HolyC compiler and run it here in a 640x480 window">▶ Run in browser</button>
+        <button id="gameToDisk" title="Write this game to the real TempleOS C: drive (with TOS_NATIVE) so you can run it in the OS itself">▤ To TempleOS disk</button>
         <span id="gameTitle"></span>
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
         <button id="runBtn">▶ Run</button>
@@ -493,10 +484,17 @@
   <!-- Games launcher: each game's .HC is hosted statically under /games and fetched only
        when you press Play (installed on demand), then compiled to WASM + run by holyc-wasm. -->
   <div id="gamesOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Games">
-    <div class="win" id="gamesWin" data-title="Games · HolyC compiled to WebAssembly">
+    <div class="win" id="gamesWin" data-title="Games">
       <span class="close" id="gamesClose" title="Close">[X]</span>
-      <div style="color:var(--blue);font-size:12px;padding:2px 2px 8px">Pick a game — it installs on demand (the code is fetched only when you play) and runs compiled to WebAssembly.</div>
       <div class="gm-grid" id="gmGrid"></div>
+    </div>
+  </div>
+
+  <!-- a game "Run in Browser" gets its own minimal 640x480 TempleOS window (the bypass canvas is re-parented in) -->
+  <div id="gameWinOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Game">
+    <div class="win" id="gameWin" data-title="Game">
+      <span class="close" id="gameWinClose" title="Close">[X]</span>
+      <div class="gamewin-screen" id="gameWinSlot"></div>
     </div>
   </div>
 
@@ -590,7 +588,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-19 (games UX: 'Run in Browser' opens a draggable 640x480 TempleOS-themed window the game plays in; 'Run in TempleOS' installs+runs in the OS. The picker is stripped to just those two buttons (no embedded canvas, no run/stop, no instructions, no formatter note). The HolyC editor no longer auto-runs on open. Next: games in the editor dropdown + localStorage edit-caching)";
+    window.__BUILD = "render-19 (games decoupled from the editor: each game card has ▶ Run in Browser (opens its OWN minimal 640x480 TempleOS window) and ▤ Run in TempleOS; no embedded canvas / run-stop / instructions in the picker. Runs use your cached edits if present. Capture clicks sent at screen-centre so they don't land out-of-window)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -778,24 +776,6 @@
       for (const s of held) if (MOVE.has(s)) pushKey(s);                                       // re-send only MOVEMENT keys (hold-to-move + simultaneous); selection/jump stay one-shot
       msX = 320 + ((msX - 320) * 0.45 | 0); msY = 240 + ((msY - 240) * 0.45 | 0); notifyInput();  // decay look toward centre
     }, 40);
-
-    // ---- "Run in Browser" game window (draggable, TempleOS-themed 640x480) ----
-    (function () {
-      const win = document.getElementById("gameWin"), bar = document.getElementById("gameWinBar");
-      window.__openGameWin = (title) => { document.getElementById("gameWinTitle").textContent = title || "Game"; win.classList.add("open");
-        setTimeout(() => { const c = document.getElementById("gameScreen"); if (c) c.focus(); }, 120); };
-      const closeWin = () => { win.classList.remove("open"); if (window.__holycEditor) window.__holycEditor.stop(); };
-      window.__closeGameWin = closeWin;
-      document.getElementById("gameWinClose").addEventListener("click", closeWin);
-      bar.addEventListener("pointerdown", (e) => {                              // drag by the title bar
-        if (e.target.closest("button")) return;
-        const r = win.getBoundingClientRect(); win.style.left = r.left + "px"; win.style.top = r.top + "px";
-        const sx = e.clientX - r.left, sy = e.clientY - r.top;
-        const move = (ev) => { win.style.left = Math.max(60 - win.offsetWidth, Math.min(innerWidth - 60, ev.clientX - sx)) + "px"; win.style.top = Math.max(0, Math.min(innerHeight - 24, ev.clientY - sy)) + "px"; };
-        const up = () => { removeEventListener("pointermove", move); removeEventListener("pointerup", up); };
-        addEventListener("pointermove", move); addEventListener("pointerup", up); e.preventDefault();
-      });
-    })();
 
     // ---- paste INTO the OS (Ctrl/Cmd+V): convert clipboard text to US-layout set-1 scancodes and feed
     //      the key queue. This types each char EXACTLY (incl. ~, ", etc.) regardless of the user's real
@@ -1995,7 +1975,9 @@ I64 GodDoodleGen(I64 strokes)
         ov.classList.add("open");
         ov.classList.remove("gamemode");          // full editor, not a game view
         if (window.__winChrome) window.__winChrome.raise(ov);
-        window.__loadEditorApp().catch(() => {});   // don't auto-run on open — the user picks what to run (▶ Run)
+        window.__loadEditorApp().then(() => {
+          if (!ranDefault) { ranDefault = true; if (window.__holycEditor && !window.__holycEditor.isRunning()) window.__holycEditor.run(); }
+        }).catch(() => {});
       }
       function close() {
         ov.classList.remove("open", "free", "gamemode");
@@ -2058,12 +2040,18 @@ I64 GodDoodleGen(I64 strokes)
       const ovG = document.getElementById("gamesOverlay");
       const ovE = document.getElementById("editorOverlay");
       const grid = document.getElementById("gmGrid");
+      const gameKey = (g) => "tos-game:" + g.file;                                  // your edits (from the editor) are cached here
+      async function gameSrc(g) {                                                    // run the CACHED source if present, else the shipped one
+        try { const c = localStorage.getItem(gameKey(g)); if (c != null && c.trim().length) return c; } catch {}
+        return await fetch("games/" + g.file, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); });
+      }
       for (const g of GAMES) {
         const c = document.createElement("div"); c.className = "gm-card";
         c.innerHTML = `<h3>${g.name}</h3><p>${g.blurb}</p>`;
-        const b = document.createElement("button"); b.className = "gm-play"; b.textContent = "▶ Play";
-        b.addEventListener("click", () => play(g));
-        c.appendChild(b); grid.appendChild(c);
+        const row = document.createElement("div"); row.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;";
+        const bB = document.createElement("button"); bB.className = "gm-play"; bB.textContent = "▶ Run in Browser"; bB.addEventListener("click", () => runInBrowser(g));
+        const bT = document.createElement("button"); bT.className = "gm-play"; bT.textContent = "▤ Run in TempleOS"; bT.addEventListener("click", () => runInTempleOS(g));
+        row.append(bB, bT); c.appendChild(row); grid.appendChild(c);
       }
       let curGame = null;
       const setStatus = (s) => { const st = document.getElementById("status"); if (st) st.textContent = s; };
@@ -2072,33 +2060,31 @@ I64 GodDoodleGen(I64 strokes)
       document.getElementById("gamesBtn").addEventListener("click", openGames);
       document.getElementById("gamesClose").addEventListener("click", closeGames);
       ovG.addEventListener("mousedown", (e) => { if (e.target === ovG) closeGames(); });
-      document.getElementById("gameRun").addEventListener("click", async () => {   // Run in Browser -> the draggable 640x480 game window (with your cached edits)
-        if (!curGame) return;
-        await window.__loadEditorApp();
-        let src = null; try { src = localStorage.getItem("game:" + curGame.file); } catch {}
-        if (src == null) src = document.getElementById("editor").value || "";
-        window.__openGameWin(curGame.name);
-        window.__holycEditor.runIn(document.getElementById("gameScreen"), src);
-        setStatus("running " + curGame.name + " in a browser window");
-      });
 
-      async function play(g) {
-        curGame = g;
-        closeGames();
-        ovE.classList.add("open", "gamemode");
-        if (window.__winChrome) window.__winChrome.raise(ovE);
-        document.getElementById("gameTitle").textContent = g.name;
-        setStatus("installing " + g.name + " …");
+      async function runInBrowser(g) {                                              // ▶ a 640x480 TempleOS popup window; the bypass canvas (#screen) is re-parented in
+        curGame = g; closeGames();
+        const ov = document.getElementById("gameWinOverlay"), win = document.getElementById("gameWin");
+        win.dataset.title = g.name;
+        ov.classList.add("open"); if (window.__winChrome) { window.__winChrome.dress(win); window.__winChrome.raise(ov); }
+        const slot = document.getElementById("gameWinSlot"), scr = document.getElementById("screen");
+        if (scr && slot && scr.parentNode !== slot) slot.appendChild(scr);            // borrow the bypass canvas
+        setStatus("loading " + g.name + " …");
         try {
-          // install on demand: the .HC is hosted statically but fetched only now
-          const src = await fetch("games/" + g.file, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); });
+          const src = await gameSrc(g);                                              // cached edits if present, else shipped
           await window.__loadEditorApp();
-          const ed = document.getElementById("editor");
-          ed.value = src; ed.dispatchEvent(new Event("input"));
-          if (window.__holycEditor.isRunning()) window.__holycEditor.stop();   // DON'T auto-launch -> the user chooses how to run
-          setStatus("ready — click ▶ Run in browser, or ▤ To TempleOS disk to play it in the OS");
-        } catch (e) { setStatus("install failed: " + e.message); }
+          const ed = document.getElementById("editor"); ed.value = src; ed.dispatchEvent(new Event("input"));
+          if (window.__holycEditor.isRunning()) window.__holycEditor.stop();
+          setTimeout(() => { window.__holycEditor.run(); const c = document.getElementById("screen"); if (c) c.focus(); }, 80);
+        } catch (e) { setStatus("run failed: " + e.message); }
       }
+      function closeGameWin() {
+        if (window.__holycEditor && window.__holycEditor.isRunning()) window.__holycEditor.stop();
+        const scr = document.getElementById("screen"), home = document.querySelector("#editorWin .ed-screenwrap");
+        if (scr && home && scr.parentNode !== home) home.appendChild(scr);            // return the canvas to the editor
+        document.getElementById("gameWinOverlay").classList.remove("open");
+      }
+      document.getElementById("gameWinClose").addEventListener("click", closeGameWin);
+      document.getElementById("gameWinOverlay").addEventListener("mousedown", (e) => { if (e.target.id === "gameWinOverlay") closeGameWin(); });
 
       // a small TempleOS-styled toast — the game loop rewrites #status every second,
       // so the "how to run it" instruction needs its own durable, dismissable home.
@@ -2122,48 +2108,37 @@ I64 GodDoodleGen(I64 strokes)
 
       // write the running game to the real TempleOS C: drive, with TOS_NATIVE defined so it
       // compiles against the OS's own graphics (dc->body) and runs in HEMU.
-      document.getElementById("gameToDisk").addEventListener("click", async () => {
-        if (!curGame) return;
-        // Use the editor's text, but if it's empty/not-yet-loaded, fetch the canonical game source so
-        // we never write a near-empty file (that "1 clusters" bug where the editor wasn't populated).
-        let raw = document.getElementById("editor").value || "";
-        if (raw.trim().length < 200) {
-          raw = await fetch("games/" + curGame.file, { cache: "no-cache" }).then((r) => r.ok ? r.text() : "").catch(() => "");
-        }
-        if (raw.trim().length < 50) { toast("Couldn't read the game source to send — try again in a moment."); return; }
-        const src = "#define TOS_NATIVE 1\n" + raw;
+      async function runInTempleOS(g) {                                            // ▤ install + #include in the OS (HEMU), with your cached edits
+        curGame = g;
         if (!window.__uploadToHome) {
           toast("The TempleOS engine isn't ready yet — open the <b>Disk</b> window and let the OS finish booting, then try again.");
           setStatus("OS engine not ready"); return;
         }
-        // The C: disk is decompressed/mounted a few seconds AFTER the desktop boots, so an upload can
-        // legitimately fail with "disk not loaded yet" right after launch. Wait for the REAL result and
-        // retry while it's still loading — and only claim success when the engine confirms the write.
-        // run:true -> the engine writes it via the OS's own FileWrite (cache stays consistent), then
-        // #includes it, so the game launches in TempleOS automatically — no manual typing needed.
-        toast("Installing <b>" + curGame.file + "</b> on the TempleOS C: drive…", 60000);
-        setStatus("writing " + curGame.file + " to C:…");
+        let raw; try { raw = await gameSrc(g); } catch (e) { raw = ""; }
+        if (!raw || raw.trim().length < 50) { toast("Couldn't read the game source — try again in a moment."); return; }
+        const src = "#define TOS_NATIVE 1\n" + raw;
+        // The C: disk mounts a few seconds AFTER boot, so retry while it's "disk not loaded yet".
+        // run:true -> the engine FileWrites it then #includes it (launches in the OS, no manual typing).
+        toast("Installing <b>" + g.file + "</b> on the TempleOS C: drive…", 60000);
+        setStatus("writing " + g.file + " to C:…");
         let r, tries = 0;
         do {
-          r = await window.__uploadToHome(curGame.file, src, true);
+          r = await window.__uploadToHome(g.file, src, true);
           if (r && r.ok) break;
-          if (!/disk not loaded/i.test(r && r.msg || "")) break;   // not the "still mounting" case — a real error, stop
-          await new Promise((res) => setTimeout(res, 1500));        // disk still mounting — wait & retry
+          if (!/disk not loaded/i.test(r && r.msg || "")) break;
+          await new Promise((res) => setTimeout(res, 1500));
         } while (++tries < 20);
         if (r && r.ok) {
-          toast('Installed <b>C:/Home/' + curGame.file + '</b> and launching it in TempleOS…<br>'
-            + 'Click the OS screen to play. Press <b>Esc</b> to quit back to the prompt.<br>'
-            + '<span style="opacity:.75">To re-run later, type</span> '
-            + '<code style="display:inline-block;background:var(--blue);color:#fff;padding:2px 7px">'
-            + '#include "' + curGame.file + '"</code>');
-          setStatus('launching ' + curGame.file + ' in TempleOS');
-          window.__gameActive = true;   // -> clicking the OS screen now CAPTURES the mouse (look + place/break), Esc releases
+          closeGames();
+          toast('Launched <b>' + g.name + '</b> in TempleOS.<br>Click the OS screen to capture the mouse (Esc releases; Esc again quits).');
+          setStatus('launching ' + g.file + ' in TempleOS');
+          window.__gameActive = true;   // -> clicking the OS screen CAPTURES the mouse (look + place/break)
         } else {
-          toast("Couldn't write <b>" + curGame.file + "</b> to the C: drive: " + ((r && r.msg) || "unknown error")
+          toast("Couldn't write <b>" + g.file + "</b> to the C: drive: " + ((r && r.msg) || "unknown error")
             + "<br>The OS may still be booting — give it a few seconds and try again.");
           setStatus("disk write failed");
         }
-      });
+      }
     })();
 
     // ---- lightweight HolyC syntax highlighter for the editor ----
