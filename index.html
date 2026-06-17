@@ -31,6 +31,7 @@
         background:url('assets/cursor.png') no-repeat top left;
         filter:brightness(0) invert(1); mix-blend-mode:difference; }
     body.xcursor #xcursor { display:block; }
+    body.gamecapture #xcursor { display:none !important; }   /* mouse captured for a game -> hide the cursor (pointer-lock hides the native one) */
     body.xcursor, body.xcursor * { cursor:none !important; }   /* the inverting arrow replaces the native cursor */
     .wbar, .wbar *, .wvert, .wvert * { font-family:'TempleOS','dos_vga',monospace; }
     html { overflow-y:auto; }
@@ -575,7 +576,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-17 (input/capture fix: in mouse-capture game mode the guest cursor is kept in a SAFE interior box (off the menu bar + window edges) so break/place clicks no longer land 'outside' and bounce the game out of focus; recentre + clear on-screen hint on capture; a click never drops focus while captured. [render-16: GrFillPoly3 HLE -> ~44fps])";
+    window.__BUILD = "render-17 (input fixes: launching a game arms mouse-capture — click the OS screen to capture (cursor hidden, mouse looks, clicks place/break, no more clicking-out-of-window freezing the game); Esc releases. Held-key repeat is now MOVEMENT-only so arrow/q-e/number selection no longer spins. Normal OS use untouched until a game is launched)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -711,7 +712,10 @@
     const releasesFocus = (t) => t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT" || t.tagName === "SELECT" || t.closest(".overlay"));
 
     canvas.addEventListener("mousedown", e => { if (document.body.classList.contains("touch")) return;
-      setFocused(true); msB |= btnBit(e); e.preventDefault(); notifyInput(); });
+      setFocused(true);
+      if (window.__gameActive && !document.pointerLockElement) { if (canvas.requestPointerLock) canvas.requestPointerLock(); }   // playing a game: this click GRABS the mouse (no place/break); locked clicks below place/break
+      else msB |= btnBit(e);
+      e.preventDefault(); notifyInput(); });
     // fullscreen: clicks on the letterbox act IN the OS (clamped to the canvas edge), never on the page
     $("frame").addEventListener("mousedown", e => { if (document.body.classList.contains("touch")) return;
       if (!$("frame").classList.contains("fsmode") || e.target === canvas || e.target.closest("#fsExit")) return;
@@ -722,7 +726,6 @@
       // fullscreen: the mouse can't LEAVE the OS — positions over the letterbox clamp to the canvas edge
       else if ($("frame").classList.contains("fsmode")) { mapAbs(e, canvas.getBoundingClientRect()); notifyInput(); } });
     document.addEventListener("mousedown", e => {                            // focus bookkeeping for clicks anywhere
-      if (gameMode) return;                                                   // captured: a click is break/place — NEVER release focus
       if (releasesFocus(e.target)) setFocused(false);
       else if (!keepsFocus(e.target)) setFocused(false);                     // clicked page content -> release
     }, true);
@@ -750,18 +753,14 @@
     // like "press repeatedly"; (2) the mouse is RELATIVE (movementX/Y), decaying back to centre so the camera
     // turns while you move the mouse and stops when you stop. Normal OS use is untouched (gameMode stays false).
     const releaseHeld = () => { for (const s of held) pushKey(s | 0x80); held.clear(); };
-    canvas.addEventListener("dblclick", e => { if (document.body.classList.contains("touch")) return; setFocused(true); if (canvas.requestPointerLock) canvas.requestPointerLock(); e.preventDefault(); });
-    document.addEventListener("pointerlockchange", () => { gameMode = (document.pointerLockElement === canvas);
-      if (gameMode) { msX = 320; msY = 240; notifyInput(); tbKey.textContent = "🎮 mouse captured · move to look · click = break/place · Esc to release"; }
-      else { releaseHeld(); tbKey.textContent = focused ? "focused · keys → OS · Ctrl+V pastes · Esc to OS" : "click the screen to use the OS"; } });
-    // captured: RELATIVE look, but keep the guest cursor in a SAFE interior box — off the 8px menu bar and the
-    // window edges — so a break/place click always lands inside the play area (was drifting to an edge -> the OS
-    // read the click as "outside", bouncing the game out of focus / into a menu).
+    const MOVE = new Set([0x11,0x1e,0x1f,0x20,0x13,0x21,0x24,0x26,0x17,0x25]);   // W A S D R F J L I K -> repeat while held; arrows/q/e/space/numbers stay one-shot
+    canvas.addEventListener("dblclick", e => { if (document.body.classList.contains("touch")) return; setFocused(true); window.__gameActive = true; if (canvas.requestPointerLock) canvas.requestPointerLock(); e.preventDefault(); });
+    document.addEventListener("pointerlockchange", () => { gameMode = (document.pointerLockElement === canvas); document.body.classList.toggle("gamecapture", gameMode); if (!gameMode) releaseHeld(); });
     document.addEventListener("mousemove", e => { if (!gameMode) return;
-      msX = Math.max(48, Math.min(591, msX + e.movementX)); msY = Math.max(48, Math.min(431, msY + e.movementY)); notifyInput(); });
+      msX = Math.max(0, Math.min(639, msX + e.movementX)); msY = Math.max(0, Math.min(479, msY + e.movementY)); notifyInput(); });
     addEventListener("blur", releaseHeld);
     setInterval(() => { if (!gameMode || !focused) return;
-      for (const s of held) pushKey(s);                                                       // continuous makes -> hold + simultaneous
+      for (const s of held) if (MOVE.has(s)) pushKey(s);                                       // re-send only MOVEMENT keys (hold-to-move + simultaneous); selection/jump stay one-shot
       msX = 320 + ((msX - 320) * 0.45 | 0); msY = 240 + ((msY - 240) * 0.45 | 0); notifyInput();  // decay look toward centre
     }, 40);
 
@@ -2037,7 +2036,7 @@ I64 GodDoodleGen(I64 strokes)
       }
       let curGame = null;
       const setStatus = (s) => { const st = document.getElementById("status"); if (st) st.textContent = s; };
-      function openGames() { ovG.classList.add("open"); if (window.__winChrome) window.__winChrome.raise(ovG); }
+      function openGames() { ovG.classList.add("open"); window.__gameActive = false; if (window.__winChrome) window.__winChrome.raise(ovG); }   // browsing games -> stop capturing the mouse
       function closeGames() { ovG.classList.remove("open"); }
       document.getElementById("gamesBtn").addEventListener("click", openGames);
       document.getElementById("gamesClose").addEventListener("click", closeGames);
@@ -2121,6 +2120,7 @@ I64 GodDoodleGen(I64 strokes)
             + '<code style="display:inline-block;background:var(--blue);color:#fff;padding:2px 7px">'
             + '#include "' + curGame.file + '"</code>');
           setStatus('launching ' + curGame.file + ' in TempleOS');
+          window.__gameActive = true;   // -> clicking the OS screen now CAPTURES the mouse (look + place/break), Esc releases
         } else {
           toast("Couldn't write <b>" + curGame.file + "</b> to the C: drive: " + ((r && r.msg) || "unknown error")
             + "<br>The OS may still be booting — give it a few seconds and try again.");
