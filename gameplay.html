@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- gameplay.html — standalone minimal "Run in Browser" game window. Opened as a popup from the Games
+     launcher (?game=<file>). Reuses the in-browser HolyC editor runtime (holyc-wasm/native/app.js): it
+     binds to #screen and compiles #editor's text in a worker (needs SharedArrayBuffer -> the site-wide
+     COOP/COEP headers apply here too). We hide the editor chrome and just show the 640x480 screen. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="assets/Logo128x152.jpg" type="image/jpeg" />
+  <title>HolyC game</title>
+  <style>
+    html, body { margin:0; height:100%; background:#000; overflow:hidden; }
+    body { display:flex; align-items:center; justify-content:center; font-family:'TempleOS',monospace; }
+    #screen { display:block; width:640px; height:480px; image-rendering:pixelated; background:#000; outline:none; }
+    /* app.js needs these elements to exist, but the player only shows the screen */
+    #editor, #console, #demoSelect, #runBtn, #stopBtn, #status { position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0; pointer-events:none; }
+    #err { display:none; color:#fff; padding:24px; font-size:15px; line-height:1.5; max-width:600px; }
+    #err b { color:yellow; }
+  </style>
+</head>
+<body>
+  <canvas id="screen" width="640" height="480" tabindex="0"></canvas>
+  <textarea id="editor"></textarea>
+  <div id="console"></div>
+  <select id="demoSelect"></select>
+  <button id="runBtn"></button>
+  <button id="stopBtn"></button>
+  <div id="status"></div>
+  <div id="err"></div>
+  <script type="module">
+    const fail = (m) => { const e = document.getElementById("err"); e.textContent = m; e.style.display = "block"; document.getElementById("screen").style.display = "none"; };
+    const game = new URLSearchParams(location.search).get("game") || "HolyCraft.HC";
+    document.title = game.replace(/\.HC$/i, "");
+    let src = "";
+    try { src = await fetch("games/" + game, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }); }
+    catch (e) { fail("Couldn't load " + game + ": " + e.message); }
+    if (src) {
+      try { await import("./holyc-wasm/native/app.js"); } catch (e) { fail("Failed to load the HolyC runtime: " + e.message); }
+      const ed = document.getElementById("editor");
+      const t0 = Date.now();
+      (function go() {                                   // app.js exposes window.__holycEditor when ready
+        if (window.__holycEditor) {
+          ed.value = src; ed.dispatchEvent(new Event("input"));   // set OUR game source (overriding app.js's default demo)
+          if (window.__holycEditor.isRunning()) window.__holycEditor.stop();
+          window.__holycEditor.run();                              // run() captures editor.value synchronously
+          document.getElementById("screen").focus();
+        } else if (Date.now() - t0 < 8000) setTimeout(go, 60);
+        else fail("The HolyC runtime didn't start (SharedArrayBuffer may be unavailable in this browser).");
+      })();
+    }
+  </script>
+</body>
+</html>

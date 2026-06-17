@@ -451,8 +451,8 @@
       <span class="close" id="editorClose" title="Close editor">[X]</span>
       <div class="ed-bar">
         <button id="gameBack" title="Back to the games list">← Games</button>
-        <button id="gameRun" title="Compile this game with the in-browser HolyC compiler and run it here in a 640x480 window">▶ Run in browser</button>
-        <button id="gameToDisk" title="Write this game to the real TempleOS C: drive (with TOS_NATIVE) so you can run it in the OS itself">▤ To TempleOS disk</button>
+        <button id="gameRun" title="Run this game in the browser — opens a minimal 640x480 game window">Run in Browser</button>
+        <button id="gameToDisk" title="Install + run this game inside TempleOS itself (the x86 emulator)">Run in TempleOS</button>
         <span id="gameTitle"></span>
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">— pick a demo / game —</option></select>
         <button id="runBtn">▶ Run</button>
@@ -578,7 +578,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-18 (games: picking a game no longer auto-runs it — choose ▶ Run in browser (now a native 640x480 window) or ▤ To TempleOS disk. Capture clicks are sent at screen-centre so they no longer land on the menu/edge and freeze the game. Held-key repeat is movement-only)";
+    window.__BUILD = "render-19 (games: two clear launch options — 'Run in Browser' opens the game in its OWN minimal 640x480 popup window (standalone gameplay.html), 'Run in TempleOS' installs+runs it in the OS. No auto-launch. (OS-path capture clicks are centred so they don't land on the menu/edge and freeze the game.))";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -2044,12 +2044,11 @@ I64 GodDoodleGen(I64 strokes)
       document.getElementById("gamesBtn").addEventListener("click", openGames);
       document.getElementById("gamesClose").addEventListener("click", closeGames);
       ovG.addEventListener("mousedown", (e) => { if (e.target === ovG) closeGames(); });
-      document.getElementById("gameRun").addEventListener("click", () => {   // ▶ Run in browser (640x480 window) — user-initiated, not auto
-        if (!window.__holycEditor) return;
-        if (window.__holycEditor.isRunning()) window.__holycEditor.stop();
-        window.__holycEditor.run();
-        setStatus("running " + (curGame ? curGame.name : "game") + " in the browser");
-        setTimeout(() => { const c = document.getElementById("screen"); if (c) c.focus(); }, 150);
+      document.getElementById("gameRun").addEventListener("click", () => {   // Run in Browser -> its own minimal 640x480 popup window (standalone gameplay.html)
+        if (!curGame) return;
+        const w = 660, h = 524, x = ((screen.width - w) / 2) | 0, y = ((screen.height - h) / 2) | 0;
+        window.open("gameplay.html?game=" + encodeURIComponent(curGame.file), "_blank", `popup=yes,width=${w},height=${h},left=${x},top=${y}`);
+        setStatus("opened " + curGame.name + " in a browser window");
       });
 
       async function play(g) {
