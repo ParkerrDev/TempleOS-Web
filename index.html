@@ -588,7 +588,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-20 (mouse lock removed entirely: no pointer-capture / dblclick-to-grab / relative-look / center-click. Mouse is plain absolute — over the canvas the cursor position IS the HolyCraft look control (ms.pos dead-zone). Hold-to-move + simultaneous keys stay, gated on __gameActive)";
+    window.__BUILD = "render-21 (input rewrite + TinkerOS games: HolyCraft native now POLLS kbd.down_bitmap for held movement + sets Fs->win_inhibit (no window-close on click) + clears stuck launch keys + drains msgs (no input bleed); browser drops the key re-send ticker + always releases held keys. 30 stock OS games (Varoom, Talons, BlackDiamond…) added to the launcher, run straight from the disk so their DolDoc sprite art stays intact)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -752,21 +752,21 @@
       if (e.ctrlKey && e.code === "BracketLeft") { pushKey(0x01); pushKey(0x81); e.preventDefault(); return; }  // legacy in-OS Esc
       const s = SC[e.code]; if (s !== undefined) { if (!e.repeat) pushKey(s); held.add(s); e.preventDefault(); }
     });
-    addEventListener("keyup", e => { if (!keysToOS(e)) return; const s = SC[e.code]; if (s !== undefined && e.code !== "Escape") { held.delete(s); pushKey(s | 0x80); e.preventDefault(); } });
+    addEventListener("keyup", e => { const s = SC[e.code]; if (s === undefined || e.code === "Escape") return;
+      // ALWAYS release a key we sent a make for — even if focus was lost between keydown and keyup. Otherwise
+      // the OS kbd.down_bitmap bit stays set and the game (which polls it) keeps "walking" -> the stuck-key bug.
+      if (held.has(s)) { held.delete(s); pushKey(s | 0x80); }
+      if (keysToOS(e)) e.preventDefault(); });
 
-    // ---- GAME INPUT: hold-to-move + simultaneous keys (FPS-style games like HolyCraft). NO pointer lock. ----
-    // The mouse is plain absolute (handler above): over the canvas, the cursor position IS the look control —
-    // HolyCraft steers by ms.pos offset from screen centre, so you point where you want to turn and centre to
-    // stop. The hold-to-move loop re-sends each held MOVEMENT make-code every tick, so you can HOLD to move and
-    // press several keys at once (the browser only auto-repeats the last key, and we suppress even that). Active
-    // only while a game is running in the OS (window.__gameActive); normal OS use is untouched.
+    // ---- GAME INPUT (FPS-style games like HolyCraft). NO pointer lock, NO key re-send ticker. ----
+    // We send exactly ONE make per keydown + ONE break per keyup. The OS keyboard driver holds the key-down
+    // state in kbd.down_bitmap between them, and well-written real-time games POLL that bitmap each frame
+    // (HolyCraft, reference Demo/Games/RainDrops.HC) — so HOLDING a key keeps you moving and pressing several
+    // at once all register, with no browser-side repeat hack (that hack was what made keys "stick"). The mouse
+    // is plain absolute: over the canvas the cursor position IS the look control (HolyCraft steers by ms.pos
+    // offset from centre). releaseHeld() flushes break codes if the window loses focus mid-press.
     const releaseHeld = () => { for (const s of held) pushKey(s | 0x80); held.clear(); };
-    const MOVE = new Set([0x11,0x1e,0x1f,0x20,0x13,0x21,0x24,0x26,0x17,0x25]);   // W A S D R F J L I K -> repeat while held; arrows/q/e/space/numbers stay one-shot
     addEventListener("blur", releaseHeld);
-    setInterval(() => { if (!window.__gameActive || !focused) return;
-      for (const s of held) if (MOVE.has(s)) pushKey(s);                                       // re-send only MOVEMENT keys (hold-to-move + simultaneous); selection/jump stay one-shot
-      notifyInput();
-    }, 40);
 
     // ---- paste INTO the OS (Ctrl/Cmd+V): convert clipboard text to US-layout set-1 scancodes and feed
     //      the key queue. This types each char EXACTLY (incl. ~, ", etc.) regardless of the user's real
@@ -2023,10 +2023,44 @@ I64 GodDoodleGen(I64 strokes)
     // ---- Games launcher: install-on-demand HolyC games (fetched only on Play) ----
     (function () {
       const GAMES = [
+        // custom dual-target games (run in the browser bypass OR the real OS; your edits are cached)
         { file: "HolyCraft.HC", name: "HolyCraft", blurb: "A 3D voxel sandbox — walk a blocky world, break & place blocks. A real-time raycaster in HolyC.",
-          how: "W/S move · A/D strafe · R/F up/down · move MOUSE or J/L/I/K to look · LEFT-click break · RIGHT-click place · 1-7 pick block · Esc quit" },
+          how: "W/S move · A/D strafe · R/F up/down · move MOUSE or J/L/I/K to look · LEFT-click break · RIGHT-click place · 1-9 pick block · Esc quit" },
         { file: "Snake.HC", name: "Snake", blurb: "The classic. Eat the apples, don't bite your tail.",
           how: "W/A/S/D to steer · Esc to quit" },
+        // ---- the OS's own games (Terry A. Davis), launched straight from the disk so their original
+        //      DolDoc sprite art is used verbatim. These need the real OS, so they have no "Run in Browser".
+        { name: "Varoom",        disk: "::/Demo/Games/Varoom",        blurb: "Top-down racing — keep your foot down and hold the track." },
+        { name: "Talons",        disk: "::/Demo/Games/Talons",        blurb: "Joust-style aerial combat: flap above your foe and skewer them." },
+        { name: "BlackDiamond",  disk: "::/Demo/Games/BlackDiamond",  blurb: "Downhill skiing — carve the slope and dodge the trees." },
+        { name: "FlatTops",      disk: "::/Demo/Games/FlatTops",      blurb: "WWII Pacific aircraft-carrier warfare." },
+        { name: "Halogen",       disk: "::/Demo/Games/Halogen",       blurb: "A fast top-down arena shooter." },
+        { name: "CastleFrankenstein", disk: "::/Demo/Games/CastleFrankenstein", blurb: "Sneak through the castle — a Castle Wolfenstein homage." },
+        { name: "BattleLines",   disk: "::/Demo/Games/BattleLines",   blurb: "A tactical battle along the front lines." },
+        { name: "BigGuns",       disk: "::/Demo/Games/BigGuns",       blurb: "Artillery duel — pick your angle and power." },
+        { name: "BomberGolf",    disk: "::/Demo/Games/BomberGolf",    blurb: "Golf, with bombs." },
+        { name: "FlapBat",       disk: "::/Demo/Games/FlapBat",       blurb: "Flap through the gaps — a Flappy-Bird-like." },
+        { name: "Maze",          disk: "::/Demo/Games/Maze",          blurb: "Find your way out of the maze." },
+        { name: "TreeCheckers",  disk: "::/Demo/Games/TreeCheckers",  blurb: "Checkers (draughts) against the computer." },
+        { name: "TicTacToe",     disk: "::/Demo/Games/TicTacToe",     blurb: "Classic noughts and crosses." },
+        { name: "Whap",          disk: "::/Demo/Games/Whap",          blurb: "Protect your base — whack the attackers." },
+        { name: "Wenceslas",     disk: "::/Demo/Games/Wenceslas",     blurb: "A wintry arcade romp." },
+        { name: "RawHide",       disk: "::/Demo/Games/RawHide",       blurb: "An arcade game from the TempleOS collection." },
+        { name: "TheDead",       disk: "::/Demo/Games/TheDead",       blurb: "Survive against the dead." },
+        { name: "Squirt",        disk: "::/Demo/Games/Squirt",        blurb: "An arcade game from the TempleOS collection." },
+        { name: "Zing",          disk: "::/Demo/Games/Zing",          blurb: "A fast reflex arcade game." },
+        { name: "ZoneOut",       disk: "::/Demo/Games/ZoneOut",       blurb: "A block-busting arcade game." },
+        { name: "RocketScience", disk: "::/Demo/Games/RocketScience", blurb: "Rocket flight, the hard way." },
+        { name: "Rocket",        disk: "::/Demo/Games/Rocket",        blurb: "Lunar-lander-style rocket physics." },
+        { name: "DunGen",        disk: "::/Demo/Games/DunGen",        blurb: "A procedural dungeon generator." },
+        // ---- graphics / physics demos that live in the Games folder ----
+        { name: "MassSpring",    disk: "::/Demo/Games/MassSpring",    blurb: "Mass-and-spring physics sandbox — left-click to place masses." },
+        { name: "Collision",     disk: "::/Demo/Games/Collision",     blurb: "An elastic-collision physics demo." },
+        { name: "RainDrops",     disk: "::/Demo/Games/RainDrops",     blurb: "A falling-raindrops graphics demo." },
+        { name: "CircleTrace",   disk: "::/Demo/Games/CircleTrace",   blurb: "A spirograph-style circle-tracing demo." },
+        { name: "ElephantWalk",  disk: "::/Demo/Games/ElephantWalk",  blurb: "An animated walk-cycle demo." },
+        { name: "CharDemo",      disk: "::/Demo/Games/CharDemo",      blurb: "A character-set and font demo." },
+        { name: "Digits",        disk: "::/Demo/Games/Digits",        blurb: "A rainbow-digits graphics demo." },
       ];
       const ovG = document.getElementById("gamesOverlay");
       const ovE = document.getElementById("editorOverlay");
@@ -2040,9 +2074,12 @@ I64 GodDoodleGen(I64 strokes)
         const c = document.createElement("div"); c.className = "gm-card";
         c.innerHTML = `<h3>${g.name}</h3><p>${g.blurb}</p>`;
         const row = document.createElement("div"); row.className = "gm-btns";
-        const bB = document.createElement("button"); bB.className = "gm-play"; bB.textContent = "Run in Browser"; bB.addEventListener("click", () => runInBrowser(g));
+        if (!g.disk) {   // dual-target games (HolyCraft/Snake) can also run in the fast browser bypass
+          const bB = document.createElement("button"); bB.className = "gm-play"; bB.textContent = "Run in Browser"; bB.addEventListener("click", () => runInBrowser(g));
+          row.append(bB);
+        }
         const bT = document.createElement("button"); bT.className = "gm-play"; bT.textContent = "Run in TempleOS"; bT.addEventListener("click", () => runInTempleOS(g));
-        row.append(bB, bT); c.appendChild(row); grid.appendChild(c);
+        row.append(bT); c.appendChild(row); grid.appendChild(c);
       }
       let curGame = null;
       const setStatus = (s) => { const st = document.getElementById("status"); if (st) st.textContent = s; };
@@ -2097,37 +2134,47 @@ I64 GodDoodleGen(I64 strokes)
         clearTimeout(t._timer); t._timer = setTimeout(() => t.remove(), ms);
       }
 
-      // write the running game to the real TempleOS C: drive, with TOS_NATIVE defined so it
-      // compiles against the OS's own graphics (dc->body) and runs in HEMU.
-      async function runInTempleOS(g) {                                            // ▤ install + #include in the OS (HEMU), with your cached edits
+      // Launch a game in the real OS (HEMU). Two cases:
+      //  - g.disk  : an OS game already on the disk -> write a tiny launcher STUB to C:/Home that #includes
+      //              it. We DON'T upload the game's own source: these .HC files carry binary DolDoc sprite
+      //              art that a UTF-8 text round-trip would mangle, and the disk copy is known-good.
+      //  - g.file  : our dual-target game -> upload the (possibly edited) source with TOS_NATIVE defined.
+      async function runInTempleOS(g) {                                            // ▤ install + #include in the OS (HEMU)
         curGame = g;
         if (!window.__uploadToHome) {
           toast("The TempleOS engine isn't ready yet — open the <b>Disk</b> window and let the OS finish booting, then try again.");
           setStatus("OS engine not ready"); return;
         }
-        let raw; try { raw = await gameSrc(g); } catch (e) { raw = ""; }
-        if (!raw || raw.trim().length < 50) { toast("Couldn't read the game source — try again in a moment."); return; }
-        const src = "#define TOS_NATIVE 1\n" + raw;
+        let name, src;
+        if (g.disk) {
+          name = "PlayGame.HC";
+          src = "// launcher stub written by TempleOS-Web — runs the on-disk game with its original art intact\n#include \"" + g.disk + "\";\n";
+        } else {
+          let raw; try { raw = await gameSrc(g); } catch (e) { raw = ""; }
+          if (!raw || raw.trim().length < 50) { toast("Couldn't read the game source — try again in a moment."); return; }
+          name = g.file; src = "#define TOS_NATIVE 1\n" + raw;
+        }
         // The C: disk mounts a few seconds AFTER boot, so retry while it's "disk not loaded yet".
         // run:true -> the engine FileWrites it then #includes it (launches in the OS, no manual typing).
-        toast("Installing <b>" + g.file + "</b> on the TempleOS C: drive…", 60000);
-        setStatus("writing " + g.file + " to C:…");
+        toast("Loading <b>" + g.name + "</b> in TempleOS…", 60000);
+        setStatus("launching " + g.name + " in TempleOS…");
         let r, tries = 0;
         do {
-          r = await window.__uploadToHome(g.file, src, true);
+          r = await window.__uploadToHome(name, src, true);
           if (r && r.ok) break;
           if (!/disk not loaded/i.test(r && r.msg || "")) break;
           await new Promise((res) => setTimeout(res, 1500));
         } while (++tries < 20);
         if (r && r.ok) {
           closeGames();
-          toast('Launched <b>' + g.name + '</b> in TempleOS.<br>Click the screen, then move the mouse to look and hold W/A/S/D to move (Esc quits).');
-          setStatus('launching ' + g.file + ' in TempleOS');
+          const how = g.how || "Click the screen, then follow the on-screen instructions.";
+          toast("Launched <b>" + g.name + "</b> in TempleOS.<br>" + how + "<br>Press <b>Esc</b> to quit.");
+          setStatus("launching " + g.name + " in TempleOS");
           window.__gameActive = true;   // -> enable hold-to-move / simultaneous keys (no mouse lock; look is absolute cursor)
         } else {
-          toast("Couldn't write <b>" + g.file + "</b> to the C: drive: " + ((r && r.msg) || "unknown error")
+          toast("Couldn't launch <b>" + g.name + "</b>: " + ((r && r.msg) || "unknown error")
             + "<br>The OS may still be booting — give it a few seconds and try again.");
-          setStatus("disk write failed");
+          setStatus("launch failed");
         }
       }
     })();
