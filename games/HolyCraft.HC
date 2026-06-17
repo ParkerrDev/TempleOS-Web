@@ -25,15 +25,15 @@
 // 80×59 ×8 == 640×472 (the maximized window), 80/59 == 640/472 -> exact aspect, square pixels.
 // Finer resolutions are too heavy for the per-pixel software raycaster even split across all 4 SMP
 // cores (160×118 measured ~3fps), so this is the resolution/fps sweet spot in the x86 emulator.
-#define RES_W   80
-#define RES_H   59
-#define SCALE   8
+#define RES_W   640          // FULL native resolution — NO downscaling (1 framebuffer px = 1 screen px).
+#define RES_H   472          // the maximized borderless window is 640x472 (top 8px = OS menu bar).
+#define SCALE   1            // SLOW in the x86 emulator for now; per the user, optimize the emulator later.
 #define RDIST   32.0         // render distance (WORLD units)
 #define MAXSTEP 80           // DDA step cap (>= steps to reach RDIST diagonally)
 #else
-#define RES_W   320          // x2 = 640 (high-res: native WASM affords it; keeps the live dither cells small)
-#define RES_H   240          // x2 = 480
-#define SCALE   2
+#define RES_W   640          // full 640x480 in the browser too (native WASM is fast enough), SCALE 1
+#define RES_H   480
+#define SCALE   1
 #define RDIST   36.0         // render distance (WORLD units)
 #define MAXSTEP 110          // DDA step cap per ray
 #endif
@@ -177,8 +177,8 @@ U0 Init()
   GenWorld();
   // spawn standing in the middle: drop in from just above the ground, gravity settles you
   g_px = WX/2 + 0.5; g_pz = WZ/2 + 0.5;
-  g_py = HeightAt(WX/2, WZ/2) + EYE + 3.0;
-  g_vy = 0.0; g_fly = 0; g_onground = 0;
+  g_py = HeightAt(WX/2, WZ/2) + EYE;
+  g_vy = 0.0; g_fly = 0; g_onground = 1;
   g_yaw = 0.7; g_pitch = -0.06;
 }
 
@@ -213,6 +213,11 @@ U0 RenderRows(I64 y0, I64 y1)                 // render scanlines [y0,y1) into g
   U64 rng = (g_frame*2654435761 + y0*2246822519 + 12345) | 1;
   for (syy=y0; syy<y1; syy++) {
     F64 vy=(1.0 - 2.0*syy/RES_H)*fov;
+#ifdef TOS_NATIVE
+    vy = -vy;   // real TempleOS HolyC renders the vertical ray sweep INVERTED vs holyc-wasm (the camera
+                // up-vector contribution comes out negated; Sin/Cos/the vy formula all verify correct in
+                // isolation, so it's a codegen difference). Flip it here so the native world is right-side up.
+#endif
     F64 bx=fwx+upx*vy, by=fwy+upy*vy, bz=fwz+upz*vy;   // row base dir (cx=0)
     F64 cstep=2.0/RES_W*asp*fov;
     F64 cx=-asp*fov;
@@ -300,16 +305,20 @@ U0 RenderFrame()
 U0 DrawHUD()
 {
   I64 cx=RES_W/2, cy=RES_H/2, i;
-  for (i=-3; i<=3; i++) { g_fb[cy*RES_W+cx+i]=15; g_fb[(cy+i)*RES_W+cx]=15; }   // crosshair
-  // hotbar: 7 swatches along the bottom, selected one framed white
-  I64 b, bw=10, x0=(RES_W-7*bw)/2, y0=RES_H-9;
+  I64 ch=RES_W/100; if (ch<3) ch=3;                          // crosshair arm length, scales with res
+  for (i=-ch; i<=ch; i++) { g_fb[cy*RES_W+cx+i]=15; g_fb[(cy+i)*RES_W+cx]=15; }
+  // hotbar: 7 swatches along the bottom, sized RELATIVE to the resolution (so it isn't huge at low res
+  // or invisible at high res). gap framing inside each cell; selected one framed white.
+  I64 bw=RES_W/18, gap=bw/8, b;                              // swatch pitch + inner margin
+  if (gap<1) gap=1;
+  I64 bh=bw*3/4, x0=(RES_W-7*bw)/2, y0=RES_H-bh-bh/3;        // squarish swatches near the bottom
   for (b=1; b<=7; b++) {
     I64 px=x0+(b-1)*bw, py, qx;
     I64 c=g_ramp[b*3+0];
-    for (py=y0; py<y0+7; py++)
-      for (qx=px+1; qx<px+bw-1; qx++) g_fb[py*RES_W+qx]=c;
+    for (py=y0; py<y0+bh; py++)
+      for (qx=px+gap; qx<px+bw-gap; qx++) g_fb[py*RES_W+qx]=c;
     if (b==g_sel)
-      for (qx=px; qx<px+bw; qx++) { g_fb[(y0-1)*RES_W+qx]=15; g_fb[(y0+7)*RES_W+qx]=15; }
+      for (qx=px; qx<px+bw; qx++) { g_fb[(y0-1)*RES_W+qx]=15; g_fb[(y0+bh)*RES_W+qx]=15; }
   }
 }
 
