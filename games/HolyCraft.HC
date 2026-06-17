@@ -53,6 +53,8 @@ U8   g_skyr[3];             // sky gradient ramp (blue zenith -> ltblue -> ltcya
 U8   g_lr[24*4];            // per-block ramp, 4 levels dark->bright. 0=air; 1-7 materials; 8-23 = the 16 system colors
 U8   g_flo[24*6], g_fhi[24*6]; // per (block,face): the 2 ramp colors bracketing that face's light shade
 I64  g_fthr[24*6];          // per (block,face): probability 0..65536 for the LIVE "static" dither blend
+U8   g_facecol[24*6];        // per (block,face): ONE solid directional shade (the native face-rasterizer fill colour)
+U8  *g_hm    = NULL;         // per (x,z): top solid y (heightmap) -> drives the native face-shell enumeration
 I64  g_frame = 0;           // frame counter -> reseeds the dither each frame so it animates (like Varoom)
 F64  g_px, g_py, g_pz;       // camera position
 F64  g_yaw, g_pitch;         // camera angles
@@ -63,6 +65,15 @@ I64  g_tf,g_tb,g_tl,g_tr,g_tu,g_td,g_tjl,g_tjr,g_tpu,g_tpd;
 F64  g_vy = 0.0;             // vertical velocity (gravity)
 I64  g_fly = 0;             // creative fly toggle ('g')
 I64  g_onground = 0, g_quit = 0;
+#ifdef TOS_NATIVE
+// native face-rasterizer state (declared before Init, which allocates g_depth). CDC is an OS type, so
+// these stay inside TOS_NATIVE (the browser/holyc-wasm target never sees them).
+I32 *g_depth = NULL;          // z-buffer (I32/px; smaller==nearer; cleared to I32_MAX); attached to the DC each frame
+I64  g_depthcap = 1024*768;   // z-buffer capacity in px (covers any sane screen)
+F64  g_focal, g_cxc, g_cyc;   // perspective focal length (px) + screen centre (set per frame from the DC size)
+I64  g_sw, g_sh;              // screen width/height (px) -- for the off-screen face reject in DrawFace
+CDC *g_rdc = NULL;            // the DC the current frame's faces fill (set at the top of RenderFaces)
+#endif
 
 I64 WIdx(I64 x, I64 y, I64 z)
 {
@@ -127,6 +138,9 @@ U0 BuildFaceShades()
       g_flo[bt*6+f] =g_lr[bt*4+lo];
       g_fhi[bt*6+f] =g_lr[bt*4+lo+1];
       g_fthr[bt*6+f]=fr*65536.0;            // probability the pixel takes the brighter color (live dither)
+      // native face-rasterizer wants ONE solid colour per face -> the nearer ramp colour (6 directional levels)
+      if (fr >= 0.5) g_facecol[bt*6+f]=g_lr[bt*4+lo+1];
+      else           g_facecol[bt*6+f]=g_lr[bt*4+lo];
     }
   }
 }
@@ -163,18 +177,38 @@ U0 GenWorld()
     }
 }
 
+// heightmap = the top solid voxel of each (x,z) column. The native face-rasterizer walks this "shell"
+// (top face + the side faces exposed wherever a neighbour column is lower) instead of every voxel.
+U0 ColTop(I64 x, I64 z)
+{
+  I64 y, top=0;
+  for (y=WY-1; y>=0; y--)
+    if (g_world[WIdx(x,y,z)]) { top=y; break; }
+  g_hm[x+WX*z]=top;
+}
+
+U0 BuildHM()
+{
+  I64 x,z;
+  for (x=0; x<WX; x++)
+    for (z=0; z<WZ; z++) ColTop(x,z);
+}
+
 U0 Init()
 {
   g_world = MAlloc(WX*WZ*WY);
+  g_hm    = MAlloc(WX*WZ);
   g_fb    = MAlloc(RES_W*RES_H);
 #ifdef TOS_NATIVE
   g_show  = MAlloc(RES_W*RES_H);   // second buffer: tear-free hand-off to DrawIt
+  g_depth = MAlloc(g_depthcap*sizeof(I32));   // face-rasterizer z-buffer (attached to the screen DC each frame)
 #else
   g_show  = g_fb;
 #endif
   SetRamp();
   BuildFaceShades();
   GenWorld();
+  BuildHM();
   // spawn standing in the middle: drop in from just above the ground, gravity settles you
   g_px = WX/2 + 0.5; g_pz = WZ/2 + 0.5;
   g_py = HeightAt(WX/2, WZ/2) + EYE;
@@ -443,32 +477,124 @@ U0 HandleInput()
 
   // break / place on mouse click edges (PickTarget raycasts from the crosshair, not the cursor)
   I64 lb=ms.lb, rb=ms.rb;
-  if (lb && !g_plb) if (PickTarget()) g_world[WIdx(g_hx,g_hy,g_hz)]=0;
-  if (rb && !g_prb) if (PickTarget()) g_world[WIdx(g_bx,g_by,g_bz)]=g_sel;
+  if (lb && !g_plb) if (PickTarget()) { g_world[WIdx(g_hx,g_hy,g_hz)]=0;    ColTop(g_hx,g_hz); }
+  if (rb && !g_prb) if (PickTarget()) { g_world[WIdx(g_bx,g_by,g_bz)]=g_sel; ColTop(g_bx,g_bz); }
   g_plb=lb; g_prb=rb;
 }
 
 #ifdef TOS_NATIVE
-// real TempleOS calls this each refresh with the screen DC. CHEAP integer block-fill: each of the 4720
-// source pixels is read ONCE and written as its SCALE×SCALE block. RES*SCALE == 640×472 fills the
-// maximized window exactly (oy/ox=0, no overflow); a smaller window centers with a stable black border.
-// Reads g_show (the published frame, never the one RenderFrame is mid-writing) -> tear-free.
+// ===== native FACE-RASTERIZER ====================================================================
+// Instead of one DDA ray per pixel (~302K rays/frame -> ~0.4fps in the x86 emulator), draw the world's
+// exposed block FACES as filled z-buffered 3D quads via the OS primitive GrFillPoly3(). Its inner span
+// filler GrFillRow is HLE-accelerated by HEMU (the SAME native-speed path that lets Varoom hit 30fps),
+// and it z-buffers through dc->depth_buf so faces occlude correctly + each pixel is written ~once.
+// We do the perspective projection ourselves (matching RenderRows' fov=1.05 / camera basis). Every
+// "var - var" below is deliberate: real TempleOS HolyC mis-compiles "literal - <mul/div expr>".
+I64 ProjPt(F64 wxf, F64 wyf, F64 wzf, CD3I32 *p)
+{//world -> screen (x,y px) + depth z (>0, nearer==smaller). Returns 0 if behind the near plane.
+  F64 rx, ry, rz, fd, rt, upc, inv, dxv, dyv, dzv;
+  I64 tx, ty, tz;
+  rx = wxf - g_px; ry = wyf - g_py; rz = wzf - g_pz;
+  fd = rx*g_fwx + ry*g_fwy + rz*g_fwz;          // forward = camera-space depth
+  if (fd < 0.2) return 0;
+  rt  = rx*g_rgx + rz*g_rgz;                     // right (rgy is always 0)
+  upc = rx*g_upx + ry*g_upy + rz*g_upz;          // up
+  inv = g_focal / fd;
+  dxv = rt*inv;  dyv = upc*inv;
+  tx = g_cxc + dxv;  p->x = tx;                  // + is commutative -> codegen-safe
+  ty = g_cyc - dyv;  p->y = ty;                  // var - var (NOT literal - expr)
+  dzv = fd * 256.0;  tz = dzv;  p->z = tz;
+  return 1;
+}
+
+U0 DrawFace(I64 cx, I64 cy, I64 cz, I64 faceid, I64 bt)
+{//one cube face (cell cx,cy,cz; face 0=-X 1=+X 2=-Y 3=+Y 4=-Z 5=+Z) -> a filled, z-buffered quad.
+  CD3I32 poly[4];
+  F64 ax, ay, az, bx, by, bz;
+  I64 ok=0;
+  ax=cx; ay=cy; az=cz; bx=cx+1; by=cy+1; bz=cz+1;
+  if      (faceid==3) { ok+=ProjPt(ax,by,az,&poly[0]); ok+=ProjPt(bx,by,az,&poly[1]); ok+=ProjPt(bx,by,bz,&poly[2]); ok+=ProjPt(ax,by,bz,&poly[3]); }
+  else if (faceid==2) { ok+=ProjPt(ax,ay,az,&poly[0]); ok+=ProjPt(ax,ay,bz,&poly[1]); ok+=ProjPt(bx,ay,bz,&poly[2]); ok+=ProjPt(bx,ay,az,&poly[3]); }
+  else if (faceid==0) { ok+=ProjPt(ax,ay,az,&poly[0]); ok+=ProjPt(ax,by,az,&poly[1]); ok+=ProjPt(ax,by,bz,&poly[2]); ok+=ProjPt(ax,ay,bz,&poly[3]); }
+  else if (faceid==1) { ok+=ProjPt(bx,ay,az,&poly[0]); ok+=ProjPt(bx,ay,bz,&poly[1]); ok+=ProjPt(bx,by,bz,&poly[2]); ok+=ProjPt(bx,by,az,&poly[3]); }
+  else if (faceid==4) { ok+=ProjPt(ax,ay,az,&poly[0]); ok+=ProjPt(bx,ay,az,&poly[1]); ok+=ProjPt(bx,by,az,&poly[2]); ok+=ProjPt(ax,by,az,&poly[3]); }
+  else                { ok+=ProjPt(ax,ay,bz,&poly[0]); ok+=ProjPt(ax,by,bz,&poly[1]); ok+=ProjPt(bx,by,bz,&poly[2]); ok+=ProjPt(bx,ay,bz,&poly[3]); }
+  if (ok==4) {
+    // cheap reject: skip the (emulated, costly) GrFillPoly3 when the whole quad is off one screen edge
+    if (poly[0].x<0    && poly[1].x<0    && poly[2].x<0    && poly[3].x<0)    return;
+    if (poly[0].x>=g_sw && poly[1].x>=g_sw && poly[2].x>=g_sw && poly[3].x>=g_sw) return;
+    if (poly[0].y<0    && poly[1].y<0    && poly[2].y<0    && poly[3].y<0)    return;
+    if (poly[0].y>=g_sh && poly[1].y>=g_sh && poly[2].y>=g_sh && poly[3].y>=g_sh) return;
+    g_rdc->color = g_facecol[bt*6+faceid];
+    GrFillPoly3(g_rdc, 4, poly);
+  }
+}
+
+U0 RenderFaces(CDC *dc)
+{
+  I64 need, R, bix, biz, xa, xb, za, zb, x, z, y, h, nh, bt;
+  F64 hw, hh, rcx, rcz, fdc;
+  g_rdc = dc;
+  SetupCam();                                   // camera basis + g_bix/g_biz (ProjPt reads the basis)
+  g_sw=dc->width; g_sh=dc->height;
+  hw=g_sw;  hw=hw/2.0;  g_cxc=hw;
+  hh=g_sh;  hh=hh/2.0;  g_cyc=hh;
+  g_focal = hh / 1.05;                           // (H/2)/fov : same view as RenderRows (fov=1.05)
+  need = dc->width_internal * dc->height;
+  if (need > g_depthcap) return;
+  dc->depth_buf = g_depth;                       // attach our z-buffer ...
+  MemSetU32(g_depth, I32_MAX, need);             // ... cleared to "far away"
+  MemSet(dc->body, 11, need);                    // sky (ltcyan); faces overwrite it
+  R=RDIST; bix=g_bix; biz=g_biz;
+  xa=bix-R; xb=bix+R; za=biz-R; zb=biz+R;
+  if (xa<1) xa=1;  if (xb>WX-2) xb=WX-2;
+  if (za<1) za=1;  if (zb>WZ-2) zb=WZ-2;
+  for (z=za; z<=zb; z++)
+    for (x=xa; x<=xb; x++) {
+      rcx = x - g_px;  rcz = z - g_pz;            // coarse frustum cull: skip columns behind the camera
+      fdc = rcx*g_fwx + rcz*g_fwz;
+      h  = g_hm[x+WX*z];
+      bt = g_world[WIdx(x,h,z)];
+      if (bt && fdc >= -2.0) {
+        if (g_py > h+1) DrawFace(x,h,z,3,bt);    // TOP face (only the topmost cell has one)
+        nh = g_hm[(x-1)+WX*z];                    // -X side faces, down to the lower neighbour column
+        if (nh<h && g_px<x)   for (y=nh+1; y<=h; y++) { bt=g_world[WIdx(x,y,z)]; if (bt) DrawFace(x,y,z,0,bt); }
+        nh = g_hm[(x+1)+WX*z];                    // +X
+        if (nh<h && g_px>x+1) for (y=nh+1; y<=h; y++) { bt=g_world[WIdx(x,y,z)]; if (bt) DrawFace(x,y,z,1,bt); }
+        nh = g_hm[x+WX*(z-1)];                    // -Z
+        if (nh<h && g_pz<z)   for (y=nh+1; y<=h; y++) { bt=g_world[WIdx(x,y,z)]; if (bt) DrawFace(x,y,z,4,bt); }
+        nh = g_hm[x+WX*(z+1)];                    // +Z
+        if (nh<h && g_pz>z+1) for (y=nh+1; y<=h; y++) { bt=g_world[WIdx(x,y,z)]; if (bt) DrawFace(x,y,z,5,bt); }
+      }
+    }
+  dc->depth_buf = NULL;                           // detach (the buffer is ours; DCDel must not free it)
+}
+
+U0 DrawHUDDC(CDC *dc)
+{//crosshair + hotbar straight into the window body (2D, on top of the rendered world)
+  U8 *b=dc->body;
+  I64 W=dc->width, H=dc->height, st=dc->width_internal, cx=W/2, cy=H/2, i;
+  I64 ch=W/100; if (ch<3) ch=3;
+  for (i=-ch; i<=ch; i++) { b[cy*st+cx+i]=15; b[(cy+i)*st+cx]=15; }
+  I64 nb=23, bw=W/24, gap=bw/8, bsel;
+  if (gap<1) gap=1;
+  I64 bh=bw*3/4, x0=(W-nb*bw)/2, y0=H-bh-bh/3;
+  for (bsel=1; bsel<=nb; bsel++) {
+    I64 px=x0+(bsel-1)*bw, py, qx, c=g_lr[bsel*4+2];
+    for (py=y0; py<y0+bh; py++)
+      for (qx=px+gap; qx<px+bw-gap; qx++) b[py*st+qx]=c;
+    if (bsel==g_sel)
+      for (qx=px-1; qx<px+bw; qx++) { b[(y0-1)*st+qx]=15; b[(y0+bh)*st+qx]=15; }
+  }
+}
+
+// real TempleOS calls this each refresh with the window DC -> render the world fresh, Varoom-style.
 U0 DrawIt(CTask *task, CDC *dc)
 {
-  U8 *fb=g_show;
-  if (!fb) return;
-  I64 w=dc->width_internal, sw=task->pix_width, sh=task->pix_height;
-  I64 ox=(sw-RES_W*SCALE)/2, oy=(sh-RES_H*SCALE)/2;
-  if (ox<0) ox=0;
-  if (oy<0) oy=0;
-  I64 x,y,sx2,sy2,c,base;
-  for (y=0; y<RES_H; y++)
-    for (x=0; x<RES_W; x++) {
-      c=fb[y*RES_W+x];
-      base=(oy+y*SCALE)*w + ox+x*SCALE;
-      for (sy2=0; sy2<SCALE; sy2++)
-        for (sx2=0; sx2<SCALE; sx2++) dc->body[base+sy2*w+sx2]=c;
-    }
+  no_warn task;
+  if (!g_world) return;
+  RenderFaces(dc);
+  DrawHUDDC(dc);
 }
 #else
 U0 Present(CDC *dc)
@@ -480,7 +606,6 @@ U0 Present(CDC *dc)
 U0 HolyCraft()
 {
 #ifdef TOS_NATIVE
-  U8 *tmp;
   SettingsPush;
   AutoComplete(OFF);            // don't pop the completion box while we read keys
   WinBorder(OFF);
@@ -488,13 +613,10 @@ U0 HolyCraft()
   DocCursor(OFF);
   DocClear;
   Init();
-  Fs->draw_it=&DrawIt;          // the OS now composites our frame every refresh
+  Fs->draw_it=&DrawIt;          // the WinMgr now renders the world (faces) to the screen DC every refresh
   try {
     while (!g_quit) {
-      HandleInput();
-      RenderFrame();            // draw into g_fb (the back buffer)
-      DrawHUD();
-      tmp=g_show; g_show=g_fb; g_fb=tmp;   // publish it for DrawIt (pointer swap = tear-free)
+      HandleInput();            // input + physics only; DrawIt does all the rendering (Varoom-style)
       Sleep(16);
     }
   } catch

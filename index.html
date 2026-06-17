@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-10 (HolyCraft: a block for EVERY system color — blocks 8-23 are the 16 TempleOS palette colors, each directionally shaded; full-palette hotbar; q/e to cycle the selected block)";
+    window.__BUILD = "render-11 (HolyCraft native: face-rasterizer — exposed block FACES drawn as z-buffered 3D quads via the OS's HLE-accelerated GrFillPoly3, ~36fps in HEMU at full 640x480, cubic + right-side up; browser keeps the per-pixel raycaster)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
