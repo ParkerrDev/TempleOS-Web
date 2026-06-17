@@ -338,8 +338,11 @@ U0 RenderFrame()
 U0 DrawHUD()
 {
   I64 cx=RES_W/2, cy=RES_H/2, i;
-  I64 ch=RES_W/100; if (ch<3) ch=3;                          // crosshair arm length, scales with res
-  for (i=-ch; i<=ch; i++) { g_fb[cy*RES_W+cx+i]=15; g_fb[(cy+i)*RES_W+cx]=15; }
+  I64 aw=RES_W/110, t; if (aw<4) aw=4;                       // crosshair = a Latin (Christian) cross: short top + crossbar, long lower stem; you aim at the crossing
+  for (t=0; t<2; t++) {                                       // 2px thick
+    for (i=-aw; i<=aw*3; i++) g_fb[(cy+i)*RES_W + cx+t]=15;   // vertical stem (top stub aw, lower stem 3aw)
+    for (i=-aw; i<=aw;   i++) g_fb[(cy+t)*RES_W + cx+i]=15;   // crossbar (near the top)
+  }
   // hotbar: 7 swatches along the bottom, sized RELATIVE to the resolution (so it isn't huge at low res
   // or invisible at high res). gap framing inside each cell; selected one framed white.
   I64 nb=16, bw=RES_W/17, gap=bw/8, b;                       // 16 placeable blocks = the palette colours (8..23)
@@ -606,8 +609,11 @@ U0 DrawHUDDC(CDC *dc)
 {//crosshair + hotbar straight into the window body (2D, on top of the rendered world)
   U8 *b=dc->body;
   I64 W=dc->width, H=dc->height, st=dc->width_internal, cx=W/2, cy=H/2, i;
-  I64 ch=W/100; if (ch<3) ch=3;
-  for (i=-ch; i<=ch; i++) { b[cy*st+cx+i]=15; b[(cy+i)*st+cx]=15; }
+  I64 aw=W/110, t; if (aw<4) aw=4;                           // Latin (Christian) cross crosshair (aim at the crossing)
+  for (t=0; t<2; t++) {
+    for (i=-aw; i<=aw*3; i++) b[(cy+i)*st + cx+t]=15;        // vertical stem
+    for (i=-aw; i<=aw;   i++) b[(cy+t)*st + cx+i]=15;        // crossbar (near the top)
+  }
   I64 nb=16, bw=W/17, gap=bw/8, bsel;
   if (gap<1) gap=1;
   I64 bh=bw*3/4, x0=(W-nb*bw)/2, y0=H-bh-bh/3;
