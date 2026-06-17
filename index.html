@@ -401,6 +401,7 @@
         <button id="gamesBtn" title="Play HolyC games compiled to WebAssembly — installed on demand (fetched only when you play)"><span class="ico">▦</span> Games</button>
         <button id="godBtn" title="The Adam/God suite — Word, Bible Passage, Song, Doodle — HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
         <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico">▤</span> Disk &amp; Save</button>
+        <button id="settingsBtn" title="Settings — Native Game Bypass and more"><span class="ico">⚙</span> Settings</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video — 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico">⌕</span> Terry Search</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico">✛</span> Touch controls</button>
       </div>
@@ -480,12 +481,20 @@
   <div id="gamesOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Games">
     <div class="win" id="gamesWin" data-title="Games · HolyC compiled to WebAssembly">
       <span class="close" id="gamesClose" title="Close">[X]</span>
-      <div style="color:var(--blue);font-size:12px;padding:2px 2px 8px">Pick a game — it installs on demand (the code is fetched only when you play) and runs compiled to WebAssembly.</div>
-      <label id="gmBypassRow" style="display:flex;align-items:flex-start;gap:7px;color:var(--blue);font-size:12px;padding:0 2px 9px;cursor:pointer" title="Run games compiled straight to WebAssembly on the canvas (fast, sharp) instead of inside the TempleOS x86 emulator (authentic, but a software raycaster in a software CPU is slow and low-res).">
-        <input type="checkbox" id="gmBypass" checked style="margin-top:2px">
-        <span><b>⚡ Native Game Bypass</b> — run games natively via HolyC-wasm (fast &amp; sharp). Uncheck to run authentically inside the TempleOS emulator (slower, lower-res).</span>
-      </label>
+      <div style="color:var(--blue);font-size:12px;padding:2px 2px 8px">Pick a game — it installs into TempleOS and launches there. How it runs (fast HolyC-wasm vs the authentic x86 emulator) follows the <b>⚡ Native Game Bypass</b> setting in <b>⚙ Settings</b>.</div>
       <div class="gm-grid" id="gmGrid"></div>
+    </div>
+  </div>
+
+  <!-- Settings overlay: browser-side preferences (saved in localStorage). -->
+  <div id="settingsOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Settings">
+    <div class="win" id="settingsWin" data-title="Settings">
+      <span class="close" id="settingsClose" title="Close">[X]</span>
+      <div style="color:var(--blue);font-size:12px;padding:2px 2px 10px">Preferences are saved in your browser.</div>
+      <label id="setBypassRow" style="display:flex;align-items:flex-start;gap:7px;color:var(--blue);font-size:12px;padding:0 2px 9px;cursor:pointer" title="Run games compiled straight to WebAssembly on the canvas (fast, sharp) instead of inside the TempleOS x86 emulator (authentic, but a software raycaster in a software CPU is slow and low-res).">
+        <input type="checkbox" id="gmBypass" checked style="margin-top:2px">
+        <span><b>⚡ Native Game Bypass</b> — run games (and TempleOS's own games) compiled natively via HolyC-wasm: fast &amp; sharp. Uncheck to run them authentically inside the TempleOS x86 emulator (slower, lower-res).</span>
+      </label>
     </div>
   </div>
 
@@ -579,7 +588,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-9 (Native Game Bypass toggle in the Games menu: Play runs games fast/sharp via HolyC-wasm by default; uncheck to run authentically inside the slow low-res x86 emulator)";
+    window.__BUILD = "render-10 (Settings window: ⚙ Settings toolbar button + window; Native Game Bypass toggle moved there; Games menu installs+launches into TempleOS per the setting)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -1377,6 +1386,15 @@ I64 GodDoodleGen(I64 strokes)
       const close = () => ov.classList.remove("open", "free");
       $("godBtn").addEventListener("click", open);
       $("godClose").addEventListener("click", close);
+    }
+
+    // Settings overlay open/close (the Native Game Bypass checkbox inside it is wired in the Games block).
+    { const ov = $("settingsOverlay");
+      if (ov) {
+        $("settingsBtn").addEventListener("click", () => { ov.classList.add("open"); window.__winChrome && window.__winChrome.raise(ov); });
+        $("settingsClose").addEventListener("click", () => ov.classList.remove("open"));
+        ov.addEventListener("mousedown", (e) => { if (e.target === ov) ov.classList.remove("open"); });
+      }
     }
 
     let winChrome = null;   // { dress, sizeMarquee, setActive } — assigned by the window-chrome block below
