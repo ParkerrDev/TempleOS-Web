@@ -575,7 +575,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-15 (input: GAME MODE — double-click the OS screen to capture the mouse (Esc releases); while captured, held keys auto-repeat each tick so you can HOLD to move + press several keys at once (the browser only repeated the last key), and the mouse is relative (movementX/Y, decays to centre). Normal OS use untouched)";
+    window.__BUILD = "render-16 (>30fps! engine GrFillPoly3 native-HLE: the polygon fill that the face-rasterizer does for all of 640x480 now runs in native C instead of the JIT -> HolyCraft ~9->~44fps REAL (wall-clock). Desktop + Varoom verified safe (Varoom also uses GrFillPoly3). Earlier in-engine fps numbers were guest-time, not wall-clock)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
