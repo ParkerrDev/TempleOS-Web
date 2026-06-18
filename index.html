@@ -600,7 +600,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render)";
+    window.__BUILD = "render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-24: stuck-key guard — the emulated keyboard FIFO can drop a BREAK under load, leaving a key stuck 'down' (e.g. K = looking down forever); a 250ms sweep re-sends breaks for game keys the browser knows are up, and launches recentre the look + flush held keys";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -779,6 +779,19 @@
     // offset from centre). releaseHeld() flushes break codes if the window loses focus mid-press.
     const releaseHeld = () => { for (const s of held) pushKey(s | 0x80); held.clear(); };
     addEventListener("blur", releaseHeld);
+    // STUCK-KEY GUARD. The emulated keyboard FIFO can drop a scancode when the OS is busy (HolyCraft's
+    // heavy first frames), and a dropped BREAK leaves kbd.down_bitmap stuck "down" — the game then keeps
+    // looking/moving that way forever (the "K stuck looking down" bug) until you tap the key again. The
+    // browser's `held` set is the source of truth for what's really pressed, so every ~250 ms while a game
+    // is active we re-send a BREAK for any game key that is NOT held: a harmless no-op for keys already up,
+    // but it clears a stuck OS bit and keeps retrying until the break gets through. Held keys are skipped,
+    // so holding to move/look is unaffected.
+    const GAMEKEYS = [0x11, 0x1e, 0x1f, 0x20, 0x13, 0x21, 0x24, 0x26, 0x17, 0x25];   // W A S D R F J L I K
+    setInterval(() => { if (!window.__gameActive || !focused) return;
+      for (const s of GAMEKEYS) if (!held.has(s)) pushKey(s | 0x80); }, 250);
+    // Called when a game launches: drop any held keys + force-clear the game keys + recentre the look, so
+    // you don't spawn already walking/looking because of a stale key or an off-centre cursor.
+    window.__resetGameInput = () => { releaseHeld(); for (const s of GAMEKEYS) pushKey(s | 0x80); msX = 320; msY = 240; notifyInput(); };
 
     // ---- paste INTO the OS (Ctrl/Cmd+V): convert clipboard text to US-layout set-1 scancodes and feed
     //      the key queue. This types each char EXACTLY (incl. ~, ", etc.) regardless of the user's real
@@ -2210,6 +2223,7 @@ I64 GodDoodleGen(I64 strokes)
           toast("Launched <b>" + g.name + "</b> in TempleOS.<br>" + how + "<br>Press <b>Esc</b> to quit.");
           setStatus("launching " + g.name + " in TempleOS");
           window.__gameActive = true;   // -> enable hold-to-move / simultaneous keys (no mouse lock; look is absolute cursor)
+          if (window.__resetGameInput) window.__resetGameInput();   // clear any stuck keys + recentre the look on spawn
         } else {
           toast("Couldn't launch <b>" + g.name + "</b>: " + ((r && r.msg) || "unknown error")
             + "<br>The OS may still be booting — give it a few seconds and try again.");
