@@ -600,7 +600,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-24: stuck-key guard — the emulated keyboard FIFO can drop a BREAK under load, leaving a key stuck 'down' (e.g. K = looking down forever); a 250ms sweep re-sends breaks for game keys the browser knows are up, and launches recentre the look + flush held keys";
+    window.__BUILD = "render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix — a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) — no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -779,19 +779,18 @@
     // offset from centre). releaseHeld() flushes break codes if the window loses focus mid-press.
     const releaseHeld = () => { for (const s of held) pushKey(s | 0x80); held.clear(); };
     addEventListener("blur", releaseHeld);
-    // STUCK-KEY GUARD. The emulated keyboard FIFO can drop a scancode when the OS is busy (HolyCraft's
-    // heavy first frames), and a dropped BREAK leaves kbd.down_bitmap stuck "down" — the game then keeps
-    // looking/moving that way forever (the "K stuck looking down" bug) until you tap the key again. The
-    // browser's `held` set is the source of truth for what's really pressed, so every ~250 ms while a game
-    // is active we re-send a BREAK for any game key that is NOT held: a harmless no-op for keys already up,
-    // but it clears a stuck OS bit and keeps retrying until the break gets through. Held keys are skipped,
-    // so holding to move/look is unaffected.
+    // STUCK-KEY GUARD. A dropped BREAK scancode (the emulated keyboard FIFO can drop one when the OS is
+    // busy with HolyCraft's heavy frames) used to leave kbd.down_bitmap stuck "down" — the game kept
+    // looking/moving that way forever (the "K stuck looking down" bug). FIX: the browser `held` set is the
+    // source of truth, and every input notify carries it; the engine then writes kbd.down_bitmap for the
+    // GAME keys DIRECTLY from `held` (a host memory write, not a scancode — see hemu-worker.js syncGameKeys
+    // / the inline notifyInput), so a stuck bit is impossible. This 250ms tick just re-asserts `held` in
+    // case an event was missed (e.g. a key released while unfocused); the heavy lifting is the direct sync.
     const GAMEKEYS = [0x11, 0x1e, 0x1f, 0x20, 0x13, 0x21, 0x24, 0x26, 0x17, 0x25];   // W A S D R F J L I K
-    setInterval(() => { if (!window.__gameActive || !focused) return;
-      for (const s of GAMEKEYS) if (!held.has(s)) pushKey(s | 0x80); }, 250);
-    // Called when a game launches: drop any held keys + force-clear the game keys + recentre the look, so
-    // you don't spawn already walking/looking because of a stale key or an off-centre cursor.
-    window.__resetGameInput = () => { releaseHeld(); for (const s of GAMEKEYS) pushKey(s | 0x80); msX = 320; msY = 240; notifyInput(); };
+    setInterval(() => { if (window.__gameActive) notifyInput(); }, 250);
+    // Called when a game launches: drop any held keys + recentre the look, so you don't spawn already
+    // walking/looking because of a stale key or an off-centre cursor (notifyInput re-syncs down_bitmap).
+    window.__resetGameInput = () => { releaseHeld(); msX = 320; msY = 240; notifyInput(); };
 
     // ---- paste INTO the OS (Ctrl/Cmd+V): convert clipboard text to US-layout set-1 scancodes and feed
     //      the key queue. This types each char EXACTLY (incl. ~, ", etc.) regardless of the user's real
@@ -1102,7 +1101,7 @@
       // NOTE: do NOT null window.__diskMsg here — the Disk window installs its reply handler at page
       // load, and this engine setup runs AFTER an async fetch (see runSMP), so nulling it would race-
       // clobber the handler and drop every worker reply (fileResult/dirList/exportResult).
-      notifyInput = () => worker?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0) });
+      notifyInput = () => worker?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0), held: [...held] });
       const fallback = (why) => {
         if (!worker) return;
         clearTimeout(watchdog); try { worker.terminate(); } catch {} worker = null; notifyInput = () => {};
@@ -1154,7 +1153,7 @@
         engine.stop = () => { try { clearTimeout(watchdog); } catch {} try { const c = new Int32Array(ctrl); Atomics.store(c, 1, 1); Atomics.notify(c, 1); } catch {} try { bsp?.terminate(); } catch {} for (const a of aps) { try { a.terminate(); } catch {} } bsp = null; aps = []; notifyInput = () => {}; };
         // (do NOT null window.__diskMsg here — runSMP resumes after the await above, AFTER the Disk
         //  window installed its handler, so nulling it dropped every worker reply. Bug fixed 2026-06-15.)
-        notifyInput = () => bsp?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0) });
+        notifyInput = () => bsp?.postMessage({ cmd: "input", x: msX, y: msY, b: msB, wheel: wheelZ, keys: keyq.splice(0), held: [...held] });
         const fallback = (why) => {
           if (!bsp && !aps.length) return;
           engine.stop();
@@ -1235,6 +1234,10 @@
       engine.kind = "inline";
       let stopped = false;
       engine.stop = () => { stopped = true; notifyInput = () => {}; };   // halts loop() on its next frame
+      // keep the OS key-down bitmap for game keys in sync with the browser's authoritative `held` set
+      // (direct memory write, main thread = race-free) — immune to a dropped break sticking a key "down".
+      notifyInput = () => { if (!inst) return; const u8 = new Uint8Array(inst.exports.memory.buffer);
+        for (const sc of GAMEKEYS) { const at = gBaseI + 0xC0F8 + (sc >> 3), bit = 1 << (sc & 7); if (held.has(sc)) u8[at] |= bit; else u8[at] &= ~bit; } };
       // type a command into the running OS (inline): push scancodes onto keyq, paced; the rAF loop
       // runs __main frames and consumes them. Same idea as the worker's osWrite typing.
       const _wait = (ms) => new Promise((r) => setTimeout(r, ms));
