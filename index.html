@@ -600,7 +600,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-22 (Games window is now a fixed-size dialog: a live Search box filters the 32 games by name/description as you type, and the card grid scrolls. Plus render-21: input rewrite (poll kbd.down_bitmap + Fs->win_inhibit + drain msgs; browser drops the re-send ticker) and 30 stock OS games run from disk)";
+    window.__BUILD = "render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -1237,7 +1237,7 @@
             const data = new Uint8Array(msg.bytes), dvw = new DataView(inst.exports.memory.buffer), SCRATCH = 0x16800000, MBOX = 0x16700000;
             if (gBaseI + SCRATCH + data.length > dvw.byteLength) return reply({ cmd: "fileResult", ok: false, msg: "file too large to stage" });
             new Uint8Array(inst.exports.memory.buffer).set(data, gBaseI + SCRATCH);
-            await osType("\x1b", 120); await _wait(250);
+            await osType("\x1b", 120); await _wait(180); await osType("n", 90); await _wait(180); await osType("\x1b", 120); await _wait(180);   // clean prompt: dismiss "Take Tour?" / popups (stray 'n' is cleared by the 2nd Esc)
             const path = "C:/Home/" + msg.name, hx = "0x" + SCRATCH.toString(16).toUpperCase(), mb = "0x" + MBOX.toString(16).toUpperCase();
             dvw.setBigUint64(gBaseI + MBOX, 0n, true);     // capture FileWrite's return (first cluster: non-zero ok, 0 fail)
             await osType(`*(${mb})(I64*)=FileWrite("${path}",${hx},${data.length});\n`);
@@ -1246,6 +1246,10 @@
             reply({ cmd: "fileResult", ok, msg: ok ? `wrote ${msg.name} to C:/Home via the OS (${data.length} b)` : `the OS did not write ${msg.name} — make sure TempleOS is at a shell prompt, then try again` });
             if (ok && msg.run) { await _wait(300); await osType(`#include "${path}";\n`); }
             return;
+          }
+          if (msg.cmd === "osLaunch") {        // inline fallback: reuse osWrite (FileWrite + #include). disk -> tiny stub; custom -> the source itself.
+            if (msg.src) return engine.post({ cmd: "osWrite", name: ((msg.name || "Game").replace(/[^A-Za-z0-9_]/g, "") || "Game") + ".HC", bytes: new TextEncoder().encode(msg.src).buffer, run: true });
+            return engine.post({ cmd: "osWrite", name: "PlayGame.HC", bytes: new TextEncoder().encode(`#include "${msg.path}";\n`).buffer, run: true });
           }
           if (msg.cmd === "pause") { window.__inlinePaused = msg.value; }
           else if (msg.cmd === "exportSnapshot") { const ram = new Uint8Array(inst.exports.memory.buffer, gBaseI, 402653184);
@@ -1943,6 +1947,17 @@ I64 GodDoodleGen(I64 strokes)
           engine.post({ cmd: "osWrite", name, run: !!run, bytes: b.buffer }, [b.buffer]); say("writing " + name + "…");   // OS-side FileWrite (no cache poke); run -> #include it
         });
       };
+      // Backend game launch (no per-game keystrokes): the engine's resident daemon runs it via a RAM
+      // mailbox. opts = { path } for an on-disk game (#include) or { src, name } for a custom game
+      // (compiled from a staged RAM buffer). Resolves with the engine's fileResult.
+      window.__launchInOS = (opts) => new Promise((resolve) => {
+        if (!engine.kind) { resolve({ ok: false, msg: "engine not ready yet" }); return; }
+        let done = false;
+        const finish = (m) => { if (done) return; done = true; resolve(m); };
+        uploadWaiters.push(finish);
+        setTimeout(() => { const i = uploadWaiters.indexOf(finish); if (i >= 0) uploadWaiters.splice(i, 1); finish({ ok: false, msg: "no response from engine (still booting?)" }); }, 30000);   // first launch installs the daemon (FileWrite + verify) -> allow time
+        engine.post({ cmd: "osLaunch", path: opts.path, src: opts.src, name: opts.name }); say("launching " + (opts.name || opts.path) + "…");
+      });
     }
 
     // ---- Terry window: gif sequence forwards/backwards ----
@@ -2165,28 +2180,28 @@ I64 GodDoodleGen(I64 strokes)
       //  - g.file  : our dual-target game -> upload the (possibly edited) source with TOS_NATIVE defined.
       async function runInTempleOS(g) {                                            // ▤ install + #include in the OS (HEMU)
         curGame = g;
-        if (!window.__uploadToHome) {
+        if (!window.__launchInOS) {
           toast("The TempleOS engine isn't ready yet — open the <b>Disk</b> window and let the OS finish booting, then try again.");
           setStatus("OS engine not ready"); return;
         }
-        let name, src;
+        // BACKEND launch (no per-game keystrokes): the engine's resident daemon runs it via a RAM mailbox.
+        // Disk game -> #include the on-disk copy; custom game -> compile its source from a staged RAM buffer.
+        let opts;
         if (g.disk) {
-          name = "PlayGame.HC";
-          src = "// launcher stub written by TempleOS-Web — runs the on-disk game with its original art intact\n#include \"" + g.disk + "\";\n";
+          opts = { path: g.disk, name: g.name };
         } else {
           let raw; try { raw = await gameSrc(g); } catch (e) { raw = ""; }
           if (!raw || raw.trim().length < 50) { toast("Couldn't read the game source — try again in a moment."); return; }
-          name = g.file; src = "#define TOS_NATIVE 1\n" + raw;
+          opts = { src: "#define TOS_NATIVE 1\n" + raw, name: g.name };
         }
-        // The C: disk mounts a few seconds AFTER boot, so retry while it's "disk not loaded yet".
-        // run:true -> the engine FileWrites it then #includes it (launches in the OS, no manual typing).
+        // The C: disk mounts a few seconds AFTER boot, so retry while the launcher isn't ready yet.
         toast("Loading <b>" + g.name + "</b> in TempleOS…", 60000);
         setStatus("launching " + g.name + " in TempleOS…");
         let r, tries = 0;
         do {
-          r = await window.__uploadToHome(name, src, true);
+          r = await window.__launchInOS(opts);
           if (r && r.ok) break;
-          if (!/disk not loaded/i.test(r && r.msg || "")) break;
+          if (!/not ready|not loaded|booting/i.test((r && r.msg) || "")) break;
           await new Promise((res) => setTimeout(res, 1500));
         } while (++tries < 20);
         if (r && r.ok) {

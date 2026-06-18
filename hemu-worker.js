@@ -93,11 +93,85 @@ async function osWrite({ name, bytes, run }) {
   if (ok && run) { await _wait(300); await _typeInto(`#include "${path}";\n`); }   // 4. run it
 }
 
+// ===== BACKEND GAME LAUNCH (no per-game keystrokes) ==========================================
+// A tiny resident daemon polls a RAM mailbox; when the host raises a flag (a plain memory write), it
+// posts the queued command to the foreground terminal CHAR-BY-CHAR as MSG_KEY_DOWN messages — exactly
+// what the keyboard driver does (KbdMsgsQue -> TaskMsg(sys_focus_task,0,MSG_KEY_DOWN,ch,..)). So the
+// terminal runs the command in its MAIN doc and the game renders full-screen, with zero scancodes and no
+// dependence on paced typing. The daemon is installed ONCE (FileWrite is reliable; verified by a ready
+// marker + retried). After that every launch is a pure memory write. Mailbox (free high guest RAM, same
+// region osWrite uses): flag@..00, ready-marker@..08, command string@..10, staged custom-game src@SRC.
+const HLD_FLAG = 0x16710000, HLD_READY = 0x16710008, HLD_CMD = 0x16710010, HLD_SRC = 0x16800000;
+const HLD_MAGIC = 0x59444145525F4C48n;   // "HL_READY" little-endian — the daemon writes this on startup
+const DAEMON_SRC =
+  'U0 HCLaunchD(U8 *){\n' +
+  '  I64 i; U8 *c;\n' +
+  '  *(0x16710008(I64*))=0x59444145525F4C48;\n' +          // tell the host we are alive
+  '  while(1){\n' +
+  '    if(*(0x16710000(I64*))){ *(0x16710000(I64*))=0; c=0x16710010; i=0;\n' +
+  '      while(c[i]){ TaskMsg(sys_focus_task,0,MSG_KEY_DOWN,c[i],0,0); i++; } }\n' +
+  '    Sleep(20);\n' +
+  '  }\n' +
+  '}\n' +
+  'Spawn(&HCLaunchD,,"HCLaunchD");\n';
+let daemonReady = false, daemonIncluded = false, daemonErr = "";
+async function ensureDaemon() {
+  if (daemonReady) return true;
+  if (!instRef) { daemonErr = "engine not up"; return false; }
+  if (!disk) { daemonErr = "C: disk not mounted yet"; return false; }
+  const dvw = new DataView(instRef.exports.memory.buffer);
+  if (dvw.getBigUint64(gBase + HLD_READY, true) === HLD_MAGIC) { daemonReady = true; return true; }   // came up from an earlier try
+  if (daemonIncluded) {   // already #included once — DON'T spawn a 2nd daemon; just give it more time
+    for (let t = 0; t < 20 && !daemonReady; t++) { await _wait(150); if (dvw.getBigUint64(gBase + HLD_READY, true) === HLD_MAGIC) daemonReady = true; }
+    if (!daemonReady) daemonErr = "daemon did not signal ready after #include";
+    return daemonReady;
+  }
+  const u8 = new Uint8Array(instRef.exports.memory.buffer);
+  const db = new TextEncoder().encode(DAEMON_SRC);
+  dvw.setBigUint64(gBase + HLD_READY, 0n, true);                   // clear marker so stale RAM can't fool us
+  u8.set(db, gBase + HLD_SRC);                                     // stage daemon source
+  // Get to a clean C:/Home> prompt first. The snapshot can resume at "Take Tour? (y/n)" (or with a
+  // popup/AutoComplete up), which is why blind FileWrite typing — and the old osWrite — was flaky.
+  await _typeInto("\x1b", 120); await _wait(180);                  // close any popup / System-Keys guide / AutoComplete
+  await _typeInto("n", 90); await _wait(180);                      // answer "Take Tour?" if it's up (a stray 'n' at a prompt is cleared next)
+  await _typeInto("\x1b", 120); await _wait(180);                  // clear the command line (incl. a stray 'n')
+  dvw.setBigUint64(gBase + OSW_MBOX, 0n, true);
+  await _typeInto(`*(0x16700000(I64*))=FileWrite("C:/Home/HCD.HC",0x16800000,${db.length});\n`);
+  await _wait(1300);
+  if (dvw.getBigInt64(gBase + OSW_MBOX, true) === 0n) { daemonErr = "FileWrite returned 0 (not at a clean C:/Home> prompt)"; return false; }   // caller retries; no #include happened
+  daemonIncluded = true;                                              // source written: #include exactly once (no double-spawn)
+  await _typeInto(`#include "C:/Home/HCD.HC";\n`);
+  for (let t = 0; t < 50 && !daemonReady; t++) { await _wait(150); if (dvw.getBigUint64(gBase + HLD_READY, true) === HLD_MAGIC) daemonReady = true; }
+  if (!daemonReady) daemonErr = "daemon did not signal ready after #include";
+  return daemonReady;
+}
+// Launch a game with NO per-game keystrokes. src set => custom game compiled straight from a staged RAM
+// buffer (ExePutS2, no disk write); else an on-disk game via #include. The daemon "types" it for us.
+async function osLaunch({ path, src, name }) {
+  if (!await ensureDaemon()) { postMessage({ cmd: "fileResult", ok: false, msg: "launcher not ready (" + daemonErr + ") — let the OS finish booting, then try again" }); return; }
+  const dvw = new DataView(instRef.exports.memory.buffer);
+  const u8 = new Uint8Array(instRef.exports.memory.buffer);
+  let cmd;
+  if (src) {
+    const sb = new TextEncoder().encode(src);
+    if (gBase + HLD_SRC + sb.length + 1 > dvw.byteLength) { postMessage({ cmd: "fileResult", ok: false, msg: "game too large to stage" }); return; }
+    u8.set(sb, gBase + HLD_SRC); u8[gBase + HLD_SRC + sb.length] = 0;
+    cmd = `\x1bExePutS2(0x16800000,"${(name || "Game").replace(/[^A-Za-z0-9_]/g, "")}",1);\n`;
+  } else {
+    cmd = `\x1b#include "${path}";\n`;
+  }
+  const cb = new TextEncoder().encode(cmd);
+  u8.set(cb, gBase + HLD_CMD); u8[gBase + HLD_CMD + cb.length] = 0;   // NUL-terminated command for the daemon
+  dvw.setBigUint64(gBase + HLD_FLAG, 1n, true);                       // raise the flag -> daemon posts the keystrokes
+  postMessage({ cmd: "fileResult", ok: true, msg: "launched " + (name || path) + " in TempleOS" });
+}
+
 onmessage = (e) => {
   const m = e.data;
   if (m.cmd === "init") boot(m).catch(err => postMessage({ cmd: "error", msg: String(err?.message || err) }));
   else if (m.cmd === "input") { msX = m.x; msY = m.y; msB = m.b; if (m.wheel !== undefined) wheel = m.wheel; if (m.keys) for (const k of m.keys) keyq.push(k); }
   else if (m.cmd === "osWrite") osWrite(m).catch(err => postMessage({ cmd: "fileResult", ok: false, msg: String(err?.message || err) }));
+  else if (m.cmd === "osLaunch") osLaunch(m).catch(err => postMessage({ cmd: "fileResult", ok: false, msg: String(err?.message || err) }));
   else if (m.cmd === "ack") outstanding--;   // main finished a frame — release a flow-control slot
   else if (m.cmd === "pause") { paused = m.value; postMessage({ cmd: "paused", value: paused }); }
   else if (m.cmd === "exportSnapshot") exportSnapshot();
