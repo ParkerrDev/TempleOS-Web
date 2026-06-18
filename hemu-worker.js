@@ -166,10 +166,22 @@ async function osLaunch({ path, src, name }) {
   postMessage({ cmd: "fileResult", ok: true, msg: "launched " + (name || path) + " in TempleOS" });
 }
 
+// Force the OS key-down bitmap for the game movement/look keys to match the browser's authoritative
+// `held` set, by writing kbd.down_bitmap (@0xC0F8, 32B scancode-indexed) DIRECTLY — a host memory write,
+// which runs between frames in this single-threaded worker, so it's race-free. This is immune to the
+// scancode FIFO dropping a BREAK under load (HolyCraft's heavy frames), which left a key stuck "down"
+// (e.g. K -> looking down forever). Only the game keys are touched; other OS keyboard state is untouched.
+const KBD_DOWNBMP = 0xC0F8, GAMEKEYS = [0x11, 0x1e, 0x1f, 0x20, 0x13, 0x21, 0x24, 0x26, 0x17, 0x25];   // W A S D R F J L I K
+function syncGameKeys(heldArr) {
+  if (!instRef || !gBase) return;
+  const u8 = new Uint8Array(instRef.exports.memory.buffer), held = new Set(heldArr);
+  for (const sc of GAMEKEYS) { const at = gBase + KBD_DOWNBMP + (sc >> 3), bit = 1 << (sc & 7);
+    if (held.has(sc)) u8[at] |= bit; else u8[at] &= ~bit; }
+}
 onmessage = (e) => {
   const m = e.data;
   if (m.cmd === "init") boot(m).catch(err => postMessage({ cmd: "error", msg: String(err?.message || err) }));
-  else if (m.cmd === "input") { msX = m.x; msY = m.y; msB = m.b; if (m.wheel !== undefined) wheel = m.wheel; if (m.keys) for (const k of m.keys) keyq.push(k); }
+  else if (m.cmd === "input") { msX = m.x; msY = m.y; msB = m.b; if (m.wheel !== undefined) wheel = m.wheel; if (m.keys) for (const k of m.keys) keyq.push(k); if (m.held) syncGameKeys(m.held); }
   else if (m.cmd === "osWrite") osWrite(m).catch(err => postMessage({ cmd: "fileResult", ok: false, msg: String(err?.message || err) }));
   else if (m.cmd === "osLaunch") osLaunch(m).catch(err => postMessage({ cmd: "fileResult", ok: false, msg: String(err?.message || err) }));
   else if (m.cmd === "ack") outstanding--;   // main finished a frame — release a flow-control slot
