@@ -121,6 +121,28 @@ The Chromium check passed worker conversion, controls, export and narrow-window 
 
 The final desktop menu check covers `/`, the old `/?v=sprite-32-clean#sprites` preview link, and `/sprites.html`. All arrive with Sprite Studio closed and its iframe unloaded. The menu opens it, controls survive closing and reopening, and a page reload leaves it closed again. Chromium pointer capture and Escape release preserve the SVG mouse icon, update the label and `aria-pressed`, and produce no page errors. The in-app browser also showed the closed desktop, working Studio menu and visible mouse icon.
 
+## Game projects and browser sessions
+
+All 34 Games menu entries now offer Run in Browser, Run in TempleOS and Edit source. HolyCraft and Snake compile directly to WebAssembly for browser play. The 32 upstream packages use an isolated HEMU game session because they depend on TempleOS kernel and graphics APIs absent from the direct compiler runtime. This change does not add native compilation support for those APIs. Closing the browser window ends its guest session and restores the main desktop's prior pause state.
+
+HolyC Editor exposes each package's source files, including TOOM's 67 files. Drafts persist locally and are used by both launch paths. Files are decoded as TempleOS byte strings, with binary DolDoc sprite records kept outside the textarea and reattached on export. Draft keys include the original file hash. Failed partial installations invalidate the install cache so a retry restores every original asset before launch.
+
+The source regression checks all 100 upstream HolyC files for exact unchanged round trips and preserves the binary tails of all 23 sprite-bearing files after an edit. Draft reload, edited installs, restoring originals, partial-write recovery, OS restarts, transfer detachment and invalid source characters pass. The package verifier still validates all 126 assets and the assembled Freedoom IWAD.
+
+Chromium checks cover all 34 menu entries, startup of all 32 isolated packages, TOOM file selection and draft restoration, edited Snake in both runners, and the main desktop's pause/resume behavior. An edited BlackDiamond declared a new global; guest introspection verified its value in both execution paths. Its downloaded source retained the exact original sprite tail. Mobile checks exposed and fixed a collapsed source pane and hidden session keys. The embedded canvas now explicitly receives keyboard focus when clicked. These catalog checks establish startup and input behavior, not full game playthroughs.
+
+The isolated TOOM session reached its first level with an active guest `in_level` flag; mouse capture, movement and Escape release passed. TOOM compiles and loads its level inside the guest, so opening the session precedes playable gameplay by several minutes on this test machine. Native runtime errors remain visible in the game window's console. Returning to the editor preserves the draft, and restoring HolyCraft after an intentional division-by-zero error launches it successfully. Repeated launches retain one window frame, and both native and emulated game windows fit a 390-pixel viewport.
+
+## Editor iteration and window dragging
+
+Game projects now keep source and playable preview in HolyC Editor. Run and Run again share the browser game's execution path and use a snapshot of all edited files. Switching source files or editing during play does not overwrite the running snapshot. Stop, closing the editor and returning to Games end the preview and restore the desktop's pause state. HolyCraft, TOOM and Snake lead the catalog; all 34 descriptions link the author and original source.
+
+Chromium checks passed native Snake edits and reruns, an intentional runtime error displayed in the editor console, HolyCraft preview startup, repeated BlackDiamond sessions, and TOOM startup while preserving the selected Weapons.HC file and its text. Narrow-screen checks cover source scrolling, both preview types, visible mouse-capture controls and a 4:3 native canvas for correct input coordinates. These are editor integration checks; the TOOM first-level check above remains the gameplay validation.
+
+Twelve immediate native restarts retain exactly one display callback, and Stop cancels it. The native editor API accepts source independently of its textarea and cancels the prior animation callback before restarting. The source regression also checks that edits made during asynchronous package loading appear only in the next run, while retaining all 100 byte-preserving source round trips and 23 embedded sprite tails. Deployment needs the updated HolyC-wasm native/app.js alongside the site.
+
+The custom desktop cursor now follows pointermove events, which continue during pointer capture when a window suppresses compatibility mouse events. The drag regression checks the cursor coordinates at three positions while the mouse button stays held, then verifies that the window moved with it. JavaScript syntax checks, asset verification and the text punctuation scan pass.
+
 ## Local performance measurements
 
 | Workload | Before | After | Interpretation |

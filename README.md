@@ -14,13 +14,16 @@ hottest render routines.
 ## Try it
 
 - The desktop boots automatically - restored from a RAM snapshot in ~4 s.
-- **Click the screen** to capture mouse + keyboard. **Ctrl+Alt+G** releases the mouse
-  (QEMU's combo); **Esc goes to the OS** (exits games and menus). Fullscreen captures
-  *every* key for the OS, including Esc.
+- **Click the screen** for keyboard and mouse input. **Esc** releases mouse capture;
+  use the Keys window's Esc button to send Escape to a captured game.
 - **Ctrl+M** opens the personal menu - click a game sprite (Varoom, BlackDiamond, …) to play.
 - **↻ Restart** reloads the clean snapshot any time the OS gets into a weird state.
 - **⌨ HolyC Editor** - write & run TempleOS HolyC compiled *natively* to WASM (no emulation).
   Save/open `.HC` files, or write your source straight into `C:/Home` for the OS to run.
+- **Games** - every game has Run in Browser, Run in TempleOS and Edit source. Browser play
+  uses direct compilation for HolyCraft and Snake and an isolated HEMU session for the
+  32 upstream packages. The main desktop pauses during browser play and resumes on close.
+  Edit source keeps the code and playable preview together, with Run again to apply edits.
 - **⏸ Pause** - freeze and resume the OS (guest time stops too).
 - **💾 Disk & Save** - export a **snapshot** (the whole running OS - reload it later to resume
   exactly where you were) or your **C: disk image** (including files you saved in TempleOS);
@@ -119,7 +122,17 @@ The desktop Terry animation uses 251 palette-indexed .GR frames at 176 pixels ta
 
 Games request mouse capture through the guest input bridge. Click the game screen to capture the mouse; Esc releases it. Use the Keys window's Esc button to send Esc to TempleOS. The Capture mouse button also allows manual capture. Focus loss, window changes and OS restarts clear held keys and mouse buttons. HolyCraft uses relative mouse movement and explicit held-key state in both execution paths.
 
-The Games menu installs pinned, checksum-verified TinkerOS game packages and TOOM with Freedoom. See [games/README.md](games/README.md) for sources and refresh instructions.
+The Games menu puts HolyCraft, TOOM and Snake first. Every description credits the author and links to the original source. It installs pinned, checksum-verified TinkerOS game packages and TOOM with Freedoom. See [games/README.md](games/README.md) for sources and refresh instructions.
+
+Developers can propose a game from the submission section at the bottom of the Games window. It opens a GitHub issue draft asking for the game's source, author credit, launch instructions, screenshots and permission to share its code and assets.
+
+Edit source opens the selected game's project in HolyC Editor. The source selector includes all HolyC files in a package, including TOOM's renderer and weapons. Edits save on the current device and apply to both launch destinations. Save downloads the selected file with its embedded sprites; Restore file restores its original source. Drafts for upstream files belong to their pinned file revision so an upstream update cannot attach old source to different sprite records.
+
+Run plays the game beside its source using the same runner as Run in Browser. You can keep editing or switch source files during play. Run again restarts the whole project with a snapshot of all current edits; Stop ends the preview. On narrow screens, scroll inside the editor to move between source and preview. Closing the editor or returning to Games also stops its preview.
+
+Browser sessions use their own temporary TempleOS disk and memory. Closing one ends that session; the main desktop and its disk stay separate. Source drafts persist, but in-game saves in a browser session do not survive closing it. Use Run in TempleOS and Disk & Save when retaining guest progress matters. Browser compatibility sessions run the same guest kernel and input controller as the desktop; they do not claim direct HolyC-to-WASM support for missing TempleOS APIs.
+
+`node tools/game-source.test.mjs` checks all 100 source files, byte preservation for the 23 files with embedded sprites, draft persistence, edited installations, restoration, partial-write recovery and OS restarts.
 
 ```sh
 node tools/sprite-codec.test.mjs

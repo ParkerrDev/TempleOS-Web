@@ -1,6 +1,8 @@
 # Game packages
 
-The Games menu keeps HolyCraft and Snake as dual-target programs. The 31 games and demos in TinkerOS's Demo/Games tree, and TOOM with Freedoom, install into the emulated C: drive on demand.
+Every game offers Run in Browser, Run in TempleOS and Edit source. HolyCraft and Snake compile directly to WebAssembly for browser play. The 31 games and demos in TinkerOS's Demo/Games tree, and TOOM with Freedoom, use an isolated HEMU session for browser play or install into the main desktop's C: drive for Run in TempleOS. Browser sessions close without changing the main desktop's files.
+
+HolyC Editor exposes the package's HolyC files through a source selector. Local edits apply to both runners. The text before a document's NUL separator is editable; the original embedded sprite bytes are appended unchanged when downloading or installing the file. Restoring a file also restores it in a previously modified guest installation on the next launch. Upstream drafts are keyed by source checksum to avoid combining source from one revision with sprite records from another.
 
 `catalog.json` pins the upstream Git revisions and SHA-256 of every installed file. The browser verifies the complete package before asking the guest to write files. It sends raw ArrayBuffers so HolyC's embedded DolDoc sprites survive unchanged. Installation uses TempleOS's own directory and file operations; completed installations are cached until the OS restarts.
 
