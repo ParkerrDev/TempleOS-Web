@@ -1,4 +1,4 @@
-// gen-cursor.mjs — reconstruct the authentic TempleOS mouse pointer and write it to
+// gen-cursor.mjs - reconstruct the authentic TempleOS mouse pointer and write it to
 // assets/cursor.png.  TempleOS has no cursor image file; the pointer is drawn by
 // DrawStdMs (Adam/Gr/GrComposites.HC) as GrArrow3(dc, x+8,y+8,0, x,y,0) with thick=1.
 // GrArrow3 (same file) draws, with the tip = hotspot at the top-left:
@@ -6,7 +6,7 @@
 //   barb1  (0.5,4.39) -> (0,0)   [w=2.75: x2-dx*d+dy*d+0.5, y2-dy*d-dx*d+0.5]
 //   barb2  (4.39,0.5) -> (0,0)
 // TempleOS Line() truncates to ints, so we rasterize those three lines with integer
-// Bresenham (no anti-aliasing — 1-bit, like the real OS) on a 9x9 grid.
+// Bresenham (no anti-aliasing - 1-bit, like the real OS) on a 9x9 grid.
 import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 

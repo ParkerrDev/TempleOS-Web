@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TempleOS HEMU — SMP (experimental, multi-core)</title>
+<title>TempleOS HEMU - SMP (experimental, multi-core)</title>
 <style>
   html,body { margin:0; background:#000; color:#9ad; font:13px/1.4 monospace; }
   header { padding:8px 12px; background:#001; color:#7af; }
@@ -18,14 +18,16 @@
 </head>
 <body>
 <header>
-  <b>TempleOS HEMU · SMP</b> — real multi-core (Web Workers + shared memory). Experimental; the
-  <a href="./index.html">single-core site</a> is the default. Cores: <span id="ncore">4</span> (set <code>?smp=N</code>).
+  <b>TempleOS HEMU · SMP</b> - real multi-core (Web Workers + shared memory). Experimental; the
+  <a href="./index.html">Main site</a> selects its engine for your device. Cores: <span id="ncore">4</span> (set <code>?smp=N</code>).
 </header>
 <div id="wrap">
   <div id="status">starting…</div>
   <canvas id="canvas" width="640" height="480"></canvas>
-  <div class="hint">Click the canvas to capture mouse + keyboard. To run an SMP game, type at the shell, e.g.
-    <kbd>#include "::/Demo/Games/Talons";</kbd> then <kbd>Enter</kbd> to start a round. Talons/Varoom use all cores.</div>
+  <div><button id="capture">Capture mouse</button> <button id="escape">Send Esc to TempleOS</button></div>
+  <div class="hint"><a href="?smp=4&amp;game=Talons">Launch Talons through the backend</a>, or click the canvas to use the shell, e.g.
+    <kbd>#include "::/Demo/Games/Talons";</kbd> then <kbd>Enter</kbd> to start a round. Talons/Varoom use all cores.
+    Games can request mouse capture. Click the screen to capture; <kbd>Esc</kbd> releases the mouse.</div>
   <div id="log"></div>
 </div>
 <script type="module">
@@ -35,7 +37,7 @@ $("ncore").textContent = N;
 const status = (s) => { $("status").textContent = s; };
 const log = (s) => { const el = $("log"); el.textContent += s + "\n"; el.scrollTop = el.scrollHeight; };
 
-if (!self.crossOriginIsolated) { status("ERROR: not cross-origin isolated — SharedArrayBuffer unavailable (need COOP/COEP headers)."); throw new Error("no SAB"); }
+if (!self.crossOriginIsolated) { status("ERROR: not cross-origin isolated - SharedArrayBuffer unavailable (need COOP/COEP headers)."); throw new Error("no SAB"); }
 
 // ---- canvas blit (TempleOS 16-color palette -> RGBA) ----
 const PALETTE = [[0,0,0],[0,0,0xaa],[0,0xaa,0],[0,0xaa,0xaa],[0xaa,0,0],[0xaa,0,0xaa],[0xaa,0x55,0],[0xaa,0xaa,0xaa],[0x55,0x55,0x55],[0x55,0x55,0xff],[0x55,0xff,0x55],[0x55,0xff,0xff],[0xff,0x55,0x55],[0xff,0x55,0xff],[0xff,0xff,0x55],[0xff,0xff,0xff]];
@@ -63,7 +65,14 @@ for (let k = 0; k < N; k++) {
   w.onmessage = (e) => {
     const m = e.data;
     if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h); w.postMessage({ cmd: "ack" }); }
-    else if (m.cmd === "ready") status(`SMP up — ${N} cores. Click to capture input; type a game at the shell.`);
+    else if(m.cmd==="palette"){const rgb=m.rgb;pal32[m.index]=(0xff000000|((rgb&255)<<16)|(rgb&0xff00)|((rgb>>>16)&255))>>>0;}
+    else if(m.cmd==="guestResult")status(m.msg||m.state);
+    else if(m.cmd==="inputMode"){
+      wantsMouse=!!m.capture;
+      if(!wantsMouse && !manualCapture && locked())document.exitPointerLock();
+      if(wantsMouse && !locked())status("Click the screen to capture the mouse. Esc releases it.");
+    }
+    else if (m.cmd === "ready") status(`SMP up - ${N} cores. Click to capture input; type a game at the shell.`);
     else if (m.cmd === "log") log(m.msg);
     else if (m.cmd === "error") { status("core error: " + m.msg); log("ERROR " + m.msg); }
   };
@@ -73,13 +82,45 @@ for (let k = 0; k < N; k++) {
   if (k === 0) bsp = w; workers.push(w);
 }
 
-// ---- input -> BSP: host-owned cursor + a set-1 scancode queue (matches snapshot.HC's host hooks) ----
-let msX = 320, msY = 240, msB = 0, captured = false;
-const sendInput = (keys) => bsp && bsp.postMessage({ cmd: "input", x: msX|0, y: msY|0, b: msB|0, keys });
-canvas.addEventListener("click", () => { captured = true; canvas.style.outline = "2px solid #5f5"; status("input captured — type at the shell."); });
-canvas.addEventListener("mousemove", (e) => { const r = canvas.getBoundingClientRect(); msX = (e.clientX-r.left)/r.width*640; msY = (e.clientY-r.top)/r.height*480; sendInput(); });
-canvas.addEventListener("mousedown", (e) => { msB |= (e.button===0?1:e.button===2?2:0); sendInput(); e.preventDefault(); });
-canvas.addEventListener("mouseup",   (e) => { msB &= ~(e.button===0?1:e.button===2?2:0); sendInput(); });
+// Relative movement follows guest MsSet calls. Held keys survive queue delays,
+// and losing focus always releases keys and mouse buttons.
+let msX=320,msY=240,msB=0,captured=false,wantsMouse=false,manualCapture=false;
+const held=new Set(),locked=()=>document.pointerLockElement===canvas;
+const sendInput=(keys=[],dx=0,dy=0,reset=false)=>bsp?.postMessage({cmd:"input",x:msX|0,y:msY|0,b:msB,keys,held:[...held],relative:locked(),dx,dy,reset});
+const releaseInput=()=>{
+  const keys=[];
+  for(const sc of held){if(Object.values(EXT).includes(sc))keys.push(0xE0);keys.push(sc|0x80);}
+  held.clear();msB=0;msX=320;msY=240;sendInput(keys,0,0,true);
+};
+const releaseFocus=()=>{captured=false;releaseInput();canvas.style.outline="";if(locked())document.exitPointerLock();};
+const captureMouse=()=>{
+  captured=true;releaseInput();
+  try{canvas.requestPointerLock()?.catch(()=>status("Mouse capture failed. Click the screen to retry."));}
+  catch{status("Mouse capture unavailable in this browser.");}
+};
+$("capture").onclick=()=>{if(locked())document.exitPointerLock();else{manualCapture=true;captureMouse();}};
+$("escape").onclick=()=>sendInput([0x01,0x81]);
+document.addEventListener("pointerlockchange",()=>{
+  captured=locked();releaseInput();canvas.style.outline=captured?"2px solid #5f5":"";
+  $("capture").textContent=captured?"Release mouse":"Capture mouse";
+  if(!captured)manualCapture=false;
+});
+canvas.addEventListener("mousedown",e=>{
+  e.preventDefault();captured=true;canvas.style.outline="2px solid #5f5";
+  if((wantsMouse||manualCapture)&&!locked()){captureMouse();return;}
+  msB|=e.button===0?1:e.button===2?2:0;sendInput();
+});
+document.addEventListener("mousemove",e=>{
+  if(locked()){sendInput([],e.movementX,e.movementY);return;}
+  if(wantsMouse||manualCapture||e.target!==canvas)return;
+  const r=canvas.getBoundingClientRect();
+  msX=Math.max(0,Math.min(639,(e.clientX-r.left)/r.width*640));
+  msY=Math.max(0,Math.min(479,(e.clientY-r.top)/r.height*480));sendInput();
+});
+document.addEventListener("mouseup",e=>{msB&=~(e.button===0?1:e.button===2?2:0);sendInput();});
+document.addEventListener("mousedown",e=>{if(e.target!==canvas && e.target.tagName!=="BUTTON")releaseFocus();});
+addEventListener("blur",releaseFocus);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)releaseFocus();});
 canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 // e.code -> set-1 make scancode (release = make | 0x80). Extended (arrows) prefixed 0xE0.
 const SC = { Escape:0x01,Digit1:0x02,Digit2:0x03,Digit3:0x04,Digit4:0x05,Digit5:0x06,Digit6:0x07,Digit7:0x08,Digit8:0x09,Digit9:0x0A,Digit0:0x0B,Minus:0x0C,Equal:0x0D,Backspace:0x0E,Tab:0x0F,
@@ -87,8 +128,16 @@ const SC = { Escape:0x01,Digit1:0x02,Digit2:0x03,Digit3:0x04,Digit4:0x05,Digit5:
   KeyA:0x1E,KeyS:0x1F,KeyD:0x20,KeyF:0x21,KeyG:0x22,KeyH:0x23,KeyJ:0x24,KeyK:0x25,KeyL:0x26,Semicolon:0x27,Quote:0x28,Backquote:0x29,ShiftLeft:0x2A,Backslash:0x2B,
   KeyZ:0x2C,KeyX:0x2D,KeyC:0x2E,KeyV:0x2F,KeyB:0x30,KeyN:0x31,KeyM:0x32,Comma:0x33,Period:0x34,Slash:0x35,ShiftRight:0x36,AltLeft:0x38,Space:0x39 };
 const EXT = { ArrowUp:0x48, ArrowDown:0x50, ArrowLeft:0x4B, ArrowRight:0x4D, Delete:0x53, Home:0x47, End:0x4F, PageUp:0x49, PageDown:0x51 };
-addEventListener("keydown", (e) => { if (!captured) return; if (EXT[e.code]!==undefined){bsp.postMessage({cmd:"keys",keys:[0xE0,EXT[e.code]]});} else if (SC[e.code]!==undefined){bsp.postMessage({cmd:"keys",keys:[SC[e.code]]});} else return; e.preventDefault(); });
-addEventListener("keyup",   (e) => { if (!captured) return; if (EXT[e.code]!==undefined){bsp.postMessage({cmd:"keys",keys:[0xE0,EXT[e.code]|0x80]});} else if (SC[e.code]!==undefined){bsp.postMessage({cmd:"keys",keys:[SC[e.code]|0x80]});} else return; e.preventDefault(); });
+addEventListener("keydown",e=>{
+  if(!captured)return;
+  if(e.code==="Escape"&&locked()){document.exitPointerLock();releaseInput();return;}
+  const sc=EXT[e.code]??SC[e.code];if(sc===undefined)return;
+  held.add(sc);if(!e.repeat)sendInput(EXT[e.code]===undefined?[sc]:[0xE0,sc]);e.preventDefault();
+});
+addEventListener("keyup",e=>{
+  const sc=EXT[e.code]??SC[e.code];if(!held.delete(sc))return;
+  sendInput(EXT[e.code]===undefined?[sc|0x80]:[0xE0,sc|0x80]);e.preventDefault();
+});
 </script>
 </body>
 </html>

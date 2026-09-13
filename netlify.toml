@@ -1,5 +1,5 @@
 # TempleOS-web assembles its sibling repos at BUILD TIME, so every deploy ships their
-# latest main — no submodule pins, no packages, no bots:
+# latest main - no submodule pins, no packages, no bots:
 #   holyc-wasm  → ./holyc-wasm   (HolyC→WASM compiler + runtime + the editor app)
 #   hemu-wasm   → ./hemu-wasm    (the emulator: snapshot.wasm, JIT, disk plumbing)
 #   holyc-fmt   → ./holyc-fmt    (the HolyC formatter: HolyCFmt.HC, used by the Format button + /format.html)

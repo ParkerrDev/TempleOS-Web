@@ -1,4 +1,4 @@
-// whitecheck.mjs — reproduce the SMP white-screen / flicker: sample the canvas over a sustained
+// whitecheck.mjs - reproduce the SMP white-screen / flicker: sample the canvas over a sustained
 // parallel run and report white% (palette 15), non-bg%, and distinct frames (flicker).
 import http from "node:http"; import { readFile } from "node:fs/promises"; import { extname, join, normalize } from "node:path"; import { chromium } from "playwright";
 const ROOT = process.cwd();

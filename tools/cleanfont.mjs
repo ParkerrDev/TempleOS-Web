@@ -1,4 +1,4 @@
-// cleanfont.mjs — fix + size the real TempleOS webfont.
+// cleanfont.mjs - fix + size the real TempleOS webfont.
 // fonts/templeos_orig.ttf is the real font (322 glyphs, the design the site has always used) but its OS/2
 // table is version 5 with malformed version-5 fields -> OTS "Failed to decode" error. This re-exports it
 // via opentype.js with OS/2 downgraded to v4 (drops the optical-point-size fields) and, if a SCALE arg is

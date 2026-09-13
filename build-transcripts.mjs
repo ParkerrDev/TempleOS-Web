@@ -1,4 +1,4 @@
-// build-transcripts.mjs — compile the TerryADavis-archive-transcriber output (one Whisper JSON per
+// build-transcripts.mjs - compile the TerryADavis-archive-transcriber output (one Whisper JSON per
 // video) into compact, sharded, gzipped chunks the static site can fuzzy-search client-side.
 //   node build-transcripts.mjs [path-to-transcripts-dir]
 // Emits assets/transcripts/shard-NN.json.gz + manifest.json. Each shard is a JSON array of videos:
@@ -22,7 +22,7 @@ console.log(`${files.length} transcript JSONs from ${SRC}`);
 
 // Which files can archive.org's web player actually play? Its playlist is the ground truth (the
 // item holds ~29k files but only ~3.8k playable tracks; .wmv/.mkv originals without derivatives are
-// absent). Videos NOT in it get p:0 and the site links their direct /download/ URL instead — a
+// absent). Videos NOT in it get p:0 and the site links their direct /download/ URL instead - a
 // /details/<id>/<file> deep link for a non-playlist file silently bounces to a DIFFERENT video.
 const PL = "https://archive.org/embed/TerryADavis_TempleOS_Archive?playlist=1&output=json";
 const playable = new Set((await (await fetch(PL)).json()).map((e) => e.orig));
@@ -40,7 +40,7 @@ const videos = [];
 let segsIn = 0, chunksOut = 0, skipped = 0;
 for (const f of files) {
   let j;
-  // Whisper emits bare NaN for some logprobs — fine for Python's json, fatal for JSON.parse.
+  // Whisper emits bare NaN for some logprobs - fine for Python's json, fatal for JSON.parse.
   try { j = JSON.parse(readFileSync(join(SRC, f), "utf8").replace(/\bNaN\b/g, "0")); } catch { skipped++; continue; }
   const path = (j.source && j.source.filename) || f.replace(/ -- /g, "/").replace(/\.json$/, "");
   const base = basename(path).replace(/\.[a-z0-9]+$/i, "");

@@ -1,4 +1,4 @@
-// tscheck.mjs — drive the real site in headless Chromium: open Terry Search, wait for the shards,
+// tscheck.mjs - drive the real site in headless Chromium: open Terry Search, wait for the shards,
 // run an exact query and a typo'd query (fuzzy proof), verify hits + archive.org links + screenshot.
 import { chromium } from "playwright-core";
 const EXE = process.env.HOME + "/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome";
@@ -71,7 +71,7 @@ if (linkAudit.bad.length) throw new Error("malformed links");
     await page.waitForTimeout(1000);
   }
   console.log("\n== video windows ==", JSON.stringify(st2));
-  // archive.org occasionally drops one of two parallel streams — the window then shows its error
+  // archive.org occasionally drops one of two parallel streams - the window then shows its error
   // fallback (correct product behavior). Require both windows present and >=1 actually streaming.
   if (st2.length !== 2 || !st2.some((x) => x.ready >= 2) || !st2.every((x) => x.ready >= 2 || x.fb)) throw new Error("video windows failed: " + JSON.stringify(st2));
   console.log(st2.every((x) => x.ready >= 2) ? "  TWO WINDOWS PLAYING AT ONCE" : "  two windows: one streaming, one error-fallback (archive.org flake)");
@@ -119,7 +119,7 @@ if (linkAudit.bad.length) throw new Error("malformed links");
              dlText: document.getElementById("dl").textContent.trim(), barIsFirst: document.body.firstElementChild.id === "bar" }; });
   console.log("  bar:", JSON.stringify(bar));
   if (!(bar.first === "back" && bar.last === "dl" && bar.barIsFirst && bar.back === "←")) throw new Error("player bar layout wrong");
-  console.log("  STREAMS — bar on top: [←] … [↓ Download video]");
+  console.log("  STREAMS - bar on top: [←] … [↓ Download video]");
   await pp.close();
 }
 

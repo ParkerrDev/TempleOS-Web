@@ -1,8 +1,8 @@
-# COEP: credentialless — the best of both worlds:
+# COEP: credentialless - the best of both worlds:
 #  * SharedArrayBuffer works (the HolyC editor runs blocking programs in a worker with a
-#    shared framebuffer + Atomics input — it NEEDS isolation),
+#    shared framebuffer + Atomics input - it NEEDS isolation),
 #  * cross-origin <video>/<img> still load (Terry Search streams archive.org originals
-#    inline; their download nodes send no CORS/CORP, which require-corp would block —
+#    inline; their download nodes send no CORS/CORP, which require-corp would block -
 #    credentialless allows no-cors media, just sent without credentials).
 # Safari doesn't support credentialless: it ignores it -> not isolated -> everything works
 # except the editor's runner, which already shows its own graceful warning there.
@@ -14,7 +14,7 @@
 /vendor/*
   Cache-Control: public, max-age=31536000
 
-# HEMU artifacts change every deploy — always revalidate so the browser HTTP cache
+# HEMU artifacts change every deploy - always revalidate so the browser HTTP cache
 # can never pin users to an old (crashing) build.
 /hemu
   Cache-Control: no-cache
@@ -25,6 +25,6 @@
 /hemu-wasm/*
   Cache-Control: no-cache
 # hemu-wasm/jit.js + the compiler modules it imports must move in lockstep with snapshot.wasm's
-# global offsets (G_FS/G_GS/G_TSC) — a stale jit.js corrupts segment bases (BADOP crash).
+# global offsets (G_FS/G_GS/G_TSC) - a stale jit.js corrupts segment bases (BADOP crash).
 /holyc-wasm/*
   Cache-Control: no-cache

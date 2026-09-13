@@ -1,4 +1,4 @@
-// Snake — the classic, in HolyC -> WebAssembly.  W/A/S/D to steer, Esc to quit.
+// Snake - the classic, in HolyC -> WebAssembly.  W/A/S/D to steer, Esc to quit.
 #define GW   34
 #define GH   26
 #define CELL 18

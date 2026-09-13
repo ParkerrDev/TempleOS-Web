@@ -1,6 +1,6 @@
-// xsel.js — TempleOS-style text selection: selecting normal text XOR-inverts the
+// xsel.js - TempleOS-style text selection: selecting normal text XOR-inverts the
 // colors under it, exactly like the OS (Adam/DolDoc/DocRecalc.HC: a selected entry does
-// i^=0xF — complement the palette index). The browser's native ::selection can only set
+// i^=0xF - complement the palette index). The browser's native ::selection can only set
 // a fixed colour, so we hide it and lay white mix-blend-mode:difference rectangles over
 // the selection's client-rects (== RGB invert for the standard palette). Desktop only.
 //

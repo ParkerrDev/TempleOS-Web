@@ -1,4 +1,4 @@
-// HolyCraft — a tiny voxel sandbox (Minecraft-ish) written in HolyC.
+// HolyCraft - a tiny voxel sandbox (Minecraft-ish) written in HolyC.
 //
 // Everything is CPU-bound (software rendering, single thread), so it is built for
 // speed: a per-pixel voxel raycaster (3D DDA, Amanatides & Woo) renders into a small
@@ -20,12 +20,12 @@
 // The x86 emulator is MUCH slower than native WASM, so the native build is tuned HARD for frame rate.
 // RES 80x59 x SCALE 8 == 640x472 EXACTLY (the maximized borderless window minus the 8px menu bar), and
 // 80/59 == 640/472 so the aspect is exact (no distortion). The integer block-fill (DrawIt) then reads
-// each of the 4720 source pixels ONCE and writes its 8x8 block — ~3x cheaper than per-pixel scaling,
+// each of the 4720 source pixels ONCE and writes its 8x8 block - ~3x cheaper than per-pixel scaling,
 // which read all ~302K screen pixels every OS refresh and was the real "barely crawling" cost.
 // 80×59 ×8 == 640×472 (the maximized window), 80/59 == 640/472 -> exact aspect, square pixels.
 // Finer resolutions are too heavy for the per-pixel software raycaster even split across all 4 SMP
 // cores (160×118 measured ~3fps), so this is the resolution/fps sweet spot in the x86 emulator.
-#define RES_W   640          // FULL native resolution — NO downscaling (1 framebuffer px = 1 screen px).
+#define RES_W   640          // FULL native resolution - NO downscaling (1 framebuffer px = 1 screen px).
 #define RES_H   472          // the maximized borderless window is 640x472 (top 8px = OS menu bar).
 #define SCALE   1            // SLOW in the x86 emulator for now; per the user, optimize the emulator later.
 #define RDIST   32.0         // render distance (WORLD units)
@@ -46,7 +46,7 @@
 #define JUMP    0.46         // jump impulse (~2-block jump but a much shorter air time than the old 0.020/0.33)
 
 U8  *g_world = NULL;         // WX*WZ*WY voxels, 0 = air
-U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame — RenderFrame/DrawHUD's render target
+U8  *g_fb    = NULL;         // RES_W*RES_H indexed frame - RenderFrame/DrawHUD's render target
 U8  *g_show  = NULL;         // the published frame DrawIt reads (native: a 2nd buffer, swapped each
                             // frame so DrawIt never blits a half-rendered frame; browser: == g_fb)
 U8   g_skyr[3];             // sky gradient ramp (blue zenith -> ltblue -> ltcyan horizon)
@@ -59,7 +59,11 @@ F64  g_px, g_py, g_pz;       // camera position
 F64  g_yaw, g_pitch;         // camera angles
 I64  g_sel  = 8;             // selected block to place (8..23 = the 16 palette-colour blocks)
 I64  g_plb  = 0, g_prb = 0;  // previous mouse button states (edge detect)
-// movement timers (refreshed by key events, decay each frame -> smooth hold via key-repeat)
+// Optional browser input bridge. Native TempleOS uses its keyboard and MsSet;
+// holyc-wasm fills these globals from the focused canvas's shared input state.
+I64 BrowserMouseCapture=0, BrowserMouseDX=0, BrowserMouseDY=0;
+U8 BrowserKeys[128];
+// Per-frame movement state, assigned from held keys before physics.
 I64  g_tf,g_tb,g_tl,g_tr,g_tu,g_td,g_tjl,g_tjr,g_tpu,g_tpd;
 F64  g_vy = 0.0;             // vertical velocity (gravity)
 I64  g_fly = 0;             // creative fly toggle ('g')
@@ -74,7 +78,7 @@ I64  g_sw, g_sh;              // screen width/height (px) -- for the off-screen 
 CDC *g_rdc = NULL;            // the DC the current frame's faces fill (set at the top of RenderFaces)
 // scancodes of the held-movement keys, precomputed once (Char2ScanCode is slow). On real TempleOS we
 // POLL kbd.down_bitmap each frame for these (robust held-key state, like Demo/Games/RainDrops.HC) instead
-// of tracking make/break messages — a lost KEY_UP can't leave you "stuck walking" that way.
+// of tracking make/break messages - a lost KEY_UP can't leave you "stuck walking" that way.
 I64 g_scw,g_scs,g_sca,g_scd,g_scr,g_scf,g_scj,g_scl,g_sci,g_sck;
 #endif
 
@@ -155,7 +159,7 @@ U0 PlantTree(I64 x, I64 top, I64 z)
     if (top+dy<WY) g_world[WIdx(x,top+dy,z)]=4;            // trunk
   for (ly=top+3; ly<=top+5; ly++)
     for (lx=x-2; lx<=x+2; lx++)
-      for (lz=z-2; lz<=z+2; lz++)              // (no `continue` — TempleOS HolyC has no such keyword)
+      for (lz=z-2; lz<=z+2; lz++)              // (no `continue` - TempleOS HolyC has no such keyword)
         if (!Solid(lx,ly,lz))
           if ((lx-x)*(lx-x)+(lz-z)*(lz-z)+(ly-top-4)*(ly-top-4) <= 6)
             if (lx>=0 && lx<WX && lz>=0 && lz<WZ && ly<WY) g_world[WIdx(lx,ly,lz)]=5;
@@ -199,6 +203,8 @@ U0 BuildHM()
 
 U0 Init()
 {
+  g_tf=0; g_tb=0; g_tl=0; g_tr=0; g_tu=0; g_td=0;
+  g_tjl=0; g_tjr=0; g_tpu=0; g_tpd=0;
   g_world = MAlloc(WX*WZ*WY);
   g_hm    = MAlloc(WX*WZ);
   g_fb    = MAlloc(RES_W*RES_H);
@@ -419,9 +425,9 @@ U0 HandleInput()
   // real TempleOS input (best practices from TinkerOS Demo/KeyBitMap.HC + Demo/MsgLoop.HC):
   //  - HELD movement is POLLED from kbd.down_bitmap each frame (set g_t*=1 -> the shared block below
   //    applies it this frame). The kernel sets/clears those bits on make/break, so a dropped KEY_UP
-  //    can't leave you "stuck walking" — and HolyCraft() clears them at startup so the launch keystrokes
+  //    can't leave you "stuck walking" - and HolyCraft() clears them at startup so the launch keystrokes
   //    ('a' in "HolyCraft.HC", etc.) don't have you strafing the moment you spawn.
-  //  - EDGE actions (jump/fly/select/quit) come from DRAINED KEY_DOWN messages — draining CONSUMES the
+  //  - EDGE actions (jump/fly/select/quit) come from DRAINED KEY_DOWN messages - draining CONSUMES the
   //    keys here so they don't leak to the shell/other windows behind the game.
   I64 a1, a2, msg;
   while (msg = ScanMsg(&a1, &a2, 1<<MSG_KEY_DOWN | 1<<MSG_KEY_UP)) {
@@ -441,33 +447,36 @@ U0 HandleInput()
     }
   }
   // held movement: poll the kernel key-down bitmap (one frame's worth -> g_t*=1; shared block consumes it)
-  if (Bt(kbd.down_bitmap,g_scw)) g_tf =1;
-  if (Bt(kbd.down_bitmap,g_scs)) g_tb =1;
-  if (Bt(kbd.down_bitmap,g_sca)) g_tl =1;
-  if (Bt(kbd.down_bitmap,g_scd)) g_tr =1;
-  if (Bt(kbd.down_bitmap,g_scj)) g_tjl=1;
-  if (Bt(kbd.down_bitmap,g_scl)) g_tjr=1;
-  if (Bt(kbd.down_bitmap,g_sci)) g_tpu=1;
-  if (Bt(kbd.down_bitmap,g_sck)) g_tpd=1;
-  if (Bt(kbd.down_bitmap,g_scr)) g_tu =1;
-  if (Bt(kbd.down_bitmap,g_scf)) g_td =1;
-  // mouse look (native/TempleOS): dead-zone steering off the OS cursor (ms.pos) — point toward an edge to
-  // turn, recentre to stop. win_inhibit (set in HolyCraft) stops the WM acting on clicks; ms.pos still updates.
-  F64 dxm, dym, dyaw, dpit;
-  dxm=(ms.pos.x-320)*0.003125; dym=(ms.pos.y-240)*0.004167;   // /320, /240 -> -1..1
-  dyaw=dxm*0.07; dpit=dym*0.05;
-  if (dxm>0.14 || dxm<-0.14) g_yaw   = g_yaw   + dyaw;
-  if (dym>0.14 || dym<-0.14) g_pitch = g_pitch - dpit;        // var - var (codegen-safe)
+  g_tf=Bt(kbd.down_bitmap,g_scw);
+  g_tb=Bt(kbd.down_bitmap,g_scs);
+  g_tl=Bt(kbd.down_bitmap,g_sca);
+  g_tr=Bt(kbd.down_bitmap,g_scd);
+  g_tjl=Bt(kbd.down_bitmap,g_scj);
+  g_tjr=Bt(kbd.down_bitmap,g_scl);
+  g_tpu=Bt(kbd.down_bitmap,g_sci);
+  g_tpd=Bt(kbd.down_bitmap,g_sck);
+  g_tu=Bt(kbd.down_bitmap,g_scr);
+  g_td=Bt(kbd.down_bitmap,g_scf);
+  // Consume movement once, then recenter. A stationary mouse cannot keep turning.
+  F64 dxm=ms.pos.x-320, dym=ms.pos.y-240;
+  MsSet(320,240);
+  g_yaw=g_yaw+dxm*0.003;
+  g_pitch=g_pitch-dym*0.003;
 #else
   while (ScanChar()) {            // peek (ScanChar does NOT consume in this runtime)...
     ch = KeyGet();               // ...so KeyGet() consumes the char (won't block, one is ready)
     KeyDown(ch);
     if (g_quit) return;
   }
-  // mouse look (browser): turn/pitch rate by distance from screen centre (dead zone)
-  F64 dxm=(ms.pos.x-320)/320.0, dym=(ms.pos.y-240)/240.0;
-  if (dxm>0.14||dxm<-0.14) g_yaw   += dxm*0.06;
-  if (dym>0.14||dym<-0.14) g_pitch -= dym*0.05;
+  // Movement is held state, not a countdown extended by browser key repeat.
+  g_tf=BrowserKeys[0x11]; g_tb=BrowserKeys[0x1F];
+  g_tl=BrowserKeys[0x1E]; g_tr=BrowserKeys[0x20];
+  g_tu=BrowserKeys[0x13]; g_td=BrowserKeys[0x21];
+  g_tjl=BrowserKeys[0x24]; g_tjr=BrowserKeys[0x26];
+  g_tpu=BrowserKeys[0x17]; g_tpd=BrowserKeys[0x25];
+  F64 dxm=BrowserMouseDX, dym=BrowserMouseDY;
+  BrowserMouseDX=0; BrowserMouseDY=0;
+  g_yaw+=dxm*0.003; g_pitch-=dym*0.003;
 #endif
 
   // ---- everything below is shared ----
@@ -673,7 +682,7 @@ U0 HolyCraft()
   DocCursor(OFF);
   DocClear;
   // Inhibit the window manager from acting on clicks (no window close/drag/menu/double-click) while we play
-  // — exactly what real-time apps do (reference ToTheFront.HC:135, MassSpring.HC). Clicks still set
+  // - exactly what real-time apps do (reference ToTheFront.HC:135, MassSpring.HC). Clicks still set
   // ms.lb/ms.rb so break/place keep working, but a stray click can no longer drop you out of the game.
   Fs->win_inhibit|=WIF_SELF_MS_L|WIF_SELF_MS_R|WIG_DBL_CLICK;
   Init();
@@ -688,6 +697,8 @@ U0 HolyCraft()
   LBtr(kbd.down_bitmap,g_scj); LBtr(kbd.down_bitmap,g_scl); LBtr(kbd.down_bitmap,g_sci);
   LBtr(kbd.down_bitmap,g_sck);
   FlushMsgs;
+  MsSet(320,240);
+  BrowserMouseCapture=1;
   Fs->draw_it=&DrawIt;          // the WinMgr now renders the world (faces) to the screen DC every refresh
   try {
     while (!g_quit) {
@@ -697,11 +708,13 @@ U0 HolyCraft()
   } catch
     PutExcept;
   Fs->draw_it=NULL;
+  BrowserMouseCapture=0;
   Fs->win_inhibit=WIG_USER_TASK_DFT;   // hand mouse handling back to the window manager
   DocClear;
   SettingsPop;
 #else
   Init();
+  BrowserMouseCapture=1;
   CDC *dc=DCAlias;
   while (!g_quit) {
     HandleInput();
@@ -711,6 +724,7 @@ U0 HolyCraft()
     Sleep(16);
   }
   DCFill(dc, BLACK);
+  BrowserMouseCapture=0;
   "HolyCraft: thanks for playing!\n";
 #endif
 }

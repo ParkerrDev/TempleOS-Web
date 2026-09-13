@@ -1,12 +1,12 @@
-// convert.js — shared in-browser video converter (ffmpeg.wasm, vendored, single-thread: no
+// convert.js - shared in-browser video converter (ffmpeg.wasm, vendored, single-thread: no
 // cross-origin isolation needed). Used by the Terry Search video windows (index.html) and the
-// standalone player page (player.html). The input bytes come from archive.org's /cors/ endpoint —
+// standalone player page (player.html). The input bytes come from archive.org's /cors/ endpoint -
 // their /download/ nodes send no CORS so fetch() can't read those, but /cors/ serves full files
 // with CORS (verified live; Range is ignored there).
 //
 // One ffmpeg instance + one cached input file per page; conversions are serialized (a second
 // request waits). Unsupported formats re-encode a `win`-second window from `start` (x264
-// ultrafast 480p + aac — ~4x realtime on the 2007 640x480 screen captures); .mkv/.mov first try
+// ultrafast 480p + aac - ~4x realtime on the 2007 640x480 screen captures); .mkv/.mov first try
 // a stream-copy remux (instant h264/aac mp4, the Firefox/Safari case).
 
 const CORSBASE = "https://archive.org/cors/TerryADavis_TempleOS_Archive/";

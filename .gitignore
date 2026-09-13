@@ -1,7 +1,7 @@
 node_modules/
 .DS_Store
 /tmp/
-# NOTE: vendor/**/*.wasm is intentionally committed — the site needs it.
+# NOTE: vendor/**/*.wasm is intentionally committed - the site needs it.
 reference/
 TerryADavis-archive-transcriber/
 # sibling repos, assembled here at build time (Netlify) / symlinked for local dev

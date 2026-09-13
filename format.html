@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>HolyC Formatter · holyc-fmt</title>
-<meta name="description" content="Format HolyC source to the canonical TempleOS style, in your browser. Powered by holyc-fmt — a formatter written in HolyC and run via the holyc-wasm compiler." />
+<meta name="description" content="Format HolyC source to the canonical TempleOS style, in your browser. Powered by holyc-fmt - a formatter written in HolyC and run via the holyc-wasm compiler." />
 <style>
   @font-face { font-family:'TempleOS'; src:url('fonts/templeos.ttf?v=4') format('truetype'); }
   @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); }
@@ -47,7 +47,7 @@
 <div id="xcursor" aria-hidden="true"></div>
 <header>
   <h1>HolyC Formatter</h1>
-  <span class="sub">holyc-fmt — a formatter written in HolyC, run in your browser</span>
+  <span class="sub">holyc-fmt - a formatter written in HolyC, run in your browser</span>
   <span class="home"><a href="index.html">← TempleOS</a></span>
 </header>
 
@@ -87,7 +87,7 @@
   const setSt = (s, err) => { st.textContent = s; st.style.color = err ? "#ff8" : "yellow"; };
 
   const SAMPLE =
-`// messy indentation/spacing — Format fixes it (2-space grid, if/switch spacing, case)
+`// messy indentation/spacing - Format fixes it (2-space grid, if/switch spacing, case)
 U0 Fib(I64 n)
 {
 I64 a=0,b=1,t,i;
@@ -127,7 +127,7 @@ Fib(10);`;
   const loadFile = async (f) => {
     if (!f) return;
     const txt = await f.text();
-    if (txt.indexOf(String.fromCharCode(0)) !== -1) { setSt("that file has embedded binary (DolDoc sprite) — text only", true); return; }
+    if (txt.indexOf(String.fromCharCode(0)) !== -1) { setSt("that file has embedded binary (DolDoc sprite) - text only", true); return; }
     inp.value = txt; $("inInfo").textContent = f.name; setSt("opened " + f.name);
   };
   $("file").addEventListener("change", (e) => loadFile(e.target.files[0]));

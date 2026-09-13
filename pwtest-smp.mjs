@@ -1,4 +1,4 @@
-// pwtest-smp.mjs — headless verification of hemu-smp.html (browser real-parallel SMP).
+// pwtest-smp.mjs - headless verification of hemu-smp.html (browser real-parallel SMP).
 // Serves the site with COOP/COEP (so SharedArrayBuffer works), loads the page in headless chromium,
 // waits for the BSP to boot the SMP desktop, and checks the canvas actually rendered (non-black).
 import http from "node:http";
@@ -49,7 +49,7 @@ for (let i = 0; i < 45; i++) {
 }
 await page.screenshot({ path: "/tmp/smp_browser.png" });
 console.log(result.nonblack > 15 ? `=== BROWSER SMP desktop rendered (${result.nonblack.toFixed(1)}% non-black) ===`
-                                 : `=== BROWSER SMP FAIL: canvas ${result.nonblack.toFixed(1)}% non-black — ${result.status} ===`);
+                                 : `=== BROWSER SMP FAIL: canvas ${result.nonblack.toFixed(1)}% non-black - ${result.status} ===`);
 
 if (process.env.CTRLM && result.nonblack > 15) {                  // snap the Ctrl+M games menu (to locate sprites)
   await page.waitForTimeout(1500);

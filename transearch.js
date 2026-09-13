@@ -1,4 +1,4 @@
-// transearch.js — Terry A. Davis transcript fuzzy-search worker (zero dependencies).
+// transearch.js - Terry A. Davis transcript fuzzy-search worker (zero dependencies).
 // Loads the prebuilt shards (assets/transcripts/, see build-transcripts.mjs), builds a vocabulary,
 // and answers queries with typo-tolerant matching: each query token matches exactly OR via
 // bounded Damerau-Levenshtein alternates drawn from the corpus vocabulary, with phrase and
@@ -43,7 +43,7 @@ async function load(base) {
   postMessage({ type: "ready", videos: videos.length, chunks: lower.length, words: vocab.size, years });
 }
 
-// video list entry for browse / title-search results (no chunk payload — the teaser is enough)
+// video list entry for browse / title-search results (no chunk payload - the teaser is enough)
 function vmeta(vi) { const v = videos[vi];
   return { t: v.t, d: v.d, f: v.f, n: v.n, p: v.p, k: v.s.length, x: v.s[0] ? v.s[0][1].slice(0, 150) : "" }; }
 
@@ -152,7 +152,7 @@ function query(q, id, opts = {}) {
     .replace(new RegExp(`(?:^|\\s)(?:date|on|year):(${LIST})(?=\\s|$)`, "g"), (m, l) => { pushDates(l); return " "; })
     .replace(new RegExp(`(^|\\s)(${LIST})(?=\\s|$)`, "g"), (m, sp, l) => { pushDates(l); return sp; })
     .replace(/(^|\s)-([a-z0-9']+)/g, (m, sp, w) => { notWords.push(w); return sp; });
-  // tokenize into OR-groups: "terry OR dave linux" -> [[terry,dave],[linux]] — a group matches
+  // tokenize into OR-groups: "terry OR dave linux" -> [[terry,dave],[linux]] - a group matches
   // if ANY member (or its fuzzy alternates) hits; plain tokens are single-member groups.
   const groups = [];
   { let joinNext = false;

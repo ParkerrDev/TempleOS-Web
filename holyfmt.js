@@ -1,4 +1,4 @@
-// holyfmt.js — run the REAL HolyC formatter (holyc-fmt/HolyCFmt.HC) in the
+// holyfmt.js - run the REAL HolyC formatter (holyc-fmt/HolyCFmt.HC) in the
 // browser. The .HC source is compiled to WASM by holyc-wasm, then the user's code is
 // written straight into the module's linear memory (above the heap) and HolyCFmtPrint
 // reads it and emits the formatted text via PutChars, which we capture. Feeding the
@@ -28,7 +28,7 @@ async function getModule(indent, tabs) {
 
 export async function formatHolyC(src, { indent = 2, tabs = false } = {}) {
   if (src.indexOf("\0") !== -1)
-    throw new Error("this file has embedded binary (a DolDoc sprite) — format plain-text HolyC only");
+    throw new Error("this file has embedded binary (a DolDoc sprite) - format plain-text HolyC only");
   const { createHost } = await import(U("./holyc-wasm/src/runtime/host.js"));
   const mod = await getModule(indent, tabs);
   let out = "";

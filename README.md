@@ -1,32 +1,32 @@
 # TempleOS‑wasm
 
-**The real, complete TempleOS V5.03 running in your browser** — on **HEMU**, a clean‑room
+**The real, complete TempleOS V5.03 running in your browser** - on **HEMU**, a clean‑room
 x86‑64 emulator written almost entirely in **HolyC** and compiled to WebAssembly by the
 bundled from‑scratch HolyC→WASM compiler ([`holyc-wasm/`](./holyc-wasm)). The actual
-TempleOS kernel, HolyC JIT, graphics, games, keyboard and mouse — not a reimplementation,
+TempleOS kernel, HolyC JIT, graphics, games, keyboard and mouse - not a reimplementation,
 not a screenshot. It boots to the installed desktop **in a few seconds**, and the 3D games
 run at their designed 30 fps thanks to an x86‑64→WASM block JIT and native HLE of the
 hottest render routines.
 
-> This is a static site. Drop it on any static host (with cross‑origin isolation — see
+> This is a static site. Drop it on any static host (with cross‑origin isolation - see
 > *Deploying*) and it runs entirely client‑side.
 
 ## Try it
 
-- The desktop boots automatically — restored from a RAM snapshot in ~4 s.
+- The desktop boots automatically - restored from a RAM snapshot in ~4 s.
 - **Click the screen** to capture mouse + keyboard. **Ctrl+Alt+G** releases the mouse
   (QEMU's combo); **Esc goes to the OS** (exits games and menus). Fullscreen captures
   *every* key for the OS, including Esc.
-- **Ctrl+M** opens the personal menu — click a game sprite (Varoom, BlackDiamond, …) to play.
+- **Ctrl+M** opens the personal menu - click a game sprite (Varoom, BlackDiamond, …) to play.
 - **↻ Restart** reloads the clean snapshot any time the OS gets into a weird state.
-- **⌨ HolyC Editor** — write & run TempleOS HolyC compiled *natively* to WASM (no emulation).
+- **⌨ HolyC Editor** - write & run TempleOS HolyC compiled *natively* to WASM (no emulation).
   Save/open `.HC` files, or write your source straight into `C:/Home` for the OS to run.
-- **⏸ Pause** — freeze and resume the OS (guest time stops too).
-- **💾 Disk & Save** — export a **snapshot** (the whole running OS — reload it later to resume
+- **⏸ Pause** - freeze and resume the OS (guest time stops too).
+- **💾 Disk & Save** - export a **snapshot** (the whole running OS - reload it later to resume
   exactly where you were) or your **C: disk image** (including files you saved in TempleOS);
   import either one back; or upload any file straight into `C:/Home`. This is how you save your
   progress, share programs/games, or boot a custom/modified TempleOS disk.
-- **✞ God Words** — TempleOS's divine word oracle on the page itself: GodBits/GodPick
+- **✞ God Words** - TempleOS's divine word oracle on the page itself: GodBits/GodPick
   compiled in‑browser by holyc-wasm, entropy from your keystroke timing.
 - On phones: an on‑screen joystick + L/R mouse buttons + a keyboard summon button appear,
   and the function/modifier key bar works by touch.
@@ -49,7 +49,7 @@ live RAM snapshot of the booted desktop, emulates just the hardware TempleOS tou
 
 Performance comes from three layers:
 - an **x86‑64 → WASM block JIT** (`jit.js`) that compiles hot guest code to native WASM at
-  runtime — the same trick TempleOS's own JIT plays, one level up;
+  runtime - the same trick TempleOS's own JIT plays, one level up;
 - **HLE** of the hottest render routines (the window compositor blit and the games' span
   fillers), each shadow‑verified bit‑exact against the emulated version before activation;
 - a worker engine that runs the emulator off the main thread.
@@ -61,9 +61,9 @@ exactly like the TSC sampling on real hardware.
 ### What's in `vendor/`
 | Path | Size | What |
 |------|------|------|
-| `vendor/images/templeos-hd.qcow2.gz` | 41 MB | the installed TempleOS hard disk (RedSea on C:), read on demand |
+| `vendor/images/templeos-hd.qcow2.gz` | 41 MB | the installed TempleOS hard disk (FAT32 on C:), read on demand |
 | `hemu-wasm/live.bin.gz` | 5 MB | booted‑desktop RAM snapshot (instant boot) |
-| `hemu-wasm/snapshot.wasm` | 55 KB | the compiled emulator |
+| `hemu-wasm/snapshot.wasm` | ~77 KB | the compiled emulator |
 
 The desktop appears after the 5 MB snapshot loads; the disk image streams in the background
 for file I/O. (The `.gz` assets are decompressed in the browser.)
@@ -75,10 +75,10 @@ for file I/O. (The `.gz` assets are decompressed in the browser.)
 | **TempleOS-web** (this) | the site: pages, search, video windows, converter, assets | deployed on Netlify |
 | [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | HolyC→WASM compiler + runtime + the editor app | cloned into `./holyc-wasm` at build time |
 | [hemu-wasm](https://github.com/ParkerrDev/Hemu-wasm) | the emulator: `snapshot.wasm`, the JIT, disk plumbing, engine harnesses | cloned into `./hemu-wasm` at build time |
-| [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline — its output is baked into `assets/transcripts/` by `build-transcripts.mjs` |
+| [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline - its output is baked into `assets/transcripts/` by `build-transcripts.mjs` |
 
 `netlify.toml`'s build command `git clone --depth 1`s the two sibling repos, so **every
-deploy ships their latest main** — no submodule pins, no packages. To auto-redeploy when
+deploy ships their latest main** - no submodule pins, no packages. To auto-redeploy when
 *they* change, create one Netlify build hook (Site settings → Build & deploy → Build hooks)
 and add its URL as a plain push webhook on both repos.
 
@@ -96,15 +96,36 @@ node server.mjs               # → http://localhost:8080  (zero-dependency)
 
 ## Credits & licenses
 
-- **TempleOS** — created by **Terry A. Davis**. Public domain. The disk image and snapshot
+- **TempleOS** - created by **Terry A. Davis**. Public domain. The disk image and snapshot
   contain TempleOS V5.03.
-- **holyc-wasm, HEMU, the JIT** — written for this project; same repository.
-- **ffmpeg.wasm** (`vendor/ffmpeg/`, powers the in-browser video converter) — FFmpeg (GPL) compiled
+- **holyc-wasm, HEMU, the JIT** - written for this project; same repository.
+- **ffmpeg.wasm** (`vendor/ffmpeg/`, powers the in-browser video converter) - FFmpeg (GPL) compiled
   to WebAssembly by the [ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm) project (MIT wrapper).
-- **Transcripts** — Whisper (large-v3-turbo) transcriptions of the
+- **Transcripts** - Whisper (large-v3-turbo) transcriptions of the
   [TerryADavis_TempleOS_Archive](https://archive.org/details/TerryADavis_TempleOS_Archive) item.
-- **Theme & assets** — the TempleOS‑desktop look (cursor, the Terry GIF) is from
+- **Theme & assets** - the TempleOS‑desktop look (cursor, the Terry GIF) is from
   [afterdavis](https://github.com/ParkerrDev/afterdavis); the TempleOS font and the window
   chrome styling (vertical border titles, scrolling title marquee, blinking MENU chip) are
   adopted from [TempleOS-tribute](https://github.com/del-Real/TempleOS-tribute) by
   Alberto del Real (MIT).
+
+## Sprite Studio and current game packages
+
+Open Sprite Studio from the desktop menu to convert PNG/JPEG/WebP images, GIFs, or video clips to the TempleOS palette. It stays closed on arrival, including visits through old `/#sprites` links. It opens in a draggable desktop window and keeps the current conversion when closed and reopened. Exports include transparent .GR frames, a PNG sheet, an animated GIF, and a ZIP with .GR frames and Play.HC. Clips default to 25 fps, with options up to 50 fps, 600 frames and 20 million pixels. Conversion runs locally using the vendored FFmpeg for GIF/video decoding and a separate palette worker. The uncompressed .GR codec was checked against TempleOS's CDC layout and a PNG2GR fixture.
+
+Natural shading is the default. It fits the unmodified source color with up to three nearby-hue entries from the stock palette, balancing display-RGB error against the contrast of the resulting pattern. There is no saturation boost or penalty for choosing gray. A fixed blue-noise mask keeps the same pattern across animation frames. Local source smoothing removes isolated compression flecks, with exact palette artwork and transparency preserved. Dither strength defaults to 35%; lower values reduce texture and 0% selects solid colors. Reconvert after changing it. The mask is reproducible with `node tools/build-sprite-noise.mjs`. Error diffusion and nearest-color matching remain selectable. Playback caches ImageData and uses elapsed time to recover after late frames; GIF exports distribute fractional delays across frames to preserve the clip duration.
+
+The desktop Terry animation uses 251 palette-indexed .GR frames at 176 pixels tall, preserving the original 25 fps timing. Run `node tools/build-terry-sprites.mjs` with FFmpeg and ffprobe installed to regenerate `assets/terry-sprites.gr.gz` from the original GIFs.
+
+Games request mouse capture through the guest input bridge. Click the game screen to capture the mouse; Esc releases it. Use the Keys window's Esc button to send Esc to TempleOS. The Capture mouse button also allows manual capture. Focus loss, window changes and OS restarts clear held keys and mouse buttons. HolyCraft uses relative mouse movement and explicit held-key state in both execution paths.
+
+The Games menu installs pinned, checksum-verified TinkerOS game packages and TOOM with Freedoom. See [games/README.md](games/README.md) for sources and refresh instructions.
+
+```sh
+node tools/sprite-codec.test.mjs
+node tools/sprite-player.test.mjs
+node tools/holycraft-input.test.mjs
+node tools/framebuffer.test.mjs
+node tools/verify-games.mjs
+python3 tools/check-text.py
+```
