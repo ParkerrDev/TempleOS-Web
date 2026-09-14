@@ -21,8 +21,8 @@ hottest render routines.
 - **⌨ HolyC Editor** - write & run TempleOS HolyC compiled *natively* to WASM (no emulation).
   Save/open `.HC` files, or write your source straight into `C:/Home` for the OS to run.
 - **Games** - every game has Run in Browser, Run in TempleOS and Edit source. Browser play
-  uses direct compilation for HolyCraft and Snake and an isolated HEMU session for the
-  32 upstream packages. The main desktop pauses during browser play and resumes on close.
+  uses HolyC-WASM exclusively, including editor previews. Unsupported native APIs are
+  reported as compilation errors; only Run in TempleOS invokes the emulator. The main desktop pauses during browser play and resumes on close.
   Edit source keeps the code and playable preview together, with Run again to apply edits.
 - **⏸ Pause** - freeze and resume the OS (guest time stops too).
 - **💾 Disk & Save** - export a **snapshot** (the whole running OS - reload it later to resume
@@ -127,9 +127,9 @@ Natural shading is the default. It fits the unmodified source color with up to t
 
 The desktop Terry animation uses 251 palette-indexed .GR frames at 176 pixels tall, preserving the original 25 fps timing. Run `node tools/build-terry-sprites.mjs` with FFmpeg and ffprobe installed to regenerate `assets/terry-sprites.gr.gz` from the original GIFs.
 
-Games request mouse capture through the guest input bridge. Click the game screen to capture the mouse; Esc releases it into hybrid mode. Clicking or focusing TempleOS again keeps the cursor free, even if the guest keeps requesting capture. Use Capture mouse to capture again; native editor previews also support Shift+click. Use the Keys window's Esc button to send Esc to TempleOS. The Capture mouse button also allows manual capture. Focus loss, window changes and OS restarts clear held keys and mouse buttons. HolyCraft uses relative mouse movement and explicit held-key state in both execution paths.
+Games request mouse capture through the guest input bridge. Click the game screen to capture the mouse; Esc releases it into hybrid mode. Clicking or focusing TempleOS again keeps the cursor free, even if the guest keeps requesting capture. Use Capture mouse to capture again; the HolyC Editor has its own capture button above the native preview. Native previews also support Shift+click and manual capture for programs that do not request it themselves. Use the Keys window's Esc button to send Esc to TempleOS. The Capture mouse button also allows manual capture. Focus loss, window changes and OS restarts clear held keys and mouse buttons. HolyCraft uses relative mouse movement and explicit held-key state in both execution paths.
 
-The Games menu puts HolyCraft, TOOM and Snake first. Every description credits the author and links to the original source. Its 63 entries include 47 games and interactive demos by Terry, 8 games or adaptations by TheTinkerer, 6 HolyC games by Austin Sierra, and HolyCraft and Snake. Authors are checked against Terry's official discs and the developers' source histories. See [games/AUTHORS.md](games/AUTHORS.md) for the inventory and attribution evidence. Both runners install the same pinned, checksum-verified packages. See [games/README.md](games/README.md) for sources and refresh instructions.
+The Games menu puts HolyCraft, TOOM and Snake first. Every description credits the author and links to the original source. Its 63 entries include 47 games and interactive demos by Terry, 8 games or adaptations by TheTinkerer, 6 HolyC games by Austin Sierra, and HolyCraft and Snake. Authors are checked against Terry's official discs and the developers' source histories. See [games/AUTHORS.md](games/AUTHORS.md) for the inventory and attribution evidence. Both destinations read the same pinned, checksum-verified sources; only Run in TempleOS installs files in the guest. See [games/README.md](games/README.md) for sources and refresh instructions.
 
 Developers can propose a game from the submission section at the bottom of the Games window. It opens a GitHub issue draft asking for the game's source, author credit, launch instructions, screenshots and permission to share its code and assets.
 
@@ -137,7 +137,7 @@ Edit source opens the selected game's project in HolyC Editor. The source select
 
 Run plays the game beside its source using the same runner as Run in Browser. You can keep editing or switch source files during play. Run again restarts the whole project with a snapshot of all current edits; Stop ends the preview. On narrow screens, scroll inside the editor to move between source and preview. Closing the editor or returning to Games also stops its preview.
 
-Browser sessions use their own temporary TempleOS disk and memory. Closing one ends that session; the main desktop and its disk stay separate. Source drafts persist, but in-game saves in a browser session do not survive closing it. Use Run in TempleOS and Disk & Save when retaining guest progress matters. Browser compatibility sessions run the same guest kernel and input controller as the desktop; they do not claim direct HolyC-to-WASM support for missing TempleOS APIs.
+Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. HolyCraft and Snake are native games; the 61 original upstream packages still require native compatibility work and remain available through the explicit Run in TempleOS button. Run `node tools/native-games-audit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability.
 
 `node tools/game-source.test.mjs` checks all 298 source files, byte preservation for the 65 files with embedded sprites, draft persistence, edited installations, restoration, partial-write recovery and OS restarts.
 
@@ -146,6 +146,8 @@ node tools/sprite-codec.test.mjs
 node tools/sprite-player.test.mjs
 node tools/guest-fps.test.mjs
 node tools/holycraft-input.test.mjs
+node tools/game-capture.test.mjs
+node tools/native-project.test.mjs
 node tools/framebuffer.test.mjs
 node tools/verify-games.mjs
 node tools/game-credits.test.mjs

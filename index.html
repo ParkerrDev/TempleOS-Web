@@ -4,8 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>TempleOS - the real 64-bit OS in your browser</title>
-  <script>window.__gameSessionId = new URLSearchParams(location.search).get('gameSession'); if(window.__gameSessionId)document.documentElement.classList.add('game-session');</script>
-  <link rel="stylesheet" href="game-session.css" />
   <link rel="icon" href="assets/Logo128x152.jpg" type="image/jpeg" />
   <link rel="apple-touch-icon" href="assets/Logo128x152.jpg" />
   <!-- cross-origin isolation removed (QEMU-era relic; HEMU uses no SharedArrayBuffer): being
@@ -209,6 +207,8 @@
     .ed-body { flex:1 1 auto; min-height:0; display:flex; gap:6px; }
     .ed-pane { flex:1 1 0; min-width:0; display:flex; flex-direction:column; border:3px double var(--blue); background:#fff; }
     .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:12px; letter-spacing:0; }
+    .ed-screenhead { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px; }
+    .ed-screenhead button { display:inline-flex; align-items:center; gap:5px; width:auto; padding:3px 6px; font-size:11px; }
     .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }
     #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;
         font-family:'TempleOS','dos_vga',monospace; font-size:12px; line-height:1.0; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
@@ -246,8 +246,6 @@
     #editorOverlay.gameproject #gamePreviewStatus { display:block; flex:0 0 auto; padding:5px; font-size:11px; overflow-wrap:anywhere; }
     #editorOverlay.gameproject .ed-screenwrap { flex:1 1 auto; min-height:0; overflow:hidden; }
     #editorOverlay.gameproject #editorWin #screen { width:auto; height:auto; max-width:100%; max-height:100%; }
-    #editorOverlay.gameproject .game-session-preview #screen { display:none; }
-    #editorOverlay.gameproject #gameSessionFrame { width:100%; height:100%; min-height:0; }
     #editorOverlay.gameproject #console { flex:0 1 auto; min-height:48px; max-height:100px; }
     body.stack #editorOverlay.gameproject .ed-body { flex:1 1 auto; overflow:auto; }
     body.stack #editorOverlay.gameproject .ed-pane:first-child { flex:1 0 240px; }
@@ -257,7 +255,6 @@
     #gameWinBar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:8px; }
     #gameWinBar button { width:auto; }
     #gameWinStatus { font-size:12px; max-width:640px; }
-    #gameSessionFrame { display:block; width:min(800px,88vw); height:min(660px,75vh); border:0; background:#000; }
     /* ---- Games launcher ---- */
     #gamesWin { width:min(740px,94vw); }
     .gm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; padding:6px 2px; }
@@ -447,7 +444,7 @@
         <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico">↻</span> Restart</button>
         <button id="fsBtn" title="Show the OS fullscreen"><span class="ico">⛶</span> Fullscreen</button>
         <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly - no emulation, native speed"><span class="ico">⌨︎</span> HolyC Editor</button>
-        <button id="gamesBtn" title="Run games in TempleOS or a separate browser window, and edit their HolyC source"><span class="ico">▦</span> Games</button>
+        <button id="gamesBtn" title="Run games with HolyC-WASM or explicitly in TempleOS, and edit their source"><span class="ico">▦</span> Games</button>
         <button id="spritesBtn" title="Convert images, GIFs and video to TempleOS sprites"><span class="ico">▧</span> Sprite Studio</button>
         <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
         <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico">▤</span> Disk &amp; Save</button>
@@ -528,7 +525,7 @@
           <div class="ed-editwrap"><pre id="editorHL" aria-hidden="true"></pre><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea></div>
         </section>
         <section class="ed-pane">
-          <div class="ed-h">Screen - 640×480, 16-color</div>
+          <div class="ed-h ed-screenhead"><span>Screen - 640×480, 16-color</span><button id="gameCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this preview; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button></div>
           <div id="gamePreviewStatus" role="status"></div>
           <div class="ed-screenwrap"><canvas id="screen" width="640" height="480" tabindex="0"></canvas></div>
           <div class="ed-h">Console</div>
@@ -540,7 +537,7 @@
   </div>
 
   <!-- Games launcher: source projects are loaded on demand. Browser play uses the
-       direct compiler or an isolated TempleOS session, including in the editor preview. -->
+       HolyC-WASM compiler for both browser play and editor previews. -->
   <div id="gamesOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Games">
     <div class="win" id="gamesWin" data-title="Games">
       <span class="close" id="gamesClose" title="Close">[X]</span>
@@ -657,7 +654,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-40: Verified game authors, 63 catalog entries with Terry supplemental and Austin Sierra games, visible PNG2GR creator credit, sticky hybrid mouse mode in both runners, and corrected x87 subtraction/division operand order for game physics. render-39: Compact Sprite Studio, shared desktop cursor, themed scrollbars and file control; FPS from TempleOS window-manager telemetry and native frame signals. render-38: Game submissions at the bottom of the Games window with a prepared GitHub issue form. render-37: Edit and play games side by side, author and source credits, and pointer-tracked window dragging. render-36: Both launch destinations and editable game projects across the catalog, preserved sprites and isolated browser game sessions. render-35: Sprite Studio opens only from the menu; mouse capture keeps its icon in both states. render-34: Natural source-color mixtures and restrained fixed dithering without forced saturation. render-33: Hue-preserving stock-palette sprites, restored blue denim and pale warm tones, local source-fleck removal. render-32: Clean sprite colors, preserved warm midtones and optional dither strength defaulting to zero. render-31: Restrained sprite colors and stable blue-noise dithering without a repeating grid. render-30: Warm stable sprite dithering, native 25 fps Terry timing, cached frame playback and worker conversion. render-29: Desktop Sprite Studio, GR Terry animation, guest-aware mouse capture, relative HolyCraft look and lossless keyboard input. render-28: FTST and native Sign correctness, VGA palette I/O, persistent 32-bit ATA writes, raw compressed uploads, recycled-code JIT validation. render-27: Exact duplicate framebuffer suppression, Sprite Studio, pinned TinkerOS game packages, TOOM with Freedoom, and guest job execution. render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix - a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) - no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys. render-26: Castle Frankenstein (and any 3D game using a DC transform) renders correctly - the GrFillPoly3 HLE now falls back to the OS unless the DC transform is identity (so transformed polys are no longer rasterized as raw model coords); screen-space games like HolyCraft/Varoom keep the HLE (Hemu-wasm a68c3e8)";
+    window.__BUILD = "render-42: Strict HolyC-WASM browser games and editor previews, multi-file native projects with frozen drafts, explicit native compatibility errors, and TempleOS only through Run in TempleOS. render-41: Capture mouse inside the HolyC Editor preview, route capture to the active native or emulated game, and preserve hybrid release. render-40: Verified game authors, 63 catalog entries with Terry supplemental and Austin Sierra games, visible PNG2GR creator credit, sticky hybrid mouse mode in both runners, and corrected x87 subtraction/division operand order for game physics. render-39: Compact Sprite Studio, shared desktop cursor, themed scrollbars and file control; FPS from TempleOS window-manager telemetry and native frame signals. render-38: Game submissions at the bottom of the Games window with a prepared GitHub issue form. render-37: Edit and play games side by side, author and source credits, and pointer-tracked window dragging. render-36: Both launch destinations and editable game projects across the catalog, preserved sprites and isolated browser game sessions. render-35: Sprite Studio opens only from the menu; mouse capture keeps its icon in both states. render-34: Natural source-color mixtures and restrained fixed dithering without forced saturation. render-33: Hue-preserving stock-palette sprites, restored blue denim and pale warm tones, local source-fleck removal. render-32: Clean sprite colors, preserved warm midtones and optional dither strength defaulting to zero. render-31: Restrained sprite colors and stable blue-noise dithering without a repeating grid. render-30: Warm stable sprite dithering, native 25 fps Terry timing, cached frame playback and worker conversion. render-29: Desktop Sprite Studio, GR Terry animation, guest-aware mouse capture, relative HolyCraft look and lossless keyboard input. render-28: FTST and native Sign correctness, VGA palette I/O, persistent 32-bit ATA writes, raw compressed uploads, recycled-code JIT validation. render-27: Exact duplicate framebuffer suppression, Sprite Studio, pinned TinkerOS game packages, TOOM with Freedoom, and guest job execution. render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix - a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) - no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys. render-26: Castle Frankenstein (and any 3D game using a DC transform) renders correctly - the GrFillPoly3 HLE now falls back to the OS unless the DC transform is identity (so transformed polys are no longer rasterized as raw model coords); screen-space games like HolyCraft/Varoom keep the HLE (Hemu-wasm a68c3e8)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -774,8 +771,10 @@
     const btnBit=e=>e.button===0?1:e.button===2?2:0;
     const captureButton=$('captureBtn'), captureLabel=$('captureLabel');
     const updateFocusText=()=>{
-      captureLabel.textContent=document.pointerLockElement?'Release mouse':'Capture mouse';
-      captureButton.setAttribute('aria-pressed',String(!!document.pointerLockElement));
+      const captured=!!document.pointerLockElement||!!window.__gameMouse?.isMouseCaptured();
+      captureLabel.textContent=captured?'Release mouse':'Capture mouse';
+      captureButton.setAttribute('aria-pressed',String(captured));
+      document.body.classList.toggle('mouse-locked',captured);
       tbKey.textContent=locked()?'mouse captured · Esc releases':captureWanted()?'click the screen to capture the mouse':focused?'hybrid mouse · keys → OS · Ctrl+V pastes':'click the screen to use the OS';
     };
     const releaseHeld=()=>{
@@ -803,13 +802,22 @@
       try{const request=canvas.requestPointerLock();request?.catch(()=>{tbKey.textContent='Mouse capture unavailable. Click the screen to retry.';});}
       catch{tbKey.textContent='Mouse capture unavailable in this browser.';}
     };
+    window.__osMouse={
+      captureMouse:()=>{hybridMouse=false;explicitCapture=true;requestCapture();return true;},
+      releaseMouse:()=>{hybridMouse=true;explicitCapture=false;releaseHeld();if(locked())document.exitPointerLock();},
+      isMouseCaptured:locked,
+      isRunning:()=>true,
+    };
+    dispatchEvent(new Event('game-mouse-change'));
+    addEventListener('game-mouse-change',updateFocusText);
     captureButton.addEventListener('click',()=>{
+      if(window.__gameMouse?.toggle())return;
       if(document.pointerLockElement){
         hybridMouse=true;explicitCapture=false;
         window.__holycEditor?.releaseMouse?.();document.exitPointerLock();return;
       }
       if(window.__holycEditor?.captureMouse?.())return;
-      hybridMouse=false;explicitCapture=true;requestCapture();
+      window.__osMouse.captureMouse();
     });
     document.addEventListener('pointerlockchange',()=>{
       // Releasing capture is a user preference, not another request to capture.
@@ -818,6 +826,7 @@
       wasMouseLocked=locked();
       releaseHeld();focused=locked();
       document.body.classList.toggle('mouse-locked',!!document.pointerLockElement);updateFocusText();
+      dispatchEvent(new Event('game-mouse-change'));
     });
     document.addEventListener('pointerlockerror',()=>{tbKey.textContent='Mouse capture unavailable. Click the screen to retry.';});
     const overCanvas=e=>{const r=canvas.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom?r:null;};
@@ -1002,7 +1011,6 @@
       for (const [label, sc, mod, e0] of KEYS) {
         const b = document.createElement("button");
         b.textContent = label; b.type = "button"; if (mod) b.className = "mod";
-        if(window.__gameSessionId && ['Esc','Enter','Space'].includes(label))b.classList.add('session-key');
         b.addEventListener("pointerdown", (e) => { e.preventDefault();
           if (mod) {
             if (latched.has(sc)) { latched.delete(sc); b.classList.remove("on"); br(sc, e0); }
@@ -1126,8 +1134,8 @@
       del: async (k) => { const db = await idb.open(); return new Promise((res) => { const t = db.transaction("kv", "readwrite").objectStore("kv").delete(k); t.onsuccess = res; t.onerror = res; }); },
     };
     window.__idb = idb;
-    const importedSnap = window.__gameSessionId ? null : await idb.get("importSnap").catch(() => null);
-    const importedDisk = window.__gameSessionId ? null : await idb.get("importDisk").catch(() => null);
+    const importedSnap = await idb.get("importSnap").catch(() => null);
+    const importedDisk = await idb.get("importDisk").catch(() => null);
     if (importedSnap) await idb.del("importSnap");
     if (importedDisk) { await idb.del("importDisk"); window.__importDisk = importedDisk; }   // raw bytes -> worker init
 
@@ -2079,7 +2087,7 @@ I64 GodDoodleGen(I64 strokes)
 
     }
 
-    if(!window.__gameSessionId)import("./terry-sprite.js").then(({playTerrySprite}) => playTerrySprite($("terrySprite"))).catch(console.error);
+    import("./terry-sprite.js").then(({playTerrySprite}) => playTerrySprite($("terrySprite"))).catch(console.error);
 
     // ---- topbar: last key pressed (focus-state text is owned by setFocused) ----
     addEventListener("keydown", (e) => {

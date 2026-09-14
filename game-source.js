@@ -79,21 +79,30 @@ async function loadProject(game,id) {
       return true;
     }catch{return false;}
   }
+  async function overrides(){
+    // Freeze all drafts before asynchronous file reads so an edit during startup
+    // belongs to the next run, in either execution destination.
+    const drafts=sources.map(file=>({file,text:texts.has(file.path)?texts.get(file.path):saved(file.path)}));
+    const result=new Map();
+    for(const {file,text} of drafts){
+      if(text===null)continue;
+      const doc=await open(file.path);
+      if(text!==doc.original)result.set(file.path,doc.encode(text));
+    }
+    return result;
+  }
   return {
     id,name:game.name,entry:pkg.entry,sources,open,change,
     async reset(path){const doc=await open(path);change(path,doc.original);return doc.original;},
     async bytes(path){const doc=await open(path);return doc.encode(texts.get(path));},
-    async overrides(){
-      // Capture every draft before fetching any unopened source. Edits made while
-      // the preview loads belong to the next run, including changes in other files.
-      const drafts=sources.map(file=>({file,text:texts.has(file.path)?texts.get(file.path):saved(file.path)}));
-      const result=new Map();
-      for(const {file,text} of drafts){
-        if(text===null)continue;
-        const doc=await open(file.path);
-        if(text!==doc.original)result.set(file.path,doc.encode(text));
+    overrides,
+    async native(){
+      const drafts=await overrides(),files=[];
+      for(const file of sources){
+        const raw=drafts.get(file.path) ?? (game.packageId?await gameFile(file):(await open(file.path)).encode((await open(file.path)).original));
+        files.push({path:file.path,source:sourceDocument(raw,!game.packageId).original});
       }
-      return result;
+      return {source:files.find(file=>file.path===pkg.entry).source,filename:pkg.entry,files,nativeGame:true};
     },
   };
 }

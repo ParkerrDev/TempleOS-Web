@@ -50,7 +50,7 @@ games by the three requested authors.
 Upstream source and embedded DolDoc sprites are retained under `games/upstream`.
 Em dashes in UTF-8 text are normalized to hyphens; binary sprite data is unchanged.
 Where V5.03 needs a compatibility change, a separate Browser file supplies the
-installed version. Both game runners and the HolyC editor use the same package.
+installed version. Both launch destinations and the HolyC editor use the same source package.
 The editor preserves binary sprite records when changing source text.
 
 ## Compatibility
@@ -62,6 +62,9 @@ MarioClone initializes its game state, allocates all 32 particle slots, bounds t
 access and restarts from the packaged level path. HEMU fixes the reversed x87
 register subtraction/division operands that broke its collision coordinates. Malicious Testimonies has a stock-TempleOS single-player adapter; its upstream
 Aiwnios networking is unavailable in the offline guest and is identified in the UI.
+These compatibility adapters and runtime smoke checks target the explicit TempleOS runner.
+Browser play and editor previews now use HolyC-WASM exclusively; the upstream games
+still need native ports. Guest startup checks do not establish native compatibility.
 Runtime smoke checks establish that a title compiles and opens, not that every level
 or possible interaction has been exhaustively tested.
 

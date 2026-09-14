@@ -1,6 +1,6 @@
 # Game packages
 
-Every game offers Run in Browser, Run in TempleOS and Edit source. HolyCraft and Snake compile directly to WebAssembly for browser play. The 61 upstream packages listed in [AUTHORS.md](AUTHORS.md), including Terry's supplemental-disc games, TheTinkerer's additions and Austin Sierra's games, use an isolated HEMU session for browser play or install into the main desktop's C: drive for Run in TempleOS. Browser sessions close without changing the main desktop's files.
+Every game offers Run in Browser, Run in TempleOS and Edit source. Run in Browser and HolyC Editor previews use HolyC-WASM exclusively, compiling the package's entry and included source files with the current drafts. They never create a HEMU session. HolyCraft and Snake support native play; the 61 upstream packages need further native compatibility work and report unsupported APIs in Console. Run in TempleOS explicitly installs and launches the package in the main desktop's guest.
 
 HolyC Editor exposes the package's HolyC files through a source selector. Local edits apply to both runners. The text before a document's NUL separator is editable; the original embedded sprite bytes are appended unchanged when downloading or installing the file. Restoring a file also restores it in a previously modified guest installation on the next launch. Upstream drafts are keyed by source checksum to avoid combining source from one revision with sprite records from another.
 

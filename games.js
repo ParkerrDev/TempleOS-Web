@@ -28,7 +28,7 @@ export const GAMES = [
     how: "W/S move · A/D strafe · R/F up/down · move MOUSE or J/L/I/K to look · LEFT-click break · RIGHT-click place · 1-9 pick block · Esc quit" },
   { file: "Snake.HC", name: "Snake", blurb: "The classic. Eat the apples, don't bite your tail.",
     how: "W/A/S/D to steer · Esc to quit" },
-  // Upstream titles use the TempleOS runtime in the desktop or an isolated game window.
+  // Both source collections use HolyC-WASM for browser play; TempleOS is explicit.
   { name: "Varoom",        disk: "C:/Home/Games/TinkerOS/Varoom.HC", packageId: "tinker-Varoom",        blurb: "Top-down racing - keep your foot down and hold the track." },
   { name: "Talons",        disk: "C:/Home/Games/TinkerOS/Talons.HC", packageId: "tinker-Talons",        blurb: "Joust-style aerial combat: flap above your foe and skewer them." },
   { name: "BlackDiamond",  disk: "C:/Home/Games/TinkerOS/BlackDiamond.HC", packageId: "tinker-BlackDiamond",  blurb: "Downhill skiing - carve the slope and dodge the trees." },
@@ -101,7 +101,7 @@ for (const g of GAMES) {
   c.append(by);
   const row = document.createElement("div"); row.className = "gm-btns";
   const bB=document.createElement("button");bB.className="gm-play";bB.textContent="Run in Browser";
-  bB.title=g.packageId?"Run in a separate HEMU game session":"Compile directly to WebAssembly";
+  bB.title="Compile HolyC directly to WebAssembly";
   bB.addEventListener("click",()=>runInBrowser(g));row.append(bB);
   const bT=document.createElement("button");bT.className="gm-play";bT.textContent="Run in TempleOS";
   bT.addEventListener("click",()=>runInTempleOS(g));row.append(bT);
@@ -122,7 +122,6 @@ gmSearch.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (gmSe
 let curGame = null;
 const setStatus = (s) => {
   document.getElementById("status").textContent=s;
-  if(window.__gameSessionId&&parent!==window)parent.postMessage({type:'game-session-status',text:s},location.origin);
 };
 let editorGame=null,editorProject=null,editorPath=null,editorLoading=false,editorToken=0,editorRequest=0;
 const editor=document.getElementById('editor'),fileSelect=document.getElementById('gameFile'),draft=document.getElementById('gameDraft');
@@ -165,8 +164,8 @@ async function editGame(g){
     document.getElementById('gameTitle').textContent=g.name;
     document.getElementById('gameRun').title='Run the latest edits in the preview. Run again to restart with new edits.';
     ovE.classList.add('gameproject');
-    document.getElementById('editorRuntimeInfo').textContent='Edit the source, then Run to play here. Run again to apply new edits. Esc releases a captured mouse.';
-    document.getElementById('gamePreviewStatus').textContent=g.packageId?'Ready. Preview uses an isolated TempleOS session.':'Ready. Preview compiles directly to WebAssembly.';
+    document.getElementById('editorRuntimeInfo').textContent='Edit, Run and play here. Capture mouse above the preview; Esc returns to hybrid mode. Run again to apply edits.';
+    document.getElementById('gamePreviewStatus').textContent='Ready. Preview compiles with HolyC-WASM.';
     const screen=document.getElementById('screen');screen.getContext('2d').clearRect(0,0,screen.width,screen.height);
     document.getElementById('console').textContent='';
     window.__gameEditor={filename:()=>(editorPath||project.entry).split('/').pop(),bytes:()=>project.bytes(editorPath||project.entry)};
@@ -185,8 +184,30 @@ document.getElementById("gamesBtn").addEventListener("click", openGames);
 document.getElementById("gamesClose").addEventListener("click", closeGames);
 ovG.addEventListener("mousedown", (e) => { if (e.target === ovG) closeGames(); });
 
-let gameFrame=null,releaseDesktop=null,nativeStatus=null,launchToken=0,runnerTarget=null,runnerOverrides=null;
+let releaseDesktop=null,nativeStatus=null,launchToken=0,runnerTarget=null;
 const runnerStatus=()=>document.getElementById(runnerTarget==='editor'?'gamePreviewStatus':'gameWinStatus');
+const previewCapture=document.getElementById('gameCapture');
+const previewMouse=()=>window.__holycEditor;
+function updatePreviewMouse(){
+  const mouse=previewMouse(),captured=!!mouse?.isMouseCaptured();
+  previewCapture.disabled=!mouse?.isRunning();
+  previewCapture.setAttribute('aria-pressed',String(captured));
+  previewCapture.querySelector('span').textContent=captured?'Release mouse':'Capture mouse';
+}
+function togglePreviewMouse(){
+  const mouse=previewMouse();
+  if(!mouse?.isRunning())return;
+  if(mouse.isMouseCaptured())mouse.releaseMouse();else mouse.captureMouse();
+}
+previewCapture.addEventListener('click',togglePreviewMouse);
+addEventListener('game-mouse-change',updatePreviewMouse);
+window.__gameMouse={
+  toggle:()=>{
+    if(!runnerTarget&&!ovE.classList.contains('open'))return false;
+    togglePreviewMouse();return true;
+  },
+  isMouseCaptured:()=>!!previewMouse()?.isMouseCaptured(),
+};
 async function runInBrowser(g,{inEditor=false}={}) {
   window.__cancelGameEditorLoad();
   closeGameWin();const token=launchToken;curGame=g;closeGames();
@@ -204,52 +225,36 @@ async function runInBrowser(g,{inEditor=false}={}) {
     if(!win.querySelector(':scope > .wbar')){win.dataset.title=g.name;window.__winChrome?.dress(win);}
     overlay.classList.add('open');window.__winChrome?.raise(overlay);
   }
-  status.textContent=g.packageId?'Starting isolated HEMU game session...':'Direct HolyC to WebAssembly';
+  status.textContent='Compiling with HolyC-WASM...';
   try{
-    if(g.packageId){
-      const overrides=await (await gameProject(g)).overrides();
-      if(token!==launchToken)return;
-      runnerOverrides=overrides;
-      gameFrame=document.createElement('iframe');gameFrame.id='gameSessionFrame';gameFrame.title=g.name+' game session';
-      gameFrame.allowFullscreen=true;
-      gameFrame.src='?gameSession='+encodeURIComponent(g.packageId);
-      if(inEditor)slot.classList.add('game-session-preview');
-      slot.append(gameFrame);
-    }else{
-      const source=await gameSrc(g);await window.__loadEditorApp();
-      if(token!==launchToken)return;
-      if(!inEditor)window.__leaveGameEditor();
-      const screen=document.getElementById('screen');slot.append(screen);
-      if(!inEditor)win.append(document.getElementById('console'));
-      const sourceStatus=document.getElementById('status');
-      nativeStatus=new MutationObserver(()=>{status.textContent='Direct WebAssembly: '+sourceStatus.textContent;});
-      nativeStatus.observe(sourceStatus,{childList:true,characterData:true,subtree:true});
-      await window.__holycEditor.runIn(screen,source,{preserveEditor:inEditor});document.getElementById('screen').focus();
-    }
-  }catch(e){if(token!==launchToken)return;status.textContent='Could not run game: '+e.message;releaseDesktop?.();releaseDesktop=null;}
+    const project=await (await gameProject(g)).native();
+    await window.__loadEditorApp();
+    if(token!==launchToken)return;
+    if(!inEditor)window.__leaveGameEditor();
+    const screen=document.getElementById('screen');slot.append(screen);
+    if(!inEditor)win.append(document.getElementById('console'));
+    const sourceStatus=document.getElementById('status');
+    nativeStatus=new MutationObserver(()=>{status.textContent='HolyC-WASM: '+sourceStatus.textContent;});
+    nativeStatus.observe(sourceStatus,{childList:true,characterData:true,subtree:true});
+    const {source,...options}=project;
+    await window.__holycEditor.runIn(screen,source,{...options,preserveEditor:inEditor});
+    document.getElementById('screen').focus();
+  }catch(e){if(token!==launchToken)return;status.textContent='HolyC-WASM could not run this game: '+e.message;releaseDesktop?.();releaseDesktop=null;}
 }
-addEventListener('message',async event=>{
-  if(event.origin!==location.origin||!gameFrame||event.source!==gameFrame.contentWindow)return;
-  const frame=gameFrame;
-  if(event.data?.type==='game-session-ready'){
-    try{
-      frame.contentWindow.postMessage({type:'game-session-launch',overrides:[...runnerOverrides]},location.origin);
-    }catch(e){runnerStatus().textContent=e.message;}
-  }else if(event.data?.type==='game-session-status')runnerStatus().textContent='TempleOS preview: '+String(event.data.text);
-});
+
 function closeGameWin() {
   ++launchToken;
+  if(previewMouse()?.isMouseCaptured())previewMouse().releaseMouse();
   nativeStatus?.disconnect();nativeStatus=null;
   window.__holycEditor?.stop();
-  if(gameFrame){gameFrame.remove();gameFrame=null;}
   const screen=document.getElementById('screen'),home=document.querySelector('#editorWin .ed-screenwrap');
   if(screen&&home&&screen.parentNode!==home)home.append(screen);
   const output=document.getElementById('console'),outputHome=document.querySelector('#editorWin .ed-pane:last-child');
   if(output&&outputHome&&output.parentNode!==outputHome)outputHome.append(output);
-  home?.classList.remove('game-session-preview');
   document.getElementById('gameStop').disabled=true;
   document.getElementById('gameRun').textContent='▶ Run';
-  runnerTarget=null;runnerOverrides=null;
+  runnerTarget=null;
+  updatePreviewMouse();
   document.getElementById('gameWinOverlay').classList.remove('open','free');
   releaseDesktop?.();releaseDesktop=null;
 }
@@ -286,7 +291,7 @@ window.__gameLaunchFailure = (message) => {
 };
 async function runInTempleOS(g,suppliedOverrides=null) {                                            // ▤ install + #include in the OS (HEMU)
   if (packageLaunchBusy) { toast("A game is already being prepared. Please wait."); return; }
-  if(!window.__gameSessionId)closeGameWin();
+  closeGameWin();
   packageLaunchBusy = true;
   try {
   curGame = g;
@@ -344,27 +349,4 @@ async function runInTempleOS(g,suppliedOverrides=null) {                        
   }
   } catch(e) { setStatus("Launch failed: "+e.message);toast(e.message.replace(/[<>&]/g,"")); }
   finally { packageLaunchBusy = false; }
-}
-
-
-if(window.__gameSessionId){
-  const game=GAMES.find(g=>(g.packageId||g.file)===window.__gameSessionId);
-  let requested=false;
-  const start=async overrides=>{
-    if(requested)return;requested=true;
-    if(!game){setStatus('Unknown game.');return;}
-    document.title=game.name+' | Browser game';
-    for(let attempt=0;attempt<60;attempt++){
-      if(window.__launchInOS){await runInTempleOS(game,overrides);return;}
-      await new Promise(resolve=>setTimeout(resolve,1000));
-    }
-    setStatus('The game engine did not start. Close this window and try again.');
-  };
-  if(parent===window)start(null);
-  else{
-    addEventListener('message',event=>{
-      if(event.source===parent&&event.origin===location.origin&&event.data?.type==='game-session-launch')start(new Map(event.data.overrides));
-    });
-    parent.postMessage({type:'game-session-ready'},location.origin);
-  }
 }
