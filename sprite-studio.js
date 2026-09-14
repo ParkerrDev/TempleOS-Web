@@ -1,6 +1,16 @@
 import { PALETTE, MAX_PIXELS, MAX_FRAMES, toRGBA, encodeGR, decodeGR, encodeGIF, spritePackage } from './sprite-codec.js';
 import {createSpritePlayer} from './sprite-player.js';
 const $ = id => document.getElementById(id);
+// The iframe shares the desktop cursor so it stays consistent across window edges.
+const desktopCursor = window !== parent ? parent.__desktopCursor : null;
+if (desktopCursor?.enabled) {
+  document.body.classList.add('xcursor');
+  const moveCursor = event => desktopCursor.move(event, window.frameElement);
+  addEventListener('pointermove', moveCursor, {capture:true, passive:true});
+  addEventListener('pointerdown', moveCursor, {capture:true, passive:true});
+  document.addEventListener('mouseleave', desktopCursor.hide);
+  addEventListener('blur', desktopCursor.hide);
+}
 let source = null, frames = [], originals = [], previews = [], size = {width:160,height:120}, delayMs = 40;
 let player = null, ff = null, busy = false, cancelled = false;
 let cancelMapping = null;

@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {createGuestFpsMeter} from '../guest-fps.js';
+
+let now=0;
+const meter=createGuestFpsMeter(()=>now);
+assert.equal(meter.text(),'FPS: …');
+meter.sample(29.6,10);
+assert.equal(meter.text(),'FPS: 30','Use the guest FPS even when the host refreshes at a different rate');
+for(let n=0;n<120;n++){now+=16;meter.sample(60,10);}
+assert.equal(meter.text(),'FPS: 0','Repeated host frame messages cannot make a stalled guest look active');
+meter.sample(24.2,11);
+assert.equal(meter.text(),'FPS: 24','An advancing guest recovers immediately');
+now+=1000;
+meter.sample(24.2,12);
+assert.equal(meter.text(),'FPS: 24','Identical pixels still count when the guest renders another frame');
+for(const [fps,updates] of [[NaN,13],[Infinity,13],[-1,13],[30,NaN],[30,1.5],[30,-1],[30,Number.MAX_SAFE_INTEGER+1]])meter.sample(fps,updates);
+assert.equal(meter.text(),'FPS: 24','Invalid telemetry does not replace the last valid sample');
+meter.setPaused(true);
+assert.equal(meter.paused,true);
+assert.equal(meter.text(),'FPS: 0');
+meter.sample(30,14);
+meter.setPaused(false);
+assert.equal(meter.text(),'FPS: …','Wait for a fresh sample after resuming');
+meter.sample(60,15);
+assert.equal(meter.text(),'FPS: 60');
+meter.reset();
+assert.equal(meter.text(),'FPS: …');
+meter.sample(10,0);
+assert.equal(meter.text(),'FPS: 10','A restarted guest may reset its counter');
+now+=1500;
+assert.equal(meter.text(),'FPS: 0');
+console.log('Guest FPS meter passed: guest cadence, duplicate messages, stalls, pause/resume, reset and invalid telemetry.');

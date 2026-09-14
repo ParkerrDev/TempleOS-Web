@@ -1,0 +1,497 @@
+{
+  "tinkerRevision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+  "archives": [
+    {
+      "url": "https://templeos.org/Downloads/TempleOS.ISO",
+      "sha256": "5d0fc944e5d89c155c0fc17c148646715bc1db6fa5750c0b913772cfec19ba26"
+    },
+    {
+      "url": "https://templeos.org/Downloads/TOS_Supplemental1.ISO.C",
+      "sha256": "fac6ce2eec2b928384ac9d1fec4d50904980f2af0e42775647afa01db1584923"
+    },
+    {
+      "url": "https://templeos.org/Downloads/TOS_Supplemental2.ISO.C",
+      "sha256": "5130ab6a6261460d2e437b672cc64fdbedeadc3b92308a7bb61f76092397deaa"
+    },
+    {
+      "url": "https://templeos.org/Downloads/TOS_Supplemental3.ISO.C",
+      "sha256": "dc1ed4de6f2a3be9ca129417b36d703e3d8831aae16546cec295e6c804442b01"
+    },
+    {
+      "url": "https://github.com/austings/GamesMirror/blob/main/Ezekiel.ISO_.zip",
+      "sha256": "e044cd514b28094f11be5d906fb19959c7b19104bf2b9cf01e39b06d4e603364"
+    },
+    {
+      "url": "https://github.com/austings/GamesMirror/blob/main/LordofHostsv3.ISO_(1).zip",
+      "sha256": "3b2199a8bbc2bc9292dc378b79dc4e32e4366012e187ef704499a8a302b6b35f"
+    },
+    {
+      "url": "https://github.com/austings/GamesMirror/blob/main/Temple.ISO_.C(1).zip",
+      "sha256": "450d696b0c0b8fa746ce4b3720120280e0b63ee4d2cb90239d856120fd1d6985"
+    }
+  ],
+  "evidence": [
+    {
+      "name": "BattleLines",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/BattleLines.HC",
+      "originalSha256": "52ccea640edf696a1b648e60adfb686268036faeb5c0622667eb64b25d247ec0",
+      "tinkerPath": "Demo/Games/BattleLines.HC",
+      "tinkerSha256": "c03377872a25690d98a91d6578f74303e662309c766b4f9a03f7009aa9921a86"
+    },
+    {
+      "name": "BigGuns",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/BigGuns.HC",
+      "originalSha256": "d03a46547f643b5b0b02de2172932a7f3a93f6951fe9125e3a92342185c7c1b4",
+      "tinkerPath": "Demo/Games/BigGuns.HC",
+      "tinkerSha256": "5fb8a614004ce5b4768321ace953f04f03a77d4affb23645001f40cb7186403a"
+    },
+    {
+      "name": "BlackDiamond",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/BlackDiamond.HC",
+      "originalSha256": "78534f1bf2d7e174986405db301c74b11c44c54b15d0bf0299d9631e7127e37e",
+      "tinkerPath": "Demo/Games/BlackDiamond.HC",
+      "tinkerSha256": "4eb4147d74624ea3c08e99faf58c2eaffebc792540c9a3968a6cb8925f10efbb"
+    },
+    {
+      "name": "BomberGolf",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/BomberGolf.HC",
+      "originalSha256": "9a4712a266cd19798a32dbc8406a1b2bb9524d1117abd7b546fffda5fd55023c",
+      "tinkerPath": "Demo/Games/BomberGolf.HC",
+      "tinkerSha256": "399ca4b634785f28139e69eddb69d8042ddf389d2522a762d329b79b10e14ef1"
+    },
+    {
+      "name": "CastleFrankenstein",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/CastleFrankenstein.HC",
+      "originalSha256": "2eb19bbf98230d18dfafd109e96c350be602a909de25df05ef50d4a5b22d8dc2",
+      "tinkerPath": "Demo/Games/CastleFrankenstein.HC",
+      "tinkerSha256": "f158f2412df4c60f63e25dd89e64b37ead7fb09ef946b418e0561074e20a8266"
+    },
+    {
+      "name": "CharDemo",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/CharDemo.HC",
+      "originalSha256": "dc3a215308c8f20680529a946503369139383274d94891e7cbe23dcd681e6c84",
+      "tinkerPath": "Demo/Games/CharDemo.HC",
+      "tinkerSha256": "46f09a78f27d2cde2684bc26c85e250f6d3f2495a38fd25ed5f1cde0afc95dbf"
+    },
+    {
+      "name": "CircleTrace",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/CircleTrace.HC",
+      "originalSha256": "7db74ca636fd3076f706f986b89e6e280d398d468da9cf6b9450b6fd690b0efe",
+      "tinkerPath": "Demo/Games/CircleTrace.HC",
+      "tinkerSha256": "732384d40a8c9ca475d8486cba77d573b668c916ead5799d43fdc84fa82a7c5e"
+    },
+    {
+      "name": "Collision",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Collision.HC",
+      "originalSha256": "6e6c2f6150aa6d2564be8df283767da9ce6b3bbfa874efe51878f7dda959dbe0",
+      "tinkerPath": "Demo/Games/Collision.HC",
+      "tinkerSha256": "fc64e73014f87b299ab84b7509e3ee6b0e01258c95c8da1113bdecad881c791a"
+    },
+    {
+      "name": "Digits",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Digits.HC",
+      "originalSha256": "a2566a4e90716530c52307fa6405cd995f55f85efb14c2be5b4d1c038f2d55b8",
+      "tinkerPath": "Demo/Games/Digits.HC",
+      "tinkerSha256": "59aef4d587ae9d1d702823f949a3b4aa9971d472c3b6f2b2b02730a5d3a1668e"
+    },
+    {
+      "name": "DunGen",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/DunGen.HC",
+      "originalSha256": "eca0cf31068a93d0570683ac16673f7f0d6bb6c8a97b18070d4f706948bd7e28",
+      "tinkerPath": "Demo/Games/DunGen.HC",
+      "tinkerSha256": "03b8e1e0ea9ba90e39a8dee3bdaf43f4e9a58baaa775585a6eb506baff35dcfc"
+    },
+    {
+      "name": "ElephantWalk",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/ElephantWalk.HC",
+      "originalSha256": "e68378015b665e9cea44e30feacd10bc5f353ee97bef943d94d772dee64f008d",
+      "tinkerPath": "Demo/Games/ElephantWalk.HC",
+      "tinkerSha256": "0eb630b8a07222464cf77a6c6e65c5999105fc1fa4af9f8757a1ccf7fa26bce0"
+    },
+    {
+      "name": "FlapBat",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/FlapBat.HC",
+      "originalSha256": "b0000d22e8870f7be275f60e9ce98de724582aad3cc0ab5b9dba786ea84e8ad4",
+      "tinkerPath": "Demo/Games/FlapBat.HC",
+      "tinkerSha256": "ec67a053bdf15d5affbd95c8c6272fd421213e495b197077083b210445b4d53e"
+    },
+    {
+      "name": "FlatTops",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/FlatTops.HC",
+      "originalSha256": "6c1ff880e80131ad7f8d7b4b1ff00815b6032de15b784460158b33634dc7825c",
+      "tinkerPath": "Demo/Games/FlatTops.HC",
+      "tinkerSha256": "ff297c623e1dd3edb215d6396cd796ab6bee16ae788e9317ec54b711518c524c"
+    },
+    {
+      "name": "Halogen",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Halogen.HC",
+      "originalSha256": "33474f3b6f933f430dca7d67439e9b467547bba665a5d8f9dd59c3235d5d90b5",
+      "tinkerPath": "Demo/Games/Halogen.HC",
+      "tinkerSha256": "4b536698b42e1a706d205565c15b039e6a238497c0cddff3f04c3d482c765588"
+    },
+    {
+      "name": "MassSpring",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/MassSpring.HC",
+      "originalSha256": "6420f57253c07121587b500b3ea103a3647b5e6460995185e4b31f7edc528db0",
+      "tinkerPath": "Demo/Games/MassSpring.HC",
+      "tinkerSha256": "e3e8ea1ca49b1c40706b7342ffb24712c093d045fc0852beb7908c2bf9192054"
+    },
+    {
+      "name": "Maze",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Maze.HC",
+      "originalSha256": "7e8905d5cd507f906fbfb9a78d2dc238243810d5621de4636e03028fec7b0194",
+      "tinkerPath": "Demo/Games/Maze.HC",
+      "tinkerSha256": "636c08e9c69effb5866106201c8e59756413f1e2ea4603b79c1781651617a13b"
+    },
+    {
+      "name": "RainDrops",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/RainDrops.HC",
+      "originalSha256": "b7d780d87f243af549ffdd942b8a137fc90a793cfbcd401101eb2c73afedf6f8",
+      "tinkerPath": "Demo/Games/RainDrops.HC",
+      "tinkerSha256": "d551e4b5e17860c03cd3e450cd071d6b9273a29173886e50bf76ceea637134cc"
+    },
+    {
+      "name": "RawHide",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/RawHide.HC",
+      "originalSha256": "1e13b7a4e75d990bdd96ef2c31e2b507c9caa9107b87f1c7bfbb63902fa8551d",
+      "tinkerPath": "Demo/Games/RawHide.HC",
+      "tinkerSha256": "b28d0c257da5b13f7d19ac8c8ea204eb777035eb74f3477bf0b5344e381652c0"
+    },
+    {
+      "name": "Rocket",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Rocket.HC",
+      "originalSha256": "5097308abd1748b1f797e3d19f4b1579a6858c4ee9087957139591eeed195e4a",
+      "tinkerPath": "Demo/Games/Rocket.HC",
+      "tinkerSha256": "96f001033906e6e670da7ea92b7ce701192ea2e4f9acff886d935b2867bad2b6"
+    },
+    {
+      "name": "RocketScience",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/RocketScience.HC",
+      "originalSha256": "277d8c826ba7acfe577db89b9cb3bbd811f641e416aa9e9d738da9059ef00ace",
+      "tinkerPath": "Demo/Games/RocketScience.HC",
+      "tinkerSha256": "671315e46688b352a323fa2ff3e972ee4ba17f6f322f952f43066334ecfbd4bd"
+    },
+    {
+      "name": "Squirt",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Squirt.HC",
+      "originalSha256": "67f0406f9dc3198e2640afe086ff00647f425e08207013ed0c6814a474c15a39",
+      "tinkerPath": "Demo/Games/Squirt.HC",
+      "tinkerSha256": "de1d9631cf9b4a3f3c5f892703555cd00eeaa49c04a1bf1d2a475ec4c52bea11"
+    },
+    {
+      "name": "Stadium",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Stadium/Stadium.HC",
+      "originalSha256": "3cea1de07fe3596e600267abac74416713e6b1378e1295c249767ee48c4ec1f2",
+      "tinkerPath": "Demo/Games/Stadium/Stadium.HC",
+      "tinkerSha256": "b282720f4ee3c5eaf39fbef25f2e5f404a7a75e5a49de4e2f7059523495af0c7"
+    },
+    {
+      "name": "Talons",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Talons.HC",
+      "originalSha256": "af31e209e1b13b4363c81b2a244b2876fe2592ac56b1b67c3074b6396a5c66b6",
+      "tinkerPath": "Demo/Games/Talons.HC",
+      "tinkerSha256": "af31e209e1b13b4363c81b2a244b2876fe2592ac56b1b67c3074b6396a5c66b6"
+    },
+    {
+      "name": "TheDead",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/TheDead.HC",
+      "originalSha256": "b5b99d2d1509d0d4519a25dd13cf82cf528b88c8315f9b2c293c49c403efeadb",
+      "tinkerPath": "Demo/Games/TheDead.HC",
+      "tinkerSha256": "709508e4bbddbeca4327ad8fbf622fcf0354ce9478371857f51d4c1452af39c5"
+    },
+    {
+      "name": "TicTacToe",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/TicTacToe.HC",
+      "originalSha256": "b2a63ed99cc4a2dfb886a014f66baf55e4420bb334cadc85de2221679342df2d",
+      "tinkerPath": "Demo/Games/TicTacToe.HC",
+      "tinkerSha256": "a333bec331278e6a518c261a69a01c590da3ad3929be0ca4d2e9058c30b67f6b"
+    },
+    {
+      "name": "TreeCheckers",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/TreeCheckers.HC",
+      "originalSha256": "4dd9e4f5f4426b6b45d8c9ce51f18ecc9aef33969860d4cf8f1f3941af72c439",
+      "tinkerPath": "Demo/Games/TreeCheckers.HC",
+      "tinkerSha256": "19fb36435dd0be3edf4c4c5d56431fa1d1b55f2c010a4fc1d8c3dbdb68246303"
+    },
+    {
+      "name": "Varoom",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Varoom.HC",
+      "originalSha256": "e8671b31da6e3ba249780aa277487611296917231ba4b4efb7111549bab4b089",
+      "tinkerPath": "Demo/Games/Varoom.HC",
+      "tinkerSha256": "d7fa3dab65847c5f08746eabeeaff8043ecfee62e8c46c9bc9fc4784b1a27e58"
+    },
+    {
+      "name": "Wenceslas",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Wenceslas.HC",
+      "originalSha256": "019abfdfd387d88b74ee144f8d5be85bfbbcafc30934df3393e5431ad0a6fb25",
+      "tinkerPath": "Demo/Games/Wenceslas.HC",
+      "tinkerSha256": "703a7bea101c9d2fc4a59a472554900414ef17b5343ae9e02e63a2007121d22b"
+    },
+    {
+      "name": "Whap",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Whap.HC",
+      "originalSha256": "14cdc7b3c178738e4500aec131c44c6235d49791b1b67db3eff7869868c95b70",
+      "tinkerPath": "Demo/Games/Whap.HC",
+      "tinkerSha256": "183fecf9d694f72513b6616f03e81a9b26cf63858f2b9d6fa0d91a9b9079e497"
+    },
+    {
+      "name": "Zing",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/Zing.HC",
+      "originalSha256": "1557a3c48635a2dfd746708af35a045a7406949ade38902be8f05ffa777469fe",
+      "tinkerPath": "Demo/Games/Zing.HC",
+      "tinkerSha256": "7a858c33903e9208b3c37f29895e566769ebbb4abf107a0b5a39f01cba7e3259"
+    },
+    {
+      "name": "ZoneOut",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Demo/Games/ZoneOut.HC",
+      "originalSha256": "fe2a85167b903c845f0ac563a3683ece63b93e6c76a460f93fb98c326149b07f",
+      "tinkerPath": "Demo/Games/ZoneOut.HC",
+      "tinkerSha256": "4c9c54c5a15a09a3c52d4f78165fb75588e734b5b19475251b6d7003e009fc80"
+    },
+    {
+      "name": "AfterEgypt",
+      "author": "Terry A. Davis",
+      "original": "TOS_Supplemental1.ISO.C/Sup1Games/AfterEgypt/AfterEgypt.HC",
+      "originalSha256": "ba0fd3b554aecc192f5799fdb88e28eeecad37f65311627a23af38479de89721",
+      "tinkerPath": "Apps/AfterEgypt/AfterEgypt.HC",
+      "tinkerSha256": "7247aba5c0973aacaa93c0377d788dcfb084b5d51e266d632e454484fa75ebbe"
+    },
+    {
+      "name": "Chess",
+      "author": "Terry A. Davis",
+      "original": "TOS_Supplemental1.ISO.C/Sup1Games/Chess.HC",
+      "originalSha256": "3a3dff0944dfd051867472fe0e869a0040722c4dd856dc9d198846dc6ec2db7d",
+      "tinkerPath": "Apps/Chess/Chess.HC",
+      "tinkerSha256": "16de45174a4b7ebfc216aeda8cf88aa25d92549745f323e1e30e99d81366feba"
+    },
+    {
+      "name": "KeepAway",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Apps/KeepAway/KeepAway.HC",
+      "originalSha256": "94eeb6d87f66cafb29fa32627df6e8f9fbed62f77ae6dcd55006d820ace4e025",
+      "tinkerPath": "Apps/KeepAway/KeepAway.HC",
+      "tinkerSha256": "d51e41e992d6fec1b41b74275bfabf846f0678972dfec5d9d524804fd9cfa73c"
+    },
+    {
+      "name": "Span",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Apps/Span/SpanMain.HC",
+      "originalSha256": "d4c8dc9a9bf496eadacaadbd39cfaed4a4eaf72ff1f8eb3d06814a69b1b29435",
+      "tinkerPath": "Apps/Span/SpanMain.HC",
+      "tinkerSha256": "9d9a66b8e27a9b7dd3cfa816f988e3e0668fde60e7c9deb9ced3e74b7c9f79bb"
+    },
+    {
+      "name": "Strut",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Apps/Strut/Strut.HC",
+      "originalSha256": "497232d6e9059dc72f11b987953ea8f9a0f5efac7ffbf847a768748f2e2af0dc",
+      "tinkerPath": "Apps/Strut/Strut.HC",
+      "tinkerSha256": "9ee94808ec160a40cb64d834d7a81ba5d6547d4fbce0e7976de8ead5f1c2d59c"
+    },
+    {
+      "name": "Titanium",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Apps/Titanium/Titanium.HC",
+      "originalSha256": "d1832e5a5f984528d9f87ec19aee4af8927ea23bf2f063e86f67b7fa0a426231",
+      "tinkerPath": "Apps/Titanium/Titanium.HC",
+      "tinkerSha256": "8e7a29b6c5bccc621ea94e13165b4b982c8dc55b33c0ef8bb631eb0e857787ce"
+    },
+    {
+      "name": "ToTheFront",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Apps/ToTheFront/ToTheFront.HC",
+      "originalSha256": "9c387f949c01fa5728ca6732ba30b4f6483b2165fbe5ec466a3d8467a781523a",
+      "tinkerPath": "Apps/ToTheFront/ToTheFront.HC",
+      "tinkerSha256": "8e2cf8f455358fc53769938b78b516b29ef907d8a9f4f510187be5ac0bdc40da"
+    },
+    {
+      "name": "Vocabulary",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Apps/Vocabulary/VocabQuiz.HC",
+      "originalSha256": "7ce89ddfe50d7a3305648d146c4d4733b7a44ae047a17c5a36ed3a3e235792f0",
+      "tinkerPath": "Apps/Vocabulary/VocabQuiz.HC",
+      "tinkerSha256": "639b2bced20d3abbe155587e3e0316b6bb0517a20cf5c5c2c8202d2cf54bf781"
+    },
+    {
+      "name": "X-Caliber",
+      "author": "Terry A. Davis",
+      "original": "TempleOS.ISO/Apps/X-Caliber/X-Caliber.HC",
+      "originalSha256": "fd7c92aa35481075188a24c9222420739adf491fcfb54823eabfbe4e3410bd32",
+      "tinkerPath": "Apps/X-Caliber/X-Caliber.HC",
+      "tinkerSha256": "1d5eabc6f0794d7287f755ca142fcb6cf4a45f9cf7e4769d95f8def0ca637fce"
+    },
+    {
+      "name": "Castle Frankenstein 2",
+      "author": "TheTinkerer",
+      "tinkerPath": "Apps/CF2/CF2.HC",
+      "firstCommit": "55c3aeb5c6c28a051d54f277ea41836d2088363a The Tinkerer: Add Castle Frankenstein 2",
+      "source": "https://github.com/tinkeros/CF2",
+      "note": "TinkerOS sequel by TheTinkerer, based on Terry A. Davis's Castle Frankenstein."
+    },
+    {
+      "name": "Cube",
+      "author": "TheTinkerer",
+      "tinkerPath": "Apps/Cube/Run.HC",
+      "firstCommit": "74ab50f42ccf6e763575e497d28bc2c93aeaaf6e The Tinkerer: TinkerOS 5.15",
+      "source": "https://github.com/tinkeros/cube",
+      "note": "An original TinkerOS game by TheTinkerer."
+    },
+    {
+      "name": "GlowUFOs",
+      "author": "TheTinkerer",
+      "tinkerPath": "Apps/GlowUFOs/GlowUFOs.HC",
+      "firstCommit": "2db1f5b66fd228ee9711046e000158e9d14024c5 The Tinkerer: TinkerOS 5.20-rc11",
+      "source": "https://github.com/tinkeros/TinkerOS/tree/main/Apps/GlowUFOs",
+      "note": "An original TinkerOS game by TheTinkerer."
+    },
+    {
+      "name": "Oregon Trail 1975",
+      "author": "TheTinkerer",
+      "tinkerPath": "Apps/OT1975/Run.HC",
+      "firstCommit": "6076bd3f5e0bbdb13788d9ce058d4577e8700618 The Tinkerer: 5.06 initial",
+      "source": "https://github.com/tinkeros/OT1975",
+      "note": "HolyC port by TheTinkerer. Original by MECC staff, with 1975 revisions by Don Rawitsch."
+    },
+    {
+      "name": "Scorch",
+      "author": "TheTinkerer",
+      "tinkerPath": "Apps/Scorch/Scorch.HC",
+      "firstCommit": "b8d1703b73fd027a35ede9b6e37ae9430e49f1bb The Tinkerer: TinkerOS 5.20-rc10",
+      "source": "https://github.com/tinkeros/TinkerOS/tree/main/Apps/Scorch",
+      "note": "An original TinkerOS game by TheTinkerer."
+    },
+    {
+      "name": "SpyHunt",
+      "author": "TheTinkerer",
+      "tinkerPath": "Apps/SpyHunt/Run.HC",
+      "firstCommit": "6076bd3f5e0bbdb13788d9ce058d4577e8700618 The Tinkerer: 5.06 initial",
+      "source": "https://github.com/tinkeros/SpyHunt",
+      "note": "TinkerOS game by TheTinkerer, based on Terry A. Davis's Titanium."
+    },
+    {
+      "name": "Sudoku",
+      "author": "TheTinkerer",
+      "tinkerPath": "Apps/Sudoku/Run.HC",
+      "firstCommit": "17e9cc5f10d0b10f23d0bd26437dd9abee92398e The Tinkerer: Add Sudoku game",
+      "source": "https://github.com/tinkeros/Sudoku",
+      "note": "An original TinkerOS game by TheTinkerer."
+    },
+    {
+      "name": "Tetris",
+      "author": "TheTinkerer",
+      "tinkerPath": "Apps/Tetris/Tetris.HC",
+      "firstCommit": "b8d1703b73fd027a35ede9b6e37ae9430e49f1bb The Tinkerer: TinkerOS 5.20-rc10",
+      "source": "https://github.com/tinkeros/TinkerOS/tree/main/Apps/Tetris",
+      "note": "HolyC implementation by TheTinkerer. Tetris was created by Alexey Pajitnov."
+    },
+    {
+      "name": "B17",
+      "author": "Terry A. Davis",
+      "original": "TOS_Supplemental1.ISO.C/Sup1Games/B17.HC",
+      "originalSha256": "7b50f52794de6026f2ab9406bfaaf052d62402bbbc31aaeb206e7145879a65b6"
+    },
+    {
+      "name": "Coach",
+      "author": "Terry A. Davis",
+      "original": "TOS_Supplemental1.ISO.C/Sup1Games/Coach.HC",
+      "originalSha256": "8cc7f098ca02199bfaffa40d2c7539a3f0a0f988afada5409b940eebb239664a"
+    },
+    {
+      "name": "DiningStars",
+      "author": "Terry A. Davis",
+      "original": "TOS_Supplemental1.ISO.C/Sup1Games/DiningStars.HC",
+      "originalSha256": "559504014bb2fb4b6a0554f376bedb1640c254981eb4a1dfa07d180f8b70a8a7"
+    },
+    {
+      "name": "Flappy",
+      "author": "Terry A. Davis",
+      "original": "TOS_Supplemental1.ISO.C/Sup1Games/Flappy.HC",
+      "originalSha256": "101a1899030fe843c435f8c9141839aca6bbc9d753eb8823d648f4f6499527c9"
+    },
+    {
+      "name": "MissileDefense",
+      "author": "Terry A. Davis",
+      "original": "TOS_Supplemental1.ISO.C/Sup1Games/MissileDefense.HC",
+      "originalSha256": "993d1fc9c5c6cb94436dfb58af002589266926ede4bcb8627f1710b441d00313"
+    },
+    {
+      "name": "Rocks",
+      "author": "Terry A. Davis",
+      "original": "TOS_Supplemental1.ISO.C/Sup1Games/Rocks.HC",
+      "originalSha256": "6bd819a29fa9ae3fec2b45e4a9a4389683e07bc3fea923ff27f533e48c3d230f"
+    },
+    {
+      "name": "Pilgrims",
+      "author": "Terry A. Davis",
+      "original": "TOS_Supplemental1.ISO.C/Sup1Games/Pilgrims/Pilgrims.HC",
+      "originalSha256": "f380584e07ec1f75b20515741db1b048e1e6c1a7a1447be60f4d89b725dce4e1"
+    },
+    {
+      "name": "MarioClone",
+      "author": "Austin Sierra",
+      "source": "https://github.com/austings/MarioClone",
+      "revision": "b9cc6b53aafc25f1930218e71ccee6ff8ecd4e6b"
+    },
+    {
+      "name": "Malicious Testimonies",
+      "author": "Austin Sierra",
+      "source": "https://github.com/austings/MaliciousTestimonies",
+      "revision": "b74402c0c25403279ee5324c2bde77d142415a6d"
+    },
+    {
+      "name": "Ezekiel",
+      "author": "Austin Sierra",
+      "source": "https://github.com/austings/GamesMirror/blob/main/Ezekiel.ISO_.zip",
+      "revision": "4a27f9f3283f6601b8bb90bc95e280d8549e93b8"
+    },
+    {
+      "name": "Lord of Hosts",
+      "author": "Austin Sierra",
+      "source": "https://github.com/austings/GamesMirror/blob/main/LordofHostsv3.ISO_(1).zip",
+      "revision": "4a27f9f3283f6601b8bb90bc95e280d8549e93b8"
+    },
+    {
+      "name": "Solomon's Temple",
+      "author": "Austin Sierra",
+      "source": "https://github.com/austings/GamesMirror/blob/main/Temple.ISO_.C(1).zip",
+      "revision": "4a27f9f3283f6601b8bb90bc95e280d8549e93b8"
+    },
+    {
+      "name": "TOOM",
+      "author": "Austin Sierra",
+      "source": "https://github.com/Church-of-Templeos/TOOM",
+      "revision": "9d24014e749fee376396c8a6a4acca152e48a250"
+    }
+  ]
+}

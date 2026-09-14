@@ -1,0 +1,22 @@
+
+Items
+1 - dagger
+2 - harpoon
+3 - wolfsteeth
+
+ai_script
+1 - default enemy
+10- fishing
+
+combat menu stage
+0 - move
+1 - move completion
+
+combatMenuSelection
+10 - move
+11 - strike
+111- strike completion
+12 - prayer
+13 - flee
+
+  

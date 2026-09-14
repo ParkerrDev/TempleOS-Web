@@ -452,7 +452,7 @@
         <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
         <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico">▤</span> Disk &amp; Save</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico">⌕</span> Terry Search</button>
-        <button id="captureBtn" title="Capture the mouse for the OS; Esc releases it" aria-pressed="false"><span class="ico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
+        <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico">✛</span> Touch controls</button>
       </div>
       <div class="win keyswin" data-title="Keys"><span class="close">[X]</span><div id="keysbar"></div></div>
@@ -480,7 +480,7 @@
       <div id="guide" class="win" data-title="Help">
         <span class="close">[X]</span>
         <b>Click the screen</b>, then move the mouse and type - you're using the real OS.
-        <b>Esc</b> releases a captured mouse. The Keys window’s Esc button sends Esc to TempleOS to exit a game.
+        <b>Esc</b> releases a captured mouse into hybrid mode. Click Capture mouse to capture again. The Keys window’s Esc button sends Esc to TempleOS to exit a game.
         Press <kbd>Ctrl+M</kbd> for the games menu, click a sprite to play - many games open on a title/setup
         screen, so press <kbd>Space</kbd> or <kbd>Enter</kbd> to start (both are in the Keys window for touch). <kbd>F7</kbd> draws a God word.
         Fullscreen enlarges the OS; Esc still releases a captured mouse.
@@ -657,7 +657,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-38: Game submissions at the bottom of the Games window with a prepared GitHub issue form. render-37: Edit and play games side by side, author and source credits, and pointer-tracked window dragging. render-36: Both launch destinations and editable game projects across the catalog, preserved sprites and isolated browser game sessions. render-35: Sprite Studio opens only from the menu; mouse capture keeps its icon in both states. render-34: Natural source-color mixtures and restrained fixed dithering without forced saturation. render-33: Hue-preserving stock-palette sprites, restored blue denim and pale warm tones, local source-fleck removal. render-32: Clean sprite colors, preserved warm midtones and optional dither strength defaulting to zero. render-31: Restrained sprite colors and stable blue-noise dithering without a repeating grid. render-30: Warm stable sprite dithering, native 25 fps Terry timing, cached frame playback and worker conversion. render-29: Desktop Sprite Studio, GR Terry animation, guest-aware mouse capture, relative HolyCraft look and lossless keyboard input. render-28: FTST and native Sign correctness, VGA palette I/O, persistent 32-bit ATA writes, raw compressed uploads, recycled-code JIT validation. render-27: Exact duplicate framebuffer suppression, Sprite Studio, pinned TinkerOS game packages, TOOM with Freedoom, and guest job execution. render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix - a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) - no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys. render-26: Castle Frankenstein (and any 3D game using a DC transform) renders correctly - the GrFillPoly3 HLE now falls back to the OS unless the DC transform is identity (so transformed polys are no longer rasterized as raw model coords); screen-space games like HolyCraft/Varoom keep the HLE (Hemu-wasm a68c3e8)";
+    window.__BUILD = "render-40: Verified game authors, 63 catalog entries with Terry supplemental and Austin Sierra games, visible PNG2GR creator credit, sticky hybrid mouse mode in both runners, and corrected x87 subtraction/division operand order for game physics. render-39: Compact Sprite Studio, shared desktop cursor, themed scrollbars and file control; FPS from TempleOS window-manager telemetry and native frame signals. render-38: Game submissions at the bottom of the Games window with a prepared GitHub issue form. render-37: Edit and play games side by side, author and source credits, and pointer-tracked window dragging. render-36: Both launch destinations and editable game projects across the catalog, preserved sprites and isolated browser game sessions. render-35: Sprite Studio opens only from the menu; mouse capture keeps its icon in both states. render-34: Natural source-color mixtures and restrained fixed dithering without forced saturation. render-33: Hue-preserving stock-palette sprites, restored blue denim and pale warm tones, local source-fleck removal. render-32: Clean sprite colors, preserved warm midtones and optional dither strength defaulting to zero. render-31: Restrained sprite colors and stable blue-noise dithering without a repeating grid. render-30: Warm stable sprite dithering, native 25 fps Terry timing, cached frame playback and worker conversion. render-29: Desktop Sprite Studio, GR Terry animation, guest-aware mouse capture, relative HolyCraft look and lossless keyboard input. render-28: FTST and native Sign correctness, VGA palette I/O, persistent 32-bit ATA writes, raw compressed uploads, recycled-code JIT validation. render-27: Exact duplicate framebuffer suppression, Sprite Studio, pinned TinkerOS game packages, TOOM with Freedoom, and guest job execution. render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix - a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) - no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys. render-26: Castle Frankenstein (and any 3D game using a DC transform) renders correctly - the GrFillPoly3 HLE now falls back to the OS unless the DC transform is identity (so transformed polys are no longer rasterized as raw model coords); screen-space games like HolyCraft/Varoom keep the HLE (Hemu-wasm a68c3e8)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -679,6 +679,11 @@
     const drawFrame = createFrameBlitter(ctx, pal32);
     const ld = $("loadui"), ldtext = $("ldtext"), ldbar = $("ldbar");
     const tbFps = $("tb-fps"), tbKey = $("tb-key");
+    const {createGuestFpsMeter} = await import('./guest-fps.js');
+    const fpsMeter = createGuestFpsMeter();
+    tbFps.title = 'TempleOS window-manager FPS. Zero when paused or rendering has stopped.';
+    const updateFps = () => { const text=fpsMeter.text(); if(tbFps.textContent!==text)tbFps.textContent=text; };
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden){fpsMeter.reset();updateFps();}});
     const setLoad = (s, pct) => { ldtext.textContent = s; if (pct != null) ldbar.style.width = pct + "%"; };
 
     // ---- stacked layout on narrow viewports / touch ----
@@ -697,28 +702,29 @@
         $("tb-time").textContent = `${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`; };
       tick(); setInterval(tick, 1000); }
 
-    let blitCount = 0, presentCount = 0;
-    function blit(idx, w, h, immutable = false) {
+    let presentCount = 0;
+    function blit(idx, w, h, immutable = false, stats = null) {
       presentCount++;
-      if (drawFrame(idx,w,h,immutable)) blitCount++;
+      drawFrame(idx,w,h,immutable);
+      if(stats)fpsMeter.sample(stats.fps,stats.updates);
     }
     let started = false;
     function firstFrame() { if (started) return; started = true; ld.style.display = "none"; dbg("TempleOS desktop up"); }
     let notifyInput = () => {};
     let engineLabel = "…";   // core count, e.g. "2"
     const FIXED_B = +((new URLSearchParams(location.search)).get("b")) || 0;
-    { let t0 = performance.now(), staleBlits = 0;
-      setInterval(() => { const n = performance.now();
-        tbFps.textContent = `FPS: ${(blitCount * 1000 / (n - t0)).toFixed(0)}`;
-        $("tb-cores").textContent = `Cores: ${engineLabel}`;
+    { let staleBlits = 0;
+      setInterval(() => {
+        updateFps();
+        const cores=`Cores: ${engineLabel}`;if($("tb-cores").textContent!==cores)$("tb-cores").textContent=cores;
         // beep watchdog: if the guest froze mid-tone (e.g. a game that hangs on launch), the PC-speaker
         // oscillator is stuck on with no Snd(0) coming - mute it after ~1.5s of no new frames.
         // And: a hang on the single-core engine usually means a multi-core game (Talons/Varoom) - once
         // we've been frozen ~3s, offer to reload on the real multi-core engine (?smp), where it works.
-        if (presentCount === 0) { if (++staleBlits >= 3 && gain && gain.gain.value > 0) gain.gain.value = 0;
+        if (presentCount === 0 && !fpsMeter.paused && !document.hidden) { if (++staleBlits >= 3 && gain && gain.gain.value > 0) gain.gain.value = 0;
                                if (staleBlits >= 6 && started && !useSMP) try { showSmpPrompt(); } catch {} }
         else staleBlits = 0;
-        blitCount = 0; presentCount = 0; t0 = n; }, 500); }
+        presentCount = 0; }, 500); }
     // one-time banner shown when a heavy game freezes the single-core engine -> 1-click switch to multi-core
     let smpPrompted = false;
     function showSmpPrompt() {
@@ -761,20 +767,21 @@
     // requires a user click; movement then follows the guest cursor so MsSet
     // recentering works without an off-center host position fighting the game.
     let focused=false, mouseDX=0, mouseDY=0, resetInput=false;
-    let guestCapture=false, explicitCapture=false;
+    let guestCapture=false, explicitCapture=false, hybridMouse=false, wasMouseLocked=false, hybridTracking=false;
     const locked=()=>document.pointerLockElement===canvas;
-    const captureWanted=()=>guestCapture || explicitCapture;
+    const captureWanted=()=>!hybridMouse && (guestCapture || explicitCapture);
+    const relativeMouse=()=>locked() || (hybridMouse && guestCapture);
     const btnBit=e=>e.button===0?1:e.button===2?2:0;
     const captureButton=$('captureBtn'), captureLabel=$('captureLabel');
     const updateFocusText=()=>{
-      captureLabel.textContent=locked()?'Release mouse':'Capture mouse';
-      captureButton.setAttribute('aria-pressed',String(locked()));
-      tbKey.textContent=locked()?'mouse captured · Esc releases':captureWanted()?'click the screen to capture the mouse':focused?'keys → OS · Ctrl+V pastes':'click the screen to use the OS';
+      captureLabel.textContent=document.pointerLockElement?'Release mouse':'Capture mouse';
+      captureButton.setAttribute('aria-pressed',String(!!document.pointerLockElement));
+      tbKey.textContent=locked()?'mouse captured · Esc releases':captureWanted()?'click the screen to capture the mouse':focused?'hybrid mouse · keys → OS · Ctrl+V pastes':'click the screen to use the OS';
     };
     const releaseHeld=()=>{
       const released=[...held];held.clear();
       for(const s of released)keyq.push((s|0x80)|ent());
-      msB=0;mouseDX=mouseDY=0;msX=320;msY=240;resetInput=true;notifyInput();
+      msB=0;mouseDX=mouseDY=0;hybridTracking=false;msX=320;msY=240;resetInput=true;notifyInput();
     };
     const setFocused=on=>{if(focused && !on)releaseHeld();focused=on;updateFocusText();};
     const releaseOSInput=()=>{
@@ -797,12 +804,20 @@
       catch{tbKey.textContent='Mouse capture unavailable in this browser.';}
     };
     captureButton.addEventListener('click',()=>{
-      if(locked()){document.exitPointerLock();return;}
-      explicitCapture=true;requestCapture();
+      if(document.pointerLockElement){
+        hybridMouse=true;explicitCapture=false;
+        window.__holycEditor?.releaseMouse?.();document.exitPointerLock();return;
+      }
+      if(window.__holycEditor?.captureMouse?.())return;
+      hybridMouse=false;explicitCapture=true;requestCapture();
     });
     document.addEventListener('pointerlockchange',()=>{
+      // Releasing capture is a user preference, not another request to capture.
+      // Guest hints and focus changes cannot undo it; the Capture button can.
+      if(wasMouseLocked && !locked()){hybridMouse=true;explicitCapture=false;}
+      wasMouseLocked=locked();
       releaseHeld();focused=locked();
-      document.body.classList.toggle('mouse-locked',locked());updateFocusText();
+      document.body.classList.toggle('mouse-locked',!!document.pointerLockElement);updateFocusText();
     });
     document.addEventListener('pointerlockerror',()=>{tbKey.textContent='Mouse capture unavailable. Click the screen to retry.';});
     const overCanvas=e=>{const r=canvas.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom?r:null;};
@@ -813,7 +828,7 @@
       if(document.body.classList.contains('touch'))return;
       e.preventDefault();canvas.focus({preventScroll:true});setFocused(true);
       if(captureWanted()&&!locked()){requestCapture();return;} // Capture click must not fire a weapon.
-      if(!locked())mapAbs(e,canvas.getBoundingClientRect());
+      if(!relativeMouse())mapAbs(e,canvas.getBoundingClientRect());
       msB|=btnBit(e);notifyInput();
     });
     document.addEventListener('mouseup',e=>{if(msB){msB&=~btnBit(e);notifyInput();}});
@@ -821,7 +836,16 @@
       if(document.body.classList.contains('touch'))return;
       if(locked()){mouseDX+=e.movementX;mouseDY+=e.movementY;notifyInput();return;}
       if(captureWanted())return; // A released mouse cannot steer a waiting game.
-      const r=overCanvas(e);if(r){mapAbs(e,r);notifyInput();}
+      if(e.target!==canvas){hybridTracking=false;return;}
+      const r=overCanvas(e);if(r){
+        if(relativeMouse()){
+          if(!focused){hybridTracking=false;return;}
+          if(hybridTracking){mouseDX+=e.movementX;mouseDY+=e.movementY;}
+          hybridTracking=true;
+        }
+        else mapAbs(e,r);
+        notifyInput();
+      }
     });
     document.addEventListener('mousedown',e=>{if(releasesFocus(e.target)||!keepsFocus(e.target))setFocused(false);},true);
     canvas.addEventListener('contextmenu',e=>e.preventDefault());
@@ -835,7 +859,7 @@
       if(!keysToOS(e))return;
       if((e.ctrlKey||e.metaKey)&&e.code==='KeyV')return;
       if(e.code==='Escape'){
-        if(locked()){document.exitPointerLock();releaseHeld();return;}
+        if(locked()){hybridMouse=true;explicitCapture=false;document.exitPointerLock();releaseHeld();return;}
         if(!e.repeat){pushKey(0x01);pushKey(0x81);}e.preventDefault();return;
       }
       if(e.ctrlKey&&e.code==='BracketLeft'){pushKey(0x01);pushKey(0x81);e.preventDefault();return;}
@@ -850,7 +874,7 @@
     document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseOSInput();});
     setInterval(()=>{if(window.__gameActive)notifyInput();},250);
     const inputMessage=()=>{
-      const message={cmd:'input',x:msX,y:msY,b:msB,wheel:wheelZ,keys:keyq.splice(0),held:[...held],relative:locked(),dx:mouseDX,dy:mouseDY,reset:resetInput};
+      const message={cmd:'input',x:msX,y:msY,b:msB,wheel:wheelZ,keys:keyq.splice(0),held:[...held],relative:relativeMouse(),dx:mouseDX,dy:mouseDY,reset:resetInput};
       mouseDX=mouseDY=0;resetInput=false;return message;
     };
 
@@ -1002,14 +1026,18 @@
       const xc = $("xcursor");
       const xcOn = !document.body.classList.contains("touch");
       document.body.classList.toggle("xcursor", xcOn);
+      const hideCursor=()=>{xc.style.visibility='hidden';};
+      const moveCursor=(e,frame=null)=>{
+        if(!xcOn||e.pointerType==='touch')return;
+        const rect=frame?.getBoundingClientRect();
+        xc.style.transform=`translate(${e.clientX+(rect?.left||0)}px,${e.clientY+(rect?.top||0)}px)`;
+        xc.style.visibility=e.target?.id==='canvas'?'hidden':'visible';
+      };
+      window.__desktopCursor={enabled:xcOn,move:moveCursor,hide:hideCursor};
       if (xcOn) {
-        addEventListener("pointermove", (e) => {
-          if(e.pointerType==='touch')return;
-          xc.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
-          // over the emulator canvas TempleOS already draws its OWN inverting cursor - don't double it
-          xc.style.visibility = (e.target && e.target.id === "canvas") ? "hidden" : "visible";
-        }, true);
-        document.addEventListener("mouseleave", () => xc.style.visibility = "hidden");
+        addEventListener('pointermove',e=>moveCursor(e),{capture:true,passive:true});
+        document.addEventListener('mouseleave',hideCursor);
+        addEventListener('blur',hideCursor);
       }
     }
     { // direct canvas touch: move cursor absolutely; quick tap = left click; long-press = right click
@@ -1184,7 +1212,7 @@
         const m = e.data;
         if (m.cmd === "frame") {
           if (!alive && document.body.classList.contains("touch")) gzBytes = null;   // phones: free the 10 MB - no inline fallback after boot anyway
-          blit(new Uint8Array(m.buf), m.w, m.h, true); worker.postMessage({ cmd: "ack" }); alive = true; firstFrame();
+          blit(new Uint8Array(m.buf), m.w, m.h, true, m); worker.postMessage({ cmd: "ack" }); alive = true; firstFrame();
         }
         else if (m.cmd === "snd") snd(m.f);
         else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
@@ -1228,7 +1256,7 @@
         bsp.onerror = (e) => fallback(e.message || "bsp error");
         bsp.onmessage = (e) => {
           if (!bsp) return; const m = e.data;
-          if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h, true); bsp.postMessage({ cmd: "ack" }); alive = true; firstFrame(); }
+          if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h, true, m); bsp.postMessage({ cmd: "ack" }); alive = true; firstFrame(); }
           else if (m.cmd === "snd") snd(m.f);
           else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
           else if (m.cmd === "smpReady") dbg("SMP: " + m.ncore + " cores running in parallel");
@@ -1261,7 +1289,7 @@
       setLoad("starting hemu (HolyC → WASM x86-64 core)…", 88);
       const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm", { cache: "no-cache" })).arrayBuffer());
       const { makeDisk, fat32Upload, fat32List } = await import("./hemu-wasm/qcow2.js");
-      let disk = null, gBaseI = 0;
+      let disk = null, gBaseI = 0, guestExec = null;
       if (window.__importDisk) { try { disk = makeDisk(new Uint8Array(window.__importDisk)); } catch {} window.__importDisk = null; }
       else loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => { disk = d; dbg("C: disk image ready"); }).catch(() => disk = null);
       engineLabel = "1";
@@ -1272,7 +1300,7 @@
         snapLoad: (base, u8) => { gBaseI = base; u8.set(snap, base); },
         diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },
         diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },
-        present: (addr, w, h, u8) => blit(u8.subarray(addr, addr + w * h), w, h),
+        present: (addr, w, h, u8) => blit(u8.subarray(addr, addr + w * h), w, h, false, guestExec?.frameStats?.()),
       });
       let guestInput;
       host.env.__host_msx = () => guestInput?.x() ?? 320n; host.env.__host_msy = () => guestInput?.y() ?? 240n; host.env.__host_msb = () => guestInput?.buttons() ?? 0n;
@@ -1303,7 +1331,7 @@
       engine.stop = () => { stopped = true; notifyInput = () => {}; };   // halts loop() on its next frame
       const {createGuestExec} = await import("./hemu-wasm/guestexec.js");
       const {createGuestInput} = await import("./hemu-wasm/guestinput.js");
-      let guestExec = null, nextProbe = 0;
+      let nextProbe = 0;
       guestInput=createGuestInput({guest:()=>guestExec,memory:()=>inst.exports.memory,base:()=>gBaseI,onState:state=>window.__guestInputMode(state)});
       notifyInput=()=>{const m=inputMessage();guestInput.accept(m);keyq.push(...m.keys);};
       const guestRequests = new Map();
@@ -1950,6 +1978,7 @@ I64 GodDoodleGen(I64 strokes)
     { let paused = false, pauseRevision = 0;
       const btn = $("pauseBtn");
       const setPaused = value => { paused = value;
+        fpsMeter.setPaused(paused);updateFps();
         engine.post({ cmd: "pause", value: paused });
         if (engine.kind === "inline") window.__inlinePaused = paused;   // inline loop reads this flag
         btn.innerHTML = paused ? '<span class="ico">▶︎</span> Play' : '<span class="ico">⏸︎</span> Pause';
@@ -1959,7 +1988,7 @@ I64 GodDoodleGen(I64 strokes)
         const previous=paused, revision=pauseRevision;setPaused(true);
         return () => { if(pauseRevision===revision)setPaused(previous); };
       };
-      window.__resetPause = () => { ++pauseRevision; paused = false; btn.innerHTML = '<span class="ico">⏸︎</span> Pause'; };   // ↻ Restart boots unpaused
+      window.__resetPause = () => { ++pauseRevision; paused = false; fpsMeter.setPaused(false);updateFps();btn.innerHTML = '<span class="ico">⏸︎</span> Pause'; };   // ↻ Restart boots unpaused
     }
 
     // ---- Disk & Save window ----

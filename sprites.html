@@ -11,27 +11,33 @@
 <header><a href="./">TempleOS desktop</a><h1>Sprite Studio</h1><span>640 x 480. 16 colors. Your pixels.</span></header>
 <main>
   <form id="controls" class="panel">
-    <h2>Source &amp; palette</h2>
-    <label class="pick">Open image, GIF or video<input id="file" type="file" accept="image/*,video/*,.gr"></label>
-    <p id="filename">Choose a file or drop it onto the workspace.</p>
-    <label>Width <input id="width" type="number" min="8" max="640" step="1" value="160"> pixels</label>
-    <label>Colors <select id="dither"><option value="stable" selected>Natural shading</option><option value="fs">Error diffusion</option><option value="none">Nearest color</option></select></label>
-    <label>Dither strength <input id="strength" type="range" min="0" max="100" value="35" step="5"><output id="strengthValue">35%</output></label>
-    <label>Transparent below <input id="alpha" type="range" min="1" max="255" value="128"><output id="alphaValue">128</output></label>
-    <fieldset><legend>Animation clip</legend>
-      <label>Start <input id="start" type="number" min="0" max="86400" value="0" step="0.1"> seconds</label>
-      <label>Length <input id="duration" type="number" min="0.1" max="10" value="3" step="0.1"> seconds</label>
-      <label>Frame rate <select id="fps"><option>5</option><option>10</option><option>15</option><option>20</option><option selected>25</option><option>30</option><option>50</option></select> fps</label>
-    </fieldset>
-    <button id="convert" type="submit" disabled>Convert to TempleOS</button>
-    <button id="cancel" type="button" hidden>Cancel conversion</button>
-    <p class="hint">Natural shading keeps the source colors unboosted and uses restrained stock-palette mixtures. Lower dither strength for less texture; 0% gives solid colors. Convert again after changing it. Files stay on your device. Clips allow up to 600 frames or 20 million pixels.</p>
-    <div id="palette" aria-label="The 16 TempleOS colors"></div>
+    <h2>Sprite settings</h2>
+    <div class="settings-scroll">
+      <label class="pick" for="file">Image, GIF, video or .GR</label>
+      <input id="file" type="file" accept="image/*,video/*,.gr" aria-describedby="filename">
+      <p id="filename">Choose a file or drop it here.</p>
+      <fieldset><legend>Size &amp; color</legend>
+        <label class="field">Width <span class="value"><input id="width" type="number" min="8" max="640" step="1" value="160"><span>px</span></span></label>
+        <label class="field">Shading <select id="dither"><option value="stable" selected>Natural</option><option value="fs">Diffusion</option><option value="none">Nearest color</option></select></label>
+        <label class="field slider">Dither <input id="strength" type="range" min="0" max="100" value="35" step="5"><output id="strengthValue">35%</output></label>
+        <label class="field slider" title="Pixels below this alpha value become transparent">Alpha <input id="alpha" aria-label="Alpha cutoff" type="range" min="1" max="255" value="128"><output id="alphaValue">128</output></label>
+      </fieldset>
+      <fieldset><legend>Animation clip</legend>
+        <label class="field">Start <span class="value"><input id="start" type="number" min="0" max="86400" value="0" step="0.1"><span>sec</span></span></label>
+        <label class="field">Length <span class="value"><input id="duration" type="number" min="0.1" max="10" value="3" step="0.1"><span>sec</span></span></label>
+        <label class="field">Rate <span class="value"><select id="fps" aria-label="Animation frame rate"><option>5</option><option>10</option><option>15</option><option>20</option><option selected>25</option><option>30</option><option>50</option></select><span>fps</span></span></label>
+      </fieldset>
+      <div class="palette-label">Stock TempleOS palette</div>
+      <div id="palette" aria-label="The 16 TempleOS colors"></div>
+      <details class="help"><summary>Settings help</summary><p>Lower dither strength for less texture; 0% gives solid colors. Pixels below the alpha cutoff become transparent.</p><p>Convert again after changing settings. Files stay on your device. Clips allow up to 600 frames or 20 million pixels.</p></details>
+    </div>
+    <div class="convert-actions"><button id="convert" type="submit" disabled>Convert to TempleOS</button><button id="cancel" type="button" hidden>Cancel conversion</button><p class="studio-credit">Sprite conversion inspired by <a href="https://github.com/greg0-4/PNG2GR" target="_blank" rel="noopener">PNG2GR</a> by <a href="https://github.com/greg0-4" target="_blank" rel="noopener">greg0-4</a>.</p></div>
   </form>
   <section class="panel workspace" aria-label="Sprite preview">
-    <h2>Pixel workspace</h2>
+    <h2>Preview &amp; export</h2>
+    <div class="workspace-scroll">
     <div class="views">
-      <figure><figcaption>Original frame</figcaption><div class="checker"><canvas id="original" width="160" height="120"></canvas><p id="empty">Your next TempleOS sprite starts here.</p></div></figure>
+      <figure><figcaption>Original</figcaption><div class="checker"><canvas id="original" width="160" height="120"></canvas><p id="empty">Open a file to preview.</p></div></figure>
       <figure><figcaption>TempleOS sprite</figcaption><div class="checker"><canvas id="preview" width="160" height="120"></canvas></div></figure>
     </div>
     <div class="transport"><button id="play" disabled type="button">Play</button><label for="frame">Frame</label><input id="frame" type="range" min="0" max="0" value="0" disabled><output id="frameLabel">0 / 0</output><output id="playbackRate" aria-label="Playback frame rate" aria-live="off"></output></div>
@@ -41,7 +47,8 @@
 U8 *sprite=DC2Sprite(dc);
 Sprite(,100,100,sprite);
 Free(sprite);
-DCDel(dc);</pre><p>Transparent pixels keep their transparency. PNG and GIF exports use the same 16-color palette as the .GR files.</p></details>
+DCDel(dc);</pre><p>Transparent pixels keep their transparency. PNG and GIF exports use the same 16-color palette as the .GR files.</p><p>Format references: <a href="https://github.com/greg0-4/PNG2GR" target="_blank" rel="noopener">PNG2GR</a> and <a href="https://github.com/tinkeros/TinkerOS/blob/main/Adam/Gr/GrDC.HC" target="_blank" rel="noopener">TempleOS graphics source</a>.</p></details>
+    </div>
   </section>
 </main>
 <footer>Format research: <a href="https://github.com/greg0-4/PNG2GR">PNG2GR</a> and <a href="https://github.com/tinkeros/TinkerOS/blob/main/Adam/Gr/GrDC.HC">TempleOS graphics source</a>. Video decoding uses the site's bundled FFmpeg.</footer>

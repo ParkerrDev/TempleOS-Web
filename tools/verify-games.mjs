@@ -1,10 +1,12 @@
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
+import {EXTRA_GAMES,TERRY_DEMOS} from '../game-library.js';
+const expected=TERRY_DEMOS.length+1+EXTRA_GAMES.length;
 const root=new URL('../',import.meta.url);
 const c=JSON.parse(await readFile(new URL('games/catalog.json',root)));
 const hash=b=>createHash('sha256').update(b).digest('hex');
-assert.equal(c.packages.length,32);assert.equal(new Set(c.packages.map(p=>p.id)).size,32);
+assert.equal(c.packages.length,expected);assert.equal(new Set(c.packages.map(p=>p.id)).size,expected);
 let count=0;
 for(const p of c.packages){
  assert(p.files.some(f=>f.path===p.entry),p.name+' missing entry');

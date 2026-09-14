@@ -56,7 +56,8 @@ async function boot(m) {
       lastFrame = { addr, w, h };                            // for prompt-detect OCR during game launch
       if (outstanding >= 2) return;                          // main hasn't caught up - drop, keep emulating
       const buf = new Uint8Array(w * h); buf.set(u8.subarray(addr, addr + w * h));
-      outstanding++; postMessage({ cmd: "frame", buf: buf.buffer, w, h }, [buf.buffer]);
+      const stats = gx?.frameStats?.();
+      outstanding++; postMessage({ cmd: "frame", buf: buf.buffer, w, h, fps: stats?.fps, updates: stats?.updates }, [buf.buffer]);
     } : null,
   });
   host.env.mem = mem;                                        // import the shared memory

@@ -10,3 +10,6 @@ hemu-wasm
 holyc-fmt
 package.json
 package-lock.json
+
+# Python archive-tool caches
+__pycache__/

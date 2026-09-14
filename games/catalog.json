@@ -24,7 +24,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/BattleLines.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-BigGuns",
@@ -39,7 +45,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/BigGuns.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-BlackDiamond",
@@ -54,7 +66,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/BlackDiamond.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-BomberGolf",
@@ -69,7 +87,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/BomberGolf.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-CastleFrankenstein",
@@ -90,7 +114,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/CastleFrankenstein.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-CharDemo",
@@ -105,7 +135,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/CharDemo.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-CircleTrace",
@@ -120,7 +156,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/CircleTrace.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Collision",
@@ -135,7 +177,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Collision.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Digits",
@@ -150,7 +198,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Digits.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-DunGen",
@@ -165,7 +219,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/DunGen.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-ElephantWalk",
@@ -180,7 +240,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/ElephantWalk.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-FlapBat",
@@ -195,7 +261,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/FlapBat.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-FlatTops",
@@ -210,7 +282,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/FlatTops.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Halogen",
@@ -225,7 +303,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Halogen.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-MassSpring",
@@ -240,7 +324,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/MassSpring.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Maze",
@@ -255,7 +345,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Maze.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-RainDrops",
@@ -270,7 +366,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/RainDrops.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-RawHide",
@@ -285,7 +387,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/RawHide.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Rocket",
@@ -300,7 +408,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Rocket.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-RocketScience",
@@ -315,7 +429,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/RocketScience.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Squirt",
@@ -330,7 +450,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Squirt.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Talons",
@@ -345,7 +471,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Talons.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-TheDead",
@@ -360,7 +492,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/TheDead.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-TicTacToe",
@@ -375,7 +513,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/TicTacToe.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-TreeCheckers",
@@ -390,7 +534,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/TreeCheckers.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Varoom",
@@ -405,7 +555,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Varoom.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Wenceslas",
@@ -420,7 +576,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Wenceslas.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Whap",
@@ -435,7 +597,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Whap.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Zing",
@@ -450,7 +618,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Zing.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-ZoneOut",
@@ -465,7 +639,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/ZoneOut.HC",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "tinker-Stadium",
@@ -498,7 +678,13 @@
         }
       ],
       "upstream": "TinkerOS",
-      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/Stadium",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
     },
     {
       "id": "toom",
@@ -1058,6 +1244,2121 @@
         "name": "Freedoom 0.12.1",
         "sha256": "c403ea7c27b5b2b77e4c0ca0b691669186790e572065e7eb2b0382801bcb18cc",
         "bytes": 27284988
+      },
+      "credit": {
+        "author": "Austin Sierra",
+        "authorUrl": "https://github.com/austings",
+        "source": "https://github.com/Church-of-Templeos/TOOM",
+        "note": "DOOM by id Software. Game data by the Freedoom contributors."
+      }
+    },
+    {
+      "id": "library-AfterEgypt",
+      "name": "AfterEgypt",
+      "entry": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/AESplash.DD",
+          "bytes": 377007,
+          "sha256": "4ca4296fd69394f219d8ec9538a5f02f18d5cbc8cb5ce7d1030291eef7688b7d",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/AESplash.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/AfterEgypt.HC",
+          "bytes": 6023,
+          "sha256": "7247aba5c0973aacaa93c0377d788dcfb084b5d51e266d632e454484fa75ebbe",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/AfterEgypt.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Battle.HC",
+          "bytes": 3420,
+          "sha256": "53bcf94cce5cdc8f39e86bd3b74367a63dd294be6bac470c2a7bc2914ef6ed0a",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Battle.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Camp.HC",
+          "bytes": 23254,
+          "sha256": "b9c71b634092eb6f65136ea78e82c777e4433d4a7b0ecc0fbe6037ea911de67d",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Camp.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Clouds.HC",
+          "bytes": 4172,
+          "sha256": "e4fa8e0bbeafe470fb7ab36c4b99be8b1caefa0bdfaa1f553e564c9da418e502",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Clouds.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Comics.HC",
+          "bytes": 526,
+          "sha256": "ba9228f55ce854217f1397f0e096e7b34c7d62ba24417d518f0eb0b8cab2a2e4",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Comics.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Comics/Moses01.DD",
+          "bytes": 538,
+          "sha256": "d5bee814ebbad335d647ba4d88898bfc2868b610b189e24d6d7bce1fe6e83d51",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Comics/Moses01.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Comics/Moses02.DD",
+          "bytes": 3538,
+          "sha256": "2c918a1ddd068f8435140e029f6c25aaf596c892a520f398dfa6ee7a53599c1f",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Comics/Moses02.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Comics/Moses04.DD",
+          "bytes": 467,
+          "sha256": "f9ebe87a7a73c7b92ffb72e6d61903a9ca7ad53f5964aba1e2984d0203e42031",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Comics/Moses04.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Comics/Moses05.DD",
+          "bytes": 676,
+          "sha256": "05b3d7b1cd4f0470ef756959cab488b4ac49e0ff6135875e1651587315b36e9a",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Comics/Moses05.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Comics/Moses06.DD",
+          "bytes": 671,
+          "sha256": "bd87ab2c0a4d8fa9533b2eff88de1d4ed6e9c2ef02547246782f06fe80ed9c51",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Comics/Moses06.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Comics/Moses07.DD",
+          "bytes": 794,
+          "sha256": "7b9bbfa24ae4bd0c59b0909809cded21e4902452078f05c9f9cbeae1d894f26e",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Comics/Moses07.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Comics/Moses08.DD",
+          "bytes": 518,
+          "sha256": "fc45f0f2fd868190f4e6bacfb241bb080b8a06388532f6924c048b6c783b9ea8",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Comics/Moses08.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/GodTalking.HC",
+          "bytes": 17508,
+          "sha256": "76578e50c20af744db4d593e5f3ba9f4c464a3392857ac4706771cccbf375760",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/GodTalking.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/HorebA.HC",
+          "bytes": 33459,
+          "sha256": "95eb538120a322648e75835c71765239e745fdfc202fd4caddf30774bd57ba6d",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/HorebA.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/HorebBMP.HC",
+          "bytes": 2886,
+          "sha256": "bc004e12fc92e718130728e988f1658f8d308f26e46ff777c1f05a888d2853f9",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/HorebBMP.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/HorebBSP.HC",
+          "bytes": 2571,
+          "sha256": "5469e61ef5f6287b26baec2ea7299799622f261bb07e7e9221fd61d1ac5a7f59",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/HorebBSP.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/HorebC.HC",
+          "bytes": 3019,
+          "sha256": "723c9191ea94fd76ea0c7a8159384519a1a3ae7005ff8785173d54dd6e6616f9",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/HorebC.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Load.HC",
+          "bytes": 343,
+          "sha256": "c30016d41781c527d2c037d4c4fe1018ad584af0d3b08e037de2102f6310c107",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Map.HC",
+          "bytes": 1857,
+          "sha256": "7fe32d195f8a96a8112f3fcae55ad3867314e190cdf5a0a71fe0f0510f827246",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Map.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Mountain.HC",
+          "bytes": 83387,
+          "sha256": "0429ffd12234749f0feb9330950bbec9c1f0d4edac2a81837a32353ba418f712",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Mountain.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Quail.HC",
+          "bytes": 3084,
+          "sha256": "f08729261bf0feb7c6ac01a003a0e5eb843e817c236a4569f3e2c767efb55ad1",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Quail.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/Run.HC",
+          "bytes": 42,
+          "sha256": "e958dc1b761749af7c871ee20f372d69eee48575b2f80669aac50d8902f593da",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/WaterRock.HC",
+          "bytes": 3574,
+          "sha256": "4fa8ef55d788def6f70c30f2224043f0cab78cf3ef702fd0b4b85638b6554d0e",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/WaterRock.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/AfterEgypt/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://templeos.org/Downloads/TOS_Supplemental1.ISO.C",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
+    },
+    {
+      "id": "library-Chess",
+      "name": "Chess",
+      "entry": "C:/Home/Games/TinkerOS/Apps/Chess/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/Chess/Chess.HC",
+          "bytes": 28719,
+          "sha256": "16de45174a4b7ebfc216aeda8cf88aa25d92549745f323e1e30e99d81366feba",
+          "path": "C:/Home/Games/TinkerOS/Apps/Chess/Chess.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Chess/Load.HC",
+          "bytes": 69,
+          "sha256": "dea904ab396c196543aa216db1834e8e1e1632645af0f19a26da52dcd0e714a6",
+          "path": "C:/Home/Games/TinkerOS/Apps/Chess/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Chess/Run.HC",
+          "bytes": 37,
+          "sha256": "891f4defef34943d604b3b78344f61a2ce8c6d48c3e53df780707eeef94b2496",
+          "path": "C:/Home/Games/TinkerOS/Apps/Chess/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Chess/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/Chess/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://templeos.org/Downloads/TOS_Supplemental1.ISO.C",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
+    },
+    {
+      "id": "library-KeepAway",
+      "name": "KeepAway",
+      "entry": "C:/Home/Games/TinkerOS/Apps/KeepAway/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/KeepAway/KeepAway.HC",
+          "bytes": 107704,
+          "sha256": "d51e41e992d6fec1b41b74275bfabf846f0678972dfec5d9d524804fd9cfa73c",
+          "path": "C:/Home/Games/TinkerOS/Apps/KeepAway/KeepAway.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/KeepAway/Load.HC",
+          "bytes": 71,
+          "sha256": "d481032d5f5543dccbb9ecedd9810c4d9ad4b068867035203e2dfe1ce306daf3",
+          "path": "C:/Home/Games/TinkerOS/Apps/KeepAway/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/KeepAway/Run.HC",
+          "bytes": 39,
+          "sha256": "476c37fbd37b8bd6bc47709bb6a4b2025bbad243b1e7b754ac7e72b031505e65",
+          "path": "C:/Home/Games/TinkerOS/Apps/KeepAway/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/KeepAway/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/KeepAway/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Apps/KeepAway",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
+    },
+    {
+      "id": "library-Span",
+      "name": "Span",
+      "entry": "C:/Home/Games/TinkerOS/Apps/Span/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/Span/Install.HC",
+          "bytes": 17,
+          "sha256": "ecc2ea096e3115b6768fd9109369822f23c554393b74445c91b8781205deb2d6",
+          "path": "C:/Home/Games/TinkerOS/Apps/Span/Install.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Span/Load.HC",
+          "bytes": 153,
+          "sha256": "ee13f28dca7f1cf53ff38532f35ce54c2b9aff3de444b850d0bd9e167b8f521a",
+          "path": "C:/Home/Games/TinkerOS/Apps/Span/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Span/Run.HC",
+          "bytes": 36,
+          "sha256": "33b7f152ca1843d4e242d4746b7efcd7758c94d5978926c1d40872c05ab40fd6",
+          "path": "C:/Home/Games/TinkerOS/Apps/Span/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Span/Span.HH",
+          "bytes": 903,
+          "sha256": "4f22e1241dee1f9fef98c691f1d39c374484847d3c23b583cd9d17d57d8f7f4a",
+          "path": "C:/Home/Games/TinkerOS/Apps/Span/Span.HH"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Span/SpanBridge.HC",
+          "bytes": 2249,
+          "sha256": "a9856922dc5228d01f020711e52a11d45d9470da49343ba8443ed8f219cb1787",
+          "path": "C:/Home/Games/TinkerOS/Apps/Span/SpanBridge.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Span/SpanDerive.HC",
+          "bytes": 1255,
+          "sha256": "734940dadfe86f73a9c379498c5efcd510b3a547857268f9b37503e42e699bad",
+          "path": "C:/Home/Games/TinkerOS/Apps/Span/SpanDerive.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Span/SpanMain.HC",
+          "bytes": 11139,
+          "sha256": "9d9a66b8e27a9b7dd3cfa816f988e3e0668fde60e7c9deb9ced3e74b7c9f79bb",
+          "path": "C:/Home/Games/TinkerOS/Apps/Span/SpanMain.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Span/SpanNew.HC",
+          "bytes": 2511,
+          "sha256": "7e6a96bda2979582f0e649d058bacdc99d79a1b576da8188a94a676f7cd0637d",
+          "path": "C:/Home/Games/TinkerOS/Apps/Span/SpanNew.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Span/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/Span/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Apps/Span",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
+    },
+    {
+      "id": "library-Strut",
+      "name": "Strut",
+      "entry": "C:/Home/Games/TinkerOS/Apps/Strut/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/Strut/Load.HC",
+          "bytes": 68,
+          "sha256": "a549f65b246d1b506d257dcfd27a17d2faacce3d915b02b3356b2160d2fd4772",
+          "path": "C:/Home/Games/TinkerOS/Apps/Strut/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Strut/Run.HC",
+          "bytes": 37,
+          "sha256": "c6d7643ad2827c09ee79298f3041d666a4b4799bcaa6673ba1500f99da604525",
+          "path": "C:/Home/Games/TinkerOS/Apps/Strut/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Strut/Strut.HC",
+          "bytes": 15314,
+          "sha256": "9ee94808ec160a40cb64d834d7a81ba5d6547d4fbce0e7976de8ead5f1c2d59c",
+          "path": "C:/Home/Games/TinkerOS/Apps/Strut/Strut.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Strut/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/Strut/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Apps/Strut",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
+    },
+    {
+      "id": "library-Titanium",
+      "name": "Titanium",
+      "entry": "C:/Home/Games/TinkerOS/Apps/Titanium/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/Titanium/Load.HC",
+          "bytes": 71,
+          "sha256": "edc60f864c9c1eb77cd46b3dac5830a5d82f8412ab70f178cd06a102f72d7fa4",
+          "path": "C:/Home/Games/TinkerOS/Apps/Titanium/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Titanium/Run.HC",
+          "bytes": 39,
+          "sha256": "cf0f24a8ad110a81a48ff34a148146fd5557f27a18595673d103e5a982f4c91b",
+          "path": "C:/Home/Games/TinkerOS/Apps/Titanium/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Titanium/Titanium.HC",
+          "bytes": 107555,
+          "sha256": "8e7a29b6c5bccc621ea94e13165b4b982c8dc55b33c0ef8bb631eb0e857787ce",
+          "path": "C:/Home/Games/TinkerOS/Apps/Titanium/Titanium.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Titanium/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/Titanium/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Apps/Titanium",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
+    },
+    {
+      "id": "library-ToTheFront",
+      "name": "ToTheFront",
+      "entry": "C:/Home/Games/TinkerOS/Apps/ToTheFront/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/AIs/Human.HC",
+          "bytes": 4547,
+          "sha256": "9313708f4faa80652572595293b2dddbe2b482e9afe903c34eef4ba2040c3642",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/AIs/Human.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/AIs/SimpleAI.HC",
+          "bytes": 2055,
+          "sha256": "c0469fa8a4b79869716aee7b7fd2e37486f369673b784c547689cbacc3041c81",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/AIs/SimpleAI.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/Install.HC",
+          "bytes": 24,
+          "sha256": "d2fcbd18e5c9b8df95c639096d192e70f2e03ba1d325b66309ff5196d2e2f3a2",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/Install.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/Load.HC",
+          "bytes": 205,
+          "sha256": "9929d772f13ebbce1e8a0a0ffd551ec00c23d6395131f187966d911c51212b0d",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/Run.HC",
+          "bytes": 41,
+          "sha256": "e4d1492f241effc0dd7d2e15b57bf9196df78a422e4183c07f9aba03483850ae",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/TTFDraw.HC",
+          "bytes": 5690,
+          "sha256": "c834d98b4b6a439f1636875d6df0872b779e769bcc96576f5ab1fdccffdd3a1d",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/TTFDraw.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/TTFFire.HC",
+          "bytes": 7179,
+          "sha256": "1fe6a651fb935accec58e7a33a8e005531978ffe5cb7fa5f0a74b40d4e4d1bba",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/TTFFire.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/TTFGlbls.HC",
+          "bytes": 2657,
+          "sha256": "ed4521e394c1b48f06568f59d59b2c6be194be07e226bfcd587ce35042340617",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/TTFGlbls.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/TTFInit.HC",
+          "bytes": 9425,
+          "sha256": "b46af70d93ff0bf7da8eeaf433694c6ddc40564bd490a430b1704a7238fa1976",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/TTFInit.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/TTFLib.HC",
+          "bytes": 2446,
+          "sha256": "929cb2613a08acba835e24b529e3aea5246b436baaf36ac6327f4900186d2536",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/TTFLib.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/TTFMove.HC",
+          "bytes": 3121,
+          "sha256": "0d8822eac7e98be5c787cb32ecb97c6c4488797f72fef42fc7a7f01e0e049f66",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/TTFMove.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/TTFVis.HC",
+          "bytes": 5712,
+          "sha256": "002fdbfdc8bee0cb4b97a1c73c61eee3649b9f364ae0689ad20cfade6253eae6",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/TTFVis.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/ToTheFront.HC",
+          "bytes": 4610,
+          "sha256": "8e2cf8f455358fc53769938b78b516b29ef907d8a9f4f510187be5ac0bdc40da",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/ToTheFront.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/ToTheFront/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Apps/ToTheFront",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
+    },
+    {
+      "id": "library-Vocabulary",
+      "name": "Vocabulary",
+      "entry": "C:/Home/Games/TinkerOS/Apps/Vocabulary/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/Vocabulary/Load.HC",
+          "bytes": 72,
+          "sha256": "cf5e6d2096d37fc7f6dfdbcdeb4e6dd9fce81876d1ca1bbc2651fde36ea142fd",
+          "path": "C:/Home/Games/TinkerOS/Apps/Vocabulary/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Vocabulary/Run.HC",
+          "bytes": 40,
+          "sha256": "36c578510595691f35bf2ba7b341a228d7d74c53103e91ebb1188ac52a9f6bed",
+          "path": "C:/Home/Games/TinkerOS/Apps/Vocabulary/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Vocabulary/VocabQuiz.HC",
+          "bytes": 1318,
+          "sha256": "639b2bced20d3abbe155587e3e0316b6bb0517a20cf5c5c2c8202d2cf54bf781",
+          "path": "C:/Home/Games/TinkerOS/Apps/Vocabulary/VocabQuiz.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Vocabulary/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/Vocabulary/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Apps/Vocabulary",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
+    },
+    {
+      "id": "library-XCaliber",
+      "name": "X-Caliber",
+      "entry": "C:/Home/Games/TinkerOS/Apps/X-Caliber/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/X-Caliber/Load.HC",
+          "bytes": 91,
+          "sha256": "1d0bc9e4cc18b58cb1f7880bdc59eadcb01c02dbdbdf3b9de6977529795fdbf2",
+          "path": "C:/Home/Games/TinkerOS/Apps/X-Caliber/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/X-Caliber/Run.HC",
+          "bytes": 39,
+          "sha256": "0996519a5a452d443ae64ab1d3dcdea36e7d02aeca5adac6c577534a1fac5d0f",
+          "path": "C:/Home/Games/TinkerOS/Apps/X-Caliber/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/X-Caliber/X-Caliber.HC",
+          "bytes": 39487,
+          "sha256": "1d5eabc6f0794d7287f755ca142fcb6cf4a45f9cf7e4769d95f8def0ca637fce",
+          "path": "C:/Home/Games/TinkerOS/Apps/X-Caliber/X-Caliber.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/X-Caliber/XCCtrls.HC",
+          "bytes": 5217,
+          "sha256": "1d292c83882a6d1029459707a53680a820bf904733080f25ad406fe451ae2c78",
+          "path": "C:/Home/Games/TinkerOS/Apps/X-Caliber/XCCtrls.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/X-Caliber/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/X-Caliber/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Apps/X-Caliber",
+        "note": "Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS."
+      }
+    },
+    {
+      "id": "library-CastleFrankenstein2",
+      "name": "Castle Frankenstein 2",
+      "entry": "C:/Home/Games/TinkerOS/Apps/CF2/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/CF2/Browser/CF2.HC",
+          "bytes": 53211,
+          "sha256": "cc2bb010be1697583bdcd4bb3220a3be1b7f0b44ecb488fbf1e779aec558fade",
+          "path": "C:/Home/Games/TinkerOS/Apps/CF2/CF2.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/CF2/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "a07ebc8160c8ab30d6cc440344f8614b835feef7ac0c841bfb49ab2e46efee07",
+          "path": "C:/Home/Games/TinkerOS/Apps/CF2/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "TheTinkerer",
+        "authorUrl": "https://github.com/tinkeros",
+        "source": "https://github.com/tinkeros/CF2",
+        "note": "TinkerOS sequel by TheTinkerer, based on Terry A. Davis's Castle Frankenstein."
+      }
+    },
+    {
+      "id": "library-Cube",
+      "name": "Cube",
+      "entry": "C:/Home/Games/TinkerOS/Apps/Cube/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/Cube/Cube.HC",
+          "bytes": 23880,
+          "sha256": "774ff40524f40eb9dd3782996582d36b0ba584c48ae6ccec2819329478eebfbd",
+          "path": "C:/Home/Games/TinkerOS/Apps/Cube/Cube.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Cube/CubeHelp.DD",
+          "bytes": 2528,
+          "sha256": "511c100470620b7e2479e637e083608a2066ef735c84ad8248755832453017c9",
+          "path": "C:/Home/Games/TinkerOS/Apps/Cube/CubeHelp.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Cube/Icon.DD",
+          "bytes": 6892,
+          "sha256": "dd9ee2a265e6357142403219e980bde5a7a15753e501e9fed63db2f73fdde459",
+          "path": "C:/Home/Games/TinkerOS/Apps/Cube/Icon.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Cube/Run.HC",
+          "bytes": 108,
+          "sha256": "61a08efaf0e69746e72777c14ec88246dbd26a635f2bc97f9e4e923b73c0e1be",
+          "path": "C:/Home/Games/TinkerOS/Apps/Cube/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Cube/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/Cube/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "TheTinkerer",
+        "authorUrl": "https://github.com/tinkeros",
+        "source": "https://github.com/tinkeros/cube",
+        "note": "An original TinkerOS game by TheTinkerer."
+      }
+    },
+    {
+      "id": "library-GlowUFOs",
+      "name": "GlowUFOs",
+      "entry": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/GlowUFOs/GlowUFOs.HC",
+          "bytes": 38779,
+          "sha256": "140f7604a49008172192821b9a90822ddd3ee01dc9e6033def318f3e8d85b52e",
+          "path": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/GlowUFOs.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/GlowUFOs/Help.DD",
+          "bytes": 2452,
+          "sha256": "0d59d94e4cb48185020e85ca657316246201a5c9382c8c129a71f487698fe1cb",
+          "path": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/Help.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/GlowUFOs/Icon.HC",
+          "bytes": 1415,
+          "sha256": "ab03f7908a37102a0b91d2ddee9432d2a9c384bd098ec978a348ad5e6a87b202",
+          "path": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/Icon.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/GlowUFOs/BrowserStart.HC",
+          "bytes": 204,
+          "sha256": "9e283f93715762172f3b0a90f94392c48338bc74e37e12571ddb0230980c6151",
+          "path": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "TheTinkerer",
+        "authorUrl": "https://github.com/tinkeros",
+        "source": "https://github.com/tinkeros/TinkerOS/tree/main/Apps/GlowUFOs",
+        "note": "An original TinkerOS game by TheTinkerer."
+      }
+    },
+    {
+      "id": "library-OregonTrail1975",
+      "name": "Oregon Trail 1975",
+      "entry": "C:/Home/Games/TinkerOS/Apps/OT1975/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/OT1975/Load.HC",
+          "bytes": 69,
+          "sha256": "a117c436e6ca143cb55dc7f381da05156a634a785d1da318d6512e7a5a5a2df3",
+          "path": "C:/Home/Games/TinkerOS/Apps/OT1975/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/OT1975/OT1975.HC",
+          "bytes": 20647,
+          "sha256": "6f8d852aa797e2e846220b9bfc991d1ed0f345cbccc4bf01a014980a5b767174",
+          "path": "C:/Home/Games/TinkerOS/Apps/OT1975/OT1975.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/OT1975/Run.HC",
+          "bytes": 38,
+          "sha256": "73f6c136c4787dda20a27cec7ee429a2152d1e7cd8cad94eb7c8080ba87b616e",
+          "path": "C:/Home/Games/TinkerOS/Apps/OT1975/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/OT1975/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/OT1975/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "TheTinkerer",
+        "authorUrl": "https://github.com/tinkeros",
+        "source": "https://github.com/tinkeros/OT1975",
+        "note": "HolyC port by TheTinkerer. Original by MECC staff, with 1975 revisions by Don Rawitsch."
+      }
+    },
+    {
+      "id": "library-Scorch",
+      "name": "Scorch",
+      "entry": "C:/Home/Games/TinkerOS/Apps/Scorch/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/Scorch/Help.DD",
+          "bytes": 1251,
+          "sha256": "2b25c5dc0bb5d4432eb1a998512881d036bc1db64156ccac926de811ff42f576",
+          "path": "C:/Home/Games/TinkerOS/Apps/Scorch/Help.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Scorch/Icon.HC",
+          "bytes": 1411,
+          "sha256": "d6f828ac7e92406e86184f8c2531fa6aa9fd913dbebc31cbbb5c79499ba4f2d7",
+          "path": "C:/Home/Games/TinkerOS/Apps/Scorch/Icon.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Scorch/Scorch.HC",
+          "bytes": 20893,
+          "sha256": "f3f5e88db289f4b14b0c0716d7a5264da4fc073a95c8c3f9ffed80d8428bb21e",
+          "path": "C:/Home/Games/TinkerOS/Apps/Scorch/Scorch.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Scorch/BrowserStart.HC",
+          "bytes": 202,
+          "sha256": "419d27d14a9f4c8474358e4b1a408328180f0e2a02388758a105765cf16653f7",
+          "path": "C:/Home/Games/TinkerOS/Apps/Scorch/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "TheTinkerer",
+        "authorUrl": "https://github.com/tinkeros",
+        "source": "https://github.com/tinkeros/TinkerOS/tree/main/Apps/Scorch",
+        "note": "An original TinkerOS game by TheTinkerer."
+      }
+    },
+    {
+      "id": "library-SpyHunt",
+      "name": "SpyHunt",
+      "entry": "C:/Home/Games/TinkerOS/Apps/SpyHunt/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/SpyHunt/Load.HC",
+          "bytes": 70,
+          "sha256": "e7967ac32fe0b3873798d8afb8f179ce977874f186941cafc9e1992d4e1e963f",
+          "path": "C:/Home/Games/TinkerOS/Apps/SpyHunt/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/SpyHunt/Run.HC",
+          "bytes": 39,
+          "sha256": "f05508e4721b8138b53aea3642bb47b63306c3ec23680c9f9b823cca13683af6",
+          "path": "C:/Home/Games/TinkerOS/Apps/SpyHunt/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/SpyHunt/SpyHunt.HC",
+          "bytes": 100931,
+          "sha256": "cfebcd86326b31850ca53b34081652b5f8898da79781750204ff04669ba41ce5",
+          "path": "C:/Home/Games/TinkerOS/Apps/SpyHunt/SpyHunt.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/SpyHunt/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/SpyHunt/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "TheTinkerer",
+        "authorUrl": "https://github.com/tinkeros",
+        "source": "https://github.com/tinkeros/SpyHunt",
+        "note": "TinkerOS game by TheTinkerer, based on Terry A. Davis's Titanium."
+      }
+    },
+    {
+      "id": "library-Sudoku",
+      "name": "Sudoku",
+      "entry": "C:/Home/Games/TinkerOS/Apps/Sudoku/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/Sudoku/Icon.HC",
+          "bytes": 1409,
+          "sha256": "2178f5f5d8ace4577741cf8e92d9612a7b8a86bd707d8cc9959dee2cc2c135ac",
+          "path": "C:/Home/Games/TinkerOS/Apps/Sudoku/Icon.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Sudoku/Load.HC",
+          "bytes": 69,
+          "sha256": "e5a948ccfb727f9c52f846ea8557e372357c75e097592e35c8f1363ec70ce789",
+          "path": "C:/Home/Games/TinkerOS/Apps/Sudoku/Load.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Sudoku/Run.HC",
+          "bytes": 38,
+          "sha256": "0d6b4c412a0c68ceead77fac58d7b94d1ddcf4fb66b5304ecb8246a85608f750",
+          "path": "C:/Home/Games/TinkerOS/Apps/Sudoku/Run.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Sudoku/Sudoku.HC",
+          "bytes": 16598,
+          "sha256": "5977b3dde28d2b1b32a200fc0177276b357e8f78fc85bb4d21ad603ed2655ba5",
+          "path": "C:/Home/Games/TinkerOS/Apps/Sudoku/Sudoku.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Sudoku/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
+          "path": "C:/Home/Games/TinkerOS/Apps/Sudoku/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "TheTinkerer",
+        "authorUrl": "https://github.com/tinkeros",
+        "source": "https://github.com/tinkeros/Sudoku",
+        "note": "An original TinkerOS game by TheTinkerer."
+      }
+    },
+    {
+      "id": "library-Tetris",
+      "name": "Tetris",
+      "entry": "C:/Home/Games/TinkerOS/Apps/Tetris/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TinkerOS/Apps/Tetris/Help.DD",
+          "bytes": 1073,
+          "sha256": "8a49333ac297c44b808da642f3483806b740867a4ecf4f9a750d8eed7df8152b",
+          "path": "C:/Home/Games/TinkerOS/Apps/Tetris/Help.DD"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Tetris/Icon.HC",
+          "bytes": 1411,
+          "sha256": "66f08d0aee82fc34b63f99419100b93c709e084dc80f291286f17cd32c61ae29",
+          "path": "C:/Home/Games/TinkerOS/Apps/Tetris/Icon.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Tetris/Tetris.HC",
+          "bytes": 12581,
+          "sha256": "9fe19f757e1a7fc7ff6307db45ca43805de1e3005a2b89ebf56d23a64ef2d1d8",
+          "path": "C:/Home/Games/TinkerOS/Apps/Tetris/Tetris.HC"
+        },
+        {
+          "url": "games/upstream/TinkerOS/Apps/Tetris/BrowserStart.HC",
+          "bytes": 202,
+          "sha256": "945202bd83ad26d22a7183f7d7855d8f6ad4d50dd350ef5d81d2718d78793172",
+          "path": "C:/Home/Games/TinkerOS/Apps/Tetris/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TinkerOS",
+      "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2",
+      "credit": {
+        "author": "TheTinkerer",
+        "authorUrl": "https://github.com/tinkeros",
+        "source": "https://github.com/tinkeros/TinkerOS/tree/main/Apps/Tetris",
+        "note": "HolyC implementation by TheTinkerer. Tetris was created by Alexey Pajitnov."
+      }
+    },
+    {
+      "id": "library-B17",
+      "name": "B17",
+      "entry": "C:/Home/Games/TerrySupplement/B17/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TerrySupplement/B17/B17.HC",
+          "bytes": 2775,
+          "sha256": "7b50f52794de6026f2ab9406bfaaf052d62402bbbc31aaeb206e7145879a65b6",
+          "path": "C:/Home/Games/TerrySupplement/B17/B17.HC"
+        },
+        {
+          "url": "games/upstream/TerrySupplement/B17/BrowserStart.HC",
+          "bytes": 199,
+          "sha256": "94c1eb6465023fff907fd00e15e500194dcdc3ef5fbeaae0319fb8293a00124a",
+          "path": "C:/Home/Games/TerrySupplement/B17/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TerrySupplement",
+      "revision": "TempleOS Supplemental 1, 2017-11-20",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://templeos.org/Downloads/TOS_Supplemental1.ISO.C",
+        "note": "From Terry's official TempleOS Supplemental 1 disc."
+      }
+    },
+    {
+      "id": "library-Coach",
+      "name": "Coach",
+      "entry": "C:/Home/Games/TerrySupplement/Coach/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TerrySupplement/Coach/Coach.HC",
+          "bytes": 4890,
+          "sha256": "8cc7f098ca02199bfaffa40d2c7539a3f0a0f988afada5409b940eebb239664a",
+          "path": "C:/Home/Games/TerrySupplement/Coach/Coach.HC"
+        },
+        {
+          "url": "games/upstream/TerrySupplement/Coach/BrowserStart.HC",
+          "bytes": 201,
+          "sha256": "3e08d70fcb4c3813236da2f3b3e11f78bfe89b7e155d4f7c1c540c893b58eb49",
+          "path": "C:/Home/Games/TerrySupplement/Coach/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TerrySupplement",
+      "revision": "TempleOS Supplemental 1, 2017-11-20",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://templeos.org/Downloads/TOS_Supplemental1.ISO.C",
+        "note": "From Terry's official TempleOS Supplemental 1 disc."
+      }
+    },
+    {
+      "id": "library-DiningStars",
+      "name": "DiningStars",
+      "entry": "C:/Home/Games/TerrySupplement/DiningStars/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TerrySupplement/DiningStars/DiningStars.HC",
+          "bytes": 30942,
+          "sha256": "559504014bb2fb4b6a0554f376bedb1640c254981eb4a1dfa07d180f8b70a8a7",
+          "path": "C:/Home/Games/TerrySupplement/DiningStars/DiningStars.HC"
+        },
+        {
+          "url": "games/upstream/TerrySupplement/DiningStars/BrowserStart.HC",
+          "bytes": 207,
+          "sha256": "bc0fa2c3e33e9d736f6efa8426521ea5efdb2e68643ececd0bf83fdf017f80dd",
+          "path": "C:/Home/Games/TerrySupplement/DiningStars/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TerrySupplement",
+      "revision": "TempleOS Supplemental 1, 2017-11-20",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://templeos.org/Downloads/TOS_Supplemental1.ISO.C",
+        "note": "From Terry's official TempleOS Supplemental 1 disc."
+      }
+    },
+    {
+      "id": "library-Flappy",
+      "name": "Flappy",
+      "entry": "C:/Home/Games/TerrySupplement/Flappy/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TerrySupplement/Flappy/Flappy.HC",
+          "bytes": 15396,
+          "sha256": "101a1899030fe843c435f8c9141839aca6bbc9d753eb8823d648f4f6499527c9",
+          "path": "C:/Home/Games/TerrySupplement/Flappy/Flappy.HC"
+        },
+        {
+          "url": "games/upstream/TerrySupplement/Flappy/BrowserStart.HC",
+          "bytes": 202,
+          "sha256": "e2e867f735d6988e1ea6d9984aab6a50360711f3b08c8f1dc0155b1fce6bc606",
+          "path": "C:/Home/Games/TerrySupplement/Flappy/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TerrySupplement",
+      "revision": "TempleOS Supplemental 1, 2017-11-20",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://templeos.org/Downloads/TOS_Supplemental1.ISO.C",
+        "note": "From Terry's official TempleOS Supplemental 1 disc."
+      }
+    },
+    {
+      "id": "library-MissileDefense",
+      "name": "MissileDefense",
+      "entry": "C:/Home/Games/TerrySupplement/MissileDefense/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TerrySupplement/MissileDefense/MissileDefense.HC",
+          "bytes": 12038,
+          "sha256": "993d1fc9c5c6cb94436dfb58af002589266926ede4bcb8627f1710b441d00313",
+          "path": "C:/Home/Games/TerrySupplement/MissileDefense/MissileDefense.HC"
+        },
+        {
+          "url": "games/upstream/TerrySupplement/MissileDefense/BrowserStart.HC",
+          "bytes": 210,
+          "sha256": "627b5561730217230f1847911e669f880e9edd9ba4f4539b4af4ec63c9ba90d1",
+          "path": "C:/Home/Games/TerrySupplement/MissileDefense/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TerrySupplement",
+      "revision": "TempleOS Supplemental 1, 2017-11-20",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://templeos.org/Downloads/TOS_Supplemental1.ISO.C",
+        "note": "From Terry's official TempleOS Supplemental 1 disc."
+      }
+    },
+    {
+      "id": "library-Rocks",
+      "name": "Rocks",
+      "entry": "C:/Home/Games/TerrySupplement/Rocks/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TerrySupplement/Rocks/Rocks.HC",
+          "bytes": 19949,
+          "sha256": "6bd819a29fa9ae3fec2b45e4a9a4389683e07bc3fea923ff27f533e48c3d230f",
+          "path": "C:/Home/Games/TerrySupplement/Rocks/Rocks.HC"
+        },
+        {
+          "url": "games/upstream/TerrySupplement/Rocks/BrowserStart.HC",
+          "bytes": 201,
+          "sha256": "d781ee108d24d45f9400fce42dca529b23670716f78c62d06810202bef071c0c",
+          "path": "C:/Home/Games/TerrySupplement/Rocks/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TerrySupplement",
+      "revision": "TempleOS Supplemental 1, 2017-11-20",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://templeos.org/Downloads/TOS_Supplemental1.ISO.C",
+        "note": "From Terry's official TempleOS Supplemental 1 disc."
+      }
+    },
+    {
+      "id": "library-Pilgrims",
+      "name": "Pilgrims",
+      "entry": "C:/Home/Games/TerrySupplement/Pilgrims/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/TerrySupplement/Pilgrims/GrVectMap.HC",
+          "bytes": 13384,
+          "sha256": "107220aff010bd0d7504a9a958857b28315480f238abc166df8cbc248f05c8b5",
+          "path": "C:/Home/Games/TerrySupplement/Pilgrims/GrVectMap.HC"
+        },
+        {
+          "url": "games/upstream/TerrySupplement/Pilgrims/NewEngland.GR",
+          "bytes": 14407,
+          "sha256": "7a41acabc1b9c6e6c63f1cbd3a336d8297d5d4d26329bd2c181cb892f3e9219e",
+          "path": "C:/Home/Games/TerrySupplement/Pilgrims/NewEngland.GR"
+        },
+        {
+          "url": "games/upstream/TerrySupplement/Pilgrims/Pilgrims.HC",
+          "bytes": 29338,
+          "sha256": "f380584e07ec1f75b20515741db1b048e1e6c1a7a1447be60f4d89b725dce4e1",
+          "path": "C:/Home/Games/TerrySupplement/Pilgrims/Pilgrims.HC"
+        },
+        {
+          "url": "games/upstream/TerrySupplement/Pilgrims/BrowserStart.HC",
+          "bytes": 204,
+          "sha256": "5e0c387167163e1124c3d256e3bca38068a9c309e35ff789d9fc0322c24b66af",
+          "path": "C:/Home/Games/TerrySupplement/Pilgrims/BrowserStart.HC"
+        }
+      ],
+      "upstream": "TerrySupplement",
+      "revision": "TempleOS Supplemental 1, 2017-11-20",
+      "credit": {
+        "author": "Terry A. Davis",
+        "authorUrl": "https://templeos.org/",
+        "source": "https://templeos.org/Downloads/TOS_Supplemental1.ISO.C",
+        "note": "From Terry's official TempleOS Supplemental 1 disc. Map derived from the US Geological Survey."
+      }
+    },
+    {
+      "id": "library-MarioClone",
+      "name": "MarioClone",
+      "entry": "C:/Home/Games/MarioClone/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/MarioClone/Browser/Draw.HC",
+          "bytes": 4862,
+          "sha256": "eafddc2f517047031f4275ba2e0950551e2a34e4e9835d57a8614b0d72f09fb3",
+          "path": "C:/Home/Games/MarioClone/Draw.HC"
+        },
+        {
+          "url": "games/upstream/MarioClone/Game.HC",
+          "bytes": 6143,
+          "sha256": "7fd183e69532410e621b9ddb33f22db83a238fcfef6901c4905cd5a878360eb3",
+          "path": "C:/Home/Games/MarioClone/Game.HC"
+        },
+        {
+          "url": "games/upstream/MarioClone/Browser/Globals.HC",
+          "bytes": 5022,
+          "sha256": "95a7c82e04a4e03764cc3663c91ee1c50615c380866827b51ceb1475c80057c2",
+          "path": "C:/Home/Games/MarioClone/Globals.HC"
+        },
+        {
+          "url": "games/upstream/MarioClone/Browser/Level.HC",
+          "bytes": 3208,
+          "sha256": "c4df8556d804dd475edebb737ba78dbbff96f9ab9fcc984eb2cbe1904accea24",
+          "path": "C:/Home/Games/MarioClone/Level.HC"
+        },
+        {
+          "url": "games/upstream/MarioClone/Levels/World1-1.TXT",
+          "bytes": 1822,
+          "sha256": "f01aceee4968042e619aae906c985e3068963cf0483c8f6aa121c2ed92959aa2",
+          "path": "C:/Home/Games/MarioClone/Levels/World1-1.TXT"
+        },
+        {
+          "url": "games/upstream/MarioClone/Main.HC",
+          "bytes": 1687,
+          "sha256": "744057ea0bb28bddfa5e17ccbc82695ff70e195ad510807f37aee1ed1ff138b6",
+          "path": "C:/Home/Games/MarioClone/Main.HC"
+        },
+        {
+          "url": "games/upstream/MarioClone/SMB.WAD",
+          "bytes": 137205,
+          "sha256": "5e6638ed657a8079723b2eddca7541d20c6b1870c697f19323fcc8fdc9974613",
+          "path": "C:/Home/Games/MarioClone/SMB.WAD"
+        },
+        {
+          "url": "games/upstream/MarioClone/Sounds.HC",
+          "bytes": 14786,
+          "sha256": "9ece7f3ad46ea630b762ae2a2290ae60111fa1287759bd9a6d9c5a20ffc01e67",
+          "path": "C:/Home/Games/MarioClone/Sounds.HC"
+        },
+        {
+          "url": "games/upstream/MarioClone/Spawn.HC",
+          "bytes": 1705,
+          "sha256": "04c202de8cd17d25dcb5ec607e5f2a4d26ad5610e398da255be6a954d1400ad1",
+          "path": "C:/Home/Games/MarioClone/Spawn.HC"
+        },
+        {
+          "url": "games/upstream/MarioClone/Test.HC",
+          "bytes": 246,
+          "sha256": "0923848fe6f6f9a409ee09c33f4acdd392bf69cfc3a89be329645afb87c5b58a",
+          "path": "C:/Home/Games/MarioClone/Test.HC"
+        },
+        {
+          "url": "games/upstream/MarioClone/Update.HC",
+          "bytes": 9471,
+          "sha256": "433330873c01d895f69fe6ace05057276b1ae68401adc4ac761f6b9ff829df1e",
+          "path": "C:/Home/Games/MarioClone/Update.HC"
+        },
+        {
+          "url": "games/upstream/MarioClone/Wad.HC",
+          "bytes": 15171,
+          "sha256": "21400e66f9bac35fcb7c193053baeb7308fa0ba704d0716fa1a5f555dca29b96",
+          "path": "C:/Home/Games/MarioClone/Wad.HC"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/1l.png",
+          "bytes": 1364,
+          "sha256": "a034a1e30312f341639c9dfadbdeacf3054f2801b777e4aa996d25f5a38543a4",
+          "path": "C:/Home/Games/MarioClone/png/1l.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/1r.png",
+          "bytes": 747,
+          "sha256": "10e428e082372694982a9aa87d12f575389eb68d167e65dc508228a0484db60b",
+          "path": "C:/Home/Games/MarioClone/png/1r.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/2l.png",
+          "bytes": 731,
+          "sha256": "2334807a24be4db3d2292e2ad8a3561d2380379f8fc4368dc53b34af408fb800",
+          "path": "C:/Home/Games/MarioClone/png/2l.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/2r.png",
+          "bytes": 727,
+          "sha256": "546d2451e36eefb564c179f15b9c28cbc6519f88eed86f741654beb4a46cbd69",
+          "path": "C:/Home/Games/MarioClone/png/2r.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/3l.png",
+          "bytes": 738,
+          "sha256": "d18909157e1e33d9c3d2d5903dec5e800ea758834c4357659c4dec75ae705c6b",
+          "path": "C:/Home/Games/MarioClone/png/3l.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/3r.png",
+          "bytes": 740,
+          "sha256": "955c9cb41fc7ff8290b543a83e2fd38cd1ac2fda32393ad584a4f1cdca27cb0d",
+          "path": "C:/Home/Games/MarioClone/png/3r.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/4l.png",
+          "bytes": 748,
+          "sha256": "c9ef3c878a4ed86961dbc05fff9751ae6e8aa1c87116bf856a453f6811e5e9f4",
+          "path": "C:/Home/Games/MarioClone/png/4l.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/4r.png",
+          "bytes": 746,
+          "sha256": "cfb54312a5a591d8a81231c0616d5f7baae461920ec91b15fd331e77f7f0235d",
+          "path": "C:/Home/Games/MarioClone/png/4r.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/5l.png",
+          "bytes": 739,
+          "sha256": "0173861d3f428a4c0f36b5620649194b8d539397ae64a5a0ad8c9535757e3cee",
+          "path": "C:/Home/Games/MarioClone/png/5l.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/5r.png",
+          "bytes": 747,
+          "sha256": "c5e0ea57e8e9d0a569e5303102121ff7b097ddf7d77e3b359b482784298d84df",
+          "path": "C:/Home/Games/MarioClone/png/5r.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/6l.png",
+          "bytes": 781,
+          "sha256": "905e29d3bafb2323ac1e9b1abaa5fcf403c67d32004d0181461512c1ff4454d4",
+          "path": "C:/Home/Games/MarioClone/png/6l.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/6r.png",
+          "bytes": 756,
+          "sha256": "00461a415b5db1f89b0c4a44dcba4a90fc19cb57f55f5b9d6d5a6ffc79730f91",
+          "path": "C:/Home/Games/MarioClone/png/6r.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/bl1.png",
+          "bytes": 835,
+          "sha256": "8c1ff26a17fa007f5d6e6abdb819ca9502d79931b094273d3fedebd876510ed0",
+          "path": "C:/Home/Games/MarioClone/png/bl1.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/bl2.png",
+          "bytes": 812,
+          "sha256": "c747db7d43b309bdffde0d2dcb91f61ea868efd5d38d401f36dd3f33c62b93a0",
+          "path": "C:/Home/Games/MarioClone/png/bl2.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/bl3.png",
+          "bytes": 838,
+          "sha256": "289c50627cf5de4e59aef937300be08d1c15e7c6c5294f591858ce195541b4d9",
+          "path": "C:/Home/Games/MarioClone/png/bl3.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/bl4.png",
+          "bytes": 841,
+          "sha256": "541a65dfa582d61a2a56faf158a904d732c01abff0fbf8668022704bffafb045",
+          "path": "C:/Home/Games/MarioClone/png/bl4.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/bl5.png",
+          "bytes": 868,
+          "sha256": "c643649b08f9bbc54aa0f10a61cb048811164016bf4c08b555a9277c62cfec67",
+          "path": "C:/Home/Games/MarioClone/png/bl5.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/bl6.png",
+          "bytes": 895,
+          "sha256": "60b5e7bef144112f68e154d9aba6940690722be9537c6ff6483e3527e2456617",
+          "path": "C:/Home/Games/MarioClone/png/bl6.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/bl7.png",
+          "bytes": 862,
+          "sha256": "038f68a2e0a58508c872f16a78266e0c97dded318bdd3784f6f4fed90cb3504a",
+          "path": "C:/Home/Games/MarioClone/png/bl7.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/bl8.png",
+          "bytes": 797,
+          "sha256": "7cc251497d5b1dd2416fb2a638d62483eabf33da9a6a1eb5160462e4796cbab7",
+          "path": "C:/Home/Games/MarioClone/png/bl8.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/br1.png",
+          "bytes": 842,
+          "sha256": "b1d132eae92a058fdd41cdee4b2cd89af6f921e78d7a1006edc4716f0cf06233",
+          "path": "C:/Home/Games/MarioClone/png/br1.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/br2.png",
+          "bytes": 819,
+          "sha256": "979f36464eb206fcdd9463f40ffa879a43586077cc1819aedb33ebc740aafd24",
+          "path": "C:/Home/Games/MarioClone/png/br2.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/br3.png",
+          "bytes": 843,
+          "sha256": "8530bb986f89fe5452ed3b5720c357e931c2fee49c56e22b04c5bf3bc17409f5",
+          "path": "C:/Home/Games/MarioClone/png/br3.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/br4.png",
+          "bytes": 845,
+          "sha256": "0a13ddb9b54bffbfdf906ea8a080765c11090100abfcb06ac5f31cd39eaed09d",
+          "path": "C:/Home/Games/MarioClone/png/br4.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/br5.png",
+          "bytes": 872,
+          "sha256": "43c1a0fcdceb023896e597c1581f46189ab6ceaa0fd2b1707b19afb7ab45141f",
+          "path": "C:/Home/Games/MarioClone/png/br5.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/br6.png",
+          "bytes": 908,
+          "sha256": "42a68b73ab24dbc680b570fa62bcec65db7fa44554f72c620f166b53431aefbd",
+          "path": "C:/Home/Games/MarioClone/png/br6.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/br7.png",
+          "bytes": 859,
+          "sha256": "e89d5eed68c5be391070d43e26e1cbc01e23bfbd4434458f5cffdd7fecb67db3",
+          "path": "C:/Home/Games/MarioClone/png/br7.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/br8.png",
+          "bytes": 804,
+          "sha256": "e87fd2a1ddeff856ad78bf35f795919066bb329d6ab0b11d67a84385115d6184",
+          "path": "C:/Home/Games/MarioClone/png/br8.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/brok1.png",
+          "bytes": 639,
+          "sha256": "63ebd94f770981da8bb791efbb58c8158fd4f4d6de6ef064c07ec818a024250b",
+          "path": "C:/Home/Games/MarioClone/png/brok1.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/brok2.png",
+          "bytes": 632,
+          "sha256": "fa895979b406514126021b421a52b57468f0014ecc3618410278ac80308480af",
+          "path": "C:/Home/Games/MarioClone/png/brok2.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/c1.png",
+          "bytes": 647,
+          "sha256": "e31383911c9b67be0f3de2a59ba907459325e1aa813771b94f557b174940816c",
+          "path": "C:/Home/Games/MarioClone/png/c1.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/c2.png",
+          "bytes": 614,
+          "sha256": "1085f46b9f0ae39de94d01e3506af469f0e4788a0382173f6acd511ea195f450",
+          "path": "C:/Home/Games/MarioClone/png/c2.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/c3.png",
+          "bytes": 662,
+          "sha256": "2faec735799238b2e0cc73768a8b5a8a659d7fa828bf1be19230b8916a0c4276",
+          "path": "C:/Home/Games/MarioClone/png/c3.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/c4.png",
+          "bytes": 596,
+          "sha256": "b8890839c5e0c8ccba9a2a2eca99ff1cd4e2690b801e97f83debe2483ea1fef3",
+          "path": "C:/Home/Games/MarioClone/png/c4.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/c5.png",
+          "bytes": 596,
+          "sha256": "d3a768e0c6b572c3511064ce6fcfa3c7673e44e187242cf9c1044cb3c4e093e5",
+          "path": "C:/Home/Games/MarioClone/png/c5.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/dead.png",
+          "bytes": 744,
+          "sha256": "80236bfb697de5e202c46311dd757540601e77e965767f57dce9802cd82394de",
+          "path": "C:/Home/Games/MarioClone/png/dead.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/floor1.png",
+          "bytes": 1620,
+          "sha256": "4062bdf1cffd38108ca9e7a9f05afa2bd0fc8a2473cec71773291262dbf1064f",
+          "path": "C:/Home/Games/MarioClone/png/floor1.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/floor2.png",
+          "bytes": 621,
+          "sha256": "e7039969994c2adcf620fa42929892276ad49c0c34144bfa20fac55f62b547f3",
+          "path": "C:/Home/Games/MarioClone/png/floor2.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/floor3.png",
+          "bytes": 666,
+          "sha256": "0f8beec42e543860487b443e3908ef57a5b022d9177f1e4ea788e6797eaa4a45",
+          "path": "C:/Home/Games/MarioClone/png/floor3.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/goom1.png",
+          "bytes": 706,
+          "sha256": "07cc5caf87787103f9353b03836d24ff8df9186435cd58d50a548bdd26f6dfd4",
+          "path": "C:/Home/Games/MarioClone/png/goom1.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/goom2.png",
+          "bytes": 709,
+          "sha256": "8dc89ccdc3e6ba2c8149c576ce82a9e2f9ff5cad3fe09307ad090923f86c85d2",
+          "path": "C:/Home/Games/MarioClone/png/goom2.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/goom3.png",
+          "bytes": 658,
+          "sha256": "73923c966f831f8e0674a4238972f4d0f47206a7e927bbc87ad19c78757f06d3",
+          "path": "C:/Home/Games/MarioClone/png/goom3.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/mush.png",
+          "bytes": 726,
+          "sha256": "a3ef2de4a2ecf18360ff238e2ed3624eaf42f54c76e2e9674d8018ada6ae4b15",
+          "path": "C:/Home/Games/MarioClone/png/mush.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/pi1.png",
+          "bytes": 629,
+          "sha256": "53463cab5b2a494e6a084cebad761f0fea6eba0b66a9c3da3ad35eecfd652f4d",
+          "path": "C:/Home/Games/MarioClone/png/pi1.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/pi2.png",
+          "bytes": 625,
+          "sha256": "62c3851ee8b16b17a0e6f264b12da13d86debf89dad35e5090c02dc78528c391",
+          "path": "C:/Home/Games/MarioClone/png/pi2.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/pi3.png",
+          "bytes": 595,
+          "sha256": "05814e584d961253173ff112cd300742c07c2b12eee94526d1f7fe974333f342",
+          "path": "C:/Home/Games/MarioClone/png/pi3.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/pi4.png",
+          "bytes": 617,
+          "sha256": "80b06ff65f3b827e4b05fe06b9db733719613bdc5b3f9aeb3e87f6c9460f1d42",
+          "path": "C:/Home/Games/MarioClone/png/pi4.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/q1.png",
+          "bytes": 703,
+          "sha256": "a0ca42a1128cf84b7856d32d1ad7c201d1df0bb5de60efe69dbbeaaa1502d0bd",
+          "path": "C:/Home/Games/MarioClone/png/q1.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/q2.png",
+          "bytes": 659,
+          "sha256": "f059bf72b918a6243ebb8766d8671f38b0c9c1f02c0b5312644f2628824656c9",
+          "path": "C:/Home/Games/MarioClone/png/q2.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/q3.png",
+          "bytes": 699,
+          "sha256": "106f922ad778f3cfb2812e27a0082e2d36ea59a8a24a96f3c70c5385cf5e08d3",
+          "path": "C:/Home/Games/MarioClone/png/q3.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/q4.png",
+          "bytes": 614,
+          "sha256": "70a59aab2d6beddee8060aa178e59532dabf6be7e9d5a9ea0b0fb53ee1605fe9",
+          "path": "C:/Home/Games/MarioClone/png/q4.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/png/spritebg.png",
+          "bytes": 175357,
+          "sha256": "cd5d1e343098c0fedf2c7f713cd2d0b248f11a9bbb31de65b97498e3fc2475a2",
+          "path": "C:/Home/Games/MarioClone/png/spritebg.png"
+        },
+        {
+          "url": "games/upstream/MarioClone/BrowserStart.HC",
+          "bytes": 200,
+          "sha256": "6281ebd11ac8167e9d1832a57011dbb76f8dffda761b2fb0913fa61500de82d0",
+          "path": "C:/Home/Games/MarioClone/BrowserStart.HC"
+        }
+      ],
+      "upstream": "MarioClone",
+      "revision": "b9cc6b53aafc25f1930218e71ccee6ff8ecd4e6b",
+      "credit": {
+        "author": "Austin Sierra",
+        "authorUrl": "https://github.com/austings",
+        "source": "https://github.com/austings/MarioClone",
+        "note": "HolyC game by Austin Sierra. Mario characters and original game by Nintendo."
+      }
+    },
+    {
+      "id": "library-MaliciousTestimonies",
+      "name": "Malicious Testimonies",
+      "entry": "C:/Home/Games/MaliciousTestimonies/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/MaliciousTestimonies/Load.HC",
+          "bytes": 716,
+          "sha256": "4886b5975acffa0cf9d0e741e787e9c102772092521026b328cf5bf3d839686e",
+          "path": "C:/Home/Games/MaliciousTestimonies/Load.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/README.md",
+          "bytes": 2308,
+          "sha256": "18efcd6fa5bc20f55310c875b5ef6b43a01761b58fc562e2be50ff83207427b8",
+          "path": "C:/Home/Games/MaliciousTestimonies/README.md"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/BMP/BMPView.HC",
+          "bytes": 547,
+          "sha256": "8c638ce0fc94eb74d0a49f253b8bdef02002bd8ff5dd5f04b701f3b25fe34aff",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/BMP/BMPView.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/BMP/FileBMP.HC",
+          "bytes": 9348,
+          "sha256": "a3454f5c19770c56c066dbb55745ee59c16cb0f077e4d935dc3cea22cd461733",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/BMP/FileBMP.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/BMP/jezebel1.bmp",
+          "bytes": 1126138,
+          "sha256": "495310c51df9fdd01704f3f4cc4a7fa7dbee0edd149f483d7c74313f092375ed",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/BMP/jezebel1.bmp"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/BMP/jezebel2.bmp",
+          "bytes": 1126138,
+          "sha256": "b2ea47ab459b1bfc4ec8a5cedb2a3a3a67a640732f3905f09b50da35d60efb60",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/BMP/jezebel2.bmp"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/BMP/jezebel3.bmp",
+          "bytes": 1126138,
+          "sha256": "d85f9e7d7dbfa9f96a0f91808fe1046427ad782a3fb490ba5d41282a5b854228",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/BMP/jezebel3.bmp"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Data/Actor.TXT",
+          "bytes": 3566,
+          "sha256": "1c3f0c71301a411d6556a7e1658e641cdefb9444a3d51639e818f454b17b11e7",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Data/Actor.TXT"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Data/Dialog.TXT",
+          "bytes": 3194,
+          "sha256": "6369fc8f0b118086a38b28c11b5c5441e1968659b8482550fe07a2c53a2d56a0",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Data/Dialog.TXT"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Data/Frames.HC",
+          "bytes": 26914,
+          "sha256": "0e608be982ed66a16277d4f14744d338991e0dbe6b1cc2989d6b323fdbbbc580",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Data/Frames.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Data/GUI.HC",
+          "bytes": 3340,
+          "sha256": "67d80a8add161663aac7bb26e752826c29fc0b04c9a2582da2991078f6bca388",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Data/GUI.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Data/Ids.HC",
+          "bytes": 1757,
+          "sha256": "3ee31dffe39857b6635eb92d6076abb303272ed9f45f1b7df9e6063d33f50a6c",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Data/Ids.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Data/Ids.TXT",
+          "bytes": 225,
+          "sha256": "ba8720d5776bffedc46574b1bfd4b520b5f27c681ef68c7318d038dff41bfd5f",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Data/Ids.TXT"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Data/OPTIONS.TXT",
+          "bytes": 8,
+          "sha256": "7ce50e12e30dee010b4e9a96f10165dc18fb70463ff70b11f7af0cef837d2b29",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Data/OPTIONS.TXT"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Data/RPG.WAD",
+          "bytes": 1970581,
+          "sha256": "128673698583dc056edfcb9ecea462191831388172d18dac6cb14a6a8a8ebae8",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Data/RPG.WAD"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/Browser/RPG/Data/Wad.HC",
+          "bytes": 15203,
+          "sha256": "f8c61802cfd9f9f45dd538d6877fa5f429cb63bc1a766d6b250424e48013c156",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Data/Wad.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Dev/Deserialize.HC",
+          "bytes": 6219,
+          "sha256": "4cbf21e0f8f162967b09d804371e77443d3aa3c6e3394005ebeb9bacc30a365e",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Dev/Deserialize.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/Browser/RPG/Dev/Dev.HC",
+          "bytes": 3191,
+          "sha256": "8262397700b1397876406b4cfcecfade458af6d4e28e0b500f76bc40005e6c25",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Dev/Dev.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Dev/Keyboard.HC",
+          "bytes": 3562,
+          "sha256": "4ad32a532a92f12df9c832ec3f3069f699c0338ddd2bb5dfb30806adb1965d83",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Dev/Keyboard.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/AI.HC",
+          "bytes": 7139,
+          "sha256": "fa908be7ebbd6050b33335f9d1c7cb89bc09b0cb639ebf3b7c4d14c9d4b09620",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/AI.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/Combat.HC",
+          "bytes": 4958,
+          "sha256": "9a7d696b3ef382760ba9cffe6bbba2e4482c9b107b3d0444641c0692f44da5c8",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Combat.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/Equipment.HC",
+          "bytes": 2757,
+          "sha256": "242340d6e95723f3b1fcb95766d036c0624babda6d6069f785862b5967c071d2",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Equipment.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/Fishing.HC",
+          "bytes": 385,
+          "sha256": "b80bbc75131e18d9951cb1da056c5ed126c7efebdd356367ed09a3482ac761fa",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Fishing.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/Inputs.HC",
+          "bytes": 13356,
+          "sha256": "4656268ed6b9e43a38312c0f9bf262f9e57669ad280ae702f7b5d1bdff56b751",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Inputs.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/InvLogic.HC",
+          "bytes": 6878,
+          "sha256": "589a73e2e78bee4381d029c8d25bdaa0aba9b2fdd0db6b91a0930dbd6226b815",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/InvLogic.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/Item.HC",
+          "bytes": 1737,
+          "sha256": "434d7e7f21b572ab3aed5fc7512b7e476cb99324e08f72c1ef3ed31307560c7e",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Item.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/Markov/Data.DD",
+          "bytes": 14121,
+          "sha256": "172002c61a13c7023028983d56ce88d194b8049581f442fa5e6b3fcc52812f76",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Markov/Data.DD"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/Markov/Druid.DD",
+          "bytes": 15333,
+          "sha256": "19abb1d6dcb9b0d4f41e40442d2bbd16cd5adbc4225d6fc51cc5d69e30b605e5",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Markov/Druid.DD"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/Markov/Guest.DD",
+          "bytes": 13147,
+          "sha256": "39124ff98ab562328cdd8fa832ba86e7cc69133a39864cf41fbb254c631bceff",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Markov/Guest.DD"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/Markov/Markov.HC",
+          "bytes": 3220,
+          "sha256": "112f30ff230031de727a4746213aeee3c9ce0ee984a4d782b04aaff1fce7eed5",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Markov/Markov.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/Browser/RPG/Gameplay/Player.HC",
+          "bytes": 2078,
+          "sha256": "2b5ddd9262923f5c5b790f1dc950fe9f28cda1799acad5439e7780b12573e308",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Player.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/Browser/RPG/Gameplay/Save.HC",
+          "bytes": 8277,
+          "sha256": "088935c8c36062fbf0e9db3162454d2c1e2e55ec5a477f59f57db752d998b701",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Save.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/StoryVars.HC",
+          "bytes": 462,
+          "sha256": "bc49cbb650daeffc074e4784c8b183a35b3e18ad4c7847639f90340d71528ea1",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/StoryVars.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Gameplay/TurnOrder.HC",
+          "bytes": 1914,
+          "sha256": "e99a5e3690380608608ea8b18a179e724aeaf7348414f789a1f1b9f6fd8f45dd",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/TurnOrder.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Globals.HC",
+          "bytes": 4341,
+          "sha256": "27d3ff6aa74e2ff5b04eb4f512cf60848719f6302485780555489e1beea2191d",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Globals.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Anim.HC",
+          "bytes": 25182,
+          "sha256": "aa69e8afa1e00f8f2a64d0f313c833640fe308677364300a6cc2940cd6f85c70",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Anim.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Armor.HC",
+          "bytes": 1063,
+          "sha256": "24eebbf5a70cdc907753e856f2c988731f9c119728d13f8dd1bcd81d4864f74b",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Armor.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Attacks.HC",
+          "bytes": 1782,
+          "sha256": "cf895bc04cb3b0f26dfedc7a4e15004703390ebe27e6593cbac700b3f4d5db89",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Attacks.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Buttons.HC",
+          "bytes": 6920,
+          "sha256": "5207f55eb977d95e1660d3e339ce63720d0c22f0b64e2ebfb9fed188fa3b8380",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Buttons.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Dialog.HC",
+          "bytes": 9174,
+          "sha256": "b61d428e80567ce66a8a5125f6d31fd39a024ea03b987f440a7110da1d32f9e0",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Dialog.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Drag.HC",
+          "bytes": 8084,
+          "sha256": "73832fc0c77b901297af9668a14c03179742d51d9bc5f4d954763efb4173bedc",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Drag.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Draw.HC",
+          "bytes": 16671,
+          "sha256": "1c2311c9b523fa5d71635b995ddeb9a0b7c43a418652cc345df5e99a4ba2ec3d",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Draw.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Interact.HC",
+          "bytes": 4360,
+          "sha256": "6435ece686ef6d67e458ee37d8d295e0ef88e2450e067ab6e6477bdf62f97490",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Interact.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/Browser/RPG/Graphics/Menu.HC",
+          "bytes": 14055,
+          "sha256": "cb4207c87fafdb7cfafd421332327731cec612f3ba57f917c18fd06de3c18c7f",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Menu.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Prayers.HC",
+          "bytes": 3677,
+          "sha256": "899be8e7e4b5648c222e98da53e5bcb3cf387c1d274303cb4d294a726da26952",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Prayers.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Render.HC",
+          "bytes": 4818,
+          "sha256": "a6f03166e456e374a9e822119f6d8e3b21d6daa29c97390f4f995fe6d9446f63",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Render.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Sidebar.HC",
+          "bytes": 5054,
+          "sha256": "a12aab609a4c8fa5fe9ac282470d4917cfd04cdc1cbe27c0c47405cb7c9c0fae",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Sidebar.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Walk.HC",
+          "bytes": 6681,
+          "sha256": "82306915e7a0aadefe43ad36ac87a363218a8821da4c8baffc14a260b15b8f74",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Walk.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Graphics/Weather.HC",
+          "bytes": 19667,
+          "sha256": "d75f2699e6ffe2d69b9e67c64fddeac8f16f0f91506cb79d319c5212a26494a6",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Graphics/Weather.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/Browser/RPG/Initialize.HC",
+          "bytes": 4456,
+          "sha256": "dc0e2987c229242dc494cda2ae742355640f151650ce6d013aa364ec503b4a1c",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Initialize.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Map/Actors.HC",
+          "bytes": 5252,
+          "sha256": "b1c4d08479152af71033c106e916d974e3c671bb4f76718c8d2f738cd87038c0",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Actors.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Map/Director.HC",
+          "bytes": 1041,
+          "sha256": "0306eca292aec1bd8953ba5d4126a69370387df3614e109a6eb55dea684b22b7",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Director.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Map/Level.HC",
+          "bytes": 9914,
+          "sha256": "8711c7e1cfd8803af5a67ea7ad9216c10998c857457c190f13b45c83a87db460",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Level.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Map/Map.HC",
+          "bytes": 10417,
+          "sha256": "da3b520f9c9013d7075d7ca392f0592d6ce100faab0229e57484fc61eff43961",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Map.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Map/Matrix.HC",
+          "bytes": 4768,
+          "sha256": "79298248a871c9fa0a70eab0cb764af6335ace0e2b9b5d4b7fb8a95b1aca4829",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Matrix.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Map/Objects.HC",
+          "bytes": 2369,
+          "sha256": "a12dc2274ac3baba9d8158fc8ea4d8c3566820d3b36816c0a69cbe5959478555",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Objects.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Map/Tensor3D.HC",
+          "bytes": 7597,
+          "sha256": "ba500fd6c7c2db9cc9fa476178712af11c8952b18848e5c1e2806a504cec76f8",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Tensor3D.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Map/Vector.HC",
+          "bytes": 4683,
+          "sha256": "2b6b9c23bde7a1e905005cc5306b08cfd25e5e5b257200dadb036fe4b9b80c59",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Vector.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Map/World.HC",
+          "bytes": 7071,
+          "sha256": "f5dd1433321b81cf8a9e88782108b20256af9a45ebd399c85d9b11cc38900fdf",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/World.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Music.HC",
+          "bytes": 5168,
+          "sha256": "6cb22f63ee8c1519de06d2303bc08aefb09f79f29782208a3c8f78849845c3e3",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Music.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Online/Client.HC",
+          "bytes": 375,
+          "sha256": "e0977c607dc8bd5f3351b34ec1d5722cf9e3f7b89041f0e474131cb333ad7fb0",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Online/Client.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Online/Glowie_Artifact.HC",
+          "bytes": 75,
+          "sha256": "c7caccb8612cf931590bc825f966ab212f3a84367ab93edafc7047ce50e5bd05",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Online/Glowie_Artifact.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Online/Handshake.HC",
+          "bytes": 839,
+          "sha256": "5295dcc370f5cb4ee629a83cfae4a6f87485b02a572d382de1f52bc06c1b0cf7",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Online/Handshake.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Online/Headers.HC",
+          "bytes": 280,
+          "sha256": "191b264a75faa6ef55b945571b5b0d5db2d1c5a20ce075fc2046d772df6e9206",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Online/Headers.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Online/Multiplayer.HC",
+          "bytes": 7,
+          "sha256": "eafbc62665f228c46a7adf21ceb0fb5de433307d2ad3de8d4266c55a5eb2638f",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Online/Multiplayer.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Online/Polling.HC",
+          "bytes": 1261,
+          "sha256": "1bf9b64edafd08f8bf8a76c7d5f79c5487cdf10f470303191ba7d85a0c011870",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Online/Polling.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Online/Remote.HC",
+          "bytes": 1370,
+          "sha256": "185c8c35e8fc498c827bb56509807b0bcf4f001469046aed37ea625e4b64b3af",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Online/Remote.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Online/Server.HC",
+          "bytes": 1190,
+          "sha256": "1cbffea239854d17b93a30f5f2aac59eb5d8c7a49e100edba23a2114a0c79aff",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Online/Server.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/Browser/RPG/RPG.HC",
+          "bytes": 4961,
+          "sha256": "c9f8918db54a821d004b11e2a75e9cc854ac4c48314c5984486095e6091145d3",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/RPG.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Sprites/SS1.HC",
+          "bytes": 125478,
+          "sha256": "2ba309e715270be1f3813ddade6114dbaacb99da26bdbcace7e6bd7a5a223aed",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Sprites/SS1.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Sprites/SpriteSheet1.HC",
+          "bytes": 42967,
+          "sha256": "a36109bc4b3bd6cac3752cbed277dfa7c004df20cc58e6de054254dd2bd561cb",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Sprites/SpriteSheet1.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Sprites/SpriteSheet2.HC",
+          "bytes": 178091,
+          "sha256": "aa607d6ad0661a20e802bb51cb91f8396054a107d992fb2e712fe187d727ca3a",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Sprites/SpriteSheet2.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Sprites/SpriteSheet3.HC",
+          "bytes": 72387,
+          "sha256": "29ca676f5351921e7a9d2e1cb4bf05f0c13f22c2e30ef2df20f81642d2721669",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Sprites/SpriteSheet3.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/RPG/Sprites/SpriteSheet4.HC",
+          "bytes": 61917,
+          "sha256": "7c63fb9cd12715474285a9a4eda73fe02de1ae8a044630b442490a2480951edb",
+          "path": "C:/Home/Games/MaliciousTestimonies/RPG/Sprites/SpriteSheet4.HC"
+        },
+        {
+          "url": "games/upstream/MaliciousTestimonies/BrowserStart.HC",
+          "bytes": 393,
+          "sha256": "fc304ff796e39f83a20291ebc14d2014531f025016bb628edc90ab25ab2ea9ba",
+          "path": "C:/Home/Games/MaliciousTestimonies/BrowserStart.HC"
+        }
+      ],
+      "upstream": "MaliciousTestimonies",
+      "revision": "b74402c0c25403279ee5324c2bde77d142415a6d",
+      "credit": {
+        "author": "Austin Sierra",
+        "authorUrl": "https://github.com/austings",
+        "source": "https://github.com/austings/MaliciousTestimonies",
+        "note": "HolyC RPG by Austin Sierra. TempleOS edition runs offline; multiplayer requires the upstream Aiwnios environment."
+      }
+    },
+    {
+      "id": "library-Ezekiel",
+      "name": "Ezekiel",
+      "entry": "C:/Home/Games/AustinArchive/Ezekiel/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/AustinArchive/Ezekiel/Sinner.HC",
+          "bytes": 132591,
+          "sha256": "eeac06d7687b0f52523df62ce272353e25c99083e3530b8d7ce88eb24e3a53cf",
+          "path": "C:/Home/Games/AustinArchive/Ezekiel/Sinner.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/Ezekiel/BrowserStart.HC",
+          "bytes": 202,
+          "sha256": "55d6138366b03f44ce9f8c31cfcb7e9ae3db975151ceaabe59002856f16b239d",
+          "path": "C:/Home/Games/AustinArchive/Ezekiel/BrowserStart.HC"
+        }
+      ],
+      "upstream": "AustinArchive",
+      "revision": "4a27f9f3283f6601b8bb90bc95e280d8549e93b8",
+      "credit": {
+        "author": "Austin Sierra",
+        "authorUrl": "https://github.com/austings",
+        "source": "https://github.com/austings/GamesMirror/blob/main/Ezekiel.ISO_.zip",
+        "note": "Original HolyC source and sprites recovered from the author's game disc."
+      }
+    },
+    {
+      "id": "library-LordofHosts",
+      "name": "Lord of Hosts",
+      "entry": "C:/Home/Games/AustinArchive/LordOfHosts/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Cactus.HC",
+          "bytes": 13863,
+          "sha256": "b9d0f64e8bcb8c18236a8d469902d0da95e9daf526128c87db4ec566eea6e99b",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Cactus.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Drone.HC",
+          "bytes": 42468,
+          "sha256": "895a919e1176ce9f5fabf4a39052e2a2f0c9f9efec92d20db78000e9b35b7c5a",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Drone.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Browser/Grid.HC",
+          "bytes": 14121,
+          "sha256": "041246d32417c57501414bc7969f47aa431df12cdcc08c883f042b58ed766a51",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Grid.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/JC.HC",
+          "bytes": 117033,
+          "sha256": "f1c095cb29fbbd170dc6355253abb43237aa2ca03ecc5b8cee476fee4cd4c3b5",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/JC.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Jew.HC",
+          "bytes": 26810,
+          "sha256": "0b1a91185f8b96b85b3f22489bb7da5f90e7e88fe1570e76c881f4e182c49494",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Jew.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Load.HC",
+          "bytes": 34,
+          "sha256": "adbf920c55dd7198ba40fd8b14ea1b5dc99e12a873d98025fd7868afebd87dfb",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Load.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Matrix.HC",
+          "bytes": 4990,
+          "sha256": "86d2802713f4946fa8065aa4ec9520712e63e40f22175fa650b96cbd47c9b962",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Matrix.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Pizza.HC",
+          "bytes": 7635,
+          "sha256": "b437c725977cf723bc8ca63ba534e06dc5d8a5ca78e88c10fe65323a09c9a49e",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Pizza.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Rock.HC",
+          "bytes": 2638,
+          "sha256": "add4ea4c95e4c399072b3bf9fe62a2b809a5887cdd6dd50d5b7398d2e2886271",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Rock.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Skateboard.HC",
+          "bytes": 5414,
+          "sha256": "ee46df8b02d296063bf010ed96c2f86ccd89a02ad5c564404b7e658fc656e945",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Skateboard.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Tree.HC",
+          "bytes": 30875,
+          "sha256": "30a61c9d060f88760c72e89b36dfd1191afd1f82f8cc244ee7f77b3aeaa2172a",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Tree.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/Vector.HC",
+          "bytes": 2814,
+          "sha256": "c9ff7d13d7147069109a1da832937e29cb3c8ebd84d31452d4c206c63ce7582e",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/Vector.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/LordOfHosts/BrowserStart.HC",
+          "bytes": 200,
+          "sha256": "001a4fe53d522a0db743aeab869482769a93f378bc8e5b4a0216a59cdf28908c",
+          "path": "C:/Home/Games/AustinArchive/LordOfHosts/BrowserStart.HC"
+        }
+      ],
+      "upstream": "AustinArchive",
+      "revision": "4a27f9f3283f6601b8bb90bc95e280d8549e93b8",
+      "credit": {
+        "author": "Austin Sierra",
+        "authorUrl": "https://github.com/austings",
+        "source": "https://github.com/austings/GamesMirror/blob/main/LordofHostsv3.ISO_(1).zip",
+        "note": "Original HolyC source and sprites recovered from the author's game disc."
+      }
+    },
+    {
+      "id": "library-SolomonsTemple",
+      "name": "Solomon's Temple",
+      "entry": "C:/Home/Games/AustinArchive/Temple/BrowserStart.HC",
+      "files": [
+        {
+          "url": "games/upstream/AustinArchive/Temple/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Home/Games/AustinArchive/Temple/Vocab.DD"
+        },
+        {
+          "url": "games/upstream/AustinArchive/Temple/Browser/cellar.HC",
+          "bytes": 84878,
+          "sha256": "aa7ee61639bd8d37ea7d34c5106dd3bcd6ce59b6f381e08acbe7034cf1bc69b1",
+          "path": "C:/Home/Games/AustinArchive/Temple/cellar.HC"
+        },
+        {
+          "url": "games/upstream/AustinArchive/Temple/BrowserStart.HC",
+          "bytes": 202,
+          "sha256": "2ff97674fea5a7b4b071a1c38182d632a5512b8e53deeb6ef1adbb6ac1c83e6d",
+          "path": "C:/Home/Games/AustinArchive/Temple/BrowserStart.HC"
+        }
+      ],
+      "upstream": "AustinArchive",
+      "revision": "4a27f9f3283f6601b8bb90bc95e280d8549e93b8",
+      "credit": {
+        "author": "Austin Sierra",
+        "authorUrl": "https://github.com/austings",
+        "source": "https://github.com/austings/GamesMirror/blob/main/Temple.ISO_.C(1).zip",
+        "note": "Original HolyC source and sprites recovered from the author's game disc."
       }
     }
   ]

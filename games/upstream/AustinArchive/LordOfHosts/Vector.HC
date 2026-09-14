@@ -1,0 +1,158 @@
+//Vector Implementation
+//Last Change April 22nd, 2023
+//Author Austin Sierra for Church of AIChrist
+//Subject to Creative Commons BY-NC 4.0
+
+
+//Vector Object Declaration
+public class Vector
+{
+ I32 size;
+ F64 *data;
+};// *vectors;
+
+//Initialize Vector of size size
+Vector *CreateVector(I32 size)
+{
+ Vector*v = MAlloc(sizeof(Vector));
+ v->size = size;
+ v->data = CAlloc(sizeof(F64)*size,Fs->parent_task);
+ return v;
+}
+
+
+//Set Vector v at data position i to value d
+U0 SetVector(Vector *v,I32 i,F64 d)
+{
+ v->data[i] = d; 
+}
+
+//Prints the data values of Vector v
+U0 PrintVector(Vector *v)
+{
+  I32 i;
+  "[";
+  for(i=0;i<v->size;i++)
+  {
+    Print("%.2f",v->data[i]);
+    if(i<v->size-1){
+      ", ";
+    }
+  }
+  "]\n";
+}
+
+//returns the data value at position i in Vector v
+F64 GetVector(Vector *v, I32 i)
+{
+  return v->data[i];
+}
+
+//Add two vectors of the same size
+Vector *AddVectors(Vector *v1, Vector *v2)
+{
+  I32 i;
+  if(v1->size != v2->size){
+    "Error: attempt to add vectors of different size.";
+    return v1;
+  }
+  else
+  {
+    Vector *sum = CreateVector(v1->size);
+    for(i=0;i<v1->size;i++)
+    {
+      sum->data[i] = v1->data[i] + v2->data[i];
+    }
+    return sum;
+  }
+}
+
+//Calculate the magnitude (length) of a Vector v,
+//i.e. distance from the origin in Euclidean space
+F64 MagnitudeVector(Vector *v)
+{
+  F64 sum = 0;
+  I32 i;
+  for(i = 0;i<v->size;i++){
+    sum+= v->data[i] * v->data[i];
+  }
+  return Sqrt(sum);
+}
+
+//Calculate the dot product of two Vectors v1 and v2
+F64 DotProductVectors(Vector *v1,Vector *v2)
+{
+  F64 product = 0.0;
+  I32 i;
+
+  if(v1->size != v2->size)
+  {
+    "Error: attempt for dot product of vectors of different size.";
+    return product;
+  }
+  else
+  {
+    for(i=0;i<v1->size;i++)
+    {
+      product+= v1->data[i] * v2->data[i];
+    }
+    return product;
+  }
+}
+
+Vector *ScaleVector(Vector *v, F64 scalar)
+{
+  Vector* scaled = CreateVector(v->size);
+  I32 i;
+  for(i =0;i<v->size;i++){
+    scaled->data[i] = v->data[i] * scalar;
+  }
+  return scaled;
+}
+
+
+//Free a created Vector v
+U0 DestroyVector(Vector *v)
+{
+ Free(v->data);
+ Free(v);
+}
+
+//Main to demo vectors
+U0 MainVector()
+{
+  I32 vectorSize = 3;
+  Vector *v1= CreateVector(vectorSize);
+  Vector *v2= CreateVector(vectorSize);
+ 
+  SetVector(v1,0,1);
+  SetVector(v1,1,2);
+  SetVector(v1,2,3);
+
+  SetVector(v2,0,4);
+  SetVector(v2,1,5);
+  SetVector(v2,2,6);
+
+  Vector *sum = AddVectors(v1,v2);
+  "v1 + v2 = ";
+  PrintVector(sum);
+  
+  F64 dot_product = DotProductVectors(v1,v2);
+  Print("v1 . v2 = %.5f\n",dot_product);
+
+  Vector *scaled = ScaleVector(v1,2);
+  "2 * v1 = ";
+  PrintVector(scaled);
+
+  F64 mag = MagnitudeVector(v1);
+  Print("|v1| = %.5f\n",mag);
+  
+  DestroyVector(v1);
+  DestroyVector(v2);
+  DestroyVector(sum);
+  DestroyVector(scaled);
+ 
+
+}//MainVector;
+
+//note: typecast is postfix, i.e. ToI64();

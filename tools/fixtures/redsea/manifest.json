@@ -1,0 +1,16 @@
+[
+  {
+    "file": "GrBitMap.HC.Z",
+    "originalPath": "Adam/Gr/GrBitMap.HC",
+    "decodedSha256": "c34892e2b69e96b8b3d8728c8433a4f324b60e592a403c8db097709c129b2974",
+    "decodedBytes": 51887,
+    "packedSha256": "48665596b499b0641dc333ee5489630ea92d2ce1327a867d1e25c5e81e63741a"
+  },
+  {
+    "file": "WaterFowl.HC.Z",
+    "originalPath": "Demo/Snd/WaterFowl.HC",
+    "decodedSha256": "36c8706b77f0835c861ffa5c7544edf997debff994500ac97cb0971974145d51",
+    "decodedBytes": 308908,
+    "packedSha256": "62c0471088568c27c52fc4b5178db0c4aa9060c06eed61fed09a78b9bc99e621"
+  }
+]

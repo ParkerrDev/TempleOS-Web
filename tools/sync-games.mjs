@@ -4,6 +4,8 @@ import {resolve,relative,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+import {syncLibrary} from './sync-game-library.mjs';
+import {gameCredits} from '../game-credits.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const tinker=resolve(process.argv[2]||'../.work/upstream/TinkerOS'),toom=resolve(process.argv[3]||'../.work/upstream/TOOM');
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -11,7 +13,10 @@ const commit=d=>execFileSync('git',['-C',d,'rev-parse','HEAD'],{encoding:'utf8'}
 const revisions={tinker:commit(tinker),toom:commit(toom)};
 async function walk(dir){const out=[];for(const e of await readdir(dir,{withFileTypes:true})){if(e.name==='.git')continue;const p=resolve(dir,e.name);if(e.isDirectory())out.push(...await walk(p));else if(e.isFile())out.push(p);}return out.sort();}
 const packages=[],hashes=[];
-async function save(source,path,bytes){bytes??=await readFile(source);const dest=resolve(root,'games/upstream',path);await mkdir(dirname(dest),{recursive:true});await writeFile(dest,bytes);const f={url:'games/upstream/'+path,bytes:bytes.length,sha256:sha(bytes)};hashes.push(f);return f;}
+async function save(source,path,bytes){bytes??=await readFile(source);
+ // Keep binary sprite records intact; normalize prohibited punctuation in UTF-8 text.
+ if(!bytes.includes(0))try{const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);if(text.includes(String.fromCodePoint(8212)))bytes=Buffer.from(text.replaceAll(String.fromCodePoint(8212),'-'));}catch{}
+const dest=resolve(root,'games/upstream',path);await mkdir(dirname(dest),{recursive:true});await writeFile(dest,bytes);const f={url:'games/upstream/'+path,bytes:bytes.length,sha256:sha(bytes)};hashes.push(f);return f;}
 const gameDir=resolve(tinker,'Demo/Games');
 for(const p of await walk(gameDir)){
  const rel=relative(gameDir,p).replaceAll('\\','/'),f=await save(p,'TinkerOS/'+rel);
@@ -60,5 +65,7 @@ for(let offset=0,index=0;offset<wad.length;offset+=chunk,index++){
 const startup=`// Browser package entry. Build the Freedoom IWAD from bounded upload parts.\n#exe {Cd(__DIR__);}\nU0 PrepareFreedoom()\n{\n  U8 *all=MAlloc(${wad.length}), *part;\n  I64 i,n,offset=0;\n  U8 name[32];\n  for(i=0;i<${Math.ceil(wad.length/chunk)};i++) {\n    StrPrint(name,"Freedoom%02d.BIN",i);\n    part=FileRead(name,&n);\n    if (!part || n<=0 || n>${chunk} || offset+n>${wad.length}) { Free(part); Free(all); throw('Package'); }\n    MemCpy(all+offset,part,n); offset+=n; Free(part);\n  }\n  if(offset!=${wad.length}) { Free(all); throw('Package'); }\n  if(!FileWrite("freedoom1.wad",all,offset)) { Free(all); throw('Disk'); }\n  Free(all);\n}\nPrepareFreedoom;\nFramePtrAdd("USE_IWAD",StrNew("freedoom1.wad"));\n#include "SinglePlayer.HC";\n`;
 const f=await save(null,'TOOM/BrowserStart.HC',Buffer.from(startup));toomFiles.push({...f,path:'C:/Home/TOOM/BrowserStart.HC'});
 packages.push({id:'toom',name:'TOOM',entry:'C:/Home/TOOM/BrowserStart.HC',files:toomFiles,upstream:'Church-of-Templeos/TOOM',revision:revisions.toom,wad:{name:'Freedoom 0.12.1',sha256:sha(wad),bytes:wad.length}});
+await syncLibrary({tinker,save,packages});
+for(const pkg of packages)pkg.credit=gameCredits({name:pkg.name,packageId:pkg.id});
 await writeFile(resolve(root,'games/catalog.json'),JSON.stringify({version:1,sources:{TinkerOS:{url:'https://github.com/tinkeros/TinkerOS',revision:revisions.tinker},TOOM:{url:'https://github.com/Church-of-Templeos/TOOM',revision:revisions.toom}},packages},null,2)+'\n');
 console.log(`Imported ${packages.length} packages and ${hashes.length} files. TinkerOS ${revisions.tinker}, TOOM ${revisions.toom}.`);

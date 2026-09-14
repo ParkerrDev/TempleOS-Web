@@ -238,9 +238,10 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
         while (Atomics.load(pc, 3) < smpCfg.ncore - 1 && performance.now() < dl) { /* spin until APs ack (or timeout) */ } }
       const buf = new Uint8Array(w * h);
       buf.set(u8.subarray(addr, addr + w * h));           // copy the finished frame out of WASM memory
+      const stats = gx?.frameStats?.();
       if (pc) { Atomics.store(pc, 3, 0); Atomics.store(pc, 2, 0); Atomics.notify(pc, 2); }   // resume APs
       outstanding++;
-      postMessage({ cmd: "frame", buf: buf.buffer, w, h }, [buf.buffer]);
+      postMessage({ cmd: "frame", buf: buf.buffer, w, h, fps: stats?.fps, updates: stats?.updates }, [buf.buffer]);
     },
   });
   // |0 on every BigInt crossing: a fractional value (trackpad movementX, joystick velocity)

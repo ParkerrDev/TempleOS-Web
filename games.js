@@ -1,5 +1,6 @@
 import {gameProject} from './game-source.js';
 import {gameCredits} from './game-credits.js';
+import {EXTRA_GAMES} from './game-library.js';
 
 const submission=new URL('https://github.com/ParkerrDev/TempleOS-Web/issues/new');
 submission.searchParams.set('title','Game submission: ');
@@ -62,6 +63,7 @@ export const GAMES = [
   { name: "Stadium", disk: "C:/Home/Games/TinkerOS/Stadium/Stadium.HC", packageId: "tinker-Stadium", blurb: "A stadium ball game with the original sprite background." },
   { name: "TOOM", disk: "C:/Home/TOOM/BrowserStart.HC", packageId: "toom", blurb: "The DOOM engine in TempleOS, bundled with Freedoom.", how: "TOOM may take a minute or two to open. Wait for its menu, then choose New Game, episode and difficulty. WASD or arrows move, mouse looks, left click fires, Space opens doors, Tab opens the map." },
 ];
+GAMES.push(...EXTRA_GAMES);
 const featured=['HolyCraft','TOOM','Snake'];
 GAMES.sort((a,b)=>(featured.includes(a.name)?featured.indexOf(a.name):featured.length)-(featured.includes(b.name)?featured.indexOf(b.name):featured.length));
 const spriteOverlay = document.getElementById("spritesOverlay"), spriteFrame = document.getElementById("spritesFrame");
