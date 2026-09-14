@@ -209,6 +209,7 @@
     .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:12px; letter-spacing:0; }
     .ed-screenhead { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px; }
     .ed-screenhead button { display:inline-flex; align-items:center; gap:5px; width:auto; padding:3px 6px; font-size:11px; }
+    .preview-actions { display:flex; flex-wrap:wrap; gap:7px; }
     .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }
     #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;
         font-family:'TempleOS','dos_vga',monospace; font-size:12px; line-height:1.0; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
@@ -220,9 +221,9 @@
     #editorHL .tc{ color:#7d8aa0; font-style:italic; }  #editorHL .ts{ color:#0a7f25; }
     #editorHL .tk{ color:#a10608; font-weight:bold; }   #editorHL .tt{ color:#6a1b9a; }
     #editorHL .tco{ color:#b35a00; }  #editorHL .tn{ color:#b35a00; }  #editorHL .tp{ color:#0a6a8a; }
-    .ed-screenwrap { flex:0 0 auto; background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
+    .ed-screenwrap { flex:1 1 auto; min-height:0; background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
     #editorWin #screen { display:block; height:min(44vh,430px); width:auto; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; background:#000; }
-    #editorWin #console { flex:1 1 auto; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:12px; line-height:1.0; white-space:pre-wrap; word-break:break-word; }
+    #editorWin #console { flex:0 1 100px; min-height:54px; margin:0; overflow:auto; padding:5px 8px; background:#000; color:var(--green); font-size:12px; line-height:1.0; white-space:pre-wrap; word-break:break-word; }
     .ed-foot { flex:0 0 auto; color:var(--blue); font-size:12px; padding:1px 2px 0; }
     /* ---- game mode: editor overlay shows just a big canvas (driven by the Games launcher) ---- */
     #gameBack, #gameRun, #gameStop, #gameToDisk { display:none; width:auto; } #gameTitle { display:none; color:var(--blue); align-self:center; padding:0 6px; }
@@ -279,10 +280,31 @@
     .game-submit-link { display:inline-block; max-width:100%; padding:7px 9px; border:2px solid var(--blue); background:var(--blue); color:#fff; font-size:12px; line-height:1.3; text-decoration:none; }
     .game-submit-link:hover, .game-submit-link:focus-visible { background:#fff; color:var(--blue); outline:2px solid var(--blue); outline-offset:2px; }
     .gamewin-screen { background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }
-    #gameWin { width:auto; margin:0; padding:8px; }
-    #gameWinOverlay #screen { display:block; width:min(640px,86vw); height:auto; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; background:#000; }
-    #gameWin #console { max-width:min(640px,86vw); max-height:160px; overflow:auto; margin:8px 0 0; padding:6px; background:#000; color:var(--green); font-size:12px; white-space:pre-wrap; overflow-wrap:anywhere; }
+    #gameWin { display:flex; flex-direction:column; width:min(1040px,94vw); height:min(88vh,850px); margin:0; padding:8px; }
+    #gameWinSlot { flex:1 1 auto; min-height:0; }
+    #gameWinBar { flex:0 0 auto; }
+    #gameWinBar button { display:inline-flex; align-items:center; gap:5px; }
+    #gameWinStatus { flex:1 1 240px; overflow-wrap:anywhere; }
+    .ed-screenwrap, #gameWinSlot { container-type:size; }
+    #editorWin #screen, #editorOverlay.gameproject #editorWin #screen, #gameWinOverlay #screen {
+      display:block; width:min(100cqw,calc(100cqh * 4 / 3)); height:min(100cqh,calc(100cqw * 3 / 4));
+      max-width:100%; max-height:100%; aspect-ratio:4/3; image-rendering:pixelated; background:#000;
+    }
+    #gameWin #console { flex:0 1 auto; max-width:100%; max-height:120px; overflow:auto; margin:8px 0 0; padding:6px; background:#000; color:var(--green); font-size:12px; white-space:pre-wrap; overflow-wrap:anywhere; }
     #gameWin #console:empty { display:none; }
+    /* Stable containers keep fullscreen active when Run replaces the canvas. */
+    #gameWin.view-fullscreen, #editorWin.view-fullscreen, #editorPreview.view-fullscreen {
+      position:fixed !important; inset:0 !important; width:100vw !important; height:100dvh !important;
+      max-width:none !important; max-height:none !important; margin:0 !important; transform:none !important;
+      box-sizing:border-box; border:0; border-image:none; outline:0; padding:8px; background:#000;
+      display:flex; flex-direction:column; min-height:0; z-index:2147483000;
+    }
+    #editorWin.view-fullscreen { background:#fff; }
+    .view-fullscreen > .wbar, .view-fullscreen > .wvert, .view-fullscreen > .wcorn { display:none; }
+    #gameWin.view-fullscreen #gameWinStatus { color:#fff; }
+    #editorPreview.view-fullscreen .ed-screenwrap { flex:1 1 auto; min-height:0; }
+    #editorPreview.view-fullscreen > .ed-h:not(.ed-screenhead), #editorPreview.view-fullscreen #console,
+    #editorPreview.view-fullscreen #gamePreviewStatus { display:none; }
 
     /* God Tools window */
     #godWin { display:flex; flex-direction:column; gap:8px; width:min(680px,94vw); height:min(74vh,620px); margin:0; padding:10px; }
@@ -409,7 +431,7 @@
     body.stack .terrywin canvas { height:120px; }
     body.stack .ed-body { flex-direction:column; }
     body.stack #editorWin { height:calc(94vh * var(--zi)); }
-    body.stack #editorWin #screen { height:calc(34vh * var(--zi)); }
+    body.stack #editorWin #screen { height:min(100cqh,calc(100cqw * 3 / 4)); }
   </style>
 </head>
 <body>
@@ -510,6 +532,7 @@
         <span id="gameTitle"></span>
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">- pick a demo / game -</option></select>
         <button id="runBtn">▶ Run</button>
+        <button id="editorFullscreen" type="button" title="Show the editor fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen editor</span></button>
         <button id="edFmt" title="Reformat to the canonical TempleOS style with holyc-fmt (a HolyC formatter, run in-browser)">⊹ Format</button>
         <button id="edSave" title="Download the source as a .HC file">↓ Save</button>
         <button id="edOpen" title="Open a .HC file from your computer">↥ Open</button>
@@ -524,8 +547,8 @@
           <span id="gameDraft" role="status"></span>
           <div class="ed-editwrap"><pre id="editorHL" aria-hidden="true"></pre><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea></div>
         </section>
-        <section class="ed-pane">
-          <div class="ed-h ed-screenhead"><span>Screen - 640×480, 16-color</span><button id="gameCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this preview; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button></div>
+        <section class="ed-pane" id="editorPreview">
+          <div class="ed-h ed-screenhead"><span>Screen - 640×480, 16-color</span><div class="preview-actions"><button id="gameCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this preview; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="previewFullscreen" type="button" title="Show the game preview fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen game</span></button></div></div>
           <div id="gamePreviewStatus" role="status"></div>
           <div class="ed-screenwrap"><canvas id="screen" width="640" height="480" tabindex="0"></canvas></div>
           <div class="ed-h">Console</div>
@@ -555,11 +578,11 @@
     </div>
   </div>
 
-  <!-- a game "Run in Browser" gets its own minimal 640x480 TempleOS window (the bypass canvas is re-parented in) -->
+  <!-- Browser games share the native editor canvas in a larger, scalable window. -->
   <div id="gameWinOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Game">
     <div class="win" id="gameWin" data-title="Game">
       <span class="close" id="gameWinClose" title="Close">[X]</span>
-      <div id="gameWinBar"><button id="gameWinEdit">Edit source</button><span id="gameWinStatus" role="status"></span></div>
+      <div id="gameWinBar"><button id="gameWinEdit">Edit source</button><button id="gameWinCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this game; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="gameFullscreen" type="button" title="Show this game fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen</span></button><span id="gameWinStatus" role="status"></span></div>
       <div class="gamewin-screen" id="gameWinSlot"></div>
     </div>
   </div>
@@ -654,7 +677,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-42: Strict HolyC-WASM browser games and editor previews, multi-file native projects with frozen drafts, explicit native compatibility errors, and TempleOS only through Run in TempleOS. render-41: Capture mouse inside the HolyC Editor preview, route capture to the active native or emulated game, and preserve hybrid release. render-40: Verified game authors, 63 catalog entries with Terry supplemental and Austin Sierra games, visible PNG2GR creator credit, sticky hybrid mouse mode in both runners, and corrected x87 subtraction/division operand order for game physics. render-39: Compact Sprite Studio, shared desktop cursor, themed scrollbars and file control; FPS from TempleOS window-manager telemetry and native frame signals. render-38: Game submissions at the bottom of the Games window with a prepared GitHub issue form. render-37: Edit and play games side by side, author and source credits, and pointer-tracked window dragging. render-36: Both launch destinations and editable game projects across the catalog, preserved sprites and isolated browser game sessions. render-35: Sprite Studio opens only from the menu; mouse capture keeps its icon in both states. render-34: Natural source-color mixtures and restrained fixed dithering without forced saturation. render-33: Hue-preserving stock-palette sprites, restored blue denim and pale warm tones, local source-fleck removal. render-32: Clean sprite colors, preserved warm midtones and optional dither strength defaulting to zero. render-31: Restrained sprite colors and stable blue-noise dithering without a repeating grid. render-30: Warm stable sprite dithering, native 25 fps Terry timing, cached frame playback and worker conversion. render-29: Desktop Sprite Studio, GR Terry animation, guest-aware mouse capture, relative HolyCraft look and lossless keyboard input. render-28: FTST and native Sign correctness, VGA palette I/O, persistent 32-bit ATA writes, raw compressed uploads, recycled-code JIT validation. render-27: Exact duplicate framebuffer suppression, Sprite Studio, pinned TinkerOS game packages, TOOM with Freedoom, and guest job execution. render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix - a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) - no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys. render-26: Castle Frankenstein (and any 3D game using a DC transform) renders correctly - the GrFillPoly3 HLE now falls back to the OS unless the DC transform is identity (so transformed polys are no longer rasterized as raw model coords); screen-space games like HolyCraft/Varoom keep the HLE (Hemu-wasm a68c3e8)";
+    window.__BUILD = "render-43: Larger native game windows, fullscreen game and editor views, independent mouse buttons under pointer lock, and quick-click delivery across worker polls. render-42: Strict HolyC-WASM browser games and editor previews, multi-file native projects with frozen drafts, explicit native compatibility errors, and TempleOS only through Run in TempleOS. render-41: Capture mouse inside the HolyC Editor preview, route capture to the active native or emulated game, and preserve hybrid release. render-40: Verified game authors, 63 catalog entries with Terry supplemental and Austin Sierra games, visible PNG2GR creator credit, sticky hybrid mouse mode in both runners, and corrected x87 subtraction/division operand order for game physics. render-39: Compact Sprite Studio, shared desktop cursor, themed scrollbars and file control; FPS from TempleOS window-manager telemetry and native frame signals. render-38: Game submissions at the bottom of the Games window with a prepared GitHub issue form. render-37: Edit and play games side by side, author and source credits, and pointer-tracked window dragging. render-36: Both launch destinations and editable game projects across the catalog, preserved sprites and isolated browser game sessions. render-35: Sprite Studio opens only from the menu; mouse capture keeps its icon in both states. render-34: Natural source-color mixtures and restrained fixed dithering without forced saturation. render-33: Hue-preserving stock-palette sprites, restored blue denim and pale warm tones, local source-fleck removal. render-32: Clean sprite colors, preserved warm midtones and optional dither strength defaulting to zero. render-31: Restrained sprite colors and stable blue-noise dithering without a repeating grid. render-30: Warm stable sprite dithering, native 25 fps Terry timing, cached frame playback and worker conversion. render-29: Desktop Sprite Studio, GR Terry animation, guest-aware mouse capture, relative HolyCraft look and lossless keyboard input. render-28: FTST and native Sign correctness, VGA palette I/O, persistent 32-bit ATA writes, raw compressed uploads, recycled-code JIT validation. render-27: Exact duplicate framebuffer suppression, Sprite Studio, pinned TinkerOS game packages, TOOM with Freedoom, and guest job execution. render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix - a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) - no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys. render-26: Castle Frankenstein (and any 3D game using a DC transform) renders correctly - the GrFillPoly3 HLE now falls back to the OS unless the DC transform is identity (so transformed polys are no longer rasterized as raw model coords); screen-space games like HolyCraft/Varoom keep the HLE (Hemu-wasm a68c3e8)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -2121,6 +2144,7 @@ I64 GodDoodleGen(I64 strokes)
         }).catch(() => {});
       }
       function close() {
+        window.__gameView?.exitWithin(document.getElementById('editorWin'));
         window.__cancelGameEditorLoad?.();
         window.__stopGamePreview?.();
         ov.classList.remove("open", "free", "gamemode");
@@ -2131,6 +2155,7 @@ I64 GodDoodleGen(I64 strokes)
       closeBtn.addEventListener("click", close);
       ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(); });
       document.getElementById("gameBack").addEventListener("click", () => {
+        window.__gameView?.exitWithin(document.getElementById('editorWin'));
         window.__cancelGameEditorLoad?.();
         window.__stopGamePreview?.();
         if (window.__holycEditor) window.__holycEditor.stop();

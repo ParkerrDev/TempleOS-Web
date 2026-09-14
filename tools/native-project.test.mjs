@@ -39,7 +39,7 @@ assert((await project.native()).files.find(f=>f.path===sourceFile.path).source.i
 await project.reset(sourceFile.path);await project.reset(project.entry);
 assert.equal((await project.native()).files.find(f=>f.path===sourceFile.path).source,original.original);
 const launcher=await readFile(new URL('../games.js',import.meta.url),'utf8');
-const browserRun=launcher.slice(launcher.indexOf('async function runInBrowser('),launcher.indexOf('function closeGameWin()'));
+const browserRun=launcher.slice(launcher.indexOf('async function runInBrowser('),launcher.indexOf('function closeGameWin('));
 assert(!/iframe|runInTempleOS|__launchInOS|gameSession/.test(browserRun),'browser launch cannot invoke emulation');
 assert(!/game-session-launch|game-session-ready/.test(launcher),'legacy URLs cannot launch emulated games');
 console.log('Native projects: nested includes/shared macros, strict failures, both native games, frozen package drafts, edited WASM execution, restore and no emulator fallback passed.');

@@ -1,6 +1,8 @@
 import {gameProject} from './game-source.js';
 import {gameCredits} from './game-credits.js';
 import {EXTRA_GAMES} from './game-library.js';
+import {setupGameViews} from './game-view.js';
+window.__gameView=setupGameViews();
 
 const submission=new URL('https://github.com/ParkerrDev/TempleOS-Web/issues/new');
 submission.searchParams.set('title','Game submission: ');
@@ -186,20 +188,22 @@ ovG.addEventListener("mousedown", (e) => { if (e.target === ovG) closeGames(); }
 
 let releaseDesktop=null,nativeStatus=null,launchToken=0,runnerTarget=null;
 const runnerStatus=()=>document.getElementById(runnerTarget==='editor'?'gamePreviewStatus':'gameWinStatus');
-const previewCapture=document.getElementById('gameCapture');
+const previewCapture=[document.getElementById('gameCapture'),document.getElementById('gameWinCapture')];
 const previewMouse=()=>window.__holycEditor;
 function updatePreviewMouse(){
   const mouse=previewMouse(),captured=!!mouse?.isMouseCaptured();
-  previewCapture.disabled=!mouse?.isRunning();
-  previewCapture.setAttribute('aria-pressed',String(captured));
-  previewCapture.querySelector('span').textContent=captured?'Release mouse':'Capture mouse';
+  for(const button of previewCapture){
+    button.disabled=!mouse?.isRunning();
+    button.setAttribute('aria-pressed',String(captured));
+    button.querySelector('span').textContent=captured?'Release mouse':'Capture mouse';
+  }
 }
 function togglePreviewMouse(){
   const mouse=previewMouse();
   if(!mouse?.isRunning())return;
   if(mouse.isMouseCaptured())mouse.releaseMouse();else mouse.captureMouse();
 }
-previewCapture.addEventListener('click',togglePreviewMouse);
+for(const button of previewCapture)button.addEventListener('click',togglePreviewMouse);
 addEventListener('game-mouse-change',updatePreviewMouse);
 window.__gameMouse={
   toggle:()=>{
@@ -210,7 +214,8 @@ window.__gameMouse={
 };
 async function runInBrowser(g,{inEditor=false}={}) {
   window.__cancelGameEditorLoad();
-  closeGameWin();const token=launchToken;curGame=g;closeGames();
+  const view=document.getElementById(inEditor?'editorWin':'gameWin');
+  closeGameWin({keepFullscreen:window.__gameView.isWithin(view)});const token=launchToken;curGame=g;closeGames();
   runnerTarget=inEditor?'editor':'window';
   if(!inEditor)ovE.classList.remove('open','free');
   window.__releaseOSInput?.();
@@ -242,8 +247,12 @@ async function runInBrowser(g,{inEditor=false}={}) {
   }catch(e){if(token!==launchToken)return;status.textContent='HolyC-WASM could not run this game: '+e.message;releaseDesktop?.();releaseDesktop=null;}
 }
 
-function closeGameWin() {
+function closeGameWin({keepFullscreen=false}={}) {
   ++launchToken;
+  if(!keepFullscreen){
+    window.__gameView.exitWithin(document.getElementById('gameWin'));
+    window.__gameView.exitWithin(document.getElementById('editorWin'));
+  }
   if(previewMouse()?.isMouseCaptured())previewMouse().releaseMouse();
   nativeStatus?.disconnect();nativeStatus=null;
   window.__holycEditor?.stop();
@@ -255,7 +264,7 @@ function closeGameWin() {
   document.getElementById('gameRun').textContent='▶ Run';
   runnerTarget=null;
   updatePreviewMouse();
-  document.getElementById('gameWinOverlay').classList.remove('open','free');
+  if(!keepFullscreen)document.getElementById('gameWinOverlay').classList.remove('open','free');
   releaseDesktop?.();releaseDesktop=null;
 }
 window.__stopGamePreview=()=>{if(runnerTarget==='editor')closeGameWin();};

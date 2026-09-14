@@ -16,7 +16,7 @@ class Node extends EventTarget {
   focus(){document.activeElement=this;}
   getContext(){return {};}
   getBoundingClientRect(){return {left:0,top:0,right:640,bottom:480,width:640,height:480};}
-  setPointerCapture(){}
+  setPointerCapture(){if(document.pointerLockElement)throw new DOMException('Pointer lock forbids pointer capture','InvalidStateError');}
   setAttribute(name,value){this[name]=value;}
   querySelector(){return this.label??=new Node();}
   requestPointerLock(){
@@ -58,6 +58,15 @@ await api.runIn(document.getElementById('screen'),'input probe');
 const screen=document.getElementById('screen'),worker=workers.at(-1),ctrl=new Int32Array(worker.sent.controlSAB);
 assert.equal(api.captureMouse(),true,'manual capture works without a game capture hint');
 await flush();assert.equal(document.pointerLockElement,screen);
+emit(screen,'pointerdown',{pointerType:'mouse',pointerId:1,button:0});
+emit(screen,'mousedown',{button:0,clientX:320,clientY:240});
+assert.equal(ctrl[CTRL.MS_LB],1,'locked left click reaches the worker');
+emit(screen,'mousedown',{button:2,clientX:320,clientY:240});
+assert.equal(ctrl[CTRL.MS_LB],1);assert.equal(ctrl[CTRL.MS_RB],1,'both mouse buttons can be held');
+emit(document,'mouseup',{button:0});
+assert.equal(ctrl[CTRL.MS_LB],0);assert.equal(ctrl[CTRL.MS_RB],1,'release only the changed button');
+emit(document,'mouseup',{button:2});
+assert.equal(ctrl[CTRL.MS_RB],0);assert.equal(ctrl[CTRL.MS_PRESSED],3,'quick clicks remain pending for the worker');
 worker.onmessage({data:{type:'inputMode',capture:false}});
 assert(api.isMouseCaptured(),'a delayed absolute-input hint must not undo manual capture');
 emit(document,'mousemove',{movementX:12,movementY:-6});
@@ -70,15 +79,19 @@ emit(windowEvents,'keydown',{code:'Escape',key:'Escape'});
 await flush();assert.equal(api.isMouseCaptured(),false);
 assert.equal(ctrl[KEY_STATE_BASE+0x11],0);assert.equal(ctrl[CTRL.MS_DX],0);
 worker.onmessage({data:{type:'inputMode',capture:true}});
-emit(screen,'pointerdown',{pointerType:'mouse',button:0,clientX:320,clientY:240});
+emit(screen,'mousedown',{button:0,clientX:320,clientY:240});
 assert.equal(api.isMouseCaptured(),false,'refocusing after Esc stays hybrid despite a new game hint');
+assert.equal(ctrl[CTRL.MS_LB],1,'hybrid clicks reach the worker');
+emit(document,'mouseup',{button:0});
+assert.equal(ctrl[CTRL.MS_LB],0,'releasing outside the canvas cannot leave a held button');
 api.captureMouse();await flush();assert.equal(document.pointerLockElement,screen);
 api.releaseMouse();
-emit(screen,'pointerdown',{pointerType:'mouse',button:0,clientX:320,clientY:240});
+emit(screen,'mousedown',{button:0,clientX:320,clientY:240});
 await flush();assert.equal(api.isMouseCaptured(),false,'Release is sticky before pointerlockchange arrives');
-emit(screen,'pointerdown',{pointerType:'mouse',button:0,shiftKey:true});
+emit(screen,'mousedown',{button:0,shiftKey:true});
 await flush();assert(api.isMouseCaptured(),'Shift+click explicitly recaptures');
 api.stop();await flush();assert.equal(api.isMouseCaptured(),false);assert.equal(api.isRunning(),false);
+assert.equal(ctrl[CTRL.MS_PRESSED],0,'stopping clears queued clicks');
 await api.runIn(screen,'rerun probe');
 api.captureMouse();await flush();assert.equal(document.pointerLockElement,document.getElementById('screen'));
 assert.notEqual(document.pointerLockElement,screen,'reruns capture the replacement canvas');
@@ -96,10 +109,21 @@ assert.equal(context.__gameMouse.toggle(),true,'loading previews cannot fall thr
 await api.runIn(document.getElementById('screen'),'editor capture probe');
 const captureButton=document.getElementById('gameCapture');
 assert.equal(captureButton.disabled,false);
+assert.equal(document.getElementById('gameWinCapture').disabled,false);
 emit(captureButton,'click');await flush();assert(api.isMouseCaptured());
 assert.equal(captureButton['aria-pressed'],'true');
 assert.equal(captureButton.querySelector('span').textContent,'Release mouse');
+assert.equal(document.getElementById('gameWinCapture').querySelector('span').textContent,'Release mouse');
 context.__gameMouse.toggle();await flush();assert.equal(api.isMouseCaptured(),false);
 assert.equal(captureButton['aria-pressed'],'false');
 api.stop();await flush();assert.equal(captureButton.disabled,true);
+await api.runIn(document.getElementById('screen'),'blocked capture probe');
+const blockedScreen=document.getElementById('screen'),blockedWorker=workers.at(-1),blockedCtrl=new Int32Array(blockedWorker.sent.controlSAB);
+blockedScreen.requestPointerLock=()=>Promise.reject(new DOMException('Unavailable','WrongDocumentError'));
+blockedWorker.onmessage({data:{type:'inputMode',capture:true}});
+api.captureMouse();await flush();
+emit(blockedScreen,'mousedown',{button:0,clientX:320,clientY:240});
+assert.equal(blockedCtrl[CTRL.MS_LB],1,'a denied capture must not consume every subsequent click');
+assert.equal(api.isMouseCaptured(),false);
+api.stop();
 console.log('Editor capture: active native canvas, desktop routing, release labels and stopped-preview cleanup passed.');

@@ -137,6 +137,8 @@ Edit source opens the selected game's project in HolyC Editor. The source select
 
 Run plays the game beside its source using the same runner as Run in Browser. You can keep editing or switch source files during play. Run again restarts the whole project with a snapshot of all current edits; Stop ends the preview. On narrow screens, scroll inside the editor to move between source and preview. Closing the editor or returning to Games also stops its preview.
 
+Browser games open in a larger window and scale the 640x480 canvas to fit while preserving its aspect ratio. Capture mouse and Fullscreen are available inside the game window. HolyC Editor offers Fullscreen editor for the whole workspace and Fullscreen game for just its preview. Escape or Exit fullscreen restores the previous layout and releases the mouse. Fullscreen survives preview reruns and uses a viewport fallback when the browser does not support element fullscreen. Native input handles left/right button combinations and retains quick clicks between worker polls.
+
 Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. HolyCraft and Snake are native games; the 61 original upstream packages still require native compatibility work and remain available through the explicit Run in TempleOS button. Run `node tools/native-games-audit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability.
 
 `node tools/game-source.test.mjs` checks all 298 source files, byte preservation for the 65 files with embedded sprites, draft persistence, edited installations, restoration, partial-write recovery and OS restarts.
@@ -147,6 +149,8 @@ node tools/sprite-player.test.mjs
 node tools/guest-fps.test.mjs
 node tools/holycraft-input.test.mjs
 node tools/game-capture.test.mjs
+node tools/native-clicks.test.mjs
+node tools/game-view.test.mjs
 node tools/native-project.test.mjs
 node tools/framebuffer.test.mjs
 node tools/verify-games.mjs
