@@ -5,8 +5,10 @@
 #   holyc-fmt   → ./holyc-fmt    (the HolyC formatter: HolyCFmt.HC, used by the Format button + /format.html)
 # then engine/build.mjs compiles hemu/src into ./build (hemu.wasm, hemu-smp.wasm, hemu-smp.json) - no compiled artifact
 # is committed anywhere, so the engine and the JIT that reads its offsets always come from the same build.
+# (hemu-wasm is the pre-rename clone dir: Netlify's cached build directory keeps stale untracked dirs
+# between builds and publish = "." would ship them, so old names stay in this rm list.)
 # To redeploy automatically when THOSE repos change, add a Netlify build hook
 # (Site settings → Build & deploy → Build hooks) as a push webhook on each repo.
 [build]
-  command = "rm -rf holyc-wasm hemu holyc-fmt build && git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm && git clone --depth 1 https://github.com/ParkerrDev/HEMU hemu && git clone --depth 1 https://github.com/ParkerrDev/HolyC-fmt holyc-fmt && node engine/build.mjs build"
+  command = "rm -rf holyc-wasm hemu hemu-wasm holyc-fmt build && git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm && git clone --depth 1 https://github.com/ParkerrDev/HEMU hemu && git clone --depth 1 https://github.com/ParkerrDev/HolyC-fmt holyc-fmt && node engine/build.mjs build"
   publish = "."
