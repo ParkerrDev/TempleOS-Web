@@ -1,6 +1,6 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import {gameProject} from '../game-source.js';
-import {compileNativeProject} from '../../holyc-wasm/native/project.js';
+import {compileNativeProject} from '../editor/project.js';
 const root=new URL('../',import.meta.url);
 globalThis.fetch=async url=>new Response(await readFile(new URL(url,root)));
 globalThis.localStorage={getItem:()=>null};

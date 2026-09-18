@@ -20,11 +20,17 @@
   Cache-Control: no-cache
 /hemu.html
   Cache-Control: no-cache
-/hemu-worker.js
+/engine/*
   Cache-Control: no-cache
-/hemu-wasm/*
+/editor/*
   Cache-Control: no-cache
-# hemu-wasm/jit.js + the compiler modules it imports must move in lockstep with snapshot.wasm's
-# global offsets (G_FS/G_GS/G_TSC) - a stale jit.js corrupts segment bases (BADOP crash).
+/hemu/*
+  Cache-Control: no-cache
+/build/*
+  Cache-Control: no-cache
+# build/hemu*.wasm is compiled at deploy from hemu/src by engine/build.mjs, and engine/jit.js reads the
+# engine's CPU-state offsets at runtime - keep the engine, the compiler runtime, the snapshots and the
+# build uncached so a browser never pairs an old JIT or snapshot with a new engine (a stale jit.js
+# corrupts segment bases: BADOP crash). editor/ imports the compiler live, so it revalidates too.
 /holyc-wasm/*
   Cache-Control: no-cache

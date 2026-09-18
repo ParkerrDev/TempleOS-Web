@@ -5,11 +5,11 @@
 // while the main thread is drawing frame N, this worker is already emulating frame N+1 - so the
 // blit cost leaves the critical path. The canvas stays on the main thread (frames are shipped via
 // postMessage), so hemu.html can fall back to its in-line single-thread engine if this ever fails.
-import { createHost } from "./holyc-wasm/src/runtime/host.js";
-import { loadDisk, makeDisk, fat32Upload, fat32List } from "./hemu-wasm/qcow2.js";
-import * as jit from "./hemu-wasm/jit.js";             // x86-64 -> WASM block JIT (the speed: interp ~6fps -> JIT 30-65fps games)
-import {createGuestInput} from "./hemu-wasm/guestinput.js";
-import { createGuestExec } from "./hemu-wasm/guestexec.js";   // backend guest execution: jobs queued through the OS's own TaskExe, no keystrokes
+import { createHemuHost } from "./host.js";
+import { loadDisk, makeDisk, fat32Upload, fat32List } from "./qcow2.js";
+import * as jit from "./jit.js";             // x86-64 -> WASM block JIT (the speed: interp ~6fps -> JIT 30-65fps games)
+import {createGuestInput} from "./guestinput.js";
+import { createGuestExec } from "./guestexec.js";   // backend guest execution: jobs queued through the OS's own TaskExe, no keystrokes
 
 let msX = 320, msY = 240, msB = 0, wheel = 0;   // latest pointer state from the main thread
 const keyq = [];                            // set-1 scancodes from the main thread
@@ -220,7 +220,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
   postMessage({ cmd: "progress", text: "starting hemu core (HolyC → WASM)…", pct: 88 });
   const mod = await WebAssembly.compile(await (await fetch(wasmUrl, { cache: "no-cache" })).arrayBuffer());
 
-  const host = createHost({
+  const host = createHemuHost({
     palette:(index,rgb)=>postMessage({cmd:"palette",index,rgb}),
     onText: (s) => { if (s && s.indexOf("BADOP") >= 0) console.log("[hemu]", s.trim()); },
     snd: { tone: (f) => postMessage({ cmd: "snd", f: Number(f) }) },   // AudioContext lives on the main thread
@@ -254,7 +254,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
   host.env.__host_budget = () => BigInt(curBudget | 0);
   host.env.__host_dt = () => BigInt(dtMs | 0);
   // ---- JIT wiring: blocks read hemu's shared state at the offsets passed via __jit_state/__jit_x87/__jit_chain;
-  //      __jit_state returns 1 to ENABLE (return 0n / ?nojit -> pure interpreter). See jit.js + JIT-DESIGN.md. ----
+  //      __jit_state returns 1 to ENABLE (return 0n / ?nojit -> pure interpreter). See jit.js. ----
   let inst;
   if (!NOJIT) {
     host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem, inst.exports.RasterHLE); return 1n; };
@@ -268,7 +268,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
     console.log("[hemu] JIT enabled (x86-64 -> WASM)");
   } else console.log("[hemu] JIT disabled (?nojit) - pure interpreter");
 
-  if (smpCfg) host.env.mem = smpCfg.mem;                          // SMP BSP: instantiate over the shared memory (snapshot-smp.wasm imports env.mem)
+  if (smpCfg) host.env.mem = smpCfg.mem;                          // SMP BSP: instantiate over the shared memory (hemu-smp.wasm imports env.mem)
   inst = await WebAssembly.instantiate(mod, { env: host.env });
   instRef = inst;
   host.attach(inst);
@@ -310,7 +310,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
       // Load the C: disk AFTER boot settles (file I/O works once it lands; the desktop runs from
       // cached RAM). Deferring it keeps the disk decompress out of the boot memory spike - the
       // difference between living and dying on iOS Safari's per-tab memory budget.
-      if (!disk) setTimeout(() => loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => disk = d).catch(() => disk = null), 2500);
+      if (!disk) setTimeout(() => loadDisk("../vendor/images/templeos-hd.qcow2.gz").then(d => disk = d).catch(() => disk = null), 2500);
       // guest execution API: bound to this instance now that gBase is known (snapLoad ran in the first frame)
       try { gx = createGuestExec({ inst, gBase, onEvent: gxEvent, log: (s) => console.log("[hemu gx] " + s) }); }
       catch (e) { console.warn("[hemu] guest execution API unavailable: " + e.message); postMessage({ cmd: "guestReady", ok: false, probe: { ok: false, errors: [String(e.message || e)], warnings: [] } }); }

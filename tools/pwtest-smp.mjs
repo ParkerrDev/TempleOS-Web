@@ -12,7 +12,7 @@ const MIME = { ".html":"text/html", ".js":"text/javascript", ".mjs":"text/javasc
 const server = http.createServer(async (req, res) => {
   try {
     let p = decodeURIComponent(req.url.split("?")[0]); if (p === "/") p = "/hemu-smp.html";
-    const fp = join(ROOT, normalize(p));                 // follows symlinks (hemu-wasm/holyc-wasm -> ../)
+    const fp = join(ROOT, normalize(p));                 // follows symlinks (hemu/holyc-wasm -> ../)
     const buf = await readFile(fp);
     res.setHeader("Cross-Origin-Opener-Policy", "same-origin");      // + COEP => crossOriginIsolated => SharedArrayBuffer
     res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");

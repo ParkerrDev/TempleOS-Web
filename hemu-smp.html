@@ -48,9 +48,9 @@ function blit(idx, w, h) { const n = Math.min(w*h, out32.length); for (let i=0;i
 // ---- fetch the SMP engine + sidecar + multi-core snapshot ----
 status("fetching SMP engine + snapshot…");
 const [wasmBytes, sc, snapGz] = await Promise.all([
-  fetch("./hemu-wasm/snapshot-smp.wasm", { cache: "no-cache" }).then(r => r.arrayBuffer()),
-  fetch("./hemu-wasm/snapshot-smp.json", { cache: "no-cache" }).then(r => r.json()),
-  fetch("./hemu-wasm/live-smp.bin.gz", { cache: "no-cache" }).then(r => r.arrayBuffer()),
+  fetch("./build/hemu-smp.wasm", { cache: "no-cache" }).then(r => r.arrayBuffer()),
+  fetch("./build/hemu-smp.json", { cache: "no-cache" }).then(r => r.json()),
+  fetch("./hemu/live-smp.bin.gz", { cache: "no-cache" }).then(r => r.arrayBuffer()),
 ]);
 sc.ncore = N;
 sc.game = new URLSearchParams(location.search).get("game") || "";   // ?game=Talons -> BSP auto-launches it after boot
@@ -61,7 +61,7 @@ const ctrl = new SharedArrayBuffer(64);
 let bsp = null; const workers = [];
 status(`booting ${N} cores (BSP loads the snapshot, ~10 MB)…`);
 for (let k = 0; k < N; k++) {
-  const w = new Worker("./hemu-smp-worker.js", { type: "module" });
+  const w = new Worker("./engine/hemu-smp-worker.js", { type: "module" });
   w.onmessage = (e) => {
     const m = e.data;
     if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h); w.postMessage({ cmd: "ack" }); }

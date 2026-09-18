@@ -45,13 +45,13 @@ hottest render routines.
 
 TempleOS is 64‑bit‑only and is its own self‑hosting compiler, so it can't be cross‑compiled
 to WASM directly. HEMU takes the emulation route, TempleOS‑style: a **TempleOS‑only x86‑64
-emulator written in HolyC** (`hemu-wasm/src/cpu.HC` + `snapshot.HC`, ~1.3k lines), compiled
+emulator written in HolyC** ([HEMU](https://github.com/ParkerrDev/HEMU): `hemu/src/cpu.HC` + `snapshot.HC`, ~1.7k lines), compiled
 to WebAssembly by **holyc-wasm**, a from‑scratch HolyC compiler in JavaScript. It resumes a
 live RAM snapshot of the booted desktop, emulates just the hardware TempleOS touches
 (PIC/PIT/HPET/PS‑2/ATA/VGA‑DAC), and pulls input from the host each frame.
 
 Performance comes from three layers:
-- an **x86‑64 → WASM block JIT** (`jit.js`) that compiles hot guest code to native WASM at
+- an **x86‑64 → WASM block JIT** (`engine/jit.js`) that compiles hot guest code to native WASM at
   runtime - the same trick TempleOS's own JIT plays, one level up;
 - **HLE** of the hottest render routines (the window compositor blit and the games' span
   fillers), each shadow‑verified bit‑exact against the emulated version before activation;
@@ -72,37 +72,52 @@ frame sequence for their separate FPS label, avoiding full-screen pixel hashing.
 | Path | Size | What |
 |------|------|------|
 | `vendor/images/templeos-hd.qcow2.gz` | 41 MB | the installed TempleOS hard disk (FAT32 on C:), read on demand |
-| `hemu-wasm/live.bin.gz` | 5 MB | booted‑desktop RAM snapshot (instant boot) |
-| `hemu-wasm/snapshot.wasm` | ~77 KB | the compiled emulator |
+| `hemu/live.bin.gz` | 10 MB | booted‑desktop RAM snapshot (instant boot) |
+| `build/hemu.wasm` | ~77 KB | the compiled emulator, built at deploy by `engine/build.mjs` |
 
-The desktop appears after the 5 MB snapshot loads; the disk image streams in the background
+The desktop appears after the 10 MB snapshot loads; the disk image streams in the background
 for file I/O. (The `.gz` assets are decompressed in the browser.)
 
-## Repository layout (4 repos)
+## Repository layout (5 repos)
 
 | repo | what | consumed how |
 |---|---|---|
 | **TempleOS-web** (this) | the site: pages, search, video windows, converter, assets | deployed on Netlify |
-| [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | HolyC→WASM compiler + runtime + the editor app | cloned into `./holyc-wasm` at build time |
-| [hemu-wasm](https://github.com/ParkerrDev/Hemu-wasm) | the emulator: `snapshot.wasm`, the JIT, disk plumbing, engine harnesses | cloned into `./hemu-wasm` at build time |
-| [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline - its output is baked into `assets/transcripts/` by `build-transcripts.mjs` |
+| [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | the HolyC→WASM compiler and its browser runtime | cloned into `./holyc-wasm` at build time |
+| [HEMU](https://github.com/ParkerrDev/HEMU) | the emulator itself - plain HolyC - and the booted-RAM snapshots | cloned into `./hemu` at build time and compiled into `./build` by `engine/build.mjs` |
+| [HolyC-fmt](https://github.com/ParkerrDev/HolyC-fmt) | the HolyC formatter, written in HolyC (the Format button, `/format.html`) | cloned into `./holyc-fmt` at build time |
+| [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline - its output is baked into `assets/transcripts/` by `tools/build-transcripts.mjs` |
 
-`netlify.toml`'s build command `git clone --depth 1`s the two sibling repos, so **every
+`netlify.toml`'s build command `git clone --depth 1`s the three sibling repos and compiles the emulator into `build/`, so **every
 deploy ships their latest main** - no submodule pins, no packages. To auto-redeploy when
 *they* change, create one Netlify build hook (Site settings → Build & deploy → Build hooks)
-and add its URL as a plain push webhook on both repos.
+and add its URL as a plain push webhook on each of them.
+
+### What's where in this repo
+
+| Path | What |
+|---|---|
+| `index.html`, `*.js`, `*.html` | the desktop UI and its pages and modules (search, converter, games, sprites) |
+| `engine/` | HEMU in the browser - the WASM host for HEMU: `build.mjs`, `compile.js`, `host.js`, the x86→WASM JIT (`jit.js`), guest execution and input, the disk reader, and the two emulator workers (see `engine/README.md`) |
+| `editor/` | the in-browser HolyC editor app: compiles with `holyc-wasm/src` and runs programs in its own worker |
+| `tools/` | tests and dev scripts (run from this directory); `tools/hemu/` the emulator harnesses, `tools/snapshot/` the QEMU recipes that produce HEMU's boot snapshots |
+| `build/` | gitignored: `hemu.wasm`, `hemu-smp.wasm`, `hemu-smp.json`, compiled at deploy |
+| `vendor/` | committed binary assets: the TempleOS disk image, fonts |
+| `holyc-wasm/`, `hemu/`, `holyc-fmt/` | the sibling repos, cloned here at build time (gitignored) |
 
 ## Running locally
 
 ```bash
 git clone https://github.com/ParkerrDev/TempleOS-Web && cd TempleOS-web
 git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm   # same layout the build creates
-git clone --depth 1 https://github.com/ParkerrDev/Hemu-wasm hemu-wasm
+git clone --depth 1 https://github.com/ParkerrDev/HEMU hemu
+git clone --depth 1 https://github.com/ParkerrDev/HolyC-fmt holyc-fmt
+node engine/build.mjs build                                            # compile the emulator into build/
 node server.mjs               # → http://localhost:8080  (zero-dependency)
 ```
 
 (For hacking on the engine/compiler, clone them as siblings and symlink instead:
-`ln -s ../holyc-wasm ../hemu-wasm .`)
+`ln -s ../holyc-wasm ../hemu ../holyc-fmt .`, then the same `node engine/build.mjs build`)
 
 ## Credits & licenses
 
@@ -141,6 +156,8 @@ Browser games open in a larger window and scale the 640x480 canvas to fit while 
 
 Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. HolyCraft and Snake are native games; the 61 original upstream packages still require native compatibility work and remain available through the explicit Run in TempleOS button. Run `node tools/native-games-audit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability.
 
+The editor's runner (`editor/worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `tools/holycraft-input.test.mjs`.
+
 `node tools/game-source.test.mjs` checks all 298 source files, byte preservation for the 65 files with embedded sprites, draft persistence, edited installations, restoration, partial-write recovery and OS restarts.
 
 ```sh
@@ -158,3 +175,7 @@ node tools/game-credits.test.mjs
 python3 tools/redsea.test.py
 python3 tools/check-text.py
 ```
+
+The emulator harnesses (`tools/hemu/`, memory-hungry, need the decompressed snapshot and a raw disk) and the QEMU capture recipes (`tools/snapshot/`) are documented in `engine/README.md`. The headless site checks `tools/tscheck.mjs`, `tools/pwtest-smp.mjs` and `tools/whitecheck.mjs` need Playwright.
+
+```sh```

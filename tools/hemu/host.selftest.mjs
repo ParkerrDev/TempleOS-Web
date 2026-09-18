@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import {createHemuHost} from "../../engine/host.js";
+const sectors=new Map(),memory=new WebAssembly.Memory({initial:4});
+const host=createHemuHost({diskWrite:(lba,count,bytes,offset)=>{for(let i=0;i<count;i++)sectors.set(lba+i,bytes.slice(offset+i*512,offset+(i+1)*512));},diskRead:(lba,count,bytes,offset)=>{for(let i=0;i<count;i++)bytes.set(sectors.get(lba+i),offset+i*512);}});
+host.attach({exports:{memory}});
+const source=Uint8Array.from({length:1024},(_,i)=>(i*17+(i>>9))&255);
+new Uint8Array(memory.buffer).set(source,1024);
+host.env.__host_disk_wr(123n,2n,1024n);
+assert.equal(sectors.size,2);assert.deepEqual(sectors.get(124),source.slice(512));
+new Uint8Array(memory.buffer).fill(0);
+host.env.__host_disk(123n,2n,2048n);
+assert.deepEqual(new Uint8Array(memory.buffer,2048,1024),source);
+console.log("Host disk adapter: two sectors survive guest memory clearing and read back exactly.");

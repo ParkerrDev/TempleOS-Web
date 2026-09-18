@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {compileHolyC} from '../../holyc-wasm/src/compiler.js';
-import {compileNativeProject} from '../../holyc-wasm/native/project.js';
-import {createMouseButtons} from '../../holyc-wasm/native/mouse-buttons.js';
+import {compileNativeProject} from '../editor/project.js';
+import {createMouseButtons} from '../editor/mouse-buttons.js';
 import {createHost} from '../../holyc-wasm/src/runtime/host.js';
 import {Framebuffer} from '../../holyc-wasm/src/runtime/graphics.js';
 import * as protocol from '../../holyc-wasm/src/runtime/protocol.js';
@@ -24,7 +24,7 @@ atomics.wait=()=>{
 const context=vm.createContext({...protocol,compileHolyC,compileNativeProject,createHost,createMouseButtons,Framebuffer,
   Atomics:atomics,WebAssembly,Int32Array,Uint8Array,DataView,performance:{now:()=>++time},postMessage:m=>messages.push(m)});
 context.self=context;
-const path=new URL('../../holyc-wasm/native/worker.js',import.meta.url);
+const path=new URL('../editor/worker.js',import.meta.url);
 new vm.Script(readFileSync(path,'utf8').replace(/^import[^\n]+\n/gm,''),{filename:path.pathname}).runInContext(context);
 await context.onmessage({data:{type:'run',nativeGame:true,filename:'ClickProbe.HC',controlSAB,fbSAB:new SharedArrayBuffer(640*480),
   source:'I64 i;for(i=0;i<7;i++){Sleep(16);"%d %d\\n",ms.lb,ms.rb;}\n'}});

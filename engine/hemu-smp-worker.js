@@ -5,12 +5,12 @@
 // Worker realm gets its OWN jit.js module instance, so the per-core block cache is automatic.
 //
 // EXPERIMENTAL / opt-in (hemu-smp.html). The single-core hemu-worker.js + the default site are untouched.
-import { createHost } from "./holyc-wasm/src/runtime/host.js";
-import * as jit from "./hemu-wasm/jit.js";
-import {createGuestInput} from "./hemu-wasm/guestinput.js";
-import {createGuestExec} from "./hemu-wasm/guestexec.js";
-import {loadDisk} from "./hemu-wasm/qcow2.js";
-import {installGame} from "./game-packages.js";
+import { createHemuHost } from "./host.js";
+import * as jit from "./jit.js";
+import {createGuestInput} from "./guestinput.js";
+import {createGuestExec} from "./guestexec.js";
+import {loadDisk} from "./qcow2.js";
+import {installGame} from "../game-packages.js";
 
 const CTRL = { READY: 0, STOP: 1 };               // shared Int32 control: APs wait on READY; STOP ends all
 let core = 0, role = "bsp", mem = null, ctrl = null, sc = null;
@@ -41,11 +41,11 @@ async function gunzipInto(gz, size) {
 async function boot(m) {
   role = m.role; core = m.core; mem = m.mem; ctrl = new Int32Array(m.ctrl); sc = m.sc;
   if (role !== "bsp") curBudget = 0;
-  else disk=await loadDisk("./vendor/images/templeos-hd.qcow2.gz");
+  else disk=await loadDisk("../vendor/images/templeos-hd.qcow2.gz");
   const mod = await WebAssembly.compile(m.wasmBytes);
   let snap = role === "bsp" ? await gunzipInto(m.snapGz, 402653184) : null;
 
-  host = createHost({
+  host = createHemuHost({
     palette:(index,rgb)=>{if(role==="bsp")postMessage({cmd:"palette",index,rgb});},
     diskRead:(lba,count,u8,dst)=>disk?.readInto(lba,count,u8,dst),
     diskWrite:(lba,count,u8,src)=>disk?.writeInto(lba,count,u8,src),

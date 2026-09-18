@@ -44,7 +44,7 @@
       }
     } catch (e) { fail("Couldn't load " + game + ": " + e.message); }
     if (src) {
-      try { await import("./holyc-wasm/native/app.js"); } catch (e) { fail("Failed to load the HolyC runtime: " + e.message); }
+      try { await import("./editor/app.js"); } catch (e) { fail("Failed to load the HolyC runtime: " + e.message); }
       const ed = document.getElementById("editor");
       const t0 = Date.now();
       (function go() {                                   // app.js exposes window.__holycEditor when ready

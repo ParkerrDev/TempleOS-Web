@@ -672,8 +672,8 @@
   <input id="mobInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" aria-hidden="true" tabindex="-1" />
 
   <script type="module">
-    import { createHost } from "./holyc-wasm/src/runtime/host.js";
-    import { loadDisk } from "./hemu-wasm/qcow2.js";
+    import { createHemuHost } from "./engine/host.js";
+    import { loadDisk } from "./engine/qcow2.js";
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
@@ -1175,7 +1175,7 @@
     let gzBytes;
     async function downloadSnapshot() {                    // reused by ↻ Restart when gzBytes was freed (phones)
       setLoad("downloading TempleOS RAM snapshot (~5 MB)…", 5);
-      const gz = await fetch(useSMP ? "./hemu-wasm/live-smp.bin.gz" : "./hemu-wasm/live.bin.gz", { cache: "no-cache" });
+      const gz = await fetch(useSMP ? "./hemu/live-smp.bin.gz" : "./hemu/live.bin.gz", { cache: "no-cache" });
       if (!gz.ok) { setLoad("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
       const total = +(gz.headers.get("content-length") || 5222517);
       const reader = gz.body.getReader(); const chunks = []; let got = 0;
@@ -1216,7 +1216,7 @@
     // ---- engine: multi-core worker, single-thread inline fallback ----
     function runWorker() {
       let worker, watchdog, alive = false;
-      try { worker = new Worker("./hemu-worker.js", { type: "module" }); } catch (e) { return false; }
+      try { worker = new Worker("./engine/hemu-worker.js", { type: "module" }); } catch (e) { return false; }
       engineLabel = "2";
       engine.kind = "worker"; engine.post = (m, t) => worker?.postMessage(m, t || []);
       engine.stop = () => { try { clearTimeout(watchdog); } catch {} try { worker?.terminate(); } catch {} worker = null; notifyInput = () => {}; };
@@ -1251,7 +1251,7 @@
         else if(m.cmd === "palette")updatePalette(m.index,m.rgb);
         else if (window.__diskMsg) window.__diskMsg(m);   // paused/exportResult/fileResult/dirList/diskInfo
       };
-      worker.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: "./hemu-wasm/snapshot.wasm", fixedB: FIXED_B, diskBytes: window.__importDisk || null }, window.__importDisk ? [window.__importDisk] : []);
+      worker.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: new URL("./build/hemu.wasm", location.href).href, fixedB: FIXED_B, diskBytes: window.__importDisk || null }, window.__importDisk ? [window.__importDisk] : []);
       window.__importDisk = null;
       watchdog = setTimeout(() => { if (!alive) fallback("no frame in 10s"); }, 10000);
       return true;
@@ -1264,13 +1264,13 @@
       try {
         setLoad("starting multi-core engine…", 90);
         const [wasmBytes, sc] = await Promise.all([
-          fetch("./hemu-wasm/snapshot-smp.wasm", { cache: "no-cache" }).then(r => r.arrayBuffer()),
-          fetch("./hemu-wasm/snapshot-smp.json", { cache: "no-cache" }).then(r => r.json()),
+          fetch("./build/hemu-smp.wasm", { cache: "no-cache" }).then(r => r.arrayBuffer()),
+          fetch("./build/hemu-smp.json", { cache: "no-cache" }).then(r => r.json()),
         ]);
         sc.ncore = SMP_N;
         const mem = new WebAssembly.Memory({ initial: 512, maximum: 8192, shared: true });
         const ctrl = new SharedArrayBuffer(64);
-        bsp = new Worker("./hemu-worker.js", { type: "module" });
+        bsp = new Worker("./engine/hemu-worker.js", { type: "module" });
         engineLabel = String(SMP_N);
         engine.kind = "smp"; engine.post = (m, t) => bsp?.postMessage(m, t || []);
         engine.stop = () => { try { clearTimeout(watchdog); } catch {} try { const c = new Int32Array(ctrl); Atomics.store(c, 1, 1); Atomics.notify(c, 1); } catch {} try { bsp?.terminate(); } catch {} for (const a of aps) { try { a.terminate(); } catch {} } bsp = null; aps = []; notifyInput = () => {}; };
@@ -1296,13 +1296,13 @@
         else if (window.__diskMsg) window.__diskMsg(m);
         };
         for (let k = 1; k < SMP_N; k++) {                  // AP workers: share `mem`, barrier-wait on `ctrl`, RunCore in parallel
-          const ap = new Worker("./hemu-smp-worker.js", { type: "module" });
+          const ap = new Worker("./engine/hemu-smp-worker.js", { type: "module" });
           ap.onmessage = (e) => { const m = e.data; if (m.cmd === "error") dbg("[smp] AP" + k + ": " + m.msg, true); else if (m.cmd === "log") { dbg("[smp] " + m.msg); console.log("[smp]", m.msg); } };
           ap.onerror = (ev) => dbg("[smp] AP" + k + " worker error: " + (ev.message || ""), true);
           ap.postMessage({ cmd: "init", role: "ap", core: k, mem, ctrl, sc, wasmBytes });
           aps.push(ap);
         }
-        bsp.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: "./hemu-wasm/snapshot-smp.wasm", fixedB: FIXED_B,
+        bsp.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: new URL("./build/hemu-smp.wasm", location.href).href, fixedB: FIXED_B,
           diskBytes: window.__importDisk || null, smp: { mem, ctrl, ipiAddr: sc.globals.g_ipi_pending, ncore: SMP_N } },
           window.__importDisk ? [window.__importDisk] : []);
         window.__importDisk = null;
@@ -1318,14 +1318,14 @@
         let off = 0;
         for (;;) { const { done, value } = await rd.read(); if (done) break; snap.set(value, off); off += value.length; } }
       setLoad("starting hemu (HolyC → WASM x86-64 core)…", 88);
-      const mod = await WebAssembly.compile(await (await fetch("./hemu-wasm/snapshot.wasm", { cache: "no-cache" })).arrayBuffer());
-      const { makeDisk, fat32Upload, fat32List } = await import("./hemu-wasm/qcow2.js");
+      const mod = await WebAssembly.compile(await (await fetch("./build/hemu.wasm", { cache: "no-cache" })).arrayBuffer());
+      const { makeDisk, fat32Upload, fat32List } = await import("./engine/qcow2.js");
       let disk = null, gBaseI = 0, guestExec = null;
       if (window.__importDisk) { try { disk = makeDisk(new Uint8Array(window.__importDisk)); } catch {} window.__importDisk = null; }
       else loadDisk("./vendor/images/templeos-hd.qcow2.gz").then(d => { disk = d; dbg("C: disk image ready"); }).catch(() => disk = null);
       engineLabel = "1";
       let curBudget = FIXED_B || 1500000, dtMs = 16;
-      const host = createHost({
+      const host = createHemuHost({
         palette:updatePalette,
         onText: (s) => { if (s && s.indexOf("BADOP") >= 0) dbg("[guest] " + s.trim(), true); }, snd: { tone: (f) => snd(Number(f)) },
         snapLoad: (base, u8) => { gBaseI = base; u8.set(snap, base); },
@@ -1360,8 +1360,8 @@
       engine.kind = "inline";
       let stopped = false;
       engine.stop = () => { stopped = true; notifyInput = () => {}; };   // halts loop() on its next frame
-      const {createGuestExec} = await import("./hemu-wasm/guestexec.js");
-      const {createGuestInput} = await import("./hemu-wasm/guestinput.js");
+      const {createGuestExec} = await import("./engine/guestexec.js");
+      const {createGuestInput} = await import("./engine/guestinput.js");
       let nextProbe = 0;
       guestInput=createGuestInput({guest:()=>guestExec,memory:()=>inst.exports.memory,base:()=>gBaseI,onState:state=>window.__guestInputMode(state)});
       notifyInput=()=>{const m=inputMessage();guestInput.accept(m);keyq.push(...m.keys);};
@@ -2130,7 +2130,7 @@ I64 GodDoodleGen(I64 strokes)
       // the Games launcher (which drives the same compile+worker+canvas+input machinery).
       let appPromise = null, ranDefault = false;
       window.__loadEditorApp = () => {
-        if (!appPromise) appPromise = import("./holyc-wasm/native/app.js")
+        if (!appPromise) appPromise = import("./editor/app.js")
           .catch((e) => { appPromise = null; const s = document.getElementById("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); throw e; });
         return appPromise;
       };

@@ -31,7 +31,7 @@ Validated locally on 2026-09-13. Changes span TempleOS-Web, HolyC-wasm, Hemu-was
 
 These are regression and smoke checks, not complete game playthroughs or full x86 conformance. TOOM's first launch compiles inside TempleOS and can take a minute or two before its menu appears. TOOM multiplayer networking is not implemented. SMP remains a separate experimental execution path.
 
-Run the dependency-free checks listed in the repository READMEs. `Hemu-wasm/game-suite.mjs --all` writes per-game screenshots and JSON under `/tmp/hemu-games`, or `OUT`. `games/catalog.json` records every source revision and asset hash.
+Run the dependency-free checks listed in the repository READMEs. `tools/hemu/game-suite.mjs --all` writes per-game screenshots and JSON under `/tmp/hemu-games`, or `OUT`. `games/catalog.json` records every source revision and asset hash.
 
 ## Desktop window and input follow-up
 
