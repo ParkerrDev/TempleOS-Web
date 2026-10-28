@@ -1,0 +1,9 @@
+# templeosweb-files: serves the disk image and RAM snapshots from R2 (see worker.js).
+name = "templeosweb-files"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "templeosweb"
