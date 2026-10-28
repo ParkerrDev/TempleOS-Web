@@ -7,8 +7,10 @@
 # is committed anywhere, so the engine and the JIT that reads its offsets always come from the same build.
 # (hemu-wasm is the pre-rename clone dir: Netlify's cached build directory keeps stale untracked dirs
 # between builds and publish = "." would ship them, so old names stay in this rm list.)
+# Last, tools/offload-redirects.mjs writes _redirects sending the disk image and RAM snapshots to raw GitHub,
+# pinned to this build's commits, so they never count against Netlify's bandwidth.
 # To redeploy automatically when THOSE repos change, add a Netlify build hook
 # (Site settings → Build & deploy → Build hooks) as a push webhook on each repo.
 [build]
-  command = "rm -rf holyc-wasm hemu hemu-wasm holyc-fmt build && git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm && git clone --depth 1 https://github.com/ParkerrDev/HEMU hemu && git clone --depth 1 https://github.com/ParkerrDev/HolyC-fmt holyc-fmt && node engine/build.mjs build"
+  command = "rm -rf holyc-wasm hemu hemu-wasm holyc-fmt build && git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm && git clone --depth 1 https://github.com/ParkerrDev/HEMU hemu && git clone --depth 1 https://github.com/ParkerrDev/HolyC-fmt holyc-fmt && node engine/build.mjs build && node tools/offload-redirects.mjs"
   publish = "."
