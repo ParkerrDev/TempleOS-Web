@@ -93,6 +93,14 @@ deploy ships their latest main** - no submodule pins, no packages. To auto-redep
 *they* change, create one Netlify build hook (Site settings → Build & deploy → Build hooks)
 and add its URL as a plain push webhook on each of them.
 
+The heavy files never come from Netlify: the build's last step, `tools/offload-redirects.mjs`, writes
+`_redirects` that send the disk image, the RAM snapshots, the games, Terry Search's shards, Terry's
+sprites and ffmpeg's wasm to `templeosweb-files`, a Cloudflare Worker over an R2 bucket (`cdn/`),
+pinned to the commits they came from. The Worker copies a pinned file in from raw GitHub on its first
+request, and the build HEADs every file first, so a bad pin or host fails the build instead of the
+site. Deploy the Worker with `cd cdn && npx wrangler deploy`; a new file or folder to offload goes
+in both `cdn/worker.js` (FILES, DIRS) and `tools/offload-redirects.mjs` (OWN).
+
 ### What's where in this repo
 
 | Path | What |
@@ -103,6 +111,7 @@ and add its URL as a plain push webhook on each of them.
 | `tools/` | tests and dev scripts (run from this directory); `tools/hemu/` the emulator harnesses, `tools/snapshot/` the QEMU recipes that produce HEMU's boot snapshots |
 | `build/` | gitignored: `hemu.wasm`, `hemu-smp.wasm`, `hemu-smp.json`, compiled at deploy |
 | `vendor/` | committed binary assets: the TempleOS disk image, fonts |
+| `cdn/` | the Cloudflare Worker that serves the heavy files from R2 (`worker.js`, `wrangler.toml`) |
 | `holyc-wasm/`, `hemu/`, `holyc-fmt/` | the sibling repos, cloned here at build time (gitignored) |
 
 ## Running locally

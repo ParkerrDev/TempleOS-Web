@@ -7,8 +7,8 @@
 # is committed anywhere, so the engine and the JIT that reads its offsets always come from the same build.
 # (hemu-wasm is the pre-rename clone dir: Netlify's cached build directory keeps stale untracked dirs
 # between builds and publish = "." would ship them, so old names stay in this rm list.)
-# Last, tools/offload-redirects.mjs writes _redirects sending the disk image and RAM snapshots to R2 (cdn/),
-# pinned to this build's commits, so they never count against Netlify's bandwidth.
+# Last, tools/offload-redirects.mjs writes _redirects sending the heavy files (disk image, RAM snapshots, games,
+# Terry Search's shards, ffmpeg) to the R2-backed Worker in cdn/, pinned to commits, after checking each one answers.
 # To redeploy automatically when THOSE repos change, add a Netlify build hook
 # (Site settings → Build & deploy → Build hooks) as a push webhook on each repo.
 [build]
