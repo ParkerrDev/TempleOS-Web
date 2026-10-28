@@ -12,7 +12,7 @@
 import { writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
-const CDN = "https://templeosweb-files.parkerhunt.workers.dev";
+const CDN = "https://templeosweb-files.parkerrhunt.workers.dev";
 const OWN = [                       // [path, folder?] - keep in step with FILES and DIRS in cdn/worker.js
   ["vendor/images/templeos-hd.qcow2.gz", false],
   ["vendor/ffmpeg/core/ffmpeg-core.wasm", false],
