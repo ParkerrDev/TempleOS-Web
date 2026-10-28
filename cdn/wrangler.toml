@@ -1,4 +1,4 @@
-# templeosweb-files: serves the disk image and RAM snapshots from R2 (see worker.js).
+# templeosweb-files: serves the site's heavy files from R2 (see worker.js).
 name = "templeosweb-files"
 main = "worker.js"
 compatibility_date = "2026-10-01"

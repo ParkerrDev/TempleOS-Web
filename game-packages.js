@@ -30,14 +30,15 @@ export async function installGame(id,writeFile,onStatus=()=>{},overrides=new Map
   const fresh = previous?.generation !== generation;
   for(const path of overrides.keys())if(!pkg.files.some(f=>f.path===path&&/\.(HC|HH)$/i.test(path)))throw new Error('Edited file is not a game source: '+path);
   // Download and verify the complete package before making any guest filesystem changes.
-  const files=[];
-  for(let i=0;i<pkg.files.length;i++){
-    const f=pkg.files[i];
-    if (!fresh && !overrides.has(f.path) && !previous.edited.has(f.path)) continue;
-    onStatus(`Downloading ${pkg.name}: ${i+1} / ${pkg.files.length}`);
-    const original=await gameFile(f),bytes=overrides.get(f.path) || original;
-    files.push({path:f.path,bytes});
-  }
+  // Eight downloads at a time: each file is a redirect to the CDN plus a fetch, so one by one is mostly waiting.
+  const need=pkg.files.filter(f=>fresh||overrides.has(f.path)||previous.edited.has(f.path));
+  const files=new Array(need.length);let next=0,done=0;
+  const fetcher=async()=>{while(next<need.length){
+    const i=next++,f=need[i],original=await gameFile(f);
+    files[i]={path:f.path,bytes:overrides.get(f.path) || original};
+    onStatus(`Downloading ${pkg.name}: ${++done} / ${need.length}`);
+  }};
+  await Promise.all(Array.from({length:Math.min(8,need.length)},fetcher));
   if(files.length)installed.delete(id);
   for(let i=0;i<files.length;i++){
     if ((globalThis.__osGeneration || 0) !== generation) throw new Error("OS restarted during installation.");

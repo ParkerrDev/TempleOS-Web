@@ -6,6 +6,9 @@
   <title>TempleOS - the real 64-bit OS in your browser</title>
   <link rel="icon" href="assets/Logo128x152.jpg" type="image/jpeg" />
   <link rel="apple-touch-icon" href="assets/Logo128x152.jpg" />
+  <!-- the snapshot, disk, games and Terry Search are redirected to this CDN (tools/offload-redirects.mjs):
+       open the connection while the page is still parsing -->
+  <link rel="preconnect" href="https://templeosweb-files.parkerhunt.workers.dev" crossorigin />
   <!-- cross-origin isolation removed (QEMU-era relic; HEMU uses no SharedArrayBuffer): being
        un-isolated lets Terry Search stream archive.org video inline. Unregister any old
        coi-serviceworker a returning visitor may still have (it would re-inject COEP). -->

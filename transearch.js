@@ -26,8 +26,11 @@ const byPath = new Map();                        // archive path -> videos[] ind
 
 async function load(base) {
   const man = await (await fetch(base + "manifest.json")).json();
+  // every shard download starts at once (each is a redirect to the CDN), they are parsed in order
+  const pending = man.shards.map((s) => fetch(base + s.f));
+  pending.forEach((p) => p.catch(() => {}));     // a failure surfaces at its own await below
   for (let k = 0; k < man.shards.length; k++) {
-    const resp = await fetch(base + man.shards[k].f);
+    const resp = await pending[k];
     if (!resp.ok) throw new Error("shard fetch " + resp.status);
     const arr = JSON.parse(await new Response(resp.body.pipeThrough(new DecompressionStream("gzip"))).text());
     for (const v of arr) {
