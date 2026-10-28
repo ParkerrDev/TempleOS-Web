@@ -1,9 +1,9 @@
 // worker.js - templeosweb-files, the Cloudflare Worker that serves the site's heavy files from R2:
-//   https://templeosweb-files.parkerhunt.me/<repo>/<commit>/<path>   (also on parkerrhunt.workers.dev)
+//   https://templeosweb-files.parkerrhunt.workers.dev/<repo>/<commit>/<path>
 // tools/offload-redirects.mjs points Netlify's _redirects here, pinned to the commits the build used.
 // The first request for a pinned file copies it from raw.githubusercontent.com into the R2 bucket;
-// later ones are served from R2, whose downloads cost nothing, and on the custom domain from
-// Cloudflare's edge cache in front of it (the Cache API does nothing on workers.dev). A commit pins
+// later ones are served from R2, whose downloads cost nothing. Given a custom domain, Cloudflare's
+// edge cache sits in front of R2 too (the Cache API does nothing on workers.dev). A commit pins
 // the bytes, so every response is immutable. Objects expire from the bucket 30 days after upload (an
 // R2 lifecycle rule on the bucket, not in wrangler.toml), which drops old commits' copies; a live one
 // is just fetched again. Only the files and folders below are served: this is no open proxy.

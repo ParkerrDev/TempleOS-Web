@@ -3,7 +3,6 @@ name = "templeosweb-files"
 main = "worker.js"
 compatibility_date = "2026-10-01"
 workers_dev = true
-routes = [{ pattern = "templeosweb-files.parkerhunt.me", custom_domain = true }]
 
 [[r2_buckets]]
 binding = "FILES"
