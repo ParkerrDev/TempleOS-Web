@@ -25,9 +25,9 @@ function room() {
   assert.deepEqual(r.counts,[],'No count until the Worker sends one');
   r.last.onmessage({data:'1'});
   r.last.onmessage({data:'3'});
-  assert.deepEqual(r.counts,[0,2],'Alone is zero others, three people is two others');
+  assert.deepEqual(r.counts,[1,3],'The count includes this visitor');
   for(const data of ['pong','','0','-1','1.5','abc','1e400',undefined])r.last.onmessage({data});
-  assert.deepEqual(r.counts,[0,2],'Anything but a positive whole number changes nothing');
+  assert.deepEqual(r.counts,[1,3],'Anything but a positive whole number changes nothing');
   p.wake();
   assert.equal(r.sockets.length,1,'Waking a connected page opens no second socket');
 }
@@ -52,7 +52,7 @@ function room() {
   p.wake();
   r.last.onmessage({data:'2'});
   r.last.onclose();
-  assert.deepEqual(r.counts,[1,null],'A lost socket shows no number at all, not an old one');
+  assert.deepEqual(r.counts,[2,null],'A lost socket shows no number at all, not an old one');
   mock.timers.tick(1999);
   assert.equal(r.sockets.length,1);
   mock.timers.tick(1);

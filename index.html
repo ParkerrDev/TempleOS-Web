@@ -101,9 +101,11 @@
     .col-left { display:flex; flex-direction:column; gap:16px; width:256px; flex:0 0 auto; }
     .col-right { display:flex; flex-direction:column; gap:16px; width:288px; flex:0 0 auto; }
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
-    .toolbar { display:flex; flex-direction:column; gap:7px; align-items:stretch; }
-    .toolbar button { font-size:11px; padding:4px 6px; }
-    .toolbar button .ico { display:inline-block; width:20px; font-size:14px; line-height:14px; text-align:center; vertical-align:-1px; }
+    .toolbar { display:flex; flex-direction:column; gap:5px; align-items:stretch; }
+    .toolbar button { font-size:11px; padding:0 6px; min-height:28px; }
+    /* 24px is the size the icons are drawn at: one grid unit to one pixel on a standard screen */
+    .toolbar button .ico { display:inline-block; width:24px; height:24px; vertical-align:middle; }
+    .ico svg { display:block; width:24px; height:24px; fill:currentColor; shape-rendering:crispEdges; }
     button, .tbtn, #homeList li, .ico { font-variant-emoji:text; }
     button { font-family:'TempleOS','dos_vga',monospace; font-size:12px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
@@ -438,6 +440,22 @@
   </style>
 </head>
 <body>
+<!-- Menu icons: pixelarticons by Gerrit Halfmann (MIT, assets/pixelarticons-LICENSE.txt). i-cross is its cross-sharp with the bar raised. -->
+<svg style="display:none">
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M10 20H4V4h6v16Zm8-16v16h-6V4h6Zm-4 2v12h2V6h-2ZM6 18h2V6H6v12Z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M15 11h-2V9h2zm0 4h-2v-2h2zm-2 2h-2v-2h2zm0-8h-2V7h2zm-2-2H9V5h2zM9 21H7V3h2zm6-8h2v-2h-2zm-6 4h2v2H9z"/></symbol>
+  <symbol id="i-restart" viewBox="0 0 24 24"><path d="M16 4h2v6h-2zm-2-2h2v2h-2zm0 2h2v8h-2zM4 8H2v5h2z M2 6h18v2H2zm6 14H6v-6h2zm2 2H8v-2h2zm0-2H8v-8h2zm10-4h2v-5h-2z M22 18H4v-2h18z"/></symbol>
+  <symbol id="i-fullscreen" viewBox="0 0 24 24"><path d="M13 9h2v2h-2zm2-2h2v2h-2zm2-2h2v2h-2zm2-2h2v8h-2z M13 3h8v2h-8zm-2 12H9v-2h2zm-2 2H7v-2h2zm-2 2H5v-2h2zm-2 2H3v-8h2z M11 21H3v-2h8z"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M11 18H9v-4h2v4Zm-4-1H5v-2h2v2Zm12-2v2h-2v-2h2ZM5 15H3v-2h2v2Zm16 0h-2v-2h2v2Zm-8-1h-2v-4h2v4ZM3 13H1v-2h2v2Zm20 0h-2v-2h2v2ZM5 11H3V9h2v2Zm16 0h-2V9h2v2Zm-6-1h-2V6h2v4ZM7 9H5V7h2v2Zm12 0h-2V7h2v2Z"/></symbol>
+  <symbol id="i-games" viewBox="0 0 24 24"><path d="M4 4h16v2H4zm0 14h16v2H4zM2 4h2v16H2zm18 0h2v16h-2zM8 9h2v6H8z M6 11h6v2H6zm8-2h2v2h-2zm2 4h2v2h-2z"/></symbol>
+  <symbol id="i-sprite" viewBox="0 0 24 24"><path d="M2 2h20v2H2zm0 18h20v2H2zM2 4h2v16H2zm18 0h2v16h-2zm-4 8h2v2h-2zm-2 2h2v2h-2zm4 0h2v2h-2zm-8 0h2v2h-2zm2 2h2v2h-2zm2 2h2v2h-2z M20 16h2v2h-2zM8 16h2v2H8zm-2 2h2v2H6zM8 6h2v2H8zM6 8h2v2H6zm2 2h2v2H8zm2-2h2v2h-2z"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M16 20V14H8V20H16ZM12 10H6V6H12V10ZM20 6H18V4H20V6ZM20 20V6H22V22H2V2H18V4H4V20H6V12H18V20H20Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M22 22h-2v-2h2v2Zm-2-2h-2v-2h2v2Zm-6-2H6v-2h8v2Zm4 0h-2v-2h2v2ZM6 16H4v-2h2v2Zm10 0h-2v-2h2v2ZM4 14H2V6h2v8Zm14 0h-2V6h2v8ZM6 6H4V4h2v2Zm10 0h-2V4h2v2Zm-2-2H6V2h8v2Z"/></symbol>
+  <symbol id="i-mouse" viewBox="0 0 24 24"><path d="M8 2h8v2H8zm0 20h8v-2H8zM6 4h2v2H6zm0 16h2v-2H6zM16 4h2v2h-2zm0 16h2v-2h-2zM4 6h2v12H4zm14 0h2v12h-2zm-7 0h2v4h-2z"/></symbol>
+  <symbol id="i-touch" viewBox="0 0 24 24"><path d="M2 14h20v2H2zm0 6h20v2H2zm0-4h2v4H2zm18 0h2v4h-2zM8 2h8v2H8zm0 2h2v4H8zm6 0h2v4h-2zM8 8h8v2H8zm3 2h2v4h-2zm-4 2h2v2H7z"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24"><path d="M2 2h20v2H2zm2 6h16v2H4zM2 20h20v2H2zM2 4h2v16H2zm18 0h2v16h-2zM5 5h2v2H5zm3 0h2v2H8z"/></symbol>
+  <symbol id="i-cross" viewBox="0 0 24 24"><path d="M16 6h6v8h-6v8H8v-8H2V6h6V2h8v4Zm-6 2H4v4h6v8h4v-8h6V8h-6V4h-4v4Z"/></symbol>
+</svg>
 <div id="xcursor" aria-hidden="true"></div>
   <div id="topbar">
     <div class="status">
@@ -446,7 +464,7 @@
       <span id="tb-fps">FPS: …</span>
       <span id="tb-cores">Cores: …</span>
       <span>Engine: <span class="y">HEMU</span></span>
-      <span id="tb-people" title="People on this site right now, not counting you" hidden>With you: <span class="y"></span></span>
+      <span id="tb-people" title="People on this site right now, including you" hidden>Visitors: <span class="y"></span></span>
     </div>
     <p id="tb-key"></p>
   </div>
@@ -466,17 +484,17 @@
     <div class="col-left">
       <div class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
-        <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico">⏸︎</span> Pause</button>
-        <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico">↻</span> Restart</button>
-        <button id="fsBtn" title="Show the OS fullscreen"><span class="ico">⛶</span> Fullscreen</button>
-        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly - no emulation, native speed"><span class="ico">⌨︎</span> HolyC Editor</button>
-        <button id="gamesBtn" title="Run games with HolyC-WASM or explicitly in TempleOS, and edit their source"><span class="ico">▦</span> Games</button>
-        <button id="spritesBtn" title="Convert images, GIFs and video to TempleOS sprites"><span class="ico">▧</span> Sprite Studio</button>
-        <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico">✞</span> God Tools</button>
-        <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico">▤</span> Disk &amp; Save</button>
-        <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico">⌕</span> Terry Search</button>
-        <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
-        <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico">✛</span> Touch controls</button>
+        <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico"><svg><use href="#i-pause"/></svg></span> Pause</button>
+        <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico"><svg><use href="#i-restart"/></svg></span> Restart</button>
+        <button id="fsBtn" title="Show the OS fullscreen"><span class="ico"><svg><use href="#i-fullscreen"/></svg></span> Fullscreen</button>
+        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly - no emulation, native speed"><span class="ico"><svg><use href="#i-code"/></svg></span> HolyC Editor</button>
+        <button id="gamesBtn" title="Run games with HolyC-WASM or explicitly in TempleOS, and edit their source"><span class="ico"><svg><use href="#i-games"/></svg></span> Games</button>
+        <button id="spritesBtn" title="Convert images, GIFs and video to TempleOS sprites"><span class="ico"><svg><use href="#i-sprite"/></svg></span> Sprite Studio</button>
+        <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico"><svg><use href="#i-cross"/></svg></span> God Tools</button>
+        <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico"><svg><use href="#i-save"/></svg></span> Disk &amp; Save</button>
+        <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico"><svg><use href="#i-search"/></svg></span> Terry Search</button>
+        <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico"><svg><use href="#i-mouse"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
+        <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico"><svg><use href="#i-touch"/></svg></span> Touch controls</button>
       </div>
       <div class="win keyswin" data-title="Keys"><span class="close">[X]</span><div id="keysbar"></div></div>
     </div>
@@ -681,7 +699,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-43: Larger native game windows, fullscreen game and editor views, independent mouse buttons under pointer lock, and quick-click delivery across worker polls. render-42: Strict HolyC-WASM browser games and editor previews, multi-file native projects with frozen drafts, explicit native compatibility errors, and TempleOS only through Run in TempleOS. render-41: Capture mouse inside the HolyC Editor preview, route capture to the active native or emulated game, and preserve hybrid release. render-40: Verified game authors, 63 catalog entries with Terry supplemental and Austin Sierra games, visible PNG2GR creator credit, sticky hybrid mouse mode in both runners, and corrected x87 subtraction/division operand order for game physics. render-39: Compact Sprite Studio, shared desktop cursor, themed scrollbars and file control; FPS from TempleOS window-manager telemetry and native frame signals. render-38: Game submissions at the bottom of the Games window with a prepared GitHub issue form. render-37: Edit and play games side by side, author and source credits, and pointer-tracked window dragging. render-36: Both launch destinations and editable game projects across the catalog, preserved sprites and isolated browser game sessions. render-35: Sprite Studio opens only from the menu; mouse capture keeps its icon in both states. render-34: Natural source-color mixtures and restrained fixed dithering without forced saturation. render-33: Hue-preserving stock-palette sprites, restored blue denim and pale warm tones, local source-fleck removal. render-32: Clean sprite colors, preserved warm midtones and optional dither strength defaulting to zero. render-31: Restrained sprite colors and stable blue-noise dithering without a repeating grid. render-30: Warm stable sprite dithering, native 25 fps Terry timing, cached frame playback and worker conversion. render-29: Desktop Sprite Studio, GR Terry animation, guest-aware mouse capture, relative HolyCraft look and lossless keyboard input. render-28: FTST and native Sign correctness, VGA palette I/O, persistent 32-bit ATA writes, raw compressed uploads, recycled-code JIT validation. render-27: Exact duplicate framebuffer suppression, Sprite Studio, pinned TinkerOS game packages, TOOM with Freedoom, and guest job execution. render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix - a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) - no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys. render-26: Castle Frankenstein (and any 3D game using a DC transform) renders correctly - the GrFillPoly3 HLE now falls back to the OS unless the DC transform is identity (so transformed polys are no longer rasterized as raw model coords); screen-space games like HolyCraft/Varoom keep the HLE (Hemu-wasm a68c3e8)";
+    window.__BUILD = "render-44: Whole device pixels per character cell, so one letter has one shape everywhere and text no longer wobbles; only changed rows are uploaded. render-43: Larger native game windows, fullscreen game and editor views, independent mouse buttons under pointer lock, and quick-click delivery across worker polls. render-42: Strict HolyC-WASM browser games and editor previews, multi-file native projects with frozen drafts, explicit native compatibility errors, and TempleOS only through Run in TempleOS. render-41: Capture mouse inside the HolyC Editor preview, route capture to the active native or emulated game, and preserve hybrid release. render-40: Verified game authors, 63 catalog entries with Terry supplemental and Austin Sierra games, visible PNG2GR creator credit, sticky hybrid mouse mode in both runners, and corrected x87 subtraction/division operand order for game physics. render-39: Compact Sprite Studio, shared desktop cursor, themed scrollbars and file control; FPS from TempleOS window-manager telemetry and native frame signals. render-38: Game submissions at the bottom of the Games window with a prepared GitHub issue form. render-37: Edit and play games side by side, author and source credits, and pointer-tracked window dragging. render-36: Both launch destinations and editable game projects across the catalog, preserved sprites and isolated browser game sessions. render-35: Sprite Studio opens only from the menu; mouse capture keeps its icon in both states. render-34: Natural source-color mixtures and restrained fixed dithering without forced saturation. render-33: Hue-preserving stock-palette sprites, restored blue denim and pale warm tones, local source-fleck removal. render-32: Clean sprite colors, preserved warm midtones and optional dither strength defaulting to zero. render-31: Restrained sprite colors and stable blue-noise dithering without a repeating grid. render-30: Warm stable sprite dithering, native 25 fps Terry timing, cached frame playback and worker conversion. render-29: Desktop Sprite Studio, GR Terry animation, guest-aware mouse capture, relative HolyCraft look and lossless keyboard input. render-28: FTST and native Sign correctness, VGA palette I/O, persistent 32-bit ATA writes, raw compressed uploads, recycled-code JIT validation. render-27: Exact duplicate framebuffer suppression, Sprite Studio, pinned TinkerOS game packages, TOOM with Freedoom, and guest job execution. render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix - a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) - no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys. render-26: Castle Frankenstein (and any 3D game using a DC transform) renders correctly - the GrFillPoly3 HLE now falls back to the OS unless the DC transform is identity (so transformed polys are no longer rasterized as raw model coords); screen-space games like HolyCraft/Varoom keep the HLE (Hemu-wasm a68c3e8)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -698,7 +716,7 @@
 
     const canvas = $("canvas");
     const ctx = canvas.getContext("2d");
-    const {createFrameBlitter} = await import("./framebuffer.js");
+    const {createFrameBlitter, screenFit} = await import("./framebuffer.js");
     const updatePalette=(index,rgb)=>{if(index>=0&&index<16)pal32[index]=(0xff000000|((rgb&255)<<16)|(rgb&0xff00)|((rgb>>>16)&255))>>>0;};
     const drawFrame = createFrameBlitter(ctx, pal32);
     const ld = $("loadui"), ldtext = $("ldtext"), ldbar = $("ldbar");
@@ -716,6 +734,22 @@
       window.__restack = apply;
       apply();
     }
+
+    // ---- sizes the screen so every character cell is whole device pixels (see framebuffer.js) ----
+    // The CSS decides how much room there is, so the size set here comes off to measure it.
+    const fitScreen = () => {
+      canvas.style.width = canvas.style.height = "";
+      const room = canvas.getBoundingClientRect();
+      if (!room.width) return;
+      const fit = screenFit(room.width, room.height, devicePixelRatio);
+      canvas.style.width = fit.cssWidth + "px"; canvas.style.height = fit.cssHeight + "px";
+      drawFrame.resize(fit.width, fit.height);
+    };
+    fitScreen();
+    addEventListener("resize", fitScreen);
+    { const watchScale = () => matchMedia(`(resolution:${devicePixelRatio}dppx)`).addEventListener("change", () => { fitScreen(); watchScale(); }, { once: true });
+      watchScale();   // moving to a monitor with another scale need not change the size in CSS pixels
+    }
     document.documentElement.style.zoom = "";   // clear any zoom saved by older builds
     try { localStorage.removeItem("tos-zoom"); localStorage.removeItem("tos-zoom-v2"); } catch {}
 
@@ -726,12 +760,12 @@
         $("tb-time").textContent = `${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`; };
       tick(); setInterval(tick, 1000); }
 
-    // ---- "With you" in the topbar. Not awaited: the OS never waits on it ----
+    // ---- "Visitors" in the topbar. Not awaited: the OS never waits on it ----
     import("./presence.js").then(({createPresence}) => {
       const tb = $("tb-people");
-      const presence = createPresence((others) => {
-        tb.hidden = others === null;
-        if (others !== null) tb.lastElementChild.textContent = others;
+      const presence = createPresence((people) => {
+        tb.hidden = people === null;
+        if (people !== null) tb.lastElementChild.textContent = people;
       });
       presence.wake();
       document.addEventListener("visibilitychange", () => { if (!document.hidden) presence.wake(); });
@@ -1003,6 +1037,7 @@
         } else if (frame.dataset.floating && frame._fsSaved) {
           Object.assign(frame.style, frame._fsSaved); frame._fsSaved = null;
         }
+        fitScreen();
         layoutFs(); requestAnimationFrame(layoutFs);     // position controls/[X]; recompute once the layout settles
       };
       const fauxOn = () => { fake = true; document.body.classList.add("fakefs"); fsUi(true); scrollTo(0, 0); };
@@ -1970,7 +2005,7 @@ I64 GodDoodleGen(I64 strokes)
           // closing reveals a reopen button in the Menu window; reopening hides it again
           const rb = document.createElement("button");
           rb.style.display = "none";
-          rb.innerHTML = '<span class="ico">▣</span> ' + w.dataset.title;
+          rb.innerHTML = '<span class="ico"><svg><use href="#i-window"/></svg></span> ' + w.dataset.title;
           document.querySelector(".toolbar").appendChild(rb);
           x.addEventListener("click", () => { closeWin(w); rb.style.display = ""; });
           rb.addEventListener("click", () => { w.style.display = ""; rb.style.display = "none"; w.classList.add("active"); });
@@ -2028,14 +2063,14 @@ I64 GodDoodleGen(I64 strokes)
         fpsMeter.setPaused(paused);updateFps();
         engine.post({ cmd: "pause", value: paused });
         if (engine.kind === "inline") window.__inlinePaused = paused;   // inline loop reads this flag
-        btn.innerHTML = paused ? '<span class="ico">▶︎</span> Play' : '<span class="ico">⏸︎</span> Pause';
+        btn.innerHTML = paused ? '<span class="ico"><svg><use href="#i-play"/></svg></span> Play' : '<span class="ico"><svg><use href="#i-pause"/></svg></span> Pause';
       };
       btn.addEventListener("click", () => { ++pauseRevision; setPaused(!paused); });
       window.__holdOSForGame = () => {
         const previous=paused, revision=pauseRevision;setPaused(true);
         return () => { if(pauseRevision===revision)setPaused(previous); };
       };
-      window.__resetPause = () => { ++pauseRevision; paused = false; fpsMeter.setPaused(false);updateFps();btn.innerHTML = '<span class="ico">⏸︎</span> Pause'; };   // ↻ Restart boots unpaused
+      window.__resetPause = () => { ++pauseRevision; paused = false; fpsMeter.setPaused(false);updateFps();btn.innerHTML = '<span class="ico"><svg><use href="#i-pause"/></svg></span> Pause'; };   // ↻ Restart boots unpaused
     }
 
     // ---- Disk & Save window ----

@@ -1,8 +1,8 @@
-// "With you" in the top bar: how many other people have the site open right now.
+// "Visitors" in the top bar: how many people have the site open right now, this one included.
 // The page holds a WebSocket to the presence Worker (presence/worker.js), which sends the number of browsers
-// connected whenever it changes. That number includes this browser, so the bar shows one less. The id is
-// random and kept in localStorage so that one person's tabs count once. Without a live connection the
-// count reports null rather than an old number, and it never touches the OS.
+// connected whenever it changes. The id is random and kept in localStorage so that one person's tabs count
+// once. Without a live connection the count reports null rather than an old number, and it never touches
+// the OS.
 export const PRESENCE_URL='wss://templeosweb-presence.parkerrhunt.workers.dev/';
 const ID_KEY='tos-presence-id',ID=/^[0-9a-f]{32}$/;
 const PING_MS=30000,SILENT_MS=95000,RETRY_MS=2000,RETRY_MAX_MS=60000;
@@ -35,7 +35,7 @@ export function createPresence(report,{url=PRESENCE_URL,id=browserId(),open=(u)=
     heard=Date.now();
     delay=RETRY_MS;
     const people=Number(e.data);
-    if(e.data!=='pong' && Number.isSafeInteger(people) && people>0)report(people-1);
+    if(e.data!=='pong' && Number.isSafeInteger(people) && people>0)report(people);
   }
   function connect() {
     drop();

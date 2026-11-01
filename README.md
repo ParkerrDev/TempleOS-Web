@@ -68,6 +68,13 @@ per second and writes to the DOM only when the displayed value changes. Pausing 
 zero and resuming waits for a fresh sample. Native editor previews use the worker's
 frame sequence for their separate FPS label, avoiding full-screen pixel hashing.
 
+The screen is always a whole number of device pixels per 8x8 character cell, so one letter has one
+shape everywhere. `framebuffer.js` scales each frame itself with integer maths and hands the browser
+only whole-number zooms: at a scale like 1.25, `image-rendering:pixelated` puts some GPU sample
+points exactly between two guest rows, and the same letter comes out in up to 15 shapes by position,
+wobbling as it moves. Only rows that changed are expanded and uploaded, and scaling in JS stops at 15
+pixels per cell, so the cost per frame stays bounded on any screen.
+
 ### What's in `vendor/`
 | Path | Size | What |
 |------|------|------|
@@ -101,7 +108,7 @@ request, and the build HEADs every file first, so a bad pin or host fails the bu
 site. Deploy the Worker with `cd cdn && npx wrangler deploy`; a new file or folder to offload goes
 in both `cdn/worker.js` (FILES, DIRS) and `tools/offload-redirects.mjs` (OWN).
 
-"With you" in the top bar comes from `templeosweb-presence` (`presence/`), a separate Worker with one
+"Visitors" in the top bar comes from `templeosweb-presence` (`presence/`), a separate Worker with one
 Durable Object. Each open page holds a WebSocket to it, the number goes out when it changes, and the
 bar shows nothing if it cannot be reached. A random id in localStorage stops one person's tabs
 counting twice. It is held only while the socket is open, and nothing about a visitor is stored.
@@ -149,6 +156,9 @@ node server.mjs               # → http://localhost:8080  (zero-dependency)
   chrome styling (vertical border titles, scrolling title marquee, blinking MENU chip) are
   adopted from [TempleOS-tribute](https://github.com/del-Real/TempleOS-tribute) by
   Alberto del Real (MIT).
+- **Menu icons** - [pixelarticons](https://github.com/halfmage/pixelarticons) by Gerrit Halfmann
+  (MIT, `assets/pixelarticons-LICENSE.txt`), inline in `index.html`. The cross is its `cross-sharp`
+  with the bar raised.
 
 ## Sprite Studio and current game packages
 

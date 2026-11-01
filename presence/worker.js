@@ -1,4 +1,4 @@
-// worker.js - templeosweb-presence, the Cloudflare Worker behind "With you" in the site's top bar:
+// worker.js - templeosweb-presence, the Cloudflare Worker behind "Visitors" in the site's top bar:
 //   wss://templeosweb-presence.parkerrhunt.workers.dev/?id=<32 hex digits>
 // Every open page holds one WebSocket here (presence.js). One Durable Object, the Room, keeps them all and
 // tells each page how many browsers are connected whenever that changes. It uses the hibernation API, so it
