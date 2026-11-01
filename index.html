@@ -446,6 +446,7 @@
       <span id="tb-fps">FPS: …</span>
       <span id="tb-cores">Cores: …</span>
       <span>Engine: <span class="y">HEMU</span></span>
+      <span id="tb-people" title="People on this site right now, not counting you" hidden>With you: <span class="y"></span></span>
     </div>
     <p id="tb-key"></p>
   </div>
@@ -724,6 +725,18 @@
         $("tb-date").textContent = `${days[t.getDay()]} ${p2(t.getMonth()+1)}/${p2(t.getDate())}`;
         $("tb-time").textContent = `${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`; };
       tick(); setInterval(tick, 1000); }
+
+    // ---- "With you" in the topbar. Not awaited: the OS never waits on it ----
+    import("./presence.js").then(({createPresence}) => {
+      const tb = $("tb-people");
+      const presence = createPresence((others) => {
+        tb.hidden = others === null;
+        if (others !== null) tb.lastElementChild.textContent = others;
+      });
+      presence.wake();
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) presence.wake(); });
+      addEventListener("online", presence.wake);
+    }).catch((e) => dbg("presence: " + e.message, true));
 
     let presentCount = 0;
     function blit(idx, w, h, immutable = false, stats = null) {

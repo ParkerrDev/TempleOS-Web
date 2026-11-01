@@ -101,6 +101,12 @@ request, and the build HEADs every file first, so a bad pin or host fails the bu
 site. Deploy the Worker with `cd cdn && npx wrangler deploy`; a new file or folder to offload goes
 in both `cdn/worker.js` (FILES, DIRS) and `tools/offload-redirects.mjs` (OWN).
 
+"With you" in the top bar comes from `templeosweb-presence` (`presence/`), a separate Worker with one
+Durable Object. Each open page holds a WebSocket to it, the number goes out when it changes, and the
+bar shows nothing if it cannot be reached. A random id in localStorage stops one person's tabs
+counting twice. It is held only while the socket is open, and nothing about a visitor is stored.
+Only the main page connects. Deploy it with `cd presence && npx wrangler deploy`.
+
 ### What's where in this repo
 
 | Path | What |
@@ -112,6 +118,7 @@ in both `cdn/worker.js` (FILES, DIRS) and `tools/offload-redirects.mjs` (OWN).
 | `build/` | gitignored: `hemu.wasm`, `hemu-smp.wasm`, `hemu-smp.json`, compiled at deploy |
 | `vendor/` | committed binary assets: the TempleOS disk image, fonts |
 | `cdn/` | the Cloudflare Worker that serves the heavy files from R2 (`worker.js`, `wrangler.toml`) |
+| `presence/` | the Cloudflare Worker that counts the people on the site (`worker.js`, `wrangler.toml`) |
 | `holyc-wasm/`, `hemu/`, `holyc-fmt/` | the sibling repos, cloned here at build time (gitignored) |
 
 ## Running locally
@@ -173,6 +180,7 @@ The editor's runner (`editor/worker.js`) supports opt-in relative mouse input th
 node tools/sprite-codec.test.mjs
 node tools/sprite-player.test.mjs
 node tools/guest-fps.test.mjs
+node tools/presence.test.mjs
 node tools/holycraft-input.test.mjs
 node tools/game-capture.test.mjs
 node tools/native-clicks.test.mjs

@@ -1,0 +1,13 @@
+# templeosweb-presence: counts the people on the site (see worker.js).
+name = "templeosweb-presence"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
