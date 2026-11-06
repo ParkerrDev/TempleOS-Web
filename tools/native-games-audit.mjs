@@ -5,7 +5,7 @@ const root=new URL('../',import.meta.url);
 globalThis.fetch=async url=>new Response(await readFile(new URL(url,root)));
 globalThis.localStorage={getItem:()=>null};
 const catalog=JSON.parse(await readFile(new URL('games/catalog.json',root)));
-const games=[{name:'HolyCraft',file:'HolyCraft.HC'},{name:'Snake',file:'Snake.HC'},...catalog.packages.map(p=>({name:p.name,packageId:p.id}))];
+const games=[{name:'HolyCraft',file:'HolyCraft.HC'},{name:'Snake',file:'Snake.HC'},{name:'Babel',file:'Babel.HC'},{name:'Volley',file:'Volley.HC'},...catalog.packages.map(p=>({name:p.name,packageId:p.id}))];
 const results=[];
 for(const game of games){
   try{

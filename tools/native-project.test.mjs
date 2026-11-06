@@ -20,7 +20,7 @@ assert.throws(()=>compileNativeProject({...program,source:'I64 Broken( {'}),/./)
 const root=new URL('../',import.meta.url),storage=new Map();
 globalThis.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)};
 globalThis.fetch=async url=>new Response(await readFile(new URL(url,root)));
-for(const file of ['HolyCraft.HC','Snake.HC']){
+for(const file of ['HolyCraft.HC','Snake.HC','Babel.HC','Volley.HC']){
   const project=await gameProject({name:file,file}),snapshot=await project.native();
   assert(snapshot.nativeGame);assert(WebAssembly.validate(compileNativeProject(snapshot).bytes));
 }
@@ -42,4 +42,4 @@ const launcher=await readFile(new URL('../games.js',import.meta.url),'utf8');
 const browserRun=launcher.slice(launcher.indexOf('async function runInBrowser('),launcher.indexOf('function closeGameWin('));
 assert(!/iframe|runInTempleOS|__launchInOS|gameSession/.test(browserRun),'browser launch cannot invoke emulation');
 assert(!/game-session-launch|game-session-ready/.test(launcher),'legacy URLs cannot launch emulated games');
-console.log('Native projects: nested includes/shared macros, strict failures, both native games, frozen package drafts, edited WASM execution, restore and no emulator fallback passed.');
+console.log('Native projects: nested includes/shared macros, strict failures, all four native games, frozen package drafts, edited WASM execution, restore and no emulator fallback passed.');

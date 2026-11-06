@@ -30,6 +30,10 @@ export const GAMES = [
     how: "W/S move · A/D strafe · R/F up/down · move MOUSE or J/L/I/K to look · LEFT-click break · RIGHT-click place · 1-9 pick block · Esc quit" },
   { file: "Snake.HC", name: "Snake", blurb: "The classic. Eat the apples, don't bite your tail.",
     how: "W/A/S/D to steer · Esc to quit" },
+  { file: "Babel.HC", name: "Babel", blurb: "Stones fall onto the tower. Turn them, place them, and clear every full row.",
+    how: "A/D or Left/Right move · W or Up turns · S or Down falls faster · Space drops · P pauses · Esc quits" },
+  { file: "Volley.HC", name: "Volley", blurb: "Two players, one ball, first to 7. Player 1 plays W/S, player 2 plays the Up and Down arrows.",
+    how: "Player 1: W/S · Player 2: Up/Down · Space serves · P pauses · Esc quits" },
   // Both source collections use HolyC-WASM for browser play; TempleOS is explicit.
   { name: "Varoom",        disk: "C:/Home/Games/TinkerOS/Varoom.HC", packageId: "tinker-Varoom",        blurb: "Top-down racing - keep your foot down and hold the track." },
   { name: "Talons",        disk: "C:/Home/Games/TinkerOS/Talons.HC", packageId: "tinker-Talons",        blurb: "Joust-style aerial combat: flap above your foe and skewer them." },
@@ -66,7 +70,7 @@ export const GAMES = [
   { name: "TOOM", disk: "C:/Home/TOOM/BrowserStart.HC", packageId: "toom", blurb: "The DOOM engine in TempleOS, bundled with Freedoom.", how: "TOOM may take a minute or two to open. Wait for its menu, then choose New Game, episode and difficulty. WASD or arrows move, mouse looks, left click fires, Space opens doors, Tab opens the map." },
 ];
 GAMES.push(...EXTRA_GAMES);
-const featured=['HolyCraft','TOOM','Snake'];
+const featured=['HolyCraft','TOOM','Babel','Volley','Snake'];
 GAMES.sort((a,b)=>(featured.includes(a.name)?featured.indexOf(a.name):featured.length)-(featured.includes(b.name)?featured.indexOf(b.name):featured.length));
 const spriteOverlay = document.getElementById("spritesOverlay"), spriteFrame = document.getElementById("spritesFrame");
 spriteFrame.addEventListener("load", () => {

@@ -1,8 +1,9 @@
 # Game provenance
 
-The catalog contains 63 entries: 47 games and interactive demos by Terry A. Davis,
+The catalog contains 65 entries: 47 games and interactive demos by Terry A. Davis,
 8 games or adaptations by TheTinkerer, 6 HolyC games by Austin Sierra, and the site's
-HolyCraft and Snake. The first three featured entries remain HolyCraft, TOOM and Snake.
+HolyCraft, Snake, Babel and Volley. The featured entries are HolyCraft, TOOM, Babel,
+Volley and Snake.
 
 Authorship is explicit in `game-library.js` and `game-credits.js`. Distributing a
 TempleOS game in TinkerOS does not make TheTinkerer its original author.

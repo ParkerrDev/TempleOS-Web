@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Legacy standalone links use the current source drafts. HolyCraft and Snake compile directly
+<!-- Legacy standalone links use the current source drafts. HolyCraft, Snake, Babel and Volley compile directly
      to WebAssembly; upstream packages redirect to an isolated HEMU game session. -->
 <html lang="en">
 <head>
@@ -32,7 +32,7 @@
     document.title = game.replace(/\.HC$/i, "");
     let src = "";
     try {
-      if(['HolyCraft.HC','Snake.HC'].includes(game)){
+      if(['HolyCraft.HC','Snake.HC','Babel.HC','Volley.HC'].includes(game)){
         const {gameProject}=await import('./game-source.js');
         const project=await gameProject({file:game,name:game.replace(/\.HC$/i,'')});
         src=(await project.open(project.entry)).text;

@@ -88,7 +88,8 @@ function keyToChar(e) {
 let captureWanted=false, manualCapture=false, hybridMouse=false, wasMouseLocked=false, hybridTracking=false;
 const isMouseCaptured=()=>document.pointerLockElement===curCanvas;
 const mouseStateChanged=()=>window.dispatchEvent(new Event('game-mouse-change'));
-const scanKeys={KeyW:0x11,KeyA:0x1e,KeyS:0x1f,KeyD:0x20,KeyR:0x13,KeyF:0x21,KeyJ:0x24,KeyL:0x26,KeyI:0x17,KeyK:0x25};
+const scanKeys={KeyW:0x11,KeyA:0x1e,KeyS:0x1f,KeyD:0x20,KeyR:0x13,KeyF:0x21,KeyJ:0x24,KeyL:0x26,KeyI:0x17,KeyK:0x25,KeyP:0x19,Space:0x39,
+  ArrowUp:0x48,ArrowLeft:0x4b,ArrowRight:0x4d,ArrowDown:0x50};   // TempleOS merged scan codes
 const hasInputFocus=()=>document.activeElement===curCanvas || document.pointerLockElement===curCanvas;
 function releaseInput(){
   hybridTracking=false;
@@ -101,7 +102,7 @@ function releaseInput(){
 addEventListener('keydown',e=>{
   if(!running||!hasInputFocus())return;
   if(e.code==='Escape'&&isMouseCaptured()){releaseMouse();return;}
-  const sc=scanKeys[e.code];if(sc!==undefined)Atomics.store(ctrl,KEY_STATE_BASE+sc,1);
+  const sc=scanKeys[e.code];if(sc!==undefined){Atomics.store(ctrl,KEY_STATE_BASE+sc,1);e.preventDefault();}
   const c=keyToChar(e);if(c){if(!e.repeat || sc===undefined)pushKey(c);e.preventDefault();}
 });
 addEventListener('keyup',e=>{const sc=scanKeys[e.code];if(ctrl&&sc!==undefined)Atomics.store(ctrl,KEY_STATE_BASE+sc,0);});
