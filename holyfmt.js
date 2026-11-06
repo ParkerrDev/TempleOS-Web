@@ -1,44 +1,69 @@
-// holyfmt.js - run the REAL HolyC formatter (holyc-fmt/HolyCFmt.HC) in the
-// browser. The .HC source is compiled to WASM by holyc-wasm, then the user's code is
-// written straight into the module's linear memory (above the heap) and HolyCFmtPrint
-// reads it and emits the formatted text via PutChars, which we capture. Feeding the
-// input through memory (not a HolyC string literal) keeps DolDoc "$$" byte-exact.
+// holyfmt.js: run the HolyC formatter (holyc-fmt/HolyCFmt.HC) in the browser.
+//
+// HolyC-wasm compiles the .HC to WebAssembly. The code to format is written straight
+// into the module's memory, above the heap, and HolyCFmtPrint reads it there and
+// prints the result, which is caught here. Going through memory, not a HolyC str,
+// keeps DolDoc "$$" and every other byte as it is.
 //
 //   import { formatHolyC } from "./holyfmt.js";
-//   const out = await formatHolyC(srcText, { indent: 2, tabs: false });
+//   const out = await formatHolyC(srcText, { indent: 2, tabs: true });
+//
+// tabs: true stores the layout through S2T, as Terry's files are; false writes spaces.
+// Text after a NUL (sprite data) is kept as it is. TempleOS text is one byte a char,
+// so each char from 0x80 up goes in as one high byte and is put back afterwards. The
+// formatter only moves whitespace, so those chars come out in the same order.
 
-const U = (p) => new URL(p, import.meta.url).href;            // resolve relative to THIS module
-const FMT_INP = 28 * 1024 * 1024;                            // 28 MiB: above heap (16), below initial mem (32)
-const _mods = new Map();                                     // "indent|tabs" -> WebAssembly.Module
+const U = (p) => new URL(p, import.meta.url).href; // relative to this module
+const FMT_INP = 28 * 1024 * 1024; // above the heap (16 MiB), below the first memory size (32 MiB)
+const HIGH = 0x80; // stands in for every char from 0x80 up
+const mods = new Map(); // "indent|tabs" to a compiled module
 
-async function getModule(indent, tabs) {
+function getModule(indent, tabs) {
   const key = indent + "|" + tabs;
-  if (_mods.has(key)) return _mods.get(key);
-  const { compileHolyC } = await import(U("./holyc-wasm/src/compiler.js"));
-  const core = await fetch(U("./holyc-fmt/HolyCFmt.HC"), { cache: "no-cache" }).then((r) => {
-    if (!r.ok) throw new Error("could not load HolyCFmt.HC (" + r.status + ")");
-    return r.text();
-  });
-  const driver = `\ng_indent_w=${indent};\ng_use_tabs=${tabs ? "TRUE" : "FALSE"};\nU8 *__fi=${FMT_INP};\nHolyCFmtPrint(__fi);\n`;
-  const { bytes } = compileHolyC(core + driver, { filename: "HolyCFmt.HC", lenient: true, resilient: true });
-  const mod = await WebAssembly.compile(bytes);
-  _mods.set(key, mod);
+  let mod = mods.get(key);
+  if (!mod) {
+    mod = (async () => {
+      const { compileHolyC } = await import(U("./holyc-wasm/src/compiler.js"));
+      const r = await fetch(U("./holyc-fmt/HolyCFmt.HC"), { cache: "no-cache" });
+      if (!r.ok) throw new Error("could not load HolyCFmt.HC (" + r.status + ")");
+      const core = await r.text();
+      const driver = `\nfmt_tabs=${tabs ? "TRUE" : "FALSE"};\nfmt_indent=${indent};\n` +
+        `U8 *__fi=${FMT_INP};\nHolyCFmtPrint(__fi);\n`;
+      const { bytes } = compileHolyC(core + driver, { filename: "HolyCFmt.HC", lenient: true, resilient: true });
+      return WebAssembly.compile(bytes);
+    })();
+    mods.set(key, mod);
+    mod.catch(() => mods.delete(key));
+  }
   return mod;
 }
 
-export async function formatHolyC(src, { indent = 2, tabs = false } = {}) {
-  if (src.indexOf("\0") !== -1)
-    throw new Error("this file has embedded binary (a DolDoc sprite) - format plain-text HolyC only");
+export async function formatHolyC(src, { indent = 2, tabs = true } = {}) {
+  if (!Number.isInteger(indent) || indent < 1 || indent > 8) throw new Error("indent must be an integer from 1 to 8");
+  const nul = src.indexOf("\0");
+  const text = nul < 0 ? src : src.slice(0, nul);
+  const tail = nul < 0 ? "" : src.slice(nul);
   const { createHost } = await import(U("./holyc-wasm/src/runtime/host.js"));
-  const mod = await getModule(indent, tabs);
+  const mod = await getModule(indent, !!tabs);
   let out = "";
   const host = createHost({ onText: (s) => { out += s; }, ansi: false });
-  const inst = await WebAssembly.instantiate(mod, { env: host.env });   // fresh memory + heap each call
+  const inst = await WebAssembly.instantiate(mod, { env: host.env }); // fresh memory and heap each call
   host.attach?.(inst);
   const mem = new Uint8Array(inst.exports.memory.buffer);
-  if (FMT_INP + src.length + 1 > mem.length) throw new Error("input too large to format in-browser");
-  for (let i = 0; i < src.length; i++) mem[FMT_INP + i] = src.charCodeAt(i) & 0xff;
-  mem[FMT_INP + src.length] = 0;
+  if (FMT_INP + text.length + 1 > mem.length) throw new Error("input too large to format in the browser");
+  const high = [];
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    if (c < 0x80) mem[FMT_INP + i] = c;
+    else {
+      high.push(text[i]);
+      mem[FMT_INP + i] = HIGH;
+    }
+  }
+  mem[FMT_INP + text.length] = 0;
   inst.exports.__main();
-  return out;
+  if ((out.match(/[\x80-\xff]/g) || []).length !== high.length)
+    throw new Error("the formatter lost a char, so nothing was changed");
+  let k = 0;
+  return out.replace(/[\x80-\xff]/g, () => high[k++]) + tail;
 }

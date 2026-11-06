@@ -217,7 +217,7 @@
     .preview-actions { display:flex; flex-wrap:wrap; gap:7px; }
     .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }
     #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;
-        font-family:'TempleOS','dos_vga',monospace; font-size:12px; line-height:1.0; letter-spacing:0; tab-size:2; white-space:pre; overflow:auto; }
+        font-family:'TempleOS','dos_vga',monospace; font-size:12px; line-height:1.0; letter-spacing:0; tab-size:8; white-space:pre; overflow:auto; }
     #editorHL { z-index:0; pointer-events:none; overflow:hidden; color:#16163a; background:transparent; }
     #editor { z-index:1; resize:none; outline:none; color:transparent; background:transparent; caret-color:#16163a; }
     #editor::selection { background:rgba(110,160,255,.4); }
@@ -579,7 +579,7 @@
         <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">- pick a demo / game -</option></select>
         <button id="runBtn">▶ Run</button>
         <button id="editorFullscreen" type="button" title="Show the editor fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen editor</span></button>
-        <button id="edFmt" title="Reformat to the canonical TempleOS style with holyc-fmt (a HolyC formatter, run in-browser)">⊹ Format</button>
+        <button id="edFmt" title="Lay the code out the way Terry's own tools did (HolyC-fmt, a formatter written in HolyC, run in your browser)">⊹ Format</button>
         <button id="edSave" title="Download the source as a .HC file">↓ Save</button>
         <button id="edOpen" title="Open a .HC file from your computer">↥ Open</button>
         <button id="edToDisk" title="Write the source to /Home on the C: drive so TempleOS can run it">➜ To C:/Home</button>
@@ -2362,7 +2362,7 @@ I64 GodDoodleGen(I64 strokes)
         fmtBtn.disabled = true; setStatus("formatting…");
         try {
           const { formatHolyC } = await import("./holyfmt.js");   // holyc-fmt, compiled+run in-browser
-          const out = await formatHolyC(src, { indent: 2 });
+          const out = await formatHolyC(src, { indent: 2, tabs: true });   // Terry's layout: 2 a level, S2T tabs
           if (out && out !== src) { ta.value = out; ta.dispatchEvent(new Event("input")); setStatus("formatted ✓"); }
           else setStatus("already formatted ✓");
         } catch (e) { setStatus("format error: " + e.message); }

@@ -4,7 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>HolyC Formatter · holyc-fmt</title>
-<meta name="description" content="Format HolyC source to the canonical TempleOS style, in your browser. Powered by holyc-fmt - a formatter written in HolyC and run via the holyc-wasm compiler." />
+<link rel="icon" href="assets/Logo128x152.jpg" type="image/jpeg" />
+<meta name="description" content="Lay HolyC out the way Terry A. Davis's own tools left TempleOS, in your browser. HolyC-fmt is a formatter written in HolyC, compiled here by HolyC-wasm." />
 <style>
   @font-face { font-family:'TempleOS'; src:url('fonts/templeos.ttf?v=4') format('truetype'); }
   @font-face { font-family:'dos_vga'; src:url('fonts/dos_vga_new.woff2') format('woff2'); }
@@ -32,7 +33,7 @@
   .pane .h { background:var(--blue); color:#fff; padding:3px 8px; display:flex; justify-content:space-between; }
   textarea { flex:1 1 auto; min-height:62vh; width:100%; resize:vertical; border:0; outline:none; padding:8px;
       font-family:'TempleOS','dos_vga',monospace; font-size:13px; line-height:1.0; color:#16163a; background:#fff;
-      white-space:pre; overflow:auto; tab-size:2; }
+      white-space:pre; overflow:auto; tab-size:8; }
   #out { background:#f4f6ff; }
   .pane.drop { outline:3px dashed yellow; outline-offset:-6px; }
   #status { color:yellow; min-height:1em; margin-top:8px; }
@@ -47,7 +48,7 @@
 <div id="xcursor" aria-hidden="true"></div>
 <header>
   <h1>HolyC Formatter</h1>
-  <span class="sub">holyc-fmt - a formatter written in HolyC, run in your browser</span>
+  <span class="sub">HolyC-fmt: a formatter written in HolyC, run in your browser</span>
   <span class="home"><a href="index.html">← TempleOS</a></span>
 </header>
 
@@ -56,11 +57,11 @@
   <input id="file" type="file" accept=".HC,.hc,.txt,text/plain" />
   <button id="sample">Load sample</button>
   <span style="flex:1"></span>
-  <label class="opt">Indent:
+  <label class="opt">Layout:
     <select id="indent">
+      <option value="s2t">Terry's: 2 a level, stored with tabs</option>
       <option value="2">2 spaces</option>
       <option value="4">4 spaces</option>
-      <option value="tab">tabs</option>
     </select>
   </label>
   <button id="fmt" class="go">⊹ Format →</button>
@@ -87,7 +88,7 @@
   const setSt = (s, err) => { st.textContent = s; st.style.color = err ? "#ff8" : "yellow"; };
 
   const SAMPLE =
-`// messy indentation/spacing - Format fixes it (2-space grid, if/switch spacing, case)
+`//Messy layout. Format lays it out the way Terry's tools did.
 U0 Fib(I64 n)
 {
 I64 a=0,b=1,t,i;
@@ -106,9 +107,30 @@ default:
 }
 }
 Fib(10);`;
-  $("sample").addEventListener("click", () => { inp.value = SAMPLE; setSt("loaded sample"); });
+  $("sample").addEventListener("click", () => {
+    inp.value = SAMPLE; fileEnc = "utf8"; fileTail = null;
+    $("inInfo").textContent = "paste, or drop a .HC file"; setSt("loaded sample");
+  });
 
-  const opts = () => { const v = $("indent").value; return v === "tab" ? { tabs:true } : { indent:+v }; };
+  const opts = () => { const v = $("indent").value; return v === "s2t" ? { tabs:true, indent:2 } : { tabs:false, indent:+v }; };
+
+  // A TempleOS file is CP437 text, then maybe a NUL and sprite data. The text is shown
+  // decoded; the tail is kept aside so that Save writes it back byte for byte.
+  const CP437 = "ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ";
+  let fileEnc = "utf8", fileTail = null;
+  const decode = (bytes) => {
+    try { fileEnc = "utf8"; return new TextDecoder("utf-8", { fatal:true }).decode(bytes); }
+    catch { fileEnc = "cp437"; let s = ""; for (const b of bytes) s += b < 0x80 ? String.fromCharCode(b) : CP437[b - 0x80]; return s; }
+  };
+  const encode = (s) => {
+    if (fileEnc !== "cp437") return { bytes:new TextEncoder().encode(s), lost:0 };
+    const bytes = new Uint8Array(s.length); let lost = 0;
+    for (let i = 0; i < s.length; i++) {
+      const c = s.charCodeAt(i), j = CP437.indexOf(s[i]);
+      bytes[i] = c < 0x80 ? c : j >= 0 ? 0x80 + j : (lost++, 0x3F);
+    }
+    return { bytes, lost };
+  };
 
   async function doFormat() {
     const src = inp.value;
@@ -126,9 +148,12 @@ Fib(10);`;
   // file open + drag/drop
   const loadFile = async (f) => {
     if (!f) return;
-    const txt = await f.text();
-    if (txt.indexOf(String.fromCharCode(0)) !== -1) { setSt("that file has embedded binary (DolDoc sprite) - text only", true); return; }
-    inp.value = txt; $("inInfo").textContent = f.name; setSt("opened " + f.name);
+    const all = new Uint8Array(await f.arrayBuffer());
+    const nul = all.indexOf(0);
+    fileTail = nul < 0 ? null : all.slice(nul);
+    inp.value = decode(nul < 0 ? all : all.slice(0, nul));
+    const extra = fileTail ? `, plus ${fileTail.length} bytes of sprite data kept for Save` : "";
+    $("inInfo").textContent = f.name; setSt(`opened ${f.name} (${fileEnc === "cp437" ? "TempleOS CP437" : "UTF-8"}${extra})`);
   };
   $("file").addEventListener("change", (e) => loadFile(e.target.files[0]));
   const pane = $("inPane");
@@ -144,9 +169,12 @@ Fib(10);`;
   });
   $("dl").addEventListener("click", () => {
     if (!out.value) return;
+    const { bytes, lost } = encode(out.value);
+    const name = $("inInfo").textContent.endsWith(".HC") ? $("inInfo").textContent : "Formatted.HC";
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([out.value], { type:"text/plain" }));
-    a.download = "Formatted.HC"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); setSt("saved Formatted.HC");
+    a.href = URL.createObjectURL(new Blob(fileTail ? [bytes, fileTail] : [bytes], { type:"application/octet-stream" }));
+    a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    setSt(`saved ${name}` + (lost ? `: ${lost} chars have no CP437 byte and were saved as ?` : ""), lost > 0);
   });
 
   // Ctrl/Cmd+Enter to format
