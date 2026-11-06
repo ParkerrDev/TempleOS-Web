@@ -775,7 +775,7 @@
       apply();
     }
 
-    // ---- sizes the screen so every character cell is whole device pixels (see framebuffer.js) ----
+    // ---- sizes the screen: whole blocks per guest pixel, smoothed the rest of the way (see framebuffer.js) ----
     // The CSS decides how much room there is, so the size set here comes off to measure it.
     const fitScreen = () => {
       canvas.style.width = canvas.style.height = "";
@@ -783,6 +783,7 @@
       if (!room.width) return;
       const fit = screenFit(room.width, room.height, devicePixelRatio);
       canvas.style.width = fit.cssWidth + "px"; canvas.style.height = fit.cssHeight + "px";
+      canvas.style.imageRendering = fit.smooth ? "auto" : "pixelated";
       drawFrame.resize(fit.width, fit.height);
     };
     fitScreen();

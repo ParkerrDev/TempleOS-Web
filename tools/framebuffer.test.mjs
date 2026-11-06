@@ -25,36 +25,43 @@ assert.equal(odd(mutable,3,3),true);assert.equal(last[0],palette[4]);
 
 palette[4]=0xffaa0088;assert.equal(odd(mutable,3,3),true);assert.equal(last[0],palette[4]);
 
-// Every whole-cell scale: one glyph repeated over the whole screen must come out the same in every cell.
+// Each backing scale: every guest pixel must come out as one uniform k x k block, so one glyph repeated over
+// the whole screen has the same shape in every cell.
 const glyph=[0x3c,0x66,0x6e,0x6e,0x60,0x62,0x3c,0x00],screen=new Uint8Array(640*480);
 for(let y=0;y<480;y++)for(let x=0;x<640;x++)screen[y*640+x]=(glyph[y&7]>>(7-(x&7)))&1?15:0;
 const full=createFrameBlitter(ctx,palette);
 assert.equal(full(screen,640,480),true);
-for(let cell=8;cell<=15;cell++){
-  full.resize(80*cell,60*cell); // The last frame comes back without a new one arriving.
-  assert.equal(ctx.canvas.width,80*cell);assert.equal(ctx.canvas.height,60*cell);
-  const width=80*cell,first=[];
-  for(let y=0;y<cell;y++)first.push(...last.subarray(y*width,y*width+cell));
-  for(let row=0;row<60;row++)for(let col=0;col<80;col++)for(let y=0;y<cell;y++)for(let x=0;x<cell;x++)
-    assert.equal(last[(row*cell+y)*width+col*cell+x],first[y*cell+x],`cell ${col},${row} at ${cell} pixels per cell`);
+for(const k of [2,1]){
+  full.resize(640*k,480*k); // The last frame comes back without a new one arriving.
+  assert.equal(ctx.canvas.width,640*k);assert.equal(ctx.canvas.height,480*k);
+  const width=640*k;
+  for(let y=0;y<480*k;y++)for(let x=0;x<width;x++)
+    assert.equal(last[y*width+x],palette[screen[Math.floor(y/k)*640+Math.floor(x/k)]],`pixel ${x},${y} at k=${k}`);
 }
-puts=0;full.resize(80*15,60*15);assert.equal(puts,0); // Same size: the canvas is left alone.
+puts=0;full.resize(640,480);assert.equal(puts,0); // Same size: the canvas is left alone.
 screen[0]=1;assert.equal(full(screen,640,480),true);assert.equal(last[0],palette[1]);
-console.log('Framebuffer: one glyph has one shape at every whole-cell scale; a resize keeps the last frame.');
+full.resize(1280,960);screen[641]=2;assert.equal(full(screen,640,480),true);
+assert.deepEqual(lastRect,[0,2,1280,2]);   // At k=2 a changed guest row uploads its two device rows only.
+assert.equal(last[2*1280+2],palette[2]);assert.equal(last[3*1280+3],palette[2]);assert.equal(last[2*1280+4],palette[screen[642]]);
+console.log('Framebuffer: every guest pixel is one uniform block at k=1 and k=2; a resize keeps the last frame.');
 
-const fit=(...room)=>{const f=screenFit(...room);return [f.width,f.height,f.cssWidth,f.cssHeight];};
-assert.deepEqual(fit(800,600,1),[800,600,800,600]);        // The 1080p desktop.
-assert.deepEqual(fit(800,600,1.6),[640,480,800,600]);      // The same box on a 1.6 scale laptop: an exact 2x.
-assert.deepEqual(fit(799.9,600,1),[720,540,720,540]);      // Never larger than the room.
-assert.deepEqual(fit(1440,1080,1),[720,540,1440,1080]);    // Fullscreen at 1080p: 18 pixels per cell.
-assert.deepEqual(fit(2133,1600,1),[1040,780,2080,1560]);   // Fullscreen at 1600 rows: 26 pixels per cell.
-assert.deepEqual(fit(1920,1080,2),[960,720,1440,1080]);    // Fullscreen on a 4K screen: the browser multiplies by 3.
-assert.deepEqual(fit(5120,2880,1),[960,720,3840,2880]);    // The filled pixels stay bounded on any screen.
-assert.deepEqual(fit(360,270,3),[1040,780,1040/3,260]);    // A phone.
-for(const dpr of [1,1.25,1.5,1.6,2,3])for(let room=300;room<2400;room+=37){
-  const f=screenFit(room,room*3/4,dpr);
-  assert.ok(f.width%80===0&&f.height%60===0&&f.width<=1200&&f.height<=900);
-  assert.ok(f.cssWidth<=room+0.1&&f.cssHeight<=room*3/4+0.1);
-  assert.ok(Number.isInteger(+(f.cssWidth*dpr/f.width).toFixed(6)));
+const fit=(...room)=>{const f=screenFit(...room);return [f.width,f.height,f.cssWidth,f.cssHeight,f.smooth];};
+assert.deepEqual(fit(800,600,1),[1280,960,800,600,true]);       // The 1080p desktop: 1.25x, smoothed from 2x.
+assert.deepEqual(fit(800,600,1.6),[640,480,800,600,false]);     // The same box on a 1.6 scale laptop: an exact 2x.
+assert.deepEqual(fit(799.9,600,1),[1280,960,796,597,true]);     // Never larger than the room.
+assert.deepEqual(fit(1440,1080,1),[1280,960,1440,1080,true]);   // Fullscreen at 1080p fills the height now.
+assert.deepEqual(fit(1280,960,1),[640,480,1280,960,false]);     // Exactly 2x: the browser doubles with hard edges.
+assert.deepEqual(fit(1920,1080,2),[1280,960,1440,1080,true]);   // Fullscreen on a 4K screen: 4.5x, smoothed from 2x.
+assert.deepEqual(fit(5120,2880,1),[640,480,3840,2880,false]);   // 6x exactly: the browser multiplies, hard edges.
+assert.deepEqual(fit(360,270,3),[1280,960,360,270,true]);       // A phone.
+assert.deepEqual(fit(500,375,1),[640,480,500,375,true]);        // Smaller than the guest: smoothed down.
+assert.deepEqual(fit(1920,993,1),[640,480,1280,960,false]);     // 2x fills 97% of the room: hard edges win.
+assert.deepEqual(fit(660,495,1),[640,480,640,480,false]);       // Within 5% of 1x: shown 1:1.
+for(const dpr of [1,1.25,1.5,1.6,2,3])for(let room=300;room<2400;room+=37)for(const tall of [0.6,0.75,1]){
+  const f=screenFit(room,room*tall,dpr),device=Math.round(f.cssWidth*dpr);
+  assert.ok((f.width===640&&f.height===480)||(f.width===1280&&f.height===960));
+  assert.ok(f.cssWidth<=room+0.01&&f.cssHeight<=room*tall+0.01);
+  assert.ok(Math.abs(f.cssWidth*3/4-f.cssHeight)<1e-9&&device%4===0&&device>=room*Math.min(1,tall*4/3)*dpr*0.95-4.01);
+  assert.equal(f.smooth,device%f.width!==0);   // Hard edges only where the browser's scale is a whole number.
 }
-console.log('Framebuffer: the screen fits its room at a whole cell size and a whole browser zoom.');
+console.log('Framebuffer: the screen fills its room at 4:3 from a backing of at most 1280x960.');

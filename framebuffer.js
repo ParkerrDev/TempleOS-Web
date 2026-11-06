@@ -1,16 +1,22 @@
-// Guest frames arrive as 640x480 palette indexes. TempleOS draws text on an 8x8 grid, so the screen is always
-// shown at a whole number of device pixels per character cell: at any other scale one letter takes different
-// shapes in different places, and text wobbles as it moves or redraws. The browser cannot be left to do this.
-// At a scale like 1.25 some sample points fall exactly between two guest rows, and GPU rounding then picks one
-// or the other by position. So the canvas holds the frame already scaled, with integer maths, and the browser
-// only ever multiplies that by a whole number, where no such ties exist.
+// Guest frames arrive as 640x480 palette indexes and are shown the way emulators call "sharp bilinear".
+// Nearest-neighbour scaling by anything but a whole number gives guest pixels uneven sizes: at 1.125, one row
+// and one column in every eight come out doubled, so lines and letters look jagged, and at a scale like 1.25
+// GPU rounding even picks different rows by position, so text wobbles. So the canvas holds the frame scaled
+// by a whole number k with integer maths, where every guest pixel is the same k x k block, and the browser
+// scales that the rest of the way with smoothing, which only softens the edge between two blocks. A letter keeps one shape everywhere, and the screen fills its room at any size. When the
+// rest of the way is itself a whole number the browser multiplies it without smoothing, and pixels stay hard.
 
-// The largest such scale that fits the room. Scaling here stops at 15 device pixels per cell and the browser
-// multiplies the rest, so the work per frame stays bounded however big the screen is.
+// k is 1 or 2, so the canvas is at most 1280x960 however big the screen is, and the work per frame stays
+// bounded. When the screen is a whole multiple of 640 wide, k is 1 and the browser does all of it exactly.
+// Otherwise a screen wider than 640 takes k=2: the soft edge is one backing pixel wide, so k=2 makes it half
+// as wide as k=1 would, under a device pixel up to 1280 wide and under two up to 2560.
+// When a whole multiple of 640 fills at least 95% of the room, the screen takes that instead: hard edges
+// are worth a slightly smaller screen. The device size is a multiple of 4 wide, so the 4:3 height is whole.
 export function screenFit(roomWidth, roomHeight, dpr) {
-  const perCell=Math.max(1,Math.floor(Math.min(roomWidth*dpr/80,roomHeight*dpr/60)+0.001));
-  const zoom=Math.ceil(perCell/15),cell=Math.floor(perCell/zoom);
-  return {width:80*cell,height:60*cell,cssWidth:80*cell*zoom/dpr,cssHeight:60*cell*zoom/dpr};
+  const room=Math.max(4,Math.floor(Math.min(roomWidth*dpr,roomHeight*dpr*4/3)/4+0.001)*4);
+  const whole=640*Math.floor(room/640),device=whole>0&&whole>=room*0.95?whole:room;
+  const smooth=device%640!==0,k=smooth&&device>640?2:1;
+  return {width:640*k,height:480*k,cssWidth:device/dpr,cssHeight:device*3/4/dpr,smooth};
 }
 
 // The source index nearest to each output index. Ties always fall the same way.
@@ -40,6 +46,8 @@ export function createFrameBlitter(ctx, palette, width=640, height=480) {
       const row=y<outHeight?rows[y]:-1;
       if(row>=0&&dirty[row]){
         if(row===source)out.copyWithin(y*outWidth,(y-1)*outWidth,y*outWidth);
+        else if(outWidth===width)for(let x=0,at=y*outWidth,from=row*width;x<width;x++,at++)out[at]=palette[indices[from+x]&15];
+        else if(outWidth===2*width)for(let x=0,at=y*outWidth,from=row*width;x<width;x++,at+=2){const c=palette[indices[from+x]&15];out[at]=c;out[at+1]=c;}
         else for(let x=0,at=y*outWidth,from=row*width;x<outWidth;x++,at++)out[at]=palette[indices[from+columns[x]]&15];
         if(run<0)run=y;
       }else if(run>=0){ctx.putImageData(image,0,0,0,run,outWidth,y-run);run=-1;}
