@@ -1,0 +1,18 @@
+# templeosweb-chat: the site's Chat window (see worker.js).
+# Moderation needs a secret: npx wrangler secret put ADMIN_TOKEN
+name = "templeosweb-chat"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[vars]
+# pages that may connect, comma separated (wrangler dev --var ORIGINS:http://localhost:8080 for local work)
+ORIGINS = "https://templeosweb.netlify.app"
+
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "ChatRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ChatRoom"]

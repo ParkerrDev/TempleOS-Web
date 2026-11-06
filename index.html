@@ -405,6 +405,27 @@
     #tsHelpPop a, #guide a, .disk-sec a, .ed-foot a, .ts-hit .ts-t { color:var(--red); text-decoration:underline; }
     #tsHelpPop a:hover, #guide a:hover, .disk-sec a:hover, .ed-foot a:hover { color:#fff; background:var(--red); }
 
+    /* Chat window: opens without the dark backdrop, in the corner, so the OS stays usable beside it.
+       Colors on the blue log are TempleOS palette entries (LTCYAN, YELLOW, LTGRAY, LTGREEN, LTRED). */
+    #chatOverlay { justify-content:flex-end; align-items:flex-end; }
+    body.stack #chatOverlay { justify-content:center; align-items:flex-start; padding-top:8px; }   /* clear of a phone's keyboard */
+    #chatWin { display:flex; flex-direction:column; gap:6px; width:min(400px,94vw); height:min(64vh,540px); margin:0; padding:8px; }
+    #chatStatus { flex:0 0 auto; color:var(--blue); font-size:12px; min-height:1em; }
+    #chatLog { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:6px 8px; font-size:12px; line-height:1.0; overflow-wrap:anywhere; }
+    #chatLog > div { margin-bottom:5px; }
+    #chatLog .ct { color:#55ffff; margin-right:.5em; }
+    #chatLog .cn { color:yellow; }
+    #chatLog .mine .cn { color:#55ff55; }
+    #chatLog .cg { color:#aaaaaa; margin-right:.5em; }
+    #chatLog .ce { color:#ff5555; }
+    #chatLog .cnone { color:#aaaaaa; }
+    #chatBar { display:flex; gap:8px; flex:0 0 auto; }
+    #chatBar input { min-width:0; height:var(--ctlh); font-family:inherit; font-size:12px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:4px 6px; }
+    #chatNick { flex:0 0 8em; }
+    #chatText { flex:1 1 auto; }
+    #chatBar button { width:auto; height:var(--ctlh); }
+    #chatNote { flex:0 0 auto; color:var(--blue); font-size:11px; line-height:1.1; }
+
 
     /* ---- TempleOS scrollbars: chunky squares, blue-on-white, arrow endcaps ---- */
     ::-webkit-scrollbar { width:14px; height:14px; }
@@ -440,7 +461,8 @@
   </style>
 </head>
 <body>
-<!-- Menu icons: pixelarticons by Gerrit Halfmann (MIT, assets/pixelarticons-LICENSE.txt). i-cross is its cross-sharp with the bar raised. -->
+<!-- Menu icons: pixelarticons by Gerrit Halfmann (MIT, assets/pixelarticons-LICENSE.txt). i-cross is its cross-sharp with the bar raised.
+     i-chat is drawn for this site on the same 24-unit grid. -->
 <svg style="display:none">
   <symbol id="i-pause" viewBox="0 0 24 24"><path d="M10 20H4V4h6v16Zm8-16v16h-6V4h6Zm-4 2v12h2V6h-2ZM6 18h2V6H6v12Z"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M15 11h-2V9h2zm0 4h-2v-2h2zm-2 2h-2v-2h2zm0-8h-2V7h2zm-2-2H9V5h2zM9 21H7V3h2zm6-8h2v-2h-2zm-6 4h2v2H9z"/></symbol>
@@ -455,6 +477,7 @@
   <symbol id="i-touch" viewBox="0 0 24 24"><path d="M2 14h20v2H2zm0 6h20v2H2zm0-4h2v4H2zm18 0h2v4h-2zM8 2h8v2H8zm0 2h2v4H8zm6 0h2v4h-2zM8 8h8v2H8zm3 2h2v4h-2zm-4 2h2v2H7z"/></symbol>
   <symbol id="i-window" viewBox="0 0 24 24"><path d="M2 2h20v2H2zm2 6h16v2H4zM2 20h20v2H2zM2 4h2v16H2zm18 0h2v16h-2zM5 5h2v2H5zm3 0h2v2H8z"/></symbol>
   <symbol id="i-cross" viewBox="0 0 24 24"><path d="M16 6h6v8h-6v8H8v-8H2V6h6V2h8v4Zm-6 2H4v4h6v8h4v-8h6V8h-6V4h-4v4Z"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 2h16v2H4zM2 4h2v10H2zM20 4h2v10h-2zM8 14h12v2H8zM4 14h2v6H4zM6 16h2v2H6zM7 8h2v2H7zM11 8h2v2h-2zM15 8h2v2h-2z"/></symbol>
 </svg>
 <div id="xcursor" aria-hidden="true"></div>
   <div id="topbar">
@@ -493,6 +516,7 @@
         <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico"><svg><use href="#i-cross"/></svg></span> God Tools</button>
         <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico"><svg><use href="#i-save"/></svg></span> Disk &amp; Save</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico"><svg><use href="#i-search"/></svg></span> Terry Search</button>
+        <button id="chatBtn" title="Talk with everyone else on the site right now"><span class="ico"><svg><use href="#i-chat"/></svg></span> Chat<span id="chatUnread"></span></button>
         <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico"><svg><use href="#i-mouse"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico"><svg><use href="#i-touch"/></svg></span> Touch controls</button>
       </div>
@@ -691,6 +715,22 @@
     </div>
   </div>
 
+  <!-- Chat: talk with everyone else on the site, through templeosweb-chat (chat/worker.js). It opens without
+       the dark backdrop so the OS stays usable, and the page connects only once someone opens it. -->
+  <div id="chatOverlay" class="overlay" role="dialog" aria-label="Chat">
+    <div class="win" id="chatWin" data-title="Chat">
+      <span class="close" id="chatClose" title="Close">[X]</span>
+      <div id="chatStatus" role="status">Connecting…</div>
+      <div id="chatLog" role="log"></div>
+      <form id="chatBar">
+        <input id="chatNick" type="text" placeholder="Guest" aria-label="Your name" autocomplete="nickname" spellcheck="false" />
+        <input id="chatText" type="text" placeholder="Say something…" aria-label="Message" autocomplete="off" />
+        <button id="chatSend" type="submit" disabled>Send</button>
+      </form>
+      <div id="chatNote">Everyone on the site can read this, and the last 100 messages are kept. Be kind.</div>
+    </div>
+  </div>
+
   <input id="mobInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" aria-hidden="true" tabindex="-1" />
 
   <script type="module">
@@ -699,7 +739,7 @@
     import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
     const $ = (id) => document.getElementById(id);
-    window.__BUILD = "render-44: Whole device pixels per character cell, so one letter has one shape everywhere and text no longer wobbles; only changed rows are uploaded. render-43: Larger native game windows, fullscreen game and editor views, independent mouse buttons under pointer lock, and quick-click delivery across worker polls. render-42: Strict HolyC-WASM browser games and editor previews, multi-file native projects with frozen drafts, explicit native compatibility errors, and TempleOS only through Run in TempleOS. render-41: Capture mouse inside the HolyC Editor preview, route capture to the active native or emulated game, and preserve hybrid release. render-40: Verified game authors, 63 catalog entries with Terry supplemental and Austin Sierra games, visible PNG2GR creator credit, sticky hybrid mouse mode in both runners, and corrected x87 subtraction/division operand order for game physics. render-39: Compact Sprite Studio, shared desktop cursor, themed scrollbars and file control; FPS from TempleOS window-manager telemetry and native frame signals. render-38: Game submissions at the bottom of the Games window with a prepared GitHub issue form. render-37: Edit and play games side by side, author and source credits, and pointer-tracked window dragging. render-36: Both launch destinations and editable game projects across the catalog, preserved sprites and isolated browser game sessions. render-35: Sprite Studio opens only from the menu; mouse capture keeps its icon in both states. render-34: Natural source-color mixtures and restrained fixed dithering without forced saturation. render-33: Hue-preserving stock-palette sprites, restored blue denim and pale warm tones, local source-fleck removal. render-32: Clean sprite colors, preserved warm midtones and optional dither strength defaulting to zero. render-31: Restrained sprite colors and stable blue-noise dithering without a repeating grid. render-30: Warm stable sprite dithering, native 25 fps Terry timing, cached frame playback and worker conversion. render-29: Desktop Sprite Studio, GR Terry animation, guest-aware mouse capture, relative HolyCraft look and lossless keyboard input. render-28: FTST and native Sign correctness, VGA palette I/O, persistent 32-bit ATA writes, raw compressed uploads, recycled-code JIT validation. render-27: Exact duplicate framebuffer suppression, Sprite Studio, pinned TinkerOS game packages, TOOM with Freedoom, and guest job execution. render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix - a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) - no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys. render-26: Castle Frankenstein (and any 3D game using a DC transform) renders correctly - the GrFillPoly3 HLE now falls back to the OS unless the DC transform is identity (so transformed polys are no longer rasterized as raw model coords); screen-space games like HolyCraft/Varoom keep the HLE (Hemu-wasm a68c3e8)";
+    window.__BUILD = "render-45: Chat window: talk with everyone else on the site through the templeosweb-chat Worker. render-44: Whole device pixels per character cell, so one letter has one shape everywhere and text no longer wobbles; only changed rows are uploaded. render-43: Larger native game windows, fullscreen game and editor views, independent mouse buttons under pointer lock, and quick-click delivery across worker polls. render-42: Strict HolyC-WASM browser games and editor previews, multi-file native projects with frozen drafts, explicit native compatibility errors, and TempleOS only through Run in TempleOS. render-41: Capture mouse inside the HolyC Editor preview, route capture to the active native or emulated game, and preserve hybrid release. render-40: Verified game authors, 63 catalog entries with Terry supplemental and Austin Sierra games, visible PNG2GR creator credit, sticky hybrid mouse mode in both runners, and corrected x87 subtraction/division operand order for game physics. render-39: Compact Sprite Studio, shared desktop cursor, themed scrollbars and file control; FPS from TempleOS window-manager telemetry and native frame signals. render-38: Game submissions at the bottom of the Games window with a prepared GitHub issue form. render-37: Edit and play games side by side, author and source credits, and pointer-tracked window dragging. render-36: Both launch destinations and editable game projects across the catalog, preserved sprites and isolated browser game sessions. render-35: Sprite Studio opens only from the menu; mouse capture keeps its icon in both states. render-34: Natural source-color mixtures and restrained fixed dithering without forced saturation. render-33: Hue-preserving stock-palette sprites, restored blue denim and pale warm tones, local source-fleck removal. render-32: Clean sprite colors, preserved warm midtones and optional dither strength defaulting to zero. render-31: Restrained sprite colors and stable blue-noise dithering without a repeating grid. render-30: Warm stable sprite dithering, native 25 fps Terry timing, cached frame playback and worker conversion. render-29: Desktop Sprite Studio, GR Terry animation, guest-aware mouse capture, relative HolyCraft look and lossless keyboard input. render-28: FTST and native Sign correctness, VGA palette I/O, persistent 32-bit ATA writes, raw compressed uploads, recycled-code JIT validation. render-27: Exact duplicate framebuffer suppression, Sprite Studio, pinned TinkerOS game packages, TOOM with Freedoom, and guest job execution. render-23 (backend game launch: 'Run in TempleOS' no longer types the launch as scancodes. A one-time resident HolyC daemon (installed via a verified FileWrite at a cleaned prompt) watches a RAM mailbox; the host raises a flag with a plain memory write and the daemon posts the command to the foreground terminal as real key MESSAGES (like the keyboard driver) -> the game runs in the main doc and renders full-screen. Disk games via #include, custom games via ExePutS2 from a staged RAM buffer. Also auto-dismisses the boot 'Take Tour?' prompt that made the old typed install flaky. Verified in-browser: Varoom + HolyCraft launch + render). render-25: BULLETPROOF stuck-key fix - a dropped BREAK scancode (emulated kbd FIFO under load) used to leave a key stuck 'down' (K = looking down forever). Now the engine writes kbd.down_bitmap for the game keys DIRECTLY from the browser's authoritative held set (host memory write @0xC0F8, race-free between frames) - no scancode/FIFO involved, so a stuck bit is impossible. Launches recentre the look + flush held keys. render-26: Castle Frankenstein (and any 3D game using a DC transform) renders correctly - the GrFillPoly3 HLE now falls back to the OS unless the DC transform is identity (so transformed polys are no longer rasterized as raw model coords); screen-space games like HolyCraft/Varoom keep the HLE (Hemu-wasm a68c3e8)";
     const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
     console.log("%cTempleOS-Web build: " + window.__BUILD, "color:#0f0;font-weight:bold");
     dbg("hemu host starting…");
@@ -2054,6 +2094,82 @@ I64 GodDoodleGen(I64 strokes)
         b.addEventListener("click", () => { ov.classList.add("free"); raise(ov); });
         ov.appendChild(b);
       }
+    }
+
+    // ---- Chat window (chat.js): connects the first time it opens, then stays connected so the Menu can
+    //      count what arrives while it is shut. What others wrote only ever goes in as textContent. ----
+    { const ov = $("chatOverlay"), log = $("chatLog"), status = $("chatStatus"), sendBtn = $("chatSend");
+      const nickIn = $("chatNick"), textIn = $("chatText"), unread = $("chatUnread");
+      const MAX_LINES = 200;
+      const WHY = { slow: "Slow down: wait a few seconds, then send it again.", repeat: "You just said that.",
+                    empty: "There was nothing to send." };
+      let chat = null, mod = null, myTag = "", pending = "", unseen = 0;
+      const setUnseen = (n) => { unseen = n; unread.textContent = n ? ` (${n > 99 ? "99+" : n})` : ""; };
+      const span = (cls, text) => { const s = document.createElement("span"); s.className = cls; s.textContent = text; return s; };
+      const add = (el, stick) => {
+        log.querySelector(".cnone")?.remove();
+        log.appendChild(el);
+        while (log.childElementCount > MAX_LINES) log.firstElementChild.remove();
+        if (stick) log.scrollTop = log.scrollHeight;
+      };
+      const nobody = () => { const d = document.createElement("div"); d.className = "cnone"; d.textContent = "Nobody has said anything yet."; log.appendChild(d); };
+      const note = (text) => { const d = document.createElement("div"); d.className = "ce"; d.textContent = text; add(d, true); };
+      const line = (m) => {
+        const d = document.createElement("div");
+        if (m.tag === myTag) d.className = "mine";
+        d.dataset.n = m.n; d.title = new Date(m.at).toLocaleString();
+        d.append(span("ct", mod.stamp(m.at)), span("cn", m.nick), span("cg", "#" + m.tag), span("cx", m.text));
+        return d;
+      };
+      const hear = (e) => {
+        if (e.t === "hello") {
+          myTag = e.tag; log.textContent = "";
+          for (const m of e.log) add(line(m), false);
+          if (!e.log.length) nobody();
+          log.scrollTop = log.scrollHeight;
+          status.textContent = `In chat: ${e.people}`; sendBtn.disabled = false;
+        }
+        else if (e.t === "msg") {
+          const nearEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 24;
+          add(line(e), nearEnd || e.tag === myTag);
+          if (!ov.classList.contains("open")) setUnseen(unseen + 1);
+        }
+        else if (e.t === "people") status.textContent = `In chat: ${e.n}`;
+        else if (e.t === "del") log.querySelector(`[data-n="${e.n}"]`)?.remove();
+        else if (e.t === "clear") { log.textContent = ""; nobody(); }
+        else if (e.t === "err") { note(WHY[e.why] || "The chat did not take that message."); if (pending && !textIn.value) textIn.value = pending; }
+        else if (e.t === "offline") { status.textContent = "Offline, trying again…"; sendBtn.disabled = true; }
+      };
+      const start = async () => {
+        if (chat) { chat.wake(); return; }
+        mod = await import("./chat.js");
+        if (chat) return;                                   // a second click while it loaded
+        nickIn.maxLength = mod.MAX_NICK; textIn.maxLength = mod.MAX_TEXT;
+        nickIn.value = mod.savedNick();
+        // a Worker on this machine (cd chat && npx wrangler dev), only ever for a page served from it too
+        const local = ["localhost", "127.0.0.1"].includes(location.hostname) && new URLSearchParams(location.search).get("chat");
+        chat = mod.createChat(hear, local ? { url: local } : {});
+        chat.wake();
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) chat.wake(); });
+        addEventListener("online", chat.wake);
+      };
+      const send = () => {
+        const said = textIn.value.trim();
+        if (!said || !chat) return;
+        if (!chat.say(nickIn.value.trim(), said)) { note("Not connected yet: wait a moment, then send it again."); return; }
+        pending = said; textIn.value = "";
+      };
+      const open = () => {
+        ov.classList.add("open", "free");
+        winChrome && winChrome.setActive($("chatWin"));
+        setUnseen(0);
+        start().then(() => { if (!document.body.classList.contains("touch")) textIn.focus({ preventScroll: true }); })
+          .catch((e) => { status.textContent = "Chat failed to load: " + e.message; dbg("chat: " + e.message, true); });
+      };
+      $("chatBtn").addEventListener("click", open);
+      $("chatClose").addEventListener("click", () => ov.classList.remove("open", "free"));
+      $("chatBar").addEventListener("submit", (e) => { e.preventDefault(); send(); });
+      nickIn.addEventListener("change", () => mod?.saveNick(nickIn.value.trim()));
     }
 
     // ---- Pause / Play ----

@@ -31,6 +31,8 @@ hottest render routines.
   progress, share programs/games, or boot a custom/modified TempleOS disk.
 - **✞ God Words** - TempleOS's divine word oracle on the page itself: GodBits/GodPick
   compiled in‑browser by holyc-wasm, entropy from your keystroke timing.
+- **Chat** - talk with everyone else on the site. It opens in the corner without darkening the
+  desktop, so the OS stays usable beside it, and the Menu counts new messages while it is shut.
 - On phones: an on‑screen joystick + L/R mouse buttons + a keyboard summon button appear,
   and the function/modifier key bar works by touch.
 
@@ -114,6 +116,34 @@ bar shows nothing if it cannot be reached. A random id in localStorage stops one
 counting twice. It is held only while the socket is open, and nothing about a visitor is stored.
 Only the main page connects. Deploy it with `cd presence && npx wrangler deploy`.
 
+Chat comes from `templeosweb-chat` (`chat/`), another Worker with one Durable Object, kept apart so
+that presence still stores nothing. A page connects the first time someone opens Chat and stays
+connected so the Menu can count what arrives. The room keeps the last 100 messages in its SQLite
+storage: time, name, text and a four-digit tag after the name, made from a salted hash of the
+browser's id, so two people called Guest can be told apart. The id itself and the sender's IP are
+never stored. Each sender (one IP, or one IPv6 /64) gets a burst of 5 messages and then one every
+3 seconds, may not repeat a message within 30 seconds, and may hold 8 sockets. That limit is kept
+in storage under a salted hash of the address, because a hibernating room forgets its memory, and
+each row goes a minute after the sender's last message. `chat/rules.js` holds the limits and the
+cleaning (bidi overrides, control characters and piled-up combining marks are removed), shared by
+the Worker and the page, and the page only ever puts a message on screen as text. Deploy with
+`cd chat && npx wrangler deploy`.
+
+To moderate, set a secret once with `cd chat && npx wrangler secret put ADMIN_TOKEN`, then:
+
+```sh
+curl -X POST https://templeosweb-chat.parkerrhunt.workers.dev/admin -H "Authorization: Bearer $TOKEN" -d '{"list":true}'
+curl -X POST https://templeosweb-chat.parkerrhunt.workers.dev/admin -H "Authorization: Bearer $TOKEN" -d '{"delete":42}'
+curl -X POST https://templeosweb-chat.parkerrhunt.workers.dev/admin -H "Authorization: Bearer $TOKEN" -d '{"clear":true}'
+```
+
+`list` shows each message's number `n`; `delete` removes one from the room and from every open
+page; `clear` empties the room. Without the secret, `/admin` does not exist.
+
+To work on Chat locally, run the Worker with `cd chat && npx wrangler dev --var ORIGINS:http://localhost:8080`
+and open `http://localhost:8080/?chat=ws://127.0.0.1:8787/`. The page takes `?chat=` only when it
+is served from localhost itself.
+
 ### What's where in this repo
 
 | Path | What |
@@ -126,6 +156,7 @@ Only the main page connects. Deploy it with `cd presence && npx wrangler deploy`
 | `vendor/` | committed binary assets: the TempleOS disk image, fonts |
 | `cdn/` | the Cloudflare Worker that serves the heavy files from R2 (`worker.js`, `wrangler.toml`) |
 | `presence/` | the Cloudflare Worker that counts the people on the site (`worker.js`, `wrangler.toml`) |
+| `chat/` | the Cloudflare Worker behind the Chat window (`worker.js`, `wrangler.toml`) and the rules it shares with the page (`rules.js`) |
 | `holyc-wasm/`, `hemu/`, `holyc-fmt/` | the sibling repos, cloned here at build time (gitignored) |
 
 ## Running locally
@@ -191,6 +222,8 @@ node tools/sprite-codec.test.mjs
 node tools/sprite-player.test.mjs
 node tools/guest-fps.test.mjs
 node tools/presence.test.mjs
+node tools/chat.test.mjs
+node tools/chat-worker.test.mjs     # the chat Worker in wrangler dev, on this machine only (needs npx)
 node tools/holycraft-input.test.mjs
 node tools/game-capture.test.mjs
 node tools/native-clicks.test.mjs

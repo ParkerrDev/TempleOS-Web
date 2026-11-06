@@ -17,3 +17,6 @@ package-lock.json
 
 # Python archive-tool caches
 __pycache__/
+
+# wrangler's local state (wrangler dev, deploy)
+.wrangler/
