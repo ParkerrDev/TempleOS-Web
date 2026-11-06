@@ -87,7 +87,7 @@ pixels per cell, so the cost per frame stays bounded on any screen.
 The desktop appears after the 10 MB snapshot loads; the disk image streams in the background
 for file I/O. (The `.gz` assets are decompressed in the browser.)
 
-## Repository layout (5 repos)
+## Repository layout (6 repos)
 
 | repo | what | consumed how |
 |---|---|---|
@@ -95,9 +95,10 @@ for file I/O. (The `.gz` assets are decompressed in the browser.)
 | [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | the HolyC→WASM compiler and its browser runtime | cloned into `./holyc-wasm` at build time |
 | [HEMU](https://github.com/ParkerrDev/HEMU) | the emulator itself - plain HolyC - and the booted-RAM snapshots | cloned into `./hemu` at build time and compiled into `./build` by `engine/build.mjs` |
 | [HolyC-fmt](https://github.com/ParkerrDev/HolyC-fmt) | the HolyC formatter, written in HolyC (the Format button, `/format.html`) | cloned into `./holyc-fmt` at build time |
+| [HolyCraft](https://github.com/ParkerrDev/HolyCraft) | the HolyCraft voxel game, in HolyC, for the browser and for TempleOS | cloned into `./holycraft` at build time |
 | [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline - its output is baked into `assets/transcripts/` by `tools/build-transcripts.mjs` |
 
-`netlify.toml`'s build command `git clone --depth 1`s the three sibling repos and compiles the emulator into `build/`, so **every
+`netlify.toml`'s build command `git clone --depth 1`s the four sibling repos and compiles the emulator into `build/`, so **every
 deploy ships their latest main** - no submodule pins, no packages. To auto-redeploy when
 *they* change, create one Netlify build hook (Site settings → Build & deploy → Build hooks)
 and add its URL as a plain push webhook on each of them.
@@ -157,7 +158,7 @@ is served from localhost itself.
 | `cdn/` | the Cloudflare Worker that serves the heavy files from R2 (`worker.js`, `wrangler.toml`) |
 | `presence/` | the Cloudflare Worker that counts the people on the site (`worker.js`, `wrangler.toml`) |
 | `chat/` | the Cloudflare Worker behind the Chat window (`worker.js`, `wrangler.toml`) and the rules it shares with the page (`rules.js`) |
-| `holyc-wasm/`, `hemu/`, `holyc-fmt/` | the sibling repos, cloned here at build time (gitignored) |
+| `holyc-wasm/`, `hemu/`, `holyc-fmt/`, `holycraft/` | the sibling repos, cloned here at build time (gitignored) |
 
 ## Running locally
 
@@ -166,12 +167,13 @@ git clone https://github.com/ParkerrDev/TempleOS-Web && cd TempleOS-web
 git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm   # same layout the build creates
 git clone --depth 1 https://github.com/ParkerrDev/HEMU hemu
 git clone --depth 1 https://github.com/ParkerrDev/HolyC-fmt holyc-fmt
+git clone --depth 1 https://github.com/ParkerrDev/HolyCraft holycraft
 node engine/build.mjs build                                            # compile the emulator into build/
 node server.mjs               # → http://localhost:8080  (zero-dependency)
 ```
 
 (For hacking on the engine/compiler, clone them as siblings and symlink instead:
-`ln -s ../holyc-wasm ../hemu ../holyc-fmt .`, then the same `node engine/build.mjs build`)
+`ln -s ../holyc-wasm ../hemu ../holyc-fmt ../holycraft .`, then the same `node engine/build.mjs build`)
 
 ## Credits & licenses
 

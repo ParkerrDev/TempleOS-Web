@@ -13,9 +13,19 @@ export function gameCredits(game) {
     source:'https://github.com/cia-foundation/TempleOS/tree/c26482bb6ad3f80106d28504ec5db3c6a360732c/Demo/Games/'+(game.name==='Stadium'?'Stadium':game.name+'.HC'),
     note:'Original TempleOS game. This version is maintained by TheTinkerer in TinkerOS.',
   };
-  if(['HolyCraft.HC','Snake.HC','Babel.HC','Volley.HC'].includes(game.file))return {
+  if(game.file==='HolyCraft.HC')return {
+    author:'ParkerrDev',authorUrl:'https://github.com/ParkerrDev',
+    source:'https://github.com/ParkerrDev/HolyCraft',
+    note:'HolyC game created for TempleOS-Web.',
+  };
+  if(['Babel.HC','Volley.HC'].includes(game.file))return {
     author:'ParkerrDev',authorUrl:'https://github.com/ParkerrDev',
     source:'https://github.com/ParkerrDev/TempleOS-Web/blob/master/games/'+game.file,
+    note:'HolyC game created for TempleOS-Web.',
+  };
+  if(game.file==='Snake.HC')return {
+    author:'ParkerrDev',authorUrl:'https://github.com/ParkerrDev',
+    source:'https://github.com/ParkerrDev/TempleOS-Web/blob/master/games/Snake.HC',
     note:'HolyC game created for TempleOS-Web.',
   };
   throw new Error('Missing verified game attribution: '+game.name);

@@ -2,6 +2,8 @@ import {gameCatalog,gameFile} from './game-packages.js';
 
 const projects=new Map();
 const editable=path=>/\.(HC|HH)$/i.test(path);
+// HolyCraft is its own repo (ParkerrDev/HolyCraft), cloned into ./holycraft at build time.
+const SITE_GAMES={'HolyCraft.HC':'holycraft/HolyCraft.HC','Snake.HC':'games/Snake.HC','Babel.HC':'games/Babel.HC','Volley.HC':'games/Volley.HC'};
 
 // TempleOS documents are byte strings followed by optional binary sprite records.
 // Keep the records outside the textarea and append them unchanged on export.
@@ -42,7 +44,7 @@ async function loadProject(game,id) {
   if(game.packageId){
     pkg=(await gameCatalog()).packages.find(p=>p.id===id);
     if(!pkg)throw new Error('Game package not found: '+id);
-  }else pkg={name:game.name,entry:game.file,files:[{path:game.file,url:'games/'+game.file}]};
+  }else pkg={name:game.name,entry:game.file,files:[{path:game.file,url:SITE_GAMES[game.file] ?? 'games/'+game.file}]};
   const sources=pkg.files.filter(f=>editable(f.path));
   sources.sort((a,b)=>a.path===pkg.entry?-1:b.path===pkg.entry?1:a.path.localeCompare(b.path));
   const documents=new Map(),texts=new Map(),loads=new Map();

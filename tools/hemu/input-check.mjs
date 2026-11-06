@@ -64,7 +64,7 @@ say("focus: " + JSON.stringify(info0.focus) + " adam: " + JSON.stringify({ name:
 input=createGuestInput({guest:()=>gx,memory:()=>inst.exports.memory,base:()=>gBase});
 say('Input layout: '+JSON.stringify(gx.inputState()));
 assert(gx.inputState()?.down,'Input class metadata resolves');
-const source='#define TOS_NATIVE 1\n'+readFileSync(SITE_DIR + '/games/HolyCraft.HC', 'latin1');
+const source='#define TOS_NATIVE 1\n'+readFileSync(SITE_DIR + '/holycraft/HolyCraft.HC', 'latin1');
 const launch=gx.launch({src:source,name:'HolyCraft'});
 await waitState(launch,['running','failed','error'],800);
 assert.equal(gx.status(launch).state,'running');

@@ -8,6 +8,7 @@ TerryADavis-archive-transcriber/
 /holyc-wasm
 /hemu
 /holyc-fmt
+/holycraft
 # the compiled emulator (hemu.wasm, hemu-smp.wasm, hemu-smp.json): node engine/build.mjs
 /build/
 # written by tools/offload-redirects.mjs during the Netlify build

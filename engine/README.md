@@ -19,7 +19,7 @@ using the [HolyC-wasm](https://github.com/ParkerrDev/HolyC-wasm) compiler (clone
 
 ## Build and check
 
-From the site root (the repos cloned or symlinked as `holyc-wasm`, `hemu`, `holyc-fmt`):
+From the site root (the repos cloned or symlinked as `holyc-wasm`, `hemu`, `holyc-fmt`, `holycraft`):
 
 ```sh
 node engine/build.mjs build                    # what the site deploys

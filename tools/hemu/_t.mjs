@@ -62,7 +62,7 @@ if (!ready) console.error("WARN: no clean prompt; proceeding anyway");
 
 // ---- install HolyCraft via the OS's own FileWrite (TOS_NATIVE), then #include it ----
 const SCRATCH = 0x16800000, MBOX = 0x16700000;
-const game = readFileSync(SITE_DIR + "/games/HolyCraft.HC", "latin1");
+const game = readFileSync(SITE_DIR + "/holycraft/HolyCraft.HC", "latin1");
 const payload = "#define TOS_NATIVE 1\n" + game;
 const bytes = Buffer.from(payload, "latin1");
 new Uint8Array(inst.exports.memory.buffer).set(bytes, gBase + SCRATCH);
