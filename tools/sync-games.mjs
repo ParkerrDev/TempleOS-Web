@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {syncLibrary} from './sync-game-library.mjs';
 import {gameCredits} from '../game-credits.js';
+import {applyToomSpeed,toomSpeed} from './toom-speed.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const tinker=resolve(process.argv[2]||'../.work/upstream/TinkerOS'),toom=resolve(process.argv[3]||'../.work/upstream/TOOM');
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -56,13 +57,26 @@ let drawerText=drawerOriginal.toString('latin1');
 const plotToken='  x=GR_WIDTH-x;';
 if(drawerText.split(plotToken).length!==2)throw new Error('Review changed TOOM sector bounds adapter');
 drawerText=drawerText.replace(plotToken,'  x=GR_WIDTH-2-x;\n  if(x<0 || x+1>=dc->width || y<0 || y+1>=dc->height) return;');
+// Speed edits (tools/toom-speed.mjs) keep every frame and every tic identical. Each one
+// checks its upstream text and the import stops if any of them changed.
+drawerText=applyToomSpeed('MainDrawer.HC',drawerText);
 const drawerFile=await save(null,'TOOM/BrowserMainDrawer.HC',Buffer.from(drawerText,'latin1'));
 toomFiles[toomFiles.findIndex(f=>f.path==='C:/Home/TOOM/MainDrawer.HC')]={...drawerFile,path:'C:/Home/TOOM/MainDrawer.HC'};
+for(const name of Object.keys(toomSpeed)){
+ if(name==='MainDrawer.HC')continue;
+ const index=toomFiles.findIndex(f=>f.path==='C:/Home/TOOM/'+name);
+ if(index<0)throw new Error('Review TOOM speed edit target '+name);
+ const text=applyToomSpeed(name,(await readFile(resolve(toom,name))).toString('latin1'));
+ const file=await save(null,'TOOM/Browser'+name,Buffer.from(text,'latin1'));
+ toomFiles[index]={...file,path:'C:/Home/TOOM/'+name};
+}
 const wad=await readFile(resolve(toom,'freedoom1.wad')),chunk=4*1024*1024;
 for(let offset=0,index=0;offset<wad.length;offset+=chunk,index++){
  const rel=`Freedoom${String(index).padStart(2,'0')}.BIN`,f=await save(null,'TOOM/'+rel,wad.subarray(offset,offset+chunk));toomFiles.push({...f,path:'C:/Home/TOOM/'+rel});
 }
-const startup=`// Browser package entry. Build the Freedoom IWAD from bounded upload parts.\n#exe {Cd(__DIR__);}\nU0 PrepareFreedoom()\n{\n  U8 *all=MAlloc(${wad.length}), *part;\n  I64 i,n,offset=0;\n  U8 name[32];\n  for(i=0;i<${Math.ceil(wad.length/chunk)};i++) {\n    StrPrint(name,"Freedoom%02d.BIN",i);\n    part=FileRead(name,&n);\n    if (!part || n<=0 || n>${chunk} || offset+n>${wad.length}) { Free(part); Free(all); throw('Package'); }\n    MemCpy(all+offset,part,n); offset+=n; Free(part);\n  }\n  if(offset!=${wad.length}) { Free(all); throw('Package'); }\n  if(!FileWrite("freedoom1.wad",all,offset)) { Free(all); throw('Disk'); }\n  Free(all);\n}\nPrepareFreedoom;\nFramePtrAdd("USE_IWAD",StrNew("freedoom1.wad"));\n#include "SinglePlayer.HC";\n`;
+// The two Option calls stop the compiler printing TOOM's 231 unused variable and header
+// mismatch warnings while it loads. The compiled code is the same.
+const startup=`// Browser package entry. Build the Freedoom IWAD from bounded upload parts.\n#exe {Cd(__DIR__);}\nU0 PrepareFreedoom()\n{\n  U8 *all=MAlloc(${wad.length}), *part;\n  I64 i,n,offset=0;\n  U8 name[32];\n  for(i=0;i<${Math.ceil(wad.length/chunk)};i++) {\n    StrPrint(name,"Freedoom%02d.BIN",i);\n    part=FileRead(name,&n);\n    if (!part || n<=0 || n>${chunk} || offset+n>${wad.length}) { Free(part); Free(all); throw('Package'); }\n    MemCpy(all+offset,part,n); offset+=n; Free(part);\n  }\n  if(offset!=${wad.length}) { Free(all); throw('Package'); }\n  if(!FileWrite("freedoom1.wad",all,offset)) { Free(all); throw('Disk'); }\n  Free(all);\n}\nPrepareFreedoom;\nFramePtrAdd("USE_IWAD",StrNew("freedoom1.wad"));\nOption(OPTf_WARN_UNUSED_VAR,OFF);\nOption(OPTf_WARN_HEADER_MISMATCH,OFF);\n#include "SinglePlayer.HC";\n`;
 const f=await save(null,'TOOM/BrowserStart.HC',Buffer.from(startup));toomFiles.push({...f,path:'C:/Home/TOOM/BrowserStart.HC'});
 packages.push({id:'toom',name:'TOOM',entry:'C:/Home/TOOM/BrowserStart.HC',files:toomFiles,upstream:'Church-of-Templeos/TOOM',revision:revisions.toom,wad:{name:'Freedoom 0.12.1',sha256:sha(wad),bytes:wad.length}});
 await syncLibrary({tinker,save,packages});

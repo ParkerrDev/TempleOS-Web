@@ -17,4 +17,6 @@ U0 PrepareFreedoom()
 }
 PrepareFreedoom;
 FramePtrAdd("USE_IWAD",StrNew("freedoom1.wad"));
+Option(OPTf_WARN_UNUSED_VAR,OFF);
+Option(OPTf_WARN_HEADER_MISMATCH,OFF);
 #include "SinglePlayer.HC";

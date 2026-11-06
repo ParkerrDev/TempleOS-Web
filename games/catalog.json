@@ -854,9 +854,9 @@
           "path": "C:/Home/TOOM/Donuts.TXT"
         },
         {
-          "url": "games/upstream/TOOM/DoomGr.HC",
-          "bytes": 6574,
-          "sha256": "35aa43b6c6d9add04ba7d6637b4c00161ad2351f2156208898d19564b841192e",
+          "url": "games/upstream/TOOM/BrowserDoomGr.HC",
+          "bytes": 6725,
+          "sha256": "8cc165608df72745911d0528f23bd9a7fb050a259ce2417231e0631b079485d0",
           "path": "C:/Home/TOOM/DoomGr.HC"
         },
         {
@@ -963,8 +963,8 @@
         },
         {
           "url": "games/upstream/TOOM/BrowserMainDrawer.HC",
-          "bytes": 112696,
-          "sha256": "9a91eb87ebf4906389d5e81de9aded5bb20fec5d64bb9e51ca9e73f6ccd3d7c0",
+          "bytes": 114557,
+          "sha256": "aa6baad842afe6bf2afd48a71e6e90a3126678da0d3aac70b35f0ad42c282f0a",
           "path": "C:/Home/TOOM/MainDrawer.HC"
         },
         {
@@ -1070,9 +1070,9 @@
           "path": "C:/Home/TOOM/README.md"
         },
         {
-          "url": "games/upstream/TOOM/ST.HC",
-          "bytes": 19206,
-          "sha256": "ba5cf13a220f69a51b4e980cce8ffcc0bca1a1117025418120ab5c9f50e60d2f",
+          "url": "games/upstream/TOOM/BrowserST.HC",
+          "bytes": 19261,
+          "sha256": "d5c0edcf60c7412c3edaca55e8bbb565ff675ffddbdcf8807b08c60107a78d3e",
           "path": "C:/Home/TOOM/ST.HC"
         },
         {
@@ -1160,9 +1160,9 @@
           "path": "C:/Home/TOOM/Thinker.HC"
         },
         {
-          "url": "games/upstream/TOOM/Wad.HC",
-          "bytes": 39683,
-          "sha256": "6e8e40f1cdb07c80344ba2aedfaccefb09e18dda93c70978e03650b84a35cf71",
+          "url": "games/upstream/TOOM/BrowserWad.HC",
+          "bytes": 42658,
+          "sha256": "f60a34f6354e86d43821734d619df46143375c5d193d675b1acb4e18dbc80fc0",
           "path": "C:/Home/TOOM/Wad.HC"
         },
         {
@@ -1233,8 +1233,8 @@
         },
         {
           "url": "games/upstream/TOOM/BrowserStart.HC",
-          "bytes": 680,
-          "sha256": "6c2230384097adae3d75834e263591214151af6a72c90ffb925a6fa5be2cb9c4",
+          "bytes": 753,
+          "sha256": "0839c618ad59ad1f9e9121dc7ce2679986e4129d2fe82a1a2ae03200aa6dcc4e",
           "path": "C:/Home/TOOM/BrowserStart.HC"
         }
       ],

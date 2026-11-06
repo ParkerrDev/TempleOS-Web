@@ -383,7 +383,23 @@ U0 SectorPlot(CDC *dc,CDC *texture,I64 x,I64 y,I64 idist,I64 wx,I64 wy,I64 light
 //wx<<1 multiples by 2,which means any number*2 is even
   wx=(wx<<1)&127;
   wy=(wy<<1)&127;
-  U64 color=LookupLighting(texture->body[wx+wy*128](U16),light,idist&U32_MAX,god_mode);
+  I64 dith=texture->body[wx+wy*128](U16);
+  F64 distance=idist&U32_MAX;
+  U64 color;
+  if(dith&0xff==TRANSPARENT)
+    color=0xffffffff;
+  else {
+    light=light-distance*1/16.;
+    if(light<15)
+      light=15;
+    else if(light>255)
+      light=255;
+    dith=(dith&0xf)|(dith>>(8-4));
+    if(god_mode)
+      color=godmode_mat[dith];
+    else
+      color=light_mat[dith][light>>4];
+  }
   *to=color&0xffff;
   to(U8*)+=dc->width_internal;
   *to=color>>16;
@@ -474,8 +490,30 @@ U0 FillPoly(CDC *dc,CDoomCamera *cam,CDoomSector *os,CDC *texture,CD4 *points,I6
   minx=ClampI64(minx,GR_WIDTH/mp_cnt*Gs->num+2,GR_WIDTH/mp_cnt*(Gs->num+1)-2);
   maxx=ClampI64(maxx,GR_WIDTH/mp_cnt*Gs->num+2,GR_WIDTH/mp_cnt*(Gs->num+1)-2);
 
+//RayPassesThroughBox only passes a column if an intersection lies within its
+//tolerance (at most 1) of the box,within 2 of the true ray line (its near
+//vertical shortcut) and no more than 1 behind the camera on the ray's main
+//axis. So a column whose ray line clears every box corner by more than 4 on
+//one side,or that sees every corner more than 8 behind the camera,fails it:
+//skip the four PlaneIntersect calls for it.
+  F64 bx0=bbox->x-cam->x,bx1=bbox->x2-cam->x,by0=bbox->y-cam->y,by1=bbox->y2-cam->y;
+  F64 rc,rs,p0,p1,p2,p3,rcos,cut1,cut2;
+  I64 ystep;
   for(x=minx-2;x<maxx+2;x+=2) {
     F64 worst,best;
+    rc=cos_table[x];
+    rs=sin_table[x];
+    p0=rc*by0-rs*bx0;
+    p1=rc*by0-rs*bx1;
+    p2=rc*by1-rs*bx0;
+    p3=rc*by1-rs*bx1;
+    if(p0>4.&&p1>4.&&p2>4.&&p3>4.)
+      goto nextx;
+    if(p0<-4.&&p1<-4.&&p2<-4.&&p3<-4.)
+      goto nextx;
+    if(rc*bx0+rs*by0<-8.&&rc*bx1+rs*by0<-8.&&
+	  rc*bx0+rs*by1<-8.&&rc*bx1+rs*by1<-8.)
+      goto nextx;
     if(!RayPassesThroughBox(bbox,&cam->x,cos_table[x],sin_table[x],&best,&worst))
        goto nextx;
     best=Floor(best);
@@ -495,23 +533,26 @@ U0 FillPoly(CDC *dc,CDoomCamera *cam,CDoomSector *os,CDC *texture,CD4 *points,I6
       cap=ClampI64(cap+4,0,GR_HEIGHT/2);
       y=ClampI64(y-4,0,GR_HEIGHT/2);;
     }
-    for(;y!=cap;y+=Sign(cap-y)*2) {
+//y and cap are both even,so y walks onto cap: the step never changes.
+    if(cap>y)
+      ystep=2;
+    else
+      ystep=-2;
+    rcos=ray_cast_table_cos[x>>1];
+    if(floor)
+      cut1=cam->floor_cutoffs[x>>1];
+    else
+      cut1=cam->ceil_cutoffs[x>>1];
+    cut2=cam->cutoff_dists[x>>1];
+    for(;y!=cap;y+=ystep) {
       dist=DIST_SCALE/(ToF64(y-GR_HEIGHT/2)/(cam->h-level));
-      dist/=ray_cast_table_cos[ToI64(x)>>1];
-      if(floor) {
-	if(dist>2+cam->floor_cutoffs[ToI64(x)>>1]) {
-	  break;
-	}
-      } else {
-	if(dist>2+cam->ceil_cutoffs[ToI64(x)>>1]) {
-	  break;
-	}
-      }
-      if(dist>2+cam->cutoff_dists[ToI64(x)>>1]) {
+      dist/=rcos;
+      if(dist>2+cut1)
+	break;
+      if(dist>2+cut2)
         break;
-      }
-      wyf=cam->y+dist*sin_table[ToI64(x)];
-      wxf=cam->x+dist*cos_table[ToI64(x)];
+      wyf=cam->y+dist*rs;
+      wxf=cam->x+dist*rc;
       x2=(wxf-l->floor_map_origin.x)/16;
       y2=(wyf-l->floor_map_origin.y)/16;
       if(!(0<=x2<l->floor_map_w))
@@ -779,8 +820,30 @@ Bool RayCastWall(CDC *to_dc,CDC *texture,CD2 *st,CD2 *en,CDoomCamera *cam,I64 le
 	  } else {
 	    tyf=(ToF64(ih2)/ih)*(texture->height-2);
 	  }
-	  for(ih2=low_ih;TRUE;ih2+=2,tyf+=2*ratio*2) { //2 for dither pixel,2 for ih2+=2
-	    if(ih2>=ih||ih2+iy>=GR_HEIGHT-2)
+//The light row,the texture column and the row bases are the same for the
+//whole column. 2*ratio*2 is 4*ratio exactly,so the step can be stored once.
+	  I64 lrow,c16,twi,th2,dwi,lim;
+	  U8 *tb,*tobase;
+	  I32 *dbase;
+	  F64 tstep;
+	  lrow=light-dist*1/16.;
+	  if(lrow<15)
+	    lrow=15;
+	  else if(lrow>255)
+	    lrow=255;
+	  lrow>>=4;
+	  twi=texture->width_internal;
+	  th2=texture->height-2;
+	  dwi=to_dc->width_internal;
+	  tb=texture->body+tx;
+	  dbase=&to_dc->depth_buf[GR_WIDTH-2-ix+iy*dwi];
+	  tobase=&to_dc->body[GR_WIDTH-2-ix+iy*dwi];
+	  lim=GR_HEIGHT-2-iy;
+	  if(ih<lim)
+	    lim=ih;
+	  tstep=2*ratio*2;
+	  for(ih2=low_ih;TRUE;ih2+=2,tyf+=tstep) { //2 for dither pixel,2 for ih2+=2
+	    if(ih2>=lim)
 	      break;
 	    if(iy+ih2<0) {
 	      skip=-iy;
@@ -788,27 +851,33 @@ Bool RayCastWall(CDC *to_dc,CDC *texture,CD2 *st,CD2 *en,CDoomCamera *cam,I64 le
 	      ih2+=skip-2;
 	      goto skip_p;
 	    }
-	    db_z=&to_dc->depth_buf[GR_WIDTH-2-ix+(iy+ih2)*to_dc->width_internal];
+	    db_z=&dbase[ih2*dwi];
 	    if(*db_z>idist) {
 	      ty=tyf;
 	      if(repeat)
 	        ty=ty%texture->height;
 	      if(ty<0) ty=-ty;
-	      ty=ClampI64(ty,0,texture->height-2);
+//ClampI64(ty,0,texture->height-2),in its order
+	      if(ty<0) ty=0;
+	      if(ty>th2) ty=th2;
 //Avoids Templeos bug with &=~1;
 	      ty=ty&~1;
-	      color=texture->body[tx+ty*texture->width_internal](U16);
-	      dither_px=LookupLighting(color,light,dist,god_mode);
-	      to=&to_dc->body[GR_WIDTH-2-ix+(iy+ih2)*to_dc->width_internal];
-	      if(color&0xff!=TRANSPARENT) {
+	      color=tb[ty*twi](U16);
+	      c16=color;
+	      if(c16&0xff!=TRANSPARENT) {
+	        if(god_mode)
+	          dither_px=godmode_mat[(c16&0xf)|(c16>>(8-4))];
+	        else
+	          dither_px=light_mat[(c16&0xf)|(c16>>(8-4))][lrow];
+	        to=&tobase[ih2*dwi];
 	        ld->seen=TRUE;
 	        db_z[0]=idist;
 	        db_z[1]=idist;
-	        db_z+=to_dc->width_internal;
+	        db_z+=dwi;
 	        db_z[0]=idist;
 	        db_z[1]=idist;
 	        *to=dither_px&0xffff;
-	        to(U8*)+=to_dc->width_internal;
+	        to(U8*)+=dwi;
 	        *to=dither_px>>16;
 	      }
 	    }
