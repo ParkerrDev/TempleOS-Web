@@ -1,4 +1,4 @@
-// The chat Worker (chat/worker.js) running in wrangler dev, on this machine only: nothing is deployed and the
+// The chat Worker (chat/ChatRoom.js) running in wrangler dev, on this machine only: nothing is deployed and the
 // room's storage is a temporary folder. Needs wrangler 4 through npx. Run from the repository root.
 //   node tools/chat-worker.test.mjs
 import assert from 'node:assert/strict';

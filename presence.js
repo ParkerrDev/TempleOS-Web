@@ -1,12 +1,13 @@
 // "Visitors" in the top bar: how many people have the site open right now, this one included.
-// The page holds a WebSocket to the presence Worker (presence/worker.js), which sends the number of browsers
+// The page holds a WebSocket to the presence Worker (presence/Room.js), which sends the number of browsers
 // connected whenever it changes. The id is random and kept in localStorage so that one person's tabs count
 // once. Without a live connection the count reports null rather than an old number, and it never touches
 // the OS. Keeping the socket up is livesocket.js.
 import {createLiveSocket} from './livesocket.js';
+import {ID,PONG} from './presence/RoomGlbls.js';
 
 export const PRESENCE_URL='wss://templeosweb-presence.parkerrhunt.workers.dev/';
-const ID_KEY='tos-presence-id',ID=/^[0-9a-f]{32}$/;
+const ID_KEY='tos-presence-id';
 
 export function browserId() {
   let id='';
@@ -23,7 +24,7 @@ export function createPresence(report,{url=PRESENCE_URL,id=browserId(),open}={})
     lost:()=>report(null),
     message(data) {
       const people=Number(data);
-      if(data!=='pong' && Number.isSafeInteger(people) && people>0)report(people);
+      if(data!==PONG && Number.isSafeInteger(people) && people>0)report(people);
     },
   });
   return {wake:socket.wake};

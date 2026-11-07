@@ -12,8 +12,9 @@ const ROOT=fileURLToPath(new URL(".",import.meta.url));
 //CDN when the build has written it). Docs, tools, Workers and build inputs
 //are not.
 const SERVED=new RegExp("^([^/]+\\.(html|js|css)|_headers|_redirects|"+
-  "chat/rules\\.js|(assets|build|editor|engine|fonts|games|vendor|"+
-  "holyc-wasm/src)/.+|(holyc-fmt|holycraft)/[^/]+\\.HC|hemu/[^/]+\\.gz)$");
+  "chat/rules\\.js|presence/RoomGlbls\\.js|"+
+  "(assets|build|editor|engine|fonts|games|vendor|holyc-wasm/src)/.+|"+
+  "(holyc-fmt|holycraft)/[^/]+\\.HC|hemu/[^/]+\\.gz)$");
 const NOT_SERVED=/\.(md|mjs|py|gif)$|(^|\/)package\.json$|templeos_orig/;
 const MIME={".html":"text/html; charset=UTF-8",
   ".js":"application/javascript; charset=UTF-8",

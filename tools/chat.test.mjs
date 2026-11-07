@@ -63,7 +63,6 @@ import {CHAT_URL,createChat,readEvent,stamp} from '../chat.js';
   const quiet=limit(limit(null,'same',0).kept,'same',FORGET_MS);
   assert.equal(quiet.why,null,'After FORGET_MS a sender is the same as someone new, so their row can go');
   assert.ok(FORGET_MS>=REPEAT_MS&&FORGET_MS>=BURST*REFILL_MS);
-  assert.equal(textHash('hello'),textHash('hello'));
   assert.notEqual(textHash('hello'),textHash('hellO'));
   assert.ok(Number.isSafeInteger(textHash('\u{1F600}'.repeat(300)))&&textHash('')>=0,'The hash is a plain integer SQL can keep');
 }

@@ -109,7 +109,7 @@ sprites and ffmpeg's wasm to `templeosweb-files`, a Cloudflare Worker over an R2
 pinned to the commits they came from. The Worker copies a pinned file in from raw GitHub on its first
 request, and the build HEADs every file first, so a bad pin or host fails the build instead of the
 site. Deploy the Worker with `cd cdn && npx wrangler deploy`; a new file or folder to offload goes
-in both `cdn/worker.js` (FILES, DIRS) and `tools/offload-redirects.mjs` (OWN).
+in `cdn/Offload.js`, which both the Worker (`cdn/Files.js`) and `tools/offload-redirects.mjs` read.
 
 "Visitors" in the top bar comes from `templeosweb-presence` (`presence/`), a separate Worker with one
 Durable Object. Each open page holds a WebSocket to it, the number goes out when it changes, and the
@@ -155,9 +155,9 @@ is served from localhost itself.
 | `tools/` | tests and dev scripts (run from this directory); `tools/hemu/` the emulator harnesses, `tools/snapshot/` the QEMU recipes that produce HEMU's boot snapshots |
 | `build/` | gitignored: `hemu.wasm`, `hemu-smp.wasm`, `hemu-smp.json`, compiled at deploy |
 | `vendor/` | committed binary assets: the TempleOS disk image, fonts |
-| `cdn/` | the Cloudflare Worker that serves the heavy files from R2 (`worker.js`, `wrangler.toml`) |
-| `presence/` | the Cloudflare Worker that counts the people on the site (`worker.js`, `wrangler.toml`) |
-| `chat/` | the Cloudflare Worker behind the Chat window (`worker.js`, `wrangler.toml`) and the rules it shares with the page (`rules.js`) |
+| `cdn/` | the Cloudflare Worker that serves the heavy files from R2 (`Files.js`, its list `Offload.js`, `wrangler.toml`) |
+| `presence/` | the Cloudflare Worker that counts the people on the site (`Room.js`, the room both Workers are built on, `wrangler.toml`), and `RoomGlbls.js`, what the rooms and the pages agree on |
+| `chat/` | the Cloudflare Worker behind the Chat window (`ChatRoom.js`, `wrangler.toml`) and the rules it shares with the page (`rules.js`) |
 | `holyc-wasm/`, `hemu/`, `holyc-fmt/`, `holycraft/` | the sibling repos, cloned here at build time (gitignored) |
 
 ## Running locally

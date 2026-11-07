@@ -4,3 +4,5 @@
 [build]
   command = "sh tools/NetlifyBuild.sh"
   publish = "Site"
+[build.environment]
+  NODE_VERSION = "26"   # the Workers' tests need 22.15 or later
