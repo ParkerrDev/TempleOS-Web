@@ -1,7 +1,7 @@
-# templeosweb-chat: the site's Chat window (see worker.js).
+# templeosweb-chat: the site's Chat window (see ChatRoom.js).
 # Moderation needs a secret: npx wrangler secret put ADMIN_TOKEN
 name = "templeosweb-chat"
-main = "worker.js"
+main = "ChatRoom.js"
 compatibility_date = "2026-10-01"
 workers_dev = true
 
