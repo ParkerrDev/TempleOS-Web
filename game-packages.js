@@ -22,10 +22,10 @@ export async function gameCatalog() {
   }).catch(e=>{catalogPromise=null;throw e;});
   return catalogPromise;
 }
-export async function installGame(id,writeFile,onStatus=()=>{},overrides=new Map()) {
+export async function installGame(id,writeFile,onStatus=()=>{},overrides=new Map(),osGen=()=>0) {
   const catalog=await gameCatalog(),pkg=catalog.packages.find(p=>p.id===id);
   if(!pkg)throw new Error('Game package not found: '+id);
-  const generation = globalThis.__osGeneration || 0;
+  const generation = osGen();
   const previous = installed.get(id);
   const fresh = previous?.generation !== generation;
   for(const path of overrides.keys())if(!pkg.files.some(f=>f.path===path&&/\.(HC|HH)$/i.test(path)))throw new Error('Edited file is not a game source: '+path);
@@ -41,7 +41,7 @@ export async function installGame(id,writeFile,onStatus=()=>{},overrides=new Map
   await Promise.all(Array.from({length:Math.min(8,need.length)},fetcher));
   if(files.length)installed.delete(id);
   for(let i=0;i<files.length;i++){
-    if ((globalThis.__osGeneration || 0) !== generation) throw new Error("OS restarted during installation.");
+    if (osGen() !== generation) throw new Error("OS restarted during installation.");
     onStatus(`Installing ${pkg.name}: ${i+1} / ${files.length}`);
     const r=await writeFile(files[i].path,files[i].bytes);
     if(!r?.ok)throw new Error(r?.msg||'The OS could not install '+files[i].path);

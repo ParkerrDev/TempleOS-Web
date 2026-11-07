@@ -13,8 +13,8 @@ class Node extends EventTarget{
 document.getElementById=id=>{if(!nodes.has(id))nodes.set(id,new Node(id));return nodes.get(id);};
 document.body={style:{overflow:'auto'}};
 document.exitFullscreen=()=>{document.fullscreenElement=null;document.dispatchEvent(new Event('fullscreenchange'));return Promise.resolve();};
-globalThis.document=document;globalThis.window={__holycEditor:{releaseMouse(){releases++;}},__winChrome:{raise(){}}};
-const views=setupGameViews(),node=id=>document.getElementById(id),click=id=>node(id).dispatchEvent(new Event('click'));
+globalThis.document=document;
+const views=setupGameViews({release(){releases++;},raise(){}}),node=id=>document.getElementById(id),click=id=>node(id).dispatchEvent(new Event('click'));
 for(const [button,target] of [['gameFullscreen','gameWin'],['editorFullscreen','editorWin'],['previewFullscreen','editorPreview']]){
   click(button);assert.equal(document.fullscreenElement,node(target));
   assert(node(target).classList.contains('view-fullscreen'));assert(views.isWithin(node(target)));
