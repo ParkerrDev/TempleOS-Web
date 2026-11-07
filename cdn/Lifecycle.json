@@ -1,0 +1,1 @@
+{"rules":[{"id":"expire-after-30-days","enabled":true,"conditions":{"prefix":""},"deleteObjectsTransition":{"condition":{"type":"Age","maxAge":2592000}}}]}

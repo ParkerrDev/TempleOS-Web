@@ -1,9 +1,13 @@
-# templeosweb-files: serves the site's heavy files from R2 (see worker.js).
+# templeosweb-files: serves the site's heavy files from R2 (see Files.js).
 name = "templeosweb-files"
-main = "worker.js"
+main = "Files.js"
 compatibility_date = "2026-10-01"
 workers_dev = true
 
+# The bucket drops an object 30 days after it is written, by the rule in
+# Lifecycle.json: npx wrangler r2 bucket lifecycle set templeosweb --file
+# Lifecycle.json applies it, and npx wrangler r2 bucket lifecycle list
+# templeosweb shows what the bucket has.
 [[r2_buckets]]
 binding = "FILES"
 bucket_name = "templeosweb"
