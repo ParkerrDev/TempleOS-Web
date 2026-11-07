@@ -13,6 +13,8 @@ TerryADavis-archive-transcriber/
 /build/
 # written by tools/offload-redirects.mjs during the Netlify build
 /_redirects
+# what Netlify publishes: node server.mjs Site
+/Site/
 package.json
 package-lock.json
 

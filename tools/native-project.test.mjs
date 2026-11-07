@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {compileNativeProject} from '../editor/project.js';
-import {createHost} from '../../holyc-wasm/src/runtime/host.js';
+import {createHost} from '../holyc-wasm/src/runtime/host.js';
 import {gameProject} from '../game-source.js';
 
 const entry='C:/Home/Test/Main.HC';

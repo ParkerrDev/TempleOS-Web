@@ -1,17 +1,6 @@
-# TempleOS-web assembles its sibling repos at BUILD TIME, so every deploy ships their
-# latest main - no submodule pins, no packages, no bots:
-#   holyc-wasm  → ./holyc-wasm   (the HolyC→WASM compiler + its browser runtime)
-#   hemu        → ./hemu         (the emulator: pure HolyC source + the booted-RAM snapshots)
-#   holyc-fmt   → ./holyc-fmt    (the HolyC formatter: HolyCFmt.HC, used by the Format button + /format.html)
-#   holycraft   → ./holycraft    (the HolyCraft game: HolyCraft.HC, played from the Games menu)
-# then engine/build.mjs compiles hemu/src into ./build (hemu.wasm, hemu-smp.wasm, hemu-smp.json) - no compiled artifact
-# is committed anywhere, so the engine and the JIT that reads its offsets always come from the same build.
-# (hemu-wasm is the pre-rename clone dir: Netlify's cached build directory keeps stale untracked dirs
-# between builds and publish = "." would ship them, so old names stay in this rm list.)
-# Last, tools/offload-redirects.mjs writes _redirects sending the heavy files (disk image, RAM snapshots, games,
-# Terry Search's shards, ffmpeg) to the R2-backed Worker in cdn/, pinned to commits, after checking each one answers.
-# To redeploy automatically when THOSE repos change, add a Netlify build hook
-# (Site settings → Build & deploy → Build hooks) as a push webhook on each repo.
+# Netlify runs tools/NetlifyBuild.sh: the sibling repos at the commits in
+# Siblings.txt, the fast tests, the engine and the CDN redirects. Only the
+# files the site serves are copied into Site/, which is published.
 [build]
-  command = "rm -rf holyc-wasm hemu hemu-wasm holyc-fmt holycraft build && git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm && git clone --depth 1 https://github.com/ParkerrDev/HEMU hemu && git clone --depth 1 https://github.com/ParkerrDev/HolyC-fmt holyc-fmt && git clone --depth 1 https://github.com/ParkerrDev/HolyCraft holycraft && node engine/build.mjs build && node tools/offload-redirects.mjs"
-  publish = "."
+  command = "sh tools/NetlifyBuild.sh"
+  publish = "Site"

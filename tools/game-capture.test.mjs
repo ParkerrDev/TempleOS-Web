@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import * as protocol from '../../holyc-wasm/src/runtime/protocol.js';
+import * as protocol from '../holyc-wasm/src/runtime/protocol.js';
 
 const nodes=new Map(),workers=[],windowEvents=new EventTarget();
 const document=new EventTarget();
