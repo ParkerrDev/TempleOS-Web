@@ -19,28 +19,50 @@ let paused = false;
 const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
 // JIT segment/TSC addresses now flow from the guest at runtime via __jit_seg (per-core CCpuState) - no hardcoded offsets to drift.
 
-const BLKDEV = 0xBC18;                       // CBlkDevGlbls in this snapshot (verified live: cache_ctrl@+48 is the LRU-ring sentinel)
-// Make a host-side disk write visible to the running OS: mark every cached block "unowned" (dv=NULL)
-// so the next guest read of any block MISSES the cache (DskCacheFind compares dv) and re-reads from
-// disk. We walk the LRU ring from cache_ctrl and touch ONLY dv@+32 - we do NOT rewrite the hash
-// chains, hash buckets, or LRU links, so the cache structure can't be corrupted (an earlier version
-// rebuilt those by hand and broke `Dir`/file reads). CCacheBlk: next_lru@0, ..., dv@32.
-function invalidateGuestCache(lbas) {
-  if (!instRef || !disk) return 0;
-  const want = (lbas && lbas.length) ? new Set(lbas) : null;   // a set of changed sectors -> refresh ONLY those; null -> all (importDisk)
-  const dvw = new DataView(instRef.exports.memory.buffer), cap = dvw.byteLength;
-  const rd = (a) => (a >= 0 && gBase + a + 8 <= cap) ? Number(dvw.getBigUint64(gBase + a, true)) : 0;
-  const clr = (a) => { if (a >= 0 && gBase + a + 8 <= cap) dvw.setBigUint64(gBase + a, 0n, true); };
-  const ctrl = rd(BLKDEV + 48);                            // cache_ctrl (LRU ring sentinel)
-  if (!ctrl) return 0;
-  let p = rd(ctrl), n = 0, cleared = 0; const sample = [];
-  while (p && p !== ctrl && n < (1 << 20)) {               // walk the LRU ring
-    const blk = rd(p + 40);                                // this block's disk block# (CCacheBlk.blk @ +40)
-    if (rd(p + 32) && sample.length < 8) sample.push(blk); // sample a few in-use blocks' block#s (diag)
-    if (!want || want.has(blk)) { clr(p + 32); cleared++; } // dv=NULL only on the sectors we changed
-    p = rd(p); n++;
+function GuestCacheInvalidate(lbas)
+{//Makes the guest read again the disk blocks a host-side write changed (all
+//of them when lbas is null). Each cached CCacheBlk of those blocks gets
+//dv=NULL, so DskCacheFind misses it and reads the disk. Only dv is
+//written: the hash chains and LRU links stay as the guest made them.
+  let want=null,dvw,cap,base,o_ctrl,o_next,o_dv,o_blk,ctrl,p,blk,n=0,
+	cleared=0,sample=[];
+  function Rd(a)
+  {
+    if (a>=0 && gBase+a+8<=cap)
+      return Number(dvw.getBigUint64(gBase+a,true));
+    return 0;
   }
-  if (want) console.log("[hemu] cacherefresh: changedLBAs=[" + [...want].slice(0, 6) + "] sampleCachedBlks=[" + sample + "] cleared=" + cleared + "/" + want.size);
+  if (!instRef || !disk || !gx)
+    return 0;
+  base=gx.varFind("blkdev");
+  o_ctrl=gx.memberFind("CBlkDevGlbls","cache_ctrl");
+  o_next=gx.memberFind("CCacheBlk","next_lru");
+  o_dv=gx.memberFind("CCacheBlk","dv");
+  o_blk=gx.memberFind("CCacheBlk","blk");
+  if (!base || o_ctrl<0 || o_next<0 || o_dv<0 || o_blk<0)
+    return 0;
+  if (lbas && lbas.length)
+    want=new Set(lbas);
+  dvw=new DataView(instRef.exports.memory.buffer);
+  cap=dvw.byteLength;
+  ctrl=Rd(base+o_ctrl);
+  if (!ctrl)
+    return 0;
+  p=Rd(ctrl+o_next);
+  while (p && p!=ctrl && n<0x100000) {
+    blk=Rd(p+o_blk);
+    if (Rd(p+o_dv) && sample.length<8)
+      sample.push(blk);
+    if ((!want || want.has(blk)) && gBase+p+o_dv+8<=cap) {
+      dvw.setBigUint64(gBase+p+o_dv,0n,true);
+      cleared++;
+    }
+    p=Rd(p+o_next);
+    n++;
+  }
+  if (want)
+    console.log("[hemu] cacherefresh: changedLBAs=["+[...want].slice(0,6)+
+	  "] sampleCachedBlks=["+sample+"] cleared="+cleared+"/"+want.size);
   return cleared;
 }
 
@@ -159,13 +181,13 @@ onmessage = (e) => {
   else if (m.cmd === "pause") { paused = m.value; postMessage({ cmd: "paused", value: paused }); }
   else if (m.cmd === "exportSnapshot") exportSnapshot();
   else if (m.cmd === "exportDisk") exportDisk();
-  else if (m.cmd === "importDisk") { try { disk = makeDisk(new Uint8Array(m.bytes)); invalidateGuestCache(); postMessage({ cmd: "diskInfo", ok: true, msg: "disk imported (" + (m.bytes.byteLength / 1048576).toFixed(0) + " MB)" }); } catch (err) { postMessage({ cmd: "diskInfo", ok: false, msg: String(err.message || err) }); } }
+  else if (m.cmd === "importDisk") { try { disk = makeDisk(new Uint8Array(m.bytes)); GuestCacheInvalidate(); postMessage({ cmd: "diskInfo", ok: true, msg: "disk imported (" + (m.bytes.byteLength / 1048576).toFixed(0) + " MB)" }); } catch (err) { postMessage({ cmd: "diskInfo", ok: false, msg: String(err.message || err) }); } }
   else if (m.cmd === "uploadFile") {
     try { if (!disk) throw new Error("disk not loaded yet - wait a moment after boot");
       const before = new Set(disk.overlay.keys());                       // which sectors are already overlaid
       const r = fat32Upload(disk, m.name, new Uint8Array(m.bytes), m.dir || "Home");
       const changed = []; for (const k of disk.overlay.keys()) if (!before.has(k)) changed.push(k);   // sectors this write touched
-      const cleared = invalidateGuestCache(changed);                     // refresh ONLY those in the guest cache
+      const cleared = GuestCacheInvalidate(changed);			 // refresh ONLY those in the guest cache
       postMessage({ cmd: "fileResult", id: m.id, ok: true, msg: `wrote ${m.name} to /${m.dir || "Home"} (${r.clusters} clusters; ${changed.length} sectors, ${cleared} cached refreshed)` });
     } catch (err) { postMessage({ cmd: "fileResult", id: m.id, ok: false, msg: String(err.message || err) }); }
   }

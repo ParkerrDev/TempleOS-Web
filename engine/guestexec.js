@@ -3,10 +3,10 @@
 // inside the emulated TempleOS with NO synthetic keystrokes and NO per-character TaskMsg injection.
 //
 // How it works (see src/guestcall.HC for the CPU-side primitive):
-//   1. probe(): resolve the kernel entry points we need (TaskExe, JobResScan, PopUp) and the globals
-//      (adam_task, sys_focus_task) by walking the running guest's OWN symbol hash tables (CTask.hash_table
-//      chains), and read the CTask / CJob / CJobCtrl member offsets from the guest's class metadata. Every
-//      address is validated (task signatures, function prologues, arg counts) before use.
+//   1. probe(): looks up the kernel entry points (TaskExe, JobResScan, PopUp), the globals
+//	(adam_task, sys_focus_task) and the CTask, CJob and CJobCtrl members by name, through HEMU's
+//	own lookup over the guest's hash tables (src/sym.HC). Every address is checked (task
+//	signatures, function prologues, arg counts) before use.
 //   2. A request becomes ONE TempleOS job: the source text is staged in the scratch window above the OS's
 //      RAM, and TaskExe(target, NULL, src, 0) is called through the injected-call primitive. TaskExe copies
 //      the text into Adam's heap and queues a JOBT_EXE_STR job; the TARGET task runs it itself from
@@ -18,36 +18,22 @@
 // Usage: const gx = createGuestExec({ inst, gBase, onEvent }); after the desktop settles: gx.probe();
 // then per emulated frame (between __main calls): gx.tick(); requests: gx.exec / include / launch /
 // writeFile / mkdir return an id; events arrive through onEvent({ id, op, state, ... }).
-export const RAM_SIZE = 402653184;
-export const GUEST_EXPORTS = ["GuestCallPost", "GuestCallTry", "GuestCallState", "GuestCallRes", "GuestCallAck", "GuestInfo"];
-
-const TASK_SIG = 0x536B7354;                       // 'TskS' (CTask.task_signature)
-const HTT = { EXPORT_SYS_SYM: 0x1, GLBL_VAR: 0x8, CLASS: 0x10, FUN: 0x40 };
-const HTG_TYPE_MASK = 0x1FFFF;
+const HEMU_CALLS=["GuestCallPost","GuestCallTry","GuestCallRes","GuestCallAck","GuestInfo",
+  "GuestFun","GuestArgCnt","GuestVar","GuestMember"];
+const TASK_SIG=0x536B7354;	//'TskS', CTask.task_signature
+//Flag bits from V5.03 Kernel/KernelA.HH.
 const JOBf = { DONE: 1 << 5, DISPATCHED: 1 << 6 };
 const TASKf = { IDLE: 1 << 3, CMD_LINE_PMT: 1 << 4, AWAITING_MSG: 1 << 9 };
-// Fixed layouts from KernelA.HH (CHash family + CMemberLst; stable across TempleOS 5.x). The CTask / CJob /
-// CJobCtrl offsets below are only BOOTSTRAP values: probe() re-reads them from the guest's class metadata.
-const CHASH = { next: 0, str: 8, type: 16 };
-const CHTBL = { next: 0, mask: 8, body: 24 };
-const CHEXPORT = { val: 64 };
-const CHFUN = { arg_cnt: 136, exe_addr: 152 };
-const CHGLBL = { data_addr: 120 };
-const CHCLASS = { size: 64, member_lst: 88 };
-// CMemberLst is PACKED (HolyC never pads). TempleOS V5.03 (the guest): use_cnt U32 @72, flags U16 @76, I8 reg,pad
-// @78..79, offset I64 @80, size @88 (verified from the live guest). Forks that add bf_offset/bf_size (TinkerOS)
-// shift offset/size to 82/90. probe() picks the reading under which CTask's addr/task_signature/task_flags land
-// at 0/8/24, so a wrong guess can never be used.
-const CMEMBER_LAYOUTS = [{ next: 0, str: 40, offset: 80, size: 88 }, { next: 0, str: 40, offset: 82, size: 90 }, { next: 0, str: 40, offset: 88, size: 96 }];
-let CMEMBER = CMEMBER_LAYOUTS[0];
-const CCPU = { seth_task: 56, idle_task: 64 };
-const CTASK_BOOT = { addr: 0, task_signature: 8, task_flags: 24, next_task: 128, task_name: 600, except_ch: 816, hash_table: 976, srv_ctrl: 984, popup_task: 1104 };
-const CJOB_BOOT = { ctrl: 16, job_code: 24, flags: 32, aux_str: 64, res: 88, master_task: 104 };
-const CJOBCTRL_BOOT = { next_waiting: 0, last_waiting: 8, next_done: 16, last_done: 24, flags: 32 };
-// Scratch window layout (offsets from the window base = RAM_SIZE): call args, request mailboxes, small
-// pointer slots, job source text, file payloads. The last 16 bytes hold the call sentinel (guestcall.HC).
-const SCR = { ARGS: 0x0000, MBOX: 0x0100, MBOX_N: 64, MBOX_SZ: 32, PTRS: 0x0900, TEXT: 0x10000, TEXT_SZ: 0xF0000, DATA: 0x100000 };
+// Scratch window layout (offsets from the window base = RAM_SIZE): call args, request mailboxes, the
+// two names of a lookup, job source text, file payloads. The last 16 bytes hold the call sentinel
+// (guestcall.HC).
+const SCR = { ARGS: 0x0000, MBOX: 0x0100, MBOX_N: 64, MBOX_SZ: 32, NAME: 0x0A00, MEMBER: 0x0A80, TEXT: 0x10000, TEXT_SZ: 0xF0000, DATA: 0x100000 };
+const NAME_LEN=128;
 const CALL_BUDGET = 8000000;                       // interpreter steps allowed for one injected call (TaskExe takes a few thousand)
+const TASK_MEMBERS=["addr","task_signature","task_flags","next_task","task_name","except_ch",
+  "hash_table","srv_ctrl","popup_task","win_inhibit","draw_it"];
+const JOB_MEMBERS=["ctrl","job_code","flags","aux_str","res","master_task"];
+const JOB_CTRL_MEMBERS=["next_waiting","last_waiting","next_done","last_done","flags"];
 
 const hex = (v) => "0x" + Number(v).toString(16);
 const cstr = (s) => s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');   // HolyC string-literal escaping
@@ -58,7 +44,7 @@ export function createGuestExec(opts) {
   const inst = opts.inst, gBase = opts.gBase | 0, ex = inst.exports;
   const log = opts.log || (() => {});
   const onEvent = opts.onEvent || (() => {});
-  for (const n of GUEST_EXPORTS) if (typeof ex[n] !== "function") throw new Error("hemu.wasm lacks export " + n + " (rebuild: node engine/build.mjs)");
+  for (const n of HEMU_CALLS) if (typeof ex[n] !== "function") throw new Error("hemu.wasm lacks export " + n + " (rebuild: node engine/build.mjs)");
   const memSize = Number(ex.GuestInfo(0n)), scrBase = Number(ex.GuestInfo(1n)), scrSize = Number(ex.GuestInfo(2n));
   const dataSize = Math.floor((scrSize - SCR.DATA - 256) / 512) * 512;       // payload area (leaves the sentinel alone)
   let bufRef = null, dv = null, u8 = null;
@@ -74,14 +60,45 @@ export function createGuestExec(opts) {
   const rdStr = (a, max = 96) => { let s = ""; for (let i = 0; i < max; i++) { const c = rd8(a + i); if (!c) break; s += String.fromCharCode(c); } return s; };
 
   const S = {}, G = {};                             // resolved functions / global variable addresses
-  const CT = { ...CTASK_BOOT }, CJ = { ...CJOB_BOOT }, CJC = { ...CJOBCTRL_BOOT }, INPUT = {}, DISPLAY = {};
-  let ready = false, probeResult = null, symbols = null;
+  const CT = {}, CJ = {}, CJC = {}, INPUT = {}, DISPLAY = {};
+  let ready = false, probeResult = null, seth_task = -1;
   const stats = { calls: 0, steps: 0, jobs: 0 };
 
   // ---------------------------------------------------------------- guest introspection
+  function NameStage(off,st)
+  {//st as a C string in the scratch window. Returns its address in the
+  //engine's memory, which is what HEMU's U8 * arguments hold.
+    let a=gBase+scrBase+off,i;
+    views();
+    for (i=0;i<st.length && i<NAME_LEN-1;i++)
+      u8[a+i]=st.charCodeAt(i)&0xFF;
+    u8[a+i]=0;
+    return BigInt(a);
+  }
+
+  function FunFind(st)
+  {//Where the guest's function st starts, 0 if it has none.
+    return Number(ex.GuestFun(NameStage(SCR.NAME,st)));
+  }
+
+  function ArgCntFind(st)
+  {//How many arguments the guest's function st takes, -1 if none.
+    return Number(ex.GuestArgCnt(NameStage(SCR.NAME,st)));
+  }
+
+  function VarFind(st)
+  {//Where the guest's global st lives, 0 if it has none.
+    return Number(ex.GuestVar(NameStage(SCR.NAME,st)));
+  }
+
+  function MemberFind(cls,st)
+  {//Offset of member st in the guest's class cls, -1 if it has none.
+    return Number(ex.GuestMember(NameStage(SCR.NAME,cls),NameStage(SCR.MEMBER,st)));
+  }
+
   function isTask(a) { return inRam(a) && rd64(a + CT.addr) === a && rd32(a + CT.task_signature) === TASK_SIG; }
   function taskRing() {
-    const gs = Number(ex.GuestInfo(4n)), seth = rd64(gs + CCPU.seth_task), out = [];
+    const gs = Number(ex.GuestInfo(4n)), seth = rd64(gs + seth_task), out = [];
     let t = seth, n = 0;
     while (isTask(t) && n < 64) { out.push(t); t = rd64(t + CT.next_task); n++; if (t === seth) break; }
     return out;
@@ -98,114 +115,116 @@ export function createGuestExec(opts) {
       awaitingMsg: !!(flags & TASKf.AWAITING_MSG), popup: popup ? { addr: popup, name: isTask(popup) ? rdStr(popup + CT.task_name, 32) : "?" } : null,
       jobsWaiting: waiting, jobsDone: done, exceptCh: i64str(rd64b(a + CT.except_ch)) };
   }
-  function hashTables() {                            // every distinct CHashTable reachable from the task ring (task -> adam -> kernel)
-    const seen = new Set(), tables = [];
-    const okTable = (t) => { if (!inRam(t)) return false; const mask = rd64(t + CHTBL.mask), body = rd64(t + CHTBL.body); return mask > 0 && mask < (1 << 22) && !((mask + 1) & mask) && inRam(body); };
-    const tasks = taskRing(); const fs = Number(ex.GuestInfo(3n)); if (isTask(fs) && !tasks.includes(fs)) tasks.push(fs);
-    for (const task of tasks) { let t = rd64(task + CT.hash_table), n = 0; while (okTable(t) && !seen.has(t) && n < 8) { seen.add(t); tables.push(t); t = rd64(t + CHTBL.next); n++; } }
-    return tables;
-  }
-  function scanSymbols(tables) {                     // name -> [{ addr, type, table }] for the types we care about
-    const map = new Map(); let total = 0;
-    for (const t of tables) {
-      const mask = rd64(t + CHTBL.mask), body = rd64(t + CHTBL.body);
-      for (let i = 0; i <= mask; i++) {
-        let e = rd64(body + i * 8), n = 0;
-        while (inRam(e) && n < 10000) {
-          const type = rd32(e + CHASH.type) & HTG_TYPE_MASK; total++;
-          if (type & (HTT.EXPORT_SYS_SYM | HTT.GLBL_VAR | HTT.CLASS | HTT.FUN)) { const name = rdStr(rd64(e + CHASH.str), 64); if (name) { if (!map.has(name)) map.set(name, []); map.get(name).push({ addr: e, type, table: t }); } }
-          e = rd64(e + CHASH.next); n++;
-        }
-      }
+
+  function FunResolve(name,argc,errors)
+  {//A function the probe needs: found by name, then checked for its
+  //argument count and its prologue (push rbp; mov rbp,rsp).
+    let a=FunFind(name),ac=ArgCntFind(name);
+    if (!a || !inRam(a) || a>=scrBase) {
+      errors.push(name+": not found in the guest symbol tables");
+      return 0;
     }
-    return { map, total };
+    if (argc>=0 && ac>=0 && ac!=argc) {
+      errors.push(name+": guest arg_cnt "+ac+" != expected "+argc);
+      return 0;
+    }
+    if (rd8(a)!=0x55 || rd8(a+1)!=0x48 || rd8(a+2)!=0x8B || rd8(a+3)!=0xEC) {
+      errors.push(name+" @"+hex(a)+": unexpected prologue "+
+	    rd8(a).toString(16)+" "+rd8(a+1).toString(16)+" "+
+	    rd8(a+2).toString(16)+" "+rd8(a+3).toString(16));
+      return 0;
+    }
+    log("sym "+name+" = "+hex(a));
+    return a;
   }
-  function classMembers(name) {                      // member name -> { offset, size } from the guest's own class metadata
-    const es = (symbols.map.get(name) || []).filter((e) => e.type & HTT.CLASS);
-    if (!es.length) return null;
-    const out = new Map(); let m = rd64(es[0].addr + CHCLASS.member_lst), n = 0;
-    while (inRam(m) && n < 4096) { const s = rdStr(rd64(m + CMEMBER.str), 64); if (s) out.set(s, { offset: rd64(m + CMEMBER.offset), size: rd64(m + CMEMBER.size) }); m = rd64(m + CMEMBER.next); n++; }
-    return { size: rd64(es[0].addr + CHCLASS.size), members: out };
+
+  function VarResolve(name,sys_name,errors)
+  {//A global the probe needs, by its name or its exported label.
+    let a=VarFind(name);
+    if (!inRam(a) && sys_name)
+      a=VarFind(sys_name);
+    if (!inRam(a)) {
+      errors.push(name+": not found in the guest symbol tables");
+      return 0;
+    }
+    log("var "+name+" @ "+hex(a)+" -> "+hex(rd64(a)));
+    return a;
   }
-  function resolveFun(name, argc, errors) {          // HTT_FUN exe_addr (with arg count check) or an EXPORT_SYS_SYM value; validated by prologue
-    const es = symbols.map.get(name) || []; let addr = 0, how = "";
-    for (const e of es) if (e.type & HTT.FUN) { const a = rd64(e.addr + CHFUN.exe_addr), ac = rd32(e.addr + CHFUN.arg_cnt); if (inRam(a) && a < RAM_SIZE) { if (argc >= 0 && ac !== argc) { errors.push(`${name}: guest arg_cnt ${ac} != expected ${argc}`); return 0; } addr = a; how = "HTT_FUN"; break; } }
-    if (!addr) for (const e of es) if (e.type & HTT.EXPORT_SYS_SYM) { const a = rd64(e.addr + CHEXPORT.val); if (inRam(a) && a < RAM_SIZE) { addr = a; how = "SYS_SYM"; break; } }
-    if (!addr) { errors.push(`${name}: not found in the guest symbol tables`); return 0; }
-    const b0 = rd8(addr), b1 = rd8(addr + 1), b2 = rd8(addr + 2), b3 = rd8(addr + 3);
-    if (!(b0 === 0x55 && b1 === 0x48 && b2 === 0x8B && b3 === 0xEC)) { errors.push(`${name} @${hex(addr)}: unexpected prologue ${[b0, b1, b2, b3].map((x) => x.toString(16)).join(" ")}`); return 0; }
-    log(`sym ${name} = ${hex(addr)} (${how})`);
-    return addr;
+
+  function MembersGet(dst,cls,names,errors)
+  {//Offsets of names in the guest's class cls into dst.
+    let i,o;
+    for (i=0;i<names.length;i++) {
+      o=MemberFind(cls,names[i]);
+      if (o<0)
+	errors.push("class member "+cls+"."+names[i]+" missing");
+      else
+	dst[names[i]]=o;
+    }
   }
-  function resolveVar(name, sysName, errors) {       // HTT_GLBL_VAR data_addr, else the EXPORT_SYS_SYM label value
-    const es = symbols.map.get(name) || []; let addr = 0;
-    for (const e of es) if (e.type & HTT.GLBL_VAR) { const a = rd64(e.addr + CHGLBL.data_addr); if (inRam(a)) { addr = a; break; } }
-    if (!addr && sysName) for (const e of (symbols.map.get(sysName) || [])) if (e.type & HTT.EXPORT_SYS_SYM) { const a = rd64(e.addr + CHEXPORT.val); if (inRam(a)) { addr = a; break; } }
-    if (!addr) errors.push(`${name}: not found in the guest symbol tables`);
-    else log(`var ${name} @ ${hex(addr)} -> ${hex(rd64(addr))}`);
-    return addr;
+
+  function MemberAddr(base,cls,st)
+  {//Address of member st of the guest's global at base, 0 if either is missing.
+    let o=MemberFind(cls,st);
+    if (!base || o<0)
+      return 0;
+    return base+o;
   }
-  function probe() {
-    const errors = [], warnings = [];
+
+  function Probe()
+  {//Finds what the requests need in this guest. Ready when nothing is missing.
+    let errors=[],warnings=[],adam;
     try {
-      const tables = hashTables();
-      if (!tables.length) { errors.push("no valid CHashTable reachable from the task ring"); return finishProbe(errors, warnings); }
-      symbols = scanSymbols(tables);
-      // exact struct offsets from the guest's class metadata (bootstrap values only got us this far)
-      let ct = null;
-      for (const lay of CMEMBER_LAYOUTS) {           // pick the CMemberLst reading that makes CTask's first members land where they must
-        CMEMBER = lay; const c = classMembers("CTask");
-        if (c && c.members.get("addr") && c.members.get("addr").offset === 0 && c.members.get("task_signature") && c.members.get("task_signature").offset === 8 && c.members.get("task_flags") && c.members.get("task_flags").offset === 24) { ct = c; break; }
-      }
-      const cj = ct && classMembers("CJob"), cjc = ct && classMembers("CJobCtrl");
-      if (!ct || !cj || !cjc) { errors.push("class metadata for CTask/CJob/CJobCtrl not found or not readable"); return finishProbe(errors, warnings); }
-      const take = (dst, meta, names) => { for (const n of names) { const m = meta.members.get(n); if (!m) { errors.push(`class member ${n} missing`); continue; } if (dst[n] !== undefined && dst[n] !== m.offset) warnings.push(`offset ${n}: bootstrap ${dst[n]} -> guest ${m.offset}`); dst[n] = m.offset; } };
-      take(CT, ct, ["addr", "task_signature", "task_flags", "next_task", "task_name", "except_ch", "hash_table", "srv_ctrl", "popup_task"]);
-      take(CJ, cj, ["ctrl", "job_code", "flags", "aux_str", "res", "master_task"]);
-      take(CJC, cjc, ["next_waiting", "last_waiting", "next_done", "last_done", "flags"]);
-      if (warnings.length) { symbols = scanSymbols(hashTables()); }   // hash_table offset moved: rescan with the exact layout
-      S.TaskExe = resolveFun("TaskExe", 4, errors);
-      S.JobResScan = resolveFun("JobResScan", 2, errors);
-      S.PopUp = resolveFun("PopUp", 3, errors);
-      G.adam_task = resolveVar("adam_task", "ADAM_TASK", errors);
-      G.sys_focus_task = resolveVar("sys_focus_task", "SYS_FOCUS_TASK", errors);
-      // Resolve input from this snapshot's own symbols; SMP snapshots need not use
-      // the single-core image's fixed addresses.
-      G.kbd = resolveVar("kbd", "KBD", warnings);
-      G.ms = resolveVar("ms", "MS", warnings);
-      // Read the same FPS value the guest prints, using this snapshot's layout.
-      // Resolve once during the existing probe; sampling needs only two loads.
-      G.winmgr = resolveVar("winmgr", "WINMGR", warnings);
-      const display = classMembers("CWinMgrGlbls");
-      for (const name of ["fps", "updates"]) {
-        delete DISPLAY[name];
-        const member = display?.members.get(name);
-        if (G.winmgr && member?.size === 8 && member.offset >= 0 && member.offset + 8 <= display.size && inRam(G.winmgr + member.offset)) DISPLAY[name] = G.winmgr + member.offset;
-      }
-      const kb = classMembers("CKbdStateGlbls"), mouse = classMembers("CMsStateGlbls");
-      if (G.kbd && kb?.members.get("down_bitmap")?.size === 32) INPUT.down = G.kbd + kb.members.get("down_bitmap").offset;
-      for (const name of ["pos", "lb", "rb", "show"]) {
-        const member = mouse?.members.get(name);
-        if (G.ms && member) INPUT[name] = G.ms + member.offset;
-      }
-      for (const name of ["win_inhibit", "draw_it"]) {
-        const member = ct.members.get(name); if (member) CT[name] = member.offset;
-      }
-      // the OS's own "focus my window" call, used by launch({focus:true}) from inside the target task:
-      // WinFocus(task=NULL) on TempleOS V5.03, SetSysFocusTask(task=Fs) on TinkerOS. Optional.
-      S.focusFn = ["WinFocus", "SetSysFocusTask"].find((n) => (symbols.map.get(n) || []).some((e) => e.type & (HTT.FUN | HTT.EXPORT_SYS_SYM))) || "";
-      if (!S.focusFn) warnings.push("no WinFocus/SetSysFocusTask symbol: launch({focus:true}) will not refocus");
-      if (G.adam_task && !isTask(rd64(G.adam_task))) errors.push("adam_task does not point at a valid CTask");
-      if (G.sys_focus_task && !isTask(rd64(G.sys_focus_task))) errors.push("sys_focus_task does not point at a valid CTask");
-      if (G.adam_task && isTask(rd64(G.adam_task)) && rdStr(rd64(G.adam_task) + CT.task_name, 32) !== "Adam") warnings.push("adam_task name is not 'Adam'");
-    } catch (e) { errors.push("probe exception: " + (e && e.message || e)); }
-    return finishProbe(errors, warnings);
+      MembersGet(CT,"CTask",TASK_MEMBERS,errors);
+      MembersGet(CJ,"CJob",JOB_MEMBERS,errors);
+      MembersGet(CJC,"CJobCtrl",JOB_CTRL_MEMBERS,errors);
+      seth_task=MemberFind("CCPU","seth_task");
+      if (seth_task<0)
+	errors.push("class member CCPU.seth_task missing");
+      if (errors.length)
+	return finishProbe(errors,warnings);
+      S.TaskExe=FunResolve("TaskExe",4,errors);
+      S.JobResScan=FunResolve("JobResScan",2,errors);
+      S.PopUp=FunResolve("PopUp",3,errors);
+      G.adam_task=VarResolve("adam_task","ADAM_TASK",errors);
+      G.sys_focus_task=VarResolve("sys_focus_task","SYS_FOCUS_TASK",errors);
+      G.kbd=VarResolve("kbd","KBD",warnings);
+      G.ms=VarResolve("ms","MS",warnings);
+      G.winmgr=VarResolve("winmgr","WINMGR",warnings);
+      DISPLAY.fps=MemberAddr(G.winmgr,"CWinMgrGlbls","fps");
+      DISPLAY.updates=MemberAddr(G.winmgr,"CWinMgrGlbls","updates");
+      INPUT.down=MemberAddr(G.kbd,"CKbdStateGlbls","down_bitmap");
+      INPUT.pos=MemberAddr(G.ms,"CMsStateGlbls","pos");
+      INPUT.lb=MemberAddr(G.ms,"CMsStateGlbls","lb");
+      INPUT.rb=MemberAddr(G.ms,"CMsStateGlbls","rb");
+      INPUT.show=MemberAddr(G.ms,"CMsStateGlbls","show");
+      //The OS's own "focus my window" call, for launch({focus:true}) from
+      //the target task: WinFocus on V5.03, SetSysFocusTask on TinkerOS.
+      S.focusFn="";
+      if (FunFind("WinFocus"))
+	S.focusFn="WinFocus";
+      else if (FunFind("SetSysFocusTask"))
+	S.focusFn="SetSysFocusTask";
+      else
+	warnings.push("no WinFocus/SetSysFocusTask symbol: launch({focus:true}) will not refocus");
+      adam=rd64(G.adam_task);
+      if (G.adam_task && !isTask(adam))
+	errors.push("adam_task does not point at a valid CTask");
+      if (G.sys_focus_task && !isTask(rd64(G.sys_focus_task)))
+	errors.push("sys_focus_task does not point at a valid CTask");
+      if (G.adam_task && isTask(adam) && rdStr(adam+CT.task_name,32)!="Adam")
+	warnings.push("adam_task name is not 'Adam'");
+    } catch (e) {
+      errors.push("probe exception: "+(e && e.message || e));
+    }
+    return finishProbe(errors,warnings);
   }
+
   function finishProbe(errors, warnings) {
     ready = errors.length === 0;
     probeResult = { ok: ready, errors, warnings, syms: { TaskExe: S.TaskExe, JobResScan: S.JobResScan, PopUp: S.PopUp }, focusFn: S.focusFn || "", vars: { ...G }, offsets: { CTask: { ...CT }, CJob: { ...CJ }, CJobCtrl: { ...CJC } },
       tasks: ready ? taskRing().map((a) => { const i = taskInfo(a); return { addr: hex(a), name: i.name, idle: i.idle, atPrompt: i.atPrompt, popup: i.popup && i.popup.name }; }) : [],
-      symbolCount: symbols ? symbols.total : 0, scratch: { base: scrBase, size: scrSize, dataSize } };
+      scratch: { base: scrBase, size: scrSize, dataSize } };
     if (ready) pumpCalls();
     return probeResult;
   }
@@ -439,7 +458,7 @@ export function createGuestExec(opts) {
     const fps = dv.getFloat64(gBase + DISPLAY.fps, true), updates = dv.getBigUint64(gBase + DISPLAY.updates, true);
     return Number.isFinite(fps) && fps >= 0 && fps <= 10000 ? {fps, updates: Number(updates)} : null;
   }
-  const symbolNames = (re) => symbols ? [...symbols.map.entries()].filter(([n]) => re.test(n)).map(([n, es]) => n + ":" + es.map((e) => "0x" + e.type.toString(16)).join("/")) : [];
-  return { probe, tick, info, inputState, frameStats, taskInfo, taskRing, exec, include, launch, writeFile, mkdir, popup, call, symbolNames, status: (id) => (reqs.get(id) || {}).last || null,
+  return { probe: Probe, tick, info, inputState, frameStats, taskInfo, taskRing, exec, include, launch, writeFile, mkdir, popup, call, status: (id) => (reqs.get(id) || {}).last || null,
+    funFind: FunFind, varFind: VarFind, memberFind: MemberFind,
     get ready() { return ready; }, syms: S, vars: G, offsets: { CT, CJ, CJC }, scratch: { base: scrBase, size: scrSize, data: scrBase + SCR.DATA, dataSize, text: scrBase + SCR.TEXT }, rd64, rd8, rdBytes, rdStr, wrBytes, wr64 };
 }

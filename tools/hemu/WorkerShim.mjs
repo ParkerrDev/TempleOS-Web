@@ -1,14 +1,9 @@
 //Runs one engine worker file in a Node worker thread the way a browser runs it.
 //Each frame message leaves with a probe: the guest's jiffies, refresh count
-//and fps, read by this file's own walk of the guest's hash table.
+//and fps, found by name through the engine's own lookup (HEMU's sym.HC).
 import {parentPort,workerData} from "node:worker_threads";
 import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
-
-const TASK_SIG=0x536B7354;
-const HTT_EXPORT_SYS_SYM=1;
-const HTT_GLBL_VAR=8;
-const HTT_CLASS=0x10;
 
 let inst=null,ex=null,g_base=0,work_ms=0,mains=0,syms=null,probe_tries=0;
 
@@ -22,96 +17,33 @@ function U64(dv,a)
   return Number(dv.getBigUint64(g_base+a,true));
 }
 
-function StrRd(dv,a)
-{
-  let s="",c,i;
-  for (i=0;i<64;i++) {
-    c=dv.getUint8(g_base+a+i);
-    if (!c)
-      break;
-    s+=String.fromCharCode(c);
-  }
-  return s;
+function NameStage(off,st)
+{//st as a C string in the guest's scratch window, for HEMU's lookups.
+  let u8=new Uint8Array(ex.memory.buffer),
+	a=g_base+Number(ex.GuestInfo(1n))+off,i;
+  for (i=0;i<st.length;i++)
+    u8[a+i]=st.charCodeAt(i);
+  u8[a+i]=0;
+  return BigInt(a);
 }
 
-function AdamFind(dv)
-{//Seeds from V5.03 KernelA.HH: CTask addr 0, task_signature 8, task_name 600.
-  let a,ram=402653184-1024;
-  for (a=0x1000;a<ram;a+=8)
-    if (dv.getUint32(g_base+a+8,true)==TASK_SIG && U64(dv,a)==a &&
-	  StrRd(dv,a+600).startsWith("Adam"))
-      return a;
-  return 0;
+function VarMemberAddr(v,cls,member)
+{//Address of a member of the guest's global v, 0 if either is missing.
+  let base=Number(ex.GuestVar(NameStage(0xA00,v))),
+	o=Number(ex.GuestMember(NameStage(0xA00,cls),NameStage(0xA80,member)));
+  if (!base || o<0)
+    return 0;
+  return base+o;
 }
 
-function SymsRd(dv)
-{//Name to entries over Adam's table: CHashTable mask 8 body 24, CHash next 0 str 8 type 16.
-  let adam=AdamFind(dv),tbl,mask,body,i,e,n,type,name,map=new Map();
-  if (!adam)
+function ProbeInit()
+{//Where the guest keeps its jiffies, refresh count and fps, by name.
+  let res={jiffies:VarMemberAddr("cnts","CCntsGlbls","jiffies"),
+	updates:VarMemberAddr("winmgr","CWinMgrGlbls","updates"),
+	fps:VarMemberAddr("winmgr","CWinMgrGlbls","fps")};
+  if (!res.jiffies || !res.updates || !res.fps)
     return null;
-  tbl=U64(dv,adam+976);
-  while (tbl) {
-    mask=U64(dv,tbl+8);
-    body=U64(dv,tbl+24);
-    for (i=0;i<=mask;i++) {
-      e=U64(dv,body+i*8);
-      n=0;
-      while (e && n<10000) {
-	type=dv.getUint32(g_base+e+16,true);
-	name=StrRd(dv,U64(dv,e+8));
-	if (!map.has(name))
-	  map.set(name,[]);
-	map.get(name).push({addr:e,type:type});
-	e=U64(dv,e);
-	n++;
-      }
-    }
-    tbl=U64(dv,tbl);
-  }
-  return map;
-}
-
-function VarAddr(dv,map,name)
-{//CHashGlblVar data_addr 120, CHashExport val 64.
-  let lst=map.get(name)||[],i;
-  for (i=0;i<lst.length;i++) {
-    if (lst[i].type&HTT_GLBL_VAR)
-      return U64(dv,lst[i].addr+120);
-    if (lst[i].type&HTT_EXPORT_SYS_SYM)
-      return U64(dv,lst[i].addr+64);
-  }
-  return 0;
-}
-
-function MemberOff(dv,map,cls,member)
-{//CHashClass member_lst 88, CMemberLst next 0 str 40 offset 80.
-  let lst=map.get(cls)||[],i,m,n;
-  for (i=0;i<lst.length;i++)
-    if (lst[i].type&HTT_CLASS) {
-      m=U64(dv,lst[i].addr+88);
-      n=0;
-      while (m && n<4096) {
-	if (StrRd(dv,U64(dv,m+40))==member)
-	  return U64(dv,m+80);
-	m=U64(dv,m);
-	n++;
-      }
-    }
-  return -1;
-}
-
-function ProbeInit(dv)
-{
-  let map=SymsRd(dv),cnts,winmgr;
-  if (!map)
-    return null;
-  cnts=VarAddr(dv,map,"cnts");
-  winmgr=VarAddr(dv,map,"winmgr");
-  if (!cnts || !winmgr)
-    return null;
-  return {jiffies:cnts+MemberOff(dv,map,"CCntsGlbls","jiffies"),
-	updates:winmgr+MemberOff(dv,map,"CWinMgrGlbls","updates"),
-	fps:winmgr+MemberOff(dv,map,"CWinMgrGlbls","fps")};
+  return res;
 }
 
 function ProbeRd()
@@ -119,7 +51,7 @@ function ProbeRd()
   let dv=MemDv();
   if (!syms && probe_tries<20 && g_base) {
     probe_tries++;
-    syms=ProbeInit(dv);
+    syms=ProbeInit();
   }
   if (!syms)
     return {t:performance.now(),work:work_ms,mains:mains};

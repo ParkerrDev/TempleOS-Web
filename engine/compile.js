@@ -10,12 +10,15 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileHolyC } from "../holyc-wasm/src/compiler.js";
-import { GUEST_EXPORTS } from "./guestexec.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 export const HEMU_SRC = process.env.HEMU_SRC ? resolve(process.env.HEMU_SRC) : resolve(here, "../hemu/src");
 export const SITE_DIR = process.env.SITE ? resolve(process.env.SITE) : resolve(here, "..");
 export const JIT_EXPORTS = ["RdMem", "WrMem", "Step", "RasterHLE"];
+//What engine/guestexec.js and the workers call: injected guest calls, the
+//guest's names (sym.HC), and an application core's attach and run.
+export const GUEST_EXPORTS = ["GuestCallPost", "GuestCallTry", "GuestCallState", "GuestCallRes", "GuestCallAck", "GuestInfo",
+  "GuestFun", "GuestArgCnt", "GuestVar", "GuestMember", "RamBase", "CoreAttach"];
 export const HEMU_EXPORTS = [...JIT_EXPORTS, ...GUEST_EXPORTS];
 
 export function hemuFile(name) { return readFileSync(resolve(HEMU_SRC, name), "latin1"); }
