@@ -469,6 +469,11 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
       i32c(f,n);f.return_();
     f.end();FLAGPEND=pending;sideExit=true;
   }
+  function stackOperand(delta=0,reg=4,span=1) {
+    rdReg(f,reg,8,true);
+    if(delta){i64c(f,delta);f.op("i64_add");}
+    f.local_set(3);ramOperand(span);
+  }
   function forwardBranch(cc,tgt,fall) {
     if(topExit||tgt<=fall||segments.length>=8)return false;
     sideExit=true;
@@ -552,20 +557,29 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
           deferPartialFlags(f,g=>incFlags(g,sz,ext)); handled = true;
         } else if (op === 0xFF && (ext === 2 || ext === 4)) {                // call/jmp r/m (indirect)
           materialize(f);                                                    // block exit -> flush deferred flags
-          if (m.isMem) emitEA(f, m, j - GBASE);
-          if (ext === 2) { /* call: push next rip */ rspAdj(f, -8); // rsp-=8
-            spAddr(f); i64c(f, j - GBASE); f.store("i64_store", 0, 3); }
-          rdRM(f, m, 8, true);                                              // target on stack -> block return
+          if(ext===2)stackOperand(-8);
+          if(m.isMem)emitEA(f,m,j-GBASE);
+          rdRM(f,m,8,true);f.local_set(0);
+          if(ext===2) {
+            rspAdj(f,-8);spAddr(f);i64c(f,j-GBASE);f.store("i64_store",0,3);
+          }
+          f.local_get(0);
           term = true; n++; i = j; break;
-        } else if (op === 0xFF && ext === 6) {                              // PUSH r/m (always 8 bytes; cpu.HC RdRM(8))
-          if (m.isMem) emitEA(f, m, j - GBASE); rdRM(f, m, 8, true); f.local_set(0); rspAdj(f, -8); spAddr(f); f.local_get(0); f.store("i64_store", 0, 3); handled = true;
+        } else if(op===0xFF&&ext===6) {
+          const width=szV===2?2:8;stackOperand(-width);
+          if(m.isMem)emitEA(f,m,j-GBASE);
+          rdRM(f,m,width,true);f.local_set(0);rspAdj(f,-width);
+          spAddr(f);f.local_get(0);f.store(width===2?"i64_store16":"i64_store",0,width===2?1:3);handled=true;
         } else break;
       } else if (op >= 0x50 && op <= 0x57) {                                 // push reg
-        const r = (op & 7) | (rexB << 3);
-        rspAdj(f, -8);    // rsp -= 8
-        spAddr(f); rdReg(f, r, 8, true); f.store("i64_store", 0, 3); handled = true;
+        const r=(op&7)|(rexB<<3),width=szV===2?2:8;
+        stackOperand(-width);rdReg(f,r,width,true);f.local_set(0);
+        rspAdj(f,-width);spAddr(f);f.local_get(0);
+        f.store(width===2?"i64_store16":"i64_store",0,width===2?1:3);handled=true;
       } else if (op >= 0x58 && op <= 0x5F) {                                 // pop reg
-        const r = (op & 7) | (rexB << 3); wrReg(f, r, 8, true, () => { spAddr(f); f.load("i64_load", 0, 3); }); rspAdj(f, 8); handled = true;
+        const r=(op&7)|(rexB<<3),width=szV===2?2:8;
+        stackOperand();spAddr(f);f.load(width===2?"i64_load16_u":"i64_load",0,width===2?1:3);
+        f.local_set(0);rspAdj(f,width);wrReg(f,r,width,true,()=>f.local_get(0));handled=true;
       } else if (op === 0x63) {                                              // movsxd r64, r/m32
         const m = decodeModRM(j, rexR, rexX, rexB); j = m.j; if (m.isMem) emitEA(f, m, j - GBASE); wrReg(f, m.reg, 8, rex, () => { rdRM(f, m, 4, rex); f.op("i64_extend32_s"); }); handled = true;
       } else if (op >= 0x70 && op <= 0x7F) {                                 // jcc rel8
@@ -585,36 +599,44 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
         materialize(f);if(!topLoop)i64c(f,tgt);term=true;n++;i=j;break;
       } else if (op === 0xE8) {                                              // call rel32
         const tgt = (j + 4 - GBASE) + imm32s(j); j += 4; materialize(f);
-        rspAdj(f, -8);    // rsp -= 8
+        stackOperand(-8);rspAdj(f,-8);
         spAddr(f); i64c(f, j - GBASE); f.store("i64_store", 0, 3); i64c(f, tgt); term = true; n++; i = j; break;
       } else if (op === 0xC3) {                                              // ret
-        materialize(f); spAddr(f); f.load("i64_load", 0, 3);
-        rspAdj(f, 8);    // rsp += 8
+        materialize(f);stackOperand();spAddr(f);f.load("i64_load",0,3);
+        rspAdj(f,8);
         term = true; n++; i = j; break;
       } else if (op === 0xC2) {                                              // ret imm16
-        const k = U8[j] | (U8[j + 1] << 8); j += 2; materialize(f); spAddr(f); f.load("i64_load", 0, 3); rspAdj(f, 8 + k); term = true; n++; i = j; break;
-      } else if (op === 0xC9) {                                              // leave: rsp=rbp; rbp=[rsp]; rsp+=8
-        wrReg(f, 4, 8, true, () => rdReg(f, 5, 8, true)); wrReg(f, 5, 8, true, () => { spAddr(f); f.load("i64_load", 0, 3); }); rspAdj(f, 8); handled = true;
-      } else if (op === 0x68 || op === 0x6A) {                               // push imm (sign-extended to 64)
-        const v = op === 0x6A ? imm8s(j) : imm32s(j); j += op === 0x6A ? 1 : 4;
-        rspAdj(f, -8);   // rsp -= 8
-        spAddr(f); i64c(f, v); f.store("i64_store", 0, 3); handled = true;
+        const k = U8[j] | (U8[j + 1] << 8); j += 2;materialize(f);stackOperand();spAddr(f);f.load("i64_load",0,3);rspAdj(f,8+k); term = true; n++; i = j; break;
+      } else if(op===0xC9) {
+        const width=szV===2?2:8;stackOperand(0,5);
+        wrReg(f,4,8,true,()=>rdReg(f,5,8,true));spAddr(f);
+        f.load(width===2?"i64_load16_u":"i64_load",0,width===2?1:3);f.local_set(0);
+        rspAdj(f,width);wrReg(f,5,width,true,()=>f.local_get(0));handled=true;
+      } else if(op===0x68||op===0x6A) {
+        const width=szV===2?2:8,v=op===0x6A?imm8s(j):immSz(j,width);
+        j+=op===0x6A?1:immLen(width);stackOperand(-width);rspAdj(f,-width);
+        spAddr(f);i64c(f,v);f.store(width===2?"i64_store16":"i64_store",0,width===2?1:3);handled=true;
       } else if (op === 0x9C) {                                              // PUSHFQ: rsp-=8; [rsp]=rfl
-        materialize(f); rspAdj(f, -8); spAddr(f); i32c(f, RFL); ld64(f); f.store("i64_store", 0, 3); handled = true;
+        materialize(f);stackOperand(-8);rspAdj(f,-8);spAddr(f);i32c(f,RFL); ld64(f); f.store("i64_store", 0, 3); handled = true;
       } else if (op === 0x9D) {                                              // POPFQ: rfl = ([rsp] & ~0x10000) | 2; rsp+=8
-        FLAGPEND = null; i32c(f, RFL); spAddr(f); f.load("i64_load", 0, 3); i64c(f, ~0x10000); f.op("i64_and"); i64c(f, 2); f.op("i64_or"); st64(f); rspAdj(f, 8);
+        stackOperand();FLAGPEND=null;i32c(f,RFL);spAddr(f); f.load("i64_load", 0, 3); i64c(f, ~0x10000); f.op("i64_and"); i64c(f, 2); f.op("i64_or"); st64(f); rspAdj(f, 8);
         i64c(f, j - GBASE); ifbrk = term = true; n++; i = j; break;          // POPF can set IF -> end the block + mark the IF window (PUSHFD/CLI/.../POPFD critical-section exits)
       } else if (op === 0xCF) {                                              // IRETQ (cpu.HC DoIret): rip=[rsp]; rfl=[rsp+16]; rsp=[rsp+24]
         // g_cs/g_ss ([rsp+8]/[rsp+32]) intentionally skipped: TempleOS runs one flat 64-bit CS/SS forever,
         // so the cpu.HC globals already hold the only values that ever round-trip through an IRET frame.
-        FLAGPEND = null;                                                     // rfl is overwritten wholesale (like POPF) - discard deferred flags
+        stackOperand(0,4,40);FLAGPEND=null;
         i32c(f, RFL); spAddr(f); f.load("i64_load", 16, 3); st64(f);         // rfl = [rsp+16] (raw, matches DoIret)
         spAddr(f); f.load("i64_load", 0, 3); f.local_set(0);                 // new rip
         spAddr(f); f.load("i64_load", 24, 3); f.local_set(1);                // new rsp (load BEFORE rsp changes)
         wrReg(f, 4, 8, true, () => f.local_get(1));
         f.local_get(0); ifbrk = term = true; n++; i = j; break;              // IRET can restore IF=1 -> IF-window flag; keeps context switches native (was an interp punt)
-      } else if (op === 0x8F) {                                             // POP r/m64: v=[rsp]; rsp+=8; r/m=v (ea uses OLD rsp)
-        const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; if (mm.isMem) emitEA(f, mm, j - GBASE); spAddr(f); f.load("i64_load", 0, 3); f.local_set(0); rspAdj(f, 8); wrRM(f, mm, 8, true, () => f.local_get(0)); handled = true;
+      } else if(op===0x8F) {
+        const mm=decodeModRM(j,rexR,rexX,rexB),width=szV===2?2:8;j=mm.j;
+        if(mm.reg&7)break;
+        stackOperand();spAddr(f);f.load(width===2?"i64_load16_u":"i64_load",0,width===2?1:3);
+        f.local_set(0);rspAdj(f,width);
+        if(mm.isMem)emitEA(f,mm,j-GBASE);
+        wrRM(f,mm,width,true,()=>f.local_get(0));handled=true;
       } else if (op === 0x69 || op === 0x6B) {
         const mm=decodeModRM(j,rexR,rexX,rexB);j=mm.j;
         const value=op===0x6B?imm8s(j):immSz(j,szV);j+=op===0x6B?1:immLen(szV);

@@ -112,6 +112,23 @@ once through the memory module. FX save/restore also checks the complete
 512-byte span. The prior JIT traps on a device FLD; the regression requires no
 speculative host callback and compares registers, flags, FP/XMM state and bytes.
 
+`stack.test.mjs` compares 88 interpreter/JIT states with 44 source-hashed
+physical x86-64 results. The witnesses cover old-SP push sources, post-increment
+POP destinations, RSP versus R12/indexed/RIP-relative addresses, indirect CALL
+targets overlapping the pushed return address, return adjustments, and 16-bit
+PUSH/POP/LEAVE with REX.W overrides and extended-register opcodes. Every register, defined flag, target and
+640 neighboring bytes must agree. The same hardware vectors run through the
+original V5.03 compiler in `cpu-native.mjs`; `--record` refreshes the separate
+physical fixture in `stack.test.mjs` on Linux x86-64.
+
+`jit-stack-memory.test.mjs` checks 1,086 implicit stack/device states, including
+693 exact-prefix fallbacks, plus 28 reserved POP refusals. Non-RAM stack access
+exits before register changes or explicit-operand reads, so a resumed Step
+performs device effects once. CALL/RET, LEAVE, flag stack operations and the
+existing flat IRET frame are covered, including dirty cached SP/FPU state.
+This does not establish privilege transitions, stack/page-fault delivery,
+address-size overrides, 16-bit flag-stack semantics or a complete IRET model.
+
 `dev-native.mjs` runs the extracted port devices, clock and keyboard source
 through original V5.03 and the current WASM compiler: 519 output records cover
 PIC selection/EOI, CMOS, PS/2 replies, speaker/DAC, ATA transfers and reset.
@@ -126,7 +143,7 @@ entire interpreter, its instruction battery and sampled hardware arithmetic
 vectors. The native host
 adapter provides a core ID, serialized atomics and explicit headless callbacks;
 it supplies neither a desktop, disk nor native JIT. The same 31 battery checks
-and 707 multiply/divide plus 861 split-field atomic assertions execute with zero badops in both builds;
+and 707 multiply/divide, 3,829 stack and 861 split-field atomic assertions execute with zero badops in both builds;
 instruction totals cover the battery and exclude HLT time budgets. Use
 `HOLYC_QEMU_ORACLE=/path/to/tests/oracle/Qemu.mjs node tools/hemu/cpu-native.mjs --record`
 to refresh this evidence after interpreter changes. This is a bounded native

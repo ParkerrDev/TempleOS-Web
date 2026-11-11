@@ -7,7 +7,7 @@ import {createHemuHost} from "../../engine/host.js";
 const adapter=readFileSync(new URL("./CpuNativeHost.HC",import.meta.url),"latin1"),
   expand=source=>source.replace(/#include "([^"]+)"/g,(_,name)=>
     name==="host.HC"?adapter:expand(hemuFile(name))),
-  source=expand(hemuFile("test.HC"))+muldivSource()+atomSource(),
+  source=expand(hemuFile("test.HC"))+muldivSource()+atomSource()+stackSource(),
   hash=createHash("sha256").update(Buffer.from(source,"latin1")).digest("hex"),
   file=new URL("./cpu-native.json",import.meta.url);
 if(process.argv.includes("--record")) {
@@ -22,14 +22,14 @@ if(process.argv.includes("--record")) {
 }
 const expected=JSON.parse(readFileSync(file,"utf8"));
 assert.equal(hash,expected.sourceHash,"rerun original V5.03 after changing the interpreter or its native fixture");
-const compiled=compileHemu({filename:"test.HC",extraSource:muldivSource()+atomSource()});assert.deepEqual(compiled.warnings,[]);
+const compiled=compileHemu({filename:"test.HC",extraSource:muldivSource()+atomSource()+stackSource()});assert.deepEqual(compiled.warnings,[]);
 let output="";
 const host=createHemuHost({onText:text=>output+=text}),
   {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env});
 host.attach(instance);instance.exports.__rt_init();instance.exports.__main();
 assert.equal(output,expected.out);
 const total=Number(expected.out.match(/total guest instr=(\d+)/)[1]);
-console.log(`Full interpreter source compiles natively: 31 battery checks, multiply/divide and split-field atomic vectors, and ${total.toLocaleString()} executed battery instructions agree in original V5.03 and WASM; zero badops.`);
+console.log(`Full interpreter source compiles natively: 31 battery checks, multiply/divide, stack and split-field atomic vectors, and ${total.toLocaleString()} executed battery instructions agree in original V5.03 and WASM; zero badops.`);
 
 function muldivSource() {
   const rows=readFileSync(new URL("./muldiv-oracle.txt",import.meta.url),"utf8").trim().split("\n"),
@@ -87,4 +87,34 @@ function atomSource() {
     checks+=10;
   }
   return `\nU0 AtomSplitNativeCheck()\n{//Native x86 split fields in the original HolyC interpreter build.\n  I64 i,before=g_pass;\n  g_ncore=1;\n${statements.join("\n")}\n  Check("atom split native count",g_pass-before,${checks});\n  "atom split native: %d passed, %d failed\\n",g_pass-before,g_fail;\n}\nAtomSplitNativeCheck;\n`;
+}
+
+function stackSource() {
+  const rows=readFileSync(new URL("./stack-oracle.txt",import.meta.url),"utf8").trim().split("\n"),
+    statements=[],Hex=n=>"0x"+BigInt.asUintN(64,n).toString(16).toUpperCase();
+  for(const row of rows) {
+    const [id,sp,codeHex,...fields]=row.split(" "),
+      [rsp,rax,rbp,flags,rip,r12]=fields.slice(0,6).map(n=>BigInt("0x"+n)),
+      before=Buffer.from(fields[6],"hex"),after=Buffer.from(fields[7],"hex"),
+      code=Buffer.from(codeHex,"hex"),encoded=[...code].reduce((n,b,i)=>n|BigInt(b)<<BigInt(i*8),0n);
+    statements.push("  MemSet(mem+0x1000000,0xA5,640);",
+      "  for (i=0;i<80;i++) want[i]=0xA5A5A5A5A5A5A5A5;");
+    for(let i=0;i<80;i++) {
+      const b=before.readBigUInt64LE(i*8),a=after.readBigUInt64LE(i*8);
+      if(b!==0xA5A5A5A5A5A5A5A5n)statements.push(`  WrMem(${0x1000000+i*8},8,${Hex(b)});`);
+      if(a!==0xA5A5A5A5A5A5A5A5n)statements.push(`  want[${i}]=${Hex(a)};`);
+    }
+    statements.push(`  WrMem(0x1000400,8,${Hex(encoded)});`,
+      "  rip=0x1000400;halted=0;rfl=0xAD7;",
+      `  reg[0]=0xFEDCBA9876543210;reg[1]=16;reg[12]=0x1000100;\n  reg[4]=${0x1000000+Number(sp)};reg[5]=0x1000180;Step;`,
+      `  Check("stack ${id} RSP",reg[4],${Hex(rsp)});`,
+      `  Check("stack ${id} RAX",reg[0],${Hex(rax)});`,
+      `  Check("stack ${id} RBP",reg[5],${Hex(rbp)});`,
+      `  Check("stack ${id} R12",reg[12],${Hex(r12)});`,
+      `  Check("stack ${id} flags",rfl&0xED7,${Hex(flags&0xED7n)});`,
+      `  Check("stack ${id} target",rip,${Hex(rip)});`,
+      `  Check("stack ${id} fault",halted,0);`,
+      `  for (i=0;i<80;i++) Check("stack ${id} bytes",RdMem(0x1000000+i*8,8),want[i]);`);
+  }
+  return `\nU0 StackNativeCheck()\n{//Physical x86 stack vectors in the original HolyC interpreter build.\n  I64 i,before=g_pass;\n  U64 want[80];\n  InitMem(33554432);\n${statements.join("\n")}\n  Check("stack native count",g_pass-before,${rows.length*87});\n  "stack native: %d passed, %d failed\\n",g_pass-before,g_fail;\n}\nStackNativeCheck;\n`;
 }
