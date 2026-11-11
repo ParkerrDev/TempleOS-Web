@@ -15,7 +15,7 @@
     "serve": "node server.mjs",
     "test:chat": "node tools/browser/chat.mjs",
     "test:search": "node search/Query.test.mjs && node search/QueryMemory.test.mjs && node tools/browser/search.mjs",
-    "test:sprites": "node sprites/Gr.test.mjs && node sprites/Play.test.mjs && node tools/sprite-codec.test.mjs && node tools/browser/sprites.mjs",
+    "test:sprites": "node sprites/Gr.test.mjs && node sprites/Play.test.mjs && node tools/sprite-codec.test.mjs && node tools/browser/sprites.mjs && node tools/browser/video-frames.mjs",
     "test:lighthouse": "node tools/lighthouse/check.mjs"
   },
   "devDependencies": {
