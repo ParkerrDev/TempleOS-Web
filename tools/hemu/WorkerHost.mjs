@@ -131,7 +131,7 @@ export async function HemuBoot(opt)
   h.workers[0].on("message",MsgIn);
   h.workers[0].on("error",function WorkerErr(e) {console.log("worker threw: "+e.stack);});
   init={cmd:"init",gz:gz,wasmUrl:new URL(wasm,SITE).href,fixedB:opt.fixed_b||0,
-	diskBytes:null};
+	diskBytes:null,patches:opt.patches};
   if (opt.welcome)
     init.welcome=true;
   if (opt.smp) {

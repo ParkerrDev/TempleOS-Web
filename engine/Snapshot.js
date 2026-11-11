@@ -6,6 +6,9 @@ const Hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest("SH
 function HeaderCheck(m)
 {
   if (!m || m.version!==1) Fail("unsupported version");
+  if (m.guestPatches===undefined) m.guestPatches=[];
+  if (!Array.isArray(m.guestPatches) || m.guestPatches.some(p=>p!=="doc-sprite-clip-v1") ||
+      new Set(m.guestPatches).size!==m.guestPatches.length) Fail("unsupported guest patches");
   if (m.heapAbi===undefined) m.heapAbi=0;
   if (![0,1].includes(m.heapAbi)) Fail("unsupported allocator ABI");
   if (![1,4].includes(m.cores) || !Int(m.memoryBytes,32*1024*1024,512*1024*1024) || m.memoryBytes%PAGE ||

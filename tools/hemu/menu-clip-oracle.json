@@ -1,0 +1,125 @@
+{
+  "patch": "doc-sprite-clip-v1",
+  "source": "TempleOS V5.03 ~/PersonalMenu.DD.Z",
+  "sprite": "Titanium",
+  "backend": {
+    "engine": "qemu",
+    "accelerator": "kvm",
+    "version": "QEMU emulator version 11.1.2"
+  },
+  "probeHash": "4d5ddee23ae1f1c652dfaa151f70341e84a06b31963deb5b2f87b4eebff7dd8d",
+  "patchHash": "1043a790e9534ad1b306ffb5f6a29cc8650b2e6465df4db585b098e2bd9c6493",
+  "original": [
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "BF5B92F3E4DBDB5C",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "BF5B92F3E4DBDB5C",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "BF5B92F3E4DBDB5C",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "BF5B92F3E4DBDB5C",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "BF5B92F3E4DBDB5C",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5",
+    "B951F9B8A030D8E5"
+  ],
+  "repeatedFrames": 24,
+  "poses": [
+    {
+      "pose": 0,
+      "bounds": [
+        34,
+        97,
+        277,
+        279
+      ],
+      "hash": "BF5B92F3E4DBDB5C"
+    },
+    {
+      "pose": 1,
+      "bounds": [
+        34,
+        97,
+        253,
+        279
+      ],
+      "hash": "C27DF79D7ED1CACB"
+    },
+    {
+      "pose": 2,
+      "bounds": [
+        34,
+        97,
+        229,
+        279
+      ],
+      "hash": "A8C89ABFD7CE72C6"
+    },
+    {
+      "pose": 3,
+      "bounds": [
+        34,
+        97,
+        40,
+        47
+      ],
+      "hash": "1D815A5164D3B8E6"
+    },
+    {
+      "pose": 4,
+      "bounds": [
+        34,
+        97,
+        40,
+        71
+      ],
+      "hash": "66C967FDD27B0947"
+    },
+    {
+      "pose": 5,
+      "bounds": [
+        34,
+        97,
+        40,
+        95
+      ],
+      "hash": "28995A58F2B8190C"
+    }
+  ]
+}

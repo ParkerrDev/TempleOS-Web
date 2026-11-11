@@ -5,6 +5,7 @@
 // while the main thread is drawing frame N, this worker is already emulating frame N+1 - so the
 // blit cost leaves the critical path. The canvas stays on the main thread (frames are shipped via
 // postMessage), so hemu.html can fall back to its in-line single-thread engine if this ever fails.
+import {DocClipPatch} from "./DocClip.js";
 import {FrameTop,FrameFps} from "./FrameText.js";
 import {SnapshotOpen,SnapshotSave} from "./Snapshot.js";
 import {KeyQueue} from "./KeyQueue.js";
@@ -29,6 +30,7 @@ let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/fram
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0, instRef = null;
 let paused=false,saving=false,machineBarrier=null,engineBytes=null,hostRef=null,showStoppedFrame=null;
 const deferred=[];
+let docClip=null;
 function PauseSet(value) {
   if (value && machineBarrier && !machineBarrier.Lock())
     throw new Error("The application cores did not stop; pause again.");
@@ -183,7 +185,8 @@ function gxTick() {                          // once per emulated frame: service
     if (gxProbe.ok) { console.log("[hemu] guest execution API ready: " + JSON.stringify({ syms: gxProbe.syms, focusFn: gxProbe.focusFn, warnings: gxProbe.warnings, tasks: gxProbe.tasks.map((t) => t.name + (t.atPrompt ? "(prompt)" : "")) })); postMessage({ cmd: "guestReady", ok: true, probe: gxProbe }); }
     else { console.warn("[hemu] guest probe " + gxProbeTries + ": " + gxProbe.errors.join("; ")); if (gxProbeTries === 40) postMessage({ cmd: "guestReady", ok: false, probe: gxProbe }); }
   }
-  if (gx.ready && disk && welcomePending) {
+  docClip?.Tick(!!disk);
+  if (gx.ready && disk && welcomePending && !docClip?.Pending()) {
     welcomePending=false;
     gx.exec({src:'PopUp("WinFocus;Ed(\\\"::/Doc/Welcome.DD\\\");");',target:"adam",name:"Welcome"});
   }
@@ -232,11 +235,12 @@ async function exportImage(kind) {
     if (!loaded || !disk || !gx?.ready) throw new Error("Wait for the machine and disk to finish loading.");
     if (machineBarrier && !machineBarrier.Lock()) throw new Error("The application cores did not stop; save again.");
     locked=true;saving=true;
+    if (docClip?.Pending()) throw new Error("Wait for the document sprite correction to finish.");
     const launch=gx.snapshot();
     const meta={cores:smpCfg?.ncore||1,base:gBase,heapPtr:hostRef.state.heapPtr,heapAbi:hostRef.state.heapAbi??0,
       sp:Number(instRef.exports.__sp.value),ipiAddr:smpCfg?.ipiAddr||0,
       paused,rate:refreshRate,actualRate,repeat:repeatKeys,budget:curBudget,
-      keyboard:keyq.Save(),pointer:guestInput.save(),launch};
+      keyboard:keyq.Save(),pointer:guestInput.save(),launch,guestPatches:docClip?.Meta()||[]};
     const buf=kind==="snapshot"?await SnapshotSave({meta,wasm:engineBytes,memory:instRef.exports.memory,disk}):await DiskImage();
     postMessage({cmd:"exportResult",kind,ok:true,buf},[buf]);
   } catch(err) {postMessage({cmd:"exportResult",kind,ok:false,msg:err.message});}
@@ -275,7 +279,7 @@ async function gunzipInto(gz, size) {
 // that spawn parallel jobs (Talons, Varoom) actually complete. No `smp` => the original single-core path,
 // byte-for-byte unchanged.
 let smpCfg = null, apsReleased = false, bootFrames = 0;
-async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate }) {
+async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate, patches }) {
   if ([0,30,60,120].includes(rate)) refreshRate=rate;
   if (typeof repeat==="boolean") repeatKeys=repeat;
   welcomePending=!!welcome;
@@ -378,8 +382,12 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
       if (paused && !barrier.Lock()) throw new Error("Restored application cores did not stop");
       postMessage({cmd:"smpReady",ncore:smpCfg.ncore});
     }
-    postMessage({cmd:"restored",cores:m.cores,paused});
+
   } else inst.exports.__rt_init();
+  docClip=DocClipPatch({guest:()=>gx,instance:()=>instRef,base:()=>gBase,
+    lock:()=>machineBarrier?machineBarrier.Lock():true,unlock:()=>machineBarrier?.Unlock(),
+    onState:msg=>postMessage(msg),restored:saved?saved.meta.guestPatches:patches===false?[]:null});
+  if (saved) postMessage({cmd:"restored",cores:saved.meta.cores,paused});
   postMessage({cmd:"progress",text:"starting TempleOS…",pct:100});
 
   // Fast yield via MessageChannel: drains input/ack messages between iterations without the
