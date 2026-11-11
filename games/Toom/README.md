@@ -1,0 +1,62 @@
+# Native TOOM work in progress
+
+This directory contains the new TempleOS implementation. It is not yet a
+playable game and does not replace the existing catalog entry. The old port is
+preserved in `../upstream/TOOM` with its original provenance.
+
+The implemented foundation uses native V5.03 file and memory APIs:
+
+- A validated IWAD directory and bounded byte-range reads. Startup does not
+  assemble, rewrite or read the entire WAD.
+- All original map records, BSP point queries, blockmap validation and explicit
+  per-level ownership. Invalid indices, cycles and truncated records are
+  rejected before use. Self-referencing sectors and absent back sides found in
+  the real Freedoom maps are retained.
+- Lazy indexed patch decoding, tall patch posts, clipped texture composition
+  and an 8 MiB texture cache. Sprites and textures are not enlarged to 2×2
+  pixels or all decoded at startup.
+
+The BSP renderer, simulation, weapons, actors, line specials, HUD, audio,
+saves and episode/intermission progression are still being implemented.
+There is deliberately no game launcher or advertised compatibility result yet.
+
+## Assets
+
+Only the unmodified official Freedoom 0.12.1 Phase 1 IWAD is accepted by the
+preparation and verification tools. Its SHA-256 is
+`c403ea7c27b5b2b77e4c0ca0b691669186790e572065e7eb2b0382801bcb18cc`.
+The existing seven vendored chunks match that release exactly; preparation
+reuses those bytes once, outside game startup:
+
+```sh
+node tools/toom/Assets.mjs
+```
+
+Alternatively set `FREEDOOM_WAD` to the official release's `freedoom1.wad`.
+The prepared `FREEDOOM.WAD` is ignored by Git. Distribute
+`Freedoom-COPYING.txt` alongside it. That notice is the original release's
+BSD-3-Clause notice, not the modified notice in the historical TOOM port.
+
+## Native regression checks
+
+Set `HOLYC_WASM` to the compiler checkout containing `tests/oracle/Qemu.mjs`.
+The oracle compiles and runs these sources in original TempleOS V5.03 under
+QEMU with a private disk; it does not compile them with HolyC-wasm.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/map.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
+```
+
+The map check covers all 36 maps and 100,171 actor/partition queries, comparing
+native results to an independent host reader. It also corrupts record indices,
+alignment, BSP links, blockmap offsets and lump ranges to verify rejection.
+The patch check compares 2,169 decoded patches, sprites and interface graphics
+(14,923,333 indexed pixels) against the host reader. The texture check compares
+all 903 composite textures and exercises cache hits and eviction/reload.
+These checks establish loader and decoding behavior; they do not establish
+gameplay, display-frame performance or parity with every hypervisor.
+
+The design and audit are recorded in `untangle/survey/toom.md` in the parent
+workspace. Measured evidence is recorded there as each stage is completed.

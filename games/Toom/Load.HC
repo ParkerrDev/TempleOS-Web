@@ -1,0 +1,5 @@
+#include "TmGlbls.HH"
+#include "TmWad"
+#include "TmMap"
+#include "TmGr"
+#include "TmTex"
