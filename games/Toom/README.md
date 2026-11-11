@@ -343,6 +343,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level-alloc.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/setup.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/input.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/screen.test.mjs > /tmp/toom-screen.json
+BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-screen.json node tools/toom/screen.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level-maps.test.mjs > /tmp/toom-level-maps.json
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-level-maps.json node tools/toom/level-maps.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
@@ -673,6 +675,13 @@ Keyboard input adds 9,216 comparisons with the original C command builder and
 276 native scan-code/alias cases. Both backends preserve movement, turn-ramp
 state, buttons, weapon priority and complete release. Mouse/joystick and host
 focus/pause policy are outside that fixture. See `tools/toom/input-evidence.json`.
+Live-scene composition adds 24 matching native/HEMU frames after running,
+turning, firing, strafing and pausing in four maps from both phases. Rendering
+leaves every actor, Player/World record and clock unchanged, preserves private
+CDC margins, and releases its session guard after rejection. Seven guard cases
+and final heap cleanup also pass. `TmScreen.HC` is compiled after `Load.HC`;
+window lifetime, weapon/HUD drawing and power-up/shadow effects remain separate
+work. See `tools/toom/screen-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

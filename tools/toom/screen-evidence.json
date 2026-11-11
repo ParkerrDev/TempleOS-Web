@@ -1,0 +1,295 @@
+{
+  "status": "bounded-native-live-scene-composition-proof",
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM",
+    "evidence": "qemu-qb5547e8"
+  },
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "sourceSha256": "e46d2c51ac217408921ad4d51ea2103cd7ab393ebfc23a4ff3b88d9f0e01916f",
+  "assetHashes": {
+    "PHASE1.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+    "PHASE2.WAD": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+    "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+  },
+  "checks": {
+    "cases": 31,
+    "frames": 24,
+    "scope": [
+      "Six scene stages in each of E1M1, E2M2, MAP01 and MAP30: initial load, forward run, turning while firing, strafing while firing, pause and 35 further simulation tics.",
+      "Native and HEMU match all indexed-frame and private-CDC hashes, level tics and RNG positions.",
+      "Every actor record, the complete Player/World records and persistent clock remain byte-for-byte unchanged by GameDraw.",
+      "The output preserves right/bottom margins and CDC row padding.",
+      "Missing level, undersized DC, active session, thinking/ticking world, missing player and invalid flat reject correctly; the session guard releases after exceptions and drawing can retry.",
+      "Game/level/render-cache/CDC teardown returns the task heap to baseline."
+    ]
+  },
+  "traceFields": [
+    "phase",
+    "episode",
+    "map",
+    "stage",
+    "levelTic",
+    "random",
+    "indexedHash",
+    "dcHash"
+  ],
+  "trace": [
+    [
+      1,
+      1,
+      1,
+      0,
+      0,
+      59,
+      1853636048,
+      1514360849
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      61,
+      2508699674,
+      3658992414
+    ],
+    [
+      1,
+      1,
+      1,
+      2,
+      5,
+      61,
+      3620738498,
+      2086691066
+    ],
+    [
+      1,
+      1,
+      1,
+      3,
+      13,
+      64,
+      2740121409,
+      1363135338
+    ],
+    [
+      1,
+      1,
+      1,
+      4,
+      13,
+      64,
+      2740121409,
+      1363135338
+    ],
+    [
+      1,
+      1,
+      1,
+      5,
+      48,
+      65,
+      3481014941,
+      2897251137
+    ],
+    [
+      1,
+      2,
+      2,
+      0,
+      0,
+      183,
+      1427535584,
+      3837395303
+    ],
+    [
+      1,
+      2,
+      2,
+      1,
+      1,
+      184,
+      1676297497,
+      3781605511
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      5,
+      185,
+      137616328,
+      3329644810
+    ],
+    [
+      1,
+      2,
+      2,
+      3,
+      13,
+      185,
+      3961295733,
+      2943188256
+    ],
+    [
+      1,
+      2,
+      2,
+      4,
+      13,
+      185,
+      3961295733,
+      2943188256
+    ],
+    [
+      1,
+      2,
+      2,
+      5,
+      48,
+      185,
+      1684516956,
+      2060429265
+    ],
+    [
+      2,
+      1,
+      1,
+      0,
+      0,
+      184,
+      138289627,
+      611674477
+    ],
+    [
+      2,
+      1,
+      1,
+      1,
+      1,
+      185,
+      551329887,
+      3809638267
+    ],
+    [
+      2,
+      1,
+      1,
+      2,
+      5,
+      187,
+      3185016294,
+      3118109961
+    ],
+    [
+      2,
+      1,
+      1,
+      3,
+      13,
+      195,
+      167440567,
+      3166405295
+    ],
+    [
+      2,
+      1,
+      1,
+      4,
+      13,
+      195,
+      167440567,
+      3166405295
+    ],
+    [
+      2,
+      1,
+      1,
+      5,
+      48,
+      214,
+      382232541,
+      2567682584
+    ],
+    [
+      2,
+      1,
+      30,
+      0,
+      0,
+      85,
+      2340305621,
+      2327972708
+    ],
+    [
+      2,
+      1,
+      30,
+      1,
+      1,
+      85,
+      524403606,
+      2716279696
+    ],
+    [
+      2,
+      1,
+      30,
+      2,
+      5,
+      85,
+      3243154373,
+      2158898090
+    ],
+    [
+      2,
+      1,
+      30,
+      3,
+      13,
+      85,
+      705337890,
+      174899200
+    ],
+    [
+      2,
+      1,
+      30,
+      4,
+      13,
+      85,
+      705337890,
+      174899200
+    ],
+    [
+      2,
+      1,
+      30,
+      5,
+      48,
+      85,
+      356869237,
+      2557748558
+    ]
+  ],
+  "inputs": {
+    "games/Toom/TmScreen.HC": "3ebb5c018611f53750b76f75a2471e7bfb064c582385062ae2e41a2ff95e1b74",
+    "tools/toom/Screen.HC": "75dd8644c7acadcc5b67e12e9237ed2adaff52b2a208e815ae97ca005f38f055",
+    "tools/toom/screen.test.mjs": "b8b00380c6b044973e42ce4fe5b80ac9b79ba686d3a277a5b94e8099944ed7ae",
+    "games/Toom/Load.HC": "5478ccc651e798c0fbde610a1cc54eafabe6ec72163c418a1463e86576c906d8"
+  },
+  "limitations": [
+    "GameDraw composes the existing world renderer; it is not a complete windowed host.",
+    "Weapon overlays, HUD, audio presentation and power-up/shadow effects remain unfinished.",
+    "These are bounded image/state comparisons, not original Doom pixel equivalence, completed maps or full-game frame-rate evidence.",
+    "TmScreen is compiled after Load.HC by this fixture; the forthcoming application host will own its display lifetime."
+  ]
+}
