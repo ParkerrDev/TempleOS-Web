@@ -11,7 +11,8 @@ node tools/hemu/check.mjs --full
 node tools/hemu/check.mjs --desktop
 ```
 
-The default suite checks CPU/JIT/device primitives, atomic threads, clocks,
+The default suite checks CPU/JIT/device primitives, emulated atomic instructions
+on four actual worker threads, clocks,
 input, completed captures, barriers and snapshot validation. `--full` also
 builds both engines and runs native raster/video, guest API, saved-machine,
 production worker, welcome and God Tools acceptance checks. `--desktop` adds
@@ -80,6 +81,15 @@ not complete physical-device emulation. Device reset also has a public-port
 regression: a partial ATA command, PS/2 reply and speaker tone must not survive.
 `snapregs.test.mjs` compiles regenerated one/four-core QEMU register fixtures
 against the actual CPU layout and requires V5.03's 1192-count PIT period.
+
+`cpu-native.mjs` requires a source-hashed original V5.03 compile/run of the
+entire interpreter and its unchanged instruction battery. The native host
+adapter provides a core ID, serialized atomics and explicit headless callbacks;
+it supplies neither a desktop, disk nor native JIT. The same 31 checks execute
+with zero badops in both builds; instruction totals exclude HLT time budgets. Use
+`HOLYC_QEMU_ORACLE=/path/to/tests/oracle/Qemu.mjs node tools/hemu/cpu-native.mjs --record`
+to refresh this evidence after interpreter changes. This is a bounded native
+source test, not proof of complete x86 coverage or a native TempleOS host app.
 
 ## Frame protocol
 
