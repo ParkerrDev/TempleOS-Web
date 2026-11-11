@@ -9,13 +9,14 @@ U64 LoopAddr(I64 n)
   switch (n) {
     case 0:return mem;case 1:return &reg[0];case 2:return &rfl;
     case 3:return &rip;case 4:return &halted;
+    case 5:return g_jit_rip;case 6:return g_jit_n;
   }
   return 0;
 }`});
 assert.deepEqual(c.warnings,[]);
 const host=createHemuHost(),{instance}=await WebAssembly.instantiate(c.bytes,{env:host.env}),ex=instance.exports;
 host.attach(instance);ex.__rt_init();ex.InitMem(8192n);
-const a=Array.from({length:5},(_,n)=>Number(ex.LoopAddr(BigInt(n)))),
+const a=Array.from({length:7},(_,n)=>Number(ex.LoopAddr(BigInt(n)))),
       u8=new Uint8Array(ex.memory.buffer),dv=new DataView(u8.buffer),
       put=(at,n)=>dv.setBigUint64(at,BigInt.asUintN(64,BigInt(n)),true);
 jit.jitState(a[1],a[2],a[3],a[0],ex.memory,ex.RdMem,ex.WrMem);
@@ -90,4 +91,41 @@ assert.equal(jit.jitRun(start),0);assert.deepEqual(State(),before);count++;
 // never hide a divide fault or a floating-point stack/IRQ transition in a loop.
 for(const unsafe of [[0x48,0xF7,0xF3],[0xD9,0xE8],[0xFB],[0xF0,0x48,0xFF,0x03]])
   Compare(Loop([...unsafe,...body]),1,0,{expected:2,compiled:2});
-console.log(`${count} top-tested loop checks: exits, counts, iteration limit, memory, code rewriting, and fallback.`);
+for(const chain of [false,true]) {
+  if(chain)jit.jitChain(a[5],a[6]);
+  for(const code of [Loop(body),[0x48,0xFF,0xC9,0x75,0xFB],
+    [0x48,0xFF,0xC0,0x48,0xFF,0xC0,0x48,0xFF,0xC0]])
+    for(const budget of [1,2,3,4,5,7,31,1023,1024,2048,5000,12000]) {
+      const regs={1:20000};Start(code,40000,regs);jit.jitReset();
+      const n=jit.jitCompile(start),slot=(start^(start>>>16))&65535;
+      assert.ok(n);put(a[5]+slot*8,start);put(a[6]+slot*8,n);
+      const ran=jit.jitDispatch(budget),got=State();
+      assert.ok(ran<=budget,`dispatch exceeded device deadline: ${ran}>${budget}, chain=${chain}`);
+      assert.ok(ran>=n||budget<n,"a whole compiled iteration runs when it fits");
+      Start(code,40000,regs);for(let i=0;i<ran;i++)ex.Step();
+      assert.deepEqual(got,State(),"budget-limited exit state");count++;
+    }
+}
+// A bottom-tested branch that becomes false exactly at the 1024-iteration
+// cap must exit to its fallthrough, not incorrectly return to its header.
+const bottom=[0x48,0xFF,0xC9,0x75,0xFB];
+Start(bottom,0,{1:1024});jit.jitReset();assert.equal(jit.jitCompile(start),2);
+assert.equal(jit.jitRun(start),2048);const bottomState=State();
+Start(bottom,0,{1:1024});for(let i=0;i<2048;i++)ex.Step();
+assert.deepEqual(bottomState,State());count++;
+const faultLoop=[0x48,0xFF,0xC0,0x48,0xF7,0xF3,0x48,0xFF,0xCB,
+  0x48,0xFF,0xC9,0x75,0xF2];
+Start(faultLoop,0,{0:17,1:2,2:0,3:1});jit.jitReset();
+assert.equal(jit.jitCompile(start),5);
+put(a[5]+start*8,start);put(a[6]+start*8,5);
+assert.equal(jit.jitDispatch(100),6,"second-iteration DIV fallback counts the preceding full iteration");
+const faultState=State();Start(faultLoop,0,{0:17,1:2,2:0,3:1});
+for(let i=0;i<6;i++)ex.Step();assert.deepEqual(faultState,State());count++;
+for(const left of [1,2]) {
+  const changed=[0xC6,0x03,0x90,0x48,0xFF,0xC9,0x75,0xF8];
+  Start(changed,0,{1:left,3:start});jit.jitReset();assert.equal(jit.jitCompile(start),3);
+  assert.equal(jit.jitRun(start),3);assert.equal(jit.jitInspect(start).cached,false);
+  const state=State();Start(changed,0,{1:left,3:start});
+  for(let i=0;i<3;i++)ex.Step();assert.deepEqual(state,State());count++;
+}
+console.log(`${count} loop checks: exact exits, device dispatch budgets, iteration caps, memory, code rewriting, and fallback.`);

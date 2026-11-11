@@ -159,6 +159,7 @@ function fIntValue(f,bits,trunc)
 // wasm (zero JS per block) until an un-JIT'd rip. The block fns live in its funcref table (table.set on
 // compile); it reads rip + hemu's g_jit_rip[]/g_jit_n[] (offsets from jitChain) to verify each block. ----
 let JITRIP = 0, JITN = 0, RUNTBL = null, RUNDISP = null, RASTERHLE = null;
+const runBudget=new WebAssembly.Global({value:"i64",mutable:true},0x7FFFFFFFn);
 // The native dispatch loop runs JIT'd blocks back-to-back without a host round-trip. PATH 1 = a normal
 // compiled block (g_jit_n[slot]>0): call_indirect it. PATH 2 (when an HLE host fn is wired) = an HLE block
 // (g_jit_n[slot]==-2): call RasterHLE INLINE - so the per-scanline GrHLine call doesn't break the chain
@@ -166,6 +167,7 @@ let JITRIP = 0, JITN = 0, RUNTBL = null, RUNDISP = null, RASTERHLE = null;
 // already advanced past the call, continue) or 0=fall through (exit so the interpreter runs the real fn).
 function buildRuntime() {
   if (!RIP || !JITRIP || !MEM) return; const rm = new Module();
+  const left=rm.importGlobal("env","budget",VT.i64,true);
   if (MEM && typeof SharedArrayBuffer !== "undefined" && MEM.buffer instanceof SharedArrayBuffer) rm.importMemory("env", "mem", 1, 8192, true);   // shared guest RAM (SMP): import must declare shared (+max). typeof-guard: without cross-origin isolation the global does not EXIST and instanceof throws
   else rm.importMemory("env", "mem", 1);
   const HLE = RASTERHLE != null, RH = HLE ? rm.importFunc("env", "RasterHLE", [], [VT.i64]) : 0;   // imports MUST precede defined funcs -> import first
@@ -185,6 +187,9 @@ function buildRuntime() {
     i32c(f, RIP); f.load("i32_load", 0, 2); f.local_set(2); f.local_get(2); f.local_get(2); i32c(f, 16); f.op("i32_shr_u"); f.op("i32_xor"); i32c(f, 0xFFFF); f.op("i32_and"); f.local_set(3); i32c(f, JITRIP); f.local_get(3); i32c(f, 8); f.op("i32_mul"); f.op("i32_add"); f.load("i32_load", 0, 2); f.local_get(2); f.op("i32_eq");
     i32c(f, JITN); f.local_get(3); i32c(f, 8); f.op("i32_mul"); f.op("i32_add"); f.load("i32_load", 0, 2); i32c(f, 0); f.op("i32_gt_s"); f.op("i32_and"); // && g_jit_n[slot] > 0
     f.local_get(1); f.local_get(5); f.op("i32_lt_s"); f.op("i32_and"); f.if_(0x40);
+      f.local_get(5);f.local_get(1);f.op("i32_sub");f.op("i64_extend_i32_u");f.global_set(left);
+      i32c(f,JITN);f.local_get(3);i32c(f,8);f.op("i32_mul");f.op("i32_add");ld64(f);
+      f.global_get(left);f.op("i64_gt_u");f.if_();f.local_get(1);f.return_();f.end();
       f.local_get(3); f.call_indirect(bt, 0); f.local_set(4);
       f.local_get(1); f.local_get(4); i32c(f, 0x3FFFFFFF); f.op("i32_and"); f.op("i32_add"); f.local_set(1);            // ran += count (flag stripped)
       f.local_get(4); i32c(f, 0x3FFFFFFF); f.op("i32_and"); i32c(f, 0); f.op("i32_ne");                                 // count != 0
@@ -201,7 +206,7 @@ function buildRuntime() {
   f.end();                                                           // loop
   if (HLE) f.end();                                                  // outer block
   f.local_get(1); setBody([{ count: 6, vt: VT.i32 }], f); rm.exportFunc("dispatch", index);
-  const inst = new WebAssembly.Instance(new WebAssembly.Module(Uint8Array.from(rm.emit())), { env: HLE ? { mem: MEM, RasterHLE: RASTERHLE } : { mem: MEM } }); RUNTBL = inst.exports.tbl; RUNDISP = inst.exports.dispatch; }
+  const inst = new WebAssembly.Instance(new WebAssembly.Module(Uint8Array.from(rm.emit())), { env: HLE ? { mem: MEM, RasterHLE: RASTERHLE,budget:runBudget } : { mem: MEM,budget:runBudget } }); RUNTBL = inst.exports.tbl; RUNDISP = inst.exports.dispatch; }
 export function jitChain(jitRipOff, jitNOff) { JITRIP = Number(jitRipOff); JITN = Number(jitNOff); buildRuntime(); }
 // read / write a decoded r/m operand (reg or mem) at size sz. For mem, emitEA(f,m,endRip) must run first.
 function rdRM(f, m, sz, rex) { if (!m.isMem) { rdReg(f, m.rm, sz, rex); return; } if (m.knownRam) { memAddr(f); f.load(LDSZ[sz], 0, ALN[sz]); return; } f.local_get(3); i64c(f, MEMSIZE); f.op("i64_lt_u"); f.if_(VT.i64); memAddr(f); f.load(LDSZ[sz], 0, ALN[sz]); f.else_(); f.local_get(3); i64c(f, sz); f.call(RD_IDX); f.end(); }
@@ -370,11 +375,12 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
   if (MEM && typeof SharedArrayBuffer !== "undefined" && MEM.buffer instanceof SharedArrayBuffer) m.importMemory("env", "mem", 1, 8192, true);    // shared guest RAM (SMP; typeof-guard - see buildRuntime)
   else m.importMemory("env", "mem", 1); RD_IDX = m.importFunc("env", "RdMem", [VT.i64, VT.i64], [VT.i64]); WR_IDX = m.importFunc("env", "WrMem", [VT.i64, VT.i64, VT.i64], []);
   const changedIndex=m.importFunc("env","CodeChanged",[VT.i64],[]);
+  const budgetIndex=m.importGlobal("env","budget",VT.i64,true);
   const blk = m.func([], [VT.i32], "blk");   // returns instr count (i32 -> JS number, no BigInt in the dispatch loop)
   const f = new Func();
   let i = GBASE + rip, n = 0, term = false, loopT = null;   // loopT set if the block is a self-loop (jcc back to entry); REP string ops emit their own native loop + end the block via the normal terminator path
   let ifbrk = false;   // block ends on an instruction that can OPEN an IF=1 window (STI/POPF/IRET): its return count carries bit30 so the dispatcher's break-on-IF mode can hand back for an IRQ delivery
-  let compareHead=false,topExit=null,topLoop=false;
+  let compareHead=false,topExit=null,topLoop=false,sideExit=false;
   function topBranch(cc,tgt,fall) {
     if(noTopLoop||globalThis.__NOLOOP||topExit||n!==1||!compareHead||tgt<=fall)return false;
     emitCond(f,cc);f.if_();
@@ -582,7 +588,7 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
           if (mm.isMem) emitEA(f, mm, j - GBASE);
           rdRM(f, mm, sz, rex); f.local_set(0);                            // a = rm (zero-extended)
           const sextL = (L) => { f.local_get(L); if (sz === 1) f.op("i64_extend8_s"); else if (sz === 2) f.op("i64_extend16_s"); else if (sz === 4) f.op("i64_extend32_s"); }; const RAX = REG + 0 * 8, RDX = REG + 2 * 8;
-          const exitHere = () => { f.if_(0x40); materialize(f); i32c(f, RIP); i64c(f, i - GBASE); st64(f); wbDirty(f); i32c(f, n); f.op("return"); f.end(); };  // rare/trapping case -> re-run in interpreter (flush flags + reg cache; rcDirty here = regs written by EARLIER instrs on this path, program-order correct)
+          const exitHere = () => { sideExit=true;f.if_(0x40); materialize(f); i32c(f, RIP); i64c(f, i - GBASE); st64(f); wbDirty(f); i32c(f, n); f.op("return"); f.end(); };  // rare/trapping case -> re-run in interpreter (flush flags + reg cache; rcDirty here = regs written by EARLIER instrs on this path, program-order correct)
           if (ext === 4 || ext === 5) {                                    // MUL / IMUL
             rdReg(f, 0, sz, rex); f.local_set(1);                          // b = AL/AX/EAX/RAX
             if (sz === 8) {                                                // full 128-bit: al/ah/bl/bh -> ll/lh/hl/hh -> mid -> lo(RAX)/hi(RDX)
@@ -629,7 +635,7 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
           if (!memOK) break;
           const intStore=sub===1 && op!==0xDC || op===0xDF && sub===7 || op===0xDB && sub===3;
           if (intStore && (!X87CW || !X87SW)) break;
-          if (intStore) { materialize(f); i32c(f,X87CW);ld64(f);i64c(f,0x21);f.op("i64_and");i64c(f,0x21);f.op("i64_ne");f.if_();materialize(f);i32c(f,RIP);i64c(f,i-GBASE);st64(f);wbDirty(f);i32c(f,n);f.op("return");f.end(); }
+          if (intStore) { sideExit=true;materialize(f); i32c(f,X87CW);ld64(f);i64c(f,0x21);f.op("i64_and");i64c(f,0x21);f.op("i64_ne");f.if_();materialize(f);i32c(f,RIP);i64c(f,i-GBASE);st64(f);wbDirty(f);i32c(f,n);f.op("return");f.end(); }
           const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; emitEA(f, mm, j - GBASE); const STW = { 0xDD: ["i64_store", 3], 0xDB: ["i64_store32", 2], 0xDF: ["i64_store16", 1] };
           if (op===0xD9 && sub===5) { i32c(f,X87CW);rdRM(f,mm,2,rex);st64(f); }
           else if (op===0xD9 && sub===7) wrRM(f,mm,2,rex,()=>{i32c(f,X87CW);ld64(f);});
@@ -698,7 +704,7 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
             f.local_get(36);f.local_get(36);f.op("f64_ne");f.op("i32_or");
             f.if_();
               i32c(f,RIP);i64c(f,i-GBASE);st64(f);wbDirty(f);
-              i32c(f,n);f.op("return");
+              sideExit=true;i32c(f,n);f.op("return");
             f.end();
             i32c(f,X87SW);i32c(f,X87SW);ld64(f);i64c(f,~0x200);f.op("i64_and");st64(f);
             i32c(f,RFL);i32c(f,RFL);ld64(f);i64c(f,~0x8D5);f.op("i64_and");
@@ -816,8 +822,18 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
   // Calling convention (chaining-ready): block STORES the exit rip to the shared RIP and RETURNS the
   // instruction count. For a self-loop, wrap the body in a native WASM loop so the whole loop runs in
   // one call (this is the dispatch win: a `dec rcx; jnz top` blit stays native instead of host round-tripping).
+  // Prefix exits only describe one iteration. Keep those blocks separate so
+  // a later fault cannot lose prior iterations' state or instruction count.
+  if(loopT&&sideExit) {
+    i64c(f,rip);i64c(f,loopT.fall);emitCond(f,loopT.cc);f.op("select");loopT=null;
+  }
   if(loopT && fCacheEnabled && fStackOffset)return jitCompile(rip,true);
   const codeBytes=U8.slice(GBASE+rip,i);
+  const anotherIteration=g=>{
+    g.local_get(4);i64c(g,1024);g.op("i64_lt_u");
+    g.local_get(4);i64c(g,1);g.op("i64_add");i64c(g,n);g.op("i64_mul");
+    g.global_get(budgetIndex);g.op("i64_le_u");g.op("i32_and");
+  };
   if(topLoop) {
     const count=(g,prefix=0)=>{g.local_get(4);i64c(g,n);g.op("i64_mul");if(prefix){i64c(g,prefix);g.op("i64_add");}g.op("i32_wrap_i64");};
     // The exit can run after any number of complete bodies. Flush the union of
@@ -834,11 +850,18 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
       i32c(g,RIP);i64c(g,rip);st64(g);wbDirty(g);
       i64c(g,rip);g.call(changedIndex);count(g);g.return_();
     });
-    f.local_get(4);i64c(f,1024);f.op("i64_lt_u");f.br_if(0);f.end();
+    anotherIteration(f);f.br_if(0);f.end();
     i32c(f,RIP);i64c(f,rip);st64(f);wbDirty(f);count(f);
   } else if (loopT) {
-    const K = 1024;                                        // iteration cap per call: bound a single loop-block's instr count well under the PIT period so IRQs fire on time
-    f.bytes.unshift(OP.loop, 0x40); f.local_get(4); i64c(f, 1); f.op("i64_add"); f.local_set(4); f.local_get(4); i64c(f, K); f.op("i64_lt_u"); emitCond(f, loopT.cc); f.op("i32_and"); f.br_if(0); f.end(); i32c(f, RIP); i64c(f, rip); i64c(f, loopT.fall); f.local_get(4); i64c(f, K); f.op("i64_ge_u"); f.op("select"); st64(f); wbDirty(f);
+    f.bytes.unshift(OP.loop,0x40);
+    f.local_get(4);i64c(f,1);f.op("i64_add");f.local_set(4);
+    codeGuard(f,rip,codeBytes,g=>{
+      i32c(g,RIP);i64c(g,rip);i64c(g,loopT.fall);emitCond(g,loopT.cc);g.op("select");st64(g);wbDirty(g);
+      i64c(g,rip);g.call(changedIndex);
+      g.local_get(4);i64c(g,n);g.op("i64_mul");g.op("i32_wrap_i64");g.return_();
+    });
+    anotherIteration(f);emitCond(f,loopT.cc);f.op("i32_and");f.br_if(0);f.end();
+    i32c(f,RIP);i64c(f,rip);i64c(f,loopT.fall);emitCond(f,loopT.cc);f.op("select");st64(f);wbDirty(f);
     f.local_get(4); i64c(f, n); f.op("i64_mul"); f.op("i32_wrap_i64");   // return counter*n = instructions actually run (i32)
   } else {
     if (term) { f.local_set(3); i32c(f, RIP); f.local_get(3); st64(f); }   // terminator left exit rip on the stack (already materialized before the push)
@@ -857,12 +880,12 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
   codeGuard(wrapper,rip,codeBytes,g=>{i64c(g,rip);g.call(changedIndex);i32c(g,0);g.return_();});
   f.bytes.unshift(...wrapper.bytes);
   blk.setBody([{ count: 5, vt: VT.i64 }, { count: 1, vt: VT.f64 }, { count: 13, vt: VT.i64 }, { count: 17, vt: VT.i64 }, { count: 9, vt: VT.f64 }, { count: flagLocalNext-45, vt: VT.i64 }], f); m.exportFunc("run", blk.index); let inst;   // local 36 = 2nd f64 scratch (FCOMI operands)
-  try { inst = new WebAssembly.Instance(new WebAssembly.Module(Uint8Array.from(m.emit())), { env: { mem: MEM, RdMem: RDMEM, WrMem: WRMEM, CodeChanged:codeChanged } }); }
+  try { inst = new WebAssembly.Instance(new WebAssembly.Module(Uint8Array.from(m.emit())), { env: { mem: MEM, RdMem: RDMEM, WrMem: WRMEM, CodeChanged:codeChanged,budget:runBudget } }); }
   catch (e) { blocks.set(rip, { fn: null, ninstr: 0, bytes:U8.slice(GBASE+rip,GBASE+rip+16) }); return 0; }   // unjittable block: fall back to interpreter
   blocks.set(rip, { fn: inst.exports.run, ninstr: n, bytes:codeBytes }); blockFn[slotOf(rip)] = inst.exports.run; blockRip[slotOf(rip)] = rip;
   if (RUNTBL) RUNTBL.set(slotOf(rip), inst.exports.run);                    // + the WASM dispatch table (call_indirect)
   return n; }
-export function jitRun(rip) { const b = blocks.get(rip); return ((b && b.fn) ? b.fn() : 0) & 0x3FFFFFFF; }  // runs the block (it writes rip); returns instr count (bit30 IF-window flag stripped)
+export function jitRun(rip) { runBudget.value=0x7FFFFFFFn;const b = blocks.get(rip); return ((b && b.fn) ? b.fn() : 0) & 0x3FFFFFFF; }  // runs the block (it writes rip); returns instr count (bit30 IF-window flag stripped)
 // Chain JIT'd blocks back-to-back without returning to the interpreter+host each block: each block
 // writes the next rip to shared memory and returns its instr count; the native WASM dispatch loop keeps
 // running while the next rip is also a JIT'd block (one host round-trip covers a whole hot loop).
@@ -871,5 +894,5 @@ export function jitDispatch(budget) {
   const ripV = new Int32Array(MEM.buffer, RIP, 1);      // fallback (no runtime module yet)
   const brk = budget < 0, bud = brk ? -budget : budget; // negative budget = break-on-IF mode (see buildRuntime)
   let ran = 0;
-  while (ran < bud) { const rip = ripV[0], slot = slotOf(rip); if (blockRip[slot] !== rip) break; const fn = blockFn[slot]; if (!fn) break; const r = fn(); const c = r & 0x3FFFFFFF; ran += c; if (c === 0) break; if (brk && (r & 0x40000000)) break; }
+  while (ran < bud) { const rip = ripV[0], slot = slotOf(rip); if (blockRip[slot] !== rip) break; const fn = blockFn[slot]; if (!fn||blocks.get(rip).ninstr>bud-ran) break;runBudget.value=BigInt(bud-ran);const r = fn(); const c = r & 0x3FFFFFFF; ran += c; if (c === 0) break; if (brk && (r & 0x40000000)) break; }
   return ran; }
