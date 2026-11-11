@@ -103,7 +103,7 @@ self.onmessage = async (e) => {
     try {
       const { bytes, warnings, globals } = msg.nativeGame
         ? compileNativeProject({source,filename:msg.filename,files:msg.files})
-        : compileHolyC(source, { filename: "program.HC", lenient: true, resilient: true });
+        : compileHolyC(source, { filename: "program.HC", lenient: false, resilient: false });
       self.postMessage({ type: "compiled", size: bytes.length, warnings });
 
       host = createHost({
@@ -111,6 +111,7 @@ self.onmessage = async (e) => {
         onText: (s) => { outBuf += s; if (outBuf.length > 256 || s.includes("\n")) flush(); },
         gfx: {
           width: 640, height: 480,
+          indices: fb.indices,
           plot: (x, y, c) => fb.plot(x, y, c),
           line: (x1, y1, x2, y2, c, t) => fb.line(x1, y1, x2, y2, c, t),
           rect: (x, y, w, h, c) => fb.rect(x, y, w, h, c),

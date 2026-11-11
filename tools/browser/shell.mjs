@@ -167,12 +167,35 @@ try {
       await cdp.send("Input.dispatchTouchEvent",{type:"touchCancel",touchPoints:[]});
       assert.equal(await left.evaluate(e=>e.classList.contains("on")),false,
         "cancelled touch releases the mouse button");
+    } else {
+      await page.locator("#editorBtn").click();
+      await page.waitForFunction(()=>window.__holycEditor);
+      await page.evaluate(()=>window.__holycEditor.stop());
+      for (const source of ['"FORBIDDEN_EXECUTION\\n";\nI64 broken=;',
+          '"FORBIDDEN_EXECUTION\\n";\nNoSuchFunction();']) {
+        await page.locator("#editor").fill(source);
+        await page.locator("#runBtn").click();
+        await page.waitForFunction(()=>document.getElementById("status").textContent=="error");
+        assert(!(await page.locator("#console").innerText()).includes("FORBIDDEN_EXECUTION"),
+          "A malformed or unsupported program must not execute its valid prefix.");
+      }
+      await page.locator("#editor").fill('"VALID\\n"; CDC *dc=DCAlias; '+
+        'dc->color=RED; GrRect(dc,17,19,3,4); Refresh; DCDel(dc);');
+      await page.locator("#runBtn").click();
+      await page.waitForFunction(()=>document.getElementById("status").textContent=="done");
+      assert.match(await page.locator("#console").innerText(),/VALID/);
+      const pixel=await page.locator("#screen").evaluate(c=>{
+        const scale=c.width/640;
+        return [...c.getContext("2d").getImageData(17*scale,19*scale,1,1).data];
+      });
+      assert.deepEqual(pixel,[170,0,0,255],"Native CDC pixels reach the browser without palette loss.");
     }
     assert.deepEqual(errors,[]);
     await context.close();
   }
   console.log("Browser shell: desktop/mobile buttons, chunked passages, touch "+
-    "drag versus scroll, resize, held keys, touch cancellation, contextual tips and landscape passed.");
+    "drag versus scroll, resize, held keys, touch cancellation, contextual tips, landscape, "+
+    "strict editor rejection and native CDC display passed.");
 } finally {
   await browser.close();
   server.kill();
