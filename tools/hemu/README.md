@@ -15,6 +15,7 @@ node --max-old-space-size=3072 tools/hemu/worker.test.mjs
 node tools/hemu/guestcheck.mjs
 node tools/hemu/jitdiff1.mjs
 node tools/hemu/fpu-check.mjs
+node tools/hemu/fpu-convert.test.mjs
 ```
 
 - Clock checks exercise fractional elapsed time, PIT reload/latch/IRQ behavior,
@@ -51,3 +52,11 @@ The HolyC host contract adds `__host_ns` (integer nanoseconds elapsed in this
 iteration), `__capture_lock` and `__capture_unlock`. The stock host uses an
 always-successful capture lock for one core; the production worker uses a
 per-generation shared-memory barrier when its AP workers are running.
+
+`fpu-oracle.txt` records 816 masked FISTP/FISTTP operations on real x86
+hardware. `fpu-convert.test.mjs` checks the interpreter and JIT against it,
+including status flags, integer widths, rounding ties, NaN and overflow.
+Regenerate on x86 with `cc -O2 tools/hemu/fpu-oracle.c -o /tmp/hemu-fpu-oracle`
+and redirect that executable's output to the fixture. The independent
+QEMU/KVM TempleOS conversion probe agrees on 64-bit invalid conversions.
+This does not cover 80-bit extended intermediates or every FPU exception.
