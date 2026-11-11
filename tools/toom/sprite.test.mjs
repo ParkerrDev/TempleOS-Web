@@ -106,7 +106,7 @@ U0 TmSpriteTest()
       if (peak>TM_SPRITE_CACHE_SIZE) throw('Cache');
     }
   tmpv->x=tmpv->y=0; tmpv->z=41; tmpv->cs=1; tmpv->sn=0;
-  tmpm->sector[0].floor=0; tmpm->sector[0].ceil=128; tmpm->sector[0].light=160;
+  tmpm->sector[0].floor=0; tmpm->sector[0].ceil=128*65536; tmpm->sector[0].light=160;
   tmpa->active=TRUE; tmpa->sector=0;
   for (i=0;i<${tests.length};i++) {
     n=tests[i*8];

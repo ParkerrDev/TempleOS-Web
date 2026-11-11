@@ -133,7 +133,7 @@ Actor *WorldSpawn(World *tmpw,I64 type,I64 x,I64 y,I64 z=TM_FLOOR_Z)
   tmpa->tics=state->tics; tmpa->sprite=state->sprite; tmpa->frame=state->frame;
   tmpa->sector=FixedSector(tmpw->map,x,y);
   sector=tmpw->map->sector+tmpa->sector;
-  tmpa->floor=sector->floor*65536; tmpa->ceil=sector->ceil*65536;
+  tmpa->floor=sector->floor; tmpa->ceil=sector->ceil;
   if (z==TM_FLOOR_Z) z=tmpa->floor;
   else if (z==TM_CEIL_Z) z=tmpa->ceil-tmpa->height;
   tmpa->z=z; tmpa->spawn=-1; tmpa->movedir=8;

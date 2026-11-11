@@ -18,8 +18,8 @@ Bool ActorSight(Path *path,Actor *source,Actor *target)
     line=world->collision->line+path->hit[i].line;
     if (line->back<0) return FALSE;
     front=map->sector+line->front; back=map->sector+line->back;
-    floor=MaxI64(front->floor,back->floor)*65536;
-    ceil=MinI64(front->ceil,back->ceil)*65536;
+    floor=MaxI64(front->floor,back->floor);
+    ceil=MinI64(front->ceil,back->ceil);
     if (floor>=ceil) return FALSE;
     fraction=path->hit[i].fraction;
     if (front->floor!=back->floor)

@@ -67,7 +67,7 @@ U0 TmMotionXY(Motion *tmpm,Actor *tmpa)
   tm_motion_cnt++;
   TmMotionRst(tmpm,tmpa);
   WorldTryMove(tmpm->world,tmpa,-8*65536,0);
-  tmpm->world->map->sector[0].floor=1;
+  tmpm->world->map->sector[0].floor=1*65536;
   tmpa->flags|=TM_MF_CORPSE; tmpa->floor=tmpa->z=65536;
   tmpa->vx=16385; ActorXY(tmpm,tmpa);
   if (tmpa->vx!=16385) throw('Corpse');
@@ -183,14 +183,14 @@ U0 TmMotionActors(Motion *tmpm,Actor *player)
 	tmpa->z!=128*65536-tmpa->height) throw('CeilHit');
   tm_motion_cnt++; WorldRemove(tmpw,tmpa);
   tmpa=WorldSpawn(tmpw,TM_MT_ROCKET,20*65536,0,64*65536);
-  tmpw->map->sector[1].ceil=32;
+  tmpw->map->sector[1].ceil=32*65536;
   StrCpy(tmpw->map->sector[1].ceil_name,"F_SKY1");
   tmpa->vx=-15*65536; old_random=tmpw->random; tm_motion_snd=0;
   ActorXY(tmpm,tmpa);
   if (tmpa->active || tmpw->random!=old_random || tm_motion_snd ||
 	tmpw->collision->ceil_line!=6) throw('Sky');
   tm_motion_cnt++; WorldRemove(tmpw,tmpa);
-  tmpw->map->sector[1].ceil=128;
+  tmpw->map->sector[1].ceil=128*65536;
   tmpa=WorldSpawn(tmpw,TM_MT_ROCKET,0,0,32*65536);
   old_random=tmpw->random; tm_motion_snd=0; tm_motion_remove=TRUE;
   MissileExplode(tmpm,tmpa); tm_motion_remove=FALSE;

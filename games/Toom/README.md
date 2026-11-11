@@ -12,7 +12,8 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - All original map records, BSP point queries, blockmap validation and explicit
   per-level ownership. Invalid indices, cycles and truncated records are
   rejected before use. Self-referencing sectors and absent back sides found in
-  the real Freedoom maps are retained.
+  the real Freedoom maps are retained. Packed 26-byte sector records decode
+  once into runtime Q16 heights, preserving fractional floors and ceilings.
 - Lazy indexed patch decoding, tall patch posts, clipped texture composition
   and an 8 MiB texture cache. Sprites and textures are not enlarged to 2×2
   pixels or all decoded at startup.
@@ -172,7 +173,8 @@ HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 The I/O check exercises 526 overlapping and repeated byte ranges, including
 short headers followed by multi-cluster bodies, with guarded buffers.
 The map check covers all 36 maps and 103,909 actor/partition queries, comparing
-native results to an independent host reader. It also corrupts record indices,
+native results and every decoded sector value to an independent host reader.
+It also corrupts record indices,
 alignment, BSP links, blockmap offsets and lump ranges to verify rejection.
 The patch check compares 2,233 decoded patches, sprites and interface graphics
 (15,109,811 indexed pixels) against the host reader. The texture check compares
@@ -190,9 +192,11 @@ The sprite check compares 7,736 state/rotation lookups, two full passes through
 853 decoded images and 49 pixel/depth views. It covers mirrored images, alpha,
 light/fullbright, sector clipping and nearer occluders. Absent Phase 2 sprite
 frames remain absent; validating gameplay-reachable state assets is a later gate.
-The masked-wall check compares 48 full pixel/depth views, covering oblique and
+The masked-wall check compares 96 full pixel/depth views, covering oblique and
 near-clipped segs, top/bottom pegging, scroll offsets, holes, reverse faces and
 opaque/sky occluders.
+Quarter-unit floors and half-unit ceilings are checked on native TempleOS and
+HEMU. Wall projection hoists height/view calculations out of the column loop.
 The collision check compares 68,035 fixed-point queries across all 36 maps
 with an independent full-linedef scan, including player, monster, missile,
 teleport, floating and noclip flags. It checks passability, sectors, headroom,
@@ -207,10 +211,11 @@ against a full actor scan. It checks large actors across block cells, vertical
 missile separation, source/species immunity, skull impacts, deferred pickup
 callbacks, stale handles and contact ordering. Actual damage and inventory
 effects are checked by the damage and inventory fixtures.
-The movement check covers 23 position-change contracts in a controlled pair
+The movement check covers 27 position-change contracts in a controlled pair
 of rooms: step/dropoff/headroom boundaries, float/teleport/noclip flags, atomic
 rejection, actor links, pickup contacts and crossed-line ordering, including
 callbacks that perform another query or throw after the position commits.
+Step and headroom tests include one-Q16-unit boundaries.
 Actual line actions remain part of the pending simulation stage.
 The path check compares all hit records for 5,012 rays across the 36 maps and
 an independent full geometry/actor scan. It includes long rays, exact grid and
@@ -319,3 +324,8 @@ in HEMU. Examples and Intel's explanation of x87 trigonometric argument
 reduction are retained in `tools/toom/fpu-evidence.json`. The common sampling
 rule resolves the tested renderer differences; it does not establish exact
 x87 semantics or universal cross-platform equivalence.
+
+The runtime-sector change is recorded in `tools/toom/sector-evidence.json`.
+All 288 static images remain exact. Three matched timing pairs put native and
+HEMU medians within 0.8% of the prior implementation, inside the observed run
+variation; this does not establish a complete game's frame rate.

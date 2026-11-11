@@ -1,7 +1,7 @@
 U0 MaskSegDraw(View *tmpv,Seg *tmps)
 {//Masked middle textures keep holes, pegging and wall/sprite depth.
-  I64 i,n,x,y,ya,yb,tx,ty,v,step,z,c,light,base_light,high,low;
-  F64 iz,iu,d,u,origin;
+  I64 i,n,x,y,ya,yb,tx,ty,v,step,z,c,light,base_light;
+  F64 iz,iu,d,u,origin,high,low,high_y,low_y;
   WallView wall;
   Map *tmpm=tmpv->map;
   Line *tmpl=tmpm->line+tmps->line;
@@ -13,8 +13,10 @@ U0 MaskSegDraw(View *tmpv,Seg *tmps)
   if (i==0xFFFF || !(tmpl->flags&4) ||
 	!WallProject(tmpv,tmps,&wall)) return;
   sb=tmpm->sector+tmpm->side[i].sector;
-  high=MinI64(sf->ceil,sb->ceil); low=MaxI64(sf->floor,sb->floor);
+  high=MinI64(sf->ceil,sb->ceil)/65536.0;
+  low=MaxI64(sf->floor,sb->floor)/65536.0;
   if (high<=low) return;
+  high_y=(high-tmpv->z)*tmpv->fy; low_y=(low-tmpv->z)*tmpv->fy;
   n=TextureFind(tmpv->gr,side->middle);
   if (!(tmpi=TextureHold(tmpv->gr,n))) return;
   origin=high+side->y;
@@ -26,8 +28,8 @@ U0 MaskSegDraw(View *tmpv,Seg *tmps)
   iz=wall.iz; iu=wall.iu;
   for (x=wall.x1;x<=wall.x2;x++,iz+=wall.dz,iu+=wall.du) {
     d=1.0/iz; u=iu*d;
-    ya=MaxI64(ViewY(tmpv,high,iz),0);
-    yb=MinI64(ViewY(tmpv,low,iz)-1,tmpv->height-1);
+    ya=MaxI64(ViewRow(tmpv,high_y,iz),0);
+    yb=MinI64(ViewRow(tmpv,low_y,iz)-1,tmpv->height-1);
     tx=SampleFixed(u)>>16; tx%=tmpi->width;
     if (tx<0) tx+=tmpi->width;
     z=Min(100000000.0*iz,I32_MAX);

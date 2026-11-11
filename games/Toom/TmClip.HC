@@ -106,12 +106,12 @@ Bool CollisionLine(Collision *tmpc,I64 n)
   }
   front=tmpc->map->sector+tmpl->front;
   back=tmpc->map->sector+tmpl->back;
-  ceil=MinI64(front->ceil,back->ceil)*65536;
+  ceil=MinI64(front->ceil,back->ceil);
   if (ceil<tmpc->ceil) {
     tmpc->ceil=ceil; tmpc->ceil_line=n;
   }
-  tmpc->floor=MaxI64(tmpc->floor,MaxI64(front->floor,back->floor)*65536);
-  tmpc->dropoff=MinI64(tmpc->dropoff,MinI64(front->floor,back->floor)*65536);
+  tmpc->floor=MaxI64(tmpc->floor,MaxI64(front->floor,back->floor));
+  tmpc->dropoff=MinI64(tmpc->dropoff,MinI64(front->floor,back->floor));
   if (line->special) tmpc->special[tmpc->special_cnt++]=n;
   return TRUE;
 cl_block:
@@ -126,8 +126,8 @@ U0 CollisionBegin(Collision *tmpc,I64 x,I64 y,I64 radius,I64 flags,
   Sector *tmps;
   tmpc->sector=FixedSector(tmpm,x,y);
   tmps=tmpm->sector+tmpc->sector;
-  tmpc->floor=tmpc->dropoff=tmps->floor*65536;
-  tmpc->ceil=tmps->ceil*65536;
+  tmpc->floor=tmpc->dropoff=tmps->floor;
+  tmpc->ceil=tmps->ceil;
   tmpc->flags=flags; tmpc->player=player;
   tmpc->float_ok=FALSE;
   tmpc->special_cnt=0; tmpc->blocking=tmpc->ceil_line=-1;

@@ -22,7 +22,7 @@ U0 TmBlastTest()
   body=FileRead("C:/ORACLE/SIGHT.BIN",&size);
   if (!body || size!=8+body[0]*5*8) throw('SightBin');
   for (i=0,row=body+1;i<body[0];i++,row+=5) {
-    map->sector[1].floor=row[0]; map->sector[1].ceil=row[1];
+    map->sector[1].floor=row[0]*65536; map->sector[1].ceil=row[1]*65536;
     source->z=row[2]*65536; target->z=row[3]*65536;
     if (ActorSight(path,source,target)!=row[4]) {
       "SIGHT %d FLOOR %d CEIL %d Z %d %d EXPECT %d\n",i,
@@ -31,7 +31,7 @@ U0 TmBlastTest()
     }
     tm_blast_cnt++;
   }
-  Free(body); map->sector[1].floor=0; map->sector[1].ceil=128;
+  Free(body); map->sector[1].floor=0; map->sector[1].ceil=128*65536;
   source->z=target->z=0;
   map->line[6].flags|=3;
   if (!ActorSight(path,source,target)) throw('FlgSight');
@@ -82,7 +82,7 @@ U0 TmBlastTest()
   map->sector[1].ceil=0;
   ActorRadius(motion,path,spot,source,128);
   if (target->health!=health) throw('BstWall');
-  map->sector[1].ceil=128; WorldRemove(world,target); tm_blast_cnt++;
+  map->sector[1].ceil=128*65536; WorldRemove(world,target); tm_blast_cnt++;
   for (i=0;i<2;i++) {
     n=TM_MT_CYBORG;
     if (i) n=TM_MT_SPIDER;

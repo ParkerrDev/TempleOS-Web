@@ -103,7 +103,7 @@ U0 ActorXY(Motion *tmpm,Actor *tmpa)
     return;
   if (tmpa->flags&TM_MF_CORPSE &&
 	(AbsI64(tmpa->vx)>16384 || AbsI64(tmpa->vy)>16384) &&
-	tmpa->floor!=tmpw->map->sector[tmpa->sector].floor*65536) return;
+	tmpa->floor!=tmpw->map->sector[tmpa->sector].floor) return;
   if (AbsI64(tmpa->vx)<TM_STOP_SPEED && AbsI64(tmpa->vy)<TM_STOP_SPEED &&
 	(!tmpp || !tmpp->forward && !tmpp->side)) {
     if (tmpp && TM_S_PLAY_RUN1<=tmpa->state<=TM_S_PLAY_RUN4)

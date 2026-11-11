@@ -31,6 +31,25 @@ U8 *MapRead(Wad *tmpw,Map *tmpm,I64 n,U8 *name,I64 size,I64 *_cnt)
   return res;
 }
 
+Bool MapSectorsRead(Wad *tmpw,Map *tmpm)
+{//The WAD has integer map units; live heights use Q16 like actor positions.
+  SectorDisk *src;
+  Sector *dst;
+  I64 i;
+  if (!(src=MapRead(tmpw,tmpm,8,"SECTORS",sizeof(SectorDisk),
+	&tmpm->sector_cnt))) return FALSE;
+  tmpm->sector=MAlloc(tmpm->sector_cnt*sizeof(Sector));
+  for (i=0,dst=tmpm->sector;i<tmpm->sector_cnt;i++,dst++) {
+    dst->floor=src[i].floor*65536; dst->ceil=src[i].ceil*65536;
+    MemCpy(dst->floor_name,src[i].floor_name,8);
+    MemCpy(dst->ceil_name,src[i].ceil_name,8);
+    dst->light=src[i].light; dst->special=src[i].special; dst->tag=src[i].tag;
+  }
+  tmpm->bytes+=(sizeof(Sector)-sizeof(SectorDisk))*tmpm->sector_cnt;
+  Free(src);
+  return TRUE;
+}
+
 Bool BlockmapChk(Map *tmpm)
 {//Each block ends in -1; offsets and linedefs must stay in the lump.
   I64 i,j,n,offset,line;
@@ -123,8 +142,7 @@ Map *MapNew(Wad *tmpw,U8 *name)
 	&tmpm->subsector_cnt))) goto mn_fail;
   if (!(tmpm->node=MapRead(tmpw,tmpm,7,"NODES",sizeof(Node),
 	&tmpm->node_cnt))) goto mn_fail;
-  if (!(tmpm->sector=MapRead(tmpw,tmpm,8,"SECTORS",sizeof(Sector),
-	&tmpm->sector_cnt))) goto mn_fail;
+  if (!MapSectorsRead(tmpw,tmpm)) goto mn_fail;
   if (!(tmpm->reject=MapRead(tmpw,tmpm,9,"REJECT",1,
 	&tmpm->reject_size))) goto mn_fail;
   if (!(tmpm->blockmap=MapRead(tmpw,tmpm,10,"BLOCKMAP",sizeof(I16),

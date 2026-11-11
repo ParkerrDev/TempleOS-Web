@@ -33,7 +33,7 @@ U0 TmPreview()
       thing=tmpm->thing+i;
       tmpv->x=thing->x; tmpv->y=thing->y;
       sector=MapSector(tmpm,tmpv->x,tmpv->y);
-      tmpv->z=tmpm->sector[sector].floor+41;
+      tmpv->z=tmpm->sector[sector].floor/65536.0+41;
       tmpv->angle=thing->angle*3.141592653589793/180;
       break;
     }
@@ -50,9 +50,9 @@ U0 TmPreview()
         actor.type=j; actor.active=TRUE; actor.flags=info->flags;
         actor.x=thing->x*65536; actor.y=thing->y*65536;
         actor.sector=FixedSector(tmpm,actor.x,actor.y);
-        actor.z=tmpm->sector[actor.sector].floor*65536;
+        actor.z=tmpm->sector[actor.sector].floor;
         if (info->flags&TM_MF_SPAWNCEILING)
-          actor.z=tmpm->sector[actor.sector].ceil*65536-info->height;
+          actor.z=tmpm->sector[actor.sector].ceil-info->height;
         actor.angle=536870912*(thing->angle/45);
         ActorState(tmpd,&actor,info->spawn,NULL);
         SpriteDraw(tmpv,tmps,&actor); actors++;

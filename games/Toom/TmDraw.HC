@@ -156,9 +156,9 @@ U0 ViewPlanes(View *tmpv)
 	s=(n-1)/2;
 	tmps=tmpv->map->sector+s;
 	if ((n-1)&1) {
-	  flat=tmpv->ceil[s]; height=tmps->ceil;
+	  flat=tmpv->ceil[s]; height=tmps->ceil/65536.0;
 	} else {
-	  flat=tmpv->floor[s]; height=tmps->floor;
+	  flat=tmpv->floor[s]; height=tmps->floor/65536.0;
 	}
 	if (src=ViewFlat(tmpv,flat)) {
 	  d=(tmpv->z-height)*tmpv->fy/(y+0.5-tmpv->cy);
@@ -214,9 +214,10 @@ U0 WallColumn(View *tmpv,Image *tmpi,I64 x,I64 ya,I64 yb,
   }
 }
 
-I64 ViewY(View *tmpv,I64 height,F64 iz)
-{//An exact pixel-center tie belongs to the lower row, despite roundoff.
-  return Ceil(tmpv->cy-(height-tmpv->z)*tmpv->fy*iz-0.500000001);
+I64 ViewRow(View *tmpv,F64 height,F64 iz)
+{//Height is (z-view_z)*fy, invariant across this wall.
+//An exact pixel-center tie belongs to the lower row, despite roundoff.
+  return Ceil(tmpv->cy-height*iz-0.500000001);
 }
 
 class WallView
@@ -269,7 +270,8 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
 {//Front-to-back opaque walls clip portals and mark visible plane spans.
   I64 i,x,x1,x2,front,back,top,bottom,up,down,light,base_light,
 	mid_n=-1,upper_n=-1,lower_n=-1;
-  F64 iz,iu,dz,du,d,u,origin;
+  F64 iz,iu,dz,du,d,u,origin,front_floor,front_ceil,back_floor,back_ceil,
+	front_yfloor,front_yceil,back_yfloor,back_yceil;
   Bool seen=FALSE;
   WallView wall;
   Map *tmpm=tmpv->map;
@@ -282,11 +284,17 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
   x1=wall.x1; x2=wall.x2;
   front=side->sector;
   sf=tmpm->sector+front;
+  front_floor=sf->floor/65536.0; front_ceil=sf->ceil/65536.0;
+  front_yfloor=(front_floor-tmpv->z)*tmpv->fy;
+  front_yceil=(front_ceil-tmpv->z)*tmpv->fy;
   back=-1;
   i=tmpl->side[1-tmps->side];
   if (i!=0xFFFF && tmpl->flags&4) {
     back=tmpm->side[i].sector;
     sb=tmpm->sector+back;
+    back_floor=sb->floor/65536.0; back_ceil=sb->ceil/65536.0;
+    back_yfloor=(back_floor-tmpv->z)*tmpv->fy;
+    back_yceil=(back_ceil-tmpv->z)*tmpv->fy;
   }
   if (!sb) {
     mid_n=TextureFind(tmpv->gr,side->middle);
@@ -310,11 +318,11 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
       seen=TRUE;
       d=1.0/iz; u=iu*d;
       light=ViewLight(base_light,tmpv->fx*16*iz);
-      top=ViewY(tmpv,sf->ceil,iz);
-      bottom=ViewY(tmpv,sf->floor,iz)-1;
+      top=ViewRow(tmpv,front_yceil,iz);
+      bottom=ViewRow(tmpv,front_yfloor,iz)-1;
       if (sb) {
-	up=ViewY(tmpv,sb->ceil,iz);
-	down=ViewY(tmpv,sb->floor,iz)-1;
+	up=ViewRow(tmpv,back_yceil,iz);
+	down=ViewRow(tmpv,back_yfloor,iz)-1;
 	if (tmpv->ceil[front]<0 && tmpv->ceil[back]<0) top=up;
       }
       if (tmpv->ceil[front]>=0)
@@ -326,20 +334,20 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
       else
 	SkyColumn(tmpv,x,bottom+1,tmpv->bottom[x],iz);
       if (!sb) {
-	origin=sf->ceil+side->y;
-	if (mid && tmpl->flags&16) origin=sf->floor+mid->height+side->y;
+	origin=front_ceil+side->y;
+	if (mid && tmpl->flags&16) origin=front_floor+mid->height+side->y;
 	WallColumn(tmpv,mid,x,top,bottom,u,d,origin,light);
 	tmpv->top[x]=tmpv->height;
 	tmpv->bottom[x]=-1;
       } else {
 	if (up>top) {
-	  origin=sf->ceil+side->y;
-	  if (upper && !(tmpl->flags&8)) origin=sb->ceil+upper->height+side->y;
+	  origin=front_ceil+side->y;
+	  if (upper && !(tmpl->flags&8)) origin=back_ceil+upper->height+side->y;
 	  WallColumn(tmpv,upper,x,top,up-1,u,d,origin,light);
 	}
 	if (down<bottom) {
-	  origin=sb->floor+side->y;
-	  if (tmpl->flags&16) origin=sf->ceil+side->y;
+	  origin=back_floor+side->y;
+	  if (tmpl->flags&16) origin=front_ceil+side->y;
 	  WallColumn(tmpv,lower,x,down+1,bottom,u,d,origin,light);
 	}
 	tmpv->top[x]=ClampI64(MaxI64(tmpv->top[x],MaxI64(top,up)),

@@ -35,9 +35,17 @@ class Side
   U16 sector;
 };
 
-class Sector
+class SectorDisk
 {
   I16 floor,ceil;
+  U8 floor_name[8],ceil_name[8];
+  I16 light;
+  U16 special,tag;
+};
+
+class Sector
+{
+  I64 floor,ceil;
   U8 floor_name[8],ceil_name[8];
   I16 light;
   U16 special,tag;

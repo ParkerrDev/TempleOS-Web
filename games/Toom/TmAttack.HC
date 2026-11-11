@@ -55,8 +55,8 @@ Bool AttackAim(Attack *tmpa,Actor *source,I64 angle,I64 range)
       if (line->back<0) return FALSE;
       front=tmpw->map->sector+line->front;
       back=tmpw->map->sector+line->back;
-      floor=MaxI64(front->floor,back->floor)*65536;
-      ceil=MinI64(front->ceil,back->ceil)*65536;
+      floor=MaxI64(front->floor,back->floor);
+      ceil=MinI64(front->ceil,back->ceil);
       if (floor>=ceil) return FALSE;
       if (front->floor!=back->floor) {
 	slope=FixedDiv(floor-tmpa->z,distance);
@@ -120,8 +120,8 @@ I64 AttackFire(Attack *tmpa,Actor *source,I64 angle,I64 range,I64 slope)
       if (tmpw->map->line[hit->line].special) AttackSpecial(tmpa,hit->line);
       if (line->back>=0) {
 	back=tmpw->map->sector+line->back;
-	floor=MaxI64(front->floor,back->floor)*65536;
-	ceil=MinI64(front->ceil,back->ceil)*65536;
+	floor=MaxI64(front->floor,back->floor);
+	ceil=MinI64(front->ceil,back->ceil);
 	if (floor<ceil && (front->floor==back->floor ||
 	      FixedDiv(floor-tmpa->z,distance)<=slope) &&
 	      (front->ceil==back->ceil ||
@@ -130,7 +130,7 @@ I64 AttackFire(Attack *tmpa,Actor *source,I64 angle,I64 range,I64 slope)
       tmpa->kind=TM_HIT_WALL; tmpa->line=hit->line;
       AttackPoint(tmpa,hit->fraction,4*65536);
       if (SectorSky(front) &&
-	    (tmpa->z>front->ceil*65536 || back && SectorSky(back)))
+	    (tmpa->z>front->ceil || back && SectorSky(back)))
 	tmpa->kind=TM_HIT_SKY;
       return tmpa->kind;
     } else if ((target=WorldActorGet(tmpw,hit->actor)) && target!=source &&

@@ -32,7 +32,7 @@ const array=(type,name,values)=>`${type} ${name}[${values.length}]={\n`+
   values.map((v,i)=>(i&&i%16===0?'\n':'')+v).join(',')+'};\n';
 let source=['TmGlbls.HH','TmWad.HC','TmMap.HC']
   .map(name=>readFileSync(resolve(root,'games/Toom',name),'latin1')).join('\n');
-source+='F64 *tm_queries;\n'+
+source+='F64 *tm_queries;I64 *tm_sectors;\n'+
   array('I64','tm_offsets',[...maps.map(m=>m.first),queries.length])+
   array('I64','tm_counts',maps.flatMap(m=>[m.vertices.length,m.lines.length,
     m.sides.length,m.sectors.length,m.segs.length,m.subsectors.length,
@@ -40,12 +40,14 @@ source+='F64 *tm_queries;\n'+
 source+=`
 U0 TmTest()
 {
-  I64 i,j,n,q,bad=0,peak=0,old,first,size,offset;
+  I64 i,j,n,q,bad=0,peak=0,old,first,size,offset,lump_offset;
   F64 start=tS;
   U8 name[9],buf[16];
   Wad *tmpw;
   Map *tmpm;
   tm_queries=FileRead("C:/ORACLE/QUERIES.BIN");
+  tm_sectors=FileRead("C:/ORACLE/SECTORS.BIN");
+  if (!tm_sectors || sizeof(SectorDisk)!=26) throw('Sectors');
   if (!tm_queries) throw('Queries');
   tmpw=WadNew("C:/ORACLE/FREEDOOM.WAD");
   if (!tmpw) throw('Wad');
@@ -53,6 +55,7 @@ U0 TmTest()
   if (tmpw->read_bytes!=12+16*tmpw->cnt) throw('Eager');
   if (WadRead(tmpw,buf,-1,1) || WadRead(tmpw,buf,0,-1) ||
         WadRead(tmpw,buf,tmpw->size,1)) throw('Bounds');
+  offset=0;
   for (i=0;i<36;i++) {
     StrPrint(name,"E%dM%d",i/9+1,i%9+1);
     tmpm=MapNew(tmpw,name);
@@ -73,6 +76,12 @@ U0 TmTest()
           MapSector(tmpm,tm_queries[q],tm_queries[q+1])!=tm_queries[q+3])
         bad++;
     }
+    for (j=0;j<tmpm->sector_cnt;j++,offset+=5)
+      if (tmpm->sector[j].floor!=tm_sectors[offset]*65536 ||
+          tmpm->sector[j].ceil!=tm_sectors[offset+1]*65536 ||
+          tmpm->sector[j].light!=tm_sectors[offset+2] ||
+          tmpm->sector[j].special!=tm_sectors[offset+3] ||
+          tmpm->sector[j].tag!=tm_sectors[offset+4]) throw('Sector');
     peak=MaxI64(peak,tmpm->bytes);
     if (!i) {
       old=tmpm->line[0].v1; tmpm->line[0].v1=0xFFFF;
@@ -91,25 +100,30 @@ U0 TmTest()
       tmpw->dir[first].size--;
       if (MapNew(tmpw,name)) throw('Align');
       tmpw->dir[first].size=size;
-      offset=tmpw->dir[first].offset;
+      lump_offset=tmpw->dir[first].offset;
       tmpw->dir[first].offset=tmpw->size;
       if (MapNew(tmpw,name)) throw('Range');
-      tmpw->dir[first].offset=offset;
+      tmpw->dir[first].offset=lump_offset;
     }
     MapDel(tmpm);
   }
   "MAPS 36 QUERIES ${queries.length} BAD %d PEAK %d READ %d MS %.1f\\n",
         bad,peak,tmpw->read_bytes,(tS-start)*1000;
   WadDel(tmpw);
-  Free(tm_queries);
+  Free(tm_queries); Free(tm_sectors);
   if (bad) throw('BSP');
 }
 TmTest;
 `;
 const queryBytes=Buffer.alloc(queries.length*32);
 queries.flat().forEach((value,i)=>queryBytes.writeDoubleLE(value,i*8));
+const sectorValues=maps.flatMap(m=>{const b=lumps[m.index+8].bytes;
+  return m.sectors.flatMap((_,i)=>[b.readInt16LE(i*26),b.readInt16LE(i*26+2),
+    b.readInt16LE(i*26+20),b.readUInt16LE(i*26+22),b.readUInt16LE(i*26+24)]);});
+const sectorBytes=Buffer.alloc(sectorValues.length*8);
+sectorValues.forEach((v,i)=>sectorBytes.writeBigInt64LE(BigInt(v),i*8));
 const result=await QemuRun([Buffer.from(source,'latin1')],
-  {files:[{name:'FREEDOOM.WAD',bytes},{name:'QUERIES.BIN',bytes:queryBytes}],timeout:240});
+  {files:[{name:'FREEDOOM.WAD',bytes},{name:'QUERIES.BIN',bytes:queryBytes},{name:'SECTORS.BIN',bytes:sectorBytes}],timeout:240});
 console.log(JSON.stringify(result,null,2));
 assert.equal(result.results.length,1);
 assert.equal(result.results[0].except,'');

@@ -74,7 +74,7 @@ U0 TmSlideCases(GameData *tmpd)
   tm_slide_cnt++;
   WorldRemove(tmpw,other);
   WorldTryMove(tmpw,tmpa,-28*65536,0);
-  tmpm->sector[0].floor=25;
+  tmpm->sector[0].floor=25*65536;
   tmpa->vx=20*65536; tmpa->vy=10*65536;
   WorldSlide(tmpw,tmpa,tmpp);
   if (tmpa->x!=-1089548 || tmpa->y!=634880 || tmpa->vx ||
@@ -88,13 +88,13 @@ U0 TmSlideCases(GameData *tmpd)
   if (tmpa->x!=-1089548 || tmpa->y!=634880) throw('Flag');
   tm_slide_cnt++;
   tmpm->line[6].flags&=~1;
-  tmpm->sector[0].ceil=55;
+  tmpm->sector[0].ceil=55*65536;
   WorldTryMove(tmpw,tmpa,-28*65536,0);
   tmpa->vx=20*65536; tmpa->vy=10*65536;
   WorldSlide(tmpw,tmpa,tmpp);
   if (tmpa->x!=-1089548 || tmpa->y!=634880) throw('Head');
   tm_slide_cnt++;
-  tmpm->sector[0].ceil=128;
+  tmpm->sector[0].ceil=128*65536;
   WorldTryMove(tmpw,tmpa,-8*65536,100*65536);
   tmpa->vx=tmpa->vy=20*65536;
   WorldSlide(tmpw,tmpa,tmpp,NULL,&TmSlideCross);

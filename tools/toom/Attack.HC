@@ -89,22 +89,22 @@ U0 TmAttackTest()
   if (AttackAim(attack,source,0,512*65536)) throw('Closed');
   TmAttackExpect(attack,source,TM_HIT_WALL,0);
   if (attack->line!=6) throw('Door');
-  map->sector[0].ceil=32;
+  map->sector[0].ceil=32*65536;
   if (!AttackAim(attack,source,0,512*65536) || attack->slope>=0)
     throw('LowAim');
   TmAttackExpect(attack,source,TM_HIT_ACTOR,target->id,attack->slope);
   TmAttackExpect(attack,source,TM_HIT_ACTOR,target->id,-8192);
   TmAttackExpect(attack,source,TM_HIT_WALL,0);
-  map->sector[0].floor=40; map->sector[0].ceil=128;
+  map->sector[0].floor=40*65536; map->sector[0].ceil=128*65536;
   if (!AttackAim(attack,source,0,512*65536) || attack->slope<=0)
     throw('StepAim');
   TmAttackExpect(attack,source,TM_HIT_ACTOR,target->id,attack->slope);
   TmAttackExpect(attack,source,TM_HIT_ACTOR,target->id,8192);
   TmAttackExpect(attack,source,TM_HIT_WALL,0);
-  map->sector[0].floor=map->sector[0].ceil=36;
+  map->sector[0].floor=map->sector[0].ceil=36*65536;
   TmAttackExpect(attack,source,TM_HIT_WALL,0);
   if (attack->line!=6) throw('ClosedEq');
-  map->sector[0].floor=0; map->sector[0].ceil=128;
+  map->sector[0].floor=0; map->sector[0].ceil=128*65536;
   WorldActorUnlink(world,target); target->z=128*65536;
   WorldActorLink(world,target);
   if (AttackAim(attack,source,0,512*65536)) throw('Cone');
@@ -124,7 +124,7 @@ U0 TmAttackTest()
   target->flags&=~TM_MF_SHOOTABLE;
   StrCpy(map->sector[0].ceil_name,"F_SKY1");
   TmAttackExpect(attack,source,TM_HIT_SKY,0,65536);
-  map->sector[0].ceil=32;
+  map->sector[0].ceil=32*65536;
   StrCpy(map->sector[1].ceil_name,"F_SKY1");
   TmAttackExpect(attack,source,TM_HIT_SKY,0);
   if (attack->line!=6 || attack->special_cnt!=1) throw('SkyLine');
@@ -132,7 +132,7 @@ U0 TmAttackTest()
   StrCpy(map->sector[0].ceil_name,"F_SKY10");
   source->z=-16*65536;
   TmAttackExpect(attack,source,TM_HIT_WALL,0,32768);
-  map->sector[0].ceil=128; source->z=0;
+  map->sector[0].ceil=128*65536; source->z=0;
   map->sector[0].ceil_name[0]=map->sector[1].ceil_name[0]=0;
   target->flags|=TM_MF_SHOOTABLE;
   WorldActorUnlink(world,source); source->x=0; WorldActorLink(world,source);

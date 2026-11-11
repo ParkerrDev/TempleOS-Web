@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "05f596b53568ffc9636bfee6579561c35655be57938f3fad413906f4d0b47967",
+  "renderSourceSha256": "dc626aa58b1de9aa4cd7d675047303371244160d39b73ed190594d6c921ac8ea",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -38,7 +38,7 @@
     "world": {
       "levelsAndSkills": 108,
       "actors": 37779,
-      "native": "qemu-0t_14vbn"
+      "native": "qemu-r4_13w4r"
     },
     "damage": {
       "cases": 4772,
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-ayiblnn3",
+      "native": "qemu-aqhupfiq",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -73,13 +73,13 @@
     },
     "player": {
       "cases": 1681,
-      "native": "qemu-43e6w_tc",
+      "native": "qemu-syw03kj9",
       "hemu": true,
       "commandVectors": 1500
     },
     "blast": {
       "cases": 279,
-      "native": "qemu-oxa8fhdn",
+      "native": "qemu-an_fiwx_",
       "hemu": true
     },
     "sight": {
@@ -87,6 +87,25 @@
       "visible": 927,
       "maps": 36,
       "native": "qemu-pjw5tp6o",
+      "hemu": true
+    },
+    "map": {
+      "maps": 36,
+      "queries": 103909,
+      "native": "qemu-gqf_ijz_"
+    },
+    "movement": {
+      "cases": 27,
+      "native": "qemu-7c2xbbob"
+    },
+    "collision": {
+      "queries": 68035,
+      "native": "qemu-altr6tei"
+    },
+    "mask": {
+      "views": 96,
+      "fractionalHeights": true,
+      "native": "qemu-rzg2hgui",
       "hemu": true
     }
   },
@@ -559,5 +578,6 @@
         2959846259
       ]
     }
-  ]
+  ],
+  "sectorHeightFormat": "Signed Q16 in runtime Sector; signed integer units in packed 26-byte SectorDisk"
 }

@@ -30,7 +30,7 @@ Map *RoomsNew(Bool specials=TRUE)
     map->line[i].special=97;
   }
   map->side[1].sector=1;
-  map->sector[0].ceil=map->sector[1].ceil=128;
+  map->sector[0].ceil=map->sector[1].ceil=128*65536;
   map->node[0].dy=256;
   map->node[0].child[0]=TM_NF_SUBSECTOR;
   map->node[0].child[1]=TM_NF_SUBSECTOR|1;

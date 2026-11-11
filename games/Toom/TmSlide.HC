@@ -25,8 +25,8 @@ Bool SlideBlocking(World *tmpw,Actor *tmpa,I64 n)
     return TRUE;
   front=tmpw->map->sector+tmpl->front;
   back=tmpw->map->sector+tmpl->back;
-  floor=MaxI64(front->floor,back->floor)*65536;
-  ceil=MinI64(front->ceil,back->ceil)*65536;
+  floor=MaxI64(front->floor,back->floor);
+  ceil=MinI64(front->ceil,back->ceil);
   return ceil-floor<tmpa->height || ceil-tmpa->z<tmpa->height ||
 	floor-tmpa->z>24*65536;
 }

@@ -136,8 +136,8 @@ U0 SpriteDraw(View *tmpv,Sprites *tmps,Actor *tmpa)
   y2=MinI64(Ceil(sy+tmpi->height*tmpv->fy/d-0.5)-1,tmpv->height-1);
   if (x1>x2 || y1>y2) return;
   sector=tmpv->map->sector+tmpa->sector;
-  y1=MaxI64(y1,Ceil(tmpv->cy-(sector->ceil-tmpv->z)*tmpv->fy/d-0.5));
-  y2=MinI64(y2,Ceil(tmpv->cy-(sector->floor-tmpv->z)*tmpv->fy/d-0.5)-1);
+  y1=MaxI64(y1,Ceil(tmpv->cy-(sector->ceil/65536.0-tmpv->z)*tmpv->fy/d-0.5));
+  y2=MinI64(y2,Ceil(tmpv->cy-(sector->floor/65536.0-tmpv->z)*tmpv->fy/d-0.5)-1);
   light=0;
   if (!(tmpa->frame&0x8000)) {
     light=4*(15-ClampI64(sector->light>>4,0,15));
