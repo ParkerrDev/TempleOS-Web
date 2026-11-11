@@ -7,3 +7,4 @@
 #include "TmState"
 #include "TmPal"
 #include "TmDraw"
+#include "TmSprite"

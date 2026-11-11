@@ -1,3 +1,14 @@
+Bool WadBlocksRead(CFile *tmpf,U8 *dst,I64 blk,I64 cnt)
+{//A cached FAT cluster must end before FBlkRead starts its bulk walk.
+  I64 n;
+  if (!(tmpf->flags&FF_CONTIGUOUS)) {
+    n=MinI64(cnt,tmpf->dv->spc-blk%tmpf->dv->spc);
+    if (!FBlkRead(tmpf,dst,blk,n)) return FALSE;
+    dst+=n*BLK_SIZE; blk+=n; cnt-=n;
+  }
+  return !cnt || FBlkRead(tmpf,dst,blk,cnt);
+}
+
 Bool WadRead(Wad *tmpw,U8 *dst,I64 offset,I64 size)
 {//Read a byte range without reading or rewriting the whole IWAD.
   I64 n,blk=offset>>BLK_SIZE_BITS,skip=offset&(BLK_SIZE-1);
@@ -13,7 +24,7 @@ Bool WadRead(Wad *tmpw,U8 *dst,I64 offset,I64 size)
   }
   n=size>>BLK_SIZE_BITS;
   if (n) {
-    if (!FBlkRead(tmpw->file,dst,blk,n)) return FALSE;
+    if (!WadBlocksRead(tmpw->file,dst,blk,n)) return FALSE;
     blk+=n;
     n<<=BLK_SIZE_BITS;
     dst+=n; size-=n;

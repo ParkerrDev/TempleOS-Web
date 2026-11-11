@@ -7,7 +7,8 @@ preserved in `../upstream/TOOM` with its original provenance.
 The implemented foundation uses native V5.03 file and memory APIs:
 
 - A validated IWAD directory and bounded byte-range reads. Startup does not
-  assemble, rewrite or read the entire WAD.
+  assemble, rewrite or read the entire WAD. Reads split the first FAT cluster
+  before bulk access to avoid the native CFile cached-cluster edge case.
 - All original map records, BSP point queries, blockmap validation and explicit
   per-level ownership. Invalid indices, cycles and truncated records are
   rejected before use. Self-referencing sectors and absent back sides found in
@@ -17,14 +18,19 @@ The implemented foundation uses native V5.03 file and memory APIs:
   pixels or all decoded at startup.
 - A 41,392-byte immutable state pack with all 967 canonical states and 137
   actor types, the original deterministic random stream and Freedoom's five
-  full-bright firing-frame and two shotgun-flash duration corrections. A native state clock handles action
-  callbacks, zero-tic transitions and permanent states independently of drawing.
+  full-bright firing-frame and two shotgun-flash duration corrections. A native
+  state clock handles action callbacks, zero-tic transitions and permanent
+  states independently of drawing.
 - Native BSP traversal, near-plane clipping, perspective wall columns, portal
   clipping and horizontal floor/ceiling spans. Original COLORMAP data supplies
   light and distance shading. Indexed pixels become 2×2 TempleOS palette
   patterns in a private CDC; window composition uses the OS graphics layer.
+- Lazy sprite frame/rotation indexing, mirrored patch origins, transparent
+  pixels, full-bright and distance lighting, sector clipping and per-pixel
+  wall/sprite depth tests. A separate 4 MiB decoded sprite cache evicts before
+  allocation. Sprites are not decoded until requested.
 
-Masked surfaces and sprites, simulation, weapons, actors, line specials, HUD,
+Masked surfaces, fuzz effects, simulation, weapons, actors, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
 
@@ -68,13 +74,17 @@ The oracle compiles and runs these sources in original TempleOS V5.03 under
 QEMU with a private disk; it does not compile them with HolyC-wasm.
 
 ```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/io.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sprite.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
+The I/O check exercises 526 overlapping and repeated byte ranges, including
+short headers followed by multi-cluster bodies, with guarded buffers.
 The map check covers all 36 maps and 103,909 actor/partition queries, comparing
 native results to an independent host reader. It also corrupts record indices,
 alignment, BSP links, blockmap offsets and lump ranges to verify rejection.
@@ -84,6 +94,10 @@ all 963 composite textures and exercises cache hits and eviction/reload.
 The state check advances all 967 states through 116,040 total tics with action
 callbacks, checks three full random-stream cycles and rejects invalid next-state
 indices. It checks the clock and data, not yet the effects of actor actions.
+The sprite check compares 7,736 state/rotation lookups, two full passes through
+853 decoded images and 48 pixel/depth views. It covers mirrored images, alpha,
+light/fullbright, sector clipping and nearer occluders. Absent Phase 2 sprite
+frames remain absent; validating gameplay-reachable state assets is a later gate.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private
