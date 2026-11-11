@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {HemuBoot,ReadyWait,Measure,Sleep} from "./WorkerHost.mjs";
 
 for (const smp of [0,4]) {
-  const h=await HemuBoot({smp});
+  const h=await HemuBoot({smp,rate:30});
   try {
     assert.equal((await ReadyWait(h,20000)).ok,true);
     if (smp && !h.msgs.some(m=>m.cmd=="smpReady"))

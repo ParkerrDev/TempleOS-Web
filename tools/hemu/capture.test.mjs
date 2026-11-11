@@ -39,7 +39,7 @@ assert.equal(frames.length,1,"a failed next capture cannot expose live pixels");
 assert.equal(locks,3);
 assert.equal(unlocks,1);
 
-for (const text of ["FPS29", "Time 12:00 FPS 200", "FPS: 99", "A fullscreen game"]) {
+for (const text of ["Welcome to TempleOS FPS29", "Time 12:00 FPS 200", "FPS: 99", "A fullscreen game"]) {
   buf.fill(1);
   for (let i=0;i<text.length;i++)
     for (let y=0;y<8;y++)

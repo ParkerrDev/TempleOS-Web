@@ -6,6 +6,7 @@
 // blit cost leaves the critical path. The canvas stays on the main thread (frames are shipped via
 // postMessage), so hemu.html can fall back to its in-line single-thread engine if this ever fails.
 import {FrameTop,FrameFps} from "./FrameText.js";
+import {KeyQueue} from "./KeyQueue.js";
 import {CaptureBarrier} from "./CoreBarrier.js";
 import { createHemuHost } from "./host.js";
 import { loadDisk, makeDisk, fat32Upload, fat32List } from "./qcow2.js";
@@ -14,7 +15,14 @@ import {createGuestInput} from "./guestinput.js";
 import { createGuestExec } from "./guestexec.js";   // backend guest execution: jobs queued through the OS's own TaskExe, no keystrokes
 
 let msX = 320, msY = 240, msB = 0, wheel = 0;   // latest pointer state from the main thread
-const keyq = [];                            // set-1 scancodes from the main thread
+const keyq=KeyQueue();
+let repeatKeys=false,welcomePending=false,refreshRate=0;
+function RateApply()
+{
+  const ok=!!instRef.exports.WinRateSet(BigInt(refreshRate));
+  postMessage({cmd:"settings",ok,rate:ok?refreshRate:30,repeat:repeatKeys,
+    msg:ok?"":"This guest has an unknown display timing layout; keeping its current rate."});
+}
 let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0, instRef = null;
 let paused = false;
@@ -165,6 +173,10 @@ function gxTick() {                          // once per emulated frame: service
     if (gxProbe.ok) { console.log("[hemu] guest execution API ready: " + JSON.stringify({ syms: gxProbe.syms, focusFn: gxProbe.focusFn, warnings: gxProbe.warnings, tasks: gxProbe.tasks.map((t) => t.name + (t.atPrompt ? "(prompt)" : "")) })); postMessage({ cmd: "guestReady", ok: true, probe: gxProbe }); }
     else { console.warn("[hemu] guest probe " + gxProbeTries + ": " + gxProbe.errors.join("; ")); if (gxProbeTries === 40) postMessage({ cmd: "guestReady", ok: false, probe: gxProbe }); }
   }
+  if (gx.ready && disk && welcomePending) {
+    welcomePending=false;
+    gx.exec({src:'PopUp("WinFocus;Ed(\\\"::/Doc/Welcome.DD\\\");");',target:"adam",name:"Welcome"});
+  }
   try { gx.tick(); } catch (e) { console.warn("[hemu] guest tick threw", e); }
 }
 
@@ -173,14 +185,25 @@ const guestInput = createGuestInput({guest:()=>gx,memory:()=>instRef?.exports.me
 onmessage = (e) => {
   const m = e.data;
   if (m.cmd === "init") boot(m).catch(err => postMessage({ cmd: "error", msg: String(err?.message || err) }));
-  else if (m.cmd === "input") { msX = m.x; msY = m.y; msB = m.b; if (m.wheel !== undefined) wheel = m.wheel; if (m.keys) for (const k of m.keys) keyq.push(k); guestInput.accept(m); }
+  else if (m.cmd === "input") { msX = m.x; msY = m.y; msB = m.b; if (m.wheel !== undefined) wheel = m.wheel; if (m.keys) keyq.Push(m.keys); if (m.keysUp) keyq.Release(); guestInput.accept(m); }
+  else if (m.cmd==="keysUp") keyq.Release();
+  else if (m.cmd==="set") {
+    if ([0,30,60,120].includes(m.rate)) {
+      refreshRate=m.rate;
+      if (loaded) RateApply();
+    }
+    if (typeof m.repeat==="boolean") {
+      repeatKeys=m.repeat;
+      if (loaded) instRef.exports.KbdRptSet(BigInt(repeatKeys));
+    }
+  }
   else if (m.cmd === "osWrite") osWrite(m).catch(err => fileResult(m.id, { ok: false, msg: String(err?.message || err), state: "error" }));
   else if (m.cmd === "osLaunch") osLaunch(m).catch(err => fileResult(m.id, { ok: false, msg: String(err?.message || err), state: "error" }));
   else if (m.cmd === "osExec") osExec(m).catch(err => fileResult(m.id, { ok: false, msg: String(err?.message || err), state: "error" }));
   else if (m.cmd === "osInstall") osInstall(m).catch(err => fileResult(m.id, { ok: false, msg: String(err?.message || err), state: "error" }));
   else if (m.cmd === "guest") { try { guestCmd(m); } catch (err) { postMessage({ cmd: "guestResult", id: m.id, op: m.op, state: "error", ok: false, msg: String(err?.message || err) }); } }
   else if (m.cmd === "ack") outstanding--;   // main finished a frame - release a flow-control slot
-  else if (m.cmd === "pause") { paused = m.value; postMessage({ cmd: "paused", value: paused }); }
+  else if (m.cmd === "pause") { paused = m.value; if (paused) keyq.Release(); postMessage({ cmd: "paused", value: paused }); }
   else if (m.cmd === "exportSnapshot") exportSnapshot();
   else if (m.cmd === "exportDisk") exportDisk();
   else if (m.cmd === "importDisk") { try { disk = makeDisk(new Uint8Array(m.bytes)); GuestCacheInvalidate(); postMessage({ cmd: "diskInfo", ok: true, msg: "disk imported (" + (m.bytes.byteLength / 1048576).toFixed(0) + " MB)" }); } catch (err) { postMessage({ cmd: "diskInfo", ok: false, msg: String(err.message || err) }); } }
@@ -234,7 +257,10 @@ async function gunzipInto(gz, size) {
 // that spawn parallel jobs (Talons, Varoom) actually complete. No `smp` => the original single-core path,
 // byte-for-byte unchanged.
 let smpCfg = null, apsReleased = false, bootFrames = 0;
-async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
+async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate }) {
+  if ([0,30,60,120].includes(rate)) refreshRate=rate;
+  if (typeof repeat==="boolean") repeatKeys=repeat;
+  welcomePending=!!welcome;
   smpCfg = smp || null;
   if (fixedB) curBudget = fixedB;
   postMessage({ cmd: "progress", text: "decompressing snapshot (→ 384 MB)…", pct: 60 });
@@ -271,7 +297,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
   host.env.__host_msy = guestInput.y;
   host.env.__host_msb = guestInput.buttons;
   host.env.__host_wheel = guestInput.wheel;
-  host.env.__host_key = () => keyq.length ? BigInt(keyq.shift() | 0) : -1n;
+  host.env.__host_key=keyq.Read;
   host.env.__host_budget = () => BigInt(curBudget | 0);
   host.env.__host_dt = () => BigInt(dtMs | 0);
   host.env.__host_ns = () => BigInt(dtNs);
@@ -334,7 +360,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
       const c = new Int32Array(smpCfg.ctrl); Atomics.store(c, 0, 1); Atomics.notify(c, 0);          // CTRL.READY = 1
       apsReleased = true; postMessage({ cmd: "smpReady", ncore: smpCfg.ncore });
     }
-    if (!loaded) { loaded = true; snap = null;                     // snapshot now in WASM RAM - free the 384 MB copy
+    if (!loaded) { loaded = true; inst.exports.KbdRptSet(BigInt(repeatKeys)); RateApply(); snap = null;                     // snapshot now in WASM RAM - free the 384 MB copy
       // Load the C: disk AFTER boot settles (file I/O works once it lands; the desktop runs from
       // cached RAM). Deferring it keeps the disk decompress out of the boot memory spike - the
       // difference between living and dying on iOS Safari's per-tab memory budget.

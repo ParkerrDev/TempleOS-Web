@@ -8,13 +8,18 @@ select other images. Disk writes stay in each test's private sector overlay.
 ```
 node engine/build.mjs build
 node tools/hemu/time.test.mjs
+node tools/hemu/keyboard.test.mjs
+node tools/hemu/rate.test.mjs
 node tools/hemu/capture.test.mjs
 node tools/hemu/barrier.test.mjs
 node --max-old-space-size=2048 tools/hemu/raster.test.mjs
 node --max-old-space-size=3072 tools/hemu/worker.test.mjs
+node --max-old-space-size=3072 tools/hemu/worker-rate.test.mjs
+node --max-old-space-size=3072 tools/hemu/welcome.test.mjs
 node tools/hemu/guestcheck.mjs
 node tools/hemu/jitdiff1.mjs
 node tools/hemu/fpu-check.mjs
+node tools/hemu/fpu-convert.test.mjs
 ```
 
 - Clock checks exercise fractional elapsed time, PIT reload/latch/IRQ behavior,
@@ -51,3 +56,31 @@ The HolyC host contract adds `__host_ns` (integer nanoseconds elapsed in this
 iteration), `__capture_lock` and `__capture_unlock`. The stock host uses an
 always-successful capture lock for one core; the production worker uses a
 per-generation shared-memory barrier when its AP workers are running.
+
+`fpu-oracle.txt` records 816 masked FISTP/FISTTP operations on real x86
+hardware. `fpu-convert.test.mjs` checks the interpreter and JIT against it,
+including status flags, integer widths, rounding ties, NaN and overflow.
+Regenerate on x86 with `cc -O2 tools/hemu/fpu-oracle.c -o /tmp/hemu-fpu-oracle`
+and redirect that executable's output to the fixture. The independent
+QEMU/KVM TempleOS conversion probe agrees on 64-bit invalid conversions.
+This does not cover 80-bit extended intermediates or every FPU exception.
+
+## Settings and keyboard
+
+`init` accepts `rate` (0, 30, 60, 120; default 0), `repeat` (default false),
+and `welcome` (true only for the stock snapshot). `set` changes rate and/or
+repeat at runtime. The worker reports `settings` with `ok`, applied `rate`
+and `repeat`; an unrecognized guest timing layout keeps its current behavior.
+Uncapped removes the display refresh cap using the guest timer's 1 ms quantum;
+the host still sends at most about 60 completed frames per second. Games that
+advance on each Refresh naturally run faster above the stock rate.
+
+`input.keys` contains plain set-1 bytes including E0/E1 prefixes. No event
+entropy is packed into a scan code or added to TSC. `input.keysUp` or a
+`keysUp` command releases every tracked physical key. Held state reaches the
+guest only through IRQ1 make/break bytes; the bridge no longer writes the
+OS keyboard bitmap. Repeat is implemented in HolyC using the guest's PS/2
+0xF3 delay/rate, and excludes modifier/lock/PrintScreen/Pause sequences.
+
+Welcome is the guest's PopUp/Ed of ::/Doc/Welcome.DD, queued once after the
+native execution API and disk are ready. Restored sessions omit welcome.

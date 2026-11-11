@@ -76,7 +76,46 @@ const fSt = (f, i, ev) => { fStAddr(f, i); ev(); f.store("f64_store", 0, 3); }; 
 const fInc = (f, d) => { rcX87 = 1; f.local_get(FSPLOC); i64c(f, d); f.op("i64_add"); i64c(f, 7); f.op("i64_and"); f.local_set(FSPLOC); }; // fsp=(fsp+d)&7 (local only)
 const fPush = (f, ev) => { ev(); f.local_set(5); fInc(f, -1); fSt(f, 0, () => f.local_get(5)); };  // local5(f64): v(old fsp) -> dec fsp -> store
 const fPop = (f) => fInc(f, 1);
-const fRoundI = (f) => { f.local_set(5); f.local_get(5); fc64(f, 0.5); f.local_get(5); f.op("f64_copysign"); f.op("f64_add"); f.fc("i64_trunc_sat_f64_s"); }; // RoundI = trunc(d+copysign(0.5,d)); SATURATING like cpu.HC F64ToInt (a trapping trunc would crash the block on NaN where the interpreter continues)
+function fIntValue(f,bits,trunc)
+{//x87 masked integer stores: round first, then check the destination range.
+  f.local_set(36);
+  if (trunc) {
+    f.local_get(36);f.op("f64_trunc");
+  } else {
+    i32c(f,X87CW);ld64(f);i64c(f,10);f.op("i64_shr_u");i64c(f,3);f.op("i64_and");f.local_set(0);
+    f.local_get(0);f.op("i64_eqz");f.if_(VT.f64);
+      f.local_get(36);f.op("f64_nearest");
+    f.else_();
+      f.local_get(0);i64c(f,1);f.op("i64_eq");f.if_(VT.f64);
+        f.local_get(36);f.op("f64_floor");
+      f.else_();
+        f.local_get(0);i64c(f,2);f.op("i64_eq");f.if_(VT.f64);
+          f.local_get(36);f.op("f64_ceil");
+        f.else_();
+          f.local_get(36);f.op("f64_trunc");
+        f.end();
+      f.end();
+    f.end();
+  }
+  f.local_set(5);
+  i32c(f,X87SW);i32c(f,X87SW);ld64(f);i64c(f,~0x200);f.op("i64_and");st64(f);
+  f.local_get(5);fc64(f,-(2**(bits-1)));f.op("f64_ge");
+  f.local_get(5);fc64(f,2**(bits-1));f.op("f64_lt");f.op("i32_and");
+  f.if_(VT.i64);
+    f.local_get(5);f.local_get(36);f.op("f64_ne");f.if_();
+      i32c(f,X87SW);i32c(f,X87SW);ld64(f);i64c(f,0x20);f.op("i64_or");st64(f);
+      if (!trunc) {
+        f.local_get(5);f.op("f64_abs");f.local_get(36);f.op("f64_abs");f.op("f64_gt");f.if_();
+          i32c(f,X87SW);i32c(f,X87SW);ld64(f);i64c(f,0x200);f.op("i64_or");st64(f);
+        f.end();
+      }
+    f.end();
+    f.local_get(5);f.op("i64_trunc_f64_s");
+  f.else_();
+    i32c(f,X87SW);i32c(f,X87SW);ld64(f);i64c(f,1);f.op("i64_or");st64(f);
+    i64c(f,-(1n<<BigInt(bits-1)));
+  f.end();
+}
 // ---- WASM dispatch module: a persistent runtime that call_indirects JIT'd blocks back-to-back in NATIVE
 // wasm (zero JS per block) until an un-JIT'd rip. The block fns live in its funcref table (table.set on
 // compile); it reads rip + hemu's g_jit_rip[]/g_jit_n[] (offsets from jitChain) to verify each block. ----
@@ -467,15 +506,19 @@ export function jitCompile(rip) {
             || (op === 0xDF && (sub === 1 || sub === 5 || sub === 7))                // FISTTP m16/FILD/FISTP m64int
             || (op === 0xDB && (sub === 0 || sub === 1 || sub === 3))                // FILD/FISTTP/FISTP m32int
             || (op === 0xDC && sub !== 2 && sub !== 3);                            // FADD/FMUL/FSUB(R)/FDIV(R) m64
-          if (!memOK) break; const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; emitEA(f, mm, j - GBASE); const STW = { 0xDD: ["i64_store", 3], 0xDB: ["i64_store32", 2], 0xDF: ["i64_store16", 1] };
-          if (sub === 1 && op !== 0xDC) { memAddr(f); fLd(f, 0); f.fc("i64_trunc_sat_f64_s"); f.store(STW[op][0], 0, STW[op][1]); fPop(f); }
+          if (!memOK) break;
+          const intStore=sub===1 && op!==0xDC || op===0xDF && sub===7 || op===0xDB && sub===3;
+          if (intStore && (!X87CW || !X87SW)) break;
+          if (intStore) { i32c(f,X87CW);ld64(f);i64c(f,0x21);f.op("i64_and");i64c(f,0x21);f.op("i64_ne");f.if_();materialize(f);i32c(f,RIP);i64c(f,i-GBASE);st64(f);wbDirty(f);i32c(f,n);f.op("return");f.end(); }
+          const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; emitEA(f, mm, j - GBASE); const STW = { 0xDD: ["i64_store", 3], 0xDB: ["i64_store32", 2], 0xDF: ["i64_store16", 1] };
+          if (sub === 1 && op !== 0xDC) { memAddr(f); fLd(f, 0); fIntValue(f,op===0xDD?64:op===0xDB?32:16,true); f.store(STW[op][0], 0, STW[op][1]); fPop(f); }
           else if (op === 0xDD && sub === 0) fPush(f, () => { memAddr(f); f.load("f64_load", 0, 3); });
           else if (op === 0xDD && sub === 2) { memAddr(f); fLd(f, 0); f.store("f64_store", 0, 3); }
           else if (op === 0xDD && sub === 3) { memAddr(f); fLd(f, 0); f.store("f64_store", 0, 3); fPop(f); }
           else if (op === 0xDF && sub === 5) fPush(f, () => { memAddr(f); f.load("i64_load", 0, 3); f.op("f64_convert_i64_s"); });
-          else if (op === 0xDF && sub === 7) { memAddr(f); fLd(f, 0); fRoundI(f); f.store("i64_store", 0, 3); fPop(f); }
+          else if (op === 0xDF && sub === 7) { memAddr(f); fLd(f, 0); fIntValue(f,64,false); f.store("i64_store", 0, 3); fPop(f); }
           else if (op === 0xDB && sub === 0) fPush(f, () => { memAddr(f); f.load("i64_load32_u", 0, 2); f.op("i64_extend32_s"); f.op("f64_convert_i64_s"); });
-          else if (op === 0xDB && sub === 3) { memAddr(f); fLd(f, 0); fRoundI(f); f.store("i64_store32", 0, 2); fPop(f); }
+          else if (op === 0xDB && sub === 3) { memAddr(f); fLd(f, 0); fIntValue(f,32,false); f.store("i64_store32", 0, 2); fPop(f); }
           else if (op === 0xDC) {                                                  // st0 = st0 OP mem  (sub 0/1/4/5/6/7)
             memAddr(f); f.load("f64_load", 0, 3); f.local_set(5);                  // b -> local5
             const W = sub === 1 ? "f64_mul" : (sub === 0) ? "f64_add" : (sub === 4 || sub === 5) ? "f64_sub" : "f64_div";
