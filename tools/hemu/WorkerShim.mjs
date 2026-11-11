@@ -83,6 +83,11 @@ function MsgIn(m)
   if(m?.cmd==="init"&&m.smp?.busProtocol===1) {
     bus_ctrl=new Int32Array(m.smp.ctrl);bus_cores=m.smp.ncore;
   }
+  if(m?.cmd==="__batch") {
+    //Keep both submissions ahead of their asynchronous guest-call continuations.
+    for(const msg of m.messages)globalThis.onmessage({data:msg});
+    return;
+  }
   if(m && m.cmd==="__fetchRelease") {
     const pending=fetch_holds.get(m.url);
     fetch_holds.delete(m.url);

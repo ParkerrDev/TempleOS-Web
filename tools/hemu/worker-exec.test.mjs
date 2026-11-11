@@ -20,12 +20,17 @@ for(const smp of [0,4]) {
     assert.equal((await ReadyWait(h,20000)).ok,true);
     if(smp)await Wait(m=>m.cmd==="smpReady");
     await Done("setup","I64 exec_gate=0,exec_order=0;");
-    Send("first","while (!exec_gate) Sleep(10);exec_order=1;");
-    Send("pending-refused","throw('Entered');");
+    h.Post({cmd:"__batch",messages:[
+      {cmd:"osExec",id:"first",name:"first",target:"prompt",src:"while (!exec_gate) Sleep(10);exec_order=1;"},
+      {cmd:"osExec",id:"pending-refused",target:"prompt",src:"throw('Entered');"}
+    ]});
     const pending=await Wait(m=>m.id==="pending-refused"&&
       (m.cmd==="fileResult"||m.cmd==="guestResult"&&m.state==="posted"));
     assert.equal(pending.state,"error","submission reserves the target before TaskExe finishes");
     assert.match(pending.msg,/still running request.*first/);
+    const denied=h.msgs.findIndex(m=>m.id==="pending-refused"&&m.state==="error"),
+      posted=h.msgs.findIndex(m=>m.id==="first"&&m.state==="posted");
+    assert.ok(posted<0||denied<posted,"refusal precedes the first TaskExe completion");
     await Running("first");
     Send("refused","throw('Entered');");
     const refused=await Result("refused");

@@ -58,6 +58,8 @@ real x86 conversion fixtures, and QEMU snapshot capture tools remain.
   refusal and explicit force forwarding, then checks queued command order,
   successor ownership and target reuse on one and four cores. Force permits
   posting to TempleOS's job queue; native input waits may service nested jobs.
+  Test-only batch delivery reaches the real message handler twice before its
+  promise continuations, making overlapping submission ownership deterministic.
 - JIT loop checks compare complete CPU and memory state after the reported
   instruction count, including zero iterations, exact device dispatch budgets,
   the iteration cap, writes to the loop's own instructions, and second-iteration
