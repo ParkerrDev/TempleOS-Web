@@ -84,7 +84,7 @@ export function FpsFromTop(top)
 export async function HemuBoot(opt)
 {//opt: smp (cores, 0 for one), nojit, welcome, rate, repeat, fixed_b.
   let h={frames:[],nframes:0,last:null,msgs:[],waiters:[],workers:[],
-	keep:opt.keep||20000,ack:true},
+	keep:opt.keep||20000,ack:true,palette:Array(16).fill(null)},
 	live,gz,wasm,init,mem,ctrl,sc,k,ap,wasm_bytes;
   function FrameIn(m)
   {
@@ -103,6 +103,7 @@ export async function HemuBoot(opt)
   function MsgIn(m)
   {
     let i,w;
+    if (m.cmd=="palette") h.palette[m.index]=m.rgb;
     if (m.cmd=="frame")
       FrameIn(m);
     else

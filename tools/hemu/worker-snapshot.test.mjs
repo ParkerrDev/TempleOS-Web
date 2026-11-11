@@ -25,7 +25,8 @@ for (const smp of [0,4]) {
     assert.equal(launch.ok,true,launch.msg);await Sleep(400);
     await Request(h,{cmd:"pause",value:true},m=>m.cmd==="paused"&&m.value);
     const before=await Request(h,{cmd:"__peek",ranges},m=>m.cmd==="__peek");
-    const frame=h.last.hash;
+    const frame=h.last.hash,palette=h.palette.slice();
+    assert.ok(palette.every(v=>v!==null),"boot publishes every displayed palette entry");
     const diskSave=await Request(h,{cmd:"exportDisk"},m=>m.cmd==="exportResult",60000);
     assert.equal(diskSave.ok,true,diskSave.msg);
     const exported=makeDisk(gunzipSync(diskSave.buf));
@@ -44,6 +45,7 @@ for (const smp of [0,4]) {
     await h.Wait(m=>m.cmd==="restored",30000);
     const resumed=await Request(h,{cmd:"__peek",ranges},m=>m.cmd==="__peek");
     assert.deepEqual(resumed.ranges,before.ranges,"CPU, x87, SSE, clock, keyboard and palette restore exactly");
+    assert.deepEqual(h.palette,palette,"restored palette produces the same RGB pixels as the original frame");
     assert.equal(h.last.hash,frame,"paused restore presents the same completed frame");
     assert.deepEqual(resumed.cpu,before.cpu,"CPU counters, RIP, flags and injected-call status resume");
     const n=h.nframes;await Sleep(150);assert.equal(h.nframes,n,"restored pause freezes all cores");
