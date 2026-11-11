@@ -69,7 +69,7 @@ hidden[5]=hash(emptyPix);hidden[6]=hash(emptyDepth);
 hidden[7]=Number(readFileSync(resolve(root,'games/Toom/TmData.HH'),'ascii').match(/#define TM_MF_NOSECTOR\s+(\d+)/)[1]);
 tests.push(hidden);
 const testBytes=Buffer.alloc(tests.length*32);tests.flat().forEach((n,i)=>testBytes.writeUInt32LE(n>>>0,i*4));
-let source=['TmGlbls.HH','TmWad.HC','TmMap.HC','TmGr.HC','TmTex.HC','TmData.HH','TmState.HC','TmPal.HC','TmDraw.HC','TmSprite.HC']
+let source=['TmGlbls.HH','TmWad.HC','TmMap.HC','TmGr.HC','TmTex.HC','TmAnim.HC','TmData.HH','TmState.HC','TmPal.HC','TmDraw.HC','TmSprite.HC']
   .map(name=>readFileSync(resolve(root,'games/Toom',name),'latin1')).join('\n');
 source+=`
 U0 TmSpriteTest()

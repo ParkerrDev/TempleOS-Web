@@ -1,0 +1,605 @@
+{
+  "status": "bounded-native-loader-unwinding-and-decoding-proof",
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "failures": {
+    "cases": 153,
+    "faults": 134,
+    "successPaths": 12,
+    "malformedInputs": 7,
+    "native": "qemu-5y6p_iea",
+    "hemu": true,
+    "sourceSha256": "af9493fa311dd60faf24fd1cb45ae0cb773b691fef3f48c3a8e685950cedc2d5",
+    "boundaries": [
+      "Application MAlloc/CAlloc calls",
+      "FOpen/FileRead entry points",
+      "WAD FBlkRead entry points"
+    ],
+    "scope": [
+      "Wad, Map, GameData, Image, Patch, Graphics, Sprites and View constructors unwind every counted failure.",
+      "Texture, sprite, flat and lump lazy reads release temporary allocations and do not publish failed cache entries; each injected failure is followed by a successful retry.",
+      "A fresh task retains the exact baseline heap and open-file count after every attempt.",
+      "Malformed WAD/data, missing map/graphics/sprite metadata, unknown flat and truncated patch preserve the existing NULL-return contract."
+    ]
+  },
+  "beforeWitness": {
+    "revision": "e4da86d",
+    "native": "qemu-_xsei2mi",
+    "sourceSha256": "f69e1f33f296d00935074782ceddfe21f9e9f82bacc4770ed61b1ebe820d5782",
+    "out": "LOAD 0 FAULT 2 LEAK 56 FILES 1\n",
+    "except": "Leak",
+    "scope": "An injected FOpen-entry exception leaks the 56-byte Wad owner in the previous source."
+  },
+  "regressions": {
+    "map": {
+      "native": "qemu-nlp5wewq",
+      "out": "MAPS 36 QUERIES 103909 BAD 0 PEAK 747749 READ 10613528 MS 1630.7\n"
+    },
+    "sprite": {
+      "native": "qemu-xpj6bibv",
+      "out": "FRAMES 7736 IMAGES 853 VIEWS 49 BAD 0 PEAK 4194292\n"
+    },
+    "state": {
+      "native": "qemu-e63dlf_g",
+      "out": "STATES 967 TICS 116040 BAD 0 RANDOM 3127169102\n"
+    },
+    "io": {
+      "native": "qemu-1x_2ae3f",
+      "out": "RANGES 526 READS 1578 BAD 0 SPC 1\n"
+    },
+    "images": {
+      "native": "qemu-u91q3dju",
+      "hemu": true,
+      "views": 288,
+      "sourceSha256": "d64dbb02b7ab2b39a80f383088f3bb5d213d39d508f523fbf0d1c3a89df849d0",
+      "assetHashes": {
+        "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+      },
+      "levels": [
+        {
+          "map": "E1M1",
+          "hashes": [
+            433670241,
+            3184353455,
+            641245019,
+            3390563395,
+            2489665566,
+            2998757713,
+            942994054,
+            451522741
+          ]
+        },
+        {
+          "map": "E1M2",
+          "hashes": [
+            3321765832,
+            3332721420,
+            1024021011,
+            1800382056,
+            2004218111,
+            896260753,
+            3199077463,
+            2575113153
+          ]
+        },
+        {
+          "map": "E1M3",
+          "hashes": [
+            3951798753,
+            3962740316,
+            1390693678,
+            3560286660,
+            1186089677,
+            1491109353,
+            3666925850,
+            2161831855
+          ]
+        },
+        {
+          "map": "E1M4",
+          "hashes": [
+            3244867279,
+            3947920117,
+            31170383,
+            3085623114,
+            1757950980,
+            1667440020,
+            2823829518,
+            3088607614
+          ]
+        },
+        {
+          "map": "E1M5",
+          "hashes": [
+            1136366868,
+            3625386975,
+            2557281060,
+            2694722762,
+            2559254785,
+            1835577564,
+            947698255,
+            1333589947
+          ]
+        },
+        {
+          "map": "E1M6",
+          "hashes": [
+            3081439130,
+            2355967612,
+            1480490886,
+            1097753779,
+            2979807865,
+            924321016,
+            2350927586,
+            3143855321
+          ]
+        },
+        {
+          "map": "E1M7",
+          "hashes": [
+            911958718,
+            332325565,
+            4272645596,
+            4273005961,
+            3531389265,
+            2809500476,
+            3748342332,
+            2390012105
+          ]
+        },
+        {
+          "map": "E1M8",
+          "hashes": [
+            1833977417,
+            3530344557,
+            3053159496,
+            3228127728,
+            2854611084,
+            2518426046,
+            1567550480,
+            2293405845
+          ]
+        },
+        {
+          "map": "E1M9",
+          "hashes": [
+            1909269914,
+            2872835674,
+            2488878706,
+            2733925266,
+            3914909649,
+            1236445458,
+            882166820,
+            1162070322
+          ]
+        },
+        {
+          "map": "E2M1",
+          "hashes": [
+            2277863252,
+            1832504679,
+            3801230112,
+            4012844277,
+            66070744,
+            3773958981,
+            1631908799,
+            3555566644
+          ]
+        },
+        {
+          "map": "E2M2",
+          "hashes": [
+            593956215,
+            625399278,
+            3660160299,
+            193155984,
+            1620336869,
+            3286317980,
+            2640475169,
+            2847728021
+          ]
+        },
+        {
+          "map": "E2M3",
+          "hashes": [
+            1812987972,
+            832435344,
+            1428426018,
+            389813397,
+            1621989150,
+            3835284787,
+            168312185,
+            340020353
+          ]
+        },
+        {
+          "map": "E2M4",
+          "hashes": [
+            132402452,
+            89844312,
+            1948317815,
+            1610937227,
+            1057402689,
+            2152375247,
+            204712888,
+            1389906852
+          ]
+        },
+        {
+          "map": "E2M5",
+          "hashes": [
+            4115480384,
+            3862848772,
+            3914374205,
+            3153918326,
+            1374847987,
+            1504742441,
+            2089519202,
+            1194927500
+          ]
+        },
+        {
+          "map": "E2M6",
+          "hashes": [
+            519591805,
+            2897324162,
+            985803916,
+            3163954297,
+            2346456640,
+            2920942401,
+            4139756492,
+            479328176
+          ]
+        },
+        {
+          "map": "E2M7",
+          "hashes": [
+            1726736592,
+            2511164477,
+            3977314500,
+            2288524966,
+            3634188874,
+            3587781831,
+            2736034587,
+            2099835493
+          ]
+        },
+        {
+          "map": "E2M8",
+          "hashes": [
+            2560341761,
+            2937852119,
+            2942971176,
+            2822123679,
+            1210740725,
+            888883874,
+            1701210882,
+            3873731419
+          ]
+        },
+        {
+          "map": "E2M9",
+          "hashes": [
+            3619120163,
+            2049194356,
+            182770060,
+            1343554270,
+            960796605,
+            4164502477,
+            4187987041,
+            346948195
+          ]
+        },
+        {
+          "map": "E3M1",
+          "hashes": [
+            104942340,
+            4134834755,
+            284015869,
+            2821376434,
+            1892048717,
+            3857309463,
+            3435665993,
+            592292900
+          ]
+        },
+        {
+          "map": "E3M2",
+          "hashes": [
+            694732029,
+            2254113247,
+            402137815,
+            3990532972,
+            2183568285,
+            3801855364,
+            3935714597,
+            852400743
+          ]
+        },
+        {
+          "map": "E3M3",
+          "hashes": [
+            3295671000,
+            4202014723,
+            704891917,
+            3891171817,
+            1618071650,
+            1980633059,
+            2284699827,
+            27008345
+          ]
+        },
+        {
+          "map": "E3M4",
+          "hashes": [
+            418095677,
+            1005028910,
+            1748823292,
+            2982820841,
+            185189917,
+            2754861849,
+            173472992,
+            3125238823
+          ]
+        },
+        {
+          "map": "E3M5",
+          "hashes": [
+            132267952,
+            2747634131,
+            2951303810,
+            2051056634,
+            3239578487,
+            2947147824,
+            2715038804,
+            62856467
+          ]
+        },
+        {
+          "map": "E3M6",
+          "hashes": [
+            1785545706,
+            88164405,
+            4083045236,
+            2355617301,
+            1750775266,
+            3806558730,
+            1423201520,
+            2059454117
+          ]
+        },
+        {
+          "map": "E3M7",
+          "hashes": [
+            1622911778,
+            3266096354,
+            3645995961,
+            2892585005,
+            1268812897,
+            2717363709,
+            2434614497,
+            1836822312
+          ]
+        },
+        {
+          "map": "E3M8",
+          "hashes": [
+            3066019931,
+            2771726511,
+            3703084245,
+            3518550383,
+            1660243194,
+            510940312,
+            1819280067,
+            615901727
+          ]
+        },
+        {
+          "map": "E3M9",
+          "hashes": [
+            892155712,
+            1241304906,
+            694260656,
+            3338253836,
+            178402550,
+            2973178056,
+            2786167110,
+            1373756515
+          ]
+        },
+        {
+          "map": "E4M1",
+          "hashes": [
+            867402072,
+            2470706831,
+            2632960066,
+            534963483,
+            4260048795,
+            1354382627,
+            1348868229,
+            978655989
+          ]
+        },
+        {
+          "map": "E4M2",
+          "hashes": [
+            371114586,
+            3337693825,
+            1159515613,
+            1345390665,
+            2456355975,
+            953099891,
+            4120571793,
+            1856755222
+          ]
+        },
+        {
+          "map": "E4M3",
+          "hashes": [
+            1574940878,
+            1506566439,
+            4123671461,
+            4121119494,
+            1661103995,
+            1814901675,
+            747257957,
+            2980215975
+          ]
+        },
+        {
+          "map": "E4M4",
+          "hashes": [
+            4013579337,
+            3339200174,
+            3298580302,
+            3225479858,
+            996738169,
+            78638648,
+            4223192229,
+            3303060173
+          ]
+        },
+        {
+          "map": "E4M5",
+          "hashes": [
+            1208785441,
+            2177906449,
+            502893015,
+            2116762208,
+            655930558,
+            3984432468,
+            3773910769,
+            2019678877
+          ]
+        },
+        {
+          "map": "E4M6",
+          "hashes": [
+            832172513,
+            3208444335,
+            3584092843,
+            2125290660,
+            2734917542,
+            3083213844,
+            1012519646,
+            2814368853
+          ]
+        },
+        {
+          "map": "E4M7",
+          "hashes": [
+            4137692819,
+            161639088,
+            3500939377,
+            3974596094,
+            3118830501,
+            3997793370,
+            578277042,
+            4077532445
+          ]
+        },
+        {
+          "map": "E4M8",
+          "hashes": [
+            3570098700,
+            2013861070,
+            1004300519,
+            954695497,
+            2530975400,
+            1589363384,
+            2250187397,
+            3572565646
+          ]
+        },
+        {
+          "map": "E4M9",
+          "hashes": [
+            3822789866,
+            2723783857,
+            696794657,
+            1411871618,
+            1362891611,
+            958142446,
+            2370132057,
+            2959846259
+          ]
+        }
+      ]
+    }
+  },
+  "inputs": {
+    "games/Toom/Load.HC": "e4edd050432f936be8bc3d0ec8031277406f92f21306015c29a0bb5bb50f2d41",
+    "games/Toom/TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f",
+    "games/Toom/TmActions.HC": "ae3bff931d7431a5c8cc9a993275114dc99cbb931670356846f4a940eabc57bb",
+    "games/Toom/TmAnim.HC": "88bacb84b0802181b51c5efe643415c5690b0c9babad2064f44c79608085c504",
+    "games/Toom/TmAttack.HC": "146737ee26c29ca330eb1b583f4e7131c1cd3580c4ca355610cd02f58d68802d",
+    "games/Toom/TmBlast.HC": "197e0c23bb1612d510e0c7094f33bf1162fea98aa1471dd83eca3bb424e1fb4f",
+    "games/Toom/TmBoss.HC": "0892a31e7c65ee6f31f3b497e940721b800b5d126a518d97ad360383113c62f7",
+    "games/Toom/TmBrain.HC": "605e90147315d888f9d6493cdc8f65092e24f79fd24d96c3306d3d05fa105554",
+    "games/Toom/TmCeil.HC": "13ce4bc669f4deec87c82d09bb08bb4ef75f623c8da7131f4eb66014ecb15379",
+    "games/Toom/TmChase.HC": "c3a53ed3ddae5f1c05a5df3851c194ada85027d81f32acff6df6e1230bdcbc7b",
+    "games/Toom/TmClip.HC": "22fbb94fca32b0f1b19bde07c591c088cf2324fd129ace1df060ca90cc09f55b",
+    "games/Toom/TmCombat.HC": "069bf282d4ba8ca9faf69c10acbba6f8cf3e578a67fdd118142de7742f89a963",
+    "games/Toom/TmContact.HC": "b8e15824529b0dafb7abf11164a53795c06759e07b1265f6abecce8602c8ed08",
+    "games/Toom/TmDamage.HC": "56e1d56ea69609cdcd34c7b5c22694367643cf51f8cd9cb0d72272522a1ab5bd",
+    "games/Toom/TmData.HH": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+    "games/Toom/TmDoor.HC": "ce49864f381d55361788f5efdc070fc377e2b4178f629856f7db74118c612a6a",
+    "games/Toom/TmDraw.HC": "1a1398f441137609ea7f87de0bbd0b894b4e16ab78c3c0efc872f0a73a89f878",
+    "games/Toom/TmEffect.HC": "cdfd0f26beff5f99eeb609ee2d0820472cda0d91f6121a345529dd87071ab80b",
+    "games/Toom/TmEnemy.HC": "332464bcf40c7c8f07dd9fb3776f744659cd3906662848067064b0ab069957b8",
+    "games/Toom/TmFloor.HC": "b86eaee35d5a448c722f063c651f61c2ba3f4160637dda2af13c6084968fa00a",
+    "games/Toom/TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+    "games/Toom/TmGr.HC": "dcf3bfd9e476ba620d1479658410ee72c75e0599e96a8bf171df1b9dbdf7bc8e",
+    "games/Toom/TmHazard.HC": "b69bdffac3c4a9394fcf757339ee6a7c915f27946b881e2b25a5673f04a8603e",
+    "games/Toom/TmImpact.HC": "bfe59592e58dff4e799cd93f3db7937bf02d2fa9cf1fc1046d4b860f4f42acb9",
+    "games/Toom/TmItems.HC": "4f265fd533b2e7820e6fb939517ad9ab5a5e3a7a8f7f8abd548494649ec448d3",
+    "games/Toom/TmLight.HC": "18751745beb55e970363df09f8e03a0979e1eb66fe8e8efe835f10cbad754850",
+    "games/Toom/TmMap.HC": "7b096f40305398fa6114c76788b158dc7c912348469cabe56393258f4abc5069",
+    "games/Toom/TmMask.HC": "fca60f4fff19a1155e541f368e1d2b4136951067b52ca7e5bec5577d34570bdf",
+    "games/Toom/TmMath.HC": "5da8d9243d01fcae7afc35858f1d17586d5addcadef1dad7052c4a86e5f684cf",
+    "games/Toom/TmMotion.HC": "d478a24beda3de1bb61756869d95df4d3952f97a89168b9a08c4831544a9f4ee",
+    "games/Toom/TmMove.HC": "d7235b8aa67b4eb72ca08c1b21d64ff56257c51314374a3523962b9bcffc18dd",
+    "games/Toom/TmPal.HC": "657c0c69082fad07cffe9b8800abf1d12df8eaa7603efa04dd62144b6142651f",
+    "games/Toom/TmPath.HC": "1897a4cc6c617a93f1556344111dabd4cb2247e3d3550c1102c841debe31eef4",
+    "games/Toom/TmPlat.HC": "e9541607e935b3f43a3cc0b36d5d79a7ed51849efdb78e5e75d5bf973802bff3",
+    "games/Toom/TmPlayer.HC": "8260fa3085ce6ec002872269c244456eeda5315cc35ece10708f9830ef9eb449",
+    "games/Toom/TmPlayer.HH": "ee536c8b0ceb057e3dda7e7320eb33520741d5d54487bb312f803ad7513cc8cf",
+    "games/Toom/TmSector.HC": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+    "games/Toom/TmSight.HC": "dba548702f1a63870416251da4473277a82de0a8e3670309a394e37b53569461",
+    "games/Toom/TmSlide.HC": "e7ea0760e058b1d12c474bc135d4466c71ecfe5d5482ba5a6f23c6a7dd5e3da1",
+    "games/Toom/TmSpecial.HC": "44a5ef52acf0022dc580e5cb90e9cb3747def44e890a5aa985db90d2fbfe615b",
+    "games/Toom/TmSprite.HC": "d3f27d4b403a7c554cb0608665b1606e302b686087290441d0be131e2a8905c6",
+    "games/Toom/TmState.HC": "0a7e57036b0d51d5a153e5cf0a8ffa76ac9f2d70061c48e429a0865899b12fdb",
+    "games/Toom/TmSwitch.HC": "a158dd8d290558945063ec3d0a6678817335d0d59cbab323f9f303499285aee9",
+    "games/Toom/TmTeleport.HC": "04efd4b10193f52d767883a0decf0e9176e0ff0213af184153b081b6bd7c8f36",
+    "games/Toom/TmTex.HC": "1058c3d88663bfd5d511ceef1ca99ccbfa356465405fb58adf7b77e8e5968807",
+    "games/Toom/TmTick.HC": "cdeb5c411d52244bdc66643719ad7d05e4463896b010c925632f854dbed30a88",
+    "games/Toom/TmVile.HC": "bde6455466b79fcbc10369df53b60ad5eb96a20ff72bbbe769e5705fc85c64de",
+    "games/Toom/TmWad.HC": "a6eb46daecd0c97c5a25e13dad93e6ac1a6c1516532d05d104da537052732517",
+    "games/Toom/TmWeapon.HC": "88be3f147541f9cb0acba2fc9f2e8640c592af6211b551c7836ab99b745198ce",
+    "games/Toom/TmWorld.HC": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+    "tools/toom/load-alloc.test.mjs": "a605330283a30810e2a777a8232ec39aa53fab6183196ab546fc649cb5458fe8",
+    "tools/toom/LoadAlloc.HC": "c7148653872d146e00823c0547ee3156a67e2a305734efe6967e9e9b631915be",
+    "tools/toom/LoadProbe.HC": "84987b52590151292ad3acd8c225a214a57f0b2b93a54fbf925c5168dba25c5f",
+    "tools/toom/map.test.mjs": "9813e47028d79084dbf85ef325a1ef046f28c82c42b696fb423d8013a7fcd395",
+    "tools/toom/sprite.test.mjs": "997969117b70d49bfaa7f9f4983188bae51082823d5074bc558c343c61566efc",
+    "tools/toom/state.test.mjs": "1af2cb08d80acfc58ba01e18647cd29afb3ec6bc6f2ba648ef44e8b205ff30d2",
+    "tools/toom/io.test.mjs": "2b3ca38836a8ef748b658dba18ed21e5471f2ec79dac2f2883c54e9a4897f712",
+    "tools/toom/time.mjs": "23b4d5353e9ed39e185ff2e8722c35a843b8aae133262335adac2470aafdf3ac",
+    "tools/toom/Bench.HC": "ac1db588f643a6a9aaab29bed360b626cf56f88ee83b1c531168c021f6f0f3c1"
+  },
+  "limitations": [
+    "These tests inject failures at application ownership boundaries; they do not establish exception safety inside native OS allocation or file routines.",
+    "Cache eviction before a later allocation failure remains permitted; callers retain indices or explicit pins rather than unpinned image pointers.",
+    "The 288 renderer views are static image/asset comparisons at one repeat. Their timings are not a performance claim.",
+    "Full Level/session composition, playable scheduling, audio, HUD, saves and progression remain unfinished."
+  ]
+}

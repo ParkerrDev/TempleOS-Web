@@ -633,6 +633,12 @@ owner bindings and retryable storage. The prior source has a native 160-byte
 leak witness. Normal path, weapon and dispatcher checks still pass. These
 controlled failures do not simulate physical RAM exhaustion or qualify the
 unbuilt level host. See `tools/toom/alloc-evidence.json`.
+Loader gates add 153 cases: 134 injected allocation/read failures, 12 successful
+construction or lazy-load paths, and seven malformed inputs. Memory, file
+handles and cache publication are checked after failure and retry. All 36 maps,
+853 decoded sprite images, 967 state clocks and 288 native/HEMU renderer views
+still pass their bounded checks. These are application ownership boundaries,
+not an audit of OS internals. See `tools/toom/load-alloc-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

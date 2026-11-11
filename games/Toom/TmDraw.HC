@@ -79,41 +79,47 @@ View *ViewNew(Map *tmpm,Graphics *tmpg,Surfaces *surfaces=NULL)
   I64 i,n,w=TM_VIEW_WIDTH,h=TM_VIEW_HEIGHT;
   U8 name[9];
   View *tmpv=CAlloc(sizeof(View));
-  tmpv->map=tmpm; tmpv->gr=tmpg; tmpv->surfaces=surfaces;
-  if (surfaces && (surfaces->map!=tmpm || surfaces->graphics!=tmpg))
-    goto vn_fail;
-  tmpv->masked=MAlloc(tmpm->seg_cnt*sizeof(Seg *));
-  if (tmpm->sector_cnt>32767) goto vn_fail;
-  tmpv->width=w; tmpv->height=h;
-  tmpv->fx=w/2.0; tmpv->fy=w/2.0;
-  tmpv->cx=w/2.0; tmpv->cy=h/2.0;
-  tmpv->top=MAlloc(w*sizeof(I16));
-  tmpv->bottom=MAlloc(w*sizeof(I16));
-  tmpv->plane=MAlloc(w*h*sizeof(U16));
-  tmpv->depth=MAlloc(w*h*sizeof(I32));
-  tmpv->pix=MAlloc(w*h);
-  tmpv->stack=MAlloc((tmpm->node_cnt+2)*sizeof(I64));
-  tmpv->floor=MAlloc(tmpm->sector_cnt*sizeof(FlatRef));
-  tmpv->ceil=MAlloc(tmpm->sector_cnt*sizeof(FlatRef));
-  tmpv->flat=CAlloc(tmpg->wad->cnt*sizeof(U8 *));
-  for (i=0;i<tmpm->sector_cnt;i++) {
-    tmpv->floor[i].name=tmpm->sector[i].floor_name(I64);
-    tmpv->ceil[i].name=tmpm->sector[i].ceil_name(I64);
-    n=ViewFlatFind(tmpg,tmpv->floor[i].name);
-    if (n< -1) goto vn_fail;
-    tmpv->floor[i].lump=n;
-    n=ViewFlatFind(tmpg,tmpv->ceil[i].name);
-    if (n< -1) goto vn_fail;
-    tmpv->ceil[i].lump=n;
+  Bool valid=FALSE;
+  try {
+    tmpv->map=tmpm; tmpv->gr=tmpg; tmpv->surfaces=surfaces;
+    if (surfaces && (surfaces->map!=tmpm || surfaces->graphics!=tmpg))
+      goto vn_fail;
+    tmpv->masked=MAlloc(tmpm->seg_cnt*sizeof(Seg *));
+    if (tmpm->sector_cnt>32767) goto vn_fail;
+    tmpv->width=w; tmpv->height=h;
+    tmpv->fx=w/2.0; tmpv->fy=w/2.0;
+    tmpv->cx=w/2.0; tmpv->cy=h/2.0;
+    tmpv->top=MAlloc(w*sizeof(I16));
+    tmpv->bottom=MAlloc(w*sizeof(I16));
+    tmpv->plane=MAlloc(w*h*sizeof(U16));
+    tmpv->depth=MAlloc(w*h*sizeof(I32));
+    tmpv->pix=MAlloc(w*h);
+    tmpv->stack=MAlloc((tmpm->node_cnt+2)*sizeof(I64));
+    tmpv->floor=MAlloc(tmpm->sector_cnt*sizeof(FlatRef));
+    tmpv->ceil=MAlloc(tmpm->sector_cnt*sizeof(FlatRef));
+    tmpv->flat=CAlloc(tmpg->wad->cnt*sizeof(U8 *));
+    for (i=0;i<tmpm->sector_cnt;i++) {
+      tmpv->floor[i].name=tmpm->sector[i].floor_name(I64);
+      tmpv->ceil[i].name=tmpm->sector[i].ceil_name(I64);
+      n=ViewFlatFind(tmpg,tmpv->floor[i].name);
+      if (n< -1) goto vn_fail;
+      tmpv->floor[i].lump=n;
+      n=ViewFlatFind(tmpg,tmpv->ceil[i].name);
+      if (n< -1) goto vn_fail;
+      tmpv->ceil[i].lump=n;
+    }
+    MemSet(name,0,sizeof(name));
+    StrCpy(name,"SKY1");
+    n=tmpg->wad->dir[tmpm->lump].name[1];
+    if ('1'<=n<='4') name[3]=n;
+    tmpv->sky=TextureFind(tmpg,name);
+    if (tmpv->sky<0) goto vn_fail;
+    valid=TRUE;
+vn_fail:;
+  } catch {
+    ViewDel(tmpv);
   }
-  MemSet(name,0,sizeof(name));
-  StrCpy(name,"SKY1");
-  n=tmpg->wad->dir[tmpm->lump].name[1];
-  if ('1'<=n<='4') name[3]=n;
-  tmpv->sky=TextureFind(tmpg,name);
-  if (tmpv->sky<0) goto vn_fail;
-  return tmpv;
-vn_fail:
+  if (valid) return tmpv;
   ViewDel(tmpv);
   return NULL;
 }

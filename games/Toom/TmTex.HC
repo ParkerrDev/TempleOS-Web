@@ -41,35 +41,41 @@ Graphics *GraphicsNew(Wad *tmpw)
   I64 i,n,n1,n2=0,size;
   U32 *idx;
   Graphics *tmpg=CAlloc(sizeof(Graphics));
-  tmpg->wad=tmpw;
-  n=LumpFind(tmpw,"PNAMES");
-  if (n<0 || tmpw->dir[n].size<4) goto gn_fail;
-  if (!(tmpg->pnames=LumpRead(tmpw,n))) goto gn_fail;
-  tmpg->patch_cnt=*tmpg->pnames(U32 *);
-  if (tmpg->patch_cnt>4096 || 4+tmpg->patch_cnt*8>tmpw->dir[n].size)
-    goto gn_fail;
-  n=LumpFind(tmpw,"TEXTURE1");
-  if (!(tmpg->tex1=LumpRead(tmpw,n))) goto gn_fail;
-  n1=TextureDefsChk(tmpg->tex1,tmpw->dir[n].size,tmpg->patch_cnt);
-  if (n1<0) goto gn_fail;
-  n=LumpFind(tmpw,"TEXTURE2");
-  if (n>=0) {
-    if (!(tmpg->tex2=LumpRead(tmpw,n))) goto gn_fail;
-    n2=TextureDefsChk(tmpg->tex2,tmpw->dir[n].size,tmpg->patch_cnt);
-    if (n2<0) goto gn_fail;
+  Bool valid=FALSE;
+  try {
+    tmpg->wad=tmpw;
+    n=LumpFind(tmpw,"PNAMES");
+    if (n<0 || tmpw->dir[n].size<4) goto gn_fail;
+    if (!(tmpg->pnames=LumpRead(tmpw,n))) goto gn_fail;
+    tmpg->patch_cnt=*tmpg->pnames(U32 *);
+    if (tmpg->patch_cnt>4096 || 4+tmpg->patch_cnt*8>tmpw->dir[n].size)
+      goto gn_fail;
+    n=LumpFind(tmpw,"TEXTURE1");
+    if (!(tmpg->tex1=LumpRead(tmpw,n))) goto gn_fail;
+    n1=TextureDefsChk(tmpg->tex1,tmpw->dir[n].size,tmpg->patch_cnt);
+    if (n1<0) goto gn_fail;
+    n=LumpFind(tmpw,"TEXTURE2");
+    if (n>=0) {
+      if (!(tmpg->tex2=LumpRead(tmpw,n))) goto gn_fail;
+      n2=TextureDefsChk(tmpg->tex2,tmpw->dir[n].size,tmpg->patch_cnt);
+      if (n2<0) goto gn_fail;
+    }
+    size=(n1+n2)*sizeof(Texture);
+    tmpg->texture=CAlloc(size);
+    tmpg->tex_cnt=n1+n2;
+    idx=tmpg->tex1+4;
+    for (i=0;i<n1;i++) tmpg->texture[i].def=tmpg->tex1+idx[i];
+    idx=tmpg->tex2+4;
+    for (i=0;i<n2;i++) tmpg->texture[n1+i].def=tmpg->tex2+idx[i];
+    n=LumpFind(tmpw,"COLORMAP");
+    if (n<0 || tmpw->dir[n].size<34*256) goto gn_fail;
+    if (!(tmpg->colormap=LumpRead(tmpw,n))) goto gn_fail;
+    valid=TRUE;
+gn_fail:;
+  } catch {
+    GraphicsDel(tmpg);
   }
-  size=(n1+n2)*sizeof(Texture);
-  tmpg->texture=CAlloc(size);
-  tmpg->tex_cnt=n1+n2;
-  idx=tmpg->tex1+4;
-  for (i=0;i<n1;i++) tmpg->texture[i].def=tmpg->tex1+idx[i];
-  idx=tmpg->tex2+4;
-  for (i=0;i<n2;i++) tmpg->texture[n1+i].def=tmpg->tex2+idx[i];
-  n=LumpFind(tmpw,"COLORMAP");
-  if (n<0 || tmpw->dir[n].size<34*256) goto gn_fail;
-  if (!(tmpg->colormap=LumpRead(tmpw,n))) goto gn_fail;
-  return tmpg;
-gn_fail:
+  if (valid) return tmpg;
   GraphicsDel(tmpg);
   return NULL;
 }
@@ -105,10 +111,11 @@ Bool TextureRoom(Graphics *tmpg,I64 size)
 Image *TextureGet(Graphics *tmpg,I64 n)
 {//Compose a requested texture once; callers retain its index, not its pointer.
   I64 i,lump;
-  U8 name[9],*src;
+  U8 name[9],*src=NULL;
   Texture *tmpt;
   TexPatch *tmpp;
   Image *tmpi;
+  Bool valid=FALSE;
   if (!(0<=n<tmpg->tex_cnt)) return NULL;
   tmpt=tmpg->texture+n;
   tmpt->stamp=++tmpg->stamp;
@@ -116,26 +123,33 @@ Image *TextureGet(Graphics *tmpg,I64 n)
   n=tmpt->def->width*tmpt->def->height*sizeof(U16);
   if (!TextureRoom(tmpg,n)) return NULL;
   tmpi=ImageNew(tmpt->def->width,tmpt->def->height);
-  tmpp=tmpt->def+1;
-  name[8]=0;
-  for (i=0;i<tmpt->def->cnt;i++) {
-    MemCpy(name,tmpg->pnames+4+tmpp[i].patch*8,8);
-    lump=LumpFind(tmpg->wad,name);
-    if (!(src=LumpRead(tmpg->wad,lump))) goto tg_fail;
-    if (!PatchChk(src,tmpg->wad->dir[lump].size)) {
-      Free(src);
-      goto tg_fail;
+  try {
+    tmpp=tmpt->def+1;
+    name[8]=0;
+    for (i=0;i<tmpt->def->cnt;i++) {
+      MemCpy(name,tmpg->pnames+4+tmpp[i].patch*8,8);
+      lump=LumpFind(tmpg->wad,name);
+      if (!(src=LumpRead(tmpg->wad,lump))) goto tg_fail;
+      if (!PatchChk(src,tmpg->wad->dir[lump].size)) {
+	Free(src); src=NULL;
+	goto tg_fail;
+      }
+      PatchBlot(tmpi,src,tmpp[i].x,tmpp[i].y);
+      Free(src); src=NULL;
     }
-    PatchBlot(tmpi,src,tmpp[i].x,tmpp[i].y);
-    Free(src);
+    valid=TRUE;
+tg_fail:;
+  } catch {
+    Free(src); ImageDel(tmpi);
+  }
+  if (!valid) {
+    ImageDel(tmpi);
+    return NULL;
   }
   n=tmpi->width*tmpi->height*sizeof(U16);
   tmpg->cache_size+=n;
   tmpt->image=tmpi;
   return tmpi;
-tg_fail:
-  ImageDel(tmpi);
-  return NULL;
 }
 
 Image *TextureHold(Graphics *tmpg,I64 n)

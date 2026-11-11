@@ -69,51 +69,57 @@ GameData *GameDataNew(U8 *filename="TMDATA.BIN")
   ActorInfo *tmpi;
   WeaponInfo *tmpw;
   GameData *tmpd=CAlloc(sizeof(GameData));
-  if (!(tmpd->body=FileRead(filename,&size))) goto gd_fail;
-  if (size!=TM_DATA_SIZE) goto gd_fail;
-  header=tmpd->body;
-  if (header[0]!='TMST' || header[1]!=3 ||
-	header[2]!=TM_STATE_NUM || header[3]!=TM_ACTOR_NUM ||
-	header[4]!=TM_SPRITE_NUM || header[5]!=TM_ACTION_NUM ||
-	header[6]!=TM_SND_NUM || header[7]!=256)
-    goto gd_fail;
-  tmpd->state=tmpd->body+32;
-  tmpd->info=tmpd->state+TM_STATE_NUM;
-  tmpd->sprite=tmpd->info+TM_ACTOR_NUM;
-  tmpd->sound=tmpd->sprite+TM_SPRITE_NUM*4;
-  tmpd->sine=tmpd->sound+TM_SND_NUM*8;
-  tmpd->angle=tmpd->sine+TM_SINE_NUM;
-  tmpd->weapon=tmpd->angle+TM_ANGLE_NUM;
-  tmpd->random=tmpd->weapon+TM_WEAPON_NUM;
-  for (i=0;i<TM_STATE_NUM;i++) {
-    tmps=tmpd->state+i;
-    if (!(0<=tmps->sprite<TM_SPRITE_NUM) || tmps->tics< -1 ||
-	!(0<=tmps->action<TM_ACTION_NUM) || !StateValid(tmps->next))
+  Bool valid=FALSE;
+  try {
+    if (!(tmpd->body=FileRead(filename,&size))) goto gd_fail;
+    if (size!=TM_DATA_SIZE) goto gd_fail;
+    header=tmpd->body;
+    if (header[0]!='TMST' || header[1]!=3 ||
+	  header[2]!=TM_STATE_NUM || header[3]!=TM_ACTOR_NUM ||
+	  header[4]!=TM_SPRITE_NUM || header[5]!=TM_ACTION_NUM ||
+	  header[6]!=TM_SND_NUM || header[7]!=256)
       goto gd_fail;
+    tmpd->state=tmpd->body+32;
+    tmpd->info=tmpd->state+TM_STATE_NUM;
+    tmpd->sprite=tmpd->info+TM_ACTOR_NUM;
+    tmpd->sound=tmpd->sprite+TM_SPRITE_NUM*4;
+    tmpd->sine=tmpd->sound+TM_SND_NUM*8;
+    tmpd->angle=tmpd->sine+TM_SINE_NUM;
+    tmpd->weapon=tmpd->angle+TM_ANGLE_NUM;
+    tmpd->random=tmpd->weapon+TM_WEAPON_NUM;
+    for (i=0;i<TM_STATE_NUM;i++) {
+      tmps=tmpd->state+i;
+      if (!(0<=tmps->sprite<TM_SPRITE_NUM) || tmps->tics< -1 ||
+	  !(0<=tmps->action<TM_ACTION_NUM) || !StateValid(tmps->next))
+	goto gd_fail;
+    }
+    for (i=0;i<TM_ACTOR_NUM;i++) {
+      tmpi=tmpd->info+i;
+      if (!StateValid(tmpi->spawn) || !StateValid(tmpi->see) ||
+	  !StateValid(tmpi->pain) || !StateValid(tmpi->melee) ||
+	  !StateValid(tmpi->missile) || !StateValid(tmpi->death) ||
+	  !StateValid(tmpi->xdeath) || !StateValid(tmpi->raise) ||
+	  tmpi->radius<0 || tmpi->height<0 || tmpi->mass<=0)
+	goto gd_fail;
+    }
+    for (i=0;i<TM_WEAPON_NUM;i++) {
+      tmpw=tmpd->weapon+i;
+      if (!(0<=tmpw->ammo<TM_AMMO_NUM || tmpw->ammo==TM_AM_NOAMMO) ||
+	    !StateValid(tmpw->up) ||
+	    !StateValid(tmpw->down) || !StateValid(tmpw->ready) ||
+	    !StateValid(tmpw->attack) || !StateValid(tmpw->flash)) goto gd_fail;
+    }
+    for (i=0;i<TM_SINE_NUM;i++)
+      if (!(-65536<=tmpd->sine[i]<=65536)) goto gd_fail;
+    for (i=0;i<TM_ANGLE_NUM;i++)
+      if (tmpd->angle[i]>0x20000000 || i && tmpd->angle[i]<tmpd->angle[i-1])
+	goto gd_fail;
+    valid=TRUE;
+gd_fail:;
+  } catch {
+    GameDataDel(tmpd);
   }
-  for (i=0;i<TM_ACTOR_NUM;i++) {
-    tmpi=tmpd->info+i;
-    if (!StateValid(tmpi->spawn) || !StateValid(tmpi->see) ||
-	!StateValid(tmpi->pain) || !StateValid(tmpi->melee) ||
-	!StateValid(tmpi->missile) || !StateValid(tmpi->death) ||
-	!StateValid(tmpi->xdeath) || !StateValid(tmpi->raise) ||
-	tmpi->radius<0 || tmpi->height<0 || tmpi->mass<=0)
-      goto gd_fail;
-  }
-  for (i=0;i<TM_WEAPON_NUM;i++) {
-    tmpw=tmpd->weapon+i;
-    if (!(0<=tmpw->ammo<TM_AMMO_NUM || tmpw->ammo==TM_AM_NOAMMO) ||
-	  !StateValid(tmpw->up) ||
-	  !StateValid(tmpw->down) || !StateValid(tmpw->ready) ||
-	  !StateValid(tmpw->attack) || !StateValid(tmpw->flash)) goto gd_fail;
-  }
-  for (i=0;i<TM_SINE_NUM;i++)
-    if (!(-65536<=tmpd->sine[i]<=65536)) goto gd_fail;
-  for (i=0;i<TM_ANGLE_NUM;i++)
-    if (tmpd->angle[i]>0x20000000 || i && tmpd->angle[i]<tmpd->angle[i-1])
-      goto gd_fail;
-  return tmpd;
-gd_fail:
+  if (valid) return tmpd;
   GameDataDel(tmpd);
   return NULL;
 }

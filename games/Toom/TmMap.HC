@@ -38,14 +38,18 @@ Bool MapSectorsRead(Wad *tmpw,Map *tmpm)
   I64 i;
   if (!(src=MapRead(tmpw,tmpm,8,"SECTORS",sizeof(SectorDisk),
 	&tmpm->sector_cnt))) return FALSE;
-  tmpm->sector=MAlloc(tmpm->sector_cnt*sizeof(Sector));
-  for (i=0,dst=tmpm->sector;i<tmpm->sector_cnt;i++,dst++) {
-    dst->floor=src[i].floor*65536; dst->ceil=src[i].ceil*65536;
-    MemCpy(dst->floor_name,src[i].floor_name,8);
-    MemCpy(dst->ceil_name,src[i].ceil_name,8);
-    dst->light=src[i].light; dst->special=src[i].special; dst->tag=src[i].tag;
+  try {
+    tmpm->sector=MAlloc(tmpm->sector_cnt*sizeof(Sector));
+    for (i=0,dst=tmpm->sector;i<tmpm->sector_cnt;i++,dst++) {
+      dst->floor=src[i].floor*65536; dst->ceil=src[i].ceil*65536;
+      MemCpy(dst->floor_name,src[i].floor_name,8);
+      MemCpy(dst->ceil_name,src[i].ceil_name,8);
+      dst->light=src[i].light; dst->special=src[i].special; dst->tag=src[i].tag;
+    }
+    tmpm->bytes+=(sizeof(Sector)-sizeof(SectorDisk))*tmpm->sector_cnt;
+  } catch {
+    Free(src);
   }
-  tmpm->bytes+=(sizeof(Sector)-sizeof(SectorDisk))*tmpm->sector_cnt;
   Free(src);
   return TRUE;
 }
@@ -126,32 +130,38 @@ Bool MapChk(Map *tmpm)
 Map *MapNew(Wad *tmpw,U8 *name)
 {//Build privately; a failed level load cannot damage the active level.
   Map *tmpm=CAlloc(sizeof(Map));
-  tmpm->lump=LumpFind(tmpw,name);
-  if (tmpm->lump<0) goto mn_fail;
-  if (!(tmpm->thing=MapRead(tmpw,tmpm,1,"THINGS",sizeof(Thing),
-	&tmpm->thing_cnt))) goto mn_fail;
-  if (!(tmpm->line=MapRead(tmpw,tmpm,2,"LINEDEFS",sizeof(Line),
-	&tmpm->line_cnt))) goto mn_fail;
-  if (!(tmpm->side=MapRead(tmpw,tmpm,3,"SIDEDEFS",sizeof(Side),
-	&tmpm->side_cnt))) goto mn_fail;
-  if (!(tmpm->vertex=MapRead(tmpw,tmpm,4,"VERTEXES",sizeof(Vertex),
-	&tmpm->vertex_cnt))) goto mn_fail;
-  if (!(tmpm->seg=MapRead(tmpw,tmpm,5,"SEGS",sizeof(Seg),
-	&tmpm->seg_cnt))) goto mn_fail;
-  if (!(tmpm->subsector=MapRead(tmpw,tmpm,6,"SSECTORS",sizeof(Subsector),
-	&tmpm->subsector_cnt))) goto mn_fail;
-  if (!(tmpm->node=MapRead(tmpw,tmpm,7,"NODES",sizeof(Node),
-	&tmpm->node_cnt))) goto mn_fail;
-  if (!MapSectorsRead(tmpw,tmpm)) goto mn_fail;
-  if (!(tmpm->reject=MapRead(tmpw,tmpm,9,"REJECT",1,
-	&tmpm->reject_size))) goto mn_fail;
-  if (!(tmpm->blockmap=MapRead(tmpw,tmpm,10,"BLOCKMAP",sizeof(I16),
-	&tmpm->blockmap_cnt))) goto mn_fail;
-  tmpm->subsector_sector=CAlloc(tmpm->subsector_cnt*sizeof(I64));
-  tmpm->bytes+=tmpm->subsector_cnt*sizeof(I64);
-  if (!MapChk(tmpm)) goto mn_fail;
-  return tmpm;
-mn_fail:
+  Bool valid=FALSE;
+  try {
+    tmpm->lump=LumpFind(tmpw,name);
+    if (tmpm->lump<0) goto mn_fail;
+    if (!(tmpm->thing=MapRead(tmpw,tmpm,1,"THINGS",sizeof(Thing),
+	  &tmpm->thing_cnt))) goto mn_fail;
+    if (!(tmpm->line=MapRead(tmpw,tmpm,2,"LINEDEFS",sizeof(Line),
+	  &tmpm->line_cnt))) goto mn_fail;
+    if (!(tmpm->side=MapRead(tmpw,tmpm,3,"SIDEDEFS",sizeof(Side),
+	  &tmpm->side_cnt))) goto mn_fail;
+    if (!(tmpm->vertex=MapRead(tmpw,tmpm,4,"VERTEXES",sizeof(Vertex),
+	  &tmpm->vertex_cnt))) goto mn_fail;
+    if (!(tmpm->seg=MapRead(tmpw,tmpm,5,"SEGS",sizeof(Seg),
+	  &tmpm->seg_cnt))) goto mn_fail;
+    if (!(tmpm->subsector=MapRead(tmpw,tmpm,6,"SSECTORS",sizeof(Subsector),
+	  &tmpm->subsector_cnt))) goto mn_fail;
+    if (!(tmpm->node=MapRead(tmpw,tmpm,7,"NODES",sizeof(Node),
+	  &tmpm->node_cnt))) goto mn_fail;
+    if (!MapSectorsRead(tmpw,tmpm)) goto mn_fail;
+    if (!(tmpm->reject=MapRead(tmpw,tmpm,9,"REJECT",1,
+	  &tmpm->reject_size))) goto mn_fail;
+    if (!(tmpm->blockmap=MapRead(tmpw,tmpm,10,"BLOCKMAP",sizeof(I16),
+	  &tmpm->blockmap_cnt))) goto mn_fail;
+    tmpm->subsector_sector=CAlloc(tmpm->subsector_cnt*sizeof(I64));
+    tmpm->bytes+=tmpm->subsector_cnt*sizeof(I64);
+    if (!MapChk(tmpm)) goto mn_fail;
+    valid=TRUE;
+mn_fail:;
+  } catch {
+    MapDel(tmpm);
+  }
+  if (valid) return tmpm;
   MapDel(tmpm);
   return NULL;
 }

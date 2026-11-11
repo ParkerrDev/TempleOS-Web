@@ -41,30 +41,36 @@ Sprites *SpritesNew(Wad *tmpw,GameData *tmpd)
   U8 *name;
   U32 *names=tmpd->sprite;
   Sprites *tmps=CAlloc(sizeof(Sprites));
-  tmps->wad=tmpw; tmps->data=tmpd;
-  if (!(0<=first<last<tmpw->cnt)) goto sn_fail;
-  n=TM_SPRITE_NUM*TM_SPRITE_FRAMES*8;
-  tmps->frame=CAlloc(n*sizeof(I32));
-  tmps->image=CAlloc(tmpw->cnt*sizeof(Image *));
-  tmps->stamp=CAlloc(tmpw->cnt*sizeof(I64));
-  for (i=first+1;i<last;i++) {
-    name=tmpw->dir[i].name;
-    j=0;
-    while (j<TM_SPRITE_NUM && names[j]!=*name(U32 *)) j++;
-    if (j<TM_SPRITE_NUM) {
-      if (!SpriteFrameAdd(tmps,j,name[4]-'A',name[5]-'0',i+1))
-	goto sn_fail;
-      if (name[6] && !SpriteFrameAdd(tmps,j,name[6]-'A',name[7]-'0',-i-1))
-	goto sn_fail;
+  Bool valid=FALSE;
+  try {
+    tmps->wad=tmpw; tmps->data=tmpd;
+    if (!(0<=first<last<tmpw->cnt)) goto sn_fail;
+    n=TM_SPRITE_NUM*TM_SPRITE_FRAMES*8;
+    tmps->frame=CAlloc(n*sizeof(I32));
+    tmps->image=CAlloc(tmpw->cnt*sizeof(Image *));
+    tmps->stamp=CAlloc(tmpw->cnt*sizeof(I64));
+    for (i=first+1;i<last;i++) {
+      name=tmpw->dir[i].name;
+      j=0;
+      while (j<TM_SPRITE_NUM && names[j]!=*name(U32 *)) j++;
+      if (j<TM_SPRITE_NUM) {
+	if (!SpriteFrameAdd(tmps,j,name[4]-'A',name[5]-'0',i+1))
+	  goto sn_fail;
+	if (name[6] && !SpriteFrameAdd(tmps,j,name[6]-'A',name[7]-'0',-i-1))
+	  goto sn_fail;
+      }
     }
+    for (i=0;i<TM_SPRITE_NUM*TM_SPRITE_FRAMES;i++) {
+      n=0;
+      for (j=0;j<8;j++) if (tmps->frame[i*8+j]) n++;
+      if (n && n!=8) goto sn_fail;
+    }
+    valid=TRUE;
+sn_fail:;
+  } catch {
+    SpritesDel(tmps);
   }
-  for (i=0;i<TM_SPRITE_NUM*TM_SPRITE_FRAMES;i++) {
-    n=0;
-    for (j=0;j<8;j++) if (tmps->frame[i*8+j]) n++;
-    if (n && n!=8) goto sn_fail;
-  }
-  return tmps;
-sn_fail:
+  if (valid) return tmps;
   SpritesDel(tmps);
   return NULL;
 }

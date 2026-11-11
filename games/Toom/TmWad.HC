@@ -50,23 +50,29 @@ Wad *WadNew(U8 *filename)
   I64 i,cnt,offset;
   U8 header[12],*ptr=header;
   Wad *tmpw=CAlloc(sizeof(Wad));
-  if (!(tmpw->file=FOpen(filename,"r"))) goto wn_fail;
-  tmpw->size=FSize(tmpw->file);
-  if (!WadRead(tmpw,header,0,sizeof(header)) || *ptr(U32 *)!='IWAD')
-    goto wn_fail;
-  cnt=*(ptr+4)(U32 *);
-  offset=*(ptr+8)(U32 *);
-  if (!(0<cnt<=TM_LUMPS_NUM) || offset>tmpw->size-cnt*sizeof(Lump))
-    goto wn_fail;
-  tmpw->cnt=cnt;
-  tmpw->dir=MAlloc(cnt*sizeof(Lump));
-  if (!WadRead(tmpw,tmpw->dir,offset,cnt*sizeof(Lump))) goto wn_fail;
-  for (i=0;i<cnt;i++)
-    if (tmpw->dir[i].size>TM_LUMP_SIZE ||
-	tmpw->dir[i].offset>tmpw->size-tmpw->dir[i].size)
+  Bool valid=FALSE;
+  try {
+    if (!(tmpw->file=FOpen(filename,"r"))) goto wn_fail;
+    tmpw->size=FSize(tmpw->file);
+    if (!WadRead(tmpw,header,0,sizeof(header)) || *ptr(U32 *)!='IWAD')
       goto wn_fail;
-  return tmpw;
-wn_fail:
+    cnt=*(ptr+4)(U32 *);
+    offset=*(ptr+8)(U32 *);
+    if (!(0<cnt<=TM_LUMPS_NUM) || offset>tmpw->size-cnt*sizeof(Lump))
+      goto wn_fail;
+    tmpw->cnt=cnt;
+    tmpw->dir=MAlloc(cnt*sizeof(Lump));
+    if (!WadRead(tmpw,tmpw->dir,offset,cnt*sizeof(Lump))) goto wn_fail;
+    for (i=0;i<cnt;i++)
+      if (tmpw->dir[i].size>TM_LUMP_SIZE ||
+	  tmpw->dir[i].offset>tmpw->size-tmpw->dir[i].size)
+	goto wn_fail;
+    valid=TRUE;
+wn_fail:;
+  } catch {
+    WadDel(tmpw);
+  }
+  if (valid) return tmpw;
   WadDel(tmpw);
   return NULL;
 }
@@ -92,9 +98,15 @@ I64 LumpFind(Wad *tmpw,U8 *name)
 U8 *LumpRead(Wad *tmpw,I64 i)
 {//The caller owns the allocation, including an empty marker lump.
   U8 *res;
+  Bool valid;
   if (!(0<=i<tmpw->cnt)) return NULL;
   res=MAlloc(MaxI64(tmpw->dir[i].size,1));
-  if (!WadRead(tmpw,res,tmpw->dir[i].offset,tmpw->dir[i].size)) {
+  try {
+    valid=WadRead(tmpw,res,tmpw->dir[i].offset,tmpw->dir[i].size);
+  } catch {
+    Free(res);
+  }
+  if (!valid) {
     Free(res);
     return NULL;
   }

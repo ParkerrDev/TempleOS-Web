@@ -53,17 +53,6 @@ U0 PatchBlot(Image *tmpi,U8 *src,I64 x0,I64 y0)
   }
 }
 
-Image *ImageNew(I64 width,I64 height)
-{//Indexed pixels remain unscaled; palette conversion happens when drawing.
-  Image *tmpi;
-  if (!(0<width<=2048) || !(0<height<=2048)) return NULL;
-  tmpi=CAlloc(sizeof(Image));
-  tmpi->width=width; tmpi->height=height;
-  tmpi->pix=MAlloc(width*height*sizeof(U16));
-  MemSetU16(tmpi->pix,TM_TRANSPARENT,width*height);
-  return tmpi;
-}
-
 U0 ImageDel(Image *tmpi)
 {
   if (tmpi) {
@@ -72,16 +61,35 @@ U0 ImageDel(Image *tmpi)
   }
 }
 
+Image *ImageNew(I64 width,I64 height)
+{//Indexed pixels remain unscaled; palette conversion happens when drawing.
+  Image *tmpi;
+  if (!(0<width<=2048) || !(0<height<=2048)) return NULL;
+  tmpi=CAlloc(sizeof(Image));
+  tmpi->width=width; tmpi->height=height;
+  try {
+    tmpi->pix=MAlloc(width*height*sizeof(U16));
+    MemSetU16(tmpi->pix,TM_TRANSPARENT,width*height);
+  } catch {
+    ImageDel(tmpi);
+  }
+  return tmpi;
+}
+
 Image *PatchNew(Wad *tmpw,I64 lump)
 {//Decode one requested patch, rather than all sprites during startup.
   U8 *src;
   Image *tmpi=NULL;
   if (!(src=LumpRead(tmpw,lump))) return NULL;
-  if (PatchChk(src,tmpw->dir[lump].size)) {
-    tmpi=ImageNew(*src(U16 *),*(src+2)(U16 *));
-    tmpi->left=*(src+4)(I16 *);
-    tmpi->top=*(src+6)(I16 *);
-    PatchBlot(tmpi,src,0,0);
+  try {
+    if (PatchChk(src,tmpw->dir[lump].size)) {
+      tmpi=ImageNew(*src(U16 *),*(src+2)(U16 *));
+      tmpi->left=*(src+4)(I16 *);
+      tmpi->top=*(src+6)(I16 *);
+      PatchBlot(tmpi,src,0,0);
+    }
+  } catch {
+    Free(src); ImageDel(tmpi);
   }
   Free(src);
   return tmpi;
