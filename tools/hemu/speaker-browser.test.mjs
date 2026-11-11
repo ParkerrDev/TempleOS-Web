@@ -67,7 +67,6 @@ try {
       if(!desktop&&cores===1)
         assert.equal(await page.evaluate(async()=>(await import("/Os.js")).engine.kind),"worker","failed stock SMP boot falls back to one core");
       await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==="guestPatch"&&m.state==="installed"));
-      await page.waitForFunction(()=>window.machine.events.some(m=>m.name==="Welcome"&&m.state==="done"));
       await page.locator(screen).focus();
       await page.keyboard.press("Shift");
       await Exec(page,"speaker-on","Snd(60);");
@@ -98,7 +97,6 @@ try {
       await MachineReady(page,cores,{after});
       await context.unroute("**/engine/hemu-worker.js");
       await page.waitForFunction(after=>window.machine.events.slice(after).some(m=>m.cmd==="guestPatch"&&m.state==="installed"),after);
-      await page.waitForFunction(after=>window.machine.events.slice(after).some(m=>m.name==="Welcome"&&m.state==="done"),after);
       assert.equal(await page.evaluate(()=>window.speakerRms()),0,"restart forgets the previous machine's tone");
 
       await Exec(page,"speaker-fault-tone","Snd(60);");
@@ -129,6 +127,8 @@ Spawn(&SpeakerFault,,,${cores===4?1:-1});
       await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==="error"&&m.retained),null,{timeout:15000});
       await page.waitForFunction(()=>window.speakerRms()===0,null,{timeout:2000});
       assert.equal(await page.locator(pause).isDisabled(),true);
+      assert.equal(await page.evaluate(()=>window.machine.events.some(m=>m.name==="Welcome")),false,
+        "stock boot and restart do not queue a Welcome popup");
       assert.deepEqual(errors,[]);
       console.log(`${desktop?"Desktop":"Web"} ${cores}: actual audio passes keyboard unlock, pause/resume, suspended-context recovery, native silence, blocked restart${desktop?", paused full-save restore":""} and native CPU fault.`);
     } catch(error) {

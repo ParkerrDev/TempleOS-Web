@@ -359,3 +359,4 @@ $("mobileFull").addEventListener("click",function () {$("fsBtn").click();});
 $("mobileHelp").addEventListener("click",function () {WinOpen("helpBtn");});
 
 import("./HelpWin.js").catch(console.error);
+import("./TerryWin.js").catch(console.error);

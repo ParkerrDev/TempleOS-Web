@@ -29,6 +29,18 @@ try {
       return !document.documentElement.classList.contains("fontwait");
     });
     assert.equal(await page.locator("#guide").isVisible(),!mobile);
+    assert.equal(await page.locator("#terryWin").isVisible(),!mobile);
+    assert.equal(await page.locator("#guide #terrySprite").count(),0);
+    assert.equal(await page.locator("#helpQuotes,#helpSource").count(),0);
+    assert.deepEqual(await page.locator("#guide button").allTextContents(),["Next tip"]);
+    for(const direction of ["Left","Right","Up","Down"])
+      assert.equal(await page.locator('[data-key="Arrow'+direction+'"]').isVisible(),mobile);
+    if(!mobile) {
+      await page.waitForFunction(()=>document.getElementById("terrySprite").dataset.format==="TempleOS GR");
+      const first=await page.locator("#terrySprite").evaluate(canvas=>canvas.toDataURL());
+      await page.waitForFunction(first=>document.getElementById("terrySprite").toDataURL()!==first,first);
+      assert.equal(Math.round((await page.locator("#terrySprite").boundingBox()).height),176);
+    }
     if (mobile)
       await page.locator("#mobileMenu").click();
     assert.equal(await page.locator("#touchBtn").isVisible(),mobile);
@@ -94,27 +106,30 @@ try {
     const tip=await page.locator("#helpText").innerText();
     await page.locator("#helpNext").click();
     assert.notEqual(await page.locator("#helpText").innerText(),tip);
-    await page.locator("#helpQuotes").click();
-    assert.equal(await page.locator("#helpQuotes").getAttribute("aria-pressed"),"true");
-    assert.match(await page.locator("#helpSource").getAttribute("href"),
-      /archive\.org\/details\/.*\?start=\d+/);
-    for (let n=0;n<5;n++)
-      await page.locator("#helpTerry").click();
-    const actor=page.locator("#terryEgg .egg-actor");
-    await actor.waitFor();
-    assert.equal(await page.locator("#terryEgg .egg-sound").getAttribute("aria-pressed"),"false");
-    if (mobile) {
+    await page.evaluate(()=>document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id:"spritesBtn"}})));
+    assert.equal(await page.locator("#helpNext").isVisible(),false);
+    await page.evaluate(()=>document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id:"godBtn"}})));
+    assert.equal(await page.locator("#helpNext").isVisible(),true);
+    await page.locator("#guide .close").click();
+    if(!mobile) {
+      assert.equal(await page.locator("#terryWin").isVisible(),true,"closing Help leaves Terry visible");
+      await page.emulateMedia({reducedMotion:"reduce"});
+      for(let n=0;n<5;n++)await page.locator("#terrySprite").click();
+      const actor=page.locator("#terryEgg .egg-actor");
+      await actor.waitFor();
+      assert.equal(await page.locator("#terryEgg .egg-sound").getAttribute("aria-pressed"),"false");
       assert.equal(await actor.innerText(),"PARROT");
       assert.equal(await actor.locator("img").count(),0);
+      await actor.focus();await page.keyboard.press("Enter");
+      assert.equal(await actor.getAttribute("aria-label"),"Catch the glowie");
+      for(let n=0;n<3;n++)await page.keyboard.press("Enter");
+      assert.match(await page.locator("#terryEgg .egg-label").innerText(),/complete/);
+      await page.locator("#terryWin .close").click();
+      assert.equal(await page.locator("#terryEgg").count(),0);
+      await page.locator("#desktopMenu").getByRole("button",{name:"Terry",exact:true}).click();
+      assert.equal(await page.locator("#terryWin").isVisible(),true);
+      await page.emulateMedia({reducedMotion:"no-preference"});
     }
-    await actor.focus();
-    await page.keyboard.press("Enter");
-    assert.equal(await actor.getAttribute("aria-label"),"Catch the glowie");
-    for (let n=0;n<3;n++)
-      await page.keyboard.press("Enter");
-    assert.match(await page.locator("#terryEgg .egg-label").innerText(),/complete/);
-    await page.locator("#guide .close").click();
-    assert.equal(await page.locator("#terryEgg").count(),0);
     await page.evaluate(async function () {
       const {KeyInput,KeyBar}=await import("/Keyboard.js");
       const bar=document.createElement("div");

@@ -50,8 +50,6 @@ try {
   await page.waitForFunction(()=>document.getElementById("loadui").style.display=="none",
     {timeout:30000});
   await page.waitForFunction(()=>window.guestEvents.some(m=>
-    m.name=="Welcome" && m.state=="done"),{timeout:30000});
-  await page.waitForFunction(()=>window.guestEvents.some(m=>
     m.cmd=="guestPatch" && m.state=="installed"),null,{timeout:30000});
   assert.equal(await page.locator("#osNotice").isVisible(),false);
   await page.evaluate(async function () {
@@ -144,7 +142,8 @@ try {
     m.cmd=="guestPatch" && m.state=="installed"),null,{timeout:30000});
   assert.equal(await page.locator("#osNotice").isVisible(),false);
   assert.deepEqual(errors,[]);
-  console.log("Browser engine: stock Welcome, visible FPS, settings acknowledgement, "+
+  assert.equal(await page.evaluate(()=>window.guestEvents.some(m=>m.name==="Welcome")),false);
+  console.log("Browser engine: no automatic Welcome, visible FPS, settings acknowledgement, "+
     "God Doodle launch/input/exit, document correction and visible failure/retry passed. Screen: "+screen);
 } catch (e) {
   if (page) {

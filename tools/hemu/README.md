@@ -15,7 +15,7 @@ The default suite checks CPU/JIT/device primitives, emulated atomic instructions
 on four actual worker threads, clocks,
 input, completed captures, barriers and snapshot validation. `--full` also
 builds both engines and runs native raster/video, guest API, saved-machine,
-production worker, welcome and God Tools acceptance checks. `--desktop` adds
+production worker, popup-free stock startup and God Tools acceptance checks. `--desktop` adds
 real Chromium window tests on one and four cores, current/legacy saved sessions,
 and forced page/desktop cancellation and worker failure; flags can be combined. Each
 check runs in a fresh process and any error stops the runner. Timed worker
@@ -422,8 +422,8 @@ consume the pinned bytes and never regenerate their reference.
 
 ## Settings and keyboard
 
-`init` accepts `rate` (0, 30, 60, 120; default 0), `repeat` (default false),
-and `welcome` (true only for the stock snapshot). `set` changes rate and/or
+`init` accepts `rate` (0, 30, 60, 120; default 0) and `repeat` (default false).
+`set` changes rate and/or
 repeat at runtime. The worker reports `settings` with `ok`, applied `rate`
 and `repeat`; an unrecognized guest timing layout keeps its current behavior.
 Uncapped removes the display refresh cap using the guest timer's 1 ms quantum;
@@ -437,8 +437,17 @@ guest only through IRQ1 make/break bytes; the bridge no longer writes the
 OS keyboard bitmap. Repeat is implemented in HolyC using the guest's PS/2
 0xF3 delay/rate, and excludes modifier/lock/PrintScreen/Pause sequences.
 
-Welcome is the guest's PopUp/Ed of ::/Doc/Welcome.DD, queued once after the
-native execution API and disk are ready. Restored sessions omit welcome.
+Stock boots resume the installed desktop without opening Welcome. Full machine
+saves retain their existing guest windows. The one/four-core startup check
+verifies no Welcome job or document appears automatically.
+
+The web and desktop hosts share `Speaker.js`: the current guest tone survives
+host pause, but audible output stops until resume. Restart discards the old
+tone, including failed SMP boot fallback; retained CPU faults remain silent.
+Keyboard and pointer gestures unlock or resume browser audio. The browser
+regression measures actual WebAudio samples for those paths and paused full-save
+restore. This does not establish guest-timestamped 140Hz tone playback: worker
+messages still apply each frequency when the main thread receives it.
 
 `jit-primitives.test.mjs` covers x87 constants, control-word loads/stores,
 rounding and deferred integer flags, plus all conditional moves and byte sets

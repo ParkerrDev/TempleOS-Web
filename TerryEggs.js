@@ -111,7 +111,7 @@ export function TerryEggs(win)
     }
   },options);
   box.querySelector(".egg-close").addEventListener("click",stop,options);
-  win.addEventListener("helpclose",stop,options);
+  win.addEventListener("terryclose",stop,options);
   document.addEventListener("visibilitychange",function () {
     if (document.hidden) {
       animation?.pause();

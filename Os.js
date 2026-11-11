@@ -585,7 +585,7 @@ function runWorker() {
     else diskMsg(m);   // paused/exportResult/fileResult/dirList/diskInfo
   };
   worker.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: new URL("./build/hemu.wasm", location.href).href, fixedB: FIXED_B, diskBytes: importDisk,
-    ...os_cfg,welcome:stockBoot }, importDisk ? [importDisk] : []);
+    ...os_cfg }, importDisk ? [importDisk] : []);
   importDisk = null;
   watchdog = setTimeout(() => { if (!alive) fallback("no frame in 10s"); }, 10000);
   return true;
@@ -684,7 +684,7 @@ async function runSMP() {
         heapAbi:snapshotInfo?.meta.heapAbi,busProtocol:BUS_VERSION,
         requiredBusProtocol:snapshotInfo?.meta.requiredBusProtocol });
     }
-    bsp.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: new URL("./build/hemu-smp.wasm", location.href).href, fixedB: FIXED_B,...os_cfg,welcome:stockBoot,
+    bsp.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: new URL("./build/hemu-smp.wasm", location.href).href, fixedB: FIXED_B,...os_cfg,
       diskBytes: importDisk, smp: { mem, ctrl, ipiAddr: sc.globals.g_ipi_pending, ncore: sc.ncore,busProtocol:BUS_VERSION } },
       importDisk ? [importDisk] : []);
     importDisk = null;

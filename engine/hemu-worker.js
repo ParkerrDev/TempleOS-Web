@@ -18,7 +18,7 @@ import {createGuestInput} from "./guestinput.js";
 import { createGuestExec } from "./guestexec.js";   // backend guest execution: jobs queued through the OS's own TaskExe, no keystrokes
 
 const keyq=KeyQueue();
-let repeatKeys=false,welcomePending=false,refreshRate=0,actualRate=null;
+let repeatKeys=false,refreshRate=0,actualRate=null;
 function SettingsApply(rateChanged=true)
 {
   instRef.exports.KbdRptSet(BigInt(repeatKeys));
@@ -198,10 +198,6 @@ function gxTick() {                          // once per emulated frame: service
     else { console.warn("[hemu] guest probe " + gxProbeTries + ": " + gxProbe.errors.join("; ")); if (gxProbeTries === 40) postMessage({ cmd: "guestReady", ok: false, probe: gxProbe }); }
   }
   docClip?.Tick(!!disk);
-  if (gx.ready && disk && welcomePending && !docClip?.Pending()) {
-    welcomePending=false;
-    gx.exec({src:'PopUp("WinFocus;Ed(\\\"::/Doc/Welcome.DD\\\");");',target:"adam",name:"Welcome"});
-  }
   try { gx.tick(); } catch (e) { console.warn("[hemu] guest tick threw", e); }
 }
 
@@ -319,10 +315,9 @@ async function gunzipInto(gz, size) {
 // that spawn parallel jobs (Talons, Varoom) actually complete. No `smp` => the original single-core path,
 // byte-for-byte unchanged.
 let smpCfg = null, apsReleased = false, bootFrames = 0;
-async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate, patches }) {
+async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, rate, patches }) {
   if ([0,30,60,120].includes(rate)) refreshRate=rate;
   if (typeof repeat==="boolean") repeatKeys=repeat;
-  welcomePending=!!welcome;
   smpCfg = smp || null;
   if (fixedB) curBudget = fixedB;
   postMessage({cmd:"progress",text:"reading saved machine…",pct:60});
@@ -415,7 +410,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
     gBase=m.base;host.state.heapPtr=m.heapPtr;inst.exports.__sp.value=BigInt(m.sp);
     if (Number(inst.exports.RamBase())!==gBase) throw new Error("Snapshot RAM base does not match its engine");
     paused=m.paused;refreshRate=m.rate;actualRate=m.actualRate;repeatKeys=m.repeat;
-    curBudget=m.budget;keyq.Restore(m.keyboard);guestInput.restore(m.pointer);welcomePending=false;
+    curBudget=m.budget;keyq.Restore(m.keyboard);guestInput.restore(m.pointer);
     loaded=true;inst.exports.SnapshotResume();
     gx=createGuestExec({inst,gBase,onEvent:gxEvent,access:RamAccess});gxProbe=gx.probe();
     if (!gxProbe.ok) throw new Error("Saved guest API could not be restored: "+gxProbe.errors.join("; "));

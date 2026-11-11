@@ -90,7 +90,7 @@ async function Boot(gz,config) {
     speaker.Pause(saved?.meta.paused??false);
     $("pause").textContent="Pause";canvas.dataset.frames="0";canvas.dataset.cores="1";
     canvas.dataset.bus=cores===4?"pending":"single";Status("Starting TempleOS…");
-    const init={cmd:"init",gz,wasmUrl,rate:Number($("rate").value),repeat:$("repeat").checked,welcome:config.stock&&!saved};
+    const init={cmd:"init",gz,wasmUrl,rate:Number($("rate").value),repeat:$("repeat").checked};
     try {
       worker=new Worker(new URL("../hemu-worker.js",import.meta.url),{type:"module"});
       worker.onmessage=e=>{if(current===generation)Message(e.data);};
