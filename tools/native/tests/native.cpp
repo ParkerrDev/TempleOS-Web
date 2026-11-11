@@ -98,7 +98,7 @@ private slots:
     qmlRegisterType<Screen>("HemuNative",1,0,"HemuScreen");Backend backend;
     QQmlApplicationEngine qml;qml.rootContext()->setContextProperty("backend",&backend);qml.load(QUrl("qrc:/hemu/Main.qml"));
     QVERIFY(!qml.rootObjects().isEmpty());auto *window=qobject_cast<QQuickWindow *>(qml.rootObjects().first());QVERIFY(window);
-    window->installEventFilter(&backend);QSignalSpy changes(&backend,&Backend::changed);QSignalSpy keys(&backend,&Backend::keyRequested);
+    backend.Attach(window);QSignalSpy changes(&backend,&Backend::changed);QSignalSpy keys(&backend,&Backend::keyRequested);
     backend.open(input);QTRY_VERIFY_WITH_TIMEOUT(!backend.busy(),30000);QVERIFY(backend.ready());
     const auto before=pixels(backend.image());QVERIFY(before.size()==640*480*4);
     auto *screen=window->findChild<QQuickItem *>("screen");QVERIFY(screen);screen->forceActiveFocus();

@@ -28,8 +28,12 @@ SHA-256 are written to `build/native/Runtime.json`; `Build.json` records the
 C++/QML source hashes, binary hash and local Qt/JSC versions. Qt's resource compiler
 embeds the bundle in the binary; no generated code is committed. The platform
 build needs Qt 6 Core/Gui/Qml/Quick/Multimedia, qmake6, a C++17 compiler, zlib and
-JavaScriptCoreGTK 4.1 development headers/libraries. The test build also needs
-Qt Test. Tested locally with Qt 6.12.0 and JavaScriptCoreGTK 2.54.1.
+JavaScriptCoreGTK 4.1 development headers/libraries. Linux pointer capture needs
+Qt 6.12 or later with its matching private GUI headers, wayland-client,
+wayland-protocols and wayland-scanner. Protocol bindings are generated from the
+installed XML; `Build.json` records their hashes and dependency versions. The
+test build also needs Qt Test and Qt WaylandCompositor. Tested locally with
+Qt 6.12.0, JavaScriptCoreGTK 2.54.1, Wayland 1.26.0 and protocols 1.49.
 
 The fixture command uses the real one-core worker, validates its stock
 RAM/register/disk pairing, waits for the document sprite correction, and
@@ -43,6 +47,22 @@ Click the screen to route keys to TempleOS. Moving focus away releases held
 keys. The [Qt Wayland input source](https://codebrowser.dev/qt6/qtbase/src/plugins/platforms/wayland/qwaylandinputdevice.cpp.html#1342)
 provides the eight-key XKB offset used here. Linux evdev/XKB scan codes preserve left/right modifiers and keypad
 identity; the logical Qt-key fallback has not been qualified on macOS.
+
+When a running guest hides its pointer for a game, click the screen to request
+relative capture. **Ctrl+Alt releases it.** Focus loss, pause, saving, session
+replacement and retained CPU faults release the compositor lock and held input.
+Capture is a host lease: restoring a saved session never acquires it automatically.
+The Linux adapter uses Wayland pointer-constraints and relative-pointer version1,
+waits for the compositor's grant, and delivers fractional unaccelerated deltas.
+It does not claim raw hardware motion. A refused request times out with a retry
+message; unsupported compositors and X11 retain absolute input with an explicit
+capture diagnostic. macOS relative input remains unimplemented.
+
+Qt's public Wayland interface provides the connection and pointer; its private
+QPA boundary supplies only the window's `wl_surface`. The adapter dispatches its
+own event queue on the GUI thread while Qt owns connection reads. Capture is
+refused if the runtime Qt version differs from the build headers; rebuild after
+upgrading Qt. This private boundary is confined to `Pointer.cpp`.
 
 Loading and saving run on the dedicated JSC thread. A replacement uses a fresh
 JSC context, keeping its JIT state separate from the previous machine. Only a
@@ -74,8 +94,15 @@ exact paused RGBA restoration, guest file round trips, native keyboard state,
 retained CPU faults and the actual Qt window. The default screenshot path is
 `/tmp/hemu-native-window.png`; override with `HEMU_NATIVE_SCREENSHOT`.
 
-Remaining qualification includes audible PCM timing/lifecycle, pointer capture
-for games, UI file selection through the desktop portal, native packaging and
+The Linux check also starts a private Qt Wayland compositor and real clients.
+It verifies grant/refusal/timeout, fractional motion, Ctrl+Alt, focus and surface
+lifetime, plus the production QML/Backend against HEMU. A native guest task must
+observe the expected relative coordinates; tests also save/reopen, reject a bad
+replacement and execute a real retained CPU fault while captured. These use an
+isolated compositor and do not send input to the user's desktop.
+
+Remaining qualification includes audible PCM timing/lifecycle,
+UI file selection through the desktop portal, native packaging and
 installation, performance/resource measurement, and non-Linux platforms. The
 browser host's four-core protocol remains separate; this window does not yet
 satisfy that native SMP requirement.

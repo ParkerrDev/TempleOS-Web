@@ -9,3 +9,5 @@ HEADERS += Js.hpp Streams.hpp Transport.hpp Machine.hpp
 
 RESOURCES += resources.qrc
 HEADERS += Input.hpp App.hpp
+
+include(Pointer.pri)

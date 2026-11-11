@@ -33,9 +33,10 @@ export async function Open(path) {
   try {
     if(saved.meta.cores!==1||saved.meta.requiredBusProtocol)
       throw Error("This native host supports one CPU only");
+    let capture=false;
     let inst,disk,gx,frame=null,frameSerial=0,fps=null,ns=0,fault="",tone=0;
     const meta=saved.meta,base=meta.base,keys=KeyQueue(),palette=[],
-      pointer=createGuestInput({guest:()=>gx}),input=KeyInput(bytes=>keys.Push(bytes)),
+      pointer=createGuestInput({guest:()=>gx,onState:hint=>{capture=hint.capture;}}),input=KeyInput(bytes=>keys.Push(bytes)),
       host=createHemuHost({heapAbi:meta.heapAbi,onText:NativeLog,
         palette:(index,rgb)=>palette[index]=rgb,
         snd:{tone:frequency=>{tone=Number(frequency);}},
@@ -71,7 +72,7 @@ export async function Open(path) {
     fault=CpuFaultText(inst.exports);
     let paused=meta.paused||!!fault;
     machine={
-      status:()=>({paused,fault,fps,frameSerial,tone:paused||fault?0:tone,cores:1,memoryBytes:inst.exports.memory.buffer.byteLength}),
+      status:()=>({paused,fault,fps,frameSerial,capture:!paused&&!fault&&capture,tone:paused||fault?0:tone,cores:1,memoryBytes:inst.exports.memory.buffer.byteLength}),
       frame:()=>NativeFrame(frame,palette),
       tick(delta){if(paused||fault)return;ns=delta;pointer.beforeFrame();inst.exports.__main();gx.tick();fault=CpuFaultText(inst.exports);if(fault){paused=true;keys.Release();}},
       pause(value){if(!value&&fault)throw Error(fault);paused=value;if(paused){input.reset();keys.Release();pointer.accept({b:0,reset:true});}},

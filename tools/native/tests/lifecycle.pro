@@ -6,3 +6,5 @@ LIBS += -lz
 TARGET = native-lifecycle
 SOURCES += lifecycle.cpp
 HEADERS += ../../../engine/native/App.hpp
+
+include(../../../engine/native/Pointer.pri)

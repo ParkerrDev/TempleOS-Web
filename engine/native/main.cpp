@@ -22,7 +22,7 @@ int main(int argc,char **argv) try {
   qmlRegisterType<Screen>("HemuNative",1,0,"HemuScreen");Backend backend;
   QQmlApplicationEngine qml;qml.rootContext()->setContextProperty("backend",&backend);
   qml.load(QUrl("qrc:/hemu/Main.qml"));if(qml.rootObjects().isEmpty())return 1;
-  auto *window=qobject_cast<QQuickWindow *>(qml.rootObjects().first());window->installEventFilter(&backend);
+  auto *window=qobject_cast<QQuickWindow *>(qml.rootObjects().first());backend.Attach(window);
   if(argc>1)backend.open(QString::fromLocal8Bit(argv[1]));
   return app.exec();
 } catch(const std::exception &error) {

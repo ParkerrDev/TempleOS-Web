@@ -40,7 +40,7 @@ ApplicationWindow {
         anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton|Qt.RightButton
         property int wheelCount: 0
         function point(mouse) { backend.mouse(mouse.x/width*640,mouse.y/height*480,mouse.buttons,wheelCount) }
-        onPressed: mouse=>{ screen.forceActiveFocus(); point(mouse) }
+        onPressed: mouse=>{ screen.forceActiveFocus(); point(mouse); backend.capture() }
         onReleased: mouse=>point(mouse)
         onPositionChanged: mouse=>point(mouse)
         onCanceled: backend.release()
@@ -58,7 +58,7 @@ ApplicationWindow {
       Button { text: backend.paused?qsTr("Resume"):qsTr("Pause"); enabled: backend.ready&&!backend.busy&&!backend.faulted; onClicked: {backend.pause();screen.forceActiveFocus()} }
       Button { text: qsTr("Restart"); enabled: backend.ready&&!backend.busy; onClicked: window.openSession(backend.path) }
       Button { text: qsTr("Cancel"); enabled: backend.busy; onClicked: backend.cancel() }
-      Label { text: backend.status; color: "white"; wrapMode: Text.Wrap; Layout.fillWidth: true }
+      Label { text: backend.captured?qsTr("Pointer captured — Ctrl+Alt releases it"):backend.status; color: "white"; wrapMode: Text.Wrap; Layout.fillWidth: true }
     }
   }
 }

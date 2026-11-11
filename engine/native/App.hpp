@@ -1,6 +1,7 @@
 #pragma once
 #include "Machine.hpp"
 #include "Input.hpp"
+#include "Pointer.hpp"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -139,12 +140,23 @@ class Backend:public QObject {
   Q_PROPERTY(bool ready READ ready NOTIFY changed)
   Q_PROPERTY(QString path READ path NOTIFY changed)
   Q_PROPERTY(bool faulted READ faulted NOTIFY changed)
+  Q_PROPERTY(bool captured READ captured NOTIFY changed)
+  Q_PROPERTY(bool captureWanted READ captureWanted NOTIFY changed)
   QThread thread;std::atomic<bool> cancelFlag{false};FrameMailbox mailbox;Engine *engine=nullptr;
   QImage value;QString message,filename;bool working=false,stopped=true,loaded=false;
-  QJsonObject state;Tone tone;std::unique_ptr<QAudioSink> audio;
+  QJsonObject state;PointerCapture pointerLock;QPointer<QQuickWindow> window;int buttons=0,wheel=0;Tone tone;std::unique_ptr<QAudioSink> audio;
 public:
   Backend() {
     JsInit();engine=new Engine(&cancelFlag,&mailbox);
+    connect(&pointerLock,&PointerCapture::motion,this,[this](double dx,double dy){
+      if(!working&&!stopped&&captureWanted())emit mouseRequested({{"relative",true},{"dx",dx},{"dy",dy},{"b",buttons},{"wheel",wheel}});
+    });
+    connect(&pointerLock,&PointerCapture::changed,this,[this]{
+      if(pointerLock.Active())emit mouseRequested({{"relative",true},{"reset",true},{"b",buttons},{"wheel",wheel}});
+      else if(!pointerLock.Pending()){buttons=0;emit releaseRequested();emit mouseRequested({{"relative",false},{"reset",true},{"b",0},{"wheel",wheel}});}
+      emit changed();
+    });
+    connect(&pointerLock,&PointerCapture::error,this,[this](QString error){message=error;emit changed();});
     engine->moveToThread(&thread);connect(&thread,&QThread::finished,engine,&QObject::deleteLater);
     connect(this,&Backend::openRequested,engine,&Engine::Open);connect(this,&Backend::saveRequested,engine,&Engine::Save);
     connect(this,&Backend::pauseRequested,engine,&Engine::Pause);connect(this,&Backend::keyRequested,engine,&Engine::Key);
@@ -154,10 +166,10 @@ public:
       {QMutexLocker lock(&mailbox.mutex);value=mailbox.image;mailbox.pending=false;}
       emit imageChanged();
     });
-    connect(engine,&Engine::busyChanged,this,[this](bool next){working=next;tone.Set(next?0:state["tone"].toDouble());emit changed();});
-    connect(engine,&Engine::stateChanged,this,[this](QJsonObject next){state=next;stopped=state["paused"].toBool();if(!state["fault"].toString().isEmpty())message=state["fault"].toString();tone.Set(working?0:state["tone"].toDouble());emit changed();});
+    connect(engine,&Engine::busyChanged,this,[this](bool next){working=next;if(next)pointerLock.Release();tone.Set(next?0:state["tone"].toDouble());emit changed();});
+    connect(engine,&Engine::stateChanged,this,[this](QJsonObject next){state=next;stopped=state["paused"].toBool();if(!state["fault"].toString().isEmpty())message=state["fault"].toString();if(stopped||!captureWanted())pointerLock.Release();tone.Set(working?0:state["tone"].toDouble());emit changed();});
     connect(engine,&Engine::errorOccurred,this,[this](QString error){message=error;tone.Set(0);emit changed();});
-    connect(engine,&Engine::fatal,this,[this]{stopped=true;tone.Set(0);emit changed();});
+    connect(engine,&Engine::fatal,this,[this]{pointerLock.Release();stopped=true;tone.Set(0);emit changed();});
     connect(engine,&Engine::opened,this,[this](QString file){filename=file;loaded=true;message=faulted()?state["fault"].toString():tr("Session restored");emit changed();});
     connect(engine,&Engine::saved,this,[this](QString file){message=tr("Saved %1").arg(file);emit changed();});
     const auto device=QMediaDevices::defaultAudioOutput();QAudioFormat format;format.setSampleRate(48000);format.setChannelCount(1);format.setSampleFormat(QAudioFormat::Float);
@@ -165,19 +177,31 @@ public:
     else message=tr("No supported audio output is available");
     thread.start();
   }
-  ~Backend(){tone.Set(0);if(audio)audio->stop();cancelFlag.store(true);thread.quit();thread.wait();}
+  ~Backend(){pointerLock.Release();tone.Set(0);if(audio)audio->stop();cancelFlag.store(true);thread.quit();thread.wait();}
   QImage image()const{return value;}QString status()const{return message;}bool busy()const{return working;}
   bool paused()const{return stopped;}bool ready()const{return loaded;}QString path()const{return filename;}bool faulted()const{return !state["fault"].toString().isEmpty();}
-  Q_INVOKABLE void open(const QString &path){if(working||path.isEmpty())return;cancelFlag.store(false);working=true;tone.Set(0);message=tr("Loading session…");emit changed();emit openRequested(path);}
-  Q_INVOKABLE void save(const QString &path){if(working||!loaded||path.isEmpty())return;cancelFlag.store(false);working=true;tone.Set(0);message=tr("Saving session…");emit changed();emit saveRequested(path);}
+  bool captured()const{return pointerLock.Active();}bool captureWanted()const{return state["capture"].toBool();}
+  void Attach(QQuickWindow *next){if(window)window->removeEventFilter(this);pointerLock.Release();window=next;if(window)window->installEventFilter(this);}
+  Q_INVOKABLE void open(const QString &path){if(working||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Set(0);message=tr("Loading session…");emit changed();emit openRequested(path);}
+  Q_INVOKABLE void save(const QString &path){if(working||!loaded||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Set(0);message=tr("Saving session…");emit changed();emit saveRequested(path);}
   Q_INVOKABLE void cancel(){if(working)cancelFlag.store(true);}
-  Q_INVOKABLE void pause(){if(!working&&loaded){tone.Set(0);emit pauseRequested(!stopped);}}
-  Q_INVOKABLE void release(){emit releaseRequested();}
-  Q_INVOKABLE void mouse(double x,double y,int buttons,int wheel=0){if(!working)emit mouseRequested({{"x",std::clamp(x,0.0,639.0)},{"y",std::clamp(y,0.0,479.0)},{"b",buttons&3},{"wheel",wheel}});}
+  Q_INVOKABLE void pause(){if(!working&&loaded){release();tone.Set(0);emit pauseRequested(!stopped);}}
+  Q_INVOKABLE void release(){pointerLock.Release();buttons=0;emit releaseRequested();}
+  Q_INVOKABLE void capture(){if(!working&&!stopped&&captureWanted())pointerLock.Start(window);}
+  Q_INVOKABLE void mouse(double x,double y,int value,int rotation=0){
+    if(working)return;
+    buttons=value&3;wheel=rotation;
+    if(pointerLock.Active())emit mouseRequested({{"relative",true},{"b",buttons},{"wheel",wheel}});
+    else emit mouseRequested({{"x",std::clamp(x,0.0,639.0)},{"y",std::clamp(y,0.0,479.0)},{"relative",false},{"b",buttons},{"wheel",wheel}});
+  }
   bool eventFilter(QObject *target,QEvent *event)override {
     if(event->type()==QEvent::WindowDeactivate)release();
     if(event->type()==QEvent::KeyPress||event->type()==QEvent::KeyRelease) {
-      auto *key=static_cast<QKeyEvent *>(event);auto *window=qobject_cast<QQuickWindow *>(target);
+      auto *key=static_cast<QKeyEvent *>(event);
+      if((pointerLock.Active()||pointerLock.Pending())&&event->type()==QEvent::KeyPress&&
+          (key->key()==Qt::Key_Control||key->key()==Qt::Key_Alt)&&
+          ((key->modifiers()|(key->key()==Qt::Key_Control?Qt::ControlModifier:Qt::AltModifier))&(Qt::ControlModifier|Qt::AltModifier))==(Qt::ControlModifier|Qt::AltModifier)){release();return true;}
+      auto *window=qobject_cast<QQuickWindow *>(target);
       if(window&&window->activeFocusItem()&&window->activeFocusItem()->objectName()=="screen") {
         const int code=ScanKey(*key);if(code){if(!working&&!key->isAutoRepeat())emit keyRequested(code,event->type()==QEvent::KeyPress);return true;}
       }
