@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "2287d76766e07fa334ad7281eb951cc9e0bce6f5301d9132a24bc9371e351efd",
+  "runtimeSha256": "8ed57f1157a5f5cf72adf15934fd58760713fcb961742c8cd52b822a4957240e",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -8,7 +8,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "2d45d8f831af44caa3c05e821ebab5c1039bb2432afcb07113b25b8777b1e341"
+      "wasmSha256": "018769a4b5569195d9038406b0a0b2ed27622ca60ce7e16d8321163070b94f49"
     },
     "toom": {
       "name": "TOOM",
@@ -24,7 +24,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "45f08a7cf8bd17158fb09e709451b0939685ee55f5803dfef131130a3ab5686e"
+      "wasmSha256": "ffb959e5bf9899c3036c4efa578640f2b7b899ab3c6be5b8fd39f4f9f7b2c18c"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -32,7 +32,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "c6ac2fb15f3cfc91feef0aee0d332c8d91a15d834d1070b80621059bbb0b108e"
+      "wasmSha256": "a5626cdddb00b6ada930f1567d56daf9903319dd72a8d3cbb745d7c5bda5baf8"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -40,7 +40,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "e31871d8f9859cfcea70034692b6fdb1f39d8f6e9b70f257ad54f3ef2fade619"
+      "wasmSha256": "62990917c8e72cb6d4a7763aff06c12745ae5073253edb285a78ea9f6bac7b75"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -168,7 +168,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/RawHide.HC:139: Undefined identifier or untyped call: QueDel"
+      "error": "C:/Home/Games/TinkerOS/RawHide.HC:250: undefined symbol 'Blink'"
     },
     "tinker-TheDead": {
       "name": "TheDead",
@@ -304,7 +304,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/Chess/Chess.HC:159: Undefined identifier or untyped call: QueIns"
+      "error": "C:/Home/Games/TinkerOS/Apps/Chess/Chess.HC:408: undefined symbol 'CDoc'"
     },
     "library-KeepAway": {
       "name": "KeepAway",
@@ -504,7 +504,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/AustinArchive/Ezekiel/Sinner.HC:235: Undefined identifier or untyped call: QueInit"
+      "error": "C:/Home/Games/AustinArchive/Ezekiel/Sinner.HC:243: undefined symbol 'SettingsPush'"
     },
     "library-LordofHosts": {
       "name": "Lord of Hosts",
