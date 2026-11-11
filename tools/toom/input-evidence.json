@@ -1,0 +1,60 @@
+{
+  "status": "bounded-native-keyboard-command-proof",
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/g_game.c",
+    "sha256": "bc8e2e0d76a70f8120174946641a82c46f0116a624f51c011b292e2ffcb78a29",
+    "function": "G_BuildTiccmd",
+    "scope": "Keyboard-only commands: mouse, joystick, external driver, chat, demo, network, pause and save inputs are inactive."
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "checks": {
+    "commands": {
+      "cases": 9216,
+      "native": "qemu-p2wa9uqs",
+      "hemu": true,
+      "sourceSha256": "b513016d21d7077f1bab7204b17ca1969cec1f2d2ed6dc6a3f0afb6229652775",
+      "scope": [
+        "Every combination of ten movement/button/modifier bits at eight turn-ramp positions, including the five/six-tic boundary and long holds.",
+        "All 256 simultaneous weapon masks with four modifier/button masks; the first pressed numeric key wins as in the original routine.",
+        "Original G_BuildTiccmd is compiled unchanged with keyboard inputs and inactive mouse/joystick/network/chat/demo/pause/save boundaries."
+      ]
+    },
+    "bitmap": {
+      "cases": 276,
+      "native": "qemu-p2wa9uqs",
+      "hemu": true,
+      "scope": [
+        "Every native merged scan-code binding individually.",
+        "All 256 arrow/strafe and WASD alias combinations, every bit held, then complete release.",
+        "Controls initialization and command sampling allocate no memory."
+      ]
+    },
+    "levelRegression": {
+      "cases": 20,
+      "native": "qemu-xs3mn6_o",
+      "hemu": true,
+      "sourceSha256": "444c0c7307ce1ee54e7fa1ba423585a5e773a7d64495997a3783095d4ca01e5a"
+    }
+  },
+  "inputs": {
+    "games/Toom/Load.HC": "5478ccc651e798c0fbde610a1cc54eafabe6ec72163c418a1463e86576c906d8",
+    "games/Toom/TmInput.HC": "5589178e7cd8c3a1884c5e5250adc73812691fa8d32cba4e0a380707f55a2ee9",
+    "tools/toom/Input.HC": "3caa68aa0a543b4f006242b9b07e0f98cdbb4018addf020248a7cc88f1973c59",
+    "tools/toom/InputRef.mjs": "dc787a8bc18ceb59fc3c1a9f2901416283697a058ee90e7eb4e38fe7a859525f",
+    "tools/toom/input.test.mjs": "59eb301941bd29e7e4a050c69c5db32612c3b0c4e283cabeae841670ae64c552"
+  },
+  "limitations": [
+    "This supplies native held-key commands; the application host must sample once per tic and control focus, pause, lifetime and rendering.",
+    "Mouse/joystick, demo/network commands, save requests and pause toggling are outside this keyboard-command contract.",
+    "This does not qualify the unfinished game for the catalog."
+  ]
+}

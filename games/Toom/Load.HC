@@ -48,3 +48,4 @@
 #include "TmMask"
 #include "TmSprite"
 #include "TmLevel"
+#include "TmInput"

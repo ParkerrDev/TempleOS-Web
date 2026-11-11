@@ -67,6 +67,10 @@ The implemented foundation uses native V5.03 file and memory APIs:
   host replaces a level. Reentry and destruction of world-linked owners during
   an active tic fail before releasing memory. Exceptions release the active
   guard while retaining effects that already occurred.
+- Held-key commands use the native merged scan-code bitmap, with optional
+  WASD aliases. The original six-tic turning ramp, walk/run rates, strafe
+  modifier, opposing-key cancellation and numeric weapon priority are retained.
+  The host still has to supply focus, timing and pause policy.
 - Per-level hearing uses an owned bounded queue and the shared sector edge
   index. Alerts cross at most one sound-blocking line, stop at closed openings,
   and revisit a sector if an unblocked route improves its first route. Sound
@@ -338,6 +342,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/action-real.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level-alloc.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/setup.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/input.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level-maps.test.mjs > /tmp/toom-level-maps.json
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-level-maps.json node tools/toom/level-maps.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
@@ -664,6 +669,10 @@ official maps construct 22,987 actors with matching native/HEMU RNG positions
 and actor-type traces. This is level composition, not a complete playable host,
 nightmare-respawn implementation or frame-rate proof. See
 `tools/toom/level-evidence.json`.
+Keyboard input adds 9,216 comparisons with the original C command builder and
+276 native scan-code/alias cases. Both backends preserve movement, turn-ramp
+state, buttons, weapon priority and complete release. Mouse/joystick and host
+focus/pause policy are outside that fixture. See `tools/toom/input-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation
