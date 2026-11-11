@@ -49,3 +49,14 @@ the task remains active: it may still be compiling or waiting at a menu. A
 `returned` result only means its entry finished without a reported exception.
 Neither result qualifies gameplay, input, performance or original-QEMU parity.
 Those require program-specific checks such as the native scenarios above.
+
+The browser launcher also requires recorded startup evidence. Run
+`node tools/browser/games.mjs --write`, then
+`node tools/native-games-audit.mjs --write` after a compiler, editor or game
+change. The browser check uses the actual editor worker, observes visible and
+advancing frames, checks worker survival and Stop, and tests the launcher's
+refusal when compilation is the only evidence or the evidence cannot load.
+`games/browser-checks.json` records exact project/compiler/runner hashes.
+The fast compiler audit rejects stale records. These four startup scenarios
+(HolyCraft, Babel, Volley and Snake) do not establish input response, complete
+gameplay or native parity; `gameplay` remains explicitly unverified.

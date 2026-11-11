@@ -3,8 +3,9 @@
 // sound ring into WebAudio, and shows console output.
 import { Speaker } from "../holyc-wasm/src/runtime/sound.js";
 import {
-  CTRL, KB_BASE, KB_RING, SND_BASE, SND_RING, SND_TONE, SND_NOTE, KEY_STATE_BASE, makeControlSAB,
+  CTRL, KB_BASE, KB_RING, SND_BASE, SND_RING, SND_TONE, SND_NOTE, KEY_STATE_BASE, makeControlSAB, keyPacketPush, keyPacketReset,
 } from "../holyc-wasm/src/runtime/protocol.js";
+import {KEY,KeyBytes,KeyInput} from "../Keyboard.js";
 import { DEMOS } from "./demos.js";
 import { Framebuffer } from "../holyc-wasm/src/runtime/graphics.js";
 import { SOURCES } from "./demo-sources.js";
@@ -21,6 +22,7 @@ let worker = null;
 let ctrl = null;
 let sndTimer = null;
 let running = false;
+let nativeKeys = false;
 let mainFb = null;     // main-thread presenter over the shared framebuffer
 let curCanvas = canvas;
 let rafId = 0;
@@ -75,6 +77,17 @@ function pushKey(code) {
   Atomics.notify(ctrl, CTRL.SLEEP_FUTEX);
 }
 
+let nativeResetting=false;
+const nativeInput=KeyInput(sendNative);
+function clearNative(){
+  nativeResetting=true;nativeInput.reset();nativeResetting=false;
+}
+function sendNative(bytes) {
+  if(!ctrl || !nativeKeys || nativeResetting || !bytes.length)return;
+  if(!keyPacketPush(ctrl,bytes))clearNative();
+  worker?.postMessage({type:"input"});
+}
+
 function keyToChar(e) {
   if (e.key === "Enter") return 10;
   if (e.key === "Escape") return e.shiftKey?0x1c:0x1b;
@@ -82,7 +95,7 @@ function keyToChar(e) {
   if (e.key === "Backspace") return 8;
   if (e.key === "Tab") return 9;
   if (e.key.length === 1) return e.key.charCodeAt(0);
-  // arrows -> TempleOS-ish scan placeholders (kept simple)
+  //The legacy character stream has no arrow characters.
   return 0;
 }
 
@@ -94,7 +107,9 @@ const scanKeys={KeyW:0x11,KeyA:0x1e,KeyS:0x1f,KeyD:0x20,KeyR:0x13,KeyF:0x21,KeyJ
 const hasInputFocus=()=>document.activeElement===curCanvas || document.pointerLockElement===curCanvas;
 function releaseInput(){
   hybridTracking=false;
+  clearNative();
   if(!ctrl)return;
+  if(nativeKeys){keyPacketReset(ctrl);worker?.postMessage({type:"input"});}
   for(let i=0;i<128;i++)Atomics.store(ctrl,KEY_STATE_BASE+i,0);
   for(const i of [CTRL.MS_DX,CTRL.MS_DY,CTRL.MS_LB,CTRL.MS_RB])Atomics.store(ctrl,i,0);
   Atomics.store(ctrl,CTRL.MS_PRESSED,0);Atomics.add(ctrl,CTRL.INPUT_RESET,1);
@@ -103,10 +118,18 @@ function releaseInput(){
 addEventListener('keydown',e=>{
   if(!running||!hasInputFocus())return;
   if(e.code==='Escape'&&isMouseCaptured()){releaseMouse();return;}
+  if(nativeKeys){
+    const key=KEY[e.code];
+    if(key!==undefined){
+      if(!nativeInput.down(e.code,key) && e.repeat)sendNative(KeyBytes(key,true));
+      e.preventDefault();
+    }
+    return;
+  }
   const sc=scanKeys[e.code];if(sc!==undefined){Atomics.store(ctrl,KEY_STATE_BASE+sc,1);e.preventDefault();}
   const c=keyToChar(e);if(c){if(!e.repeat || sc===undefined)pushKey(c);e.preventDefault();}
 });
-addEventListener('keyup',e=>{const sc=scanKeys[e.code];if(ctrl&&sc!==undefined)Atomics.store(ctrl,KEY_STATE_BASE+sc,0);});
+addEventListener('keyup',e=>{nativeInput.up(e.code);const sc=scanKeys[e.code];if(ctrl&&sc!==undefined)Atomics.store(ctrl,KEY_STATE_BASE+sc,0);});
 addEventListener('blur',()=>{releaseInput();if(document.pointerLockElement===curCanvas)document.exitPointerLock();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseInput();if(document.pointerLockElement===curCanvas)document.exitPointerLock();}});
 document.addEventListener('pointerlockchange',()=>{
@@ -172,6 +195,7 @@ function releaseMouse() {
   if(isMouseCaptured())document.exitPointerLock();
 }
 function attachInput(target) {
+  target.addEventListener("blur",()=>{if(target===curCanvas&&!isMouseCaptured())releaseInput();});
   const mouseDown=e=>{
     if(!running||target!==curCanvas||![0,2].includes(e.button))return;
     if(((captureWanted&&!hybridMouse)||e.shiftKey)&&!isMouseCaptured()){
@@ -243,7 +267,7 @@ function stop() {
   if (ctrl) { Atomics.store(ctrl, CTRL.RUNNING, 0); Atomics.notify(ctrl, CTRL.SLEEP_FUTEX); }
   if (worker) { worker.terminate(); worker = null; }
   if (sndTimer) { clearInterval(sndTimer); sndTimer = null; }
-  running = false;
+  running = false;nativeKeys=false;
   mouseStateChanged();
   speaker.tone(0);
   $("runBtn").textContent = "▶ Run";
@@ -282,9 +306,14 @@ async function run(source=editor.value,project={}) {
   };
 
   worker = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
+  const startedWorker=worker;
   worker.onmessage = (e) => {
+    if(worker!==startedWorker)return;
     const m = e.data;
-    if(m.type === 'inputMode'){
+    if(m.type === 'keyboardMode'){
+      nativeKeys=!!m.native;releaseInput();
+    }
+    else if(m.type === 'inputMode'){
       captureWanted=!!m.capture;releaseInput();
       if(captureWanted)setStatus(hybridMouse?'Hybrid mouse. Use Capture mouse or Shift+click to capture again.':'Click the screen to capture the mouse. Esc releases.');
       else if(!manualCapture&&isMouseCaptured())document.exitPointerLock();
@@ -299,6 +328,11 @@ async function run(source=editor.value,project={}) {
   mouseStateChanged();
   $("runBtn").textContent = "■ Stop";
   setStatus("running…");
+  worker.onerror=event=>{
+    if(worker!==startedWorker)return;
+    event.preventDefault();
+    appendConsole("\n[error] "+(event.message||"The program worker could not start.")+"\n");setStatus("error");stop();
+  };
   worker.postMessage({ type: "run", source, controlSAB: sab, fbSAB, ...project });
   rafId = requestAnimationFrame(present);
 

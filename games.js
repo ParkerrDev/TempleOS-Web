@@ -93,10 +93,11 @@ for (const g of GAMES) {
   const bB=document.createElement("button");bB.className="gm-play";bB.textContent="Run in Browser";
   bB.title="Compile HolyC directly to WebAssembly";
   const support=evidence?.programs[g.packageId || g.file];
-  if (!support?.compile) {
+  if (!support?.compile || !support?.browserStartup) {
     bB.disabled=true;
     bB.textContent="Browser support pending";
-    bB.title="This program has not passed the browser compiler checks.";
+    bB.title=support?.compile ? "This program compiles, but browser startup checks are pending." :
+      "This program has not passed the browser compiler checks.";
   }
   bB.addEventListener("click",()=>runInBrowser(g));row.append(bB);
   const bT=document.createElement("button");bT.className="gm-play";bT.textContent="Run in TempleOS";

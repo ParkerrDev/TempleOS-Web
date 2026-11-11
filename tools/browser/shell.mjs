@@ -190,7 +190,7 @@ try {
       });
       assert.deepEqual(pixel,[170,0,0,255],"Native CDC pixels reach the browser without palette loss.");
       await page.locator("#editor").fill('"INPUT_READY\\n"; I64 i; '+
-        'for(i=0;i<3;i++) "%d\\n",GetChar;');
+        'for(i=0;i<3;i++) "%d\\n",GetChar(,FALSE);');
       await page.locator("#runBtn").click();
       await page.waitForFunction(()=>document.getElementById("console").textContent.includes("INPUT_READY"));
       await page.locator("#screen").focus();

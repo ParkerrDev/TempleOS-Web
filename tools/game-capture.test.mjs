@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as protocol from '../holyc-wasm/src/runtime/protocol.js';
+import {KEY,KeyBytes,KeyInput} from '../Keyboard.js';
 
 const nodes=new Map(),workers=[],windowEvents=new EventTarget();
 const document=new EventTarget();
@@ -38,7 +39,7 @@ class Worker {
   terminate(){}
 }
 const context=vm.createContext({
-  ...protocol,document,console,URL,Event,Worker,Int32Array,Uint8Array,SharedArrayBuffer,Atomics,
+  ...protocol,KEY,KeyBytes,KeyInput,document,console,URL,Event,Worker,Int32Array,Uint8Array,SharedArrayBuffer,Atomics,
   DEMOS:[],SOURCES:{'Demo/Graphics/Lines.HC':'// test source'},PointerEvent:true,crossOriginIsolated:true,performance,
   Speaker:class {resume(){} tone(){}},Framebuffer:class {present(){}},
   addEventListener:windowEvents.addEventListener.bind(windowEvents),

@@ -7,6 +7,7 @@ import {compileHolyC} from '../holyc-wasm/src/compiler.js';
 import {compileNativeProject} from '../editor/project.js';
 import {createMouseButtons} from '../editor/mouse-buttons.js';
 import {createHost} from '../holyc-wasm/src/runtime/host.js';
+import {MS_ADDR,MS} from '../holyc-wasm/src/abi.js';
 import {Framebuffer} from '../holyc-wasm/src/runtime/graphics.js';
 import * as protocol from '../holyc-wasm/src/runtime/protocol.js';
 
@@ -21,7 +22,7 @@ atomics.wait=()=>{
   if(waits===6){ctrl[CTRL.MS_PRESSED]=0;Atomics.add(ctrl,CTRL.INPUT_RESET,1);}
   return 'ok';
 };
-const context=vm.createContext({...protocol,compileHolyC,compileNativeProject,createHost,createMouseButtons,Framebuffer,
+const context=vm.createContext({...protocol,MS_ADDR,MS,compileHolyC,compileNativeProject,createHost,createMouseButtons,Framebuffer,
   Atomics:atomics,WebAssembly,Int32Array,Uint8Array,DataView,performance:{now:()=>++time},postMessage:m=>messages.push(m)});
 context.self=context;
 const path=new URL('../editor/worker.js',import.meta.url);

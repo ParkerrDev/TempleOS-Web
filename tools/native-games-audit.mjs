@@ -1,5 +1,5 @@
-import {readFile,writeFile,readdir} from "node:fs/promises";
-import {createHash} from "node:crypto";
+import {readFile,writeFile} from "node:fs/promises";
+import {Hash,CompilerInputs,BrowserInputs} from "./games/BrowserEvidence.mjs";
 import {gameProject} from "../game-source.js";
 import {compileNativeProject} from "../editor/project.js";
 import {GAMES} from "../GameCatalog.js";
@@ -13,27 +13,7 @@ globalThis.fetch=async function (url) {
 };
 globalThis.localStorage={getItem:function () {return null;}};
 
-async function Files(dir)
-{
-  let res=[],entry;
-  for (entry of await readdir(new URL(dir,ROOT),{withFileTypes:true})) {
-    if (entry.isDirectory())
-      res.push(...await Files(dir+entry.name+"/"));
-    else if (entry.name.endsWith(".js"))
-      res.push(dir+entry.name);
-  }
-  return res.sort();
-}
-function Hash(value)
-{
-  return createHash("sha256").update(value).digest("hex");
-}
-const runtime=createHash("sha256");
-for (const path of [...await Files("holyc-wasm/src/"),"editor/project.js"]) {
-  runtime.update(path+"\0");
-  runtime.update(await readFile(new URL(path,ROOT)));
-}
-let evidence={format:1,runtimeSha256:runtime.digest("hex"),programs:{}},
+let evidence={format:1,runtimeSha256:await CompilerInputs(),programs:{}},
   old=null,failures=0,regressions=[];
 try {
   old=JSON.parse(await readFile(FILE));
@@ -41,10 +21,17 @@ try {
   if (e.code!="ENOENT")
     throw e;
 }
+let browser=null;
+try {browser=JSON.parse(await readFile(new URL("games/browser-checks.json",ROOT)));}
+catch (e) {if(e.code!=="ENOENT")throw e;}
+const browserInputs=await BrowserInputs(),browserCurrent=browser?.format===1 &&
+  Object.entries(browserInputs).every(([key,value])=>browser[key]===value);
+if(mode!=="--audit" && !browserCurrent)
+  throw new Error("Browser startup evidence is missing or stale. Run node tools/browser/games.mjs --write first.");
 for (const game of GAMES) {
   const id=game.packageId || game.file,project=await (await gameProject(game)).native(),
     record={name:game.name,sourceSha256:Hash(JSON.stringify(project)),
-      compile:false,gameplay:"unverified",templeos:"unverified"};
+      compile:false,browserStartup:false,gameplay:"unverified",templeos:"unverified"};
   try {
     const result=compileNativeProject(project);
     if (!WebAssembly.validate(result.bytes))
@@ -59,6 +46,11 @@ for (const game of GAMES) {
     if (old?.programs[id]?.compile)
       regressions.push(game.name+": "+e.message);
   }
+  const checked=browser?.programs[id];
+  if(checked && mode!=="--audit" && checked.sourceSha256!==record.sourceSha256)
+    throw new Error(game.name+" browser startup evidence has stale source. Run node tools/browser/games.mjs --write.");
+  record.browserStartup=record.compile && browserCurrent && checked?.sourceSha256===record.sourceSha256 &&
+    checked?.startup===true;
   evidence.programs[id]=record;
   if (mode=="--audit")
     console.log(game.name+": "+(record.compile ? "compiled" : record.error.split("\n")[0]));

@@ -8,6 +8,8 @@
   "scripts": {
     "test": "sh tools/Test.sh",
     "test:browser": "node tools/browser/shell.mjs",
+    "test:editor": "node tools/browser/editor-keys.mjs",
+    "test:games:browser": "node tools/browser/games.mjs",
     "test:engine": "node tools/browser/engine.mjs",
     "test:snapshot": "node tools/browser/snapshot.mjs",
     "test:clip": "node tools/clip/mp4.mjs && node tools/clip/mkv.mjs && node tools/clip/memory.mjs && node tools/clip/browser.mjs",
