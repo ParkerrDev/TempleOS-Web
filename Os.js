@@ -6,6 +6,7 @@ import {createGuestFpsMeter} from "./guest-fps.js";
 import {KEY,KeyInput,KeyBar,KeyRoute} from "./Keyboard.js";
 import {TouchControls} from "./TouchControls.js";
 import {SnapshotInspect} from "./engine/Snapshot.js";
+import {BusStop,BUS_VERSION} from "./engine/CoreBus.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
 import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
@@ -445,10 +446,8 @@ addEventListener("pointerdown", () => {
         osc.type = "square"; gain.gain.value = 0; osc.connect(gain).connect(actx.destination); osc.start(); } catch {}
 });
 
-// Real multi-core is the DEFAULT on desktop (so Talons/Varoom just work when clicked). Reliability
-// nets: present-sync handshake gives consistent frames (fixed the games white-screen), AP faults
-// auto-recover, and ANY SMP failure (no frame in 15s, instantiate error) auto-falls-back to single
-// core. Mobile stays single-core (phone memory/perf); ?nosmp / ?single force single-core; ?smp forces on.
+//Desktop uses four guest CPUs. Only a stock boot failure can fall back to one;
+//running faults retain their stopped machine until restart.
 const isMobileDev = (navigator.maxTouchPoints > 1) || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || "");
 let useSMP = self.crossOriginIsolated && !/[?&](single|nosmp)\b/.test(location.search)
              && (/[?&]smp\b/.test(location.search) || !isMobileDev);
@@ -457,9 +456,9 @@ let snapshotInfo=null,bootFile=null;
 
 // ---- load the compressed RAM snapshot (imported, or the default; the SMP snapshot when ?smp) ----
 let gzBytes;
-async function downloadSnapshot() {                    // reused by ↻ Restart when gzBytes was freed (phones)
+async function downloadSnapshot(smp=useSMP) {          // reused when phones free their boot image
   setLoad("downloading the TempleOS RAM snapshot…", 5);
-  const gz = await fetch(useSMP ? "./hemu/live-smp.bin.gz" : "./hemu/live.bin.gz", { cache: "no-cache" });
+  const gz = await fetch(smp ? "./hemu/live-smp.bin.gz" : "./hemu/live.bin.gz", { cache: "no-cache" });
   if (!gz.ok) { setLoad("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
   const total = +gz.headers.get("content-length") || 10300000;   // hemu/live.bin.gz
   const reader = gz.body.getReader(); const chunks = []; let got = 0;
@@ -560,24 +559,31 @@ function engineFault(why) {
   dbg(why,true);
   dispatchEvent(new CustomEvent("osstate",{detail:{ready:false,msg:String(why)}}));
 }
-function singleCore(why) {   // multi-core failed before its first frame
+function singleCore(why,generation=osGen) {   // multi-core failed before its first frame
+  if(generation!==osGen)return;
   if (snapshotInfo) {
     engineFail("Could not restore the saved multi-core machine: "+why);
     return;
   }
   dbg("SMP engine failed (" + why + ") - falling back to single core", true);
   useSMP = false;
-  downloadSnapshot().then(b => { gzBytes = b; if (!runWorker()) engineFail(why); }).catch(e => engineFail(e.message));
+  downloadSnapshot().then(b => {
+    if(generation!==osGen)return;
+    gzBytes=b;if(!runWorker())engineFail(why);
+  }).catch(e=>{if(generation===osGen)engineFail(e.message);});
 }
 function runWorker() {
+  const generation=osGen;
   let worker, watchdog, alive = false;
   try { worker = new Worker("./engine/hemu-worker.js", { type: "module" }); } catch (e) { return false; }
   engine.kind = "worker"; engine.post = (m, t) => worker?.postMessage(m, t || []);
-  engine.stop = () => { try { clearTimeout(watchdog); } catch {} try { worker?.terminate(); } catch {} worker = null; notifyInput = () => {}; };
+  const stop=()=>{clearTimeout(watchdog);worker?.terminate();worker=null;
+    if(engine.stop===stop){engine.kind=null;notifyInput=()=>{};}};
+  engine.stop=stop;
   notifyInput = () => worker?.postMessage(inputMessage());
   const fallback = (why) => {
     if (!worker) return;
-    clearTimeout(watchdog); try { worker.terminate(); } catch {} worker = null; notifyInput = () => {};
+    stop();
     if (alive) {
       // The engine ALREADY booted and then died (e.g. iOS reclaimed the worker's memory).
       // Do NOT boot a second 384 MB engine on top - that's a guaranteed tab kill on phones.
@@ -587,8 +593,9 @@ function runWorker() {
     engineFail(why);
   };
   worker.onerror = (e) => fallback(e.message || "worker error");
+  worker.onmessageerror=()=>fallback("The worker sent an unreadable message");
   worker.onmessage = (e) => {
-    if (!worker) return;
+    if (!worker || generation!==osGen) return;
     const m = e.data;
     if (m.cmd === "frame") {
       if (!alive && stockBoot && document.body.classList.contains("touch")) gzBytes = null;
@@ -613,7 +620,28 @@ function runWorker() {
 // ---- SMP engine (?smp): the BSP is hemu-worker.js over a SHARED memory + N-1 AP workers running
 //      RunCore in parallel. Same BSP message protocol as runWorker, so the whole UI works unchanged. ----
 async function runSMP() {
-  let bsp = null, aps = [], watchdog, alive = false;
+  const generation=osGen;
+  let bsp=null,aps=[],ctrl=null,watchdog,alive=false,stopped=false,busFailed=false;
+  const current=()=>!stopped&&generation===osGen;
+  function stop() {
+    stopped=true;clearTimeout(watchdog);
+    if(ctrl)BusStop(new Int32Array(ctrl));
+    bsp?.terminate();for(const ap of aps)ap.terminate();
+    bsp=null;aps=[];
+    if(engine.stop===stop){engine.kind=null;notifyInput=()=>{};}
+  }
+  engine.stop=stop;
+  function fault(why) {
+    if(!current())return;
+    busFailed=true;clearTimeout(watchdog);
+    if(ctrl)BusStop(new Int32Array(ctrl));
+    engineFault(why);
+  }
+  function fallback(why) {
+    if(!current())return;
+    if(alive){fault(why);return;}
+    stop();singleCore(why,generation);
+  }
   try {
     setLoad("starting multi-core engine…", 90);
     let wasmBytes,sc;
@@ -628,27 +656,34 @@ async function runSMP() {
       ]);
       sc.ncore=SMP_N;
     }
+    if(!current())return false;
     const mem = new WebAssembly.Memory({ initial: 512, maximum: 8192, shared: true });
-    const ctrl = new SharedArrayBuffer(64);
+    ctrl=new SharedArrayBuffer(64);
     bsp = new Worker("./engine/hemu-worker.js", { type: "module" });
-    engine.kind = "smp"; engine.post = (m, t) => bsp?.postMessage(m, t || []);
-    engine.stop = () => { try { clearTimeout(watchdog); } catch {} try { const c = new Int32Array(ctrl); Atomics.store(c, 1, 1); Atomics.notify(c, 1); } catch {} try { bsp?.terminate(); } catch {} for (const a of aps) { try { a.terminate(); } catch {} } bsp = null; aps = []; notifyInput = () => {}; };
-    notifyInput = () => bsp?.postMessage(inputMessage());
-    const fallback = (why) => {
-      if (!bsp && !aps.length) return;
-      engine.stop();
-      if (alive) {engineFail(why);return;}
-      singleCore(why);
+    engine.kind="smp";
+    engine.post=(m,t)=>{
+      if(!current())return;
+      if(busFailed&&["exportSnapshot","exportDisk"].includes(m.cmd)) {
+        diskMsg({cmd:"exportResult",kind:m.cmd==="exportSnapshot"?"snapshot":"disk",ok:false,
+          msg:"Shared RAM coordination failed. This stopped machine cannot be exported; restart TempleOS."});
+        return;
+      }
+      bsp?.postMessage(m,t||[]);
     };
+    notifyInput = () => bsp?.postMessage(inputMessage());
     bsp.onerror = (e) => fallback(e.message || "bsp error");
+    bsp.onmessageerror=()=>fallback("The main worker sent an unreadable message");
     bsp.onmessage = (e) => {
-      if (!bsp) return; const m = e.data;
+      if (!bsp || !current()) return; const m = e.data;
       if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h, true, m); bsp.postMessage({ cmd: "ack" }); alive = true; firstFrame(); }
       else if (m.cmd === "snd") snd(m.f);
       else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
       else if (m.cmd === "smpReady") dbg("SMP: " + m.ncore + " cores running in parallel");
       else if (m.cmd === "error") {
-        if (m.retained) engineFault(m.msg);
+        if (m.retained) {
+          if(Atomics.load(new Int32Array(ctrl),1))fault(m.msg);
+          else engineFault(m.msg);
+        }
         else fallback(m.msg);
       }
       else if(m.cmd === "palette")updatePalette(m.index,m.rgb);
@@ -657,25 +692,31 @@ async function runSMP() {
     for (let k=1;k<sc.ncore;k++) {
       const ap = new Worker("./engine/hemu-smp-worker.js", { type: "module" });
       ap.onmessage = (e) => {
+        if(!current())return;
         const m=e.data;
         if (m.cmd=="error") {
-          if (m.retained) engineFault("AP"+k+": "+m.msg);
+          if (m.retained) {
+            if(Atomics.load(new Int32Array(ctrl),1))fault("AP"+k+": "+m.msg);
+            else engineFault("AP"+k+": "+m.msg);
+          }
           else fallback("AP"+k+": "+m.msg);
         }
         else if (m.cmd=="log") dbg("[smp] "+m.msg);
       };
       ap.onerror = (ev) => fallback("AP"+k+" worker error: "+(ev.message || ""));
-      ap.postMessage({ cmd: "init", role: "ap", core: k, mem, ctrl, sc, wasmBytes,
-        heapAbi:snapshotInfo?.meta.heapAbi });
+      ap.onmessageerror=()=>fallback("AP"+k+" sent an unreadable message");
       aps.push(ap);
+      ap.postMessage({ cmd: "init", role: "ap", core: k, mem, ctrl, sc, wasmBytes,
+        heapAbi:snapshotInfo?.meta.heapAbi,busProtocol:BUS_VERSION,
+        requiredBusProtocol:snapshotInfo?.meta.requiredBusProtocol });
     }
     bsp.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: new URL("./build/hemu-smp.wasm", location.href).href, fixedB: FIXED_B,...os_cfg,welcome:stockBoot,
-      diskBytes: importDisk, smp: { mem, ctrl, ipiAddr: sc.globals.g_ipi_pending, ncore: sc.ncore } },
+      diskBytes: importDisk, smp: { mem, ctrl, ipiAddr: sc.globals.g_ipi_pending, ncore: sc.ncore,busProtocol:BUS_VERSION } },
       importDisk ? [importDisk] : []);
     importDisk = null;
     watchdog = setTimeout(() => { if (!alive) fallback("no frame in 15s"); }, 15000);
     return true;
-  } catch (e) { engine.stop?.(); singleCore("SMP init threw: " + (e.message || e)); return false; }
+  } catch (e) {fallback("SMP init threw: "+(e.message||e));return false;}
 }
 
 function bootEngine() {
@@ -704,6 +745,7 @@ const cancelOSRequests = (msg="OS restarted during the request.") => {
 };
 const diskMsg = (m) => {
   if (m.cmd=="guestPatch") {
+    if(osFault)return;
     if (m.state=="failed") {
       OsNotice("The game-menu graphics fix could not load. Some icons may "+
         "flicker. Restart TempleOS to retry.");
@@ -712,6 +754,7 @@ const diskMsg = (m) => {
     return;
   }
   if (m.cmd==="paused") {
+    if(osFault&&!m.value)return;
     paused=m.value;
     fpsMeter.setPaused(paused);
     updateFps();
@@ -765,33 +808,34 @@ addEventListener("keydown", (e) => {
 
 async function OsBoot()
 {//Boots from a snapshot imported before the reload, or the stock one.
-  let snap;
+  const generation=osGen;
+  let snap,file,disk,info=null,smp=useSMP,bytes;
   try {
-    bootFile=await BootFileRead();
+    file=await BootFileRead();
   } catch (e) {
     dbg("Browser storage unavailable; loading the stock machine: "+
       e.message,true);
   }
-  snap=bootFile?.snapshot;
-  importDisk=bootFile?.disk;
-  if (bootFile?.kind=="snapshot")
-    snap=bootFile.bytes;
-  else if (bootFile?.kind=="disk")
-    importDisk=bootFile.bytes;
+  if(generation!==osGen)return;
+  snap=file?.snapshot;disk=file?.disk;
+  if (file?.kind=="snapshot")snap=file.bytes;
+  else if (file?.kind=="disk")disk=file.bytes;
   if (snap) {
-    stockBoot=false;
     setLoad("Checking imported snapshot…",40);
-    snapshotInfo=await SnapshotInspect(snap);
-    if (snapshotInfo) {
-      useSMP=snapshotInfo.meta.cores>1;
-      if (useSMP && !self.crossOriginIsolated)
+    info=await SnapshotInspect(snap,{busProtocol:BUS_VERSION});
+    if(generation!==osGen)return;
+    if (info) {
+      smp=info.meta.cores>1;
+      if (smp && !self.crossOriginIsolated)
         throw new Error("This snapshot needs shared memory for its four CPUs. "+
           "Open the site in a browser that supports cross-origin isolation.");
     }
-    gzBytes=snap;
+    bytes=snap;
     setLoad("loading imported snapshot…",50);
   } else
-    gzBytes=await downloadSnapshot();
+    bytes=await downloadSnapshot(smp);
+  if(generation!==osGen)return;
+  bootFile=file;importDisk=disk;snapshotInfo=info;stockBoot=!snap;useSMP=smp;gzBytes=bytes;
   bootEngine();
 }
 
@@ -800,7 +844,9 @@ function OsGen()
   return osGen;
 }
 
-OsBoot().catch(engineFail);
+const firstBoot=osGen;
+OsBoot().catch(error=>{if(firstBoot===osGen)engineFail(error);});
+addEventListener("pagehide",e=>{if(!e.persisted)engine.stop?.();});
 export {$,dbg,engine,pal32,OsGen,releaseOSInput as OsInputRelease,releaseHeld as OsInputReset,
   setGameCapture as OsCaptureSet,holdOSForGame as OsHold,writeOSFile as OsFileWrite,
   uploadToHome as OsHomeWrite,launchInOS as OsLaunch};

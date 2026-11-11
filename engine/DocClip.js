@@ -1,17 +1,17 @@
 export const DOC_CLIP_PATCH="doc-sprite-clip-v1";
 
-export function DocClipPatch({guest,instance,base,lock,unlock,onState,canRun=()=>true,restored=null})
+export function DocClipPatch({guest,instance,lock,unlock,onState,canRun=()=>true,restored=null})
 {//Compile the installed HolyC source, then patch its entry between CPU runs.
   let state="pending",id=null,tries=0,patches=[],source=null;
   if(restored) {state="restored";patches=restored.slice();}
   if(restored?.includes(DOC_CLIP_PATCH)) {
     const gx=guest(),revision=gx.varFind("doc_clip_revision"),
       old=gx.rd64(gx.varFind("doc_clip_old")),target=gx.rd64(gx.varFind("doc_clip_new")),
-      view=new DataView(instance().exports.memory.buffer);
+      view=new DataView(gx.rdBytes(old,9).buffer);
     if(!revision || !old || !target || gx.rd64(revision)!==1 ||
-        view.getUint32(base()+old,true)!==0xEC8B4855 ||
-        view.getUint8(base()+old+4)!==0xE9 ||
-        old+9+view.getInt32(base()+old+5,true)!==target+4)
+        view.getUint32(0,true)!==0xEC8B4855 ||
+        view.getUint8(4)!==0xE9 ||
+        old+9+view.getInt32(5,true)!==target+4)
       throw new Error("Saved document patch metadata does not match guest code");
   }
   function Report(next,msg="") {
@@ -54,7 +54,7 @@ export function DocClipPatch({guest,instance,base,lock,unlock,onState,canRun=()=
         const result=Number(inst.exports.GuestPatchJump(BigInt(old),BigInt(target)));
         if(result<0)throw new Error("Document routine has an unknown native prologue");
         if(!result)return;
-        new DataView(inst.exports.memory.buffer).setBigUint64(base()+revision,1n,true);
+        gx.wr64(revision,1);
         patches.push(DOC_CLIP_PATCH);
         Report("installed");
       } finally {unlock();}

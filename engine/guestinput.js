@@ -2,7 +2,7 @@
 // come from class metadata, and locked movement starts at the guest's cursor
 // so MsSet recentering by an unmodified game is honored on the next frame.
 const clamp=(n,max)=>Math.max(0,Math.min(max,Math.round(n)));
-export function createGuestInput({guest,memory,base,onState=()=>{}}) {
+export function createGuestInput({guest,onState=()=>{}}) {
   let x=320,y=240,b=0,wheel=0,dx=0,dy=0,relative=false,reset=true,lastHint='';
   let frameX=320,frameY=240;
   function accept(m) {

@@ -16,7 +16,8 @@ on four actual worker threads, clocks,
 input, completed captures, barriers and snapshot validation. `--full` also
 builds both engines and runs native raster/video, guest API, saved-machine,
 production worker, welcome and God Tools acceptance checks. `--desktop` adds
-real Chromium window tests on one and four cores; flags can be combined. Each
+real Chromium window tests on one and four cores, current/legacy saved sessions,
+and forced page/desktop cancellation and worker failure; flags can be combined. Each
 check runs in a fresh process and any error stops the runner. Timed worker
 checks should run without competing benchmarks. The runner prints the actual
 compiler path: use the same pinned compiler and HEMU source as the site build.
@@ -133,18 +134,20 @@ XCHG end a JIT block so the interpreter owns their atomic operation.
 covering arithmetic, logic, unary operations, implicit-lock XCHG, XADD and
 CMPXCHG/8B across eight-byte and cache-line boundaries. The separate physical
 probe matches all 387 within-line cases, including flags, registers and adjacent
-bytes. `atom-split.test.mjs` makes 4,128 single-core comparisons across private/
-shared WASM memory, direct/aliased RAM and interpreted/JIT prefixes. It requires
+bytes. `atom-split.test.mjs` makes 6,192 single-core and 2,064 coordinated SMP
+comparisons across private/shared WASM memory, direct/aliased RAM and
+interpreted/JIT prefixes. It requires
 no host callback or IRQ delivery during an instruction, checks the valid RAM-end
-boundary, and verifies 4,128 multi-core attempts retain faults without writes.
+boundary, and verifies 4,128 uncoordinated multi-core attempts retain faults without writes.
 Re-record with `HOLYC_QEMU_ORACLE=.../tests/oracle/Qemu.mjs node
 tools/hemu/atom-split.test.mjs --record`.
 
-Multi-core cross-word fields, MMIO and invalid LOCK forms remain explicitly
-unsupported. This does not supply a full SMP bus lock, CMPXCHG16B or architectural
-exception delivery for those cases. A private mutex would not exclude ordinary
-or JIT readers; full support needs coordinated CPU and host RAM ownership plus
-a capture-barrier handoff. The bounded behavior follows Intel's [locked operation
+Multi-core cross-word fields require [coordinated CPU and host ownership](Bus.md),
+including ordinary interpreter/JIT readers, host writes and capture handoff.
+The page and desktop opt into that protocol; unregistered and legacy embedded
+engines retain safe refusal. MMIO, invalid LOCK forms and CMPXCHG16B remain
+explicitly unsupported, without architectural exception delivery for those
+cases. The bounded behavior follows Intel's [locked operation
 contract](https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf).
 
 `bit.test.mjs` compares 2,112 bit-string operations (264 compiled) with exact
@@ -335,7 +338,7 @@ across flag combinations and operand widths. It also checks that an untaken
 
 ## Full machine snapshots
 
-`exportSnapshot` writes a gzip-compressed HEMUSNP1 container. Version 1 stores
+`exportSnapshot` writes a gzip-compressed HEMUSNP1 container. Both versions store
 validated JSON metadata, the exact SHA-256-identified engine WASM, every byte
 of its linear memory, and the whole current disk. This includes all CPU cores,
 x87/SSE registers, device queues, clocks, palette, guest RAM, scratch mailboxes,
@@ -344,10 +347,18 @@ mailbox are recorded separately. Compiled JIT functions are rebuilt on restore.
 Saving stops every core; pending guest commands must finish first. Pause now
 stops application cores as well as the display core.
 
-Call `SnapshotInspect(gz)` before creating workers. It returns null for the
+Coordinated four-core saves use mandatory version 2 and `requiredBusProtocol:1`;
+older decoders reject them. Version 1 remains readable, including embedded
+engines that lack the ownership protocol. See [Bus.md](Bus.md) for the complete
+controller and host contract.
+
+Call `SnapshotInspect(gz,{busProtocol:1})` before creating workers in a
+coordinated controller. The default protocol 0 refuses a required protocol
+before memory changes or AP creation. Inspection returns null for the
 original stock RAM-only format; otherwise `{meta,wasm}`. For a four-core save,
 instantiate APs with that wasm and a shared memory (initial 512, maximum 8192
-pages), and pass the BSP `smp:{mem,ctrl,ipiAddr:meta.ipiAddr,ncore:meta.cores}`.
+pages), `busProtocol:1`, `sc.ncore` and the saved `requiredBusProtocol`.
+Pass the BSP `smp:{mem,ctrl,ipiAddr:meta.ipiAddr,ncore:meta.cores,busProtocol:1}`.
 The BSP's existing `init.gz` detects and restores either format. Full saves
 supply their own disk/settings and retain pause; `restored` signals success.
 Every AP must finish instantiating before the BSP writes restored memory.
@@ -405,7 +416,10 @@ snapshot, including its original one- or four-core topology and current disk.
 The canvas uses the production worker/JIT, native palette, speaker and shared
 Keyboard.js mapping. Click it to type; Full screen offers keyboard capture.
 Pointer-lock games acquire the mouse on a click; Escape releases it. Pause,
-BIOS repeat, refresh rate, session save and open are available in the toolbar.
+BIOS repeat, refresh rate, session save, open and restart are available in the
+toolbar. Restart returns to the last boot session, including an imported full
+save. Running CPU faults retain the paused machine; coordination failure stops
+all participants and refuses exports of an interrupted instruction.
 No internet service is required once the build and bundled images are local.
 
 `node tools/hemu/desktop.test.mjs` drives a real installed Chromium headlessly;
@@ -414,6 +428,12 @@ x86-64: offline boot, actual frames/FPS, disk readiness, pause/resume and rate
 changes, with the screenshot inspected. Mac and Windows executable lookup is
 implemented but untested. This is a portable WASM host in a desktop window,
 not native-code HEMU, direct hardware access, or a measured memory reduction.
+
+`desktop-lifecycle.test.mjs` additionally checks current one/four-core and
+historical embedded version-1 saves, exact restored RGBA/FPS, native faults and
+restart. `tools/browser/bus.mjs` forces failure/cancellation while an AP owns a
+cross-word instruction and verifies stop-before-termination with no partial
+save. `tools/browser/boot-cancel.mjs` checks stale asynchronous boots separately.
 
 Both disk-only and full-machine exports hold the shared core barrier until
 compression finishes and defer incoming mutations. Disk-only export is a

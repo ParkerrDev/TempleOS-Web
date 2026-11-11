@@ -6,6 +6,7 @@ import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 
 let inst=null,ex=null,g_base=0,work_ms=0,mains=0,syms=null,probe_tries=0,tsc_addr=0;
+let bus_ctrl=null,bus_cores=0;
 //Credit gap has the initial boot-credit offset; differences measure new lag.
 let clock_input_ns=0,clock_tick_ns=0,clock_start=null,clock_read=0;
 const fetch_holds=new Map((workerData.fetchHold||[]).map(url=>[url,[]]));
@@ -51,6 +52,9 @@ function ProbeInit()
 
 function ProbeRd()
 {//What the guest itself counts, at the moment a frame leaves.
+  //Frame callbacks run inside the BSP lease. Other host events must not add an unregistered RAM reader.
+  if(bus_ctrl&&!(Atomics.load(bus_ctrl,13)&1))
+    return {t:performance.now(),work:work_ms,mains:mains};
   if (!g_base) g_base=Number(ex.RamBase());
   let dv=MemDv();
   if (!syms && probe_tries<20 && g_base) {
@@ -76,6 +80,9 @@ function MsgOut(m,transfer)
 
 function MsgIn(m)
 {
+  if(m?.cmd==="init"&&m.smp?.busProtocol===1) {
+    bus_ctrl=new Int32Array(m.smp.ctrl);bus_cores=m.smp.ncore;
+  }
   if(m && m.cmd==="__fetchRelease") {
     const pending=fetch_holds.get(m.url);
     fetch_holds.delete(m.url);
@@ -90,6 +97,12 @@ function MsgIn(m)
     return;
   }
   if (m && m.cmd=="__peek") {
+    if(bus_ctrl) {
+      const seq=Atomics.load(bus_ctrl,2);
+      if(!seq||Atomics.load(bus_ctrl,12)||Atomics.load(bus_ctrl,13)||
+          Array.from({length:bus_cores-1},(_,i)=>i+1).some(core=>Atomics.load(bus_ctrl,4+core)!==seq))
+        throw new Error("Diagnostic RAM copy requires a held complete-machine capture");
+    }
     parentPort.postMessage({cmd:"__peek",probe:ProbeRd(),
       fault:ex.CpuFault?String(ex.CpuFault(0n)):null,faultPc:ex.CpuFault?String(ex.CpuFault(1n)):null,
       cpu:Array.from({length:17},(_,i)=>String(ex.GuestInfo(BigInt(i)))),

@@ -169,7 +169,7 @@ async function Import(kind)
     Say("Checking "+kind+"…");
     if (kind=="snapshot") {
       bytes=await file.arrayBuffer();
-      await SnapshotInspect(bytes);
+      await SnapshotInspect(bytes,{busProtocol:1});
     } else
       bytes=await DiskBytes(file);
     Say("Storing "+kind+"…");

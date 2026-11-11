@@ -120,6 +120,20 @@ I64 __ap_run(U64,I64)
   return 0;
 }
 
+Bool __bus_poll()
+{
+  return TRUE;
+}
+
+Bool __bus_lock()
+{
+  return FALSE;
+}
+
+U0 __bus_unlock()
+{
+}
+
 I64 cpu_host_lock=0;
 
 U64 CpuHostAtom(U8 *addr,U64 v,I64 width,I64 op,U64 nv=0)

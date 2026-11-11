@@ -1,3 +1,5 @@
+import {BusModuleVersion} from "./CoreBus.js";
+
 const MAGIC=new TextEncoder().encode("HEMUSNP1"),PAGE=65536,CHUNK=131072;
 const Fail=msg=>{throw new Error("Invalid HEMU snapshot: "+msg);};
 const Int=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
@@ -5,7 +7,9 @@ const Hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest("SH
 
 function HeaderCheck(m)
 {
-  if (!m || m.version!==1) Fail("unsupported version");
+  if (!m || ![1,2].includes(m.version)) Fail("unsupported version");
+  if (m.version===1 && m.requiredBusProtocol!==undefined && m.requiredBusProtocol!==0 ||
+      m.version===2 && (m.requiredBusProtocol!==1 || m.cores!==4)) Fail("unsupported RAM ownership requirement");
   if (m.guestPatches===undefined) m.guestPatches=[];
   if (!Array.isArray(m.guestPatches) || m.guestPatches.some(p=>p!=="doc-sprite-clip-v1") ||
       new Set(m.guestPatches).size!==m.guestPatches.length) Fail("unsupported guest patches");
@@ -53,7 +57,7 @@ function Reader(gz)
   return {Take,End,Close:()=>reader.cancel().catch(()=>{})};
 }
 
-export async function SnapshotOpen(gz)
+export async function SnapshotOpen(gz,{busProtocol=0}={})
 {//null denotes the original stock RAM-only format, which keeps its old loader.
   const rd=Reader(gz);
   try {
@@ -62,9 +66,15 @@ export async function SnapshotOpen(gz)
     const n=new DataView((await rd.Take(4)).buffer).getUint32(0,true);
     if (!Int(n,2,65536)) Fail("header length");
     const meta=HeaderCheck(JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(await rd.Take(n))));
+    if(meta.requiredBusProtocol && busProtocol!==meta.requiredBusProtocol)
+      Fail("requires shared RAM protocol "+meta.requiredBusProtocol);
     const wasm=await rd.Take(meta.wasmBytes);
     if (await Hash(wasm)!==meta.engineHash || !WebAssembly.validate(wasm)) Fail("engine checksum or module");
-    return {meta,wasm,Close:rd.Close,async Restore(memory) {
+    if(meta.requiredBusProtocol && BusModuleVersion(new WebAssembly.Module(wasm))!==meta.requiredBusProtocol)
+      Fail("engine does not implement its required RAM protocol");
+    return {meta,wasm,Close:rd.Close,async Restore(memory,{busProtocol=0}={}) {
+      if(meta.requiredBusProtocol && busProtocol!==meta.requiredBusProtocol)
+        Fail("requires shared RAM protocol "+meta.requiredBusProtocol);
       if (memory.buffer.byteLength>meta.memoryBytes) Fail("engine memory size");
       memory.grow((meta.memoryBytes-memory.buffer.byteLength)/PAGE);
       await rd.Take(meta.memoryBytes,new Uint8Array(memory.buffer));
@@ -91,9 +101,9 @@ export async function SnapshotOpen(gz)
   } catch (err) {await rd.Close();throw err;}
 }
 
-export async function SnapshotInspect(gz)
+export async function SnapshotInspect(gz,options)
 {//Read the engine and topology before creating the worker's shared memory.
-  const saved=await SnapshotOpen(gz);
+  const saved=await SnapshotOpen(gz,options);
   if (!saved) return null;
   await saved.Close();
   return {meta:saved.meta,wasm:saved.wasm};
@@ -101,8 +111,10 @@ export async function SnapshotInspect(gz)
 
 export async function SnapshotSave({meta,wasm,memory,disk})
 {//Call with every guest core stopped until this promise settles.
-  const header=HeaderCheck({...meta,version:1,memoryBytes:memory.buffer.byteLength,
+  const header=HeaderCheck({...meta,version:meta.requiredBusProtocol?2:1,memoryBytes:memory.buffer.byteLength,
     diskBytes:disk.virtualSize,wasmBytes:wasm.byteLength,engineHash:await Hash(wasm)});
+  if(header.requiredBusProtocol && BusModuleVersion(new WebAssembly.Module(wasm))!==header.requiredBusProtocol)
+    Fail("engine does not implement its required RAM protocol");
   const json=new TextEncoder().encode(JSON.stringify(header));
   if (json.length>65536) Fail("header too long");
   const lead=new Uint8Array(12+json.length);

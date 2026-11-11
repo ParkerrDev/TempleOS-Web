@@ -6,6 +6,7 @@ import {OpcodeOracle} from "./OpcodeOracle.mjs";
 import {compileHemu} from "../../engine/compile.js";
 import {createHemuHost} from "../../engine/host.js";
 import * as jit from "../../engine/jit.js";
+import {CoreBus} from "../../engine/CoreBus.js";
 
 const source=readFileSync(new URL("./AtomSplit.HC",import.meta.url)),
   sourceHash=createHash("sha256").update(source).digest("hex"),
@@ -29,8 +30,9 @@ for(const row of lines) {
 }
 console.log("516 original TempleOS split-field cases recorded; all 387 within-line cases also match physical x86-64.");
 
-let checks=0,rejected=0,callbacks=0,executing=false;
-for(const sharedMemory of [false,true]) {
+let checks=0,rejected=0,coordinatedChecks=0,callbacks=[],executing=false;
+for(const mode of ["private","shared","coordinated"]) {
+  const sharedMemory=mode!=="private",coordinated=mode==="coordinated";
   const c=compileHemu({sharedMemory,exports:["InitMem","SplitBegin","SplitAddr"],extraSource:`
 U0 SplitBegin(U64 acc,U64 arg,U64 flags,U64 addr,I64 cores)
 {
@@ -52,9 +54,18 @@ U64 SplitAddr(I64 n)
 }`}),host=createHemuHost();
   assert.deepEqual(c.warnings,[]);
   if(sharedMemory)host.env.mem=new WebAssembly.Memory({initial:1024,maximum:8192,shared:true});
+  let bus;
+  if(coordinated) {
+    const ctrl=new Int32Array(new SharedArrayBuffer(64));
+    for(let core=0;core<4;core++) {
+      const owner=CoreBus(ctrl,core,4);owner.Join({polling:true});
+      if(!core)bus=owner;
+    }
+    Object.assign(host.env,bus.Imports());
+  }
   for(const [name,fn]of Object.entries(host.env))if(typeof fn==="function")
-    host.env[name]=(...args)=>{if(executing)callbacks++;return fn(...args);};
-  const {instance}=await WebAssembly.instantiate(c.bytes,{env:host.env}),ex=instance.exports;
+    host.env[name]=(...args)=>{if(executing)callbacks.push(name);return fn(...args);};
+  const {instance}=await WebAssembly.instantiate(c.bytes,{env:host.env}),ex=(bus?bus.Guard(instance):instance).exports;
   host.attach(instance);ex.__rt_init();ex.InitMem(65536n);
   const base=Number(ex.RamBase()),mem=new Uint8Array(ex.memory.buffer),dv=new DataView(mem.buffer),
     at=Array.from({length:7},(_,i)=>Number(ex.SplitAddr(BigInt(i)))),
@@ -81,7 +92,7 @@ U64 SplitAddr(I64 n)
       Put(base+addr,value);mem.set([...prefix,...code,0xF4],base+4096);
       const before=State(),guard=mem.slice(base+0x2FC0,base+0x3100),outRegs=new DataView(before.regs.buffer);
       if(compiled)outRegs.setBigUint64(64,Get(at[0]+64)+1n,true);
-      executing=true;
+      callbacks=[];executing=true;
       try {
         if(compiled) {
           jit.jitReset();assert.equal(jit.jitCompile(4096),1,"LOCK and memory XCHG end the compiled prefix");
@@ -89,11 +100,12 @@ U64 SplitAddr(I64 n)
         }
         ex.Step();
       } finally {executing=false;}
-      const label=`${sharedMemory?"shared":"private"} cores=${cores} jit=${compiled} alias=${alias} ${row}`;
-      assert.equal(callbacks,0,"RAM RMW cannot call a host between its read and write");
+      const label=`${mode} cores=${cores} jit=${compiled} alias=${alias} ${row}`;
+      assert.deepEqual(callbacks,cores===1?[]:coordinated?["__bus_lock","__bus_unlock"]:["__bus_lock"],
+        "single-core RAM RMW has no host callbacks; coordinated SMP owns the complete RMW");
       assert.equal(Get(at[4]),0n,"pending interrupt is deferred until the instruction finishes");
       assert.equal(Get(at[5]),1n);
-      if(cores===4) {
+      if(cores===4&&!coordinated) {
         assert.deepEqual(State(),{...before,rip:BigInt(4096+prefix.length+code.length),halted:2n},label);
         assert.deepEqual(mem.slice(base+0x2FC0,base+0x3100),guard,label);rejected++;
       } else {
@@ -102,7 +114,8 @@ U64 SplitAddr(I64 n)
         assert.deepEqual(mem.slice(at[0],at[0]+128),before.regs,label);
         assert.equal(Get(at[1])&([1,4,6].includes(op)?0xEC5n:0xED5n),expected[4],label);
         assert.equal(Get(at[2]),BigInt(4096+prefix.length+code.length),label);
-        assert.deepEqual(Buffer.from(mem.slice(base+addr-8,base+addr+16)),expectedMem,label);checks++;
+        assert.deepEqual(Buffer.from(mem.slice(base+addr-8,base+addr+16)),expectedMem,label);
+        if(cores===4)coordinatedChecks++;else checks++;
       }
     }
   }
@@ -111,7 +124,7 @@ U64 SplitAddr(I64 n)
     mem.fill(0xA5,base+65520,base+65536);dv.setUint16(base+65533,0x1234,true);
     mem.set([0xF0,0x66,0xFF,0x07],base+4096);
     const before=mem.slice(base+65520,base+65536);ex.Step();
-    if(cores===1){before[13]=0x35;assert.equal(Get(at[3]),0n);}
+    if(cores===1||coordinated){before[13]=0x35;assert.equal(Get(at[3]),0n);}
     else assert.equal(Get(at[3]),2n);
     assert.deepEqual(mem.slice(base+65520,base+65536),before,"the valid tail field preserves the byte beyond guest RAM");
   }
@@ -124,4 +137,4 @@ U64 SplitAddr(I64 n)
     assert.deepEqual(mem.slice(base,base+65536),ram);
   }
 }
-console.log(`${checks} single-core native split-field comparisons pass; ${rejected} multi-core attempts retain faults without writes. No instruction invokes a host callback or delivers a pending IRQ midway.`);
+console.log(`${checks} single-core and ${coordinatedChecks} coordinated four-core native split-field comparisons pass; ${rejected} uncoordinated attempts retain faults without writes. Pending IRQs remain deferred through complete instruction retirement.`);

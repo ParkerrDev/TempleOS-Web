@@ -10,12 +10,13 @@ async function Request(h,m,pred,ms=30000) {
   const waiting=h.Wait(pred,ms);h.Post(m);return waiting;
 }
 const Result=(h,m)=>Request(h,m,v=>v.cmd==="fileResult"&&v.id===m.id);
+const busProtocol=process.env.HEMU_BUS_PROTOCOL?Number(process.env.HEMU_BUS_PROTOCOL):undefined;
 
 for (const smp of [0,4]) {
   const compiled=compileHemu({smp:!!smp}),addr=n=>Number(compiled.globals.get(n).addr);
   const ranges=[[addr("g_cpu_st"),addr("g_ncore")-addr("g_cpu_st")],
     [addr("g_xmm_lo"),1024],[addr("tsc"),16],[addr("kbd_q"),512],[addr("vga_dac"),768]];
-  let h=await HemuBoot({smp,rate:120,repeat:true,keep_buf:true}),saved;
+  let h=await HemuBoot({smp,busProtocol,rate:120,repeat:true,keep_buf:true}),saved;
   try {
     assert.equal((await ReadyWait(h,20000)).ok,true);
     if (!h.msgs.some(m=>m.cmd==="diskInfo"&&m.ok)) await h.Wait(m=>m.cmd==="diskInfo"&&m.ok,30000);
@@ -42,12 +43,14 @@ for (const smp of [0,4]) {
     const after=await Request(h,{cmd:"__peek",ranges},m=>m.cmd==="__peek");
     assert.deepEqual(after.ranges,before.ranges,"saving freezes every CPU and device");
     await h.Stop();h=null;
-    const head=await SnapshotInspect(saved.buf);
+    const head=await SnapshotInspect(saved.buf,{busProtocol});
     assert.equal(head.meta.heapAbi,runtime.HOST_HEAP_ABI??0);
     assert.deepEqual(head.meta.guestPatches,["doc-sprite-clip-v1"]);
     assert.equal(head.meta.cores,smp||1);assert.equal(head.meta.rate,120);
+    assert.equal(head.meta.requiredBusProtocol,smp?busProtocol:undefined);
+    assert.equal(head.meta.version,smp&&busProtocol?2:1);
     assert.equal(head.meta.repeat,true);assert.equal(head.meta.launch.name,"Snapshot loop");
-    h=await HemuBoot({snapshot:saved.buf,keep_buf:true});
+    h=await HemuBoot({snapshot:saved.buf,busProtocol,keep_buf:true});
     await h.Wait(m=>m.cmd==="restored",30000);
     const resumed=await Request(h,{cmd:"__peek",ranges},m=>m.cmd==="__peek");
     assert.deepEqual(resumed.ranges,before.ranges,"CPU, x87, SSE, clock, keyboard and palette restore exactly");
