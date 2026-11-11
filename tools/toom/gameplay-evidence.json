@@ -292,6 +292,13 @@
       "integrationCases": 21,
       "evidence": "enemy-evidence.json",
       "hemu": true
+    },
+    "enemy-chase": {
+      "decisions": 29182,
+      "movement": 13826,
+      "integrationCases": 20,
+      "evidence": "chase-evidence.json",
+      "hemu": true
     }
   },
   "frames": [

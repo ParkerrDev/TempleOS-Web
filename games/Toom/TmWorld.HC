@@ -17,7 +17,7 @@ class World
   I64 slot_cap,free_slot,actor_cnt,*blocks,skill,random,tic,player,
 	player_start,total_kills,total_items,total_secrets,max_radius,
 	first,last,hit_actor,hit_kind,exit_rqst;
-  Bool thinking,ticking;
+  Bool thinking,ticking,fast;
 };
 
 U0 WorldIdle(World *tmpw)

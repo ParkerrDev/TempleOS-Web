@@ -66,8 +66,12 @@ The implemented foundation uses native V5.03 file and memory APIs:
   and revisit a sector if an unblocked route improves its first route. Sound
   targets are generation handles. Player search retains the four-slot order;
   ambush, facing, see sounds and melee/missile decisions preserve the original
-  branches and random consumption. These functions are checked separately;
-  chase movement and the complete actor action dispatcher are still unfinished.
+  branches and random consumption. Chase movement retains diagonal/cardinal
+  direction search, octant turns, reaction/target countdowns, attack priority
+  and active-sound timing. Failed movement can adjust a floating actor's height
+  or use encountered doors in reverse order. Captured lines survive nested
+  queries, and temporary storage is released if a callback fails. The complete
+  actor action dispatcher is still unfinished.
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
   contact callbacks defer reclamation until the end of the tic. Nested contact
@@ -257,6 +261,9 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/clock.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/enemy-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/noise.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/enemy.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/chase-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/walk-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/chase.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -358,8 +365,8 @@ The inventory check covers 2,304 independent ammo/auto-selection combinations
 and 52 pickup/respawn cases, including all item families, duplicate/full
 inventories, powers, dropped weapons, reach, and pickup during a blocked move.
 The data loader rejects the unused ammo enum marker, invalid weapon states and
-older pack formats. Powers are granted here; their countdown and visible/audio
-effects remain part of the unfinished game loop.
+older pack formats. Player tics advance power durations; their HUD and audio
+presentation remain unfinished.
 The impact check covers 18 effect/projectile cases, including all three player
 missiles, source immunity, auto-aim, close-wall explosions, nested line actions,
 stale targets and repeated exception cleanup. Intentional test exceptions skip
@@ -456,6 +463,15 @@ cases exercise actual sight, doors, facing, state callbacks, stale/reused actor
 handles and cleanup. All pass native TempleOS and the pinned HEMU engine in
 `tools/toom/enemy-evidence.json`. Neither these fixtures nor the perception API
 constitute a completed monster AI or gameplay qualification.
+The chase oracle compares 29,182 scenarios with original `P_TryWalk`,
+`P_NewChaseDir` and `A_Chase`, including complete movement/sound/state query
+traces. The movement oracle compares 13,824 original `P_Move` cases plus two
+nested-query/exception ownership cases. Twenty real-map cases cover walls,
+floating height, door restrictions, crossing callbacks, attack-state entry and
+cleanup. Their native and pinned HEMU results are in
+`tools/toom/chase-evidence.json`. The shared fast flag currently affects chase
+selection only; fast state durations and projectile speeds still need their
+level setup. None of these fixtures install an incomplete action dispatcher.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

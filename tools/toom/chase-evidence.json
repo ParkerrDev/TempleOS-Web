@@ -1,0 +1,67 @@
+{
+  "description": "Native TOOM chase movement and selection; complete actor actions and playable host remain unfinished.",
+  "engine": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "sourceSha256": "46b3e0a7183a9e8bc079598aa9cb05e1f24ce95f9a3b27130ac8b948f98db02b",
+      "cases": 29182,
+      "native": "qemu-89s2086l",
+      "hemu": true,
+      "reference": "Original P_TryWalk, P_NewChaseDir and A_Chase compiled as host C; complete ordered move, query, sound and state traces plus exact RNG."
+    },
+    "movement": {
+      "sourceSha256": "4af4343108157bed39965175ae5ec19a28479a3bea258bddf1e4f5bafec2848e",
+      "cases": 13826,
+      "native": "qemu-o8tinjek",
+      "hemu": true,
+      "reference": "13,824 original P_Move cases compiled as host C; two additional native ownership checks preserve copied lines across nested scratch overwrite and release their allocation on a callback exception."
+    },
+    "integration": {
+      "sourceSha256": "cd60dda32030f4ee8edb9f0c4f476606928a519789376051523c14791fb2fc4e",
+      "cases": 20,
+      "native": "qemu-em99b9iz",
+      "hemu": true,
+      "scope": [
+        "Actual collision/block links, diagonal and stopped/wall-blocked movement",
+        "Floating up/down and successful floating height preservation",
+        "Ordinary, secret and locked monster door attempts",
+        "Crossed-line callbacks observe committed coordinates; exception cleanup",
+        "Real melee/missile state entry begins by facing the target",
+        "Nightmare just-attacked and movement countdown behavior",
+        "Inactive actor, owner and direction guards; heap returns to baseline"
+      ]
+    }
+  },
+  "remaining": [
+    "Remaining actor actions and complete action dispatch",
+    "Fast-mode state duration/projectile setup",
+    "Native host input/render pacing and UI/audio",
+    "Save/load and episode/intermission progression"
+  ],
+  "regressions": {
+    "perception": {
+      "native": "qemu-14z68lsd",
+      "hemu": true,
+      "cases": 30632,
+      "sourceSha256": "d8687d0644f72ed0ebc4765bb46800c7a5a87aab047e9646eb344a4202a75dbd"
+    },
+    "clock": {
+      "native": "qemu-leksjt2_",
+      "hemu": true,
+      "cases": 20
+    }
+  }
+}
