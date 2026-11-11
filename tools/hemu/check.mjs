@@ -13,7 +13,7 @@ const quick=["host.selftest.mjs","measure.mjs","cpu-native.mjs","boot-test.mjs",
   "atomic.test.mjs","atomic-flags.test.mjs","bit.test.mjs","cmpxchg8b.test.mjs","muldiv.test.mjs","time.test.mjs","mem-native.mjs","dev-native.mjs","keyboard.test.mjs","capture.test.mjs","barrier.test.mjs",
   "snapshot-format.test.mjs","snapregs.test.mjs","patch.test.mjs","jit-primitives.test.mjs","jit-loop.test.mjs","jit-branch.test.mjs","fpu-check.mjs",
   "fpu-convert.test.mjs","fpu-compare.test.mjs","fpu-ops.test.mjs","cpu-fault.test.mjs","fpu-native.mjs","jit-x87.test.mjs","shift.test.mjs","jitdiff1.mjs"],
-  full=["menu-clip.test.mjs","video.test.mjs","raster.test.mjs","rate.test.mjs","guestcheck.mjs","large-file.test.mjs",
+  full=["menu-clip.test.mjs","video.test.mjs","raster.test.mjs","raster-native.mjs","raster-fallback.test.mjs","rate.test.mjs","guestcheck.mjs","large-file.test.mjs",
     "jitrecycle.mjs","worker.test.mjs","worker-fault.test.mjs","worker-legacy-fault.test.mjs","worker-clock.test.mjs","worker-rate.test.mjs","worker-pause.test.mjs",
     "worker-patch-pause.test.mjs","worker-snapshot.test.mjs","welcome.test.mjs","god-tools.test.mjs"];
 let count=0;

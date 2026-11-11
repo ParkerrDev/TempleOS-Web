@@ -156,6 +156,23 @@ reading the device, avoiding a repeated read on fallback. The contract follows
 Intel's [DIV/IDIV/IMUL reference](https://cdrdv2.intel.com/v1/dl/getContent/671199)
 and [MUL reference](https://cdrdv2.intel.com/v1/dl/getContent/671241).
 
+`Raster.HC` owns the named native line/polygon acceleration and its shared
+span filler. `raster-native.mjs` compares 200 source-hashed original QEMU/KVM
+cases with native execution and acceleration in HEMU: horizontal/vertical
+lines and triangles, clipping, reversed endpoints, all raster modes, ordered
+and probability dithering, recorded extents, nearest distance and draw-disabled
+contexts. Pixel/depth storage, changed/collision counts and final RNG state
+must agree. Regenerate with `HOLYC_QEMU_ORACLE=... node tools/hemu/raster-native.mjs --record`.
+
+`raster-fallback.test.mjs` retains two negative witnesses: a valid 5,000-pixel
+line previously consumed one RNG value before fallback, and a wide triangle
+returned -1 without drawing. Rejection now precedes random sampling, and
+unsupported polygon contexts fall back before any triangle starts. Existing
+extent/nearest updates before line fallback remain idempotent, matching final
+native state; the change does not claim a general transaction for arbitrary
+malformed guest pointers. `raster.test.mjs` additionally checks 674 native
+triangle/line results, including every pixel/depth value and collision state.
+
 ## Frame protocol
 
 `frame` carries `buf`, `w`, `h`, integer-or-null `fps`, `updates`, and `top`.
