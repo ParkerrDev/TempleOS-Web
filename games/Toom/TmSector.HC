@@ -1,11 +1,13 @@
 #define TM_MOVER_DOOR 1
 #define TM_MOVER_FLOOR 2
+#define TM_MOVER_PLAT 3
+#define TM_MOVER_CEIL 4
 
 class Mover
 {
   Mover *next,*last;
   I64 sector,kind,type,direction,speed,high,wait,delay;
-  I64 new_special;
+  I64 new_special,low,old_direction,tag;
   U8 texture[8];
   Bool active,crush;
 };

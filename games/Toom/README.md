@@ -132,6 +132,14 @@ The implemented foundation uses native V5.03 file and memory APIs:
   handle either boundary orientation, and never replace a busy ring controller.
   Ring flats/specials change only when the movement completes.
 
+- Lifts implement perpetual, normal/fast down-wait-up and one-shot flat-changing
+  raises. Ceiling movers implement lowering, highest-neighbor raising and normal,
+  fast or silent crushers, including slowdown/recovery under an obstruction.
+  Tag-based stop/resume retains direction, wait and speed. Active movers have no
+  fixed thirty-object limit. Obstructed zero-wait platforms have an initialized
+  lower endpoint and can retry after returning to it; they cannot stall forever
+  by decrementing an already-zero wait count.
+
 Fuzz effects, the full simulation loop, actor actions, line dispatch, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
@@ -183,6 +191,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sector.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/door.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/floor.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/floor-links.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/movers.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
@@ -320,10 +329,14 @@ actual crushing and blocked-floor recovery. Another 607 linked-floor checks
 cover both stair speeds, fractional heights, busy branches, flat/direction
 barriers, cycles, tagged-root coverage and donut motion/flat changes in either
 boundary orientation. These are controlled topology fixtures, not a claim that
-complete map progression has been exercised. Lifts, ceiling controllers and
-line dispatch remain unfinished.
+complete map progression has been exercised. Lift/ceiling fixtures add 7,300
+individually checked tics across all eleven presets, exact sound/timing states,
+stop/resume, real crush/slowdown recovery, zero-wait obstruction recovery and
+negative/isolated ceiling heights. A 64-controller fixture verifies simultaneous
+ownership, stop/resume, movement and cleanup beyond the legacy thirty-object
+limits. Line dispatch remains unfinished.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector, door or floor checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector, door, floor or mover checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

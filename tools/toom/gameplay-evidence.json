@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "18cbe41538570552de67b03f259cc4b2a9e114f616eb46bbd9fa6e8bef606acc",
+  "renderSourceSha256": "919334212315fcef7da543e3438ff445513d81474666f113e01794ed8124f4ef",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-aq760yk5",
+      "native": "qemu-sk5uc90a",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -133,7 +133,7 @@
       "cases": 14873,
       "timelineTics": 12778,
       "keyMaskCombinations": 1024,
-      "native": "qemu-b0aok7gs",
+      "native": "qemu-u9wtyxg_",
       "hemu": true,
       "scope": "Door controllers, manual/tagged/locked activation, timers, obstruction and mover ownership; full line dispatch and UI/audio remain pending"
     },
@@ -141,7 +141,7 @@
       "presets": 12,
       "heightConfigurations": 768,
       "timelineTics": 107940,
-      "native": "qemu-qwd5vvlj",
+      "native": "qemu-l3kvyz53",
       "hemu": true,
       "scope": "Direct floor presets, flat/special timing, texture metadata, actual crush/block recovery and ownership; full line dispatch pending"
     },
@@ -150,6 +150,14 @@
       "native": "qemu-a62opgr8",
       "hemu": true,
       "scope": "Synthetic directed-sector topology fixtures for both stair speeds, fractional heights, busy branches, cycles, tagged roots and donut movement/flat changes; complete map progression not tested"
+    },
+    "movers": {
+      "presets": 11,
+      "timelineTics": 7300,
+      "native": "qemu-pfy1leoj",
+      "hemu": true,
+      "concurrentMovers": 64,
+      "scope": "Five platform and six ceiling presets, sound/timing states, obstruction/crush/slowdown, zero-wait retry, tagged pause/resume and 64-controller ownership; line dispatch pending"
     }
   },
   "frames": [
