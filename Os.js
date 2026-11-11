@@ -437,15 +437,16 @@ let snapshotInfo=null,bootFile=null;
 
 // ---- load the compressed RAM snapshot (imported, or the default; the SMP snapshot when ?smp) ----
 let gzBytes;
-async function downloadSnapshot(smp=useSMP) {          // reused when phones free their boot image
-  setLoad("downloading the TempleOS RAM snapshot…", 5);
+async function downloadSnapshot(smp=useSMP,generation=osGen) {
+  const progress=(text,pct)=>{if(generation===osGen)setLoad(text,pct);};
+  progress("downloading the TempleOS RAM snapshot…", 5);
   const gz = await fetch(smp ? "./hemu/live-smp.bin.gz" : "./hemu/live.bin.gz", { cache: "no-cache" });
-  if (!gz.ok) { setLoad("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
+  if (!gz.ok) { progress("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
   const total = +gz.headers.get("content-length") || 10300000;   // hemu/live.bin.gz
   const reader = gz.body.getReader(); const chunks = []; let got = 0;
-  for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.length; setLoad(`downloading snapshot… ${(got/1048576).toFixed(1)} MB`, 5 + 45 * got / total); }
+  for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.length; progress(`downloading snapshot… ${(got/1048576).toFixed(1)} MB`, 5 + 45 * got / total); }
   const buf = await new Blob(chunks).arrayBuffer();
-  dbg(`snapshot downloaded (${(got/1048576).toFixed(1)} MB)`);
+  if(generation===osGen)dbg(`snapshot downloaded (${(got/1048576).toFixed(1)} MB)`);
   return buf;
 }
 

@@ -128,4 +128,6 @@ leaves the old machine, and restart registers fresh cores. The modified module
 exists only in intercepted test responses and retains the isolation headers
 needed by a shared-memory worker. `tools/browser/boot-cancel.mjs` holds an
 earlier engine fetch until a replacement is running, then releases success or
-failure to check the separate asynchronous boot race.
+failure to check the separate asynchronous boot race. It also holds the initial
+snapshot body and releases late data, a read failure or an HTTP failure after
+the replacement starts; neither loader text nor progress may change.
