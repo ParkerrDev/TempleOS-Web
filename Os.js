@@ -546,6 +546,16 @@ function engineFail(why) {
   dbg("engine failed: " + why, true);
   dispatchEvent(new CustomEvent("osstate",{detail:{ready:false,msg:String(why)}}));
 }
+function engineFault(why) {
+  osFault=true;
+  cancelOSRequests(String(why));
+  ++pauseRevision;
+  setPaused(true);
+  pauseBtn.disabled=true;
+  OsNotice(String(why)+" TempleOS is paused. Restart TempleOS to retry.");
+  dbg(why,true);
+  dispatchEvent(new CustomEvent("osstate",{detail:{ready:false,msg:String(why)}}));
+}
 function singleCore(why) {   // multi-core failed before its first frame
   if (snapshotInfo) {
     engineFail("Could not restore the saved multi-core machine: "+why);
@@ -582,7 +592,10 @@ function runWorker() {
     }
     else if (m.cmd === "snd") snd(m.f);
     else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
-    else if (m.cmd === "error") fallback(m.msg);
+    else if (m.cmd === "error") {
+      if (m.retained) engineFault(m.msg);
+      else fallback(m.msg);
+    }
     else if(m.cmd === "palette")updatePalette(m.index,m.rgb);
     else diskMsg(m);   // paused/exportResult/fileResult/dirList/diskInfo
   };
@@ -630,14 +643,24 @@ async function runSMP() {
       else if (m.cmd === "snd") snd(m.f);
       else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
       else if (m.cmd === "smpReady") dbg("SMP: " + m.ncore + " cores running in parallel");
-      else if (m.cmd === "error") fallback(m.msg);
+      else if (m.cmd === "error") {
+        if (m.retained) engineFault(m.msg);
+        else fallback(m.msg);
+      }
       else if(m.cmd === "palette")updatePalette(m.index,m.rgb);
     else diskMsg(m);
     };
     for (let k=1;k<sc.ncore;k++) {
       const ap = new Worker("./engine/hemu-smp-worker.js", { type: "module" });
-      ap.onmessage = (e) => { const m = e.data; if (m.cmd === "error") dbg("[smp] AP" + k + ": " + m.msg, true); else if (m.cmd === "log") { dbg("[smp] " + m.msg); console.log("[smp]", m.msg); } };
-      ap.onerror = (ev) => dbg("[smp] AP" + k + " worker error: " + (ev.message || ""), true);
+      ap.onmessage = (e) => {
+        const m=e.data;
+        if (m.cmd=="error") {
+          if (m.retained) engineFault("AP"+k+": "+m.msg);
+          else fallback("AP"+k+": "+m.msg);
+        }
+        else if (m.cmd=="log") dbg("[smp] "+m.msg);
+      };
+      ap.onerror = (ev) => fallback("AP"+k+" worker error: "+(ev.message || ""));
       ap.postMessage({ cmd: "init", role: "ap", core: k, mem, ctrl, sc, wasmBytes,
         heapAbi:snapshotInfo?.meta.heapAbi });
       aps.push(ap);
@@ -657,22 +680,22 @@ function bootEngine() {
 }
 
 // ---- Pause / Play ----
-let paused = false, pauseRevision = 0;
+let paused = false, pauseRevision = 0, osFault=false;
 const pauseBtn = $("pauseBtn");
 const pauseShow = () => { pauseBtn.innerHTML = '<span class="ico"><svg><use href="#i-' + (paused ? "play" : "pause") + '"/></svg></span> ' + (paused ? "Play" : "Pause"); };
-const setPaused = value => { paused = value; fpsMeter.setPaused(paused); updateFps(); engine.post({ cmd: "pause", value: paused }); pauseShow(); };
+const setPaused = value => { if (osFault && !value) return; paused = value; fpsMeter.setPaused(paused); updateFps(); engine.post({ cmd: "pause", value: paused }); pauseShow(); };
 pauseBtn.addEventListener("click", () => { ++pauseRevision; setPaused(!paused); });
 const holdOSForGame = () => {
   const previous=paused, revision=pauseRevision;setPaused(true);
   return () => { if(pauseRevision===revision)setPaused(previous); };
 };
-const resetPause = () => { ++pauseRevision; paused = false; fpsMeter.setPaused(false); updateFps(); pauseShow(); };   // Restart boots unpaused
+const resetPause = () => { ++pauseRevision; paused = false; osFault=false; pauseBtn.disabled=false; fpsMeter.setPaused(false); updateFps(); pauseShow(); };
 
 // ---- requests to the guest, matched to their replies by id; the Disk window shows the rest ----
 const uploadWaiters = new Map();
 let nextRequestId = 1;
-const cancelOSRequests = () => {
-  for (const [id,finish] of uploadWaiters) finish({id,ok:false,msg:"OS restarted during the request."});
+const cancelOSRequests = (msg="OS restarted during the request.") => {
+  for (const [id,finish] of uploadWaiters) finish({id,ok:false,msg});
   uploadWaiters.clear();
 };
 const diskMsg = (m) => {
@@ -710,6 +733,7 @@ const diskMsg = (m) => {
 };
 // Match each OS reply to its request; a late reply cannot satisfy a later operation.
 const osRequest = (msg, transfer = []) => new Promise((resolve) => {
+  if (osFault) { resolve({ok:false,msg:"TempleOS stopped after a CPU fault. Restart it before running programs or writing files."}); return; }
   if (!engine.kind) { resolve({ok:false,msg:"engine not ready yet"}); return; }
   const id = nextRequestId++;
   const timeout = setTimeout(() => {

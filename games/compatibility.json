@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "ee5152d4aa0eaf06db96ffce2a008c2338a7705e57cd103720742780f9bcd8e7",
+  "runtimeSha256": "aadd16927206a8f35e3239e2ed4c26b54b99585717413c2664e967fbf31c4148",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -8,7 +8,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "fd2c7feb5d0dad4e3b0eb55cf339846d578f012e21da26dc9ecf50808e7cf837"
+      "wasmSha256": "d7820333ceb81e19c4f0be9edb091ef901f29605fa1dc5985da9bceec04cc921"
     },
     "toom": {
       "name": "TOOM",
@@ -24,7 +24,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "f9ea95bf1bae20a5cac1b84d2616d255c84993fc19fd7dfa0018811473e6b8be"
+      "wasmSha256": "d473c306a8964086dd7d7284cd088578eb04c5945399172b84794c5be07554d2"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -32,7 +32,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "1e00e5c75d599e581dbf1cc4d3223422dee8830d0f42b6209283578773e19e51"
+      "wasmSha256": "d53959e5bb055c93752e4d3d75fd3bd4ff90e0e081826bc85e9999c1e44cba3c"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -40,7 +40,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "2c40867a43a5d0c536430b56c569f8fd009fcefc42137961964fe01ec72570b0"
+      "wasmSha256": "914d29d32ba2f831c837dd33541d715adcb1c53b3899702229cb9b5c15a07980"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -112,7 +112,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/BomberGolf.HC:96: Undefined identifier or untyped call: GrRect3"
+      "error": "C:/Home/Games/TinkerOS/BomberGolf.HC:113: Undefined identifier or untyped call: Blink"
     },
     "tinker-FlapBat": {
       "name": "FlapBat",
@@ -312,7 +312,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/KeepAway/KeepAway.HC:264: Undefined identifier or untyped call: GrFloodFill"
+      "error": "C:/Home/Games/TinkerOS/Apps/KeepAway/KeepAway.HC:267: Undefined identifier or untyped call: Sprite3"
     },
     "library-Span": {
       "name": "Span",
