@@ -15,7 +15,8 @@ const busProtocol=process.env.HEMU_BUS_PROTOCOL?Number(process.env.HEMU_BUS_PROT
 for (const smp of [0,4]) {
   const compiled=compileHemu({smp:!!smp}),addr=n=>Number(compiled.globals.get(n).addr);
   const ranges=[[addr("g_cpu_st"),addr("g_ncore")-addr("g_cpu_st")],
-    [addr("g_xmm_lo"),1024],[addr("tsc"),16],[addr("kbd_q"),512],[addr("vga_dac"),768]];
+    [addr("g_xmm_lo"),1024],[addr("tsc"),16],[addr("kbd_q"),512],[addr("vga_dac"),768],
+    [addr("spk_ctrl"),8]];
   let h=await HemuBoot({smp,busProtocol,rate:120,repeat:true,keep_buf:true}),saved;
   try {
     assert.equal((await ReadyWait(h,20000)).ok,true);
@@ -28,8 +29,11 @@ for (const smp of [0,4]) {
     assert.equal(write.ok,true,write.msg);
     const launch=await Result(h,{cmd:"osLaunch",id:"game",name:"Snapshot loop",src:'while (TRUE) {Refresh;Sleep(10);}'});
     assert.equal(launch.ok,true,launch.msg);await Sleep(400);
+    const gate=await Result(h,{cmd:"osExec",id:"speaker-gate",target:"adam",src:'OutU8(0x61,InU8(0x61)&~3|2);'});
+    assert.equal(gate.ok,true,gate.msg);
     await Request(h,{cmd:"pause",value:true},m=>m.cmd==="paused"&&m.value);
     const before=await Request(h,{cmd:"__peek",ranges},m=>m.cmd==="__peek");
+    assert.deepEqual([...before.ranges.at(-1)],[2,0,0,0,0,0,0,0],"one enabled gate remains distinct from both off");
     const frame=h.last.hash,palette=h.palette.slice();
     assert.ok(palette.every(v=>v!==null),"boot publishes every displayed palette entry");
     const diskSave=await Request(h,{cmd:"exportDisk"},m=>m.cmd==="exportResult",60000);

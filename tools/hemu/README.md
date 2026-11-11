@@ -628,3 +628,16 @@ native distinct-XMM/TOP witnesses and rejects unrepresentable or malformed
 captures. See `tools/snapshot/README.md` for provenance and the unchanged
 synthetic device/80-bit x87 limitations. Historical module tests now restore
 self-contained full snapshots, never an old engine paired with new stock RAM.
+
+`speaker.test.mjs` compares275 actual native port0x61 gate reads with original
+QEMU/V5.03: all byte writes, both independently held gate bits, read-modify-write
+transitions and the original Snd stop/restart path. The pre-fix engine fails
+this fixture by returning zero. Only the two output gate bits are modeled;
+refresh-clock bit4 and PIT channel2 output bit5 are not yet represented.
+[QEMU's speaker implementation](https://github.com/qemu/qemu/blob/v11.1.0/hw/audio/pcspk.c)
+also distinguishes the gate and data latch from those changing status bits.
+The existing Boolean spk_on remains the tone-enabled state, while spk_ctrl
+preserves both gates. Reset clears both, and one/four-core full-save tests
+retain the silent data-only state through disk export and snapshot restore.
+Regenerate the source-bound independent fixture with
+`HOLYC_QEMU_ORACLE=... node tools/hemu/speaker.test.mjs --record`.
