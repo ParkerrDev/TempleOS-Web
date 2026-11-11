@@ -8,7 +8,7 @@
   "scripts": {
     "test": "sh tools/Test.sh",
     "test:browser": "node tools/browser/shell.mjs",
-    "test:editor": "node tools/browser/editor-keys.mjs",
+    "test:editor": "node tools/browser/editor-keys.mjs && node tools/browser/palette.mjs",
     "test:games:browser": "node tools/browser/games.mjs",
     "test:engine": "node tools/browser/engine.mjs",
     "test:snapshot": "node tools/browser/snapshot.mjs",

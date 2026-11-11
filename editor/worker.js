@@ -77,12 +77,12 @@ self.onmessage = async (e) => {
   const msg = e.data;
   if(msg.type==="input"){wakeInput?.();return;}
   if (msg.type === "run") {
-    const { source, controlSAB, fbSAB } = msg;
+    const { source, controlSAB, fbSAB, paletteSAB } = msg;
     ctrl = new Int32Array(controlSAB);
     const buttons=createMouseButtons(ctrl);
     // Draw into the SHARED index buffer; the main thread presents it. (A worker
     // blocked in a synchronous program loop never composites its own canvas.)
-    fb = new Framebuffer(null, 640, 480, 1, new Uint8Array(fbSAB));
+    fb = new Framebuffer(null, 640, 480, 1, new Uint8Array(fbSAB),paletteSAB?new Uint32Array(paletteSAB):null);
 
     let outBuf = "";
     const flush = () => { if (outBuf) { self.postMessage({ type: "text", text: outBuf }); outBuf = ""; } };
@@ -107,6 +107,7 @@ self.onmessage = async (e) => {
         gfx: {
           width: 640, height: 480,
           indices: fb.indices,
+          palette:(index,bgr48)=>{fb.palette(index,bgr48);drawPending=true;},
           plot: (x, y, c) => fb.plot(x, y, c),
           line: (x1, y1, x2, y2, c, t) => fb.line(x1, y1, x2, y2, c, t),
           rect: (x, y, w, h, c) => fb.rect(x, y, w, h, c),

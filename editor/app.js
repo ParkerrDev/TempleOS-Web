@@ -302,12 +302,12 @@ async function run(source=editor.value,project={}) {
   // Shared framebuffer: the worker draws into it (even while blocked in a
   // synchronous program loop); the MAIN thread presents it via rAF, because a
   // blocked worker never composites its own canvas. NO OffscreenCanvas transfer.
-  const fbSAB = new SharedArrayBuffer(640 * 480);
+  const fbSAB = new SharedArrayBuffer(640 * 480),paletteSAB=new SharedArrayBuffer(256*4);
   const fresh = curCanvas.cloneNode(false);
   curCanvas.parentNode.replaceChild(fresh, curCanvas);
   curCanvas = fresh;
   reattachCanvas(fresh);
-  mainFb = new Framebuffer(fresh.getContext("2d"), 640, 480, SCALE, new Uint8Array(fbSAB));
+  mainFb = new Framebuffer(fresh.getContext("2d"), 640, 480, SCALE, new Uint8Array(fbSAB),new Uint32Array(paletteSAB));
   // The worker already signals frame boundaries. Reading that sequence avoids a
   // full-frame hash on every browser refresh, and skips uploads while it sleeps.
   let lastFrame=0,rateFrames=0,rateStart=performance.now();
@@ -348,7 +348,7 @@ async function run(source=editor.value,project={}) {
     event.preventDefault();
     appendConsole("\n[error] "+(event.message||"The program worker could not start.")+"\n");setStatus("error");stop();
   };
-  worker.postMessage({ type: "run", source, controlSAB: sab, fbSAB, ...project });
+  worker.postMessage({ type: "run", source, controlSAB: sab, fbSAB, paletteSAB, ...project });
   rafId = requestAnimationFrame(present);
 
   sndTimer = setInterval(pumpSound, 16);
