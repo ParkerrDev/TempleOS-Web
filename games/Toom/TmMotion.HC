@@ -18,6 +18,7 @@ class Motion
 U0 MotionDel(Motion *tmpm)
 {
   if (tmpm) {
+    if (tmpm->world->thinking) throw('Thinking');
     PathDel(tmpm->path); Free(tmpm);
   }
 }

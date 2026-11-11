@@ -1,3 +1,13 @@
+#define TM_THINK_ACTOR 1
+#define TM_THINK_MOVER 2
+#define TM_THINK_LIGHT 3
+
+class Thinker
+{
+  Thinker *next,*last;
+  I64 kind;
+};
+
 class State
 {
   I32 sprite,frame,tics,action,next,misc1,misc2;
@@ -29,6 +39,7 @@ extern class World;
 
 class Actor
 {
+  Thinker thinker;
   World *world;
   I64 type,state,tics,sprite,frame,health,flags;
   I64 x,y,z,vx,vy,vz,angle,sector,target,reaction,threshold;

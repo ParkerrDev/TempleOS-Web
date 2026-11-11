@@ -86,7 +86,7 @@ const signatures=[
   ['CeilStop','Bool','Sectors *,I64 line',16,'0,0,0'],
 ];
 const load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmSpecial')
+let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmSpecial','TmTick'].includes(m[1]))
   .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n');
 source+=`
 I64 tm_event_cases=0,tm_event_done=0,tm_event_calls=0,tm_probe_cnt=0,tm_probe_values[16];

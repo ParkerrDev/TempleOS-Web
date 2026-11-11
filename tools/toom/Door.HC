@@ -35,7 +35,8 @@ U0 TmDoorQueue(Sectors *sectors,Mover *mover)
   tm_door_actions++;
   if (tm_door_mode==2) MoverFinish(sectors,sectors->last);
   MoverFinish(sectors,mover);
-  if (!tm_door_mode && !sector) DoorNew(sectors,0,TM_DOOR_OPEN);
+  if (!tm_door_mode && !sector && tm_door_actions==1)
+    DoorNew(sectors,0,TM_DOOR_OPEN);
   if (tm_door_mode==3) throw('QueueErr',TRUE);
 }
 
@@ -225,12 +226,11 @@ U0 TmDoorTest()
   map->line[6].flags=4; used=Fs->data_heap->used_u8s;
   DoorNew(sectors,0,TM_DOOR_OPEN); DoorNew(sectors,1,TM_DOOR_OPEN);
   tm_door_mode=0; tm_door_actions=0; MoversTick(sectors,&TmDoorQueue);
-  TmDoorChk(tm_door_actions==2 && sectors->first==sectors->last &&
-	sectors->area[0].mover==sectors->first && !sectors->area[1].mover,
-	"new controller waits");
+  TmDoorChk(tm_door_actions==3 && !sectors->first && !sectors->area[0].mover &&
+	!sectors->area[1].mover,"new controller runs this tic");
   tm_door_mode=1; MoversTick(sectors,&TmDoorQueue);
   TmDoorChk(tm_door_actions==3 && !sectors->first &&
-	Fs->data_heap->used_u8s==used,"new controller next tic");
+	Fs->data_heap->used_u8s==used,"retired controllers do not run again");
   DoorNew(sectors,0,TM_DOOR_OPEN); DoorNew(sectors,1,TM_DOOR_OPEN);
   tm_door_mode=2; tm_door_actions=0; MoversTick(sectors,&TmDoorQueue);
   TmDoorChk(tm_door_actions==1 && !sectors->first &&

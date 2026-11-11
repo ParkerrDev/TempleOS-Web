@@ -42,6 +42,12 @@ The implemented foundation uses native V5.03 file and memory APIs:
   and the canonical RNG sequence. The block lists respect NOBLOCKMAP, and
   NOSECTOR objects remain invisible. A separate thinker list preserves update
   order when a new actor reuses an earlier handle slot.
+- Actors, plane controllers and lights share an embedded native queue in
+  creation order. Objects appended by a callback run later in that same pass;
+  retired objects are reclaimed after callbacks finish. Map initialization
+  interleaves timed doors and lights by sector order and counts secret sectors.
+  The thinker pass advances neither the level clock nor rendering. Reentry and
+  destruction of live contexts during that pass fail before changing ownership.
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
   contact callbacks defer reclamation until the end of the tic. Nested contact
@@ -223,6 +229,9 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/light-map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/hazard.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/special-use.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/special-dispatch.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think-order.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think-map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
@@ -388,11 +397,20 @@ requests. A separate oracle extracts action calls, enum arguments, order and
 one-shot rules directly from hash-pinned original C, then checks 65,232 native
 dispatch combinations and 9,222 action calls. It varies every special from
 0 through 150, event kind, player role, actor type, side, secrecy and action
-success. These establish activation wiring; the shared game clock, actor AI,
-complete action dispatcher and level progression remain unfinished.
+success. These establish activation wiring.
+The thinker-order oracle compiles the four original C list routines in an
+isolated host test, then compares 324 mixed creation/append/retirement scenarios
+and 2,628 action calls with the native implementation. Its test allocator
+retains retired records until the case ends; this isolates call order from the
+original routine's read after its free callback. Eighteen real-controller cases
+cover interleaved RNG, floor/actor order, callback spawns, retirement, exception
+cleanup, reentry/destruction guards and timed-door/light initialization order.
+All 36 real maps retain 626 light controllers and 183 secret sectors in their
+expected order. These are simulation foundations; the full game clock, actor
+AI/actions and level progression remain unfinished.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
 motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector,
-door, floor, mover, teleport, switch, lighting, sector-effect or line-event
+door, floor, mover, teleport, switch, lighting, sector-effect, line-event or thinker
 checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.

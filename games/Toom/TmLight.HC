@@ -5,6 +5,7 @@
 
 class Light
 {
+  Thinker thinker;
   Light *next;
   I64 sector,kind,low,high,tics,dark,direction;
 };
@@ -42,7 +43,10 @@ U0 LightsDel(Lights *tmpl)
 {
   Light *light,*next;
   if (tmpl) {
-    for (light=tmpl->first;light;light=next) {next=light->next; Free(light);}
+    if (tmpl->sectors->motion->world->thinking) throw('Thinking');
+    for (light=tmpl->first;light;light=next) {
+      next=light->next; QueRem(&light->thinker); Free(light);
+    }
     Free(tmpl);
   }
 }
@@ -80,6 +84,8 @@ Light *LightNew(Lights *tmpl,I64 sector,I64 kind,I64 dark=35,Bool sync=FALSE)
   if (tmpl->last) tmpl->last->next=light;
   else tmpl->first=light;
   tmpl->last=light; world->map->sector[sector].special=0;
+  light->thinker.kind=TM_THINK_LIGHT;
+  QueIns(&light->thinker,world->thinkers.last);
   return light;
 }
 
@@ -126,25 +132,30 @@ U0 LightsTick(Lights *tmpl)
   for (light=tmpl->first;light;light=light->next) LightTick(tmpl,light);
 }
 
-U0 LightsInit(Lights *tmpl)
+U0 LightSectorInit(Lights *tmpl,I64 sector)
 {//Sector four keeps its damage attribute after creating the fast strobe.
   Map *map=tmpl->sectors->motion->world->map;
+  switch (map->sector[sector].special) {
+    case 1: LightNew(tmpl,sector,TM_LIGHT_FLASH); break;
+    case 2: LightNew(tmpl,sector,TM_LIGHT_STROBE,15); break;
+    case 3: LightNew(tmpl,sector,TM_LIGHT_STROBE); break;
+    case 4:
+      LightNew(tmpl,sector,TM_LIGHT_STROBE,15); map->sector[sector].special=4;
+      break;
+    case 8: LightNew(tmpl,sector,TM_LIGHT_GLOW); break;
+    case 12: LightNew(tmpl,sector,TM_LIGHT_STROBE,35,TRUE); break;
+    case 13: LightNew(tmpl,sector,TM_LIGHT_STROBE,15,TRUE); break;
+    case 17: LightNew(tmpl,sector,TM_LIGHT_FIRE); break;
+  }
+}
+
+U0 LightsInit(Lights *tmpl)
+{
   I64 i;
   if (tmpl->initialized) throw('Loaded');
   tmpl->initialized=TRUE;
-  for (i=0;i<map->sector_cnt;i++)
-    switch (map->sector[i].special) {
-      case 1: LightNew(tmpl,i,TM_LIGHT_FLASH); break;
-      case 2: LightNew(tmpl,i,TM_LIGHT_STROBE,15); break;
-      case 3: LightNew(tmpl,i,TM_LIGHT_STROBE); break;
-      case 4:
-	LightNew(tmpl,i,TM_LIGHT_STROBE,15); map->sector[i].special=4;
-	break;
-      case 8: LightNew(tmpl,i,TM_LIGHT_GLOW); break;
-      case 12: LightNew(tmpl,i,TM_LIGHT_STROBE,35,TRUE); break;
-      case 13: LightNew(tmpl,i,TM_LIGHT_STROBE,15,TRUE); break;
-      case 17: LightNew(tmpl,i,TM_LIGHT_FIRE); break;
-    }
+  for (i=0;i<tmpl->sectors->motion->world->map->sector_cnt;i++)
+    LightSectorInit(tmpl,i);
 }
 
 Bool LightStrobeTag(Lights *tmpl,I64 line)

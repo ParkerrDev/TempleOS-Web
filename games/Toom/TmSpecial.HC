@@ -4,12 +4,13 @@ class Specials
   Switches *switches;
   Lights *lights;
   U0 (*exit)(Bool secret);
-  Bool monsters_stomp;
+  Bool monsters_stomp,initialized;
 };
 
 U0 SpecialsDel(Specials *tmps)
 {
   if (tmps) {
+    if (tmps->sectors->motion->world->thinking) throw('Thinking');
     SwitchesDel(tmps->switches); LightsDel(tmps->lights); Free(tmps);
   }
 }
@@ -24,6 +25,19 @@ Specials *SpecialsNew(Sectors *sectors)
     SpecialsDel(tmps);
   }
   return tmps;
+}
+
+U0 SpecialsInit(Specials *tmps)
+{//Mix light and delayed-door creation in the original sector order.
+  World *world=tmps->sectors->motion->world;
+  I64 i;
+  if (tmps->initialized || tmps->lights->initialized) throw('Loaded');
+  tmps->initialized=tmps->lights->initialized=TRUE;
+  world->total_secrets=0;
+  for (i=0;i<world->map->sector_cnt;i++) {
+    if (world->map->sector[i].special==9) world->total_secrets++;
+    LightSectorInit(tmps->lights,i); DoorTimerNew(tmps->sectors,i);
+  }
 }
 
 Bool LineUse(Specials *tmps,Actor *actor,I64 line,I64 side)

@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "910af1322904eefbdec1098783c9adbb7c0a45c21eb1e5745de2e711ee3436a4",
+  "renderSourceSha256": "10b7d09707843a67b82d61d3789da0f3724472924788742d771f486b26a1ff0e",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -38,7 +38,7 @@
     "world": {
       "levelsAndSkills": 108,
       "actors": 37779,
-      "native": "qemu-r4_13w4r"
+      "native": "qemu-uuiazran"
     },
     "damage": {
       "cases": 4772,
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-iwds1hb3",
+      "native": "qemu-vlc7gr51",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -110,7 +110,7 @@
     },
     "sectorMotion": {
       "cases": 430,
-      "native": "qemu-b16hcoye",
+      "native": "qemu-bd348jgc",
       "hemu": true,
       "scope": "Q16 moving planes, height clipping, crushing, callback isolation and geometry recovery",
       "perTicScratchAllocations": 0
@@ -133,9 +133,10 @@
       "cases": 14873,
       "timelineTics": 12778,
       "keyMaskCombinations": 1024,
-      "native": "qemu-u9wtyxg_",
+      "native": "qemu-hnjpugpx",
       "hemu": true,
-      "scope": "Door controllers, manual/tagged/locked activation, timers, obstruction and mover ownership; line activation checked separately; UI/audio remain pending"
+      "scope": "Door controllers, manual/tagged/locked activation, timers, obstruction and mover ownership; line activation checked separately; UI/audio remain pending",
+      "appendPolicy": "A controller appended during an action runs later in the same pass; the earlier next-tic helper assumption is corrected."
     },
     "floors": {
       "presets": 12,
@@ -198,7 +199,7 @@
     "lights": {
       "cases": 209,
       "tics": 51200,
-      "native": "qemu-qb7h9wh5",
+      "native": "qemu-o1uuz6_g",
       "hemu": true,
       "scope": "Flash/strobe/glow/fire timelines and RNG, external brightness changes, tagged neighbor semantics, mover exclusion, repeated strobe order and ownership."
     },
@@ -231,9 +232,31 @@
         "cross": 72,
         "shoot": 3
       },
-      "native": "qemu-plmofgae",
+      "native": "qemu-o_gycwen",
       "hemu": true,
       "reference": "Pinned original p_switch.c and p_spec.c parsed for action calls, arguments, order, permissions and consumption rules; actions instrumented separately from the real-controller integration fixture."
+    },
+    "thinkerOrder": {
+      "cases": 324,
+      "actionCalls": 2628,
+      "native": "qemu-7y_4gmib",
+      "hemu": true,
+      "reference": "The original P_InitThinkers/P_AddThinker/P_RemoveThinker/P_RunThinkers compiled as an isolated host oracle with retained records; six initial actor/mover/light permutations, callback appends, nested appends and retirement before/after/current turn over two passes."
+    },
+    "thinkers": {
+      "cases": 18,
+      "native": "qemu-btge5y3l",
+      "hemu": true,
+      "scope": "Real interleaved actor/light RNG, floor/actor order, callback-created actors/movers, retirement, reentry/owner destruction rejection, exception cleanup and mixed light/timed-door initialization. No complete-game or demo synchronization claim."
+    },
+    "thinkerMaps": {
+      "maps": 36,
+      "sectors": 14556,
+      "controllers": 626,
+      "secrets": 183,
+      "native": "qemu-yi3kdxk0",
+      "hemu": true,
+      "scope": "Original map sector order and retained specials with actors loaded first; all controllers in the official Phase 1 maps are lights, with mixed delayed-door order covered by synthetic integration cases."
     }
   },
   "frames": [

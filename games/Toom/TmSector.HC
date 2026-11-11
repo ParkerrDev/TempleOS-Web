@@ -5,6 +5,7 @@
 
 class Mover
 {
+  Thinker thinker;
   Mover *next,*last;
   I64 sector,kind,type,direction,speed,high,wait,delay;
   I64 new_special,low,old_direction,tag;
@@ -33,8 +34,9 @@ U0 SectorsDel(Sectors *tmps)
 {
   Mover *tmpm,*next;
   if (tmps) {
+    if (tmps->motion->world->thinking) throw('Thinking');
     for (tmpm=tmps->first;tmpm;tmpm=next) {
-      next=tmpm->next; Free(tmpm);
+      next=tmpm->next; QueRem(&tmpm->thinker); Free(tmpm);
     }
     Free(tmps->area); Free(tmps->lines); Free(tmps);
   }
@@ -94,6 +96,8 @@ Mover *MoverNew(Sectors *tmps,I64 sector,I64 kind)
   if (tmps->last) tmps->last->next=tmpm;
   else tmps->first=tmpm;
   tmps->last=tmps->area[sector].mover=tmpm;
+  tmpm->thinker.kind=TM_THINK_MOVER;
+  QueIns(&tmpm->thinker,tmps->motion->world->thinkers.last);
   return tmpm;
 }
 
@@ -107,6 +111,7 @@ U0 MoverFinish(Sectors *tmps,Mover *tmpm)
 U0 MoversSweep(Sectors *tmps)
 {
   Mover *tmpm=tmps->first,*next;
+  if (tmps->motion->world->thinking) throw('Thinking');
   while (tmpm) {
     next=tmpm->next;
     if (!tmpm->active) {
@@ -114,21 +119,19 @@ U0 MoversSweep(Sectors *tmps)
       else tmps->first=next;
       if (next) next->last=tmpm->last;
       else tmps->last=tmpm->last;
-      Free(tmpm);
+      QueRem(&tmpm->thinker); Free(tmpm);
     }
     tmpm=next;
   }
 }
 
 U0 MoversTick(Sectors *tmps,U0 (*action)(Sectors *sectors,Mover *mover))
-{//New controllers wait until the following 35 Hz tic.
-  Mover *tmpm=tmps->first,*last=tmps->last,*next;
+{//An appended controller participates later in the same pass.
+  Mover *tmpm=tmps->first;
   try {
     while (tmpm) {
-      next=tmpm->next;
       if (tmpm->active) (*action)(tmps,tmpm);
-      if (tmpm==last) break;
-      tmpm=next;
+      tmpm=tmpm->next;
     }
   } catch {
     MoversSweep(tmps);

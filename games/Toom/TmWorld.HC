@@ -9,13 +9,15 @@ class ActorSlot
 
 class World
 {
+  Thinker thinkers;
   Map *map;
   GameData *data;
   Collision *collision;
   ActorSlot *slot;
   I64 slot_cap,free_slot,actor_cnt,*blocks,skill,random,tic,player,
-	player_start,total_kills,total_items,max_radius,first,last,
-	hit_actor,hit_kind;
+	player_start,total_kills,total_items,total_secrets,max_radius,
+	first,last,hit_actor,hit_kind;
+  Bool thinking;
 };
 
 I64 WorldRand(World *tmpw)
@@ -91,6 +93,7 @@ U0 WorldDel(World *tmpw)
 {
   I64 i;
   if (tmpw) {
+    if (tmpw->thinking) throw('Thinking');
     for (i=0;i<tmpw->slot_cap;i++) Free(tmpw->slot[i].actor);
     Free(tmpw->slot); Free(tmpw->blocks);
     CollisionDel(tmpw->collision); Free(tmpw);
@@ -100,6 +103,7 @@ U0 WorldDel(World *tmpw)
 World *WorldNew(Map *tmpm,GameData *tmpd,I64 skill=2)
 {//The level and immutable data are borrowed; world objects are owned here.
   World *tmpw=CAlloc(sizeof(World));
+  QueInit(&tmpw->thinkers);
   tmpw->map=tmpm; tmpw->data=tmpd; tmpw->skill=ClampI64(skill,0,4);
   tmpw->free_slot=tmpw->player_start=-1;
   tmpw->blocks=CAlloc(tmpm->blockmap(U16 *)[2]*
@@ -143,6 +147,8 @@ Actor *WorldSpawn(World *tmpw,I64 type,I64 x,I64 y,I64 z=TM_FLOOR_Z)
   else tmpw->first=tmpa->id;
   tmpw->last=tmpa->id;
   tmpw->max_radius=MaxI64(tmpw->max_radius,tmpa->radius);
+  tmpa->thinker.kind=TM_THINK_ACTOR;
+  QueIns(&tmpa->thinker,tmpw->thinkers.last);
   tmpw->actor_cnt++;
   return tmpa;
 }
@@ -152,6 +158,8 @@ U0 WorldRemove(World *tmpw,Actor *tmpa)
   I64 n=tmpa->id.u32[0]-1;
   ActorSlot *slot=tmpw->slot+n;
   Actor *prev,*next;
+  if (tmpw->thinking) throw('Thinking');
+  QueRem(&tmpa->thinker);
   WorldActorUnlink(tmpw,tmpa);
   if (prev=WorldActorGet(tmpw,tmpa->tick_last,FALSE))
     prev->tick_next=tmpa->tick_next;
@@ -171,6 +179,7 @@ U0 WorldSweep(World *tmpw)
 {
   I64 id=tmpw->first,next;
   Actor *tmpa;
+  if (tmpw->thinking) throw('Thinking');
   while (tmpa=WorldActorGet(tmpw,id,FALSE)) {
     next=tmpa->tick_next;
     if (!tmpa->active) WorldRemove(tmpw,tmpa);

@@ -32,6 +32,7 @@
 #include "TmLight"
 #include "TmHazard"
 #include "TmSpecial"
+#include "TmTick"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

@@ -198,20 +198,24 @@ Bool DoorLocked(Sectors *tmps,Actor *actor,I64 line,I64 type)
   return DoorTag(tmps,line,type);
 }
 
-U0 DoorTimersInit(Sectors *tmps)
+Mover *DoorTimerNew(Sectors *tmps,I64 sector)
 {//Both delayed forms initialize their reopening height and wait explicitly.
   Map *map=tmps->motion->world->map;
-  Mover *tmpm;
-  I64 i;
-  for (i=0;i<map->sector_cnt;i++)
-    if (map->sector[i].special==10 || map->sector[i].special==14) {
-      if (map->sector[i].special==10) {
-	tmpm=DoorNew(tmps,i,TM_DOOR_RAISE,FALSE);
-	if (tmpm) {
-	  tmpm->high=map->sector[i].ceil;
-	  tmpm->direction=0; tmpm->delay=30*TM_TICK_HZ;
-	}
-      } else tmpm=DoorNew(tmps,i,TM_DOOR_RAISE_5MIN,FALSE);
-      if (tmpm) map->sector[i].special=0;
+  Mover *tmpm=NULL;
+  if (map->sector[sector].special==10) {
+    tmpm=DoorNew(tmps,sector,TM_DOOR_RAISE,FALSE);
+    if (tmpm) {
+      tmpm->high=map->sector[sector].ceil;
+      tmpm->direction=0; tmpm->delay=30*TM_TICK_HZ;
     }
+  } else if (map->sector[sector].special==14)
+    tmpm=DoorNew(tmps,sector,TM_DOOR_RAISE_5MIN,FALSE);
+  if (tmpm) map->sector[sector].special=0;
+  return tmpm;
+}
+
+U0 DoorTimersInit(Sectors *tmps)
+{
+  I64 i;
+  for (i=0;i<tmps->motion->world->map->sector_cnt;i++) DoorTimerNew(tmps,i);
 }
