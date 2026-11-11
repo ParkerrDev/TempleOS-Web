@@ -100,10 +100,12 @@ regression: a partial ATA command, PS/2 reply and speaker tone must not survive.
 against the actual CPU layout and requires V5.03's 1192-count PIT period.
 
 `cpu-native.mjs` requires a source-hashed original V5.03 compile/run of the
-entire interpreter and its unchanged instruction battery. The native host
+entire interpreter, its instruction battery and sampled hardware arithmetic
+vectors. The native host
 adapter provides a core ID, serialized atomics and explicit headless callbacks;
-it supplies neither a desktop, disk nor native JIT. The same 31 checks execute
-with zero badops in both builds; instruction totals exclude HLT time budgets. Use
+it supplies neither a desktop, disk nor native JIT. The same 31 battery checks
+and 707 multiply/divide assertions execute with zero badops in both builds;
+instruction totals cover the battery and exclude HLT time budgets. Use
 `HOLYC_QEMU_ORACLE=/path/to/tests/oracle/Qemu.mjs node tools/hemu/cpu-native.mjs --record`
 to refresh this evidence after interpreter changes. This is a bounded native
 source test, not proof of complete x86 coverage or a native TempleOS host app.
@@ -134,6 +136,25 @@ aligned LOCK and ordinary unaligned operands. Both use `OpcodeOracle.mjs` to
 record source-hashed native fixtures with CPU/compiler metadata; add `--record`
 on x86-64 to regenerate them. Reserved forms and unsupported CMPXCHG16B must
 retain faults without writing operands.
+
+`MulDiv.HC` owns full products, signed/unsigned double-width dividends, byte
+AX/AH:AL results and quotient bounds. `muldiv.test.mjs` compares 102,432 register
+and unaligned-memory cases with 25,608 independent hardware results. Its 50
+compiled encodings include one/two/three-operand multiply, signed immediates,
+all operand widths, and 19,360 retained divide-fault comparisons. It checks
+every register and the neighboring divisor bytes, plus 884 deferred flag
+chains, 30 RIP-relative operands and the MMIO fallback read count. The old engine fails this
+gate immediately by incorrectly replacing DL during byte multiplication.
+
+Only CF/OF are hardware-defined for these multiply forms; divide flags are
+undefined. HEMU explicitly preserves the other flag bits. Zero divisors and
+oversized quotients retain the existing divide-error stop with unchanged
+destination registers; architectural guest #DE delivery is not implemented by
+this change. Full 128-bit dividends use the HolyC path when they do not fit the
+compiled signed/unsigned 64-bit fast path. MMIO divisors enter that path before
+reading the device, avoiding a repeated read on fallback. The contract follows
+Intel's [DIV/IDIV/IMUL reference](https://cdrdv2.intel.com/v1/dl/getContent/671199)
+and [MUL reference](https://cdrdv2.intel.com/v1/dl/getContent/671241).
 
 ## Frame protocol
 

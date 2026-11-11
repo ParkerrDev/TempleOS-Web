@@ -1,0 +1,55 @@
+{
+  "scope": "Same-source HolyCraft RenderFaces arithmetic-change regression check, not browser FPS or inherited-versus-corrected comparison",
+  "compiler": "52f06fb",
+  "node": "v26.12.0",
+  "cpu": "Intel(R) Core(TM) i9-14900HX",
+  "control": {
+    "web": "e434723",
+    "hemu": "f2bc498"
+  },
+  "current": {
+    "web_base": "e434723",
+    "hemu_base": "f2bc498",
+    "jit_sha256": "16a80b29428701bead596b710d6b524c218e93dc285bfcbeded5c5279bb9a9ec",
+    "cpu_sha256": "7ab8b9d405f3d400239de6ffff198c6a5309704be5dc4f1ca74ce1b3d988e007",
+    "muldiv_sha256": "ae9b3d535deee852295d9803a3e35d9daf2a8e214f1100b6ffae56a21693797a"
+  },
+  "source": {
+    "commit": "a3860e4",
+    "sha256": "88d591cd24a52e76484ea7f0b661ac42545eacd67cd7cde6da3c32682780b834",
+    "harness_sha256": "ebed9433b6879493a0f901a6e3f06b9aea5acec7e9a86a635707503dcbd74c25"
+  },
+  "method": {
+    "views": 11,
+    "renders_per_view": 30,
+    "order": "control,current,control,current; root and games held CPU-heavy work",
+    "command": "TEMPLEOS_WEB=<engine> N=30 node --max-old-space-size=3072 HolyCraft-C1/tools/render/tos.mjs time"
+  },
+  "runs": [
+    {
+      "engine": "control",
+      "pair": 1,
+      "per_view": "spawn:9.66ms/24237spans open-0:6.17ms/12748spans open-1:7.81ms/15726spans open-2:7.52ms/14758spans open-3:14.00ms/31676spans open-4:0.73ms/98spans open-5:0.85ms/0spans open-6:13.27ms/27815spans open-7:1.76ms/0spans open-8:12.14ms/26585spans open-9:7.87ms/18072spans",
+      "mean": "MEAN 7.43 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+    },
+    {
+      "engine": "current",
+      "pair": 1,
+      "per_view": "spawn:10.38ms/24237spans open-0:6.23ms/12748spans open-1:7.83ms/15726spans open-2:7.73ms/14758spans open-3:14.67ms/31676spans open-4:0.79ms/98spans open-5:0.95ms/0spans open-6:14.05ms/27815spans open-7:1.93ms/0spans open-8:12.10ms/26585spans open-9:7.85ms/18072spans",
+      "mean": "MEAN 7.68 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+    },
+    {
+      "engine": "control",
+      "pair": 2,
+      "per_view": "spawn:10.39ms/24237spans open-0:6.05ms/12748spans open-1:7.83ms/15726spans open-2:7.56ms/14758spans open-3:14.59ms/31676spans open-4:0.77ms/98spans open-5:0.91ms/0spans open-6:13.32ms/27815spans open-7:1.88ms/0spans open-8:12.53ms/26585spans open-9:8.38ms/18072spans",
+      "mean": "MEAN 7.66 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+    },
+    {
+      "engine": "current",
+      "pair": 2,
+      "per_view": "spawn:10.93ms/24237spans open-0:6.06ms/12748spans open-1:7.81ms/15726spans open-2:7.61ms/14758spans open-3:14.49ms/31676spans open-4:0.76ms/98spans open-5:0.88ms/0spans open-6:13.81ms/27815spans open-7:1.86ms/0spans open-8:12.58ms/26585spans open-9:8.09ms/18072spans",
+      "mean": "MEAN 7.72 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+    }
+  ],
+  "limit": "Only two pairs; no speedup or no-regression equivalence is established. Mean current is about 2% higher; the earlier same-head inherited/corrected performance gap remains open. Source hash includes a comment-only wording correction after timing."
+}
