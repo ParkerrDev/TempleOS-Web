@@ -227,8 +227,8 @@ function emitFlags(f, kind, sz) {
   }                                                                                                                            // logic: CF=OF=0
   if(kind!=="logic")emitAuxCarry(f);
   st64(f); }
-// Full writers replace pending arithmetic flags. Partial writers retain the
-// prior CF/OF and save operands in private locals until a reader or block exit.
+// Full writers replace pending arithmetic flags. Partial writers retain
+// unwritten flags and save operands in private locals until a reader or exit.
 // A subsequent full writer discards that chain without emitting dead flag work.
 let FLAGPEND = null,flagLocalNext=45;
 function deferFlags(f,kind,sz) {
@@ -296,6 +296,54 @@ function emitAdcSbbFlags(f, isSbb, sz) {
   if (!isSbb) { f.local_get(0); f.local_get(2); f.op("i64_xor"); f.local_get(1); f.local_get(2); f.op("i64_xor"); f.op("i64_and"); }   // ADC OF=(a^r)&(b^r)&sb
   else { f.local_get(0); f.local_get(1); f.op("i64_xor"); f.local_get(0); f.local_get(2); f.op("i64_xor"); f.op("i64_and"); }          // SBB OF=(a^b)&(a^r)&sb
   i64c(f, hb); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x800); f.op("i64_mul"); f.op("i64_or"); emitAuxCarry(f); st64(f); }
+// Full product in local2, upper operand-sized half in local1. Deferred
+// CF/OF writes retain the other flags and disappear before a full writer.
+function mulValue(f,size,signed) {
+  if(size===8) {
+    f.local_get(0);f.local_get(1);f.op("i64_mul");f.local_set(2);
+    for(const [source,low,high]of [[0,6,7],[1,8,9]]) {
+      f.local_get(source);i64c(f,0xFFFFFFFF);f.op("i64_and");f.local_set(low);
+      f.local_get(source);i64c(f,32);f.op("i64_shr_u");f.local_set(high);
+    }
+    for(const [left,right,out]of [[6,8,10],[6,9,11],[7,8,12],[7,9,13]]) {
+      f.local_get(left);f.local_get(right);f.op("i64_mul");f.local_set(out);
+    }
+    f.local_get(10);i64c(f,32);f.op("i64_shr_u");
+    for(const local of [11,12]) {
+      f.local_get(local);i64c(f,0xFFFFFFFF);f.op("i64_and");f.op("i64_add");
+    }
+    f.local_set(14);f.local_get(13);
+    for(const local of [11,12,14]) {
+      f.local_get(local);i64c(f,32);f.op("i64_shr_u");f.op("i64_add");
+    }
+    if(signed)for(const [left,right]of [[0,1],[1,0]]) {
+      f.local_get(left);i64c(f,63);f.op("i64_shr_s");
+      f.local_get(right);f.op("i64_and");f.op("i64_sub");
+    }
+    f.local_set(1);
+  } else {
+    for(const local of [0,1]) {
+      f.local_get(local);
+      if(signed)f.op(size===4?"i64_extend32_s":size===2?"i64_extend16_s":"i64_extend8_s");
+    }
+    f.op("i64_mul");f.local_set(2);
+    f.local_get(2);i64c(f,size*8);f.op("i64_shr_u");
+    i64c(f,(1n<<BigInt(size*8))-1n);f.op("i64_and");f.local_set(1);
+  }
+  deferPartialFlags(f,g=>{
+    i32c(g,RFL);i32c(g,RFL);ld64(g);i64c(g,~0x801);g.op("i64_and");
+    if(signed&&size<8) {
+      g.local_get(2);g.op(size===4?"i64_extend32_s":size===2?"i64_extend16_s":"i64_extend8_s");
+      g.local_get(2);g.op("i64_ne");
+    } else {
+      g.local_get(1);
+      if(signed){g.local_get(2);i64c(g,63);g.op("i64_shr_s");}
+      else i64c(g,0);
+      g.op("i64_ne");
+    }
+    g.op("i64_extend_i32_u");i64c(g,0x801);g.op("i64_mul");g.op("i64_or");st64(g);
+  });
+}
 // push i32 condition (0/1) for jcc code cc (0..15), computed from rfl.
 function emitCond(f, cc) {
   const bit = (b) => { i32c(f, RFL); f.load("i32_load", 0, 2); i32c(f, b); f.op("i32_shr_u"); i32c(f, 1); f.op("i32_and"); }; const base = cc >> 1;
@@ -561,12 +609,12 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
         f.local_get(0); ifbrk = term = true; n++; i = j; break;              // IRET can restore IF=1 -> IF-window flag; keeps context switches native (was an interp punt)
       } else if (op === 0x8F) {                                             // POP r/m64: v=[rsp]; rsp+=8; r/m=v (ea uses OLD rsp)
         const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; if (mm.isMem) emitEA(f, mm, j - GBASE); spAddr(f); f.load("i64_load", 0, 3); f.local_set(0); rspAdj(f, 8); wrRM(f, mm, 8, true, () => f.local_get(0)); handled = true;
-      } else if (op === 0x69 || op === 0x6B) {                              // IMUL r, r/m, imm (no flags; result masked to sz, matches cpu.HC)
-        const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; if (mm.isMem) emitEA(f, mm, j - GBASE);
-        let v; if (op === 0x6B) { v = imm8s(j); j += 1; } else { v = immSz(j, szV); j += immLen(szV); }
-        rdRM(f, mm, szV, rex);
-        if (szV === 1) f.op("i64_extend8_s"); else if (szV === 2) f.op("i64_extend16_s"); else if (szV === 4) f.op("i64_extend32_s");  // sext(a,sz)
-        i64c(f, v); f.op("i64_mul"); f.local_set(0); wrReg(f, mm.reg, szV, rex, () => f.local_get(0)); handled = true;
+      } else if (op === 0x69 || op === 0x6B) {
+        const mm=decodeModRM(j,rexR,rexX,rexB);j=mm.j;
+        const value=op===0x6B?imm8s(j):immSz(j,szV);j+=op===0x6B?1:immLen(szV);
+        if(mm.isMem)emitEA(f,mm,j-GBASE);
+        rdRM(f,mm,szV,rex);f.local_set(0);i64c(f,value);f.local_set(1);
+        mulValue(f,szV,true);wrReg(f,mm.reg,szV,rex,()=>f.local_get(2));handled=true;
       } else if ((op >= 0xA4 && op <= 0xA7) || (op >= 0xAA && op <= 0xAF)) {  // string ops MOVS/CMPS/STOS/LODS/SCAS (+ REP/REPE/REPNE as a native loop)
         const sz = (op & 1) ? szV : 1;
         i64c(f, sz); i64c(f, -sz); i32c(f, RFL); f.load("i32_load", 0, 2); i32c(f, 0x400); f.op("i32_and"); f.op("i32_eqz"); f.op("select"); f.local_set(6);  // d = DF ? -sz : sz
@@ -628,47 +676,71 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
           if (mm.isMem) emitEA(f, mm, j - GBASE); wrRM(f, mm, sz, rex, () => { rdRM(f, mm, sz, rex); i64c(f, -1); f.op("i64_xor"); }); handled = true;
         } else if (ext === 3) {                                            // NEG: r=0-a ; SetSub(0,a,r)
           if (mm.isMem) emitEA(f, mm, j - GBASE); rdRM(f, mm, sz, rex); f.local_set(1); i64c(f, 0); f.local_set(0); f.local_get(0); f.local_get(1); f.op("i64_sub"); f.local_set(2); wrRM(f, mm, sz, rex, () => f.local_get(2)); deferFlags(f, "sub", sz); handled = true;
-        } else {                                                            // ext 4-7: MUL/IMUL/DIV/IDIV -> RDX:RAX, NO flags (matches cpu.HC Grp3)
-          // DIV's fallback is conditional; expose prior flags on both paths
-          // before loading its operands into the materializer's scratch locals.
+        } else {
           if(ext>=6)materialize(f);
-          if (mm.isMem) emitEA(f, mm, j - GBASE);
-          rdRM(f, mm, sz, rex); f.local_set(0);                            // a = rm (zero-extended)
-          const sextL = (L) => { f.local_get(L); if (sz === 1) f.op("i64_extend8_s"); else if (sz === 2) f.op("i64_extend16_s"); else if (sz === 4) f.op("i64_extend32_s"); }; const RAX = REG + 0 * 8, RDX = REG + 2 * 8;
-          const exitHere = () => { sideExit=true;f.if_(0x40); materialize(f); i32c(f, RIP); i64c(f, i - GBASE); st64(f); wbDirty(f); i32c(f, n); f.op("return"); f.end(); };  // rare/trapping case -> re-run in interpreter (flush flags + reg cache; rcDirty here = regs written by EARLIER instrs on this path, program-order correct)
-          if (ext === 4 || ext === 5) {                                    // MUL / IMUL
-            rdReg(f, 0, sz, rex); f.local_set(1);                          // b = AL/AX/EAX/RAX
-            if (sz === 8) {                                                // full 128-bit: al/ah/bl/bh -> ll/lh/hl/hh -> mid -> lo(RAX)/hi(RDX)
-              f.local_get(0); i64c(f, 0xFFFFFFFF); f.op("i64_and"); f.local_set(6); f.local_get(0); i64c(f, 32); f.op("i64_shr_u"); f.local_set(7); f.local_get(1); i64c(f, 0xFFFFFFFF); f.op("i64_and"); f.local_set(8); f.local_get(1); i64c(f, 32); f.op("i64_shr_u"); f.local_set(9);
-              f.local_get(6); f.local_get(8); f.op("i64_mul"); f.local_set(10); f.local_get(6); f.local_get(9); f.op("i64_mul"); f.local_set(11); f.local_get(7); f.local_get(8); f.op("i64_mul"); f.local_set(12); f.local_get(7); f.local_get(9); f.op("i64_mul"); f.local_set(13); f.local_get(10); i64c(f, 32); f.op("i64_shr_u");
-              f.local_get(11); i64c(f, 0xFFFFFFFF); f.op("i64_and"); f.op("i64_add"); f.local_get(12); i64c(f, 0xFFFFFFFF); f.op("i64_and"); f.op("i64_add"); f.local_set(14);
-              wrReg(f, 0, 8, true, () => { f.local_get(10); i64c(f, 0xFFFFFFFF); f.op("i64_and"); f.local_get(14); i64c(f, 32); f.op("i64_shl"); f.op("i64_or"); });  // RAX = lo
-              wrReg(f, 2, 8, true, () => {                                // RDX = hi = hh + (lh>>32)+(hl>>32)+(mid>>32)
-                f.local_get(13); f.local_get(11); i64c(f, 32); f.op("i64_shr_u"); f.op("i64_add"); f.local_get(12); i64c(f, 32); f.op("i64_shr_u"); f.op("i64_add"); f.local_get(14); i64c(f, 32); f.op("i64_shr_u"); f.op("i64_add");
-                if (ext === 5) {                                          // IMUL sign-correct: hi -= (a<0?b:0) + (b<0?a:0)
-                  f.local_get(0); i64c(f, 63); f.op("i64_shr_s"); f.local_get(1); f.op("i64_and"); f.op("i64_sub"); f.local_get(1); i64c(f, 63); f.op("i64_shr_s"); f.local_get(0); f.op("i64_and"); f.op("i64_sub"); } });
-            } else {                                                      // sz<8: r = a*b (MUL zero-ext, IMUL sign-ext); RAX=low, RDX=high
-              if (ext === 4) { f.local_get(0); f.local_get(1); f.op("i64_mul"); }
-              else { sextL(0); sextL(1); f.op("i64_mul"); }
-              f.local_set(2); wrReg(f, 0, sz, rex, () => f.local_get(2)); wrReg(f, 2, sz, rex, () => { f.local_get(2); i64c(f, sz * 8); f.op("i64_shr_u"); }); }
-          } else if (ext === 6) {                                         // DIV (unsigned)
-            if (sz === 8) {                                               // guard a==0 || RDX!=0 (128-bit dividend -> interpreter); else RAX=lo/a, RDX=lo%a
-              f.local_get(0); f.op("i64_eqz"); rdReg(f, 2, 8, true); f.op("i64_eqz"); i32c(f, 1); f.op("i32_xor"); f.op("i32_or"); exitHere(); rdReg(f, 0, 8, true); f.local_set(1); wrReg(f, 0, 8, true, () => { f.local_get(1); f.local_get(0); f.op("i64_div_u"); }); wrReg(f, 2, 8, true, () => { f.local_get(1); f.local_get(0); f.op("i64_rem_u"); });
-            } else {                                                      // r = (RDX<<bits)|RAX (zero-ext); RAX=r/a, RDX=r%a
-              f.local_get(0); f.op("i64_eqz"); exitHere(); rdReg(f, 2, sz, rex); i64c(f, sz * 8); f.op("i64_shl"); rdReg(f, 0, sz, rex); f.op("i64_or"); f.local_set(1); wrReg(f, 0, sz, rex, () => { f.local_get(1); f.local_get(0); f.op("i64_div_u"); }); wrReg(f, 2, sz, rex, () => { f.local_get(1); f.local_get(0); f.op("i64_rem_u"); }); }
-          } else if (sz === 8) {                                          // IDIV w64 (cpu.HC 64-bit-fits: RAX=lo/sa, RDX=lo%sa, ignores RDX hi)
-            sextL(0); f.local_set(0); rdReg(f, 0, 8, true); f.local_set(1); f.local_get(0); f.op("i64_eqz"); f.local_get(0); i64c(f, -1); f.op("i64_eq"); f.local_get(1); i64c(f, 1n << 63n); f.op("i64_eq"); f.op("i32_and"); f.op("i32_or"); exitHere();
-            f.local_get(0); i64c(f, -1); f.op("i64_eq"); f.if_(0x40);     // sa == -1 (non-MIN): RAX = -lo, RDX = 0
-              wrReg(f, 0, 8, true, () => { i64c(f, 0); f.local_get(1); f.op("i64_sub"); }); wrReg(f, 2, 8, true, () => { i64c(f, 0); });
-            f.else_();                                                    // normal signed divide
-              wrReg(f, 0, 8, true, () => { f.local_get(1); f.local_get(0); f.op("i64_div_s"); }); wrReg(f, 2, 8, true, () => { f.local_get(1); f.local_get(0); f.op("i64_rem_s"); });
-            f.end();
-          } else {                                                        // IDIV sz<8 (rare): punt sa==0 || sa==-1 unchanged
-            sextL(0); f.local_set(0); f.local_get(0); f.op("i64_eqz"); f.local_get(0); i64c(f, -1); f.op("i64_eq"); f.op("i32_or"); exitHere();
-            {                                                             // sdd = (sext(RDX)<<bits)|(RAX&mask); RAX=sdd/sa, RDX=sdd%sa
-              sextL2: { rdReg(f, 2, sz, rex); if (sz === 1) f.op("i64_extend8_s"); else if (sz === 2) f.op("i64_extend16_s"); else if (sz === 4) f.op("i64_extend32_s"); }
-              i64c(f, sz * 8); f.op("i64_shl"); rdReg(f, 0, sz, rex); f.op("i64_or"); f.local_set(1); wrReg(f, 0, sz, rex, () => { f.local_get(1); f.local_get(0); f.op("i64_div_s"); }); wrReg(f, 2, sz, rex, () => { f.local_get(1); f.local_get(0); f.op("i64_rem_s"); }); } }
-          handled = true; }
+          const exitHere=()=>{
+            sideExit=true;f.if_();materialize(f);
+            i32c(f,RIP);i64c(f,i-GBASE);st64(f);wbDirty(f);
+            i32c(f,n);f.return_();f.end();
+          };
+          if(mm.isMem) {
+            emitEA(f,mm,j-GBASE);
+            //A fallback must not read an MMIO divisor a second time.
+            if(ext>=6&&!mm.knownRam) {
+              f.local_get(3);i64c(f,MEMSIZE);f.op("i64_ge_u");exitHere();
+            }
+          }
+          rdRM(f,mm,sz,rex);f.local_set(0);
+          if(ext<=5) {
+            rdReg(f,0,sz,rex);f.local_set(1);mulValue(f,sz,ext===5);
+            if(sz===1)wrReg(f,0,2,true,()=>f.local_get(2));
+            else {
+              wrReg(f,0,sz,rex,()=>f.local_get(2));
+              wrReg(f,2,sz,rex,()=>f.local_get(1));
+            }
+          } else {
+            const signed=ext===7;
+            if(signed&&sz<8) {
+              f.local_get(0);f.op(sz===4?"i64_extend32_s":sz===2?"i64_extend16_s":"i64_extend8_s");f.local_set(0);
+            }
+            f.local_get(0);f.op("i64_eqz");exitHere();
+            if(sz===1) {
+              rdReg(f,0,2,true);if(signed)f.op("i64_extend16_s");f.local_set(1);
+            } else if(sz===8) {
+              rdReg(f,0,8,true);f.local_set(1);
+              rdReg(f,2,8,true);
+              if(signed){f.local_get(1);i64c(f,63);f.op("i64_shr_s");}
+              else i64c(f,0);
+              f.op("i64_ne");exitHere();
+            } else {
+              rdReg(f,2,sz,rex);i64c(f,sz*8);f.op("i64_shl");
+              rdReg(f,0,sz,rex);f.op("i64_or");
+              if(signed&&sz===2)f.op("i64_extend32_s");f.local_set(1);
+            }
+            if(signed) {
+              f.local_get(0);i64c(f,-1);f.op("i64_eq");
+              f.local_get(1);i64c(f,1n<<63n);f.op("i64_eq");f.op("i32_and");exitHere();
+            }
+            f.local_get(1);f.local_get(0);f.op(signed?"i64_div_s":"i64_div_u");f.local_set(2);
+            if(sz<8) {
+              f.local_get(2);i64c(f,(1n<<BigInt(sz*8-(signed?1:0)))-1n);f.op(signed?"i64_gt_s":"i64_gt_u");
+              if(signed) {
+                f.local_get(2);i64c(f,-(1n<<BigInt(sz*8-1)));f.op("i64_lt_s");f.op("i32_or");
+              }
+              exitHere();
+            }
+            f.local_get(1);f.local_get(0);f.op(signed?"i64_rem_s":"i64_rem_u");f.local_set(1);
+            if(sz===1)wrReg(f,0,2,true,()=>{
+              f.local_get(2);i64c(f,255);f.op("i64_and");
+              f.local_get(1);i64c(f,255);f.op("i64_and");i64c(f,8);f.op("i64_shl");f.op("i64_or");
+            });
+            else {
+              wrReg(f,0,sz,rex,()=>f.local_get(2));
+              wrReg(f,2,sz,rex,()=>f.local_get(1));
+            }
+          }
+          handled=true;
+        }
       } else if (op >= 0xD8 && op <= 0xDF) {                                 // x87 FPU (geometry+int core; rest -> interpreter)
         if(fCacheEnabled && fHasFx)return jitCompile(rip,true);
         if (!FPR) break;                                                     // x87 offsets not wired
@@ -775,6 +847,11 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
     } else {                                                                 // 0F two-byte
       if (op === 0x31 && TSC) {                                             //RDTSC reads the shared device clock; only core zero advances it.
         wrReg(f, 0, 4, rex, () => { i32c(f, TSC); ld64(f); }); wrReg(f, 2, 4, rex, () => { i32c(f, TSC); ld64(f); i64c(f, 32); f.op("i64_shr_u"); }); handled = true;
+      } else if(op===0xAF) {
+        const mm=decodeModRM(j,rexR,rexX,rexB);j=mm.j;
+        if(mm.isMem)emitEA(f,mm,j-GBASE);
+        rdReg(f,mm.reg,szV,rex);f.local_set(0);rdRM(f,mm,szV,rex);f.local_set(1);
+        mulValue(f,szV,true);wrReg(f,mm.reg,szV,rex,()=>f.local_get(2));handled=true;
       } else if (op>=0x40 && op<=0x4F) {
         const m=decodeModRM(j,rexR,rexX,rexB);j=m.j;
         materialize(f);
