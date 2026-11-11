@@ -1027,3 +1027,25 @@ BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/finale.te
 
 This component reports transitions; artwork, cast animation, music and its
 connection to the interactive host are separate work.
+
+`TmFinaleGr.HC` adds the authored finale font/backgrounds, episode artwork and
+the episode-three scroll/END sequence as a second standalone component. It
+loads one flat and a private indexed frame, then decodes glyphs and artwork
+on demand. Original TempleOS and frozen HEMU match every pixel in 154 scenes
+(9,856,000 pixels) from the original C renderer, using both official Freedoom
+phases. Native CDC palette output and untouched padding are checked separately.
+The cleanup fixture passes 181 allocation/read failures plus cached-image and
+sound-callback retry cases. Exact evidence is in `finale-gr-evidence.json`.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/finale-gr.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/finale-alloc.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/finale-gr.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/finale-alloc.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm EPISODE=3 STAGE=1 TIC=1210 node tools/toom/finale-preview.mjs
+```
+
+The preview command exports an actual native frame. `EPISODE=1 STAGE=0
+TIC=3000` shows the completed first-episode text. These components remain
+outside `Load`/`Run` while cast animation and host continuation are connected;
+the development host still has the earlier static finale screen.

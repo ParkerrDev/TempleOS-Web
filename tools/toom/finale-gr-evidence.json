@@ -1,0 +1,140 @@
+{
+  "scope": "Standalone authored finale text and episode artwork rendering; not yet connected to Load/Run. Cast drawing and music remain separate.",
+  "sourceHashes": {
+    "games/Toom/TmFinaleGr.HC": "3fd6d383058f71978a4757686aa5ce9c29bb25f38e52e6bfbfe329f2bd9b0f73",
+    "games/Toom/TmFinale.HC": "cec0b0a9729b659b90162ef88340bcba339562540b415c7d8f4b50efc01d279a",
+    "games/Toom/TmGr.HC": "dcf3bfd9e476ba620d1479658410ee72c75e0599e96a8bf171df1b9dbdf7bc8e",
+    "games/Toom/TmPal.HC": "657c0c69082fad07cffe9b8800abf1d12df8eaa7603efa04dd62144b6142651f",
+    "tools/toom/FinaleGr.HC": "dff26876f7bd2d84a338103aebb85903e2632c77a6b69290e1ad4ce334b2d0ac",
+    "tools/toom/FinaleDrawRef.mjs": "c404606a8969b415976f073867c7562b8411add6e9b23a92d2286b4c6626ceee",
+    "tools/toom/finale-gr.test.mjs": "27e21c0b5d2e562ae5d91213dabd1fc7a56cf97e3ece0b697af114ffd9dc2fe3",
+    "tools/toom/FinaleAlloc.HC": "596a6719bf3c7857698da9e73ca375d8c9c8cee0da55316d1bc9c1db2d5e4c8d",
+    "tools/toom/finale-alloc.test.mjs": "6973eeecad5e6aae60d740edca80ceb32dff38ea1d0511e9f367c875d0d11cb8",
+    "tools/toom/FinaleRef.mjs": "77e5aa7c09b74c49ed3eddd02f2b5cb5c58383b6e3262a9453a9fa15b88b3da5",
+    "tools/toom/source/finale.json": "4f3ac8258145282f69b22d900557989e0caff5f3121e51f9bc76be678cb0143e",
+    "tools/toom/finale-preview.mjs": "469f2b63f12090763b96b245cbb36c9e108288b4984535ef7cde1a9929b924fe",
+    "tools/toom/Frame.mjs": "3c663cc639850340534328385d04a44dfbc7be7d0a8bc7136d92a79e286ed00c"
+  },
+  "reference": {
+    "repository": "https://github.com/id-Software/DOOM",
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "files": [
+      {
+        "path": "linuxdoom-1.10/f_finale.c",
+        "sha256": "c443ab18b6fa27df7033ac1ced0e86ab7c43c6e2cf2f8e428348d67d40a35670"
+      },
+      {
+        "path": "linuxdoom-1.10/v_video.c",
+        "sha256": "52fb89efb1e6de3842c197b32009d620dcd1578f7111a7502abe6110a925e5eb"
+      }
+    ]
+  },
+  "nativePixels": {
+    "results": [
+      {
+        "out": "FINALE GR 154 CASES 9856000 PIXELS BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-i_nb2rdc",
+    "sourceSha256": "865f630e458e43fba4144d48af50be82f7ccaadcc15cccedf58174a27ad1ea0e",
+    "referenceSha256": "7700308032ea3ffed6d400bf438d4a44d0507fe9d6b72a007d620d530eb79276",
+    "referenceSourceSha256": "c3945c6f9c32854e8b5266d11b02f16588129470bba24325429dbd9be263d539",
+    "assetHashes": [
+      "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
+    ]
+  },
+  "hemuPixels": {
+    "backend": "hemu",
+    "sourceSha256": "865f630e458e43fba4144d48af50be82f7ccaadcc15cccedf58174a27ad1ea0e",
+    "referenceSha256": "7700308032ea3ffed6d400bf438d4a44d0507fe9d6b72a007d620d530eb79276",
+    "referenceSourceSha256": "c3945c6f9c32854e8b5266d11b02f16588129470bba24325429dbd9be263d539",
+    "assetHashes": [
+      "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
+    ],
+    "cases": 154,
+    "pixels": 9856000,
+    "bad": 0
+  },
+  "nativeFailures": {
+    "results": [
+      {
+        "out": "FINALE ALLOC 187 CASES 181 FAULTS BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-ltr1xjw_",
+    "sourceSha256": "02ee5b6450c3ba39836bd82fb5a42b42af6ab383045fd6506666f365e5dd0988",
+    "assetSha256": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d"
+  },
+  "hemuFailures": {
+    "backend": "hemu",
+    "sourceSha256": "02ee5b6450c3ba39836bd82fb5a42b42af6ab383045fd6506666f365e5dd0988",
+    "assetSha256": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+    "cases": 187,
+    "faults": 181,
+    "bad": 0
+  },
+  "runtime": {
+    "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
+    "compiler": "d0e394e",
+    "hemu": "0eff35b",
+    "singleWasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c"
+  },
+  "nativePreviews": [
+    {
+      "path": "/tmp/toom-finale-1-0-3000.png",
+      "summary": "FINALE E1 STAGE 0 TIC 3000",
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-xk3q_auu"
+    },
+    {
+      "path": "/tmp/toom-finale-3-1-1210.png",
+      "summary": "FINALE E3 STAGE 1 TIC 1210",
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-8fw4ea4w"
+    }
+  ],
+  "previewHashes": {
+    "/tmp/toom-finale-1-0-3000.png": "c1948d26956669ac600c5ad05812c4846664bad82e7123755c5f9fae40a01b2d",
+    "/tmp/toom-finale-3-1-1210.png": "3c72f191ec103af94c631cdf4fc1a81630360a452b253638407c42de2f0c3d71"
+  },
+  "pixelCoverage": [
+    "154 scenes compare every indexed pixel with unchanged released F_TextWrite, F_DrawPatchCol, F_BunnyScroll, F_Drawer and V_DrawPatch bodies using official Freedoom 0.13.0 Phase1/Phase2 assets.",
+    "9,856,000 direct pixel comparisons cover all ten authored text/background selections at reveal boundaries and full text, E1 CREDIT/E2 VICTORY2/E4 ENDPIC, and21 E3 scroll/END boundaries.",
+    "Six END sound events match original render order. Native END patch origins -77/-123 are retained.",
+    "Four representative original indexed frames also verify every native 2x2 palette byte and untouched padding in an oversized CDC."
+  ],
+  "ownershipCoverage": [
+    "187 cases include181 injected application allocation/read failures across construction, lazy fonts, episode art, scroll pair and END replacement.",
+    "Failure before a replacement END image is ready retains the old cached image and allocation baseline; retry succeeds.",
+    "A sound callback can throw after image publication; its event remains retryable and cleanup releases the cache.",
+    "All fixture files and task-heap allocations return to baseline."
+  ],
+  "limits": [
+    "No cast character animation/drawing, music playback, interactive finale lifecycle or performance qualification is implied.",
+    "The original font index for a backtick is out of bounds; official authored strings contain none. Unsupported glyphs are treated as four-pixel spacing in the native renderer.",
+    "The native image helper clips to its320x200 private buffer. Source parity is established for the154 defined official-asset scenes, not original undefined out-of-screen writes.",
+    "The two previews are native renderer outputs encoded as PNG, not observations of an interactive browser finale."
+  ]
+}

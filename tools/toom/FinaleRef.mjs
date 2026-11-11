@@ -7,9 +7,9 @@ import {execFileSync} from 'node:child_process';
 import {root} from './Assets.mjs';
 import {EnemyFunction} from './EnemyRef.mjs';
 
-export async function FinaleSource() {
+export async function FinaleSource(name='f_finale.c') {
   const dir=resolve(root,'tools/toom/source'),meta=JSON.parse(readFileSync(resolve(dir,'finale.json'))),
-    file=meta.files[0],path=resolve(dir,'f_finale.c');
+    file=meta.files.find(f=>f.path.endsWith('/'+name)),path=resolve(dir,name);assert(file);
   if(!existsSync(path)) {
     const response=await fetch(`https://raw.githubusercontent.com/id-Software/DOOM/${meta.revision}/${file.path}`);
     assert(response.ok);writeFileSync(path,Buffer.from(await response.arrayBuffer()));

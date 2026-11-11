@@ -103,6 +103,12 @@ reveal count from F_StartFinale, F_Ticker and F_TextWrite in the same pinned
 id Software f_finale.c. Source provenance is in tools/toom/source/finale.json.
 Cast animation and artwork rendering are separate from this timeline.
 
+TmFinaleGr.HC re-expresses F_TextWrite, F_DrawPatchCol, F_BunnyScroll and
+F_Drawer from f_finale.c, with patch placement from V_DrawPatch in v_video.c
+at the same revision. It renders lazily decoded Freedoom assets into private
+indexed pixels and native TempleOS CDC palette patterns. Both original source
+digests are recorded in tools/toom/source/finale.json.
+
 TmStory consumes the authored Freedoom BEX map names, ending text, ending
 flats and par times. Its text/continuation rules follow Chocolate Doom
 DEH_ReadLine and DEH_ParseAssignment, copyright 2005-2014 Simon Howard,

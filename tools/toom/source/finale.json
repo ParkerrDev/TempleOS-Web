@@ -5,6 +5,10 @@
     {
       "path": "linuxdoom-1.10/f_finale.c",
       "sha256": "c443ab18b6fa27df7033ac1ced0e86ab7c43c6e2cf2f8e428348d67d40a35670"
+    },
+    {
+      "path": "linuxdoom-1.10/v_video.c",
+      "sha256": "52fb89efb1e6de3842c197b32009d620dcd1578f7111a7502abe6110a925e5eb"
     }
   ]
 }
