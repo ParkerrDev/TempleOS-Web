@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "2a984377dc109c44da16309188ce057c7d75ab85eedbab69db9299e6c7922374",
+  "runtimeSha256": "48ebd547f629ba5ebf2120c33edb5aeef862d22ab72d4df7fac81f046856e5e4",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -9,7 +9,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "33a9f637cd28ccbd05e46554702a165b1d964ef70b3544940dd202c528af8b78"
+      "wasmSha256": "1fe3d2de73867b57f77b7df2e5bee9009a0358d913ccc296805e103670e2204b"
     },
     "toom": {
       "name": "TOOM",
@@ -27,7 +27,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "ba818a9fd3d6f67cd18718422c5932c0163551c21e6ad7d1bfcb03edc2b2f1fc"
+      "wasmSha256": "a369b6cfcf28aac8f49e3965b83022a087e9f535e073abf8842df3f18a68c908"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -36,7 +36,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "b6d8047c7f391a8fdca6d7f6c0214dc24c1b0becff9041be10918524f5360605"
+      "wasmSha256": "da5962a4218b963ec906e8ed2c1aaffd5d39bdd7247095b0fc9c32dfe83e7c18"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -45,7 +45,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "3fe41cc9f4e233b426a57729105aa66098bf7f4089251a926b4e34d59e3319b0"
+      "wasmSha256": "b29bf54eaa640a8438343045389a6d20397ba2de4477e77a0ca83c2abd3b6b62"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -162,7 +162,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "d25f970c1027b5cd5f7e12d7d070ee83faaeac514f6eae6f3977c0d4c3a66a05"
+      "wasmSha256": "7b879497e4cfc0ef188461b52f2dbcb58e6a6059f9683b3d1d1ddf4586096232"
     },
     "tinker-Whap": {
       "name": "Whap",

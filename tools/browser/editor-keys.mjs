@@ -45,7 +45,12 @@ try{
  assert.deepEqual([...text.matchAll(/KEY:(\d+):/g)].map(m=>Number(m[1])),[0,28,31,0,97,97,27],text);
  console.log('Native GetKey: modifiers, extended arrow, repeats and idle worker wake pass.');
  await run('I64 ch; gr.dc->color=RED; GrRect(,0,0,20,20); "READY\\n"; while(TRUE) {ch=GetKey; if(ch==27) break; "HIT:%d\\n",ch;}');await ready();
- await page.waitForFunction(()=>{const c=document.getElementById('screen').getContext('2d').getImageData(0,0,1,1).data;return c[0]===170&&c[1]===0&&c[2]===0;});
+ try{await page.waitForFunction(()=>{const c=document.getElementById('screen').getContext('2d').getImageData(0,0,1,1).data;return c[0]===170&&c[1]===0&&c[2]===0;});}
+ catch(error){throw new Error(JSON.stringify(await page.evaluate(()=>({
+  pixel:Array.from(document.getElementById('screen').getContext('2d').getImageData(0,0,1,1).data),
+  text:document.getElementById('console').textContent,events:workerEvents,
+  frame:Atomics.load(inputCtrl,control.FRAME)
+ }))),{cause:error});}
  const frames=await page.evaluate(()=>Atomics.load(inputCtrl,control.FRAME));
  await page.keyboard.press('a');await page.waitForFunction(()=>document.getElementById('console').textContent.includes('HIT:97'));
  assert.equal(await page.evaluate(()=>Atomics.load(inputCtrl,control.FRAME)),frames,'key wakeups do not inflate display frames');
