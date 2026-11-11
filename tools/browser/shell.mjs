@@ -160,6 +160,10 @@ try {
       await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(
         ()=>requestAnimationFrame(resolve))));
       await left.waitFor({state:"visible"});
+      assert.equal(await page.locator('#keysbar').evaluate(e=>document.getElementById('frame').contains(e)),true,
+        'OS fullscreen keeps the Keys window inside its fullscreen element.');
+      assert.equal(await page.locator('#mobInput').evaluate(e=>document.getElementById('frame').contains(e)),true,
+        'The phone keyboard input remains focusable inside fullscreen.');
       const box=await left.boundingBox();
       await cdp.send("Input.dispatchTouchEvent",{type:"touchStart",
         touchPoints:[{x:box.x+box.width/2,y:box.y+box.height/2}]});

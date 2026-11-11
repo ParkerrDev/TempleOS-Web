@@ -103,10 +103,11 @@ try{
  await bar.getByRole('button',{name:'Shift',exact:true}).tap();
  await bar.getByRole('button',{name:'Esc',exact:true}).tap();
  await bar.getByRole('button',{name:'Space',exact:true}).tap();
+ await bar.getByRole('button',{name:'Left arrow',exact:true}).tap();
  await bar.getByRole('button',{name:'Esc',exact:true}).tap();
  await page.waitForFunction(()=>!__holycEditor.isRunning());
  const mobile=await page.locator('#console').innerText();
- assert.deepEqual([...mobile.matchAll(/KEY:(\d+):/g)].map(m=>Number(m[1])),[0,28,32,27],mobile);
+ assert.deepEqual([...mobile.matchAll(/KEY:(\d+):/g)].map(m=>Number(m[1])),[0,28,32,0,27],mobile);
  assert.equal(await bar.getByRole('button',{name:'Shift',exact:true}).getAttribute('aria-pressed'),'false');
  await run('I64 sc=Char2ScanCode(32); "READY\\n"; while(!Bt(kbd.down_bitmap,sc.u8[0])) Sleep(1); "DOWN\\n"; while(Bt(kbd.down_bitmap,sc.u8[0])) Sleep(1); "UP\\n";');await ready();
  await page.keyboard.down('Space');await page.waitForFunction(()=>document.getElementById('console').textContent.includes('DOWN'));
@@ -133,6 +134,53 @@ try{
  const legacy=await page.locator('#console').innerText();
  assert.deepEqual([...legacy.matchAll(/CHAR:(\d+)/g)].map(m=>Number(m[1])),[31,27],legacy);
  assert.deepEqual(errors,[]);
+ for(const native of [true,false]) {
+  await run('I64 ch; "READY\\n"; while(TRUE) {ch='+ (native?'GetKey':'KeyGet') +'; if(ch) "TEXT:%d\\n",ch; if(ch==27) break;}');
+  await page.waitForFunction(()=>document.getElementById('console').textContent.includes('READY'));
+  await page.locator('#screen').focus();
+  await page.locator('#tKb').tap();
+  assert.equal(await page.locator('#mobInput').evaluate(e=>e===document.activeElement),true);
+  await page.locator('#mobInput').evaluate(e=>{
+   e.dispatchEvent(new InputEvent('beforeinput',{inputType:'insertText',data:'Ab!?',bubbles:true,cancelable:true}));
+   e.dispatchEvent(new InputEvent('beforeinput',{inputType:'insertCompositionText',data:'c',isComposing:true,bubbles:true,cancelable:true}));
+   e.dispatchEvent(new CompositionEvent('compositionend',{data:'c',bubbles:true}));
+   e.dispatchEvent(new KeyboardEvent('keydown',{key:'Backspace',code:'Backspace',bubbles:true,cancelable:true}));
+   e.dispatchEvent(new InputEvent('beforeinput',{inputType:'insertLineBreak',bubbles:true,cancelable:true}));
+  });
+  await bar.getByRole('button',{name:'Esc',exact:true}).tap();
+  await page.waitForFunction(()=>!__holycEditor.isRunning());
+  const typed=await page.locator('#console').innerText();
+  assert.deepEqual([...typed.matchAll(/TEXT:(\d+)/g)].map(m=>Number(m[1])),[65,98,33,63,99,8,10,27],typed);
+ }
+ await run('"READY\\n"; while(TRUE) Sleep(1);');
+ await page.waitForFunction(()=>document.getElementById('console').textContent.includes('READY'));
+ await page.locator('#screen').focus();
+ await page.locator('#previewFullscreen').tap();
+ await page.waitForFunction(()=>document.fullscreenElement?.id==='editorPreview');
+ for(const selector of ['#keysbar','#touchui','#mobInput'])
+  assert.equal(await page.locator(selector).evaluate(e=>document.fullscreenElement.contains(e)),true,selector);
+ await page.screenshot({path:'/tmp/temple-mobile-preview-fullscreen.png'});
+ const cdp=await context.newCDPSession(page),left=page.locator('#tL'),joy=page.locator('#joy');
+ let bounds=await left.boundingBox();
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:bounds.x+bounds.width/2,y:bounds.y+bounds.height/2}]});
+ await page.waitForFunction(()=>Atomics.load(inputCtrl,control.MS_LB)===1);
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+ await page.waitForFunction(()=>Atomics.load(inputCtrl,control.MS_LB)===0);
+ bounds=await joy.boundingBox();
+ const beforeX=await page.evaluate(()=>Atomics.load(inputCtrl,control.MS_X));
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:bounds.x+bounds.width-5,y:bounds.y+bounds.height/2}]});
+ await page.waitForFunction(x=>Atomics.load(inputCtrl,control.MS_X)>x,beforeX);
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ const stoppedX=await page.evaluate(()=>Atomics.load(inputCtrl,control.MS_X));
+ await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ assert.equal(await page.evaluate(()=>Atomics.load(inputCtrl,control.MS_X)),stoppedX);
+ await page.locator('#previewFullscreen').tap();
+ await page.waitForFunction(()=>!document.fullscreenElement&&!document.querySelector('.keyswin.input-docked'));
+ assert.equal(await bar.evaluate(e=>e.closest('.keyswin').parentElement.className),'col-left');
+ await page.evaluate(()=>__holycEditor.stop());
+ assert.equal(await page.locator('#touchui').evaluate(e=>e.parentElement.id),'frame');
+ console.log('Phone text/composition and deletion reach native/legacy previews; fullscreen preserves Keys, joystick motion and mouse-button cancellation.');
  console.log('On-screen mobile keys reach native and legacy previews, preserve physical holds and clear modifiers.');
  console.log('Unsupported blocking import refuses before source initialization; no page errors.');
 }finally{await browser.close();server.kill();await once(server,'exit');}

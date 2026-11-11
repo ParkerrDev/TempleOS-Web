@@ -180,7 +180,7 @@ export function KeyBar(bar,input)
     unlatch();
   }
   for (let button of buttons) {
-    let name=button.textContent,key=KEY[names[name] || name],
+    let name=button.textContent,key=KEY[button.dataset.key || names[name] || name],
       modifier=modifiers.has(name);
     if (modifier)
       button.setAttribute("aria-pressed","false");

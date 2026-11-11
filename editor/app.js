@@ -87,11 +87,16 @@ const screenKeys={
     if(!legacyInput.down(source,key&127))return false;
     const shift=legacyInput.held().some(key=>key===KEY.ShiftLeft||key===KEY.ShiftRight);
     const ch=key===KEY.Escape?(shift?28:27):key===KEY.Space?(shift?31:32):
-      key===KEY.Enter?10:key===KEY.Tab?9:0;
+      key===KEY.Enter?10:key===KEY.Tab?9:key===KEY.Backspace?8:0;
     if(ch)pushKey(ch);
     return true;
   },
   up:source=>legacyInput.up(source),
+  tap(key){const source=Symbol();this.down(source,key);this.up(source);},
+  text(ch){
+    if(!legacyInput.text(ch))return false;
+    pushKey(ch.charCodeAt(0));return true;
+  },
 };
 function clearNative(){
   nativeResetting=true;nativeInput.reset();nativeResetting=false;
@@ -154,7 +159,7 @@ document.addEventListener('pointerlockchange',()=>{
   document.body.classList.toggle('mouse-locked',!!document.pointerLockElement);
   mouseStateChanged();
 });
-document.addEventListener('pointerdown',e=>{if(e.target!==curCanvas&&!e.target?.closest?.('#keysbar'))releaseInput();},true);
+document.addEventListener('pointerdown',e=>{if(e.target!==curCanvas&&!e.target?.closest?.('#keysbar,#touchui'))releaseInput();},true);
 document.addEventListener('mousemove',e=>{
   if(!running)return;
   if(document.pointerLockElement!==curCanvas){
@@ -210,7 +215,7 @@ function releaseMouse() {
   if(isMouseCaptured())document.exitPointerLock();
 }
 function attachInput(target) {
-  target.addEventListener("blur",()=>{if(target===curCanvas&&!isMouseCaptured())releaseInput();});
+  target.addEventListener("blur",event=>{if(target===curCanvas&&!isMouseCaptured()&&!event.relatedTarget?.closest?.("#touchui"))releaseInput();});
   const mouseDown=e=>{
     if(!running||target!==curCanvas||![0,2].includes(e.button))return;
     if(((captureWanted&&!hybridMouse)||e.shiftKey)&&!isMouseCaptured()){
@@ -391,4 +396,15 @@ if (!self.crossOriginIsolated) {
 }
 // Expose run/stop so the host page (the overlay opener) can drive the editor:
 // run the default demo when the window opens, stop it when the window closes.
-window.__holycEditor = { run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null };
+window.__holycEditor = { run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null,
+  inputCanvas:()=>running?curCanvas:null,
+  touchMouse:{
+    position:()=>ctrl?[Atomics.load(ctrl,CTRL.MS_X),Atomics.load(ctrl,CTRL.MS_Y)]:[320,240],
+    move(x,y){
+      if(!running||!ctrl)return;
+      Atomics.add(ctrl,CTRL.MS_DX,x-Atomics.exchange(ctrl,CTRL.MS_X,x));
+      Atomics.add(ctrl,CTRL.MS_DY,y-Atomics.exchange(ctrl,CTRL.MS_Y,y));
+    },
+    buttons(mask){if(running){setButton(CTRL.MS_LB,!!(mask&1));setButton(CTRL.MS_RB,!!(mask&2));}},
+  },
+};

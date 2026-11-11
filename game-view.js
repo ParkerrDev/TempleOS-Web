@@ -17,6 +17,7 @@ export function setupGameViews({release:releaseMouse,raise}){
     if(!active)return;
     active.classList.remove('view-fullscreen');active=null;real=false;
     document.body.style.overflow=overflow;update();release();
+    dispatchEvent(new Event('input-view-change'));
   }
   function exit(){
     ++revision;
@@ -33,6 +34,7 @@ export function setupGameViews({release:releaseMouse,raise}){
     const request=++revision;active=target;overflow=document.body.style.overflow;
     document.body.style.overflow='hidden';active.classList.add('view-fullscreen');
     raise(target.closest('.overlay'));update();focus();
+    dispatchEvent(new Event('input-view-change'));
     const enter=target.requestFullscreen||target.webkitRequestFullscreen;
     if(enter){
       try{Promise.resolve(enter.call(target)).then(()=>{

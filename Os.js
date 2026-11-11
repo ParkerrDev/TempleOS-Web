@@ -4,7 +4,7 @@
 import {createFrameBlitter,screenFit,PALETTE} from "./framebuffer.js";
 import {createGuestFpsMeter} from "./guest-fps.js";
 import {KEY,KeyInput,KeyBar,KeyRoute} from "./Keyboard.js";
-import {TouchControls} from "./TouchControls.js";
+import {MobileInput} from "./MobileInput.js";
 import {SnapshotInspect} from "./engine/Snapshot.js";
 import {BusStop,BUS_VERSION} from "./engine/CoreBus.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
@@ -127,7 +127,10 @@ const keyboard=KeyInput(function (bytes) {
   keyq.push(...bytes);
   notifyInput();
 });
-const resetKeyBar=KeyBar($("keysbar"),KeyRoute(()=>os_game.ed?.hasInputFocus() || !focused ? os_game.ed?.keyInput() || keyboard : keyboard));
+const previewInput=()=>os_game.ed?.inputCanvas() && !$("frame").classList.contains('fsmode') &&
+  (os_game.ed.hasInputFocus() || !focused)?os_game.ed:null;
+const keyTarget=()=>previewInput()?.keyInput()||keyboard;
+const resetKeyBar=KeyBar($("keysbar"),KeyRoute(keyTarget));
 
 addEventListener('preview-input-reset',resetKeyBar);
 
@@ -301,16 +304,12 @@ addEventListener("paste",function (e) {
 //      the touch controls stay (they live inside #frame) and the keys bar floats on top. ----
 { const frame = $("frame");
   let fake = false;
-  // Touch fullscreen layout: keep the controls above the on-screen keyboard and the [X] out of
-  // the OS view. VisualViewport reports the keyboard height (it shrinks the visual viewport on
-  // both iOS and Android) - so tapping the joystick/buttons while typing stays usable.
+  //VisualViewport excludes the phone keyboard; keep the exit button above it.
   const vv = window.visualViewport;
   const layoutFs = () => {
     const onFs = document.body.classList.contains("touch") && frame.classList.contains("fsmode");
-    if (!onFs) { frame.style.removeProperty("--kbinset"); frame.style.removeProperty("--fsx-top"); frame.classList.remove("fsx-mid"); return; }
+    if (!onFs) { frame.style.removeProperty("--fsx-top"); frame.classList.remove("fsx-mid"); return; }
     const kb = vv ? Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) : 0;   // ≈ keyboard height
-    const lift = Math.min(kb, Math.max(0, innerHeight - 140));        // keep the 124px joystick fully on-screen
-    frame.style.setProperty("--kbinset", lift + "px");               // lifts joystick + L/R + ⌨ above the keyboard
     const kbTop = innerHeight - kb, cr = canvas.getBoundingClientRect();
     // [X] stays OUT of the OS AND clear of the right-side buttons. Portrait: there's a black
     // letterbox below the canvas → center it there (.fsx-mid), just under the OS but never under
@@ -332,7 +331,7 @@ addEventListener("paste",function (e) {
       Object.assign(frame.style, frame._fsSaved); frame._fsSaved = null;
     }
     fitScreen();
-    layoutFs(); requestAnimationFrame(layoutFs);     // position controls/[X]; recompute once the layout settles
+    layoutFs(); dispatchEvent(new Event("input-view-change")); requestAnimationFrame(layoutFs);     // position controls/[X]; recompute once the layout settles
   };
   const fauxOn = () => { fake = true; document.body.classList.add("fakefs"); fsUi(true); scrollTo(0, 0); };
   const fauxOff = () => { fake = false; document.body.classList.remove("fakefs"); fsUi(false); };
@@ -373,12 +372,14 @@ function TouchMode(e)
     releaseHeld();
   document.body.classList.toggle("touch",touchDevice.matches);
   $("touchBtn").setAttribute("aria-pressed",String(touchDevice.matches));
+  dispatchEvent(new Event("input-view-change"));
 }
 TouchMode();
 touchDevice.addEventListener("change",TouchMode);
 $("touchBtn").addEventListener("click",function () {
   let on=document.body.classList.toggle("touch");
   $("touchBtn").setAttribute("aria-pressed",String(on));
+  dispatchEvent(new Event("input-view-change"));
   releaseHeld();
 });
 { // The mouse: the real TempleOS pointer. The cursor.png arrow (recolored white) rides the
@@ -402,40 +403,20 @@ $("touchBtn").addEventListener("click",function () {
     addEventListener('blur',hideCursor);
   }
 }
-TouchControls($("frame"),{
+const touchMouse={
   position:()=>[msX,msY],
-  move(x,y) {msX=x;msY=y;notifyInput();},
+  move(x,y) {mouseDX+=x-msX;mouseDY+=y-msY;msX=x;msY=y;notifyInput();},
   buttons(mask) {msB=mask;notifyInput();},
-});
-{
-  let inp=$("mobInput");
-  $("tKb").addEventListener("click",function () {
-    inp.focus({preventScroll:true});
-  });
-  inp.addEventListener("beforeinput",function (e) {
-    if (e.isComposing)
-      return;
-    if (e.inputType=="insertText" && e.data)
-      for (let ch of e.data)
-        keyboard.text(ch);
-    else if (e.inputType=="deleteContentBackward")
-      keyboard.tap(KEY.Backspace);
-    else if (e.inputType=="insertLineBreak")
-      keyboard.tap(KEY.Enter);
-    e.preventDefault();
-  });
-  inp.addEventListener("compositionend",function (e) {
-    for (let ch of e.data)
-      keyboard.text(ch);
-    inp.value="";
-  });
-  inp.addEventListener("keydown",function (e) {
-    if (!e.isComposing && ["Enter","Backspace"].includes(e.key)) {
-      keyboard.tap(KEY[e.key]);
-      e.preventDefault();
-    }
-  });
-}
+};
+document.addEventListener('pointerdown',e=>{
+  if(e.target===canvas)setFocused(true);
+  else if(e.target===os_game.ed?.inputCanvas())setFocused(false);
+},true);
+MobileInput({frame:$("frame"),target:()=>{
+  const ed=previewInput();
+  if(ed)return {canvas:ed.inputCanvas(),mouse:ed.touchMouse,keys:ed.keyInput};
+  return {canvas,mouse:touchMouse,keys:()=>keyboard};
+}});
 
 // ---- optional PC-speaker sound ----
 let actx = null, osc = null, gain = null;
