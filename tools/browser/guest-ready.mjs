@@ -13,7 +13,7 @@ await once(site,'listening');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/usr/bin/chromium',
   headless:true,args:['--no-sandbox']});
 try {
-  for(const cores of [1,4])for(const outcome of ['ready','disk-error','early-disk-error','restart']) {
+  for(const cores of [1,4])for(const outcome of ['ready','disk-error','early-disk-error','boot-error','restart']) {
     const context=await browser.newContext({viewport:{width:1280,height:800}});
     let releaseBoot=()=>{},releaseDisk=()=>{};
     try {
@@ -37,12 +37,13 @@ try {
       });
       let bootHeld,firstBoot=true,diskHeld,firstDisk=true;
       const bootWait=new Promise(resolve=>bootHeld=resolve),diskWait=new Promise(resolve=>diskHeld=resolve);
-      const binary=cores===1?'hemu.wasm':'hemu-smp.wasm';
-      await context.route('**/build/'+binary,async route=>{
+      await context.route('**/build/hemu*.wasm',async route=>{
         if(firstBoot) {
           firstBoot=false;bootHeld();await new Promise(resolve=>releaseBoot=resolve);
         }
-        await route.fulfill({body:await readFile(new URL('build/'+binary,root)),contentType:'application/wasm'});
+        const binary=new URL(route.request().url()).pathname.split('/').pop();
+        await route.fulfill({body:outcome==='boot-error'?Buffer.from([0]):
+          await readFile(new URL('build/'+binary,root)),contentType:'application/wasm'});
       });
       await context.route('**/vendor/images/templeos-hd.qcow2.gz',async route=>{
         if(firstDisk) {
@@ -63,7 +64,17 @@ try {
       });
       assert.deepEqual(await page.evaluate(()=>window.guestSent),[]);
       assert.equal(await page.evaluate(()=>window.guestBytes.byteLength),8);
-      if(outcome==='restart') {
+      if(outcome==='boot-error') {
+        releaseBoot();
+        await page.waitForFunction(()=>window.guestResults.file&&window.guestResults.source);
+        const failed=await page.evaluate(()=>({results:window.guestResults,sent:window.guestSent,bytes:window.guestBytes.byteLength}));
+        assert.equal(failed.results.file.ok,false);assert.equal(failed.results.source.ok,false);
+        assert.deepEqual(failed.sent,[]);assert.equal(failed.bytes,8);
+        const retry=await page.evaluate(async()=>{
+          const {OsLaunch}=await import('/Os.js');return OsLaunch({src:'"Still stopped";'});
+        });
+        assert.equal(retry.ok,false);assert.equal(retry.msg,failed.results.source.msg);
+      } else if(outcome==='restart') {
         await page.locator('#restartBtn').click();
         await page.waitForFunction(()=>window.guestResults.file&&window.guestResults.source);
         const canceled=await page.evaluate(()=>({results:window.guestResults,sent:window.guestSent,bytes:window.guestBytes.byteLength}));
