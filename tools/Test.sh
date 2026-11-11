@@ -16,3 +16,4 @@ node tools/verify-games.mjs
 node tools/native-games-audit.mjs --check
 node search/Query.test.mjs
 node search/QueryMemory.test.mjs
+node sprites/Gr.test.mjs

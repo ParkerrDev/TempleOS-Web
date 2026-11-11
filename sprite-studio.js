@@ -1,5 +1,6 @@
-import { PALETTE, MAX_PIXELS, MAX_FRAMES, toRGBA, encodeGR, decodeGR, encodeGIF, spritePackage } from './sprite-codec.js';
+import { PALETTE, MAX_PIXELS, MAX_FRAMES, toRGBA, encodeGIF, spritePackage } from './sprite-codec.js';
 import {createSpritePlayer} from './sprite-player.js';
+import {GrLoad} from './sprites/Gr.js';
 const $ = id => document.getElementById(id);
 // The iframe shares the desktop cursor so it stays consistent across window edges.
 const desktopCursor = window !== parent ? parent.__desktopCursor : null;
@@ -13,7 +14,7 @@ if (desktopCursor?.enabled) {
 }
 let source = null, frames = [], originals = [], previews = [], size = {width:160,height:120}, delayMs = 40;
 let player = null, ff = null, busy = false, cancelled = false;
-let cancelMapping = null;
+let cancelMapping = null,gr_codec=null;
 let rateStart=0,rateFrames=0;
 for (const color of PALETTE) { const s=document.createElement('span'); s.style.background=`rgb(${color})`; s.title=color.join(', '); $('palette').append(s); }
 function status(s) { $('status').textContent=s; }
@@ -27,6 +28,7 @@ function selectFile(file) {
   source=file; clearResult(); $('filename').textContent=file.name; $('convert').disabled=false; status('Ready to convert.');
 }
 $('file').onchange=e=>selectFile(e.target.files[0]);
+$('file').disabled=false;
 for(const name of ['dragenter','dragover']) document.addEventListener(name,e=>{e.preventDefault();document.body.classList.add('drag');});
 document.addEventListener('dragleave',()=>document.body.classList.remove('drag'));
 document.addEventListener('drop',e=>{e.preventDefault();document.body.classList.remove('drag');selectFile(e.dataTransfer.files[0]);});
@@ -97,9 +99,15 @@ $('controls').onsubmit=async e=>{
     const width=Number($('width').value), fps=Number($('fps').value), duration=Number($('duration').value), start=Number($('start').value);
     if(!Number.isInteger(width)||width<8||width>640||!Number.isFinite(fps)||fps<5||fps>50||!Number.isFinite(duration)||duration<0.1||duration>10||!Number.isFinite(start)||start<0||start>86400) throw new Error('Check the width, frame rate, start time and clip length.');
     delayMs=1000/fps;
+    gr_codec=await GrLoad();
+    if (cancelled) throw new Error("Cancelled.");
     const isGR=/\.gr$/i.test(source.name), isGIF=source.type==='image/gif'||/\.gif$/i.test(source.name), isVideo=source.type.startsWith('video/');
     let raw=[];
-    if(isGR){const gr=decodeGR(new Uint8Array(await source.arrayBuffer()));size={width:gr.width,height:gr.height};raw=[toRGBA(gr.indices,gr.width,gr.height)];}
+    if(isGR){
+      if (source.size>gr_codec.maxSize) throw new Error("Sprite data exceeds the maximum GR size.");
+      const gr=gr_codec.decodeGR(new Uint8Array(await source.arrayBuffer()));
+      size={width:gr.width,height:gr.height};raw=[toRGBA(gr.indices,gr.width,gr.height)];
+    }
     else {
       let natural,bitmap;
       if(isVideo) natural=await videoDimensions(source);
@@ -133,9 +141,9 @@ $('controls').onsubmit=async e=>{
   finally{busy=false;$('convert').disabled=!source;$('file').disabled=false;$('cancel').hidden=true;}
 };
 function download(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
-$('gr').onclick=()=>download(encodeGR(frames[Number($('frame').value)],size.width,size.height),'Sprite.GR','application/octet-stream');
+$('gr').onclick=()=>download(gr_codec.encodeGR(frames[Number($('frame').value)],size.width,size.height),'Sprite.GR','application/octet-stream');
 $('gif').onclick=()=>download(encodeGIF(frames,size.width,size.height,delayMs),'Sprite.gif','image/gif');
-$('package').onclick=()=>download(spritePackage(frames,size.width,size.height,delayMs),'TempleOS-Sprite.zip','application/zip');
+$('package').onclick=()=>download(spritePackage(frames.map(f=>gr_codec.encodeGR(f,size.width,size.height)),size.width,size.height,delayMs),'TempleOS-Sprite.zip','application/zip');
 $('png').onclick=()=>{
   const cols=Math.min(frames.length,Math.max(1,Math.floor(2048/size.width))),rows=Math.ceil(frames.length/cols);
   const canvas=document.createElement('canvas');canvas.width=cols*size.width;canvas.height=rows*size.height;const ctx=canvas.getContext('2d');
