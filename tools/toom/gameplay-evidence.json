@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "70bbfc9ceb077d09738ef9cd4f9f7129bdc3eb17ad667b9f52b5ebfbfba64c41",
+  "renderSourceSha256": "580c088bad01fb9c0f466f9d51a8f56dbdded83f1867b6224f69224bdb5debd2",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-928z7oco",
+      "native": "qemu-stn1oi53",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -133,9 +133,17 @@
       "cases": 14873,
       "timelineTics": 12778,
       "keyMaskCombinations": 1024,
-      "native": "qemu-o8y_vnfl",
+      "native": "qemu-b0aok7gs",
       "hemu": true,
       "scope": "Door controllers, manual/tagged/locked activation, timers, obstruction and mover ownership; full line dispatch and UI/audio remain pending"
+    },
+    "floors": {
+      "presets": 12,
+      "heightConfigurations": 768,
+      "timelineTics": 107940,
+      "native": "qemu-qwd5vvlj",
+      "hemu": true,
+      "scope": "Direct floor presets, flat/special timing, texture metadata, actual crush/block recovery and ownership; stairs/donuts and full line dispatch pending"
     }
   },
   "frames": [

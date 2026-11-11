@@ -9,21 +9,6 @@
 #define TM_DOOR_SPEED		(2*65536)
 #define TM_DOOR_WAIT		150
 
-I64 SectorCeilMin(Sectors *tmps,I64 sector,Bool *_found=NULL)
-{//An isolated sector keeps its ceiling instead of using an unbounded sentinel.
-  Map *map=tmps->motion->world->map;
-  SectorArea *area=tmps->area+sector;
-  I64 i,n,res=0x7FFFFFFF;
-  Bool found=FALSE;
-  for (i=0;i<area->cnt;i++) {
-    n=SectorOther(tmps,sector,tmps->lines[area->first+i]);
-    if (n>=0) {res=MinI64(res,map->sector[n].ceil); found=TRUE;}
-  }
-  if (!found) res=map->sector[sector].ceil;
-  if (_found) *_found=found;
-  return res;
-}
-
 U0 DoorSnd(Sectors *tmps,Mover *tmpm,Bool opening)
 {
   I64 n=TM_SFX_DORCLS;

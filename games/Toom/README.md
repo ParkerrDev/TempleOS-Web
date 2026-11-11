@@ -117,6 +117,14 @@ The implemented foundation uses native V5.03 file and memory APIs:
   uninitialized fields in the legacy source. Isolated doors retain their ceiling,
   and an opening destination cannot go below the floor.
 
+- Floor controllers implement lowering, nearest/ceiling/24/512-unit raising,
+  turbo movement, crushing, lower-and-change and raise-and-change flats/specials,
+  and raises by the shortest lower texture. Texture triggers inspect metadata
+  without decoding images. Neighbor queries accept every signed map height and
+  have no fixed 20-neighbor limit; isolated sectors keep their own floor. Missing
+  lower-and-change neighbors preserve the existing flat/special, and destinations
+  saturate at the signed Q16 range rather than overflowing.
+
 Fuzz effects, the full simulation loop, actor actions, line dispatch, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
@@ -166,6 +174,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sector-index.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sector.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/door.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/floor.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
@@ -296,10 +305,13 @@ checks all 14,556 sector bounds and 127,943 indexed edges across 36 maps. Moving
 planes allocate no per-tic scratch memory. The door fixture adds 14,873 checks:
 12,778 individual tics across eight source-defined cycles, all 1,024 manual and
 remote key-mask combinations, obstruction/delayed reopening, controller ownership,
-spawn/removal and exception cleanup. Full floor/lift/ceiling controllers and
-line dispatch remain unfinished.
+spawn/removal and exception cleanup. The floor fixture checks 768 preset/height
+combinations over 107,940 individual tics, flat-change timing, sound cadence,
+negative/isolated neighbors, texture metadata/defaults, busy tagged sectors,
+actual crushing and blocked-floor recovery. Stairs, donuts, lifts, ceiling
+controllers and line dispatch remain unfinished.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector or door checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector, door or floor checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

@@ -1,10 +1,13 @@
 #define TM_MOVER_DOOR 1
+#define TM_MOVER_FLOOR 2
 
 class Mover
 {
   Mover *next,*last;
   I64 sector,kind,type,direction,speed,high,wait,delay;
-  Bool active;
+  I64 new_special;
+  U8 texture[8];
+  Bool active,crush;
 };
 
 class SectorArea
@@ -16,6 +19,7 @@ class SectorArea
 class Sectors
 {
   Motion *motion;
+  Graphics *graphics;
   SectorArea *area;
   I64 *lines;
   Mover *first,*last;
@@ -34,7 +38,7 @@ U0 SectorsDel(Sectors *tmps)
   }
 }
 
-Sectors *SectorsNew(Motion *tmpm)
+Sectors *SectorsNew(Motion *tmpm,Graphics *graphics=NULL)
 {//An immutable sector edge index is shared by movers and sound propagation.
   Map *map=tmpm->world->map;
   Sectors *tmps=CAlloc(sizeof(Sectors));
@@ -42,7 +46,8 @@ Sectors *SectorsNew(Motion *tmpm)
   Line *line;
   Vertex *a,*b;
   I64 i,j,n,last,total=0;
-  tmps->motion=tmpm; tmps->area=CAlloc(map->sector_cnt*sizeof(SectorArea));
+  tmps->motion=tmpm; tmps->graphics=graphics;
+  tmps->area=CAlloc(map->sector_cnt*sizeof(SectorArea));
   for (i=0;i<map->line_cnt;i++) {
     line=map->line+i; last=-1;
     for (j=0;j<2;j++)
@@ -145,6 +150,21 @@ I64 SectorOther(Sectors *tmps,I64 sector,I64 line)
   if (front==sector && back!=sector) return back;
   if (back==sector && front!=sector) return front;
   return -1;
+}
+
+I64 SectorCeilMin(Sectors *tmps,I64 sector,Bool *_found=NULL)
+{//An isolated sector keeps its ceiling instead of using an unbounded sentinel.
+  Map *map=tmps->motion->world->map;
+  SectorArea *area=tmps->area+sector;
+  I64 i,n,res=0x7FFFFFFF;
+  Bool found=FALSE;
+  for (i=0;i<area->cnt;i++) {
+    n=SectorOther(tmps,sector,tmps->lines[area->first+i]);
+    if (n>=0) {res=MinI64(res,map->sector[n].ceil); found=TRUE;}
+  }
+  if (!found) res=map->sector[sector].ceil;
+  if (_found) *_found=found;
+  return res;
 }
 
 Bool ActorHeightClip(Motion *tmpm,Actor *tmpa,Bool contacts=TRUE)

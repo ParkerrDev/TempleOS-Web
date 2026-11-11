@@ -24,6 +24,7 @@
 #include "TmBlast"
 #include "TmSector"
 #include "TmDoor"
+#include "TmFloor"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"
