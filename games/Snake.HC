@@ -47,7 +47,7 @@ U0 Snake()
       }
     }
     DCFill(dc, BLACK);
-    dc->color=DKGRAY; GrBorder(dc, OX-2, OY-2, GW*CELL+2, GH*CELL+2);
+    dc->color=DKGRAY; GrBorder(dc,OX-2,OY-2,OX+GW*CELL,OY+GH*CELL);
     dc->color=RED;    GrRect(dc, OX+ax*CELL, OY+ay*CELL, CELL-2, CELL-2);
     for (i=0; i<slen; i++) {
       if (i==0) dc->color=LTGREEN; else dc->color=GREEN;

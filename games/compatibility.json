@@ -20,11 +20,11 @@
     },
     "Babel.HC": {
       "name": "Babel",
-      "sourceSha256": "02c90fb5d64f4f971eec059925db0bf820c30cf6eea62f4f9316c90ad0e89f9b",
+      "sourceSha256": "dec221132dd3952d9f1c42c5c239f5d71c9206c6d05bcf2880685c9eb2d20838",
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "e9a1bb5957e1052ba68b2da2797a6a4430e4e90c62a6b2cf5962419dc47c31ab"
+      "wasmSha256": "82ef81b955733fc8c95a34a821c8944bd4ddb21841064a979c296f65d72d7ece"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -36,11 +36,11 @@
     },
     "Snake.HC": {
       "name": "Snake",
-      "sourceSha256": "c11f19327858a4f5ec08bc4f87d1b986e9303a3044f86edb583488926f18e331",
+      "sourceSha256": "54502f40078974cd397113f5da6184f586d550cc90ef19fbe2070054ac0b2280",
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "59a43d7a109bf34d3bb439e4f7725e817938bb021045883c99ba643cb4e514b0"
+      "wasmSha256": "2485a31b86e1a86c8dc364559accb1b05277ae529ade5cc30e3cb6a52222b504"
     },
     "tinker-Varoom": {
       "name": "Varoom",

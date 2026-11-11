@@ -406,7 +406,8 @@ U0 BbDraw(CTask *task, CDC *dc)
   GrPrint(dc, x, oy+72, "S    Down   fall");
   GrPrint(dc, x, oy+84, "Space       drop");
   GrPrint(dc, x, oy+96, "P pause  Esc quit");
-  GrPrint(dc, x, oy+120, "Cross stays upright.");
+  GrPrint(dc, x, oy+120, "Cross stays");
+  GrPrint(dc, x, oy+132, "upright.");
 
   if (bb_paused || bb_over) {
     BbBox(dc, ox+12, oy+BB_H*BB_CELL/2-26, BB_W*BB_CELL-24, 52, BLUE);
