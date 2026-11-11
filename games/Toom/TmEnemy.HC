@@ -2,6 +2,7 @@ class Enemies
 {
   Specials *specials;
   Path *sight;
+  Attack *trace;
   I64 *sound,*queue;
   U8 *depth;
 };
@@ -10,7 +11,7 @@ U0 EnemiesDel(Enemies *tmpe)
 {
   if (tmpe) {
     WorldIdle(tmpe->specials->sectors->motion->world);
-    PathDel(tmpe->sight); Free(tmpe);
+    AttackDel(tmpe->trace); PathDel(tmpe->sight); Free(tmpe);
   }
 }
 
@@ -26,7 +27,7 @@ Enemies *EnemiesNew(Specials *specials)
   tmpe->queue=tmpe->sound+cnt; tmpe->depth=tmpe->queue+cnt*2;
   MemSet(tmpe->depth,255,cnt);
   try {
-    tmpe->sight=PathNew(world);
+    tmpe->sight=PathNew(world); tmpe->trace=AttackNew(world);
   } catch {
     EnemiesDel(tmpe);
   }

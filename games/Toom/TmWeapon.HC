@@ -9,7 +9,8 @@ class Weapon
   Attack *trace;
   I64 state_depth;
   U0 (*action)(Weapon *weapon,Psprite *sprite,I64 n);
-  U0 (*special)(Actor *source,I64 line);
+  U0 (*special)(Actor *source,I64 line,U8 *context);
+  U8 *special_context;
   U0 (*noise)(Actor *source);
 };
 
@@ -195,7 +196,8 @@ U0 WeaponShot(Weapon *tmpw,Actor *tmpa,I64 angle,I64 range,
 	I64 slope,I64 damage)
 {
   AttackFire(tmpw->trace,tmpa,angle,range,slope);
-  AttackApply(tmpw->motion,tmpw->trace,tmpa,damage,tmpw->special);
+  AttackApply(tmpw->motion,tmpw->trace,tmpa,damage,tmpw->special,
+	tmpw->special_context);
 }
 
 U0 WeaponBullet(Weapon *tmpw,Actor *tmpa,I64 slope,Bool accurate)
@@ -218,7 +220,7 @@ U0 WeaponMelee(Weapon *tmpw,Bool saw)
   angle=tmpa->angle+WorldRandDiff(world)<<18;
   AttackAim(tmpw->trace,tmpa,angle,range); slope=tmpw->trace->slope;
   AttackFire(tmpw->trace,tmpa,angle,range,slope); id=tmpw->trace->target;
-  AttackApply(tmpm,tmpw->trace,tmpa,damage,tmpw->special);
+  AttackApply(tmpm,tmpw->trace,tmpa,damage,tmpw->special,tmpw->special_context);
   if (!(target=WorldActorGet(world,id))) {
     if (saw) WeaponSound(tmpw,TM_SFX_SAWFUL);
     return;

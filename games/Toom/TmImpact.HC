@@ -20,7 +20,8 @@ Actor *ImpactNew(Motion *tmpm,I64 x,I64 y,I64 z,I64 damage,
 }
 
 U0 AttackApply(Motion *tmpm,Attack *trace,Actor *source,I64 damage,
-	U0 (*special)(Actor *source,I64 line)=NULL)
+	U0 (*special)(Actor *source,I64 line,U8 *context)=NULL,
+	U8 *context=NULL)
 {//Snapshot query results before line actions can issue another attack.
   World *tmpw=tmpm->world;
   I64 n=trace->special_cnt,i,*lines,kind=trace->kind,id=trace->target,
@@ -31,7 +32,7 @@ U0 AttackApply(Motion *tmpm,Attack *trace,Actor *source,I64 damage,
     lines=MAlloc(n*sizeof(I64));
     MemCpy(lines,trace->special,n*sizeof(I64));
     try {
-      for (i=0;i<n;i++) (*special)(source,lines[i]);
+      for (i=0;i<n;i++) (*special)(source,lines[i],context);
     } catch {
       Free(lines);
     }

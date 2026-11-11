@@ -36,6 +36,7 @@
 #include "TmTick"
 #include "TmEnemy"
 #include "TmChase"
+#include "TmCombat"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

@@ -1,5 +1,4 @@
 I64 tm_impact_cnt=0,tm_impact_done=0,tm_impact_special=0,tm_impact_sound=0;
-Attack *tm_impact_trace;
 Motion *tm_impact_motion;
 
 U0 TmImpactSound(Actor *,I64 n)
@@ -7,14 +6,16 @@ U0 TmImpactSound(Actor *,I64 n)
   tm_impact_sound=n;
 }
 
-U0 TmImpactSpecial(Actor *source,I64 line)
+U0 TmImpactSpecial(Actor *source,I64 line,U8 *context)
 {
+  Attack *trace=context;
   if (line!=6) throw('Line');
+  if (!trace || trace->world!=source->world) throw('Context');
   tm_impact_special++;
-  AttackFire(tm_impact_trace,source,0,32*65536,0);
+  AttackFire(trace,source,0,32*65536,0);
 }
 
-U0 TmImpactThrow(Actor *,I64)
+U0 TmImpactThrow(Actor *,I64,U8 *)
 {
   throw('LineErr',TRUE);
 }
@@ -41,7 +42,7 @@ U0 TmImpactTest()
   if (!data) throw('Files');
   MemSet(&player,0,sizeof(Player)); PlayerBorn(&player);
   world->player=source->id;
-  motion->sound=&TmImpactSound; tm_impact_trace=trace; tm_impact_motion=motion;
+  motion->sound=&TmImpactSound; tm_impact_motion=motion;
   for (i=0;i<5;i++) {
     world->random=0; state=TM_S_PUFF1;
     if (i<3) {
@@ -61,7 +62,7 @@ U0 TmImpactTest()
   target=WorldSpawn(world,TM_MT_TROOP,64*65536,0); health=target->health;
   world->random=0;
   AttackFire(trace,source,0,512*65536,0);
-  AttackApply(motion,trace,source,5,&TmImpactSpecial);
+  AttackApply(motion,trace,source,5,&TmImpactSpecial,trace);
   effect=WorldActorGet(world,world->last);
   if (target->health!=health-5 || effect->type!=TM_MT_BLOOD ||
 	effect->state!=TM_S_BLOOD3 || tm_impact_special!=1 ||

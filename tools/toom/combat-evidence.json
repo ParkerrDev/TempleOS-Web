@@ -1,0 +1,76 @@
+{
+  "description": "Ordinary actor combat and explicit shot context; full actor dispatcher and playable game remain unfinished.",
+  "engine": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "cases": 18304,
+      "native": "qemu-xqvku3o8",
+      "hemu": true,
+      "sourceSha256": "16e33c16cb5086c4a14a4ab741cf2a017d5897c96fd16e0f2dabc9aaa3d72e35",
+      "reference": "Thirteen unmodified original C actions with original melee and facing helpers; all 70 output fields and ordered event/RNG traces match.",
+      "scope": [
+        "Pistol, shotgun and chaingun sound/facing/aim order and pellet RNG",
+        "Chaingun and spider refire early RNG, target health and visibility",
+        "Imp, demon, cacodemon, bruiser and revenant melee order",
+        "Arachnotron/cyberdemon launch and revenant whoosh",
+        "Missing targets, shadow spread, angles, distance and random starts"
+      ]
+    },
+    "integration": {
+      "cases": 24,
+      "native": "qemu-7y99pj3e",
+      "hemu": true,
+      "sourceSha256": "e0ebbeca93d10eb949a2515f5476e11e98e1b81f412b45b145b189b8d153a177",
+      "scope": [
+        "Actual effects, damage, missile half-steps, owner handles and refire",
+        "Enemy and both player shot paths activate shootable doors",
+        "Nested trace overwrite retains captured outer impact",
+        "Callback failure stops subsequent impact and releases captured line memory",
+        "Fresh-task heap returns to baseline"
+      ]
+    }
+  },
+  "regressions": {
+    "impact": {
+      "cases": 18,
+      "native": "qemu-fher3wbp",
+      "hemu": true
+    },
+    "weapon": {
+      "cases": 13859,
+      "native": "qemu-qhr0v8we",
+      "hemu": true
+    },
+    "clock": {
+      "cases": 20,
+      "native": "qemu-8whj9kzq",
+      "hemu": true
+    },
+    "enemy": {
+      "cases": 21,
+      "native": "qemu-mxcwsipi",
+      "hemu": true,
+      "sourceSha256": "be1247bd58473b11e9c52b234c6b88b4ab232ad47f73859a52db5105c346900e"
+    }
+  },
+  "remaining": [
+    "Pain/death/fall and remaining special actor actions",
+    "Complete actor action dispatcher",
+    "Fast-mode state duration/projectile setup",
+    "Native host input/render pacing and UI/audio",
+    "Save/load and episode/intermission progression"
+  ]
+}

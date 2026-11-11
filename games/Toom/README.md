@@ -72,6 +72,13 @@ The implemented foundation uses native V5.03 file and memory APIs:
   or use encountered doors in reverse order. Captured lines survive nested
   queries, and temporary storage is released if a callback fails. The complete
   actor action dispatcher is still unfinished.
+- Ordinary monster shots retain their sound/facing/aim order, shared shotgun
+  slope and per-pellet RNG. Imp, demon, cacodemon, bruiser and revenant melee
+  retain their distinct sound and damage order; projectile actions use the
+  native actor-targeted launch path. Refire checks preserve the early random
+  return before health and sight tests. Enemy and player shots pass an explicit
+  level context to shootable-line actions; captured impact data survives nested
+  callbacks, and exceptions release temporary storage.
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
   contact callbacks defer reclamation until the end of the tic. Nested contact
@@ -266,6 +273,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/walk-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/chase.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/projectile-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/projectile.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/combat-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/combat.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -482,6 +491,13 @@ cleanup. Their native and pinned HEMU results are in
 `tools/toom/chase-evidence.json`. The shared fast flag currently affects chase
 selection only; fast state durations and projectile speeds still need their
 level setup. None of these fixtures install an incomplete action dispatcher.
+The ordinary-combat oracle compares 18,304 cases against thirteen original
+actions, retaining all ordered angle, sight, sound, aim, shot, damage, missile
+and state observations with their RNG positions. Twenty-four real-map cases
+exercise effects, damage, projectiles, refire, enemy and player shootable-door
+triggers, nested queries and callback-failure cleanup. Their native and pinned
+HEMU results are in `tools/toom/combat-evidence.json`. The full actor action
+dispatcher and playable host remain unfinished.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation
