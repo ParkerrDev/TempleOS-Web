@@ -60,7 +60,12 @@ The implemented foundation uses native V5.03 file and memory APIs:
   classic separate-axis fallback, and crossed-line/contact callbacks remain
   effective during a slide.
 
-Fuzz effects, simulation, weapons, actors, line specials, HUD,
+- A motion context owns its reusable path and borrows the level and persistent
+  player view state. Fixed-tic motion covers friction, gravity, speed limits,
+  smooth steps, landing effects, floating actors, skull charges and missile
+  impacts. State/sound/contact/line effects use native callbacks.
+
+Fuzz effects, the full simulation loop, weapons, actor actions, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
 
@@ -118,6 +123,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/contact.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/movement.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/path.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/slide.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/motion.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -153,8 +159,7 @@ pending simulation stage.
 The world check covers 108 map/skill combinations and 37,779 initial actors,
 including exact spawn state/timers, RNG, flags, positions and totals. It also
 checks linked block lists, stable allocation through table growth, stale
-handles, slot reuse and out-of-map unlinking. Actor actions and momentum are
-not yet implemented.
+handles, slot reuse and out-of-map unlinking. Actual actor actions remain part of the pending simulation stage.
 The contact check covers 1,756 interaction cases and 1,024 spatial queries
 against a full actor scan. It checks large actors across block cells, vertical
 missile separation, source/species immunity, skull impacts, deferred pickup
@@ -163,7 +168,7 @@ effects remain part of the pending simulation stage.
 The movement check covers 22 position-change contracts in a controlled pair
 of rooms: step/dropoff/headroom boundaries, float/teleport/noclip flags, atomic
 rejection, actor links, pickup contacts and crossed-line ordering, including
-callbacks that perform another query. Momentum and actual line actions remain part of the pending simulation stage.
+callbacks that perform another query. Actual line actions remain part of the pending simulation stage.
 The path check compares all hit records for 5,012 rays across the 36 maps and
 an independent full geometry/actor scan. It includes long rays, exact grid and
 vertex boundaries, large actors in neighboring cells, wall/actor ties, all four
@@ -171,8 +176,15 @@ exact diagonals, allocation growth, stamp reset and reused actor handles.
 The sliding check covers 19 cases for axis and diagonal walls, corners, actor
 obstructions, 25-unit steps, headroom, blocking flags and action callbacks.
 It also compares 1,024 projected moves with an independent integer reference.
-Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math or sliding
-checks using the original TempleOS compiler and file I/O under HEMU.
+The motion check covers 35 contracts for signed substeps and odd deltas,
+friction/stop thresholds, speed limits, sliding, gravity, view steps, hard/soft
+landings, floating/skull actors, missile explosions and sky suppression.
+Fast movement splits both signs and preserves the exact integer displacement;
+wall sliding consumes only the uncommitted remainder. These explicitly correct
+legacy directional splitting and repeated movement, rather than promise demo
+synchronization. The state clock remains separate from motion.
+Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding
+or motion checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

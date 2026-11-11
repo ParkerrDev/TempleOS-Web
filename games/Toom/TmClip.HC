@@ -8,7 +8,7 @@ class Collision
   Map *map;
   ClipLine *line;
   I64 *seen,*special,stamp,special_cnt;
-  I64 left,right,bottom,top,flags,sector,floor,ceil,dropoff,blocking;
+  I64 left,right,bottom,top,flags,sector,floor,ceil,dropoff,blocking,ceil_line;
   Bool player,float_ok;
 };
 
@@ -97,6 +97,7 @@ Bool CollisionLine(Collision *tmpc,I64 n)
   ClipLine *tmpl=tmpc->line+n;
   Line *line=tmpc->map->line+n;
   Sector *front,*back;
+  I64 ceil;
   if (!BoxLineCross(tmpc,tmpl)) return TRUE;
   if (tmpl->back<0) goto cl_block;
   if (!(tmpc->flags&TM_MF_MISSILE)) {
@@ -105,7 +106,10 @@ Bool CollisionLine(Collision *tmpc,I64 n)
   }
   front=tmpc->map->sector+tmpl->front;
   back=tmpc->map->sector+tmpl->back;
-  tmpc->ceil=MinI64(tmpc->ceil,MinI64(front->ceil,back->ceil)*65536);
+  ceil=MinI64(front->ceil,back->ceil)*65536;
+  if (ceil<tmpc->ceil) {
+    tmpc->ceil=ceil; tmpc->ceil_line=n;
+  }
   tmpc->floor=MaxI64(tmpc->floor,MaxI64(front->floor,back->floor)*65536);
   tmpc->dropoff=MinI64(tmpc->dropoff,MinI64(front->floor,back->floor)*65536);
   if (line->special) tmpc->special[tmpc->special_cnt++]=n;
@@ -126,7 +130,7 @@ U0 CollisionBegin(Collision *tmpc,I64 x,I64 y,I64 radius,I64 flags,
   tmpc->ceil=tmps->ceil*65536;
   tmpc->flags=flags; tmpc->player=player;
   tmpc->float_ok=FALSE;
-  tmpc->special_cnt=0; tmpc->blocking=-1;
+  tmpc->special_cnt=0; tmpc->blocking=tmpc->ceil_line=-1;
   tmpc->left=x-radius; tmpc->right=x+radius;
   tmpc->bottom=y-radius; tmpc->top=y+radius;
   if (!++tmpc->stamp) {

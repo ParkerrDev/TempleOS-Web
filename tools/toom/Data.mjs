@@ -116,7 +116,8 @@ put('TMDATA.BIN',data);
 const upper=s=>s.replace(/^A_/,'').replace(/([a-z0-9])([A-Z])/g,'$1_$2').toUpperCase();
 let defines='//Generated identifiers for TMDATA.BIN; see NOTICE and tools/toom/Data.mjs.\n\n';
 for (const [name,value] of constants)
-  if (/^(SPR_|S_|MT_|MF_)/.test(name))defines+=`#define TM_${name}\t${value}\n`;
+  if (/^(SPR_|S_|MT_|MF_|sfx_)/.test(name))
+    defines+=`#define TM_${name.toUpperCase()}\t${value}\n`;
 defines+='\n';
 actions.forEach((name,i)=>defines+=`#define TM_A_${upper(name)}\t${i}\n`);
 defines+='\n';
