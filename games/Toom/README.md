@@ -84,7 +84,12 @@ The implemented foundation uses native V5.03 file and memory APIs:
   Native projectiles use source handles, portal-aware auto-aim and an atomic
   initial half-step through the ordinary contact/movement code.
 
-Fuzz effects, the full simulation loop, weapon control, actor actions, line specials, HUD,
+- Weapon and flash overlays run their canonical state clocks at 35 Hz. All
+  22 weapon actions connect firing, melee, projectiles, ammo, sounds and light
+  requests. Weapon changes wait for the animation; refiring follows each
+  weapon's state sequence. Drawing and audio playback remain separate work.
+
+Fuzz effects, the full simulation loop, actor actions, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
 
@@ -147,6 +152,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/attack.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/damage.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/items.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/impact.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/weapon.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -215,7 +221,7 @@ The damage check covers 4,752 player boundaries for health, armor, difficulty,
 invulnerability, god mode and the end-sector survival rule, plus 20 focused
 monster cases for thrust, pain/retaliation, skulls, corpse flags, overkill,
 item drops and callback removal. Invalid zero-mass actor data is rejected.
-Actual weapon control and action dispatch remain unfinished.
+Weapon actions are checked separately; actor action dispatch remains unfinished.
 The inventory check covers 2,304 independent ammo/auto-selection combinations
 and 52 pickup/respawn cases, including all item families, duplicate/full
 inventories, powers, dropped weapons, reach, and pickup during a blocked move.
@@ -226,8 +232,15 @@ The impact check covers 18 effect/projectile cases, including all three player
 missiles, source immunity, auto-aim, close-wall explosions, nested line actions,
 stale targets and repeated exception cleanup. Intentional test exceptions skip
 Adam logging so the heap assertion measures the owned trigger buffer.
+The weapon check covers 13,824 independently computed ammo/owned-weapon
+selections and 32 animation/combat cases. Nine 200-tic firing schedules match
+canonical shot intervals and ammunition costs; every weapon action is reached.
+It also checks flash completion, trigger rearming, switching/death, zero-tic
+states, callback replacement/cleanup, exact pellet counts and melee damage.
+Automatic selection uses enough ammo for a complete shot, including exactly
+two shells or 40 cells; it does not preserve legacy strict-greater quirks.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage, inventory or impact checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory, impact or weapon checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

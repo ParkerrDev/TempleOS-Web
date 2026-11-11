@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/id-Software/DOOM",
   "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
-  "purpose": "Reference collision, actor motion and combat behavior, re-expressed in native HolyC. These C files are not compiled or linked into TOOM.",
+  "purpose": "Reference collision, actor motion, combat and weapon-state behavior, re-expressed in native HolyC. These C files are not compiled or linked into TOOM.",
   "files": [
     {
       "path": "linuxdoom-1.10/p_map.c",
@@ -18,6 +18,14 @@
     {
       "path": "linuxdoom-1.10/p_inter.c",
       "sha256": "72e9bbabe560ef548c2f2522494786347d5c831b0e1f0ecb5cb29d8d8e682356"
+    },
+    {
+      "path": "linuxdoom-1.10/p_pspr.c",
+      "sha256": "b47100f9c2c2c4f7913831c170bff55161af2d5d01f5467dbbc6be081c4f1af1"
+    },
+    {
+      "path": "linuxdoom-1.10/p_enemy.c",
+      "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
     }
   ]
 }
