@@ -122,6 +122,20 @@ without changing their operands. FNSTSW now includes TOP in both interpreter
 and JIT results. The old integer-memory compare path incorrectly dispatched
 those encodings as arithmetic; it now updates status and pops as required.
 
+`CpuFault(0)` reports the first stopped CPU as `(core<<8)|reason`, or zero;
+`CpuFault(1)` reports its instruction pointer. Hosts do not read CPU structure
+offsets to discover a fault. Reasons 2 and 3 are unsupported instruction and
+integer divide faults. `RunCore` retains the fault on every later call; the
+old one-time automatic recovery has been removed. HLT remains normal idle.
+
+The BSP reports an actionable `error`, publishes `paused:true`, and keeps all
+APs in the capture barrier. AP workers also report errors and stop executing
+that core. The real worker regression compiles native faulting child tasks on
+core0 and core1, then verifies frozen registers, RIP, frames and all barrier
+acknowledgements. Older saved engines without `CpuFault` retain the BSP
+`GuestInfo` fallback; their AP `error` messages should also pause the BSP in
+the page host. Their embedded instruction implementation is unchanged.
+
 ## Settings and keyboard
 
 `init` accepts `rate` (0, 30, 60, 120; default 0), `repeat` (default false),

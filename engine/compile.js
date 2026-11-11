@@ -17,7 +17,7 @@ export const SITE_DIR = process.env.SITE ? resolve(process.env.SITE) : resolve(h
 export const JIT_EXPORTS = ["RdMem", "WrMem", "Step", "RasterHLE"];
 //What engine/guestexec.js and the workers call: injected guest calls, the
 //guest's names (sym.HC), and an application core's attach and run.
-export const GUEST_EXPORTS = ["GuestCallPost", "GuestCallTry", "GuestCallState", "GuestCallRes", "GuestCallAck", "GuestInfo",
+export const GUEST_EXPORTS = ["CpuFault", "GuestCallPost", "GuestCallTry", "GuestCallState", "GuestCallRes", "GuestCallAck", "GuestInfo",
   "GuestPatchJump", "GuestFun", "GuestArgCnt", "GuestVar", "GuestMember", "RamBase", "CoreAttach", "KbdRptSet", "WinRateSet", "SnapshotResume"];
 export const HEMU_EXPORTS = [...JIT_EXPORTS, ...GUEST_EXPORTS];
 
