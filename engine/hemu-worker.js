@@ -27,13 +27,13 @@ function SettingsApply(rateChanged=true)
 }
 let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0, instRef = null;
-let paused=false,saving=false,machineBarrier=null,engineBytes=null,hostRef=null;
+let paused=false,saving=false,machineBarrier=null,engineBytes=null,hostRef=null,showStoppedFrame=null;
 const deferred=[];
 function PauseSet(value) {
   if (value && machineBarrier && !machineBarrier.Lock())
     throw new Error("The application cores did not stop; pause again.");
   paused=!!value;
-  if (paused) keyq.Release(); else machineBarrier?.Unlock();
+  if (paused) {keyq.Release();showStoppedFrame?.();} else machineBarrier?.Unlock();
   postMessage({cmd:"paused",value:paused});
 }
 const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
@@ -290,7 +290,16 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
   engineBytes=saved?saved.wasm:new Uint8Array(await (await fetch(wasmUrl,{cache:"no-cache"})).arrayBuffer());
   const mod=await WebAssembly.compile(engineBytes);
 
-  let sequence=0;
+  let sequence=0,lastFrame=null;
+  function SendFrame(addr,w,h,u8,force=false) {
+    if (!force && outstanding>=2) return;
+    const buf=u8.slice(addr,addr+w*h),top=FrameTop(buf,w);
+    outstanding++;
+    postMessage({cmd:"frame",buf:buf.buffer,w,h,fps:FrameFps(top),updates:++sequence,top},[buf.buffer]);
+  }
+  showStoppedFrame=()=>{
+    if (lastFrame) SendFrame(...lastFrame,new Uint8Array(instRef.exports.memory.buffer),true);
+  };
   const barrier=machineBarrier=smpCfg?CaptureBarrier(new Int32Array(smpCfg.ctrl),
         smpCfg.ncore,()=>apsReleased):null;
   const host=hostRef=createHemuHost({
@@ -302,13 +311,8 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
     snapLoad: (base, u8) => { gBase = base; u8.set(snap, base); },   // capture gBase for the JIT
     diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },   // ATA -> real C: sectors
     diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },  // ATA writes -> in-session overlay
-    present: (addr, w, h, u8) => {
-      if (outstanding >= 2) return;                       // main hasn't caught up - drop, keep emulating
-      const buf = new Uint8Array(w * h);
-      buf.set(u8.subarray(addr, addr + w * h));           // copy the finished frame out of WASM memory
-      const top=FrameTop(buf,w);
-      outstanding++;
-      postMessage({ cmd: "frame", buf: buf.buffer, w, h, fps:FrameFps(top),updates:++sequence,top }, [buf.buffer]);
+    present: (addr,w,h,u8)=>{
+      lastFrame=[addr,w,h];SendFrame(addr,w,h,u8);
     },
   });
   // |0 on every BigInt crossing: a fractional value (trackpad movementX, joystick velocity)
