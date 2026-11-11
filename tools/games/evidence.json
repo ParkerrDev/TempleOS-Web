@@ -17,16 +17,16 @@
   "guestHarnessSha256": "9fe6f769b458f6399e5041ca4a7586e49a4a90a1d224239a92d3e95cd4f9e057",
   "webRuntimeSha256": "653b66a6b9346508ca46ff0d33a3799fb31381e568dbce25e59c21f87f5dd0f4",
   "siblings": [
-    "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm 63c9aad2a3a30faaba218e1bbe9a619e4c1cb442",
+    "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm dbd1946838cfd33dd7c86cda51acb8528c824697",
     "hemu https://github.com/ParkerrDev/HEMU 486f8a68bca0ca872cc99c28d1429830d5b53e84"
   ],
-  "engineSha256": "de0391d94d452a074338ecdecfdbadd97a2936e7db0b2b37160af0a2efedba06",
+  "engineSha256": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
   "backend": {
     "engine": "qemu",
     "accelerator": "kvm",
     "version": "QEMU emulator version 11.1.2"
   },
-  "oracle": "qemu-ed9n_1g0",
+  "oracle": "qemu-btixmnoz",
   "programs": {
     "Babel": {
       "sourceSha256": "8f9fa354dda68f563b96a15d4b1219d79bc0fbeb39f285b102022a4b75279300",
