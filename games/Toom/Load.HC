@@ -18,6 +18,7 @@
 #include "TmAttack"
 #include "TmDamage"
 #include "TmItems"
+#include "TmTouch"
 #include "TmImpact"
 #include "TmWeapon"
 #include "TmPlayer"

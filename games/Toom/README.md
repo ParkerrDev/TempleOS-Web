@@ -639,6 +639,11 @@ handles and cache publication are checked after failure and retry. All 36 maps,
 853 decoded sprite images, 967 state clocks and 288 native/HEMU renderer views
 still pass their bounded checks. These are application ownership boundaries,
 not an audit of OS internals. See `tools/toom/load-alloc-evidence.json`.
+The contact-effect dispatcher matches 4,640 decisions from the original C
+collision routine, including RNG, damage source and skull reset order. Another
+1,037 native/HEMU cases execute real damage, pickups, state actions and cleanup.
+The complete level owner still needs to install the binding; these checks do
+not turn the renderer preview into gameplay. See `tools/toom/touch-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

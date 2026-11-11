@@ -7,8 +7,9 @@ import {pathToFileURL} from 'node:url';
 import {FreedoomRead,root} from './Assets.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
+const game=resolve(root,'games/Toom');
 const read=name=>process.env.GAME_REF?execFileSync('git',['show',`${process.env.GAME_REF}:games/Toom/${name}`],{cwd:root,encoding:'latin1'}):readFileSync(resolve(game,name),'latin1');
+const load=read('Load.HC');
 const source=readFileSync(resolve(root,'tools/toom/LoadProbe.HC'),'latin1')+'\n#define MAlloc TmLoadAlloc\n#define CAlloc TmLoadCAlloc\n#define FOpen TmLoadOpen\n#define FClose TmLoadClose\n#define FileRead TmLoadRead\n#define FBlkRead TmLoadBlocks\n'+[...load.matchAll(/#include "([^"]+)"/g)]
   .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+
   ['LoadAlloc.HC'].map(n=>readFileSync(resolve(root,'tools/toom',n),'latin1')).join('\n');

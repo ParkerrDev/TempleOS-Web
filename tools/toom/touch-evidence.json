@@ -1,0 +1,60 @@
+{
+  "status": "bounded-native-contact-effect-proof",
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_map.c",
+    "sha256": "752c7873c81fe6b10b77a08b7ef5716fe49c3103f6caa02097ed299e6e04736c"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "checks": {
+    "decisions": {
+      "cases": 4640,
+      "native": "qemu-kprnu44x",
+      "hemu": true,
+      "sourceSha256": "ba19ef16b073dbca1d31840f55217bf4eb69a06d36ec5c5b8ef17c7648be5146",
+      "scope": [
+        "The unchanged original PIT_CheckThing function runs in a host-C witness with recorded damage, pickup and state boundaries.",
+        "All 256 RNG starts and five damage magnitudes exercise pickups, missiles and skulls. Additional flags, owners/species and vertical-contact boundaries check dispatch and movement return values.",
+        "Damage source, RNG index, state call and post-contact momentum/flags match the original witness; the damage/pickup internals are covered separately."
+      ]
+    },
+    "real": {
+      "cases": 1037,
+      "native": "qemu-9nalv2pa",
+      "hemu": true,
+      "sourceSha256": "ad255922b96bae910b27df85fb136079441061264cde5ec2e70916e568d6e937",
+      "scope": [
+        "All 256 RNG starts execute real missile/skull contacts against shootable or solid-only actors, including source credit and retaliation target.",
+        "Real clip pickups, full inventory, out-of-height rejection and a solid pickup preserve movement outcome and sound counts.",
+        "Skull state callbacks observe cleared flight/momentum and may retire the actor safely. Inactive and foreign-world actors and unsupported contact kinds are guarded.",
+        "Each fresh-task scenario returns the heap to baseline."
+      ]
+    },
+    "contactRegression": {
+      "native": "qemu-r8tln28_",
+      "out": "CONTACTS 1756 GRID 1024 BAD 0\n"
+    }
+  },
+  "inputs": {
+    "games/Toom/TmTouch.HC": "b589423b0ea307643655babf3e8861ded6f2c837d5c99c17273d2a768dc3a53c",
+    "games/Toom/Load.HC": "17dc517c30232c8903771d0bb5a0c504eb882a8cad4269cff2d7dd5943548b03",
+    "tools/toom/TouchRef.mjs": "c1a283a07928558c9ae3a40a71aeebffef9af7e41d92d7439a41c0868303c2f9",
+    "tools/toom/TouchProbe.HC": "7831432865f8871a86f2a9eaa63105694246728bc86c112650519170f0d1a9ea",
+    "tools/toom/Touch.HC": "28c42ff750ec98ec68015946c8c9ce66ef0c3c97d76fec2dcf1bff52539f0d1d",
+    "tools/toom/TouchReal.HC": "95965c3337cf3bbc527a1320fb22c6ea9bfdcffef7924cf861629bbaa76f8491",
+    "tools/toom/touch.test.mjs": "0a69ef8b1bebfba09c9f4bf2e08778da60cc01f52efd62d07d271b4c3350eed0",
+    "tools/toom/touch-real.test.mjs": "6dd29cf53f80c6ea3944ce6cc12f356f2526aa6c352192b840d5a9b29536c051"
+  },
+  "limitations": [
+    "MotionTouch acts only after contact classification; the caller supplies the correct level Motion through its binding.",
+    "Real integration uses a native test callback to supply that binding. The complete Level/session owner and playable host remain unfinished."
+  ]
+}
