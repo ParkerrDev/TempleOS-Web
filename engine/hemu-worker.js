@@ -112,7 +112,7 @@ function GuestCacheInvalidate(lbas)
 //   osWrite   {id, path|name, bytes, run}   -> fileResult {id, ok, msg, path, size, cluster}; run=true then
 //                                             launches the file with id `${id}:run` (its own fileResult)
 //   osLaunch  {id, path|src, name, force?}   -> fileResult {id, ok, msg} when the program is RUNNING (or refused/failed)
-//   osExec    {id, src, target?}             -> fileResult {id, ok, msg, res} when the source finished (or failed)
+//   osExec    {id, src, target?, force?}     -> fileResult {id, ok, msg, res} when the source finished (or failed)
 //   osInstall {id, files:[{path,bytes}], path?, name?} -> one fileResult at the end (+ per-file guestResult events)
 //   guest     {id, op, ...params}            -> guestResult for every state change (queued/posted/dispatched/
 //                                             running/stalled/done/failed/error); op = exec|include|launch|
@@ -163,7 +163,7 @@ async function osLaunch(m) {                 // run a program in a user terminal
 }
 async function osExec(m) {                   // execute HolyC source text (default: in the focused terminal)
   const nr = gxNotReady(); if (nr) return fileResult(m.id, { ok: false, msg: nr, state: "error" });
-  const ev = await gxRequest("exec", { src: m.src, target: m.target || "focus", name: m.name }, m.id);
+  const ev = await gxRequest("exec", { src: m.src, target: m.target || "focus", name: m.name, force: !!m.force }, m.id);
   fileResult(m.id, ev);
 }
 async function osInstall(m) {                // write a package (files under absolute guest paths, parents created), then optionally launch its entry

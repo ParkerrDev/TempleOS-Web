@@ -54,6 +54,10 @@ real x86 conversion fixtures, and QEMU snapshot capture tools remain.
   FPS to the frame message, check clock/refresh pacing, and verify pause.
 - Guest execution checks cover source errors, exceptions, file readback,
   disk include, launch completion/refusal and an animating native game.
+  The real worker also holds a command at a native Sleep gate, verifies busy
+  refusal and explicit force forwarding, then checks queued command order,
+  successor ownership and target reuse on one and four cores. Force permits
+  posting to TempleOS's job queue; native input waits may service nested jobs.
 - JIT loop checks compare complete CPU and memory state after the reported
   instruction count, including zero iterations, exact device dispatch budgets,
   the iteration cap, writes to the loop's own instructions, and second-iteration

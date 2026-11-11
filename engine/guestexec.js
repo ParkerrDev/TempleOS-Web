@@ -113,7 +113,7 @@ export function createGuestExec(opts) {
     let waiting = 0, p = rd64(ctrl + CJC.next_waiting); while (p && p !== ctrl + CJC.next_waiting && waiting < 4096) { waiting++; p = rd64(p); }
     let done = 0; p = rd64(ctrl + CJC.next_done); while (p && p !== ctrl + CJC.next_done && done < 4096) { done++; p = rd64(p); }
     const popup = rd64(a + CT.popup_task);
-    const b = busy.get(a);
+    const b = busyFirst(a);
     return { addr: a, valid: true, name: rdStr(a + CT.task_name, 32), flags, idle: !!(flags & TASKf.IDLE), atPrompt: !!(flags & TASKf.CMD_LINE_PMT), busy: b ? { id: b.id, name: b.name, state: b.state } : null,
       awaitingMsg: !!(flags & TASKf.AWAITING_MSG), popup: popup ? { addr: popup, name: isTask(popup) ? rdStr(popup + CT.task_name, 32) : "?" } : null,
       jobsWaiting: waiting, jobsDone: done, exceptCh: i64str(rd64b(a + CT.except_ch)) };
@@ -259,7 +259,19 @@ export function createGuestExec(opts) {
   // the OS flags alone cannot tell "sitting at the prompt" from "running our launch from the prompt". The
   // module therefore remembers which of ITS jobs are still executing per task and refuses to stack a second
   // program on top of one that has not finished (that would run game B inside game A's input loop).
-  const busy = new Map();                            // task addr -> request currently executing there (launch/include/exec)
+  const busy = new Map();                            // task addr -> pending/running requests in submission order
+  const busyFirst = task => busy.get(task)?.values().next().value;
+  function busyAdd(task,r) {
+    let pending=busy.get(task);
+    if(!pending)busy.set(task,pending=new Set());
+    pending.add(r);
+  }
+  function busyRemove(task,r) {
+    const pending=busy.get(task);
+    if(!pending)return;
+    pending.delete(r);
+    if(!pending.size)busy.delete(task);
+  }
   const mboxFree = []; for (let i = SCR.MBOX_N - 1; i >= 0; i--) mboxFree.push(i);
   const mboxAddr = (slot) => scrBase + SCR.MBOX + slot * SCR.MBOX_SZ;
   const mutex = () => { let tail = Promise.resolve(); return (fn) => { const run = tail.then(fn, fn); tail = run.catch(() => {}); return run; }; };
@@ -294,7 +306,7 @@ export function createGuestExec(opts) {
     if (!t) throw new Error(`target task "${target}" is invalid`);
     const info = taskInfo(t);
     if (info.popup) throw new Error(`target task "${info.name}" has a popup task open (${info.popup.name}); TaskExe would refuse it`);
-    const b = busy.get(t);
+    const b = busyFirst(t);
     if (b && b !== r && !r.p.force) throw new Error(`task "${info.name}" is still running request ${b.id} (${b.name}); wait for it to finish or pass force:true to queue behind it`);
     r.target = info; r.task = t;
     const slot = mboxFree.pop(); if (slot === undefined) throw new Error("too many requests in flight (64 mailboxes)");
@@ -304,11 +316,11 @@ export function createGuestExec(opts) {
     if (bytes.length + 1 > SCR.TEXT_SZ) { mboxFree.push(slot); throw new Error(`source too large (${bytes.length} b, max ${SCR.TEXT_SZ - 1})`); }
     const exceptBefore = info.exceptCh;
     let job = 0;
+    busyAdd(t,r);
     try {
       job = Number(await lockText(async () => { wrBytes(scrBase + SCR.TEXT, bytes); wr64(scrBase + SCR.TEXT + bytes.length, 0); return call(S.TaskExe, [t, 0, scrBase + SCR.TEXT, 0]); }));
       if (!job) throw new Error(`TaskExe refused the job for "${info.name}" (task invalid or an input popup is up)`);
       stats.jobs++;
-      if (!busy.has(t)) busy.set(t, r);
       emit(r, "posted", { msg: `job queued on "${info.name}"`, job: hex(job), target: { name: info.name, atPrompt: info.atPrompt, idle: info.idle, jobsWaiting: info.jobsWaiting + 1 } });
       const done = await waitJob(r, job, t, mb);
       const after = taskInfo(t);
@@ -316,7 +328,7 @@ export function createGuestExec(opts) {
       done.exceptCh = (!done.finished && after.exceptCh !== exceptBefore) ? after.exceptCh : (!done.finished ? after.exceptCh : "");
       done.mbaux = rd64b(mb + 16);
       return done;
-    } finally { mboxFree.push(slot); if (busy.get(t) === r) busy.delete(t); }
+    } finally { mboxFree.push(slot); busyRemove(t,r); }
   }
   const failMsg = (d) => !d.started ? "the job ran but nothing executed (compile error before the first statement" + (d.exceptCh ? `, exception '${d.exceptCh}'` : "") + ")"
     : "execution stopped before the end of the source" + (d.exceptCh ? ` (exception '${d.exceptCh}')` : "") + ": compile error or runtime exception, see the TempleOS window";
@@ -358,7 +370,7 @@ export function createGuestExec(opts) {
       if(state===3){const except=i64str(rd64b(j.mb+8));finish({state:'failed',ok:false,except,msg:`${j.r.name} stopped with guest exception '${except || 'Compiler'}'`});}
       else if(state===2)finish({state:'done',ok:true,msg:`${j.r.name} exited`});
       else if(j.spawned && task && !isTask(task))finish(state===1?{state:'done',ok:true,msg:`${j.r.name} task closed`}:{state:'failed',ok:false,msg:`${j.r.name} could not start (guest compile or task error)`});
-      else if(state===1 && !j.started){j.started=true;busy.set(task,j.r);emit(j.r,'running',{ok:true,task:hex(task),msg:`${j.r.name} task started; TempleOS is compiling or running the program`});}
+      else if(state===1 && !j.started){j.started=true;busyAdd(task,j.r);emit(j.r,'running',{ok:true,task:hex(task),msg:`${j.r.name} task started; TempleOS is compiling or running the program`});}
     }
   }
   const launch = (p) => submit('launch',p,async(r)=>{
@@ -380,7 +392,7 @@ export function createGuestExec(opts) {
     } finally {
       const i=launches.indexOf(monitor);if(i>=0)launches.splice(i,1);
       mboxFree.push(slot);if(activeLaunch===r)activeLaunch=null;
-      if(busy.get(r.task)===r)busy.delete(r.task);
+      busyRemove(r.task,r);
     }
   });
   function guestPath(path) {                         // normalize to an absolute TempleOS path
@@ -485,9 +497,9 @@ export function createGuestExec(opts) {
     if (!ready || index<0 || !isTask(saved.task)) throw new Error("Saved game task is invalid");
     mboxFree.splice(index,1);
     const r={id:"restored-game",op:"launch",name:saved.name,task:saved.task,t0:Date.now(),state:"running",p:{}};
-    activeLaunch=r;busy.set(r.task,r);reqs.set(r.id,r);
+    activeLaunch=r;busyAdd(r.task,r);reqs.set(r.id,r);
     launches.push({r,mb:mboxAddr(slot),spawned:true,started:true,resolve:result=>{
-      mboxFree.push(slot);activeLaunch=null;busy.delete(r.task);emit(r,result.state,result);
+      mboxFree.push(slot);activeLaunch=null;busyRemove(r.task,r);emit(r,result.state,result);
     }});
     emit(r,"running",{ok:true,task:hex(r.task),msg:r.name+" restored"});
   }
