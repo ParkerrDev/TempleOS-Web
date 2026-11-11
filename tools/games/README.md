@@ -10,6 +10,8 @@ Run `node tools/games/native.mjs --write` to refresh both current scenarios,
 Babel and Volley. The fast test checks the exact program source, fixture,
 compiler/HEMU pins, compiled engine and host source against this evidence; stale
 evidence fails the build. Keep the pins fixed while a check runs.
+The snapshot and disk input hashes include explicit LIVE/RAW overrides; fixture
+loaders and runner sources are recorded too.
 
 For a candidate source, set `GAME_SOURCE_DIR` and name the game, for example
 `GAME_SOURCE_DIR=/path/to/drafts node tools/games/native.mjs Snake`. Candidate
@@ -29,3 +31,15 @@ checks restoration before its own outer settings are popped. It suspends the
 candidate Snake animation task for controlled physics states, then invokes the
 game's compiled functions using TempleOS's `Call` API. No game source is rewritten
 or given replacement drawing/input functions by this check.
+
+`node tools/games/catalog.mjs NAME` checks byte-preserving installation and
+observes the selected TempleOS task in HEMU. `--all` gives each of the 65 catalog
+entries a fresh emulator process and writes reports under `tmp/games/catalog/`.
+The old `tools/hemu/game-suite.mjs` command forwards here. `OUT` changes the report
+directory; `CATALOG_FRAMES` changes the observation budget (default 300 frames).
+A child has a separate 180-second wall-time limit. Reports retain actual observed
+frames, artifact hashes, exceptions and stage timings. A `running` result means
+the task remains active: it may still be compiling or waiting at a menu. A
+`returned` result only means its entry finished without a reported exception.
+Neither result qualifies gameplay, input, performance or original-QEMU parity.
+Those require program-specific checks such as the native scenarios above.
