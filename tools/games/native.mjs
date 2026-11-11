@@ -1,0 +1,58 @@
+import assert from "node:assert/strict";
+import {readFile,writeFile,mkdir} from "node:fs/promises";
+import {resolve} from "node:path";
+import {pathToFileURL} from "node:url";
+import {QemuRun} from "../../holyc-wasm/tests/oracle/Qemu.mjs";
+import {GuestHarness} from "../hemu/GuestHarness.mjs";
+import {GameInputs,Hash,root,GAME_CHECKS} from "./Evidence.mjs";
+
+const args=process.argv.slice(2),
+  names=args.filter(arg=>!arg.startsWith("--")),
+  source_dir=process.env.GAME_SOURCE_DIR?pathToFileURL(resolve(process.env.GAME_SOURCE_DIR)+"/"):
+    new URL("games/",root);
+assert(!(process.env.GAME_SOURCE_DIR && args.includes("--write")),
+  "Candidate sources cannot replace production evidence.");
+if (!names.length) names.push(...GAME_CHECKS);
+if (args.includes("--write"))
+  assert.deepEqual(names,GAME_CHECKS,"Refresh all qualified scenarios together.");
+const source=await readFile(new URL("tools/games/Native.HC",root),"latin1"),files=[],runs=[];
+for (const name of names) {
+  assert(["Babel","Volley","Snake"].includes(name));
+  const file=name.toUpperCase()+".HC";
+  files.push({name:file,bytes:await readFile(new URL(name+".HC",source_dir))});
+  runs.push(source+'\nGameChk("C:/ORACLE/'+file+'","'+name+'");\n');
+}
+const result=await QemuRun(runs,{files,timeout:60});
+await mkdir(new URL("tmp/games/",root),{recursive:true});
+await writeFile(new URL("tmp/games/native-"+names.join("-")+".json",root),JSON.stringify(result,null,2)+"\n");
+console.log(JSON.stringify(result));
+for (const [i,name] of names.entries()) {
+  assert.equal(result.results[i].except,"",name);
+  assert.match(result.results[i].out,new RegExp("EXIT:"+name+":settings,draw,window,tasks"));
+}
+if (!args.includes("--native-only")) {
+  const h=await GuestHarness({disk:true}),evidence={format:1,...await GameInputs(),
+    engineSha256:Hash(h.compiled.bytes),
+    backend:result.backend,oracle:result.evidence.split("/").at(-1),programs:{}};
+  await h.Exec(source);
+  for (const [i,name] of names.entries()) {
+    const file=files[i],path="C:/ORACLE/"+file.name,
+      id=h.gx.writeFile({path,bytes:file.bytes});
+    for (let frame=0;frame<1000;frame++) {
+      await h.Run();
+      if (["done","failed","error"].includes(h.gx.status(id)?.state)) break;
+    }
+    assert.equal(h.gx.status(id)?.state,"done",JSON.stringify(h.gx.status(id)));
+    const ptr=h.gx.scratch.base+0x1400;
+    await h.Exec('GameChk("'+path+'","'+name+'");*(0x'+ptr.toString(16)+')(I64*)=game_chk_frame;');
+    const frame=new DataView(h.ex.memory.buffer).getBigUint64(h.base+ptr,true).
+        toString(16).toUpperCase().padStart(16,"0"),
+      native=result.results[i].out.match(new RegExp("FRAME:"+name+":([0-9A-F]+)"))[1];
+    assert.equal(frame,native,name+" paused indexed-pixel framebuffer matches native TempleOS");
+    evidence.programs[name]={sourceSha256:Hash(file.bytes),frameFnv64:frame,
+      native:result.results[i].out.trim().split("\n"),hemu:"same input, frame and exit checks passed"};
+    console.log(name+": original V5.03 and HEMU pass input, frame "+frame+" and cleanup.");
+  }
+  await writeFile(new URL(args.includes("--write")?"tools/games/evidence.json":"tmp/games/evidence.json",root),
+    JSON.stringify(evidence,null,2)+"\n");
+}

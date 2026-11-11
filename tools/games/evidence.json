@@ -1,0 +1,38 @@
+{
+  "format": 1,
+  "harnessSha256": "253529768151a90a795227edd46fdf836f921a5bcd2198a86084e17b66fa9a88",
+  "webRuntimeSha256": "31da6f69ef2e59735040ad1d84942cddfebc54dc0f039b7d770081af957fc297",
+  "siblings": [
+    "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm bd688d5713ca8e320fb7d9439323db3841bc3319",
+    "hemu https://github.com/ParkerrDev/HEMU 39c384643922ecd3d3b272d7e3c9e238db07cd0e"
+  ],
+  "engineSha256": "300471b2546d7451997ca635aa10c29d1aa6014ab10f362908a19527966c2a12",
+  "backend": {
+    "engine": "qemu",
+    "accelerator": "kvm",
+    "version": "QEMU emulator version 11.1.2"
+  },
+  "oracle": "qemu-enabzia8",
+  "programs": {
+    "Babel": {
+      "sourceSha256": "769bff7f92ab92f1fb93294b47bc518858f40338bca34ba64bfb58545c8328b3",
+      "frameFnv64": "1BEB230827ABCDD3",
+      "native": [
+        "FRAME:Babel:1BEB230827ABCDD3",
+        "INPUT:Babel:pause,cross,left,right,drop",
+        "EXIT:Babel:settings,draw,window,tasks"
+      ],
+      "hemu": "same input, frame and exit checks passed"
+    },
+    "Volley": {
+      "sourceSha256": "d4c7e329e898c8cb33359282327de8e2d6292c94c603461494f5fd380b0f98de",
+      "frameFnv64": "070264F24E97EB62",
+      "native": [
+        "FRAME:Volley:070264F24E97EB62",
+        "INPUT:Volley:both-players,serve,pause",
+        "EXIT:Volley:settings,draw,window,tasks"
+      ],
+      "hemu": "same input, frame and exit checks passed"
+    }
+  }
+}

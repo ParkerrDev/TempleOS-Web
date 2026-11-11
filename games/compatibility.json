@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "32b31a4e1f45f1bd34514673e8e9e85c6c2270072137a4e4591ac46084552cb7",
+  "runtimeSha256": "ab1dd7c067cfb60fb99ec58f81d0bb21985fc5d4e56ef9a61e7ac2a5245a1267",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -8,7 +8,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "fe4fc6988248ab6d135974d1dce7ba50380f5829ab2a11adcd0ad88963bbb5ed"
+      "wasmSha256": "b15a72d3d8aa12162e014c822990d7dc2769ef923e5003ce26ffa9c381423d4f"
     },
     "toom": {
       "name": "TOOM",
@@ -24,7 +24,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "921f1edb580f38ce4483a7e351d8a7f77e4a9a877bf79fe7a0ed993a000dc9bd"
+      "wasmSha256": "d0e43a9d6288f6d3b2af4f984d4a16452715a2d7d979a081950c6266139df4a3"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -32,7 +32,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "967748705d55f7d1c516a5dc70266451cb8f4e716a376d788b973140704584cc"
+      "wasmSha256": "28fab59d8efa7c582ccecf09cc55cb0058a7b5473c4eff344cbbd0fa5a434b44"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -40,7 +40,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "21e342c5f67abc0d712d64d49fe948dae92d40ea520c1fcd5ec0756230abeb61"
+      "wasmSha256": "c3508c01a3f7ea5b862405ab0bd4b7dc12afa80cf731554b69132d85ba8b42d1"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -64,7 +64,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/BlackDiamond.HC:175: Undefined identifier or untyped call: Sprite3ZB"
+      "error": "C:/Home/Games/TinkerOS/BlackDiamond.HC:203: Undefined identifier or untyped call: Cosh"
     },
     "tinker-FlatTops": {
       "name": "FlatTops",
@@ -96,7 +96,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/BattleLines.HC:87: Undefined identifier or untyped call: Sprite3"
+      "error": "C:/Home/Games/TinkerOS/BattleLines.HC:107: Undefined identifier or untyped call: SpriteInterpolate"
     },
     "tinker-BigGuns": {
       "name": "BigGuns",
@@ -120,7 +120,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/FlapBat.HC:56: Undefined identifier or untyped call: Sprite3"
+      "error": "C:/Home/Games/TinkerOS/FlapBat.HC:61: Undefined identifier or untyped call: SpriteInterpolate"
     },
     "tinker-Maze": {
       "name": "Maze",
@@ -160,7 +160,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Wenceslas.HC:139: Undefined identifier or untyped call: Sprite3"
+      "error": "C:/Home/Games/TinkerOS/Wenceslas.HC:180: undefined symbol 'GR_Z_ALL'"
     },
     "tinker-RawHide": {
       "name": "RawHide",
@@ -168,7 +168,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/RawHide.HC:98: Undefined identifier or untyped call: Sprite3B"
+      "error": "C:/Home/Games/TinkerOS/RawHide.HC:139: Undefined identifier or untyped call: QueDel"
     },
     "tinker-TheDead": {
       "name": "TheDead",
@@ -176,7 +176,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/TheDead.HC:50: Undefined identifier or untyped call: Sprite3"
+      "error": "C:/Home/Games/TinkerOS/TheDead.HC:87: Undefined identifier or untyped call: MenuPush"
     },
     "tinker-Squirt": {
       "name": "Squirt",
@@ -184,7 +184,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Squirt.HC:62: Undefined identifier or untyped call: Sprite3"
+      "error": "C:/Home/Games/TinkerOS/Squirt.HC:64: undefined symbol 'ode'"
     },
     "tinker-Zing": {
       "name": "Zing",
@@ -192,7 +192,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Zing.HC:69: Undefined identifier or untyped call: Sprite3ZB"
+      "error": "class CTask has no field 'parent_task'"
     },
     "tinker-ZoneOut": {
       "name": "ZoneOut",
@@ -288,7 +288,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Stadium/Stadium.HC:26: Undefined identifier or untyped call: Sprite3ZB"
+      "error": "C:/Home/Games/TinkerOS/Stadium/Stadium.HC:92: undefined symbol 'SettingsPush'"
     },
     "library-AfterEgypt": {
       "name": "AfterEgypt",
@@ -312,7 +312,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/KeepAway/KeepAway.HC:267: Undefined identifier or untyped call: Sprite3"
+      "error": "C:/Home/Games/TinkerOS/Apps/KeepAway/KeepAway.HC:267: undefined symbol 'GR_Z_ALL'"
     },
     "library-Span": {
       "name": "Span",
@@ -432,7 +432,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TerrySupplement/B17/B17.HC:21: Undefined identifier or untyped call: Sprite3ZB"
+      "error": "C:/Home/Games/TerrySupplement/B17/B17.HC:97: undefined symbol 'SettingsPush'"
     },
     "library-Coach": {
       "name": "Coach",
@@ -440,7 +440,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TerrySupplement/Coach/Coach.HC:47: Undefined identifier or untyped call: Sprite3"
+      "error": "C:/Home/Games/TerrySupplement/Coach/Coach.HC:53: Undefined identifier or untyped call: SpriteInterpolate"
     },
     "library-DiningStars": {
       "name": "DiningStars",
@@ -456,7 +456,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TerrySupplement/Flappy/Flappy.HC:53: Undefined identifier or untyped call: Sprite3"
+      "error": "C:/Home/Games/TerrySupplement/Flappy/Flappy.HC:97: undefined symbol 'SettingsPush'"
     },
     "library-MissileDefense": {
       "name": "MissileDefense",
@@ -464,7 +464,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TerrySupplement/MissileDefense/MissileDefense.HC:49: Undefined identifier or untyped call: Sprite3"
+      "error": "C:/Home/Games/TerrySupplement/MissileDefense/MissileDefense.HC:61: cannot address undefined 'winmgr'"
     },
     "library-Rocks": {
       "name": "Rocks",
@@ -480,7 +480,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TerrySupplement/Pilgrims/GrVectMap.HC:64: Undefined identifier or untyped call: BFieldExtU32"
+      "error": "C:/Home/Games/TerrySupplement/Pilgrims/GrVectMap.HC:123: undefined symbol 'Gs'"
     },
     "library-MarioClone": {
       "name": "MarioClone",
@@ -504,7 +504,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/AustinArchive/Ezekiel/Sinner.HC:173: Undefined identifier or untyped call: Sprite3B"
+      "error": "C:/Home/Games/AustinArchive/Ezekiel/Sinner.HC:235: Undefined identifier or untyped call: QueInit"
     },
     "library-LordofHosts": {
       "name": "Lord of Hosts",
