@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {readFileSync,readdirSync} from "node:fs";
 import {gunzipSync} from "node:zlib";
 import {TERRY_QUOTES} from "../TerryQuotes.js";
-import {ArchiveDetails,ArchiveFile,ArchiveWatch} from "../Archive.js";
+import {ArchiveDetails,ArchiveFile,ArchiveWatch,ArchiveRange} from "../Archive.js";
 
 const dir=new URL("../assets/transcripts/",import.meta.url),videos=new Map();
 for (const file of readdirSync(dir).filter(name=>/^shard-.*\.gz$/.test(name)))
@@ -27,3 +27,6 @@ assert.equal(url.searchParams.get("f"),file);
 assert.equal(url.searchParams.get("n"),"A & B");
 assert.equal(url.searchParams.get("t"),"90");
 console.log("Terry quotes: transcript provenance and timestamped archive links passed.");
+
+assert.equal(new URL(ArchiveRange(file)).pathname,
+  "/archive/TerryADavis_TempleOS_Archive/"+file.split("/").map(encodeURIComponent).join("/"));

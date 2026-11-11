@@ -5,6 +5,10 @@
 import {WinAdd,WinDress,WinFocus,WinRaise} from "./WinMgr.js";
 import {$} from "./Os.js";
 import {ArchiveFile,ArchiveWatch} from "./Archive.js";
+import {ClipPanel} from "./clip/Panel.js";
+const clip_style=document.createElement("link");
+clip_style.rel="stylesheet";clip_style.href=new URL("./clip/Panel.css",import.meta.url);
+document.head.append(clip_style);
 
 const CSS='    /* Terry transcript search window */\n'+
   '    #tsWin { display:flex; flex-direction:column; gap:8px; width:min(860px,94vw); height:min(82vh,720px); margin:0; padding:10px; }\n'+
@@ -41,8 +45,8 @@ const CSS='    /* Terry transcript search window */\n'+
   '    #tsWin button { width:auto; font-size:12px; padding:2px 8px; }\n'+
   '    .ts-hit { display:block; background:#fff; margin:0 0 6px; padding:5px 8px; border:2px solid #fff; }\n'+
   '    .ts-hit:hover { border-color:var(--yellow); }\n'+
-  '    .ts-row { display:flex; align-items:baseline; gap:8px; }\n'+
-  '    .ts-t { color:var(--red); font-weight:bold; font-size:12px; text-decoration:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\n'+
+  '    .ts-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; }\n'+
+  '    .ts-t { flex:1 1 180px; color:var(--red); font-weight:bold; font-size:12px; text-decoration:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\n'+
   '    .ts-t:hover { text-decoration:underline; }\n'+
   '    .ts-m { color:var(--blue); font-size:12px; white-space:nowrap; }\n'+
   '    .ts-act { margin-left:auto; display:flex; gap:4px; flex:0 0 auto; }\n'+
@@ -116,13 +120,13 @@ const url=(h,sec)=>ArchiveWatch(h,sec==null?null:Math.max(0,sec-2));
 const dl=(h,sec)=>ArchiveFile(h.f)+(sec?"#t="+Math.max(0,sec-2):"");
 let vidN = 0;
 const vidWins = new Set();
-const openVideoWindow = (h, sec) => {
+const openVideoWindow = (h, sec, play=true) => {
   const w = document.createElement("div");
   w.className = "win vidwin";
   w.dataset.title = `${h.t} · ${h.d}`;
   const x = document.createElement("span"); x.className = "close"; x.textContent = "[X]";
   const v = document.createElement("video");
-  v.controls = true; v.autoplay = true; v.playsInline = true; v.preload = "metadata";
+  v.controls=true;v.autoplay=play;v.playsInline=true;v.preload=play?"metadata":"none";
   v.src = dl(h, sec);
   const t0 = Math.max(0, (sec || 0) - 2);
   v.addEventListener("loadedmetadata", () => { if (t0 && Math.abs(v.currentTime - t0) > 2) { try { v.currentTime = t0; } catch {} } });
@@ -163,7 +167,8 @@ const openVideoWindow = (h, sec) => {
     go.addEventListener("click", () => { go.disabled = true;
       doConvert(Math.max(0, (sec || 0) - 5)).catch((e) => { stl.textContent = "✗ " + e.message; go.disabled = false; }); });
   });
-  w.append(x, v);
+  const clip=ClipPanel(h,Math.max(0,(sec || 0)-2),(sec || 0)+20);
+  w.append(x,v,clip.element);
   document.body.appendChild(w);
   const n = vidN++ % 7;                                  // cascade new windows
   w.dataset.floating = "1";
@@ -173,7 +178,7 @@ const openVideoWindow = (h, sec) => {
   w.style.top = (84 + n * 28) + "px";
   w._tsF = h.f; w._tsVideo = v;
   vidWins.add(w);
-  const destroy = () => { const vv = w.querySelector("video") || v;
+  const destroy = () => { clip.Close(); const vv = w.querySelector("video") || v;
     try { vv.pause(); if (vv.src && vv.src.startsWith("blob:")) URL.revokeObjectURL(vv.src); vv.removeAttribute("src"); vv.load(); } catch {}
     w.remove(); vidWins.delete(w); };
   WinDress(w, { onClose: destroy });
@@ -211,6 +216,7 @@ const vidCard = (v, j) =>
     `<div class="ts-row"><a class="ts-t" href="${url(v, 0)}" target="_blank" rel="noopener" title="${v.p ? "watch on archive.org" : "archive.org never web-encoded this original - opens our player page"}">${esc(v.t)}</a>` +
     `<span class="ts-m">${esc(v.d)}${v.n ? " · " + hms(v.n) : ""} · ${v.k} passages</span>` +
     `<span class="ts-act"><button class="ts-pl" data-v="${j}" title="play in a window">▶</button>` +
+    `<button class="ts-clip" data-v="${j}" title="Export a video section">Clip</button>` +
     `<button class="ts-cp" data-v="${j}" title="copy title + link">⧉</button></span></div>` +
     (v.x ? `<span class="ts-x" title="click to expand the full transcript">${esc(v.x)}…</span>` : "") + `</div>`;
 const renderBrowse = () => {
@@ -236,6 +242,7 @@ const render = (m) => {
       `<div class="ts-row"><a class="ts-t" href="${url(h, h.sec)}" target="_blank" rel="noopener" title="${h.p ? `watch on archive.org at ${hms(h.sec)}` : `archive.org never web-encoded this original - plays in our mini-player at ${hms(h.sec)}`}">${esc(h.t)}</a>` +
       `<span class="ts-m">${esc(h.d)} · ▶ ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
       `<span class="ts-act"><button class="ts-pl" data-i="${i}" title="play in a window, from ${hms(h.sec)}">▶</button>` +
+      `<button class="ts-clip" data-i="${i}" title="Export this passage as a video clip">Clip</button>` +
       `<button class="ts-cp" data-i="${i}" title="copy this passage (with video + timestamp + link)">⧉</button></span></div>` +
       `<span class="ts-x" title="click to expand the full transcript">${hi(h.text, m.terms)}</span></div>`).join("");
   out.innerHTML = html ||
@@ -257,8 +264,12 @@ const renderTranscript = (v) => {
     `<button id="tsPlHere" title="play this video in a window - the [h:mm:ss] timestamps below seek it">▶ Play</button>` +
     `<button id="tsCpTr">⧉ Copy transcript</button><button id="tsDlTr">↓ .txt</button>` +
     `<a href="${url(v, 0)}" target="_blank" rel="noopener">${v.p ? "watch on archive.org" : "open in the mini-player"}</a></div>` +
-    v.s.map(([sec, text]) => `<div class="ts-line"><a class="ts-ts" data-s="${sec}" href="${url(v, sec)}" target="_blank" rel="noopener">[${hms(sec)}]</a>${esc(text)}</div>`).join("");
+    v.s.map(([sec, text]) => `<div class="ts-line"><button class="ts-clip-line" data-s="${sec}" title="Export a clip from this timestamp">Clip</button> <a class="ts-ts" data-s="${sec}" href="${url(v, sec)}" target="_blank" rel="noopener">[${hms(sec)}]</a>${esc(text)}</div>`).join("");
   out.scrollTop = 0;
+  for (const button of out.querySelectorAll(".ts-clip-line"))
+    button.addEventListener("click",function () {
+      openVideoWindow(v,Number(button.dataset.s),false);
+    });
   $("tsPlHere").addEventListener("click", () => {
     if (!seekOpenWindow(v.f, v.s[0] ? v.s[0][0] : 0)) openVideoWindow(v, v.s[0] ? v.s[0][0] : 0); });
   $("tsBack").addEventListener("click", () => { curTrF = null; if (lastView) lastView(); });
@@ -272,6 +283,15 @@ const renderTranscript = (v) => {
 const expand = (h) => { if (h && w) { vid++; w.postMessage({ type: "video", f: h.f, id: vid }); } };
 const refOf = (el) => el.dataset.v !== undefined ? lastVids[+el.dataset.v] : lastHits[+el.dataset.i];   // video card or passage hit
 out.addEventListener("click", (e) => {
+  const clip=e.target.closest(".ts-clip");
+  if (clip) {
+    const hit=refOf(clip);
+    if (hit) {
+      const win=openVideoWindow(hit,hit.sec || 0,false);
+      win.querySelector(".clip-panel input").focus();
+    }
+    return;
+  }
   const pl = e.target.closest(".ts-pl");
   if (pl) { const h = refOf(pl); if (h) openVideoWindow(h, h.sec || 0); return; }
   const cp = e.target.closest(".ts-cp");

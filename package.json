@@ -8,6 +8,7 @@
     "test:browser": "node tools/browser/shell.mjs",
     "test:engine": "node tools/browser/engine.mjs",
     "test:snapshot": "node tools/browser/snapshot.mjs",
+    "test:clip": "node tools/clip/mp4.mjs && node tools/clip/browser.mjs",
     "build:bible": "node tools/bible-build.mjs",
     "serve": "node server.mjs"
   },

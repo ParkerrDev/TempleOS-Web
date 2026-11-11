@@ -13,7 +13,7 @@ const ROOT=fileURLToPath(new URL(".",import.meta.url));
 //are not.
 const SERVED=new RegExp("^([^/]+\\.(html|js|css)|_headers|_redirects|"+
   "chat/rules\\.js|presence/RoomGlbls\\.js|"+
-  "(assets|build|editor|engine|fonts|games|god|vendor|holyc-wasm/src)/.+|"+
+  "(assets|build|clip|editor|engine|fonts|games|god|vendor|holyc-wasm/src)/.+|"+
   "(holyc-fmt|holycraft)/[^/]+\\.HC|hemu/[^/]+\\.gz)$");
 const NOT_SERVED=/\.(md|mjs|py)$|(^|\/)package\.json$|templeos_orig/;
 const MIME={".html":"text/html; charset=UTF-8",

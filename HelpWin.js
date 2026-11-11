@@ -31,6 +31,7 @@ const CTX={
     "Keep an exported copy outside the browser. Browser storage can be cleared."]},
   tsWin:{name:"Terry Search",tips:[
     "Search the transcript and open a result at its timestamp. Copy passage keeps the text and its source link.",
+    "Clip opens start and end times for a downloadable video section. You can adjust them before exporting.",
     "Transcript text is automatically recognized speech. Check the video before quoting it."],
     actions:[["tsBtn","Search videos"]]},
   chatWin:{name:"Chat",tips:[

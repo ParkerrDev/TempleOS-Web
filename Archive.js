@@ -27,3 +27,9 @@ export function ArchiveWatch(video,seconds,base=location.href)
     url.searchParams.set("t",Math.max(0,seconds));
   return url.href;
 }
+
+export function ArchiveRange(file)
+{
+  return "https://templeosweb-files.parkerrhunt.workers.dev/archive/"+
+    ITEM+"/"+file.split("/").map(encodeURIComponent).join("/");
+}
