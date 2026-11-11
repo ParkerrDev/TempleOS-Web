@@ -203,6 +203,22 @@ U0 TmWeaponTest()
   if (target->health!=health-18 || !(source->flags&TM_MF_JUSTATTACKED))
     throw('Saw');
   tm_weapon_cnt++;
+  for (n=0;n<2;n++) {
+    source->angle=0x08000000;
+    expected=0x40000000/21;
+    if (n) {source->angle=0xF8000000; expected=0x100000000-expected;}
+    world->random=0; WeaponMelee(weapon,TRUE);
+    if (source->angle!=expected) throw('SawTurn');
+    tm_weapon_cnt++;
+  }
+  PlayerBorn(&player); player.ready_weapon=TM_WP_BFG;
+  player.weapon[TM_WP_BFG]=TRUE; player.ammo[TM_AM_CELL]=100;
+  player.psprite[0].y=TM_WEAPON_TOP;
+  WeaponFire(weapon); player.dead=TRUE; player.health=0;
+  for (i=0;i<60;i++) WeaponTick(weapon);
+  if (player.psprite[0].state!=TM_S_BFGDOWN || player.ammo[TM_AM_CELL]!=100)
+    throw('DeadFire');
+  tm_weapon_cnt++;
   for (n=TM_WP_SHOTGUN;n<=TM_WP_SUPERSHOTGUN;n+=6) {
     PlayerBorn(&player); player.ready_weapon=n; player.weapon[n]=TRUE;
     player.ammo[TM_AM_SHELL]=20; source->angle=0x80000000;

@@ -21,7 +21,7 @@ for(let ready=0;ready<9;ready++)for(let mask=1;mask<512;mask+=2)for(const ammo o
 }
 const records=Buffer.alloc(8+cases.length*72);records.writeBigInt64LE(BigInt(cases.length));
 cases.flat().forEach((n,i)=>records.writeBigInt64LE(BigInt(n),8+i*8));
-const total=cases.length+32;
+const total=cases.length+35;
 const files=[{name:'TMDATA.BIN',bytes},{name:'WPAMMO.BIN',bytes:records}];
 if(backend==='qemu') {
   assert(process.env.HOLYC_WASM,'Set HOLYC_WASM to the checkout containing the native oracle.');

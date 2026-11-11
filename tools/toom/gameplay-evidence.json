@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "c4c7d7c729386050c2533b95dfda36b7180b76d267b5180d71c1614d80f8f7d8",
+  "renderSourceSha256": "05f596b53568ffc9636bfee6579561c35655be57938f3fad413906f4d0b47967",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -21,7 +21,7 @@
   "checks": {
     "items": {
       "cases": 2356,
-      "native": "qemu-5h5o3kqj",
+      "native": "qemu-63mpdt07",
       "hemu": true
     },
     "states": {
@@ -42,7 +42,7 @@
     },
     "damage": {
       "cases": 4772,
-      "native": "qemu-pj9bigpp"
+      "native": "qemu-9dq4egcb"
     },
     "math": {
       "fixedVectors": 4457,
@@ -54,11 +54,28 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-063dauy9",
+      "native": "qemu-ayiblnn3",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
       "purpose": "Image equivalence, not a performance measurement"
+    },
+    "impact": {
+      "cases": 18,
+      "native": "qemu-phhumysb",
+      "hemu": true
+    },
+    "weapon": {
+      "cases": 13859,
+      "native": "qemu-7pnrbfph",
+      "hemu": true,
+      "weaponActions": 22
+    },
+    "player": {
+      "cases": 1681,
+      "native": "qemu-43e6w_tc",
+      "hemu": true,
+      "commandVectors": 1500
     }
   },
   "frames": [

@@ -89,6 +89,11 @@ The implemented foundation uses native V5.03 file and memory APIs:
   requests. Weapon changes wait for the animation; refiring follows each
   weapon's state sequence. Drawing and audio playback remain separate work.
 
+- Player commands apply fixed-tic turning and ground thrust, use-button edges,
+  weapon selection, view bob/step recovery, timed powers and death/respawn state.
+  Airborne views remain below the ceiling. Sector/use callbacks precede weapon
+  and power clocks; actor motion and state updates follow them.
+
 Fuzz effects, the full simulation loop, actor actions, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
@@ -153,6 +158,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/damage.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/items.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/impact.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/weapon.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/player.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -233,14 +239,20 @@ missiles, source immunity, auto-aim, close-wall explosions, nested line actions,
 stale targets and repeated exception cleanup. Intentional test exceptions skip
 Adam logging so the heap assertion measures the owned trigger buffer.
 The weapon check covers 13,824 independently computed ammo/owned-weapon
-selections and 32 animation/combat cases. Nine 200-tic firing schedules match
+selections and 35 animation/combat cases. Nine 200-tic firing schedules match
 canonical shot intervals and ammunition costs; every weapon action is reached.
 It also checks flash completion, trigger rearming, switching/death, zero-tic
 states, callback replacement/cleanup, exact pellet counts and melee damage.
 Automatic selection uses enough ammo for a complete shot, including exactly
 two shells or 40 cells; it does not preserve legacy strict-greater quirks.
+The player check covers 1,500 independent movement/turn vectors and 181 cases
+for view limits, power expiry, use edges, teleport freezes, weapon requests,
+chainsaw thrust, death facing/respawn and movement through the actual collision
+and state clocks. Angle wrap and death during weapon windup have regressions.
+The static renderer still matches all 288 native map views after these modules
+are included; this does not measure a complete game's frame rate.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage, inventory, impact or weapon checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory, impact, weapon or player checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

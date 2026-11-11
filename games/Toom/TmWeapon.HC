@@ -227,7 +227,7 @@ U0 WeaponMelee(Weapon *tmpw,Bool saw)
     WeaponSound(tmpw,TM_SFX_PUNCH); tmpa->angle=angle; return;
   }
   WeaponSound(tmpw,TM_SFX_SAWHIT);
-  delta=angle-tmpa->angle&0xFFFFFFFF;
+  delta=angle-tmpa->angle; delta&=0xFFFFFFFF;
   if (delta>0x80000000) {
     if (delta<0x100000000-0x40000000/20)
       tmpa->angle=angle+0x40000000/21;
@@ -383,7 +383,9 @@ U0 WeaponTick(Weapon *tmpw)
 {//Two overlay clocks advance once per simulation tic, independently of draw.
   Player *tmpp=tmpw->motion->player;
   Psprite *sprite=tmpp->psprite;
-  I64 i;
+  I64 i,down=tmpw->motion->world->data->weapon[tmpp->ready_weapon].down;
+  if (tmpp->dead && sprite->state && sprite->state!=down)
+    WeaponState(tmpw,0,down);
   for (i=0;i<2;i++,sprite++)
     if (sprite->state && sprite->tics!= -1 && !--sprite->tics)
       WeaponState(tmpw,i,tmpw->motion->world->data->state[sprite->state].next);

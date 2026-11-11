@@ -26,6 +26,10 @@
     {
       "path": "linuxdoom-1.10/p_enemy.c",
       "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+    },
+    {
+      "path": "linuxdoom-1.10/p_user.c",
+      "sha256": "ecb5bab44ab9326c9c0d14bd607bc49c669bf048eecda27f7dc4634023a6c4a4"
     }
   ]
 }
