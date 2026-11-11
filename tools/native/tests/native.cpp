@@ -67,6 +67,44 @@ private slots:
     for(int i=0;i<2000;i++){disk.Call("Tick",{16000000});if(disk.Call("Job",{read}).toObject()["state"].toString()=="done"){done=true;break;}}
     QVERIFY(done);
   }
+  void settings() {
+    std::atomic<bool> cancel{false};Machine machine(&cancel);const auto imported=machine.Call("Open",{input}).toObject();
+    machine.Call("Pause",{true});
+    const auto initial=machine.Call("Status").toObject();
+    QCOMPARE(initial["rate"],imported["rate"]);QCOMPARE(initial["repeat"],imported["repeat"]);
+    QVERIFY_THROWS_EXCEPTION(std::runtime_error,machine.Call("Settings",{QJsonObject{{"rate",59},{"repeat",true}}}));
+    QVERIFY_THROWS_EXCEPTION(std::runtime_error,machine.Call("Settings",{QJsonObject{{"rate",60},{"repeat",1}}}));
+    QCOMPARE(machine.Call("Status").toObject(),initial);
+    auto settle=[&](const QString &source) {
+      const auto id=machine.Call("Exec",{source});
+      for(int i=0;i<1000;i++) {
+        machine.Call("Tick",{16000000});const auto job=machine.Call("Job",{id}).toObject();
+        if(job["state"].toString()=="done")return true;
+        if(job["state"].toString()=="failed"){qWarning()<<job;return false;}
+      }
+      return false;
+    };
+    const QStringList periods={"3F91111111111111","3F81111111111111","3F50624DD2F1A9FC","3FA1156F8C384072"};int index=0;
+    for(int rate:{60,120,0,30}) {
+      machine.Call("Pause",{true});const auto still=pixels(machine.Image());
+      const auto state=machine.Call("Settings",{QJsonObject{{"rate",rate},{"repeat",false}}}).toObject();
+      QVERIFY(state["ok"].toBool());QCOMPARE(state["rate"].toInt(),rate);QCOMPARE(state["actualRate"].toInt(),rate);QVERIFY(!state["repeat"].toBool());
+      QCOMPARE(pixels(machine.Image()),still);machine.Call("Pause",{false});
+      QVERIFY(settle(QString("Bool native_rate_found=FALSE;I64 native_i;for(native_i=0;native_i<4096;native_i++)if(*((&WinMgrSleep)(U8*)+native_i)(U64*)==0x%1)native_rate_found=TRUE;if(!native_rate_found)throw('Rate');").arg(periods[index++])));
+    }
+    for(bool repeat:{false,true}) {
+      machine.Call("Settings",{QJsonObject{{"rate",30},{"repeat",repeat}}});
+      QVERIFY(settle("I64 native_key_start=kbd.cnt;"));machine.Call("Key",{0x1E,true});
+      for(int i=0;i<80;i++)machine.Call("Tick",{16000000});
+      QVERIFY(settle(repeat?"if(kbd.cnt-native_key_start<20)throw('Repeat');":"if(kbd.cnt-native_key_start!=1)throw('Repeat');"));
+      machine.Call("Release");for(int i=0;i<10;i++)machine.Call("Tick",{16000000});
+    }
+    machine.Call("Settings",{QJsonObject{{"rate",120},{"repeat",true}}});machine.Call("Pause",{true});
+    const auto before=pixels(machine.Image());QTemporaryDir dir;QVERIFY(dir.isValid());const auto saved=dir.filePath("settings.hemu");
+    machine.Call("Save",{saved});Machine restored(&cancel);const auto state=restored.Call("Open",{saved}).toObject();
+    QCOMPARE(state["rate"].toInt(),120);QCOMPARE(state["actualRate"].toInt(),120);QVERIFY(state["repeat"].toBool());QVERIFY(state["paused"].toBool());
+    QCOMPARE(pixels(restored.Image()),before);
+  }
   void timerLifecycle() {
     std::atomic<bool> cancel{false};FrameMailbox mailbox;Engine engine(&cancel,&mailbox);
     auto *timer=engine.findChild<QTimer *>();QVERIFY(timer);QVERIFY(!timer->isActive());
@@ -159,6 +197,10 @@ private slots:
     const bool oldPause=backend.paused();backend.pause();QTRY_VERIFY_WITH_TIMEOUT(backend.paused()!=oldPause,3000);
     if(!backend.paused()){backend.pause();QTRY_VERIFY_WITH_TIMEOUT(backend.paused(),3000);}
     const auto paused=pixels(backend.image());QTest::qWait(50);QCOMPARE(pixels(backend.image()),paused);
+    auto *rate=window->findChild<QQuickItem *>("rate"),*repeat=window->findChild<QQuickItem *>("repeat");QVERIFY(rate);QVERIFY(repeat);
+    rate->setProperty("currentIndex",0);QVERIFY(QMetaObject::invokeMethod(rate,"activated",Q_ARG(int,0)));QVERIFY(backend.busy());QTRY_VERIFY(!backend.busy());QCOMPARE(backend.rate(),0);QVERIFY(backend.rateKnown());
+    const auto wasRepeat=backend.repeat();QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,repeat->mapToScene(QPointF(repeat->width()/2,repeat->height()/2)).toPoint());
+    QTRY_VERIFY(!backend.busy());QCOMPARE(backend.repeat(),!wasRepeat);QCOMPARE(pixels(backend.image()),paused);
     QTemporaryDir dir;QVERIFY(dir.isValid());QFile bad(dir.filePath("bad.hemu"));QVERIFY(bad.open(QIODevice::WriteOnly));bad.write("invalid");bad.close();
     backend.open(bad.fileName());QTRY_VERIFY_WITH_TIMEOUT(!backend.busy(),30000);QVERIFY(backend.ready());QVERIFY(backend.paused());
     QCOMPARE(pixels(backend.image()),paused);QCOMPARE(backend.path(),input);

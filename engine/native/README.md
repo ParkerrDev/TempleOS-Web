@@ -43,6 +43,13 @@ lack sufficient CPU and disk state and are refused. This host resumes captured
 TempleOS; it does not implement a cold BIOS/DVD boot.
 
 The window accepts a session path, Open, Save, Pause/Resume, Restart and Cancel.
+Refresh limit offers Uncapped, 30, 60 and 120 through the same guest WinRateSet
+implementation as the browser. BIOS key repeat uses the emulated keyboard's
+guest-programmed typematic delay/rate; Qt autorepeat is not injected. Imported
+settings are displayed without changing the saved machine, and subsequent saves
+preserve explicit choices. An unknown guest timing layout reports failure instead
+of claiming the requested limit was applied. Changing these settings is serialized
+on the machine thread and releases held input.
 Click the screen to route keys to TempleOS. Moving focus away releases held
 keys. The [Qt Wayland input source](https://codebrowser.dev/qt6/qtbase/src/plugins/platforms/wayland/qwaylandinputdevice.cpp.html#1342)
 provides the eight-key XKB offset used here. Linux evdev/XKB scan codes preserve left/right modifiers and keypad

@@ -70,17 +70,28 @@ export async function Open(path) {
     //A restored session retains its documented patch policy. Never fetch or modify guest code here.
     DocClipCheck(gx,meta.guestPatches);
     fault=CpuFaultText(inst.exports);
-    let paused=meta.paused||!!fault;
+    let paused=meta.paused||!!fault,rate=meta.rate,actualRate=meta.actualRate,repeat=meta.repeat;
     machine={
-      status:()=>({paused,fault,fps,frameSerial,capture:!paused&&!fault&&capture,tone:paused||fault?0:tone,cores:1,memoryBytes:inst.exports.memory.buffer.byteLength}),
+      status:()=>({paused,fault,fps,frameSerial,rate,actualRate,repeat,capture:!paused&&!fault&&capture,tone:paused||fault?0:tone,cores:1,memoryBytes:inst.exports.memory.buffer.byteLength}),
       frame:()=>NativeFrame(frame,palette),
       tick(delta){if(paused||fault)return;ns=delta;pointer.beforeFrame();inst.exports.__main();gx.tick();fault=CpuFaultText(inst.exports);if(fault){paused=true;keys.Release();}},
       pause(value){if(!value&&fault)throw Error(fault);paused=value;if(paused){input.reset();keys.Release();pointer.accept({b:0,reset:true});}},
       key(id,down){if(paused||fault)return;if(down)input.down(id,id);else input.up(id);},
       mouse:p=>{if(!paused&&!fault)pointer.accept(p);},
       release(){input.reset();keys.Release();pointer.accept({b:0,reset:true});},
+      settings(options){
+        if(fault)throw Error(fault);
+        if(!options||![0,30,60,120].includes(options.rate)||typeof options.repeat!=="boolean")
+          throw Error("Select a rate of 0, 30, 60 or 120 and a boolean BIOS-repeat setting");
+        if(!inst.exports.KbdRptSet||!inst.exports.WinRateSet)
+          throw Error("This saved engine does not support these settings");
+        rate=options.rate;repeat=options.repeat;
+        inst.exports.KbdRptSet(BigInt(repeat));
+        const ok=!!inst.exports.WinRateSet(BigInt(rate));actualRate=ok?rate:null;
+        return ok;
+      },
       async save(path){
-        const launch=gx.snapshot(),current={...meta,paused,heapPtr:host.state.heapPtr,sp:Number(inst.exports.__sp.value),keyboard:keys.Save(),pointer:pointer.save(),launch};
+        const launch=gx.snapshot(),current={...meta,paused,rate,actualRate,repeat,heapPtr:host.state.heapPtr,sp:Number(inst.exports.__sp.value),keyboard:keys.Save(),pointer:pointer.save(),launch};
         await Write(path,{meta:current,wasm:saved.wasm,memory:inst.exports.memory,disk});
       },
       exec:src=>gx.exec({src,target:"adam"}),job:id=>gx.status(id)
@@ -99,3 +110,7 @@ export function Release(){Require().release();}
 export async function Save(path){await Require().save(path);return Status();}
 export function Exec(src){return Require().exec(src);}
 export function Job(id){return Require().job(id);}
+export function Settings(options){
+  const ok=Require().settings(options);
+  return {...Status(),ok,msg:ok?"":"This guest has an unknown display timing layout; its rate was not changed."};
+}

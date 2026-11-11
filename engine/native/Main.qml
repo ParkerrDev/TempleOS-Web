@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import HemuNative
 ApplicationWindow {
   visible: true
-  width: 800; height: 700; minimumWidth: 640; minimumHeight: 570
+  width: 800; height: 700; minimumWidth: 640; minimumHeight: 610
   title: qsTr("TempleOS — HEMU")
   color: "#111111"
   id: window
@@ -57,6 +57,22 @@ ApplicationWindow {
       Label { Layout.fillWidth: true; text: backend.path||qsTr("Open a complete .hemu session"); textFormat: Text.PlainText; elide: Text.ElideMiddle; color: "white" }
       Button { objectName: "openFile"; text: qsTr("Open"); enabled: !backend.busy; onClicked: backend.choose(false) }
       Button { objectName: "saveFile"; text: qsTr("Save"); enabled: backend.ready&&!backend.busy; onClicked: backend.choose(true) }
+    }
+    RowLayout {
+      Label { text: qsTr("Refresh limit"); color: "white" }
+      ComboBox {
+        objectName: "rate"; model: [qsTr("Uncapped"),"30","60","120"]
+        currentIndex: [0,30,60,120].indexOf(backend.rate)
+        enabled: backend.ready&&!backend.busy&&!backend.faulted
+        onActivated: backend.settings([0,30,60,120][currentIndex],backend.repeat)
+      }
+      CheckBox {
+        objectName: "repeat"; text: qsTr("BIOS key repeat"); checked: backend.repeat
+        palette.windowText: "white"
+        enabled: backend.ready&&!backend.busy&&!backend.faulted
+        onToggled: backend.settings(backend.rate,checked)
+      }
+      Label { visible: backend.ready&&!backend.rateKnown; text: qsTr("Guest rate unavailable"); color: "white"; Layout.fillWidth: true }
     }
     RowLayout {
       Button { text: backend.paused?qsTr("Resume"):qsTr("Pause"); enabled: backend.ready&&!backend.busy&&!backend.faulted; onClicked: {backend.pause();screen.forceActiveFocus()} }

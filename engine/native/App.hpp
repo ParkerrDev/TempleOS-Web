@@ -117,6 +117,16 @@ public slots:
     if(!machine)return;
     try{if(!paused&&!fatalMessage.isEmpty())throw std::runtime_error(fatalMessage.toStdString());machine->Call("Pause",{paused});Present();clock.restart();Wake();}catch(const std::exception &error){Failed(error);}
   }
+  void Settings(QJsonObject options) {
+    emit busyChanged(true);
+    try {
+      if(!machine)throw std::runtime_error("No complete machine is loaded");
+      if(!fatalMessage.isEmpty())throw std::runtime_error(fatalMessage.toStdString());
+      const auto result=machine->Call("Settings",{options}).toObject();Present();
+      if(!result["ok"].toBool())throw std::runtime_error(result["msg"].toString().toStdString());
+    }catch(const std::exception &error){Failed(error);}
+    emit busyChanged(false);
+  }
   void Key(int key,bool down){if(machine)try{machine->Call("Key",{key,down});}catch(const std::exception &error){Failed(error);}}
   void Mouse(QJsonObject point){if(machine)try{machine->Call("Mouse",{point});}catch(const std::exception &error){Failed(error);}}
   void Release(){if(machine)try{machine->Call("Release");}catch(const std::exception &error){Failed(error);}}
@@ -145,6 +155,9 @@ class Backend:public QObject {
   Q_PROPERTY(bool faulted READ faulted NOTIFY changed)
   Q_PROPERTY(bool captured READ captured NOTIFY changed)
   Q_PROPERTY(bool captureWanted READ captureWanted NOTIFY changed)
+  Q_PROPERTY(int rate READ rate NOTIFY changed)
+  Q_PROPERTY(bool rateKnown READ rateKnown NOTIFY changed)
+  Q_PROPERTY(bool repeat READ repeat NOTIFY changed)
   QThread thread;std::atomic<bool> cancelFlag{false};FrameMailbox mailbox;Engine *engine=nullptr;
   QImage value;QString message,filename;bool working=false,stopped=true,loaded=false;
   QJsonObject state;PointerCapture pointerLock;Files files;QPointer<QQuickWindow> window;int buttons=0,wheel=0;Tone tone;std::unique_ptr<QAudioSink> audio;
@@ -166,6 +179,7 @@ public:
     connect(&pointerLock,&PointerCapture::error,this,[this](QString error){message=error;emit changed();});
     engine->moveToThread(&thread);connect(&thread,&QThread::finished,engine,&QObject::deleteLater);
     connect(this,&Backend::openRequested,engine,&Engine::Open);connect(this,&Backend::saveRequested,engine,&Engine::Save);
+    connect(this,&Backend::settingsRequested,engine,&Engine::Settings);
     connect(this,&Backend::pauseRequested,engine,&Engine::Pause);connect(this,&Backend::keyRequested,engine,&Engine::Key);
     connect(this,&Backend::mouseRequested,engine,&Engine::Mouse);connect(this,&Backend::releaseRequested,engine,&Engine::Release);
     connect(engine,&Engine::progress,this,[this](QString mode,qulonglong bytes){message=mode=="read"?tr("Loading session: %1 MiB").arg(bytes/(1024*1024)):tr("Saving session: %1 MiB").arg(bytes/(1024*1024));emit changed();});
@@ -187,6 +201,7 @@ public:
   ~Backend(){pointerLock.Release();tone.Set(0);if(audio)audio->stop();cancelFlag.store(true);thread.quit();thread.wait();}
   QImage image()const{return value;}QString status()const{return message;}bool busy()const{return working||files.Pending();}
   bool paused()const{return stopped;}bool ready()const{return loaded;}QString path()const{return filename;}bool faulted()const{return !state["fault"].toString().isEmpty();}
+  int rate()const{return state["rate"].toInt();}bool rateKnown()const{return !state["actualRate"].isNull()&&!state["actualRate"].isUndefined();}bool repeat()const{return state["repeat"].toBool();}
   bool captured()const{return pointerLock.Active();}bool captureWanted()const{return state["capture"].toBool();}
   void Attach(QQuickWindow *next){if(window)window->removeEventFilter(this);pointerLock.Release();window=next;if(window)window->installEventFilter(this);}
   Q_INVOKABLE void open(const QString &path){if(busy()||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Set(0);message=tr("Loading session…");emit changed();emit openRequested(path);}
@@ -194,6 +209,10 @@ public:
   Q_INVOKABLE void choose(bool save){if(busy()||(save&&!loaded))return;release();message=save?tr("Choose where to save the session"):tr("Choose a complete .hemu session");files.Choose(save,filename);}
   Q_INVOKABLE void cancel(){if(files.Pending())files.Cancel();else if(working)cancelFlag.store(true);}
   Q_INVOKABLE void pause(){if(!busy()&&loaded){release();tone.Set(0);emit pauseRequested(!stopped);}}
+  Q_INVOKABLE void settings(int rate,bool repeat){
+    if(busy()||!loaded||faulted())return;
+    release();working=true;emit changed();emit settingsRequested({{"rate",rate},{"repeat",repeat}});
+  }
   Q_INVOKABLE void release(){pointerLock.Release();buttons=0;emit releaseRequested();}
   Q_INVOKABLE void capture(){if(!busy()&&!stopped&&captureWanted())pointerLock.Start(window);}
   Q_INVOKABLE void mouse(double x,double y,int value,int rotation=0){
@@ -218,5 +237,5 @@ public:
   }
 signals:
   void imageChanged();void changed();void openRequested(QString);void saveRequested(QString);void pauseRequested(bool);
-  void keyRequested(int,bool);void mouseRequested(QJsonObject);void releaseRequested();void fileChosen(QString path,bool save);
+  void settingsRequested(QJsonObject);void keyRequested(int,bool);void mouseRequested(QJsonObject);void releaseRequested();void fileChosen(QString path,bool save);
 };
