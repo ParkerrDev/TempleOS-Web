@@ -128,6 +128,28 @@ small-memory guarantee for every phone. The tests compare CPU/device bytes
 and the saved frame across fresh one- and four-core workers, verify disk
 readback, game exclusivity and saved 120 Hz settings returning to stock 30 Hz.
 
+Allocator ABI is recorded separately from the container version. Missing ABI
+metadata denotes the original bump allocator (0). Current allocator sessions
+use ABI1 with their block/free-list metadata inside saved memory. Restore
+selects the matching host allocator before executing the embedded engine;
+legacy sessions retain ABI0 on subsequent saves. Unknown ABIs fail explicitly.
+Stock RAM images always initialize a fresh current allocator.
+
+To check compatibility with an actual older compiled engine, generate a private
+fixture while `holyc-wasm` points at the old compiler/runtime, then restore it
+after switching to the current pinned build:
+
+```
+node tools/hemu/snapshot-legacy.test.mjs save /path/legacy.hemu
+node engine/build.mjs
+node tools/hemu/snapshot-legacy.test.mjs restore /path/legacy.hemu
+```
+
+The two stages retain the saved pixel hash/palette beside the fixture and
+check native disk readback, resume and resave. The normal full suite covers
+new one- and four-core snapshots. Large generated machine images are not
+checked into source control.
+
 ## Desktop window
 
 From this checkout, after `node engine/build.mjs build`:

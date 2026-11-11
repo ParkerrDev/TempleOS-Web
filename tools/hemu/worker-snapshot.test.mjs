@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import * as runtime from "../../holyc-wasm/src/runtime/host.js";
 import {compileHemu} from "../../engine/compile.js";
 import {gunzipSync} from "node:zlib";
 import {makeDisk,fat32Read} from "../../engine/qcow2.js";
@@ -39,6 +40,7 @@ for (const smp of [0,4]) {
     assert.deepEqual(after.ranges,before.ranges,"saving freezes every CPU and device");
     await h.Stop();h=null;
     const head=await SnapshotInspect(saved.buf);
+    assert.equal(head.meta.heapAbi,runtime.HOST_HEAP_ABI??0);
     assert.equal(head.meta.cores,smp||1);assert.equal(head.meta.rate,120);
     assert.equal(head.meta.repeat,true);assert.equal(head.meta.launch.name,"Snapshot loop");
     h=await HemuBoot({snapshot:saved.buf,keep_buf:true});

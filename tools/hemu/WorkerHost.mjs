@@ -145,7 +145,7 @@ export async function HemuBoot(opt)
       ap=WorkerNew("engine/hemu-smp-worker.js");
       ap.on("message",function ApMsg(m) {if (m.cmd=="error") console.log("ap: "+m.msg);});
       ap.postMessage({cmd:"init",role:"ap",core:k,mem:mem,ctrl:ctrl,sc:sc,
-	    wasmBytes:wasm_bytes});
+	    wasmBytes:wasm_bytes,heapAbi:saved?.meta.heapAbi});
       h.workers.push(ap);
     }
     init.smp={mem:mem,ctrl:ctrl,ipiAddr:sc.globals&&sc.globals.g_ipi_pending,

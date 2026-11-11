@@ -233,7 +233,7 @@ async function exportImage(kind) {
     if (machineBarrier && !machineBarrier.Lock()) throw new Error("The application cores did not stop; save again.");
     locked=true;saving=true;
     const launch=gx.snapshot();
-    const meta={cores:smpCfg?.ncore||1,base:gBase,heapPtr:hostRef.state.heapPtr,
+    const meta={cores:smpCfg?.ncore||1,base:gBase,heapPtr:hostRef.state.heapPtr,heapAbi:hostRef.state.heapAbi??0,
       sp:Number(instRef.exports.__sp.value),ipiAddr:smpCfg?.ipiAddr||0,
       paused,rate:refreshRate,actualRate,repeat:repeatKeys,budget:curBudget,
       keyboard:keyq.Save(),pointer:guestInput.save(),launch};
@@ -303,6 +303,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
   const barrier=machineBarrier=smpCfg?CaptureBarrier(new Int32Array(smpCfg.ctrl),
         smpCfg.ncore,()=>apsReleased):null;
   const host=hostRef=createHemuHost({
+    ...(saved?{heapAbi:saved.meta.heapAbi}:{}),
     captureLock:()=>barrier?barrier.Lock():true,
     captureUnlock:()=>barrier?.Unlock(),
     palette:(index,rgb)=>postMessage({cmd:"palette",index,rgb}),
@@ -315,6 +316,9 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
       lastFrame=[addr,w,h];SendFrame(addr,w,h,u8);
     },
   });
+  if (saved && (host.state.heapAbi??0)!==saved.meta.heapAbi) {
+    await saved.Close();throw new Error("Snapshot allocator ABI is unsupported by this host");
+  }
   // |0 on every BigInt crossing: a fractional value (trackpad movementX, joystick velocity)
   // throws "Not an integer" in BigInt() and traps the whole emulator.
   host.env.__host_msx = guestInput.x;
