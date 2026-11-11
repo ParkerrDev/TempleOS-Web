@@ -1117,3 +1117,24 @@ reviewed screenshots and bounded claims are in `finale-play-evidence.json`.
 A cast pause OCR failure was corrected by observing native pause/tic state;
 transparent text over artwork is not a reliable input for the plain-screen
 text decoder. The product pixels were kept unchanged.
+
+`tools/toom/startup.mjs` creates a private instrumented copy of the native
+package. Its markers separate file compilation, object/asset construction and
+the first render. Production game sources are not changed. Native stamps are
+saved through FileWrite and read back from the production worker's disk export.
+The original TempleOS mode launches the same private files but stops after
+PlayNew/PlayDel instead of entering an interactive window.
+
+```sh
+TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web CORES=1 node tools/toom/startup.mjs
+TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web CORES=4 node tools/toom/startup.mjs
+BACKEND=qemu HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/startup.mjs
+```
+
+The initial Phase 1 diagnostics attribute most cold startup time to compiling
+the package: 4.84/5.94 seconds on the one/four-worker frozen 09109b0 runs, versus
+0.41 seconds in the original TempleOS run. Construction took 0.34/0.35 seconds
+and the first frame 0.86/1.00 seconds in those worker samples. These are
+instrumented, uncontrolled-load observations, not performance acceptance or a
+controlled comparison of host speed. `startup-evidence.json` retains all stage
+stamps, source/runtime/asset hashes and the narrower native fixture scope.

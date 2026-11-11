@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {gunzipSync} from 'node:zlib';
 import {FreedoomRead,root} from './Assets.mjs';
 
 const web=resolve(process.env.TEMPLEOS_WEB||root);
@@ -10,6 +11,7 @@ const {HemuBoot,ReadyWait,FramesWait,Sleep,TextRow}=await import(pathToFileURL(r
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom')),load=readFileSync(resolve(game,'Load.HC'),'latin1');
 const finale=!!process.env.FINALE,progression=!!process.env.PROGRESSION;
+const startup=process.env.STARTUP?JSON.parse(readFileSync(process.env.STARTUP)):null;
 assert(!(finale&&progression));
 const names=['Run.HC','Load.HC',...load.matchAll(/#include "([^"]+)"/g)]
   .map(n=>typeof n==='string'?n:n[1].includes('.')?n[1]:n[1]+'.HC')
@@ -19,7 +21,8 @@ const files=names.map(n=>({path:`C:/TOOM/${n}`,bytes:readFileSync(resolve(game,n
   {path:'C:/TOOM/TMDATA.BIN',bytes:readFileSync(resolve(game,'TMDATA.BIN'))}]);
 const probe=readFileSync(resolve(root,'tools/toom/Worker.HC'),'latin1')+'\n'+readFileSync(new URL('AudioWorker.HC',import.meta.url),'latin1')+
   (progression||finale?'\n'+readFileSync(new URL('ProgressWorker.HC',import.meta.url),'latin1'):'')+
-  (finale?'\n'+readFileSync(new URL('FinaleWorker.HC',import.meta.url),'latin1'):'');
+  (finale?'\n'+readFileSync(new URL('FinaleWorker.HC',import.meta.url),'latin1'):'')+
+  (startup?'\n'+readFileSync(new URL('StartupWorker.HC',import.meta.url),'latin1'):'');
 const out=resolve(process.env.OUT||'/tmp/toom-workers');mkdirSync(out,{recursive:true});
 const fileHashes=Object.fromEntries(files.map(f=>[f.path,hash(f.bytes)]));
 const runtimeNames=['engine/jit.js','engine/hemu-worker.js','engine/hemu-smp-worker.js',
@@ -39,6 +42,7 @@ for(const count of cores) {
     h.Post({cmd:'osExec',id,src,target:'adam'});
     const result=await Result(id);assert(result.ok,result.msg);
     console.error(`${count} cores: ${id} passed`);
+    return result;
   }
   const SendKeys=keys=>h.Post({cmd:'input',keys});
   async function Tap(code) {SendKeys([code]);await Sleep(40);SendKeys([code|128]);}
@@ -87,8 +91,25 @@ for(const count of cores) {
     await Done('weapon-ready','TmWorkerWeaponReady;');
     const weaponReadyMs=performance.now()-readyStart;
     if(process.env.READY_ONLY) {
+      const marks=[];
+      if(startup) {
+        await Done('startup-save','TmWorkerStartup;');
+        h.Post({cmd:'exportDisk'});
+        const saved=await Wait(m=>m.cmd==='exportResult'&&m.kind==='disk',60000);
+        assert(saved.ok,saved.msg);
+        const {makeDisk,fat32Read}=await import(pathToFileURL(resolve(web,'engine/qcow2.js')));
+        const bytes=Buffer.from(fat32Read(makeDisk(gunzipSync(saved.buf)),'TOOM','STARTUP.BIN'));
+        assert.equal(bytes.length,256*8);
+        writeFileSync(resolve(out,`startup-${count}.bin`),bytes);
+        const start=bytes.readDoubleLE(0);assert(start>0);
+        for(let i=0;i<startup.labels.length;i++) {
+          const stamp=bytes.readDoubleLE(i*8);
+          marks.push({label:startup.labels[i],microseconds:stamp?Math.round((stamp-start)*1000000):null});
+        }
+        assert(marks.every(m=>m.microseconds!==null&&m.microseconds>=0),'Every startup stage ran.');
+      }
       const result={cores:count,wasmSha256,runtimeHashes,fileHashes,firstFrameMs,weaponReadyMs,
-        probeSha256:hash(Buffer.from(probe,'latin1')),probe:h.last.probe};
+        startup:startup&&{...startup,marks},probeSha256:hash(Buffer.from(probe,'latin1')),probe:h.last.probe};
       results.push(result);writeFileSync(resolve(out,`ready-${count}.json`),JSON.stringify(result,null,2));
       break;
     }
