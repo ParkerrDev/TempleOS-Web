@@ -106,6 +106,22 @@ floating exception are not implemented. These tests establish the stated
 comparison behavior, not full x87 conformance. The authoritative instruction
 reference is [Intel SDM revision 089](https://cdrdv2-public.intel.com/868137/325462-089-sdm-vol-1-2abcd-3abcd-4.pdf).
 
+FPU dispatch reports whether it handled an encoding. Unsupported forms stop
+with `BADOPX87` and both opcode bytes; reserved forms and unsupported native
+instructions cannot silently pass a coverage gate. The former low-64-bit
+80-bit operand approximation is rejected. The valid FFREE operation still
+uses the documented tag-less approximation needed by TempleOS's FFREE /
+FINCSTP discard sequence; success is not a claim of complete stack-tag checks.
+
+`fpu-ops-oracle.c` records 108 additional real x86 results: all eight FCMOV
+conditions against all CF/PF/ZF combinations, FNSTSW/FNCLEX at eight stack
+positions, and signed 16/32-bit FICOM/FICOMP comparisons. The 494-check gate
+repeats them through both execution engines, checks memory-store width and
+register/flag preservation, then requires 22 unsupported cases to stop
+without changing their operands. FNSTSW now includes TOP in both interpreter
+and JIT results. The old integer-memory compare path incorrectly dispatched
+those encodings as arithmetic; it now updates status and pops as required.
+
 ## Settings and keyboard
 
 `init` accepts `rate` (0, 30, 60, 120; default 0), `repeat` (default false),
