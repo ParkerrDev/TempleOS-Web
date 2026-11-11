@@ -47,6 +47,9 @@ real x86 conversion fixtures, and QEMU snapshot capture tools remain.
   FPS to the frame message, check clock/refresh pacing, and verify pause.
 - Guest execution checks cover source errors, exceptions, file readback,
   disk include, launch completion/refusal and an animating native game.
+- JIT loop checks compare complete CPU and memory state after the reported
+  instruction count, including zero iterations, the iteration cap, writes to
+  the loop's own instructions, and bodies that must retain interpreter exits.
 
 These are bounded checks, not proof that every program or CPU instruction is
 correct on bare metal. Raster expectations run the original TempleOS code in

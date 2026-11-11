@@ -298,7 +298,33 @@ function codeChanged(rip) {
   if(blockRip[slot]===rip){blockFn[slot]=null;blockRip[slot]=-1;if(RUNTBL)RUNTBL.set(slot,null);}
   if(JITN && JITRIP){const v=new DataView(MEM.buffer);if(Number(v.getBigUint64(JITRIP+slot*8,true))===rip)v.setBigInt64(JITN+slot*8,-1n,true);}
 }
-export function jitCompile(rip,noFprCache=false) {
+function codeGuard(f,rip,bytes,onMiss) {
+  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  f.block(0x40);f.block(0x40);
+  let k=0;
+  for(;k+8<=bytes.length;k+=8) {
+    i32c(f,GBASE+rip+k);f.load("i64_load",0,0);
+    i64c(f,view.getBigUint64(k,true));f.op("i64_ne");f.br_if(0);
+  }
+  for(;k<bytes.length;k++) {
+    i32c(f,GBASE+rip+k);f.load("i32_load8_u",0,0);
+    i32c(f,bytes[k]);f.op("i32_ne");f.br_if(0);
+  }
+  f.br(1);f.end();onMiss(f);f.end();
+}
+// Only straight integer bodies participate in top-tested loops. Instructions
+// with fault exits, FPU stack changes, calls, or IRQ windows retain basic blocks.
+function integerLoopOp(op,two,ext) {
+  if(two)return op>=0x40&&op<=0x4F || op>=0x80&&op<=0x9F ||
+    [0xB6,0xB7,0xBE,0xBF].includes(op);
+  if(op<0x40)return true;
+  if(op>=0x70&&op<=0x7F || op>=0xB0&&op<=0xBF)return true;
+  if(op===0xFE||op===0xFF)return ext<=1;
+  if(op===0xF6||op===0xF7)return ext<=5;
+  return [0x63,0x69,0x6B,0x80,0x81,0x83,0x84,0x85,0x88,0x89,0x8A,0x8B,
+    0x8D,0x90,0x98,0x99,0xA8,0xA9,0xC0,0xC1,0xC6,0xC7,0xD0,0xD1,0xE9,0xEB].includes(op);
+}
+export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
   const cached=blocks.get(rip);
   if(cached && codeMatches(rip,cached.bytes)) {
     if(cached.fn){const slot=slotOf(rip);blockFn[slot]=cached.fn;blockRip[slot]=rip;if(RUNTBL)RUNTBL.set(slot,cached.fn);}
@@ -315,6 +341,13 @@ export function jitCompile(rip,noFprCache=false) {
   const f = new Func();
   let i = GBASE + rip, n = 0, term = false, loopT = null;   // loopT set if the block is a self-loop (jcc back to entry); REP string ops emit their own native loop + end the block via the normal terminator path
   let ifbrk = false;   // block ends on an instruction that can OPEN an IF=1 window (STI/POPF/IRET): its return count carries bit30 so the dispatcher's break-on-IF mode can hand back for an IRQ delivery
+  let compareHead=false,topExit=null,topLoop=false;
+  function topBranch(cc,tgt,fall) {
+    if(noTopLoop||globalThis.__NOLOOP||topExit||n!==1||!compareHead||tgt<=fall)return false;
+    emitCond(f,cc);f.if_();
+    topExit={at:f.bytes.length,tgt,count:n+1};f.end();
+    return true;
+  }
   for (; n < 400;) {
     let j = i, rexW = 0, rexR = 0, rexX = 0, rexB = 0, rex = 0, pfx66 = 0, two = 0, rep = 0, locked = 0; SEG = 0;
     for (;;) {                                            // prefixes
@@ -331,6 +364,11 @@ export function jitCompile(rip,noFprCache=false) {
     if (locked) break;                                   // LOCK-prefixed instr -> end block at `i`; interpreter executes it atomically
     let op = U8[j]; j++;
     if (op === 0x0F) { two = 1; op = U8[j]; j++; }
+    const ext=(U8[j]>>3)&7;
+    if(topExit&&!integerLoopOp(op,two,ext))return jitCompile(rip,noFprCache,true);
+    if(n===0)compareHead=!two&&(op>=0x38&&op<=0x3D ||
+      [0x84,0x85,0xA8,0xA9].includes(op) ||
+      [0x80,0x81,0x83].includes(op)&&ext===7 || (op===0xF6||op===0xF7)&&ext<=1);
     const szV = rexW ? 8 : (pfx66 ? 2 : 4);              // size for "v" operands
     let handled = false;
     if (!two) {
@@ -399,13 +437,18 @@ export function jitCompile(rip,noFprCache=false) {
       } else if (op >= 0x70 && op <= 0x7F) {                                 // jcc rel8
         const tgt = (j + 1 - GBASE) + imm8s(j); j += 1;
         materialize(f);                                                      // jcc reads flags (loop-trace re-reads each iteration)
+        if(topBranch(op&15,tgt,j-GBASE)){i=j;n++;continue;}
         if (tgt === rip && !globalThis.__NOLOOP) loopT = { cc: op & 0xF, fall: j - GBASE };         // backward jcc to entry -> trace as a native loop
         else { i64c(f, tgt); i64c(f, j - GBASE); emitCond(f, op & 0xF); f.op("select"); }
         term = true; n++; i = j; break;
       } else if (op === 0xEB) {                                              // jmp rel8
-        const tgt = (j + 1 - GBASE) + imm8s(j); j += 1; materialize(f); i64c(f, tgt); term = true; n++; i = j; break;
+        const tgt = (j + 1 - GBASE) + imm8s(j); j += 1; materialize(f);
+        topLoop=!!topExit&&tgt===rip&&topExit.tgt>=j-GBASE;
+        if(!topLoop)i64c(f,tgt);term=true;n++;i=j;break;
       } else if (op === 0xE9) {                                              // jmp rel32
-        const tgt = (j + 4 - GBASE) + imm32s(j); j += 4; materialize(f); i64c(f, tgt); term = true; n++; i = j; break;
+        const tgt = (j + 4 - GBASE) + imm32s(j); j += 4; materialize(f);
+        topLoop=!!topExit&&tgt===rip&&topExit.tgt>=j-GBASE;
+        if(!topLoop)i64c(f,tgt);term=true;n++;i=j;break;
       } else if (op === 0xE8) {                                              // call rel32
         const tgt = (j + 4 - GBASE) + imm32s(j); j += 4; materialize(f);
         rspAdj(f, -8);    // rsp -= 8
@@ -681,6 +724,7 @@ export function jitCompile(rip,noFprCache=false) {
       } else if (op >= 0x80 && op <= 0x8F) {                                 // jcc rel32
         const tgt = (j + 4 - GBASE) + imm32s(j); j += 4;
         materialize(f);                                                      // jcc reads flags (loop-trace re-reads each iteration)
+        if(topBranch(op&15,tgt,j-GBASE)){i=j;n++;continue;}
         if (tgt === rip && !globalThis.__NOLOOP) loopT = { cc: op & 0xF, fall: j - GBASE };         // backward jcc to entry -> trace as a native loop
         else { i64c(f, tgt); i64c(f, j - GBASE); emitCond(f, op & 0xF); f.op("select"); }
         term = true; n++; i = j; break;
@@ -747,12 +791,32 @@ export function jitCompile(rip,noFprCache=false) {
     }
     if (!handled) { if (globalThis.__JITSTATS) globalThis.__JITSTATS[(two ? "0F " : "") + op.toString(16)] = (globalThis.__JITSTATS[(two ? "0F " : "") + op.toString(16)] || 0) + 1; break; }   // unknown op: end block (interpreter resumes here)
     i = j; n++; }
+  if(topExit&&!topLoop)return jitCompile(rip,noFprCache,true);
   if (n === 0) { blocks.set(rip, { fn: null, ninstr: 0, bytes:U8.slice(GBASE+rip,GBASE+rip+16) }); return 0; }   // empty block (e.g. LOCK-prefixed instr first) -> cache as failed so it's interpreted, not re-decoded every visit
   // Calling convention (chaining-ready): block STORES the exit rip to the shared RIP and RETURNS the
   // instruction count. For a self-loop, wrap the body in a native WASM loop so the whole loop runs in
   // one call (this is the dispatch win: a `dec rcx; jnz top` blit stays native instead of host round-tripping).
   if(loopT && fCacheEnabled && fStackOffset)return jitCompile(rip,true);
-  if (loopT) {
+  const codeBytes=U8.slice(GBASE+rip,i);
+  if(topLoop) {
+    const count=(g,prefix=0)=>{g.local_get(4);i64c(g,n);g.op("i64_mul");if(prefix){i64c(g,prefix);g.op("i64_add");}g.op("i32_wrap_i64");};
+    // The exit can run after any number of complete bodies. Flush the union of
+    // dirty registers, including those only written after this comparison.
+    const exit=new Func();
+    i32c(exit,RIP);i64c(exit,topExit.tgt);st64(exit);wbDirty(exit);
+    count(exit,topExit.count);exit.return_();
+    f.bytes.splice(topExit.at,0,...exit.bytes);
+    f.bytes.unshift(OP.loop,0x40);
+    f.local_get(4);i64c(f,1);f.op("i64_add");f.local_set(4);
+    // A body may rewrite its own code. Preserve the old block-boundary guard
+    // before executing the next iteration with cached registers.
+    codeGuard(f,rip,codeBytes,g=>{
+      i32c(g,RIP);i64c(g,rip);st64(g);wbDirty(g);
+      i64c(g,rip);g.call(changedIndex);count(g);g.return_();
+    });
+    f.local_get(4);i64c(f,1024);f.op("i64_lt_u");f.br_if(0);f.end();
+    i32c(f,RIP);i64c(f,rip);st64(f);wbDirty(f);count(f);
+  } else if (loopT) {
     const K = 1024;                                        // iteration cap per call: bound a single loop-block's instr count well under the PIT period so IRQs fire on time
     f.bytes.unshift(OP.loop, 0x40); f.local_get(4); i64c(f, 1); f.op("i64_add"); f.local_set(4); f.local_get(4); i64c(f, K); f.op("i64_lt_u"); emitCond(f, loopT.cc); f.op("i32_and"); f.br_if(0); f.end(); i32c(f, RIP); i64c(f, rip); i64c(f, loopT.fall); f.local_get(4); i64c(f, K); f.op("i64_ge_u"); f.op("select"); st64(f); wbDirty(f);
     f.local_get(4); i64c(f, n); f.op("i64_mul"); f.op("i32_wrap_i64");   // return counter*n = instructions actually run (i32)
@@ -769,15 +833,8 @@ export function jitCompile(rip,noFprCache=false) {
   // TempleOS frees and recompiles statement code at the same addresses. Guard
   // every decoded byte before entering cached native code, including through the
   // native dispatch table. A miss re-arms compilation and leaves CPU state intact.
-  const codeBytes=U8.slice(GBASE+rip,i),guard=new Func(),codeView=new DataView(codeBytes.buffer);
-  guard.block(0x40);
-  let offset=0;
-  for(;offset+8<=codeBytes.length;offset+=8){i32c(guard,GBASE+rip+offset);guard.load("i64_load",0,0);i64c(guard,codeView.getBigUint64(offset,true));guard.op("i64_ne");guard.br_if(0);}
-  for(;offset<codeBytes.length;offset++){i32c(guard,GBASE+rip+offset);guard.load("i32_load8_u",0,0);i32c(guard,codeBytes[offset]);guard.op("i32_ne");guard.br_if(0);}
-  // Matching code skips the miss handler; mismatches branch out of the inner block.
-  const entry=[...guard.bytes];
-  const wrapper=new Func();wrapper.block(0x40);wrapper.raw(...entry);wrapper.br(1);wrapper.end();
-  i64c(wrapper,rip);wrapper.call(changedIndex);i32c(wrapper,0);wrapper.return_();wrapper.end();
+  const wrapper=new Func();
+  codeGuard(wrapper,rip,codeBytes,g=>{i64c(g,rip);g.call(changedIndex);i32c(g,0);g.return_();});
   f.bytes.unshift(...wrapper.bytes);
   blk.setBody([{ count: 5, vt: VT.i64 }, { count: 1, vt: VT.f64 }, { count: 13, vt: VT.i64 }, { count: 17, vt: VT.i64 }, { count: 9, vt: VT.f64 }], f); m.exportFunc("run", blk.index); let inst;   // local 36 = 2nd f64 scratch (FCOMI operands)
   try { inst = new WebAssembly.Instance(new WebAssembly.Module(Uint8Array.from(m.emit())), { env: { mem: MEM, RdMem: RDMEM, WrMem: WRMEM, CodeChanged:codeChanged } }); }
