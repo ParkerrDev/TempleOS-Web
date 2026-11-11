@@ -90,8 +90,10 @@ try {
       return text;
     };
   });
-  assert.equal(await page.evaluate(()=>document.getElementById("tb-fps").textContent),
-    await page.evaluate(()=>"FPS: "+window.lastGuestFrame.fps));
+  await page.waitForFunction(()=>Number.isSafeInteger(window.lastGuestFrame?.fps));
+  const fps=await page.evaluate(()=>[document.getElementById("tb-fps").textContent,
+    "FPS: "+window.lastGuestFrame.fps]);
+  assert.equal(fps[0],fps[1]);
   await page.locator("#settingsBtn").click();
   await page.locator("#biosRepeat").check();
   await page.waitForFunction(()=>window.guestEvents.some(m=>

@@ -89,6 +89,9 @@ try {
     await page.locator("#pauseBtn").click();
     await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd=="paused" && m.value));
     const before_fps=await page.locator("#tb-fps").innerText();
+    const before_pixels=await page.locator("#canvas").evaluate(async e=>
+      Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",e.getContext("2d").
+        getImageData(0,0,e.width,e.height).data)),v=>v.toString(16).padStart(2,"0")).join(""));
     await page.locator("#diskBtn").click();
     const downloading=page.waitForEvent("download",{timeout:60000});
     await page.locator("#dlSnap").click();
@@ -106,6 +109,10 @@ try {
     assert.equal(await page.evaluate(()=>window.guestEvents.find(m=>m.cmd=="restored").cores),cores);
     assert.match(await page.locator("#pauseBtn").innerText(),/Play/);
     assert.equal(await page.locator("#tb-fps").innerText(),before_fps);
+    assert.equal(await page.locator("#canvas").evaluate(async e=>
+      Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",e.getContext("2d").
+        getImageData(0,0,e.width,e.height).data)),v=>v.toString(16).padStart(2,"0")).join("")),before_pixels,
+      "a paused restore presents exactly the same complete image");
     await page.locator("#settingsBtn").click();
     assert.equal(await page.locator("#frameRate").inputValue(),"120");
     assert.equal(await page.locator("#biosRepeat").isChecked(),true);

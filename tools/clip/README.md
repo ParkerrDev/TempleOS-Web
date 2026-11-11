@@ -50,7 +50,7 @@ failed range requests and mobile width.
 Format reference:
 https://developer.apple.com/documentation/quicktime-file-format
 
-A current compiler limitation remains recorded separately: before the exception
-semantics change, HolyC-wasm traps at a thrown exception instead of executing the
-native catch. The host reports the parser's stored diagnostic in that case;
-this is not counted as proof of language exception parity.
+The compiler pin includes cross-function exception handling. Malformed metadata
+returns the native diagnostic through the parser catch. Chromium validation and
+execution of the resulting WASM exception-handling module are part of the browser
+clip check; other browser/CPU targets still require their own runs.

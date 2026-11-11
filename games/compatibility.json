@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "9ade48d1e4a059eb0b88396b22f0c39a670f5819d78f7be9cb9b8ba268541a66",
+  "runtimeSha256": "f1b433da6c26baced1258c98ca3a2c1e49883b172e71437f1a22f4517ce07cc4",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -8,7 +8,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "a8650d9e75727a024183451cdc367336df24ecb811f20f9868df4f1d1fd2be96"
+      "wasmSha256": "d20b4198de4bbf458766b32f900157e2e5afeea5b62ff4494e817714dc37f21a"
     },
     "toom": {
       "name": "TOOM",
@@ -24,7 +24,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "2953b572f5f7cd77448f2c8ee91f43903e9ab321f12a3b98edc1ddfef5bc1735"
+      "wasmSha256": "77eb1ad3ff3ffd5ec5023fbdad1c467fe497819f992e389767df062d505536ad"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -32,7 +32,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "8987fe7d08bdbb4991e8493bb71e9fb36f43ff759cf206ea031230650d818be3"
+      "wasmSha256": "48365acd6dd64d31388e2c24fcaf306bd46309961b232a76e65f510bc5085f46"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -40,7 +40,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "d6593b461fa2979514fb98b1326a3c9069212261bffec36ec182e7f58ea437f9"
+      "wasmSha256": "dd891efcb4e0341c32943bb86eb009b452b93faf4053b442feff78a214884695"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -48,7 +48,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "class Track: member 'c' has unknown class type 'CColorROPU16'"
+      "error": "array dimension is not a constant integer at line 113"
     },
     "tinker-Talons": {
       "name": "Talons",
@@ -120,7 +120,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 56: Undefined identifier or unsupported indirect call: Sprite3"
+      "error": "line 56: Undefined identifier or untyped call: Sprite3"
     },
     "tinker-Maze": {
       "name": "Maze",
@@ -144,7 +144,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 8: Undefined identifier or unsupported indirect call: GrLine3"
+      "error": "line 8: Undefined identifier or untyped call: GrLine3"
     },
     "tinker-Whap": {
       "name": "Whap",
@@ -160,7 +160,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 139: Undefined identifier or unsupported indirect call: Sprite3"
+      "error": "line 139: Undefined identifier or untyped call: Sprite3"
     },
     "tinker-RawHide": {
       "name": "RawHide",
@@ -168,7 +168,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 98: Undefined identifier or unsupported indirect call: Sprite3B"
+      "error": "line 98: Undefined identifier or untyped call: Sprite3B"
     },
     "tinker-TheDead": {
       "name": "TheDead",
@@ -176,7 +176,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 50: Undefined identifier or unsupported indirect call: Sprite3"
+      "error": "line 50: Undefined identifier or untyped call: Sprite3"
     },
     "tinker-Squirt": {
       "name": "Squirt",
@@ -184,7 +184,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 62: Undefined identifier or unsupported indirect call: Sprite3"
+      "error": "line 62: Undefined identifier or untyped call: Sprite3"
     },
     "tinker-Zing": {
       "name": "Zing",
@@ -200,7 +200,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 83: Undefined identifier or unsupported indirect call: Mat4x4MulXYZ"
+      "error": "line 83: Undefined identifier or untyped call: Mat4x4MulXYZ"
     },
     "tinker-RocketScience": {
       "name": "RocketScience",
@@ -224,7 +224,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 87: Undefined identifier or unsupported indirect call: Line"
+      "error": "line 87: Undefined identifier or untyped call: Line"
     },
     "tinker-MassSpring": {
       "name": "MassSpring",
@@ -256,7 +256,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 22: undefined symbol 'best_score'"
+      "error": "line 21: Too many function arguments"
     },
     "tinker-ElephantWalk": {
       "name": "ElephantWalk",
@@ -312,7 +312,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 263: Undefined identifier or unsupported indirect call: GrEllipse"
+      "error": "line 263: Undefined identifier or untyped call: GrEllipse"
     },
     "library-Span": {
       "name": "Span",
@@ -320,7 +320,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/Span/BrowserStart.HC:29:28: parse error: unexpected token in expression (near '{')"
+      "error": "class MyMass has no field 'drag_profile_factor'"
     },
     "library-Strut": {
       "name": "Strut",
@@ -328,7 +328,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/Strut/BrowserStart.HC:29:46: parse error: unexpected token in expression (near '{')"
+      "error": "class CTask has no field 'pix_left'"
     },
     "library-Titanium": {
       "name": "Titanium",
@@ -344,7 +344,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/ToTheFront/BrowserStart.HC:65:21: parse error: expected ')' (near ',')"
+      "error": "array dimension is not a constant integer at line 21"
     },
     "library-Vocabulary": {
       "name": "Vocabulary",
@@ -384,7 +384,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 1192: Undefined identifier or unsupported indirect call: GrHLine"
+      "error": "line 1192: Undefined identifier or untyped call: GrHLine"
     },
     "library-OregonTrail1975": {
       "name": "Oregon Trail 1975",
@@ -392,7 +392,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 15: Undefined identifier or unsupported indirect call: GetI64"
+      "error": "line 15: Undefined identifier or untyped call: GetI64"
     },
     "library-Scorch": {
       "name": "Scorch",
@@ -400,7 +400,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/Scorch/BrowserStart.HC:53:18: parse error: unexpected token in expression (near ')')"
+      "error": "C:/Home/Games/TinkerOS/Apps/Scorch/BrowserStart.HC:53:13: parse error: expected declarator name (near '(')"
     },
     "library-SpyHunt": {
       "name": "SpyHunt",
@@ -416,7 +416,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 51: Undefined identifier or unsupported indirect call: MStrPrint"
+      "error": "line 51: Undefined identifier or untyped call: MStrPrint"
     },
     "library-Tetris": {
       "name": "Tetris",
@@ -424,7 +424,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 345: undefined symbol 'Blink'"
+      "error": "line 301: Too many function arguments"
     },
     "library-B17": {
       "name": "B17",
@@ -432,7 +432,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 21: Undefined identifier or unsupported indirect call: Sprite3ZB"
+      "error": "line 21: Undefined identifier or untyped call: Sprite3ZB"
     },
     "library-Coach": {
       "name": "Coach",
@@ -440,7 +440,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 44: Undefined identifier or unsupported indirect call: GrLine3"
+      "error": "line 44: Undefined identifier or untyped call: GrLine3"
     },
     "library-DiningStars": {
       "name": "DiningStars",
@@ -448,7 +448,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 107: Undefined identifier or unsupported indirect call: Mat4x4MulXYZ"
+      "error": "line 107: Undefined identifier or untyped call: Mat4x4MulXYZ"
     },
     "library-Flappy": {
       "name": "Flappy",
@@ -456,7 +456,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 53: Undefined identifier or unsupported indirect call: Sprite3"
+      "error": "line 53: Undefined identifier or untyped call: Sprite3"
     },
     "library-MissileDefense": {
       "name": "MissileDefense",
@@ -464,7 +464,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 49: Undefined identifier or unsupported indirect call: Sprite3"
+      "error": "line 49: Undefined identifier or untyped call: Sprite3"
     },
     "library-Rocks": {
       "name": "Rocks",
@@ -480,7 +480,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TerrySupplement/Pilgrims/BrowserStart.HC:437:29: parse error: unexpected token in expression (near '{')"
+      "error": "class CDC has no field 'bkcolor'"
     },
     "library-MarioClone": {
       "name": "MarioClone",
@@ -488,7 +488,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/MarioClone/BrowserStart.HC:417:31: parse error: expected ')' (near 'lump')"
+      "error": "class CDC has no field 'width'"
     },
     "library-MaliciousTestimonies": {
       "name": "Malicious Testimonies",
@@ -496,7 +496,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/MaliciousTestimonies/BrowserStart.HC:417:31: parse error: expected ')' (near 'lump')"
+      "error": "C:/Home/Games/MaliciousTestimonies/BrowserStart.HC:36:1: parse error: unexpected token in expression (near '}')"
     },
     "library-Ezekiel": {
       "name": "Ezekiel",
@@ -504,7 +504,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "line 173: Undefined identifier or unsupported indirect call: Sprite3B"
+      "error": "line 173: Undefined identifier or untyped call: Sprite3B"
     },
     "library-LordofHosts": {
       "name": "Lord of Hosts",
