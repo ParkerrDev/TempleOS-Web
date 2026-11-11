@@ -55,6 +55,7 @@ Bool WorldContacts(World *tmpw,Actor *mover,I64 x,I64 y,
 	if (kind) {
 	  solid=other->flags&TM_MF_SOLID;
 	  if (touch && kind!=TM_CONTACT_SOLID) (*touch)(mover,other,kind);
+	  if (!mover->active) return FALSE;
 	  if (kind!=TM_CONTACT_PICKUP || solid) {
 	    tmpw->hit_actor=id; tmpw->hit_kind=kind;
 	    return FALSE;
@@ -63,6 +64,7 @@ Bool WorldContacts(World *tmpw,Actor *mover,I64 x,I64 y,
 	id=next;
       }
     }
+  tmpw->hit_actor=tmpw->hit_kind=0;
   return TRUE;
 }
 
@@ -70,7 +72,12 @@ Bool WorldPosition(World *tmpw,Actor *tmpa,I64 x,I64 y,
 	U0 (*touch)(Actor *mover,Actor *other,I64 kind)=NULL)
 {//Contacts precede lines, preserving pickup and missile-impact timing.
   Collision *tmpc=tmpw->collision;
+  I64 stamp;
+  Bool res;
   CollisionBegin(tmpc,x,y,tmpa->radius,tmpa->flags,tmpa->type==TM_MT_PLAYER);
-  if (!WorldContacts(tmpw,tmpa,x,y,touch)) return FALSE;
+  stamp=tmpc->stamp; res=WorldContacts(tmpw,tmpa,x,y,touch);
+  if (tmpc->stamp!=stamp)
+    CollisionBegin(tmpc,x,y,tmpa->radius,tmpa->flags,tmpa->type==TM_MT_PLAYER);
+  if (!res || !tmpa->active) return FALSE;
   return CollisionLines(tmpc,tmpa->z,tmpa->height);
 }

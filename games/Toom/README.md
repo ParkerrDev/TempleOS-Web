@@ -44,7 +44,8 @@ The implemented foundation uses native V5.03 file and memory APIs:
   order when a new actor reuses an earlier handle slot.
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
-  contact callbacks defer reclamation until the end of the tic.
+  contact callbacks defer reclamation until the end of the tic. Nested contact
+  queries restore the outer collision context before checking walls.
 - Position changes commit actor coordinates, sector bounds and block links
   together. Crossed-line callbacks run afterward in reverse contact order;
   nested queries cannot overwrite the pending line list.
@@ -100,6 +101,12 @@ The implemented foundation uses native V5.03 file and memory APIs:
   checks visibility, and preserves boss immunity and self-damage. BFG spray
   fires its forty canonical rays from the current firer position.
 
+- A compact sector-edge index supplies bounds and adjacent sectors. Q16 moving
+  planes preserve destination timing, grounded/airborne clipping, blocked
+  rollback, crush damage/blood and corpse/dropped-item handling. New thinkers
+  wait until the next query. Exceptions restore plane heights and actor bounds
+  without repeating callbacks; already-applied game effects are retained.
+
 Fuzz effects, the full simulation loop, actor actions, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
@@ -146,6 +153,8 @@ QEMU with a private disk; it does not compile them with HolyC-wasm.
 ```sh
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/io.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/map.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sector-index.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sector.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
@@ -269,8 +278,13 @@ self-damage, exception cleanup and forty BFG effects with exact RNG/damage.
 The sight check compares 6,912 rays across all 36 maps with an independent
 full-linedef scan, including REJECT and 927 visible pairs. These are actor
 combat foundations; the actor action dispatcher is still unfinished.
+The sector fixtures cover 430 movement/contact contracts, including fractional
+steps, strict destination completion, crush cadence, callbacks that spawn or
+retire actors, nested queries and exception recovery. An independent map scan
+checks all 14,556 sector bounds and 127,943 indexed edges across 36 maps. Moving
+planes allocate no per-tic scratch memory; full door/lift controllers are next.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage, inventory, impact, weapon, player, blast or sight checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory, impact, weapon, player, blast, sight or sector checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

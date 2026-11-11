@@ -22,6 +22,7 @@
 #include "TmPlayer"
 #include "TmSight"
 #include "TmBlast"
+#include "TmSector"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"
