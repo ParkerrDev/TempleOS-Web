@@ -73,3 +73,50 @@ U0 BrainSpit(Brain *tmpb,Actor *actor)
   }
   BossSnd(specials,TM_SFX_BOSPIT);
 }
+
+U0 BrainSpawn(Brain *tmpb,Actor *cube,I64 action=TM_A_SPAWN_FLY)
+{
+  Enemies *enemies=tmpb->enemies;
+  Specials *specials=enemies->specials;
+  Motion *motion=specials->sectors->motion;
+  World *world=motion->world;
+  Actor *target,*fog,*monster;
+  I64 r,type;
+  if (cube->world!=world) throw('World');
+  if (!cube->active) return;
+  if (action==TM_A_SPAWN_SOUND) {
+    if (motion->sound) (*motion->sound)(cube,TM_SFX_BOSCUB);
+  } else if (action!=TM_A_SPAWN_FLY) throw('Action');
+  if (!cube->active) return;
+  if (cube->reaction>1) {cube->reaction--; return;}
+  cube->reaction=0;
+  if (!(target=WorldActorGet(world,cube->target))) {
+    cube->active=FALSE; return;
+  }
+  fog=WorldSpawn(world,TM_MT_SPAWNFIRE,target->x,target->y,target->z);
+  if (motion->sound) (*motion->sound)(fog,TM_SFX_TELEPT);
+  if (!cube->active) return;
+  if (!(target=WorldActorGet(world,cube->target))) {
+    cube->active=FALSE; return;
+  }
+  r=WorldRand(world);
+  switch (r) {
+    case 0...49: type=TM_MT_TROOP; break;
+    case 50...89: type=TM_MT_SERGEANT; break;
+    case 90...119: type=TM_MT_SHADOWS; break;
+    case 120...129: type=TM_MT_PAIN; break;
+    case 130...159: type=TM_MT_HEAD; break;
+    case 160...161: type=TM_MT_VILE; break;
+    case 162...171: type=TM_MT_UNDEAD; break;
+    case 172...191: type=TM_MT_BABY; break;
+    case 192...221: type=TM_MT_FATSO; break;
+    case 222...245: type=TM_MT_KNIGHT; break;
+    default: type=TM_MT_BRUISER;
+  }
+  monster=WorldSpawn(world,type,target->x,target->y,target->z);
+  if (EnemyPlayer(enemies,monster,TRUE))
+    ActorState(world->data,monster,world->data->info[type].see,motion->action);
+  ActorTeleportMove(motion,monster,monster->x,monster->y,
+	specials->monsters_stomp);
+  cube->active=FALSE;
+}

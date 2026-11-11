@@ -321,6 +321,11 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/ending-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/ending.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/awake.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/awake-real.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/spit.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/spit-real.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cube.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cube-real.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cube-map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -587,8 +592,8 @@ Boss/Keen death decisions match 15,340 original-C cases. Thirty-two native and
 pinned HEMU integration cases run the selected controllers to completion,
 check level exits and preserve every linedef. The existing 14,873 door cases
 and 768 floor cases (107,940 tics) also pass both backends. Exact scope and
-source hashes are in `tools/toom/boss-evidence.json`; brain and complete host
-actions remain unfinished.
+source hashes are in `tools/toom/boss-evidence.json`; complete host action
+dispatch remains unfinished.
 Brain ending effects match 1,024 original-C cases covering all random starts
 and every emitted actor's position, velocity, state/frame and timer. Nine
 native and pinned HEMU lifecycle cases include 80 actual thinker tics and
@@ -598,7 +603,21 @@ Target collection matches 864 original-C cases within the original 32-target
 limit. Thirteen actual native and pinned HEMU cases add populations through
 257, actor-slot growth, repeated refresh, stale handles and exception cleanup.
 The larger table is an explicit native extension, recorded with exact scopes
-in `tools/toom/awake-evidence.json`. Spawn cubes remain unfinished.
+in `tools/toom/awake-evidence.json`.
+Cube launch matches 1,152 original-C decisions and 63 real native/HEMU cases,
+including all ten Phase 2 MAP30 marker trajectories at four random starts.
+Zero-speed/empty original-C paths have separate divide-by-zero witnesses;
+horizontal, coincident and short travel get explicit finite corrections.
+These are not labeled original parity. See `tools/toom/spit-evidence.json`.
+Cube arrival matches 4,096 original-C decision traces. Its 282 real cases
+cover all random starts, sounds, player search, immediate state actions,
+telefrag death/item drops, generation handles, callback failure and cleanup.
+Forty additional isolated MAP30 flights run from launch through actual motion,
+state-clock arrival and cube retirement on native TempleOS and pinned HEMU.
+Their expected monster types come from the original-C witness. These single
+trajectories omit other map actors and spitter actions; they do not qualify
+whole-level gameplay. Exact scope is in `tools/toom/cube-evidence.json`.
+The complete action dispatcher and playable host remain unfinished.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

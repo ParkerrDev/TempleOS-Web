@@ -1,0 +1,155 @@
+{
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "status": "bounded-native-brain-cube-arrival-proof",
+  "checks": {
+    "decisions": {
+      "cases": 4096,
+      "native": "qemu-e0df2lfn",
+      "hemu": true,
+      "sourceSha256": "23e9792a0aa7d922847d088a2071fc6ed2f1a583992793deaa115f22e14e73c5",
+      "reference": "Unmodified original A_SpawnFly/A_SpawnSound compiled as host C. Spawn, sound, player lookup, immediate state action, teleport and removal boundaries are controlled; all 87 actor/timer/RNG/event slots match. Teleport explicitly verifies the post-state-action position and map rule.",
+      "scope": [
+        "Every one of 256 random starts, all selection intervals, positive countdowns 1/2, sound/no-sound entry, player found/not found, immediate state position change",
+        "Fog consumes lastlook RNG before monster selection; monster consumes its own lastlook afterward",
+        "The original removes the cube after the teleport call even when teleport reports failure; native retirement defers the free to WorldSweep"
+      ]
+    },
+    "integration": {
+      "cases": 282,
+      "native": "qemu-x5ez6xhi",
+      "hemu": true,
+      "sourceSha256": "e2ac011a5be4cd9142fcd5ffea89ec02d4c411326a889ccc3e4c1b8b94f42240",
+      "scope": [
+        "256 random starts through real WorldSpawn, ActorTeleportMove and owned actor cleanup; expected monster types come from the independent original-C reference",
+        "26 actual world/state cases covering nonpositive countdown correction, missing/stale/deactivated targets, ownership and inactive/action guards",
+        "Sound callback exceptions/deactivation/retargeting; state callback exceptions/deactivation and position changes; published actors stay owned",
+        "Actual player search and immediate EnemyChase entry; map-specific monster telefrag including enemy death and dropped ammunition",
+        "Four ThinkersTick calls drive a reaction-2 cube through arrival and normal retirement; fresh-task heap returns to baseline"
+      ]
+    },
+    "mapFlights": {
+      "cases": 40,
+      "native": "qemu-j4_6fjof",
+      "hemu": true,
+      "sourceSha256": "fd185cb49901e7a4cb7a203ab7006ca24affb6a3d3fbd610452419e0d88b3ffd",
+      "scope": [
+        "All ten original Freedoom 0.13.0 Phase 2 MAP30 marker trajectories at four random starts on actual WAD geometry",
+        "BrainSpit initial random tics plus canonical three-tic state intervals determine the exact arrival tic",
+        "Actual ActorMotion, ThinkersTick, BrainSpawn, teleport, floor/sector placement and retired cube removal; final RNG matches launch plus fog/selection/monster draws",
+        "This isolated trajectory fixture omits other map actors and ignores the spitter actor actions. It does not establish full-level gameplay or performance."
+      ],
+      "assets": {
+        "archiveSha256": "3f9b264f3e3ce503b4fb7f6bdcb1f419d93c7b546f4df3e874dd878db9688f59",
+        "entry": "freedoom-0.13.0/freedoom2.wad",
+        "wadSha256": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+        "maps": [
+          {
+            "map": "MAP30",
+            "spitters": [
+              [
+                -2208,
+                4331,
+                270,
+                89,
+                7
+              ]
+            ],
+            "targets": [
+              [
+                -1618,
+                3200,
+                180,
+                87,
+                7
+              ],
+              [
+                -2798,
+                3200,
+                0,
+                87,
+                7
+              ],
+              [
+                -480,
+                4096,
+                180,
+                87,
+                7
+              ],
+              [
+                -2804,
+                2724,
+                45,
+                87,
+                7
+              ],
+              [
+                -3936,
+                4096,
+                0,
+                87,
+                7
+              ],
+              [
+                -2448,
+                3592,
+                0,
+                87,
+                7
+              ],
+              [
+                -3392,
+                3840,
+                0,
+                87,
+                7
+              ],
+              [
+                -1024,
+                3840,
+                180,
+                87,
+                7
+              ],
+              [
+                -1968,
+                3592,
+                180,
+                87,
+                7
+              ],
+              [
+                -1612,
+                2724,
+                135,
+                87,
+                7
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "corrections": [
+    "Nonpositive reaction counts complete instead of decrementing forever. BrainSpit already prevents them; explicit fixtures retain a safe contract for restored or externally edited state. Original failure witnesses are in spit-evidence.json.",
+    "Missing or retired generation targets retire the cube safely. After fog sound, the target is resolved again so callback deactivation/retargeting cannot silently use the old handle."
+  ],
+  "limitations": [
+    "Normal thinker callbacks must defer actor reclamation until WorldSweep. Direct callback deletion of the currently executing actor is unsupported.",
+    "Full action dispatcher, persistent host, UI/audio, saves and progression are still unfinished. No catalog or playable-game qualification."
+  ]
+}
