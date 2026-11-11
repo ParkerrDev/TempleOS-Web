@@ -34,6 +34,24 @@ worker loop were removed. `GuestHarness.mjs` provides native source/call access;
 `WorkerHost.mjs` exercises the production loop. Instruction-code recycling,
 real x86 conversion fixtures, and QEMU snapshot capture tools remain.
 
+`cpuid.test.mjs` checks 528 complete register states across supported core
+configurations, including high input halves, ignored subleaf inputs, preserved
+flags and the stock cache-line expression. Its saved physical and original
+TempleOS probes independently establish the register layout; they do not copy
+the physical machine's feature mask into HEMU. The BootDVD capability decision
+runs with 32-bit registers in the long-mode interpreter, not through its BIOS
+loader. `worker-cpuid.test.mjs` runs the installed native CPUId wrapper on every
+guest core, then repeats after one/four-core full-session restoration.
+
+Set `HOLYC_QEMU_ORACLE` to the compiler checkout's `tests/oracle/Qemu.mjs` and
+run `node tools/hemu/cpuid.test.mjs --record` on x86-64 to refresh both native
+and physical references. `cpu-native.mjs --record` separately verifies the
+complete interpreter source under original V5.03, including the synthetic
+CPU's results. The register fields follow the
+[Intel CPUID specification](https://cdrdv2-public.intel.com/774492/325383-sdm-vol-2abcd.pdf).
+Old full sessions retain their embedded engine and its original CPUID answers;
+this correction changes newly built engines without changing saved state.
+
 - Clock checks exercise fractional elapsed time, PIT reload/latch/IRQ behavior,
   read-only RDTSC and independent core instruction budgets.
   A production-worker test blocks the worker for 450 ms, verifies that capped

@@ -77,6 +77,13 @@ stream into `live.bin`; `bake-regs.mjs` turns the register dump into `snapregs.H
 capture so the registers match the RAM). `smp-capture.py` and `bake-regs-smp.mjs` are the four-core
 equivalents; `find-delta.mjs` locates the code relocation between the two snapshots.
 
+The browser and standalone desktop window both resume that already booted
+64-bit guest. They do not execute TempleOS's 16-bit DVD/BIOS loader or perform
+a fresh installation. The small embedded framebuffer kernel in `boot-test.mjs`
+is a CPU/device fixture, not a TempleOS cold boot. The native HolyC adapter is
+currently a headless test host; a native desktop/JIT backend remains separate
+work.
+
 ## Keeping the pieces together
 
 `jit.js` learns the engine's CPU-state addresses at runtime (`__jit_state`, `__jit_seg`), so there are no

@@ -7,7 +7,7 @@ import {createHemuHost} from "../../engine/host.js";
 const adapter=readFileSync(new URL("./CpuNativeHost.HC",import.meta.url),"latin1"),
   expand=source=>source.replace(/#include "([^"]+)"/g,(_,name)=>
     name==="host.HC"?adapter:expand(hemuFile(name))),
-  source=expand(hemuFile("test.HC"))+muldivSource()+atomSource()+stackSource(),
+  source=expand(hemuFile("test.HC"))+muldivSource()+atomSource()+stackSource()+cpuIdSource(),
   hash=createHash("sha256").update(Buffer.from(source,"latin1")).digest("hex"),
   file=new URL("./cpu-native.json",import.meta.url);
 if(process.argv.includes("--record")) {
@@ -22,14 +22,14 @@ if(process.argv.includes("--record")) {
 }
 const expected=JSON.parse(readFileSync(file,"utf8"));
 assert.equal(hash,expected.sourceHash,"rerun original V5.03 after changing the interpreter or its native fixture");
-const compiled=compileHemu({filename:"test.HC",extraSource:muldivSource()+atomSource()+stackSource()});assert.deepEqual(compiled.warnings,[]);
+const compiled=compileHemu({filename:"test.HC",extraSource:muldivSource()+atomSource()+stackSource()+cpuIdSource()});assert.deepEqual(compiled.warnings,[]);
 let output="";
 const host=createHemuHost({onText:text=>output+=text}),
   {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env});
 host.attach(instance);instance.exports.__rt_init();instance.exports.__main();
 assert.equal(output,expected.out);
 const total=Number(expected.out.match(/total guest instr=(\d+)/)[1]);
-console.log(`Full interpreter source compiles natively: 31 battery checks, multiply/divide, stack and split-field atomic vectors, and ${total.toLocaleString()} executed battery instructions agree in original V5.03 and WASM; zero badops.`);
+console.log(`Full interpreter source compiles natively: 31 battery checks, multiply/divide, stack, split-field atomic and CPUID vectors, and ${total.toLocaleString()} executed battery instructions agree in original V5.03 and WASM; zero badops.`);
 
 function muldivSource() {
   const rows=readFileSync(new URL("./muldiv-oracle.txt",import.meta.url),"utf8").trim().split("\n"),
@@ -117,4 +117,30 @@ function stackSource() {
       `  for (i=0;i<80;i++) Check("stack ${id} bytes",RdMem(0x1000000+i*8,8),want[i]);`);
   }
   return `\nU0 StackNativeCheck()\n{//Physical x86 stack vectors in the original HolyC interpreter build.\n  I64 i,before=g_pass;\n  U64 want[80];\n  InitMem(33554432);\n${statements.join("\n")}\n  Check("stack native count",g_pass-before,${rows.length*87});\n  "stack native: %d passed, %d failed\\n",g_pass-before,g_fail;\n}\nStackNativeCheck;\n`;
+}
+
+function cpuIdSource() {
+  const rows=[
+    [0,1,0x756E6547,0x6C65746E,0x49656E69],
+    [1,0x6FB,0x10800,0,0x1008331],
+    [0x80000000,0x80000001,0,0,0],
+    [0x80000001,0,0,0,0x20000000],
+    [0x80000008,0,0,0,0]
+  ],lines=[];
+  for(const [leaf,...outputs] of rows) {
+    lines.push(`  reg[0]=0x${leaf.toString(16).toUpperCase()};reg[1]=-1;`,
+      "  rip=4096;rfl=0xAD7;halted=0;Step;");
+    [0,3,1,2].forEach((reg,i)=>lines.push(`  Check("cpuid R${reg}",reg[${reg}],0x${outputs[i].toString(16).toUpperCase()});`));
+    lines.push('  Check("cpuid flags",rfl,0xAD7);');
+  }
+  return `
+U0 CpuIdNativeCheck()
+{//Run the same virtual CPU source under the original HolyC compiler.
+  I64 before=g_pass;
+  g_ncore=1;WrMem(4096,8,0xA20F);
+${lines.join("\n")}
+  "cpuid native: %d passed, %d failed\\n",g_pass-before,g_fail;
+}
+CpuIdNativeCheck;
+`;
 }

@@ -1,0 +1,10 @@
+{
+  "sourceHash": "874c1aa514de7893f30066ef84e6e2e488b96df2017718f4d2d1cc948a8e1f36",
+  "backend": {
+    "engine": "qemu",
+    "accelerator": "kvm",
+    "version": "QEMU emulator version 11.1.2"
+  },
+  "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-ip1_zxsw",
+  "out": "00000000 00000020 756E6547 6C65746E 49656E69\n00000001 000B0671 00000800 F7FA3223 0F8BFBFF\n80000000 80000008 00000000 00000000 00000000\n80000001 000B0671 00000000 00000121 2C100800\n80000008 00273027 0100D000 00000000 00000000\n"
+}
