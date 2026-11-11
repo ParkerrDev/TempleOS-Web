@@ -9,6 +9,8 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - A validated IWAD directory and bounded byte-range reads. Startup does not
   assemble, rewrite or read the entire WAD. Reads split the first FAT cluster
   before bulk access to avoid the native CFile cached-cluster edge case.
+  Each byte range owns one native drive transaction, avoiding a pair of task
+  yields for every cluster while preserving nested ownership and error cleanup.
 - All original map records, BSP point queries, blockmap validation and explicit
   per-level ownership. Invalid indices, cycles and truncated records are
   rejected before use. Self-referencing sectors and absent back sides found in
@@ -919,6 +921,23 @@ Nonzero browser PCM plus pause/exit silence proves audible delivery and
 lifecycle, not correct 140 Hz spacing. No complete-game or sustained-performance
 qualification is implied by the current audio host.
 
+
+## WAD range ownership
+
+`wad-lock.test.mjs` checks a native FAT file with seven fragmented links,
+byte guards, caller-owned locks and all 16 injected read-failure paths. Both
+original TempleOS and frozen HEMU pass its 26 cases. The existing independent
+Freedoom byte corpus also passes 1,578 reads across 526 ranges. Commands:
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/wad-lock.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/wad-lock.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/io.test.mjs
+```
+
+`wad-lock-evidence.json` records the exact native source and runtime. A drive
+lock covers one requested range, not decoding or a complete level load. The
+native unlock/yield semantics and the on-disk WAD remain unchanged.
 
 ## Intermission component under development
 

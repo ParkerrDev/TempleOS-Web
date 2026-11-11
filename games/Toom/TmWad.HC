@@ -13,27 +13,38 @@ Bool WadRead(Wad *tmpw,U8 *dst,I64 offset,I64 size)
 {//Read a byte range without reading or rewriting the whole IWAD.
   I64 n,blk=offset>>BLK_SIZE_BITS,skip=offset&(BLK_SIZE-1);
   U8 buf[BLK_SIZE];
+  Bool unlock=FALSE,res=FALSE;
   if (offset<0 || size<0 || offset>tmpw->size-size)
     return FALSE;
+  if (!size) return TRUE;
   tmpw->read_bytes+=size;
-  if (skip && size) {
-    if (!FBlkRead(tmpw->file,buf,blk++)) return FALSE;
-    n=MinI64(size,BLK_SIZE-skip);
-    MemCpy(dst,buf+skip,n);
-    dst+=n; size-=n;
+  try {
+    //FBlkRead otherwise yields twice for every FAT cluster.
+    unlock=DrvLock(tmpw->file->dv);
+    if (skip) {
+      if (!FBlkRead(tmpw->file,buf,blk++)) goto wr_done;
+      n=MinI64(size,BLK_SIZE-skip);
+      MemCpy(dst,buf+skip,n);
+      dst+=n; size-=n;
+    }
+    n=size>>BLK_SIZE_BITS;
+    if (n) {
+      if (!WadBlocksRead(tmpw->file,dst,blk,n)) goto wr_done;
+      blk+=n;
+      n<<=BLK_SIZE_BITS;
+      dst+=n; size-=n;
+    }
+    if (size) {
+      if (!FBlkRead(tmpw->file,buf,blk)) goto wr_done;
+      MemCpy(dst,buf,size);
+    }
+    res=TRUE;
+wr_done:
+    if (unlock) DrvUnlock(tmpw->file->dv);
+  } catch {
+    if (unlock) DrvUnlock(tmpw->file->dv);
   }
-  n=size>>BLK_SIZE_BITS;
-  if (n) {
-    if (!WadBlocksRead(tmpw->file,dst,blk,n)) return FALSE;
-    blk+=n;
-    n<<=BLK_SIZE_BITS;
-    dst+=n; size-=n;
-  }
-  if (size) {
-    if (!FBlkRead(tmpw->file,buf,blk)) return FALSE;
-    MemCpy(dst,buf,size);
-  }
-  return TRUE;
+  return res;
 }
 
 U0 WadDel(Wad *tmpw)

@@ -1,0 +1,75 @@
+{
+  "scope": "Native range-read drive ownership; fragmented FAT bytes, nested callers, read failures and cleanup. No whole-IWAD buffering or filesystem implementation change.",
+  "sourceHashes": {
+    "games/Toom/TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+    "games/Toom/TmWad.HC": "85463df0ecb634f6a74cc1a1cdeef9ff62c35c4e02a34b368326ba53ac1887d0",
+    "tools/toom/WadLock.HC": "14179db61166304706d915a98a964ab4d3da07afabce055010373beac45ab7b5",
+    "tools/toom/WadLockHook.HC": "8d55f19b9f848fd3ccab6cabab743c21105a7285bddda4503b6ac67a6089c749",
+    "tools/toom/wad-lock.test.mjs": "b654c331de6954aadcbcd8eda8d36631d783ae976fad858845709f3feb96d71d",
+    "tools/toom/io.test.mjs": "2b3ca38836a8ef748b658dba18ed21e5471f2ec79dac2f2883c54e9a4897f712"
+  },
+  "beforeWadSha256": "a6eb46daecd0c97c5a25e13dad93e6ac1a6c1516532d05d104da537052732517",
+  "native": {
+    "results": [
+      {
+        "out": "WAD LOCK 26 CASES 16 FAULTS 7 GAPS BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-trgket05",
+    "sourceSha256": "ab69a4827df2aebb16a0585162a19b5061fc41da3007f324eb5805e5bdd60a93"
+  },
+  "hemu": {
+    "backend": "hemu",
+    "sourceSha256": "ab69a4827df2aebb16a0585162a19b5061fc41da3007f324eb5805e5bdd60a93",
+    "cases": 26,
+    "faults": 16,
+    "bad": 0
+  },
+  "nativeByteRanges": {
+    "results": [
+      {
+        "out": "RANGES 526 READS 1578 BAD 0 SPC 1\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-f34_okeb"
+  },
+  "runtime": {
+    "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
+    "compiler": "d0e394e",
+    "hemu": "0eff35b",
+    "singleWasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c"
+  },
+  "nativeSource": {
+    "revision": "TempleOS V5.03",
+    "files": {
+      "Kernel/BlkDev/DskCFile.HC": "cbaa77cd57fde09bbd90c2f9fcc7720b5a9c837e79ca208661ecd4b0aa03b959",
+      "Kernel/BlkDev/DskDrv.HC": "46661eba1f7f44dbe4fd097944270f90ec5e3e5a7ee06308c960d1831e168d6a",
+      "Kernel/BlkDev/DskBlkDev.HC": "ffea2709872f104268b8ebc731363881b28a036291397282e9688e6d5d325a18"
+    }
+  },
+  "cases": [
+    "Eight-cluster file constructed by alternating allocations with another file; seven nonadjacent links are required and observed.",
+    "Whole-file, cached first-cluster, aligned bulk and unaligned reads compare every returned byte and both destination guards.",
+    "Both previously unlocked and caller-owned drive/device states are preserved.",
+    "All four FBlkRead call sites fail once by returning FALSE and once by throwing, under both ownership states; no task heap leak.",
+    "Negative, past-end and empty ranges are checked without disk access.",
+    "526 actual Freedoom ranges, read three times each, match independent host hashes (1,578 native reads)."
+  ],
+  "limits": [
+    "The block and drive unlock routines retain their native yields. The application holds the drive for one requested range, not across rendering or the complete level load.",
+    "No throughput or universal host-performance claim; actual-window transition qualification is recorded separately.",
+    "The native fixture uses FAT32; existing contiguous/RedSea FBlkRead behavior is retained but not newly qualified by this fixture."
+  ]
+}
