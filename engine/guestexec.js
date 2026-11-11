@@ -401,27 +401,43 @@ export function createGuestExec(opts) {
   const writeFile = (p) => submit("writeFile", p, async (r) => {
     const path = guestPath(p.path); if (/[\x00-\x1f"]/.test(path)) throw new Error("path contains control characters or quotes");
     const bytes = p.bytes instanceof Uint8Array ? p.bytes : new Uint8Array(p.bytes);
-    if (bytes.length > dataSize) throw new Error(`file too large for the staging window (${bytes.length} b > ${dataSize} b)`);
-    return lockData(async () => {                    // the payload must stay staged until the OS has read it
-      wrBytes(scrBase + SCR.DATA, bytes);
-      // FileWrite recompresses .Z names. Uploads already contain the archive bytes,
-      // so stream those sectors directly through TempleOS and retain the exact size.
-      let write = `*(%MB%+8)(I64*)=FileWrite("${cstr(path)}",${hex(scrBase + SCR.DATA)},${bytes.length});`;
-      if (/\.Z$/i.test(path) && bytes.length) {
-        const blocks=Math.ceil(bytes.length/512),padding=blocks*512-bytes.length;
-        if(padding)wrBytes(scrBase+SCR.DATA+bytes.length,new Uint8Array(padding));
-        write=`CFile *gx_file_=FOpen("${cstr(path)}","w",${blocks});if(!gx_file_)throw('File');`+
-          `if(!FBlkWrite(gx_file_,${hex(scrBase+SCR.DATA)},0,${blocks})){FClose(gx_file_);throw('Disk');}`+
-          `gx_file_->de.size=${bytes.length};gx_file_->de.attr=FileAttr("${cstr(path)}",gx_file_->de.attr);`+
-          `*(%MB%+8)(I64*)=gx_file_->de.clus;FClose(gx_file_);`;
+    return lockData(async () => {
+      let data=scrBase+SCR.DATA,loan=0,free=0;
+      const blocks=Math.ceil(bytes.length/512),padded=blocks*512;
+      try {
+        //Large payloads borrow Adam's heap until the native write completes.
+        if(bytes.length>dataSize) {
+          const errors=[],malloc=FunResolve("MAlloc",2,errors);
+          free=FunResolve("Free",1,errors);
+          if(errors.length)throw new Error(errors.join("; "));
+          if(padded>memSize)throw new Error("File exceeds guest memory capacity");
+          const ptr=Number(await call(malloc,[padded,rd64(G.adam_task)]));
+          if(!inRam(ptr) || ptr+padded>memSize)
+            throw new Error("TempleOS could not allocate the file transfer buffer");
+          loan=ptr;data=ptr;
+        }
+        wrBytes(data,bytes);
+        // FileWrite recompresses .Z names. Uploads already contain the archive bytes,
+        // so stream those sectors directly through TempleOS and retain the exact size.
+        let write = `*(%MB%+8)(I64*)=FileWrite("${cstr(path)}",${hex(data)},${bytes.length});`;
+        if (/\.Z$/i.test(path) && bytes.length) {
+          const padding=padded-bytes.length;
+          if(padding)wrBytes(data+bytes.length,new Uint8Array(padding));
+          write=`CFile *gx_file_=FOpen("${cstr(path)}","w",${blocks});if(!gx_file_)throw('File');`+
+            `if(!FBlkWrite(gx_file_,${hex(data)},0,${blocks})){FClose(gx_file_);throw('Disk');}`+
+            `gx_file_->de.size=${bytes.length};gx_file_->de.attr=FileAttr("${cstr(path)}",gx_file_->de.attr);`+
+            `*(%MB%+8)(I64*)=gx_file_->de.clus;FClose(gx_file_);`;
+        }
+        const src = (p.mkdirs === false ? "" : mkdirStmts(path)) + write;
+        r.runningMsg = `writing ${path} (${bytes.length} b) through the OS`;
+        const d = await runJobMb(r, src, p.target || "adam");
+        const cluster = Number(d.mbres);
+        const ok = d.finished && (bytes.length === 0 || cluster !== 0);
+        return ok ? { state: "done", ok: true, msg: `wrote ${path} (${bytes.length} b) through TempleOS, first cluster ${cluster}`, path, size: bytes.length, cluster }
+          : { state: "failed", ok: false, msg: d.finished ? `FileWrite returned 0 for ${path} (bad path, read-only or full drive?)` : failMsg(d), except: d.exceptCh, path };
+      } finally {
+        if(loan)await call(free,[loan]);
       }
-      const src = (p.mkdirs === false ? "" : mkdirStmts(path)) + write;
-      r.runningMsg = `writing ${path} (${bytes.length} b) through the OS`;
-      const d = await runJobMb(r, src, p.target || "adam");
-      const cluster = Number(d.mbres);
-      const ok = d.finished && (bytes.length === 0 || cluster !== 0);
-      return ok ? { state: "done", ok: true, msg: `wrote ${path} (${bytes.length} b) through TempleOS, first cluster ${cluster}`, path, size: bytes.length, cluster }
-        : { state: "failed", ok: false, msg: d.finished ? `FileWrite returned 0 for ${path} (bad path, read-only or full drive?)` : failMsg(d), except: d.exceptCh, path };
     });
   });
   // like runJob, but the source may reference its own mailbox as %MB% (FileWrite stores its result there)
