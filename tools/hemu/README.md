@@ -6,26 +6,31 @@ snapshot and disk; no `/tmp` image is needed. `LIVE` and `RAW` can explicitly
 select other images. Disk writes stay in each test's private sector overlay.
 
 ```
-node engine/build.mjs build
-node tools/hemu/time.test.mjs
-node tools/hemu/keyboard.test.mjs
-node tools/hemu/rate.test.mjs
-node tools/hemu/capture.test.mjs
-node --max-old-space-size=3072 tools/hemu/video.test.mjs
-node --max-old-space-size=2048 tools/hemu/worker-pause.test.mjs
-node tools/hemu/barrier.test.mjs
-node tools/hemu/snapshot-format.test.mjs
-node --max-old-space-size=3072 tools/hemu/worker-snapshot.test.mjs
-node --max-old-space-size=2048 tools/hemu/raster.test.mjs
-node --max-old-space-size=3072 tools/hemu/worker.test.mjs
-node --max-old-space-size=3072 tools/hemu/worker-rate.test.mjs
-node --max-old-space-size=3072 tools/hemu/welcome.test.mjs
-node tools/hemu/guestcheck.mjs
-node tools/hemu/jitdiff1.mjs
-node tools/hemu/jit-primitives.test.mjs
-node tools/hemu/fpu-check.mjs
-node tools/hemu/fpu-convert.test.mjs
+node tools/hemu/check.mjs
+node tools/hemu/check.mjs --full
+node tools/hemu/check.mjs --desktop
 ```
+
+The default suite checks CPU/JIT/device primitives, atomic threads, clocks,
+input, completed captures, barriers and snapshot validation. `--full` also
+builds both engines and runs native raster/video, guest API, saved-machine,
+production worker, welcome and God Tools acceptance checks. `--desktop` adds
+real Chromium window tests on one and four cores; flags can be combined. Each
+check runs in a fresh process and any error stops the runner. Timed worker
+checks should run without competing benchmarks. The runner prints the actual
+compiler path: use the same pinned compiler and HEMU source as the site build.
+
+The full suite reads `god/Tools.HC`. A separated engine worktree can supply
+`GOD_TOOLS_SOURCE=/path/to/site/god/Tools.HC` explicitly. The God Tools test
+executes the stock native Doodle algorithm on a deterministic bit record and
+accepts both native Song forms and timer menus. It verifies exact FAT32
+filenames/readback, saved DolDoc sprite/song payloads, live View ownership
+after temporary allocations are freed, and clean Escape exits.
+
+Old one-off probes with fixed RAM addresses, deleted `/tmp` inputs or a second
+worker loop were removed. `GuestHarness.mjs` provides native source/call access;
+`WorkerHost.mjs` exercises the production loop. Instruction-code recycling,
+real x86 conversion fixtures, and QEMU snapshot capture tools remain.
 
 - Clock checks exercise fractional elapsed time, PIT reload/latch/IRQ behavior,
   read-only RDTSC and independent core instruction budgets.
@@ -122,6 +127,28 @@ save with the bundled 256 MiB disk compresses to about 53.5 MB. It is not a
 small-memory guarantee for every phone. The tests compare CPU/device bytes
 and the saved frame across fresh one- and four-core workers, verify disk
 readback, game exclusivity and saved 120 Hz settings returning to stock 30 Hz.
+
+Allocator ABI is recorded separately from the container version. Missing ABI
+metadata denotes the original bump allocator (0). Current allocator sessions
+use ABI1 with their block/free-list metadata inside saved memory. Restore
+selects the matching host allocator before executing the embedded engine;
+legacy sessions retain ABI0 on subsequent saves. Unknown ABIs fail explicitly.
+Stock RAM images always initialize a fresh current allocator.
+
+To check compatibility with an actual older compiled engine, generate a private
+fixture while `holyc-wasm` points at the old compiler/runtime, then restore it
+after switching to the current pinned build:
+
+```
+node tools/hemu/snapshot-legacy.test.mjs save /path/legacy.hemu
+node engine/build.mjs
+node tools/hemu/snapshot-legacy.test.mjs restore /path/legacy.hemu
+```
+
+The two stages retain the saved pixel hash/palette beside the fixture and
+check native disk readback, resume and resave. The normal full suite covers
+new one- and four-core snapshots. Large generated machine images are not
+checked into source control.
 
 ## Desktop window
 

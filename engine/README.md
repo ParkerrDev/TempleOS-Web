@@ -8,46 +8,35 @@ using the [HolyC-wasm](https://github.com/ParkerrDev/HolyC-wasm) compiler (clone
 | File | What |
 |---|---|
 | `compile.js` | `compileHemu()`: the one way HEMU is compiled - strict mode plus the exports the host calls back into. Reads `../hemu/src` (`HEMU_SRC` overrides) |
-| `build.mjs` | `node engine/build.mjs [outDir]` → `hemu.wasm`, `hemu-smp.wasm` (the shared-memory SMP engine) and `hemu-smp.json` (the CCpuState offsets the SMP workers wire APs with). `netlify.toml` runs it right after cloning, into `build/`; nothing compiled is committed |
+| `build.mjs` | `node engine/build.mjs [outDir]` → `hemu.wasm`, `hemu-smp.wasm` (the shared-memory SMP engine) and `hemu-smp.json` (the shared IPI mailbox address). `netlify.toml` runs it right after cloning, into `build/`; nothing compiled is committed |
 | `host.js` | `createHemuHost()`: holyc-wasm's `createHost()` plus every import `host.HC` declares - the snapshot / present / disk / palette adapters and default stubs for input, pacing and the JIT hooks. Runners override `env.__host_*` and `env.__jit_*` before instantiating |
 | `jit.js` | the x86-64 → WASM block JIT: decodes guest code out of hemu's memory and emits one native function per hot block with holyc-wasm's emitter. Guest registers live in WASM locals for a block's duration, flags are computed lazily, and a native dispatch module chains blocks without returning to JS |
 | `guestexec.js` | the backend guest-execution API over `HEMU/src/guestcall.HC`: resolves kernel functions and class layouts from the running OS's symbol tables and exposes `exec`, `include`, `mkdir`, `writeFile` and `launch`, with request IDs and queued / running / done / failed states |
 | `guestinput.js` | mouse state resolved through `guestexec.js` metadata: relative deltas and capture hints; raw keyboard bytes use `KeyQueue.js` and HEMU IRQ1 |
 | `qcow2.js` | the C: disk: qcow2 and raw readers, RedSea and FAT32 listing, upload and read |
 | `hemu-worker.js` | the engine as the site runs it: one Worker, single core (the shipping path); also the BSP of the SMP engine |
-| `hemu-smp-worker.js` | experimental: one Worker per emulated core over one shared `WebAssembly.Memory` (`hemu-smp.html`, `?smp=N`) |
+| `hemu-smp-worker.js` | application cores over shared `WebAssembly.Memory`; the BSP always uses the production worker |
 
 ## Build and check
 
 From the site root (the repos cloned or symlinked as `holyc-wasm`, `hemu`, `holyc-fmt`, `holycraft`):
 
 ```sh
-node engine/build.mjs build                    # what the site deploys
-node tools/hemu/measure.mjs                    # HEMU's own instruction battery (src/test.HC, 31 checks)
-node tools/hemu/boot-test.mjs                  # HEMU/src/boot.HC draws its framebuffer
-node tools/hemu/host.selftest.mjs              # the disk adapter
-node tools/hemu/diskio-check.mjs               # ATA + VGA DAC, no guest needed
-node tools/hemu/fpu-check.mjs                  # x87 FTST / FNSTSW + 432 arithmetic cases, interpreter and JIT
+node tools/hemu/check.mjs                  # CPU/JIT/device/clock/input primitives
+node tools/hemu/check.mjs --full           # build both engines, then native and worker checks
+node tools/hemu/check.mjs --desktop        # installed Chromium, one and four cores
 ```
 
-The maintained guest checks read the tracked compressed RAM and disk fixtures;
-`LIVE` and `RAW` optionally override them. See [the check list](../tools/hemu/README.md)
-for current clock, raster, keyboard, worker and full-machine snapshot coverage.
-They need several hundred MiB of memory per running guest.
+The runner stops on any failed assertion or timeout and prints the actual compiler
+path. Guest checks read tracked compressed RAM and disk fixtures; `LIVE` and `RAW`
+can override them. See [the check list](../tools/hemu/README.md) for coverage,
+God Tools source selection and limits. Each guest needs several hundred MiB.
+`GuestHarness.mjs` provides native source/call access; `WorkerHost.mjs` exercises
+the production worker and APs, including clock, presentation and snapshot events.
 
-```sh
-node --max-old-space-size=3072 tools/hemu/guestcheck.mjs     # the guest-execution API: 14 checks, including a game launch
-node --max-old-space-size=3072 tools/hemu/input-check.mjs    # HolyCraft input: spawn, look, held keys, a 200-event burst
-node --max-old-space-size=3072 tools/hemu/jitrecycle.mjs     # recompilation into reused guest addresses
-node --max-old-space-size=3072 tools/hemu/jitboot.mjs        # JIT off vs on: identical desktop, and the speedup
-node --max-old-space-size=3072 tools/hemu/deploycheck.mjs    # build/hemu.wasm exactly as hemu-worker.js runs it (HEMU_WASM overrides; NOJIT=1 = interpreter)
-node --max-old-space-size=3072 tools/hemu/game-suite.mjs Talons   # or --all: every catalog game, screenshots + JSON under OUT
-```
-
-The other files in `tools/hemu/` are one-off investigations of the same shape - `compileHemu()`,
-`createHemuHost({...})`, boot, measure one thing: `gamecheck` fps, `smp*` the multi-core engine, `f6*` /
-`whoat` / `asksym` / `getsrc` / `evalq` guest introspection. Read one and you can read all of them; there
-is no runner.
+Game-specific acceptance remains in the game catalog checks and each game's
+renderer/input harness. A successful launch alone does not prove a playthrough
+or hardware-equivalent performance.
 
 ## What guestexec.js and guestinput.js guarantee
 
@@ -82,8 +71,8 @@ equivalents; `find-delta.mjs` locates the code relocation between the two snapsh
 
 `jit.js` learns the engine's CPU-state addresses at runtime (`__jit_state`, `__jit_seg`), so there are no
 offsets to keep in sync by hand - but the JIT, the compiler runtime and the engine still have to come from
-one build. The site compiles `build/hemu*.wasm` at deploy and serves `engine/`, `build/`, `hemu/` and
-`holyc-wasm/` uncached, so a browser never pairs an old JIT or snapshot with a new engine.
+one build. Build both `build/hemu*.wasm` artifacts with the pinned source/compiler
+and deploy their matching host and JIT. Full saves embed their exact engine.
 
 Full machine saves, their versioned format and worker startup protocol are documented
 in [tools/hemu/README.md](../tools/hemu/README.md#full-machine-snapshots).

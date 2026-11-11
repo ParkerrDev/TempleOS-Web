@@ -8,11 +8,11 @@ onmessage=e=>{
     .catch(err=>postMessage({cmd:"error",msg:String(err.message||err)}));
 };
 
-async function RunAp({core,mem,ctrl:control,wasmBytes}) {
+async function RunAp({core,mem,ctrl:control,wasmBytes,heapAbi}) {
   if(!Number.isInteger(core)||core<1||core>3)throw new Error("Invalid application core");
   const ctrl=new Int32Array(control),hot=new Map();
   let inst,base=0;
-  const host=createHemuHost({onText:s=>{if(s.includes("BADOP"))postMessage({cmd:"log",msg:`core${core} ${s.trim()}`});}});
+  const host=createHemuHost({...(heapAbi===undefined?{}:{heapAbi}),onText:s=>{if(s.includes("BADOP"))postMessage({cmd:"log",msg:`core${core} ${s.trim()}`});}});
   Object.assign(host.env,{
     mem,
     __jit_state:(rg,fl,rp)=>{jit.jitState(rg,fl,rp,base,mem,inst.exports.RdMem,inst.exports.WrMem,inst.exports.RasterHLE);return 1n;},

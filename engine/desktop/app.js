@@ -72,7 +72,7 @@ async function Boot(gz,config) {
     for(let core=1;core<cores;core++) {
       const ap=new Worker(new URL("../hemu-smp-worker.js",import.meta.url),{type:"module"});
       ap.onmessage=e=>{if(e.data.cmd==="error")Status(e.data.msg);};ap.onerror=e=>Status(e.message);
-      ap.postMessage({cmd:"init",role:"ap",core,mem,ctrl:ctrl.buffer,wasmBytes:wasm});aps.push(ap);
+      ap.postMessage({cmd:"init",role:"ap",core,mem,ctrl:ctrl.buffer,wasmBytes:wasm,heapAbi:saved?.meta.heapAbi});aps.push(ap);
     }
     init.smp={mem,ctrl:ctrl.buffer,ncore:cores,ipiAddr};
   }
