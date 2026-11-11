@@ -74,7 +74,7 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - Held-key commands use the native merged scan-code bitmap, with optional
   WASD aliases. The original six-tic turning ramp, walk/run rates, strafe
   modifier, opposing-key cancellation and numeric weapon priority are retained.
-  The host still has to supply focus, timing and pause policy.
+  The native window host owns focus, 35 Hz timing and pause policy.
 - Per-level hearing uses an owned bounded queue and the shared sector edge
   index. Alerts cross at most one sound-blocking line, stop at closed openings,
   and revisit a sector if an unblocked route improves its first route. Sound
@@ -779,7 +779,8 @@ surface context, and do not establish animation or complete-game performance.
 ## Native window host under development
 
 After preparing the pinned IWAD, copy this directory and its assets into
-TempleOS, enter that directory and `#include "Run"`. The developing host uses
+TempleOS and include its `Run.HC` entry from any directory. The entry selects
+its own directory before loading modules and default assets. The host uses
 native held-key state, task messages, `SettingsPush`/`SettingsPop` and a
 `DrawIt` callback. It needs no browser API. This entry remains outside the
 production catalog: sound, level progression/intermission, saves, nightmare
@@ -817,3 +818,21 @@ not emulate every internal OS allocation failure. The lazy-frame sweep
 protects the prior displayed frame, verifies every texture pin is released,
 retries drawing and returns the task heap/files to baseline after teardown.
 Exact source, asset and backend scopes are in `tools/toom/play-evidence.json`.
+
+
+The package/worker gate installs individual source and asset files, then launches
+`Run.HC` from `C:/Home` using default asset names. It observes the actual native
+HUD/world on one and four production workers, sends physical scan codes, and
+checks pause/repeat/resume, held movement, both exits and fresh relaunch. It
+uses Node workers; browser DOM keyboard routing is a separate boundary.
+
+```sh
+TEMPLEOS_WEB=/path/to/built/TempleOS-Web node tools/toom/worker.test.mjs
+```
+
+Set `CORES=1` or `CORES=4` to select one mode; the default checks both. Raw VGA
+frames, palette metadata and result JSON go to `OUT` (default
+`/tmp/toom-workers`). `worker-evidence.json` records exact package/runtime
+bytes and native companion checks. Real keyboard testing caught a previous
+pause bug: native task messages have already cleared `SCF_NEW_KEY`. Pause now
+tracks key-down/release explicitly, including keys held across focus changes.

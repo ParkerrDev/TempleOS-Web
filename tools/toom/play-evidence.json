@@ -45,10 +45,9 @@
       "nativeEvidence": "qemu-u4hcwp25",
       "sourceSha256": "97e8c93f71c9ec9580714b7a3067033e215ac8cfb68cff2b9e5cebcfb74a5919",
       "nativeOutput": "PLAY ALLOC 675 CASES 674 FAULTS BAD 0",
-      "nativeCases": 675,
-      "nativeFaults": 674,
-      "hemuCompleted": false,
-      "status": "Full current-host sweep in progress; no completed HEMU claim at this checkpoint."
+      "hemuCompleted": true,
+      "matchingCases": 675,
+      "matchingFaults": 674
     }
   },
   "scope": [
@@ -56,7 +55,7 @@
     "Three PlayRun calls in an actual spawned native task: Escape, Shift-Escape and an injected bad-flat frame exception. Native held bitmap/task messages exercise movement, pause, focus loss and release-before-resume.",
     "The task fixture verifies prior callback, user_data, window attributes, settings chain and absence of retained animate/song tasks. It calls installed callbacks directly; it does not establish browser compositor behavior.",
     "Constructor sweeps inject application allocation/read failures and DCNew entry failures; all 1014 native points clean their graph, CDCs and files. The identical HEMU fixture completes its dynamically counted sweep.",
-    "Native TempleOS passes all 674 lazy-frame failure positions; the current HEMU sweep is pending at this checkpoint. Every rejected draw retains the exact 256000 prior front-buffer bytes and frame/pointer publication state, releases guards and texture pins, retries successfully and frees all heap/file ownership.",
+    "Both backends compare all 674 lazy-frame failure positions. Every rejected draw retains the exact 256000 prior front-buffer bytes and frame/pointer publication state, releases guards and texture pins, retries successfully and frees all heap/file ownership.",
     "The existing 24 live scene hashes and seven guard cases still match both backends and the previously accepted frame traces."
   ],
   "beforeWitness": {
@@ -83,5 +82,6 @@
     "No steady full-game frame-rate or boot-time guarantee.",
     "Sound, progression/intermission, saves, nightmare respawn, world power-up lighting and spectre fuzz remain unfinished.",
     "The failure model does not inject every internal TempleOS allocation failure."
-  ]
+  ],
+  "sourceRevision": "303815f"
 }

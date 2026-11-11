@@ -9,7 +9,7 @@ class Play
   CTask *task;
   Controls controls;
   I64 flags,blocked,frames;
-  Bool focused,paused,quit;
+  Bool focused,paused,pause_down,quit;
 };
 
 U8 *tm_weapon_names[TM_WEAPON_NUM]={
@@ -162,12 +162,16 @@ I64 PlayStep(Play *tmpp,I64 *clock,I64 now,I64 keys,Bool focused)
 
 Bool PlayKey(Play *tmpp,I64 ch,I64 sc)
 {
+  if (sc&SCF_KEY_UP) {
+    if (ch=='p' || ch=='P') tmpp->pause_down=FALSE;
+    return FALSE;
+  }
   if (ch==CH_ESC || ch==CH_SHIFT_ESC) {
     tmpp->quit=TRUE;
     return TRUE;
   }
-  if ((ch=='p' || ch=='P') && (!sc || sc&SCF_NEW_KEY)) {
-    tmpp->paused=!tmpp->paused;
+  if ((ch=='p' || ch=='P') && !tmpp->pause_down) {
+    tmpp->pause_down=TRUE; tmpp->paused=!tmpp->paused;
     return TRUE;
   }
   return FALSE;
@@ -200,7 +204,7 @@ U0 PlayRun(Play *tmpp)
   try {
     if (tmpp->task) throw('Active');
     tmpp->task=Fs;
-    tmpp->quit=tmpp->paused=tmpp->focused=FALSE;
+    tmpp->quit=tmpp->paused=tmpp->pause_down=tmpp->focused=FALSE;
     tmpp->blocked=0; ControlsInit(&tmpp->controls);
   } catch {
     PlayLeave(tmpp);
@@ -218,8 +222,12 @@ U0 PlayRun(Play *tmpp)
     clock=Floor(tS*TM_TICK_HZ);
     while (!tmpp->quit) {
       changed=FALSE;
-      while (msg=ScanMsg(&ch,&sc))
+      if (!tmpp->focused || sys_focus_task!=Fs)
+	tmpp->pause_down=Bt(kbd.down_bitmap,Char2ScanCode('p'));
+      while (msg=ScanMsg(&ch,&sc)) {
 	if (msg==MSG_KEY_DOWN) changed|=PlayKey(tmpp,ch,sc);
+	else if (msg==MSG_KEY_UP) PlayKey(tmpp,ch,sc|SCF_KEY_UP);
+      }
       if (!tmpp->quit) {
 	keys=ControlsKeys(&tmpp->controls,kbd.down_bitmap);
 	focused=tmpp->focused;

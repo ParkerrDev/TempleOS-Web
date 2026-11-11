@@ -111,9 +111,13 @@ U0 TmPlayTest()
 	PlayStep(play,&clock,110,0,TRUE) || play->game->clock!=tic+10)
     throw('Clock');
   tm_play_cases++;
-  if (!PlayKey(play,'p',SCF_NEW_KEY|0x19) || !play->paused ||
+  if (!PlayKey(play,'p',0x19) || !play->paused ||
 	PlayKey(play,'p',0x19) || !play->paused ||
-	!PlayKey(play,'P',0) || play->paused) throw('PauseKey');
+	PlayKey(play,'p',0x19|SCF_NEW_KEY) || !play->paused ||
+	PlayKey(play,'p',0x19|SCF_KEY_UP) || !play->paused ||
+	!PlayKey(play,'P',0x19) || play->paused ||
+	PlayKey(play,CH_ESC,SC_ESC|SCF_KEY_UP) || play->quit)
+    throw('PauseKey');
   tm_play_cases++;
   if (!PlayKey(play,CH_ESC,SC_ESC) || !play->quit) throw('Esc');
   play->quit=FALSE;

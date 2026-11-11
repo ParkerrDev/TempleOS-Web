@@ -76,7 +76,7 @@ U0 TmWindowWait(TmWindow *tmpw,I64 *value,I64 expected,I64 size=8)
 U0 TmWindowKey(TmWindow *tmpw,I64 ch,I64 sc,Bool down)
 {
   LBEqu(kbd.down_bitmap,sc.u8[0],down);
-  if (down) PostMsg(tmpw->task,MSG_KEY_DOWN,ch,sc|SCF_NEW_KEY);
+  if (down) PostMsg(tmpw->task,MSG_KEY_DOWN,ch,sc);
   else PostMsg(tmpw->task,MSG_KEY_UP,ch,sc|SCF_KEY_UP);
 }
 
@@ -114,7 +114,6 @@ U0 TmWindowTest()
 	if (play->controls.forward!=25) throw('Move');
 	TmWindowKey(tm_window,0,SC_CURSOR_UP,FALSE);
 	TmWindowKey(tm_window,'p',0x19,TRUE);
-	TmWindowKey(tm_window,'p',0x19,FALSE);
 	tm_window_stage++; TmWindowWait(tm_window,&play->paused,TRUE,1);
 	tic=play->game->level->world->tic; clock=play->game->clock;
 	tm_window_stage++; TmWindowWait(tm_window,&play->game->clock,clock+3);
@@ -127,7 +126,9 @@ U0 TmWindowTest()
 	clock=play->game->clock;
 	tm_window_stage++; TmWindowWait(tm_window,&play->game->clock,clock+2);
 	if (!play->paused || play->frames!=frames) throw('Repeat');
-	PostMsg(tm_window->task,MSG_KEY_DOWN,'p',0x19|SCF_NEW_KEY);
+	TmWindowKey(tm_window,'p',0x19,FALSE);
+	TmWindowKey(tm_window,'p',0x19,TRUE);
+	TmWindowKey(tm_window,'p',0x19,FALSE);
 	tm_window_stage++; TmWindowWait(tm_window,&play->paused,FALSE,1);
 	tm_window_stage++;
 	TmWindowWait(tm_window,&play->game->level->world->tic,tic+2);
@@ -136,13 +137,19 @@ U0 TmWindowTest()
 	tm_window_stage++; TmWindowWait(tm_window,&play->focused,FALSE,1);
 	tic=play->game->level->world->tic; clock=play->game->clock;
 	TmWindowKey(tm_window,0,SC_CURSOR_UP,TRUE);
+	LBts(kbd.down_bitmap,0x19);
 	tm_window_stage++; TmWindowWait(tm_window,&play->game->clock,clock+2);
 	if (play->game->level->world->tic!=tic) throw('Blur');
 	WinFocus(tm_window->task);
 	tm_window_stage++; TmWindowWait(tm_window,&play->focused,TRUE,1);
 	clock=play->game->clock;
 	tm_window_stage++; TmWindowWait(tm_window,&play->game->clock,clock+2);
-	if (play->controls.forward) throw('Held');
+	PostMsg(tm_window->task,MSG_KEY_DOWN,'p',0x19);
+	clock=play->game->clock;
+	tm_window_stage++; TmWindowWait(tm_window,&play->game->clock,clock+2);
+	if (play->controls.forward || play->paused || !play->pause_down)
+	  throw('Held');
+	TmWindowKey(tm_window,'p',0x19,FALSE);
 	TmWindowKey(tm_window,0,SC_CURSOR_UP,FALSE);
 	frames=play->frames;
 	tm_window_stage++; TmWindowWait(tm_window,&play->frames,frames+2);

@@ -1,0 +1,161 @@
+{
+  "status": "bounded-native-package-worker-input-and-lifecycle-proof",
+  "host": {
+    "web": "b7e6e0790118aae885886ee0b49a0ef1e90231d8",
+    "compiler": "dbd1946838cfd33dd7c86cda51acb8528c824697",
+    "hemu": "486f8a68bca0ca872cc99c28d1429830d5b53e84",
+    "sha256": {
+      "build/hemu.wasm": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "build/hemu-smp.wasm": "bd16c80c4c8920d29692f4b7f4f6cbd20e7a843348fa9217955fda8ccb09851c",
+      "engine/jit.js": "98ef4631b01bc7a95a46505c3951d6d222ba397865d87e70ce8001f298fd5b32",
+      "engine/hemu-worker.js": "b72a4c771125b0fae7b3867142f4585c33535b7df070377f01b4200077b316f9",
+      "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+      "tools/hemu/GuestHarness.mjs": "9fe6f769b458f6399e5041ca4a7586e49a4a90a1d224239a92d3e95cd4f9e057"
+    }
+  },
+  "fileHashes": {
+    "C:/TOOM/Run.HC": "c96139a8dfd45044dd932a7863d2d331a25eb2cc62f503f3e1e6a58c297c9598",
+    "C:/TOOM/Load.HC": "5478ccc651e798c0fbde610a1cc54eafabe6ec72163c418a1463e86576c906d8",
+    "C:/TOOM/TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+    "C:/TOOM/TmWad.HC": "a6eb46daecd0c97c5a25e13dad93e6ac1a6c1516532d05d104da537052732517",
+    "C:/TOOM/TmMap.HC": "7b096f40305398fa6114c76788b158dc7c912348469cabe56393258f4abc5069",
+    "C:/TOOM/TmGr.HC": "dcf3bfd9e476ba620d1479658410ee72c75e0599e96a8bf171df1b9dbdf7bc8e",
+    "C:/TOOM/TmTex.HC": "1058c3d88663bfd5d511ceef1ca99ccbfa356465405fb58adf7b77e8e5968807",
+    "C:/TOOM/TmAnim.HC": "88bacb84b0802181b51c5efe643415c5690b0c9babad2064f44c79608085c504",
+    "C:/TOOM/TmData.HH": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+    "C:/TOOM/TmClip.HC": "22fbb94fca32b0f1b19bde07c591c088cf2324fd129ace1df060ca90cc09f55b",
+    "C:/TOOM/TmState.HC": "0a7e57036b0d51d5a153e5cf0a8ffa76ac9f2d70061c48e429a0865899b12fdb",
+    "C:/TOOM/TmMath.HC": "5da8d9243d01fcae7afc35858f1d17586d5addcadef1dad7052c4a86e5f684cf",
+    "C:/TOOM/TmWorld.HC": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+    "C:/TOOM/TmContact.HC": "b8e15824529b0dafb7abf11164a53795c06759e07b1265f6abecce8602c8ed08",
+    "C:/TOOM/TmMove.HC": "d7235b8aa67b4eb72ca08c1b21d64ff56257c51314374a3523962b9bcffc18dd",
+    "C:/TOOM/TmPath.HC": "1897a4cc6c617a93f1556344111dabd4cb2247e3d3550c1102c841debe31eef4",
+    "C:/TOOM/TmSlide.HC": "e7ea0760e058b1d12c474bc135d4466c71ecfe5d5482ba5a6f23c6a7dd5e3da1",
+    "C:/TOOM/TmPlayer.HH": "ee536c8b0ceb057e3dda7e7320eb33520741d5d54487bb312f803ad7513cc8cf",
+    "C:/TOOM/TmMotion.HC": "d478a24beda3de1bb61756869d95df4d3952f97a89168b9a08c4831544a9f4ee",
+    "C:/TOOM/TmAttack.HC": "146737ee26c29ca330eb1b583f4e7131c1cd3580c4ca355610cd02f58d68802d",
+    "C:/TOOM/TmDamage.HC": "56e1d56ea69609cdcd34c7b5c22694367643cf51f8cd9cb0d72272522a1ab5bd",
+    "C:/TOOM/TmItems.HC": "4f265fd533b2e7820e6fb939517ad9ab5a5e3a7a8f7f8abd548494649ec448d3",
+    "C:/TOOM/TmTouch.HC": "b589423b0ea307643655babf3e8861ded6f2c837d5c99c17273d2a768dc3a53c",
+    "C:/TOOM/TmImpact.HC": "bfe59592e58dff4e799cd93f3db7937bf02d2fa9cf1fc1046d4b860f4f42acb9",
+    "C:/TOOM/TmWeapon.HC": "2904054222cc7f8bbf19307da47dac9c16e8a8bb5768bd56b17ce1e95733189c",
+    "C:/TOOM/TmPlayer.HC": "8260fa3085ce6ec002872269c244456eeda5315cc35ece10708f9830ef9eb449",
+    "C:/TOOM/TmSight.HC": "dba548702f1a63870416251da4473277a82de0a8e3670309a394e37b53569461",
+    "C:/TOOM/TmBlast.HC": "197e0c23bb1612d510e0c7094f33bf1162fea98aa1471dd83eca3bb424e1fb4f",
+    "C:/TOOM/TmSector.HC": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+    "C:/TOOM/TmDoor.HC": "ce49864f381d55361788f5efdc070fc377e2b4178f629856f7db74118c612a6a",
+    "C:/TOOM/TmFloor.HC": "b86eaee35d5a448c722f063c651f61c2ba3f4160637dda2af13c6084968fa00a",
+    "C:/TOOM/TmPlat.HC": "e9541607e935b3f43a3cc0b36d5d79a7ed51849efdb78e5e75d5bf973802bff3",
+    "C:/TOOM/TmCeil.HC": "13ce4bc669f4deec87c82d09bb08bb4ef75f623c8da7131f4eb66014ecb15379",
+    "C:/TOOM/TmTeleport.HC": "04efd4b10193f52d767883a0decf0e9176e0ff0213af184153b081b6bd7c8f36",
+    "C:/TOOM/TmSwitch.HC": "a158dd8d290558945063ec3d0a6678817335d0d59cbab323f9f303499285aee9",
+    "C:/TOOM/TmLight.HC": "18751745beb55e970363df09f8e03a0979e1eb66fe8e8efe835f10cbad754850",
+    "C:/TOOM/TmHazard.HC": "b69bdffac3c4a9394fcf757339ee6a7c915f27946b881e2b25a5673f04a8603e",
+    "C:/TOOM/TmSpecial.HC": "44a5ef52acf0022dc580e5cb90e9cb3747def44e890a5aa985db90d2fbfe615b",
+    "C:/TOOM/TmTick.HC": "cdeb5c411d52244bdc66643719ad7d05e4463896b010c925632f854dbed30a88",
+    "C:/TOOM/TmEnemy.HC": "332464bcf40c7c8f07dd9fb3776f744659cd3906662848067064b0ab069957b8",
+    "C:/TOOM/TmChase.HC": "c3a53ed3ddae5f1c05a5df3851c194ada85027d81f32acff6df6e1230bdcbc7b",
+    "C:/TOOM/TmCombat.HC": "069bf282d4ba8ca9faf69c10acbba6f8cf3e578a67fdd118142de7742f89a963",
+    "C:/TOOM/TmVile.HC": "bde6455466b79fcbc10369df53b60ad5eb96a20ff72bbbe769e5705fc85c64de",
+    "C:/TOOM/TmBoss.HC": "0892a31e7c65ee6f31f3b497e940721b800b5d126a518d97ad360383113c62f7",
+    "C:/TOOM/TmBrain.HC": "605e90147315d888f9d6493cdc8f65092e24f79fd24d96c3306d3d05fa105554",
+    "C:/TOOM/TmEffect.HC": "cdfd0f26beff5f99eeb609ee2d0820472cda0d91f6121a345529dd87071ab80b",
+    "C:/TOOM/TmActions.HC": "ae3bff931d7431a5c8cc9a993275114dc99cbb931670356846f4a940eabc57bb",
+    "C:/TOOM/TmPal.HC": "657c0c69082fad07cffe9b8800abf1d12df8eaa7603efa04dd62144b6142651f",
+    "C:/TOOM/TmDraw.HC": "89ff3d412fe95123e136228916792b84b0bf6d841f5d6b0c628a3f77569f174e",
+    "C:/TOOM/TmMask.HC": "49be08c8e34a92fad7989e3a28672f26fac33877ac2fe212cba2174f1252a33a",
+    "C:/TOOM/TmSprite.HC": "d3f27d4b403a7c554cb0608665b1606e302b686087290441d0be131e2a8905c6",
+    "C:/TOOM/TmLevel.HC": "be6c6e92e8f3e4ee9eebe5ea25217a903f324ce358e393c24eb406800cbacb43",
+    "C:/TOOM/TmInput.HC": "5589178e7cd8c3a1884c5e5250adc73812691fa8d32cba4e0a380707f55a2ee9",
+    "C:/TOOM/TmOverlay.HC": "6f4adb56ed7b326a0e6548be673489713c2e58d047689f79072f2fd677a8feca",
+    "C:/TOOM/TmScreen.HC": "54386654b6eaa3aab7a8f4a8087e59eb989aefdad5d23cd365c2959857e77aa7",
+    "C:/TOOM/TmPlay.HC": "bfe4fec3d85c82fec6e448ec925c6ab0c79a40024a2a68f4bd83edc39899f837",
+    "C:/TOOM/FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+    "C:/TOOM/TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+  },
+  "runtimeHashes": {
+    "engine/jit.js": "98ef4631b01bc7a95a46505c3951d6d222ba397865d87e70ce8001f298fd5b32",
+    "engine/hemu-worker.js": "b72a4c771125b0fae7b3867142f4585c33535b7df070377f01b4200077b316f9",
+    "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+    "engine/guestexec.js": "dcdd39026889418506cadfa96654b55d4e67ada171a789029419784408d7a726",
+    "engine/guestinput.js": "7b2cc55fe61d63d9fec4c6129c58c85ed5d0fd1e2f757419e50b10940a82a3f2",
+    "engine/KeyQueue.js": "769df85ef4dbc5614517b1944c2fc7f7b5f242125ecea1c87b4bcacb9d0f8913",
+    "tools/hemu/WorkerHost.mjs": "ed8d99658c0a0682bcc1a51fa64895809a15acf82594c016f770b18246ba271b",
+    "tools/hemu/WorkerShim.mjs": "1eb8de631fc22bdb1480c988f7b5c684e343dc28be858c24a7207e1ca200d61e",
+    "hemu/live.bin.gz": "99389d6deade3fae598862bdee1856e8157d62b1843fe901f3530014485ff3d6",
+    "hemu/live-smp.bin.gz": "a37f9adb63782fcd03c50bb753e5c2ec9a404511ab4e034b6ee862f539e0adf6",
+    "vendor/images/templeos-hd.qcow2.gz": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+  },
+  "fixtureHashes": {
+    "Worker.HC": "aa4183a43742e81fa8675598a4f5b3df5c623fed2c32083de69a0f37ecfad8a8",
+    "worker.test.mjs": "807ef35f9f0a714d1ef123a8588851fbeca234072b39c1ae41c4c145bd024912"
+  },
+  "nativeChecks": {
+    "play": {
+      "sourceSha256": "46b0647ecee565164b7e91f0a6a966c974a82d0c17302fb8d28ca8e5629e59a5",
+      "nativeEvidence": "qemu-ous9dq0q",
+      "output": "PLAY 18 CASES HASH 3858873714 BAD 0",
+      "hemuCompleted": true
+    },
+    "window": {
+      "sourceSha256": "a0dcd1d21ca00c6dccdcba7d24354053380c53382df96936f982597a8c573a5e",
+      "nativeEvidence": "qemu-hsvdu12b",
+      "output": "WINDOW 3 RUNS INPUT FOCUS PAUSE EXIT FAULT RESTORE BAD 0",
+      "hemuCompleted": true
+    }
+  },
+  "workerChecks": [
+    {
+      "cores": 1,
+      "wasmSha256": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "frames": 1275,
+      "initialHash": "771b666c2a2dfc22c0786ec57fe1af89d288fc71488671d64ef4e95e7ad89c46",
+      "pausedHash": "62b1b6b2ef0977cc2d595321856ed4ff96bd66b70843d97c3fe905450463e73b",
+      "movedHash": "96fa6280d8853eb453390d489eb2823ce84d8d069701058aa3882cc5cbed688a",
+      "hud": [
+        "HEALTH:100  ARMOR:  0  PISTOL                    AMMO: 50/200     B   Y   R",
+        "E1M1     KILLS:0/29  ITEMS:0/49  SECRETS:0/4",
+        "ARROWS/WASD MOVE  CTRL FIRE  SPACE USE  P PAUSE  ESC EXIT"
+      ],
+      "screenshot": {
+        "path": "/tmp/toom-workers/frame-1.png",
+        "sha256": "57eda2c7f77ffaef79851706b9356e3f6533bb3fb1da765f53decf58e453808f"
+      }
+    },
+    {
+      "cores": 4,
+      "wasmSha256": "bd16c80c4c8920d29692f4b7f4f6cbd20e7a843348fa9217955fda8ccb09851c",
+      "frames": 1288,
+      "initialHash": "4dee26937d3714a6c3534a967d478586a4d49f88704b33173719ac0d49242e27",
+      "pausedHash": "5df8ec38fa6775246718b7a8ef6525b8855b42fae6effec9010dd15a2a94bfb9",
+      "movedHash": "304358f846fd9529600bdcedcaa64776580b03599d88202f64397eef77a5c8b2",
+      "hud": [
+        "HEALTH:100  ARMOR:  0  PISTOL                    AMMO: 50/200     B   Y   R",
+        "E1M1     KILLS:0/29  ITEMS:0/49  SECRETS:0/4",
+        "ARROWS/WASD MOVE  CTRL FIRE  SPACE USE  P PAUSE  ESC EXIT"
+      ],
+      "screenshot": {
+        "path": "/tmp/toom-workers/frame-4.png",
+        "sha256": "f7fbc102e529e5a22d3f230c9e19e4a489eb7ffec7d6494bd72ecbccb111ddb1"
+      }
+    }
+  ],
+  "scope": [
+    "Installs58 actual package files through native FileWrite and compiles Run.HC from C:/Home using its default FREEDOOM.WAD and TMDATA.BIN names; no flattened application preload.",
+    "Observed native world and HUD through production one/four-worker VGA frames. Four-worker run uses shared memory and the ownership bus.",
+    "Raw set1 P press and repeated make leave the world tic paused. Release and a second press resume. Held ArrowUp changes actual native player coordinates and the displayed world.",
+    "Escape closes the first native task and removes its HUD; a fresh actual file launch accepts Shift-Escape and also closes without BSP/AP errors.",
+    "A read-only native metadata probe checks actor positions and level tics. It does not replace game functions or change game memory."
+  ],
+  "beforeWitness": {
+    "finding": "Native KbdHndlr clears SCF_NEW_KEY before queuing task messages; the previous PlayKey guard ignored physical P presses. The old synthetic lifecycle fixture incorrectly added that flag.",
+    "source": "TempleOS-V5.03/Kernel/SerialDev/Keyboard.HC:451",
+    "fix": "Track P down/up explicitly, ignore repeated makes until release, and synchronize the latch with held state across focus changes. The native fixture now uses the actual message flags.",
+    "sourceRevision": "303815f"
+  },
+  "limits": [
+    "This is production worker/device input under Node, not browser DOM keyboard routing.",
+    "No complete gameplay, full-map, sound, progression, save, or sustained frame-rate claim.",
+    "The full674-point failure sweep remains separately bound to checkpoint303815f in play-evidence.json; this key/entry followup is covered by the state/lifecycle and worker gates."
+  ]
+}
