@@ -960,3 +960,13 @@ These isolate orchestration from the separately verified real Freedoom
 payloads. The existing original-C channel/distance and real PIT task gates
 also pass after the optional paused-start argument was added. Actual
 actor/sector callbacks, focus ownership and interactive audio remain unwired.
+
+`TmSoundScene.HC` resolves actor generation handles and sector indices without
+retaining actor pointers. It stops removed, inactive or distant sources and
+clears old channels when `GameLoad` replaces a level. The sector source is the
+original bounding-box midpoint. `sound-scene.test.mjs` compares all 24,879
+sector origins across both official WADs with the original C assignments,
+then checks 39 native world/level ownership cases and complete heap cleanup.
+The same QEMU/HEMU environment variables shown above select its backend.
+`sound-scene-evidence.json` records its exact source and asset inputs. This
+scene component still awaits the interactive `Play` callbacks and task owner.

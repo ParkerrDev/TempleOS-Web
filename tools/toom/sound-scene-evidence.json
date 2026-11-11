@@ -1,0 +1,85 @@
+{
+  "scope": "Native actor-generation and sector-origin sound binding. Scene functions are not yet installed as Play callbacks.",
+  "files": {
+    "games/Toom/TmSoundScene.HC": "94f3aff023f520f08577652d703f0ffde75171be5ebee790bd0194ec6df7af9a",
+    "games/Toom/TmAudio.HC": "ee93c78b6c173389f25bfa7c4f047c0a52cf427344fcee8b0616c7f68c530fd7",
+    "games/Toom/TmSector.HC": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+    "games/Toom/TmWorld.HC": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+    "games/Toom/TmLevel.HC": "be6c6e92e8f3e4ee9eebe5ea25217a903f324ce358e393c24eb406800cbacb43",
+    "tools/toom/SoundScene.HC": "a24b0120517e6806ce6f7f983147a777ffbbba3fe37f2b1356fe0e93c960b318",
+    "tools/toom/SoundSceneRef.mjs": "b9bc0ba167719467adc34966686d7c51c9cb469ccf77316becc518d66d86c91c",
+    "tools/toom/sound-scene.test.mjs": "3fc480a4f41fdbe10868d343edecdd6e870ca637c44f2e6ecb110e3d3f6575bb",
+    "tools/toom/SpeakerHook.HC": "4314324fd83ac073a8ea63860b84d48a8aff98c9250dc9999dc55c405dbed61f"
+  },
+  "native": {
+    "results": [
+      {
+        "out": "SOUND SCENE 24879 ORIGINS 39 CASES BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-kjizk9jj",
+    "sourceSha256": "282f55e9950c27dcec41ff1a7338d4aaef815f3d895588330d2f0f8a88b805f8",
+    "assetHashes": {
+      "PHASE1.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "PHASE2.WAD": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+      "ORIGINS.BIN": "1ffb756394a021c5c63eb7bbbb88e010b525a197cecc0d7ad6cd97b21696f4f4",
+      "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+    },
+    "reference": {
+      "repository": "https://github.com/id-Software/DOOM",
+      "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+      "path": "linuxdoom-1.10/p_setup.c",
+      "sha256": "cc56c3ef5eb73aaec4db8be855fd3c192af19bf8f775478d002e9b2e9225872d",
+      "maps": 68,
+      "sectors": 24879,
+      "scope": "The two unchanged P_GroupLines soundorg assignments run as C with UBSan; an independent WAD reader supplies edge bounds. All official sector additions are in the defined signed32-bit range."
+    }
+  },
+  "hemu": {
+    "backend": "hemu",
+    "sourceSha256": "282f55e9950c27dcec41ff1a7338d4aaef815f3d895588330d2f0f8a88b805f8",
+    "assetHashes": {
+      "PHASE1.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "PHASE2.WAD": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+      "ORIGINS.BIN": "1ffb756394a021c5c63eb7bbbb88e010b525a197cecc0d7ad6cd97b21696f4f4",
+      "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+    },
+    "reference": {
+      "repository": "https://github.com/id-Software/DOOM",
+      "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+      "path": "linuxdoom-1.10/p_setup.c",
+      "sha256": "cc56c3ef5eb73aaec4db8be855fd3c192af19bf8f775478d002e9b2e9225872d",
+      "maps": 68,
+      "sectors": 24879,
+      "scope": "The two unchanged P_GroupLines soundorg assignments run as C with UBSan; an independent WAD reader supplies edge bounds. All official sector additions are in the defined signed32-bit range."
+    },
+    "cases": 39,
+    "bad": 0
+  },
+  "runtime": {
+    "web": "b7e6e0790118aae885886ee0b49a0ef1e90231d8",
+    "compiler": "dbd1946838cfd33dd7c86cda51acb8528c824697",
+    "hemu": "486f8a68bca0ca872cc99c28d1429830d5b53e84",
+    "sha256": {
+      "build/hemu.wasm": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "build/hemu-smp.wasm": "bd16c80c4c8920d29692f4b7f4f6cbd20e7a843348fa9217955fda8ccb09851c",
+      "engine/jit.js": "98ef4631b01bc7a95a46505c3951d6d222ba397865d87e70ce8001f298fd5b32",
+      "engine/hemu-worker.js": "b72a4c771125b0fae7b3867142f4585c33535b7df070377f01b4200077b316f9",
+      "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+      "tools/hemu/GuestHarness.mjs": "9fe6f769b458f6399e5041ca4a7586e49a4a90a1d224239a92d3e95cd4f9e057"
+    }
+  },
+  "limits": [
+    "All 24,879 sectors in 68 official Freedoom 0.13.0 Phase1/Phase2 maps compare native sector-index midpoints with the two unchanged original P_GroupLines assignments compiled as C with UBSan. Independent WAD parsing supplies bounds; every official sector is nonempty and every original signed32-bit sum is defined.",
+    "The 39 lifecycle cases use native GameNew/GameLoad, WorldSpawn/WorldRemove/WorldSweep and actual DP cache loads. They cover distant and local actors, map-eight clipping, actor generation reuse, inactive actors, actor/sector/global identity, invalid origins, foreign owners, session random-state preservation and cross-level handle reuse.",
+    "GameLoad publishes the new level before reclaiming the old one. The scene only compares its old level pointer, stops old channels, then borrows the current level; it never dereferences the retired level.",
+    "Sound output uses the deterministic port boundary in this component test. No song task, focus adapter, rendering load, actual Play callback or audible browser delivery is established here.",
+    "For an empty or invalid sector, SoundOrigin rejects the source. The official maps have no empty sectors; no original undefined bounding-box or signed-overflow behavior is reproduced."
+  ]
+}

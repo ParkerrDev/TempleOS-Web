@@ -84,6 +84,10 @@ linuxdoom-1.10/s_sound.c at the pinned id Software revision. TmSoundData.HH
 priorities are generated from its sounds.c table. The source path/hash is
 recorded in tools/toom/source/audio.json. The native PC speaker retains
 binary amplitude; distance rules decide whether a request is audible.
+TmSoundScene.HC uses the sector bounding-box midpoint from P_GroupLines in
+linuxdoom-1.10/p_setup.c, recorded in tools/toom/source/collision.json.
+Actor origins use generation handles, and level replacement stops all old
+channels before borrowing the published level.
 
 The native implementation and derived data are distributed under version 2
 of the GNU General Public License. See COPYING for the full license and
