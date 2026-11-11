@@ -21,6 +21,11 @@ for(const smp of [0,4]) {
     if(smp)await Wait(m=>m.cmd==="smpReady");
     await Done("setup","I64 exec_gate=0,exec_order=0;");
     Send("first","while (!exec_gate) Sleep(10);exec_order=1;");
+    Send("pending-refused","throw('Entered');");
+    const pending=await Wait(m=>m.id==="pending-refused"&&
+      (m.cmd==="fileResult"||m.cmd==="guestResult"&&m.state==="posted"));
+    assert.equal(pending.state,"error","submission reserves the target before TaskExe finishes");
+    assert.match(pending.msg,/still running request.*first/);
     await Running("first");
     Send("refused","throw('Entered');");
     const refused=await Result("refused");
@@ -44,14 +49,21 @@ exec_order=2;while (exec_gate<2) Sleep(10);exec_order=3;`,"prompt",true);
       (m.cmd==="fileResult"||m.cmd==="guestResult"&&m.state==="posted"));
     assert.equal(still.state,"error","queued execution keeps the target busy after its predecessor exits");
     assert.match(still.msg,/still running request.*force:true/);
+    Send("failed-successor","if (exec_order!=3) throw('Order');throw('ExecFail');","prompt",true);
+    const failedQueued=await Wait(m=>m.id==="failed-successor"&&
+      (m.cmd==="fileResult"||m.cmd==="guestResult"&&m.state==="posted"));
+    assert.equal(failedQueued.state,"posted",failedQueued.msg);
     await Done("release-second","exec_gate=2;");
     assert.equal((await Result("second")).ok,true);
+    const failed=await Result("failed-successor");
+    assert.equal(failed.state,"failed",failed.msg);
+    assert.equal(failed.except,"ExecFail");
     await Done("verify","if (exec_order!=3) throw('Order');");
     await Done("available","exec_order=4;","prompt");
     await Done("verify-final","if (exec_order!=4) throw('Order');");
     assert.ok(!h.msgs.some(m=>m.cmd==="error"));
     assert.ok(!h.apMsgs.some(m=>m.cmd==="error"));
-    console.log(`${smp||1} core worker: busy refusal, forced queue order, successor ownership and completed-target reuse pass.`);
+    console.log(`${smp||1} core worker: pending/running refusal, forced queue order, successor ownership and completed/failed-target reuse pass.`);
   } catch(error) {
     console.error(h.msgs.filter(m=>["fileResult","guestResult"].includes(m.cmd)).slice(-24));
     throw error;
