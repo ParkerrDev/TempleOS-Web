@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "10e5538b6fbe6482d598a4aa7b728cc867bd3244a95451e75b2fced24020e8a7",
+  "runtimeSha256": "ee5152d4aa0eaf06db96ffce2a008c2338a7705e57cd103720742780f9bcd8e7",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -8,7 +8,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "c0a9c59718af85d0cbfcefde978e7b3d95618bf111ac878af0cd795aba71505b"
+      "wasmSha256": "fd2c7feb5d0dad4e3b0eb55cf339846d578f012e21da26dc9ecf50808e7cf837"
     },
     "toom": {
       "name": "TOOM",
@@ -24,7 +24,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "706115779c52b440cbd7e48d56d0d10e857e342e5f075e5965f3c64dd9335541"
+      "wasmSha256": "f9ea95bf1bae20a5cac1b84d2616d255c84993fc19fd7dfa0018811473e6b8be"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -32,7 +32,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "47a360da1a53a7d96d799b715f087029239742f5a3143be2ffe1e9cb689267d2"
+      "wasmSha256": "1e00e5c75d599e581dbf1cc4d3223422dee8830d0f42b6209283578773e19e51"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -40,7 +40,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "653524c841aa7a723838e48724e95da374964eb173dc20800dc7ee36ece1297c"
+      "wasmSha256": "2c40867a43a5d0c536430b56c569f8fd009fcefc42137961964fe01ec72570b0"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -144,7 +144,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/TicTacToe.HC:8: Undefined identifier or untyped call: GrLine3"
+      "error": "C:/Home/Games/TinkerOS/TicTacToe.HC:117: undefined symbol 'WinMax'"
     },
     "tinker-Whap": {
       "name": "Whap",
@@ -192,7 +192,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Zing.HC:65: Undefined identifier or untyped call: Gr2BSpline3"
+      "error": "C:/Home/Games/TinkerOS/Zing.HC:69: Undefined identifier or untyped call: Sprite3ZB"
     },
     "tinker-ZoneOut": {
       "name": "ZoneOut",
@@ -384,7 +384,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/GlowUFOs.HC:1192: Undefined identifier or untyped call: GrHLine"
+      "error": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/GlowUFOs.HC:1579: Too many function arguments"
     },
     "library-OregonTrail1975": {
       "name": "Oregon Trail 1975",
@@ -440,7 +440,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TerrySupplement/Coach/Coach.HC:44: Undefined identifier or untyped call: GrLine3"
+      "error": "C:/Home/Games/TerrySupplement/Coach/Coach.HC:47: Undefined identifier or untyped call: Sprite3"
     },
     "library-DiningStars": {
       "name": "DiningStars",
