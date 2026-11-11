@@ -79,6 +79,10 @@ The implemented foundation uses native V5.03 file and memory APIs:
   return before health and sight tests. Enemy and player shots pass an explicit
   level context to shootable-line actions; captured impact data survives nested
   callbacks, and exceptions release temporary storage.
+- Pain/death/fall actions retain sound variant RNG and boss full-volume origins.
+  Footstep actions emit their sound before chase, and corpse fall removes only
+  solidity. The player death sound takes an explicit episode/commercial rule.
+  Explosion and BFG actions share the checked radius and forty-ray damage paths.
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
   contact callbacks defer reclamation until the end of the tic. Nested contact
@@ -275,6 +279,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/projectile-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/projectile.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/combat-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/combat.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/effect-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/effect.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -498,6 +504,13 @@ exercise effects, damage, projectiles, refire, enemy and player shootable-door
 triggers, nested queries and callback-failure cleanup. Their native and pinned
 HEMU results are in `tools/toom/combat-evidence.json`. The full actor action
 dispatcher and playable host remain unfinished.
+The effect oracle compares 6,266 cases with nine original death, pain, fall,
+footstep and explosion actions. Nineteen assembled cases add real movement,
+death/pain state chains, episode-specific player sounds, owner/active guards
+and callback-failure cleanup. The 279-case blast fixture now exercises explosion
+and BFG action entry points, including blocked sight, boss immunity, missing
+firers, all forty rays and callback failure. Native and pinned HEMU results
+are in `tools/toom/effect-evidence.json`; the full dispatcher remains unfinished.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

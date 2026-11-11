@@ -11,8 +11,10 @@ U0 TmBlastTest()
   Map *map=RoomsNew(FALSE);
   World *world=WorldNew(map,data);
   Motion *motion=MotionNew(world);
+  Sectors *sectors=SectorsNew(motion);
+  Specials *specials=SpecialsNew(sectors);
+  Enemies *enemies=EnemiesNew(specials);
   Path *path=PathNew(world);
-  Attack *trace=AttackNew(world);
   Actor *source=WorldSpawn(world,TM_MT_POSSESSED,-64*65536,0),
 	*target=WorldSpawn(world,TM_MT_TROOP,64*65536,0),*spot;
   I64 *body,*row,size,i,n,before,x,expected,health,pain;
@@ -80,18 +82,19 @@ U0 TmBlastTest()
   WorldRemove(world,spot); spot=WorldSpawn(world,TM_MT_ROCKET,-64*65536,0,0);
   target=WorldSpawn(world,TM_MT_TROOP,64*65536,0); health=target->health;
   map->sector[1].ceil=0;
-  ActorRadius(motion,path,spot,source,128);
+  spot->target=source->id; EnemyEffect(enemies,spot,TM_A_EXPLODE);
   if (target->health!=health) throw('BstWall');
   map->sector[1].ceil=128*65536; WorldRemove(world,target); tm_blast_cnt++;
   for (i=0;i<2;i++) {
     n=TM_MT_CYBORG;
     if (i) n=TM_MT_SPIDER;
     target=WorldSpawn(world,n,0,0); health=target->health;
-    ActorRadius(motion,path,spot,source,128);
+    spot->target=source->id; EnemyEffect(enemies,spot,TM_A_EXPLODE);
     if (target->health!=health) throw('Boss');
     WorldRemove(world,target); tm_blast_cnt++;
   }
-  health=source->health; ActorRadius(motion,path,spot,source,128);
+  health=source->health; spot->target=source->id;
+  EnemyEffect(enemies,spot,TM_A_EXPLODE);
   if (source->health!=health-128) throw('SelfHit');
   tm_blast_cnt++;
   target=WorldSpawn(world,TM_MT_TROOP,0,0); target->health=1000;
@@ -100,7 +103,7 @@ U0 TmBlastTest()
   data->info[TM_MT_TROOP].pain=pain+1; motion->action=&TmBlastThrow;
   before=Fs->data_heap->used_u8s; caught=FALSE;
   try {
-    ActorRadius(motion,path,spot,source,128);
+    spot->target=source->id; EnemyEffect(enemies,spot,TM_A_EXPLODE);
   } catch {
     if (Fs->except_ch=='BlastErr') {caught=TRUE; Fs->catch_except=TRUE;}
   }
@@ -113,7 +116,7 @@ U0 TmBlastTest()
   target->height=56*65536; target->radius=64*65536;
   world->max_radius=MaxI64(world->max_radius,target->radius);
   world->random=0; before=world->actor_cnt;
-  ActorBfg(motion,trace,spot);
+  EnemyEffect(enemies,spot,TM_A_BFGSPRAY);
   if (world->actor_cnt!=before+40 || target->health!=100000-TM_BFG_DAMAGE ||
 	world->random!=TM_BFG_RANDOM) {
     "BFG EFFECTS %d DAMAGE %d RANDOM %d\n",world->actor_cnt-before,
@@ -122,14 +125,15 @@ U0 TmBlastTest()
   }
   tm_blast_cnt++;
   spot->angle=0x80000000; before=world->actor_cnt; health=target->health;
-  ActorBfg(motion,trace,spot);
+  EnemyEffect(enemies,spot,TM_A_BFGSPRAY);
   if (world->actor_cnt!=before || target->health!=health) throw('BfgBack');
   tm_blast_cnt++;
   WorldRemove(world,source); before=world->actor_cnt;
-  ActorBfg(motion,trace,spot);
+  EnemyEffect(enemies,spot,TM_A_BFGSPRAY);
   if (world->actor_cnt!=before) throw('BfgOwner');
   tm_blast_cnt++;
-  AttackDel(trace); PathDel(path); MotionDel(motion);
+  EnemiesDel(enemies); SpecialsDel(specials); SectorsDel(sectors);
+  PathDel(path); MotionDel(motion);
   WorldDel(world); MapDel(map); GameDataDel(data); tm_blast_done=1;
   "BLAST %d CASES BAD 0\n",tm_blast_cnt;
 }

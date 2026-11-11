@@ -1,0 +1,97 @@
+{
+  "description": "Native death, pain, fall, footstep and blast action entry points; full actor dispatcher remains unfinished.",
+  "engine": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "cases": 6266,
+      "native": "qemu-olpvqchh",
+      "hemu": true,
+      "sourceSha256": "949251106025d1a2e3d19fe7df63a4bb561391a60c28de2b719c9eff933f7ca3",
+      "reference": "Nine unmodified original C actions; flags, RNG positions and all ordered sound/chase/radius events match.",
+      "scope": [
+        "All 256 random starts for death-sound groups",
+        "Boss full-volume null sound origins",
+        "Optional pain sounds and exact corpse flag clearing",
+        "Phase 1 and explicit commercial player health threshold",
+        "Footstep sound precedes chase",
+        "Explosion source and damage arguments"
+      ]
+    },
+    "integration": {
+      "cases": 19,
+      "native": "qemu-dwgkyca0",
+      "hemu": true,
+      "sourceSha256": "e6c8f8dd066a8dd89e303035e7fb04465bae6b158a9033f03de17fa42e8ef339",
+      "scope": [
+        "Actual chase movement after footstep sound",
+        "Death and pain state chains with exact RNG and corpse collision",
+        "Inactive/foreign owner/unknown action guards",
+        "Callback failure and complete fresh-task heap cleanup"
+      ]
+    },
+    "blast": {
+      "cases": 279,
+      "native": "qemu-pc5if9nu",
+      "hemu": true,
+      "sourceSha256": "59e60cd35ec5915359124af166c68a5dac32fcf2ccf65d252878d2e699828f7e",
+      "scope": [
+        "Native explosion and BFG action entry points",
+        "Portal sight, boss immunity, self-damage and callback-failure cleanup",
+        "Forty BFG rays, damage and RNG against independent sequence",
+        "Missing owner and reverse-facing spray"
+      ]
+    }
+  },
+  "regressions": {
+    "enemy": {
+      "cases": 30632,
+      "native": "qemu-1fcscazp",
+      "hemu": true,
+      "sourceSha256": "71100854a2228f1721d6ee0319b9cfb741ee92c77e2988d8b02c8f2a33d1ba01"
+    },
+    "chase": {
+      "cases": 29182,
+      "native": "qemu-gjb9d55g",
+      "hemu": true,
+      "sourceSha256": "31f09a7d5aa62250a1223518e23b5cec321bdf0810ee433189871664675cb8b2"
+    },
+    "walk": {
+      "cases": 13826,
+      "native": "qemu-ynag6dw7",
+      "hemu": true,
+      "sourceSha256": "1253d2c83bab73cca1d3840e1daec60c63ef531cfe76ad564f1dae732694b3b8"
+    },
+    "projectile": {
+      "cases": 17920,
+      "native": "qemu-3vm5hoq0",
+      "hemu": true,
+      "sourceSha256": "2ea5de08bcedc8d7a3f9fb233b8974b32cdaf1f224b5f87aacb443796c213b5f"
+    },
+    "combat": {
+      "cases": 18304,
+      "native": "qemu-zzbcpbpy",
+      "hemu": true,
+      "sourceSha256": "16e33c16cb5086c4a14a4ab741cf2a017d5897c96fd16e0f2dabc9aaa3d72e35"
+    }
+  },
+  "remaining": [
+    "Tracer, mancubus, arch-vile, skull/pain and boss actions",
+    "Complete actor action dispatcher",
+    "Fast-mode state duration/projectile setup",
+    "Native host input/render pacing and UI/audio",
+    "Save/load and episode/intermission progression"
+  ]
+}
