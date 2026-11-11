@@ -264,6 +264,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/enemy.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/chase-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/walk-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/chase.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/projectile-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/projectile.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -371,6 +373,14 @@ The impact check covers 18 effect/projectile cases, including all three player
 missiles, source immunity, auto-aim, close-wall explosions, nested line actions,
 stale targets and repeated exception cleanup. Intentional test exceptions skip
 Adam logging so the heap assertion measures the owned trigger buffer.
+Actor-targeted missiles have their own native entry point: spawn and sound
+precede shadow RNG, and vertical aim uses integer travel time. It shares the
+atomic initial half-step with player projectiles. Original `P_SpawnMissile`
+supplies 17,920 decision cases across eight projectile types; 137 assembled
+cases check real half-steps, timers, NOBLOCKMAP behavior, sound order, owner/type
+guards and callback-failure cleanup. Native and pinned HEMU evidence is in
+`tools/toom/projectile-evidence.json`. The existing impact gate still passes;
+actor attack actions and their complete dispatcher remain unfinished.
 The weapon check covers 13,824 independently computed ammo/owned-weapon
 selections and 35 animation/combat cases. Nine 200-tic firing schedules match
 canonical shot intervals and ammunition costs; every weapon action is reached.

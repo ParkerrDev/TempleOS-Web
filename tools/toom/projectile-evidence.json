@@ -1,0 +1,55 @@
+{
+  "description": "Actor-targeted projectile creation; actor attack actions and full playable game remain unfinished.",
+  "engine": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_mobj.c",
+    "sha256": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f"
+  },
+  "checks": {
+    "decisions": {
+      "sourceSha256": "d5ae223db8e46c7b7b8e2e30a6f0a8b796f240efbb1d1cd8de1dcb2bf5747350",
+      "cases": 17920,
+      "native": "qemu-gjpfcb_a",
+      "hemu": true,
+      "reference": "Unmodified original P_SpawnMissile compiled as host C, with controlled spawn/sound/angle/initial-step boundaries. The native side uses real WorldSpawn and the same canonical integer sine/RNG tables.",
+      "scope": [
+        "Eight projectile types, zero/near/far target offsets and vertical differences",
+        "Angle wrap and all 256 shadow-spread random starts",
+        "Spawn, sound, angle and initial-step RNG positions",
+        "Integer travel-time velocity, owner handle and allocation cleanup"
+      ]
+    },
+    "integration": {
+      "sourceSha256": "622f2a5e4e1ea3dc6aee6bb348f4152e6b5b06d915eb610eb9044313c00d6caa",
+      "cases": 137,
+      "native": "qemu-e8vhwhj0",
+      "hemu": true,
+      "scope": [
+        "128 actual initial half-step, timer and RNG cases",
+        "Native NOBLOCKMAP flags and absence from block lists",
+        "Nine owner/type/inactive guards and callback-failure ownership cases",
+        "Fresh-task heap returns to baseline"
+      ]
+    }
+  },
+  "impactRegression": {
+    "cases": 18,
+    "native": "qemu-bd8rcs0s",
+    "hemu": true
+  },
+  "remaining": [
+    "Actor attacks and complete action dispatch",
+    "Fast-mode state duration/projectile setup",
+    "Native host input/render pacing and UI/audio",
+    "Save/load and episode/intermission progression"
+  ]
+}

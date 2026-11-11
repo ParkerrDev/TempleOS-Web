@@ -88,3 +88,29 @@ Actor *PlayerMissileNew(Motion *tmpm,Attack *trace,Actor *source,I64 type)
   else angle=source->angle;
   return MissileNew(tmpm,source,type,angle,slope);
 }
+
+Actor *ActorMissileNew(Motion *tmpm,Actor *source,Actor *target,I64 type)
+{//Spawn and sound precede shadow RNG; vertical aim uses integer travel tics.
+  World *world=tmpm->world;
+  ActorInfo *info;
+  Actor *actor;
+  I64 distance,angle;
+  if (source->world!=world || target->world!=world) throw('World');
+  if (!source->active || !target->active) return NULL;
+  if (!(0<=type<TM_ACTOR_NUM)) throw('Missile');
+  info=world->data->info+type;
+  if (!(info->flags&TM_MF_MISSILE) || info->speed<=0) throw('Missile');
+  actor=WorldSpawn(world,type,source->x,source->y,source->z+32*65536);
+  if (tmpm->sound && info->see_snd) (*tmpm->sound)(actor,info->see_snd);
+  actor->target=source->id;
+  angle=AngleFrom(world->data,target->x-source->x,target->y-source->y);
+  if (target->flags&TM_MF_SHADOW) angle+=WorldRandDiff(world)<<20;
+  actor->angle=angle&0xFFFFFFFF;
+  actor->vx=FixedMul(info->speed,AngleCos(world->data,angle));
+  actor->vy=FixedMul(info->speed,AngleSin(world->data,angle));
+  distance=MaxI64(DistanceApprox(target->x-source->x,target->y-source->y)/
+	info->speed,1);
+  actor->vz=(target->z-source->z)/distance;
+  MissileStart(tmpm,actor);
+  return actor;
+}

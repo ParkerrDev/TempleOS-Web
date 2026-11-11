@@ -299,6 +299,12 @@
       "integrationCases": 20,
       "evidence": "chase-evidence.json",
       "hemu": true
+    },
+    "actor-projectile": {
+      "decisions": 17920,
+      "integrationCases": 137,
+      "evidence": "projectile-evidence.json",
+      "hemu": true
     }
   },
   "frames": [

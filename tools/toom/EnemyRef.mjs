@@ -19,7 +19,7 @@ export async function EnemySource() {
 }
 
 export function EnemyFunction(original,name) {
-    const m=new RegExp(`(?:void|boolean)\\s+${name}\\s*\\([^)]*\\)\\s*\\{`).exec(original);assert(m,name);
+    const m=new RegExp(`(?:void|boolean|mobj_t\\s*\\*)\\s+${name}\\s*\\([^)]*\\)\\s*\\{`).exec(original);assert(m,name);
     let at=m.index+m[0].length,depth=1;
     for(;depth&&at<original.length;at++){if(original[at]==='{')depth++;if(original[at]==='}')depth--;}
     assert.equal(depth,0);return original.slice(m.index,at);
