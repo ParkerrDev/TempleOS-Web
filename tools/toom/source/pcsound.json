@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/chocolate-doom/chocolate-doom",
+  "tag": "chocolate-doom-3.1.0",
+  "revision": "35fb1372d10756ca27eca05665bd8a7cebc71c05",
+  "path": "src/i_pcsound.c",
+  "sha256": "acf9209a377fba2aadeaea0676a8bf3bbb508178852677defab9bc612398033c",
+  "license": "GPL-2.0-or-later",
+  "copyright": "Copyright(C) 2005-2014 Simon Howard",
+  "formatReference": "https://soulsphere.org/apocrypha/pcspkr/"
+}

@@ -64,6 +64,18 @@ ownership immediately; stale generation handles cannot name replacement actors.
 Brain target storage grows with the actor population instead of the original
 fixed 32-pointer array. Its normal thinker ordering and awake sound are retained.
 
+The PC-speaker period table in TmSnd.HC is derived from Chocolate Doom's
+src/i_pcsound.c, Copyright (C) 2005-2014 Simon Howard, licensed under GPL
+version 2 or later. This implementation uses GPL version 2. The pinned
+reference is Chocolate Doom 3.1.0, revision
+35fb1372d10756ca27eca05665bd8a7cebc71c05; its path and hash are recorded in
+tools/toom/source/pcsound.json. The reference is retrieved with its original
+notice intact. DP format and period measurements were published by Simon
+Howard and Andrew Apted at https://soulsphere.org/apocrypha/pcspkr/ . This is
+not a claim that the unreleased original DMX PC-speaker implementation was
+available. The native decoder rejects short headers before reading fields
+and reads only the declared payload, ignoring any trailing bytes.
+
 The native implementation and derived data are distributed under version 2
 of the GNU General Public License. See COPYING for the full license and
 disclaimer of warranty. Distribution must include the corresponding source

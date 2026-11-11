@@ -853,3 +853,23 @@ TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/browser.test.mjs
 `/tmp/toom-browser`). `browser-evidence.json` records the exact site/game
 bytes and observed bounds. These keyboard checks do not qualify mobile
 controls, sound, full-map completion or sustained performance.
+
+
+## PC-speaker decoder under development
+
+`TmSnd.HC` validates an original DP header and reads only its declared tone
+stream. It preserves the measured 8253 timer periods, silence and empty/end
+behavior. It is not yet included in the interactive entry or connected to
+speaker ports. Both official 0.13.0 Phase 1/Phase 2 sound sets, all tone-byte
+values, maximum lengths, malformed streams and constructor failure cleanup
+are compared with pinned Chocolate Doom reference functions and data.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sound.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/sound.test.mjs
+```
+
+`sound-evidence.json` scopes this decoder proof. Speaker ownership, sound
+selection, 140 Hz scheduling and pause/focus/exit silence remain separate work.
+The GPL reference notice and source hash are retained in `NOTICE` and
+`tools/toom/source/pcsound.json`; the unreleased DMX library is not used.
