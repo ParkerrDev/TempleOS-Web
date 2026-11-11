@@ -10,6 +10,7 @@
 #include "TmWorld"
 #include "TmContact"
 #include "TmMove"
+#include "TmPath"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

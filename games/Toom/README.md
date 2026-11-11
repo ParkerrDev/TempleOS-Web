@@ -50,6 +50,10 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - Texture coordinates, increments and lighting buckets use nearest Q16 values
   with even ties. This defines sampling at texel and light boundaries across
   native x87 and HEMU. Sky row coordinates are computed once per row.
+- Path queries visit every touched block edge/corner and nearby actor cells.
+  Exact integer intersections produce ordered Q16 fractions; walls win ties
+  with actor cross-sections. A reusable path owns its buffers and borrows its
+  world, and must be freed before that world.
 
 Fuzz effects, simulation, weapons, actors, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
@@ -107,6 +111,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/collision.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/world.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/contact.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/movement.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/path.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -124,6 +129,9 @@ indices. It checks the clock and data, not yet the effects of actor actions.
 The math check covers 16,384 original sine/cosine samples and 4,457 edge/random
 fixed-point arithmetic and angle vectors, including distant vectors and
 saturation limits. It rejects malformed trigonometry tables.
+It also compares 8,594 wide products/signed product orderings and 4,128 unit
+fractions with independent BigInt results, including signed and unsigned limits
+and products differing by one beyond floating-point precision.
 The sprite check compares 7,736 state/rotation lookups, two full passes through
 853 decoded images and 49 pixel/depth views. It covers mirrored images, alpha,
 light/fullbright, sector clipping and nearer occluders. Absent Phase 2 sprite
@@ -151,6 +159,12 @@ of rooms: step/dropoff/headroom boundaries, float/teleport/noclip flags, atomic
 rejection, actor links, pickup contacts and crossed-line ordering, including
 callbacks that perform another query. Momentum, sliding and actual line actions
 remain part of the pending simulation stage.
+The path check compares all hit records for 5,012 rays across the 36 maps and
+an independent full geometry/actor scan. It includes long rays, exact grid and
+vertex boundaries, large actors in neighboring cells, wall/actor ties, all four
+exact diagonals, allocation growth, stamp reset and reused actor handles.
+Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run the path or math
+checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

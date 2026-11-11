@@ -1,3 +1,49 @@
+U0 WideMul(U64 a,U64 b,U64 *_low,U64 *_high)
+{//Unsigned 128-bit product, expressed with native 64-bit operations.
+  U64 a0=a&0xFFFFFFFF,a1=a>>32,b0=b&0xFFFFFFFF,b1=b>>32,
+	w0=a0*b0,t=a1*b0+w0>>32,w1=t&0xFFFFFFFF,w2=t>>32;
+  w1+=a0*b1;
+  *_high=a1*b1+w2+w1>>32;
+  *_low=w1<<32|w0&0xFFFFFFFF;
+}
+
+I64 ProductCmp(I64 a,I64 b,I64 c,I64 d)
+{//Compare signed products without overflowing at distant map coordinates.
+  U64 low1,high1,low2,high2;
+  I64 res;
+  Bool neg1=a && b && (a<0 ^^ b<0),neg2=c && d && (c<0 ^^ d<0);
+  if (-0x80000000<=a<=0x7FFFFFFF && -0x80000000<=b<=0x7FFFFFFF &&
+	-0x80000000<=c<=0x7FFFFFFF && -0x80000000<=d<=0x7FFFFFFF)
+    return SignI64(a*b-c*d);
+  if (neg1!=neg2) {
+    if (neg1) return -1;
+    return 1;
+  }
+  WideMul(AbsI64(a),AbsI64(b),&low1,&high1);
+  WideMul(AbsI64(c),AbsI64(d),&low2,&high2);
+  if (high1<high2 || high1==high2 && low1<low2) res=-1;
+  else if (high1>high2 || high1==high2 && low1>low2) res=1;
+  else res=0;
+  if (neg1) res=-res;
+  return res;
+}
+
+I64 Fraction16(U64 num,U64 den)
+{//Exact floor of a unit fraction times 65536, without a wide divide.
+  I64 i,res=0;
+  if (!den || num>den) throw('Fraction');
+  if (num==den) return 65536;
+  if (num<=0xFFFFFFFFFFFF) return num<<16/den;
+  for (i=0;i<16;i++) {
+    res<<=1;
+    if (num>=den-num) {
+      num-=den-num; res++;
+    } else
+      num<<=1;
+  }
+  return res;
+}
+
 I64 FixedMul(I64 a,I64 b)
 {//The Q16 result retains the original signed 32-bit value range.
   I64 res=(a*b)>>16;
