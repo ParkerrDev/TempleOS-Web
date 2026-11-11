@@ -21,3 +21,14 @@ for (const rate of [60,120,0,30]) {
 assert.deepEqual(gx.rdBytes(sleep,4096),originalSleep,"30 restores original pacing and FPS instructions");
 assert.deepEqual(gx.rdBytes(wall,4096),originalWall,"30 restores original top-line formatting");
 console.log("Guest refresh settings:",JSON.stringify(measurements));
+
+for (const rate of [60,120,0]) {
+  assert.equal(ex.WinRateSet(BigInt(rate)),1n);
+  //A RAM-only import loses host patch metadata while retaining guest code.
+  const dv=new DataView(ex.memory.buffer);
+  dv.setBigUint64(Number(h.compiled.globals.get("win_rate_pool").addr),0n,true);
+  assert.equal(ex.WinRateSet(30n),1n,"recognize prior patched RAM at "+rate);
+  assert.deepEqual(gx.rdBytes(sleep,4096),originalSleep,"legacy rate restore is byte-exact");
+  assert.deepEqual(gx.rdBytes(wall,4096),originalWall,"legacy format restore is byte-exact");
+}
+console.log("Legacy RAM snapshots recover all three modified timing layouts.");
