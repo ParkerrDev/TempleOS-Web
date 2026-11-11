@@ -32,7 +32,7 @@ export function FrameTop(u8,width)
       else
         hi|=row<<((y-4)*8);
     }
-    res+=glyphs.get(lo+":"+hi)||"?";
+    res+=glyphs.get(lo+":"+hi)||glyphs.get((~lo)+":"+(~hi))||"?";
   }
   return res;
 }
