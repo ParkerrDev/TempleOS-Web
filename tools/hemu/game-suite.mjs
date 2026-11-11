@@ -1,3 +1,4 @@
+import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
 // Smoke the actual catalog through the public backend API. Commands are never typed.
 // Optional Enter/arrow input exercises game dialogs and gameplay after backend launch.
 // node --max-old-space-size=3072 game-suite.mjs Talons
@@ -33,7 +34,7 @@ function chunk(t,d){const l=Buffer.alloc(4);l.writeUInt32BE(d.length);const tt=B
 function dumpPng(p,idx,w,h){const raw=Buffer.alloc((w*3+1)*h);let o=0;for(let y=0;y<h;y++){raw[o++]=0;for(let x=0;x<w;x++){const c=PAL[idx[y*w+x]&15];raw[o++]=c[0];raw[o++]=c[1];raw[o++]=c[2];}}const ih=Buffer.alloc(13);ih.writeUInt32BE(w,0);ih.writeUInt32BE(h,4);ih[8]=8;ih[9]=2;writeFileSync(p,Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk("IHDR",ih),chunk("IDAT",deflateSync(raw)),chunk("IEND",Buffer.alloc(0))]));}
 
 const compiled=compileHemu();
-const live=readFileSync(process.env.LIVE||"/tmp/live.bin"),disk=readFileSync(process.env.RAW||"/tmp/templeos.raw"),overlay=new Map(),badops=[];
+const live=SnapshotRead(),disk=DiskRead(),overlay=disk.overlay,badops=[];
 let inst,gBase=0,gx,frame=null,frames=0,mouseButtons=0;
 const keys=[],host=createHemuHost({onText:s=>{if(s.includes("BADOP"))badops.push(s);},snd:{tone(){}},
   snapLoad(base,u8){gBase=base;u8.set(live.subarray(0,402653184),base);},
@@ -51,7 +52,7 @@ const start=performance.now(),events=[];
 async function run(n){for(let i=0;i<n;i++){inst.exports.__main();gx?.tick();frames++;await new Promise(setImmediate);}}
 async function wait(id,states,max=1800){for(let i=0;i<max;i++){const s=gx.status(id);if(states.includes(s?.state))return s;await run(1);}throw new Error("Request timed out: "+JSON.stringify(gx.status(id)));}
 const hashFrame=()=>frame?createHash("sha256").update(frame.u8.subarray(frame.a,frame.a+frame.w*frame.h)).digest("hex"):null;
-const reader={readInto(lba,count,dst,offset=0){for(let i=0;i<count;i++)dst.set(overlay.get(lba+i)||disk.subarray((lba+i)*512,(lba+i+1)*512),offset+i*512);}};
+const reader=disk;
 let failure=null,launch;
 try {
   await run(300);gx=createGuestExec({inst,gBase,onEvent:e=>events.push(e)});assert.equal(gx.probe().ok,true);

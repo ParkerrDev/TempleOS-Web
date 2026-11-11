@@ -1,3 +1,4 @@
+import {CaptureWait} from "./CoreBarrier.js";
 // hemu-smp-worker.js - one Web Worker == one emulated core, over ONE shared WebAssembly.Memory.
 //   role "bsp" (core 0): loads the snapshot, owns devices/present/input, runs __main frames.
 //   role "ap"  (core k): barrier-waits, wires its per-core JIT, runs RunCore (IPI-woken) in parallel.
@@ -84,7 +85,6 @@ async function boot(m) {
 }
 
 const dv = () => new DataView(inst.exports.memory.buffer);
-const rd = (a) => Number(dv().getBigUint64(a, true));
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 async function runBsp() {
@@ -124,26 +124,15 @@ async function runBsp() {
 
 async function runAp() {
   Atomics.wait(ctrl, CTRL.READY, 0);                         // block until BSP loaded snapshot + seeded regs
-  gBase = rd(sc.globals.mem);                                // guest RAM base from the shared `mem` global (APs never run snapLoad)
-  const g = sc.globals, cc = sc.ccpu, oc = (o) => g.g_cpu_st + core * cc.stride + o;
-  jit.jitState(oc(cc.reg), oc(cc.rfl), oc(cc.rip), gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem, inst.exports.RasterHLE);
-  jit.jitX87(oc(cc.fpr), oc(cc.fsp), oc(cc.x87_sw));
-  jit.jitSeg(oc(cc.fsbase), oc(cc.gsbase), g.tsc, oc(cc.x87_cw), g.g_xmm_lo + core * sc.xmmStride, g.g_xmm_hi + core * sc.xmmStride);
+  gBase = Number(inst.exports.RamBase());                    // APs never run snapLoad
+  inst.exports.CoreAttach();                                 // this core's state to its own JIT
   postMessage({ cmd: "log", msg: `AP${core} parallel` });
   const APB = 2000000n; let spins = 0, apFaulted = false;
-  const PAUSE_REQ = 2, PAUSE_ACK = 3;                         // ctrl indices (BSP pauses APs to capture a consistent frame)
-  while (!Atomics.load(ctrl, CTRL.STOP)) {
-    if (Atomics.load(ctrl, PAUSE_REQ)) {                      // BSP is capturing a frame -> hold still (no concurrent writes)
-      Atomics.add(ctrl, PAUSE_ACK, 1);                        // ack: the seq-cst handshake also RELEASES our writes to the BSP
-      while (Atomics.load(ctrl, PAUSE_REQ) && !Atomics.load(ctrl, CTRL.STOP)) Atomics.wait(ctrl, PAUSE_REQ, 1, 20);
+  while (!Atomics.load(ctrl,CTRL.STOP)) {
+    if (CaptureWait(ctrl,core))
       continue;
-    }
-    const before = rd(g.icount);
-    inst.exports.RunCore(APB);
-    const did = rd(g.icount) - before;
-    const halted = rd(oc(144));                              // f_halted: >=2 means this AP faulted (bad op / #DE)
-    if (halted >= 2 && !apFaulted) { apFaulted = true; postMessage({ cmd: "log", msg: `AP${core} FAULTED halted=${halted} rip=0x${rd(oc(cc.rip)).toString(16)} - recovering` });
-      dv().setBigUint64(oc(144), 0n, true); }              // clear the fault so the AP keeps serving jobs instead of dying (best-effort recovery)
+    const did = Number(inst.exports.RunCore(APB));           // <0: -halted, a fault stopped this core (RunCore clears the first)
+    if (did < 0 && !apFaulted) { apFaulted = true; postMessage({ cmd: "log", msg: `AP${core} FAULTED halted=${-did} - recovering` }); }
     if (did < 1000) { spins++; if (spins > 4) { await sleep(0); spins = 0; } }   // idle -> yield (don't pin a core)
     else { spins = 0; if (Math.random() < 0.003) await sleep(0); }
   }

@@ -5,6 +5,8 @@
 // while the main thread is drawing frame N, this worker is already emulating frame N+1 - so the
 // blit cost leaves the critical path. The canvas stays on the main thread (frames are shipped via
 // postMessage), so hemu.html can fall back to its in-line single-thread engine if this ever fails.
+import {FrameTop,FrameFps} from "./FrameText.js";
+import {CaptureBarrier} from "./CoreBarrier.js";
 import { createHemuHost } from "./host.js";
 import { loadDisk, makeDisk, fat32Upload, fat32List } from "./qcow2.js";
 import * as jit from "./jit.js";             // x86-64 -> WASM block JIT (the speed: interp ~6fps -> JIT 30-65fps games)
@@ -13,34 +15,56 @@ import { createGuestExec } from "./guestexec.js";   // backend guest execution: 
 
 let msX = 320, msY = 240, msB = 0, wheel = 0;   // latest pointer state from the main thread
 const keyq = [];                            // set-1 scancodes from the main thread
-let curBudget = 1500000, dtMs = 16;         // guest instr/frame + real wall-clock ms/frame
+let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0, instRef = null;
 let paused = false;
 const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
 // JIT segment/TSC addresses now flow from the guest at runtime via __jit_seg (per-core CCpuState) - no hardcoded offsets to drift.
 
-const BLKDEV = 0xBC18;                       // CBlkDevGlbls in this snapshot (verified live: cache_ctrl@+48 is the LRU-ring sentinel)
-// Make a host-side disk write visible to the running OS: mark every cached block "unowned" (dv=NULL)
-// so the next guest read of any block MISSES the cache (DskCacheFind compares dv) and re-reads from
-// disk. We walk the LRU ring from cache_ctrl and touch ONLY dv@+32 - we do NOT rewrite the hash
-// chains, hash buckets, or LRU links, so the cache structure can't be corrupted (an earlier version
-// rebuilt those by hand and broke `Dir`/file reads). CCacheBlk: next_lru@0, ..., dv@32.
-function invalidateGuestCache(lbas) {
-  if (!instRef || !disk) return 0;
-  const want = (lbas && lbas.length) ? new Set(lbas) : null;   // a set of changed sectors -> refresh ONLY those; null -> all (importDisk)
-  const dvw = new DataView(instRef.exports.memory.buffer), cap = dvw.byteLength;
-  const rd = (a) => (a >= 0 && gBase + a + 8 <= cap) ? Number(dvw.getBigUint64(gBase + a, true)) : 0;
-  const clr = (a) => { if (a >= 0 && gBase + a + 8 <= cap) dvw.setBigUint64(gBase + a, 0n, true); };
-  const ctrl = rd(BLKDEV + 48);                            // cache_ctrl (LRU ring sentinel)
-  if (!ctrl) return 0;
-  let p = rd(ctrl), n = 0, cleared = 0; const sample = [];
-  while (p && p !== ctrl && n < (1 << 20)) {               // walk the LRU ring
-    const blk = rd(p + 40);                                // this block's disk block# (CCacheBlk.blk @ +40)
-    if (rd(p + 32) && sample.length < 8) sample.push(blk); // sample a few in-use blocks' block#s (diag)
-    if (!want || want.has(blk)) { clr(p + 32); cleared++; } // dv=NULL only on the sectors we changed
-    p = rd(p); n++;
+function GuestCacheInvalidate(lbas)
+{//Makes the guest read again the disk blocks a host-side write changed (all
+//of them when lbas is null). Each cached CCacheBlk of those blocks gets
+//dv=NULL, so DskCacheFind misses it and reads the disk. Only dv is
+//written: the hash chains and LRU links stay as the guest made them.
+  let want=null,dvw,cap,base,o_ctrl,o_next,o_dv,o_blk,ctrl,p,blk,n=0,
+	cleared=0,sample=[];
+  function Rd(a)
+  {
+    if (a>=0 && gBase+a+8<=cap)
+      return Number(dvw.getBigUint64(gBase+a,true));
+    return 0;
   }
-  if (want) console.log("[hemu] cacherefresh: changedLBAs=[" + [...want].slice(0, 6) + "] sampleCachedBlks=[" + sample + "] cleared=" + cleared + "/" + want.size);
+  if (!instRef || !disk || !gx)
+    return 0;
+  base=gx.varFind("blkdev");
+  o_ctrl=gx.memberFind("CBlkDevGlbls","cache_ctrl");
+  o_next=gx.memberFind("CCacheBlk","next_lru");
+  o_dv=gx.memberFind("CCacheBlk","dv");
+  o_blk=gx.memberFind("CCacheBlk","blk");
+  if (!base || o_ctrl<0 || o_next<0 || o_dv<0 || o_blk<0)
+    return 0;
+  if (lbas && lbas.length)
+    want=new Set(lbas);
+  dvw=new DataView(instRef.exports.memory.buffer);
+  cap=dvw.byteLength;
+  ctrl=Rd(base+o_ctrl);
+  if (!ctrl)
+    return 0;
+  p=Rd(ctrl+o_next);
+  while (p && p!=ctrl && n<0x100000) {
+    blk=Rd(p+o_blk);
+    if (Rd(p+o_dv) && sample.length<8)
+      sample.push(blk);
+    if ((!want || want.has(blk)) && gBase+p+o_dv+8<=cap) {
+      dvw.setBigUint64(gBase+p+o_dv,0n,true);
+      cleared++;
+    }
+    p=Rd(p+o_next);
+    n++;
+  }
+  if (want)
+    console.log("[hemu] cacherefresh: changedLBAs=["+[...want].slice(0,6)+
+	  "] sampleCachedBlks=["+sample+"] cleared="+cleared+"/"+want.size);
   return cleared;
 }
 
@@ -159,13 +183,13 @@ onmessage = (e) => {
   else if (m.cmd === "pause") { paused = m.value; postMessage({ cmd: "paused", value: paused }); }
   else if (m.cmd === "exportSnapshot") exportSnapshot();
   else if (m.cmd === "exportDisk") exportDisk();
-  else if (m.cmd === "importDisk") { try { disk = makeDisk(new Uint8Array(m.bytes)); invalidateGuestCache(); postMessage({ cmd: "diskInfo", ok: true, msg: "disk imported (" + (m.bytes.byteLength / 1048576).toFixed(0) + " MB)" }); } catch (err) { postMessage({ cmd: "diskInfo", ok: false, msg: String(err.message || err) }); } }
+  else if (m.cmd === "importDisk") { try { disk = makeDisk(new Uint8Array(m.bytes)); GuestCacheInvalidate(); postMessage({ cmd: "diskInfo", ok: true, msg: "disk imported (" + (m.bytes.byteLength / 1048576).toFixed(0) + " MB)" }); } catch (err) { postMessage({ cmd: "diskInfo", ok: false, msg: String(err.message || err) }); } }
   else if (m.cmd === "uploadFile") {
     try { if (!disk) throw new Error("disk not loaded yet - wait a moment after boot");
       const before = new Set(disk.overlay.keys());                       // which sectors are already overlaid
       const r = fat32Upload(disk, m.name, new Uint8Array(m.bytes), m.dir || "Home");
       const changed = []; for (const k of disk.overlay.keys()) if (!before.has(k)) changed.push(k);   // sectors this write touched
-      const cleared = invalidateGuestCache(changed);                     // refresh ONLY those in the guest cache
+      const cleared = GuestCacheInvalidate(changed);			 // refresh ONLY those in the guest cache
       postMessage({ cmd: "fileResult", id: m.id, ok: true, msg: `wrote ${m.name} to /${m.dir || "Home"} (${r.clusters} clusters; ${changed.length} sectors, ${cleared} cached refreshed)` });
     } catch (err) { postMessage({ cmd: "fileResult", id: m.id, ok: false, msg: String(err.message || err) }); }
   }
@@ -220,7 +244,12 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
   postMessage({ cmd: "progress", text: "starting hemu core (HolyC → WASM)…", pct: 88 });
   const mod = await WebAssembly.compile(await (await fetch(wasmUrl, { cache: "no-cache" })).arrayBuffer());
 
+  let sequence=0;
+  const barrier=smpCfg?CaptureBarrier(new Int32Array(smpCfg.ctrl),
+        smpCfg.ncore,()=>apsReleased):null;
   const host = createHemuHost({
+    captureLock:()=>barrier?barrier.Lock():true,
+    captureUnlock:()=>barrier?.Unlock(),
     palette:(index,rgb)=>postMessage({cmd:"palette",index,rgb}),
     onText: (s) => { if (s && s.indexOf("BADOP") >= 0) console.log("[hemu]", s.trim()); },
     snd: { tone: (f) => postMessage({ cmd: "snd", f: Number(f) }) },   // AudioContext lives on the main thread
@@ -229,19 +258,11 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
     diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },  // ATA writes -> in-session overlay
     present: (addr, w, h, u8) => {
       if (outstanding >= 2) return;                       // main hasn't caught up - drop, keep emulating
-      // SMP: stop-the-world for the frame copy. Pause the AP cores via an atomic handshake, which (a) stops
-      // concurrent writes so the captured frame isn't torn, and (b) makes the BSP ACQUIRE the APs' writes
-      // (seq-cst) so the frame isn't a stale/blank buffer (the white-screen race). Timeout -> never hangs.
-      let pc = null;
-      if (smpCfg) { pc = new Int32Array(smpCfg.ctrl); Atomics.store(pc, 2, 1);   // PAUSE_REQ
-        const dl = performance.now() + 6;
-        while (Atomics.load(pc, 3) < smpCfg.ncore - 1 && performance.now() < dl) { /* spin until APs ack (or timeout) */ } }
       const buf = new Uint8Array(w * h);
       buf.set(u8.subarray(addr, addr + w * h));           // copy the finished frame out of WASM memory
-      const stats = gx?.frameStats?.();
-      if (pc) { Atomics.store(pc, 3, 0); Atomics.store(pc, 2, 0); Atomics.notify(pc, 2); }   // resume APs
+      const top=FrameTop(buf,w);
       outstanding++;
-      postMessage({ cmd: "frame", buf: buf.buffer, w, h, fps: stats?.fps, updates: stats?.updates }, [buf.buffer]);
+      postMessage({ cmd: "frame", buf: buf.buffer, w, h, fps:FrameFps(top),updates:++sequence,top }, [buf.buffer]);
     },
   });
   // |0 on every BigInt crossing: a fractional value (trackpad movementX, joystick velocity)
@@ -253,6 +274,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
   host.env.__host_key = () => keyq.length ? BigInt(keyq.shift() | 0) : -1n;
   host.env.__host_budget = () => BigInt(curBudget | 0);
   host.env.__host_dt = () => BigInt(dtMs | 0);
+  host.env.__host_ns = () => BigInt(dtNs);
   // ---- JIT wiring: blocks read hemu's shared state at the offsets passed via __jit_state/__jit_x87/__jit_chain;
   //      __jit_state returns 1 to ENABLE (return 0n / ?nojit -> pure interpreter). See jit.js. ----
   let inst;
@@ -293,11 +315,17 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
   let lastT = performance.now(), dtAcc = 0;
   for (;;) {
     const now = performance.now();
-    dtAcc += now - lastT; lastT = now;
-    if (dtAcc > 100) dtAcc = 100;                                  // tab was backgrounded - don't fast-forward
-    dtMs = Math.max(1, Math.min(100, Math.floor(dtAcc)));
-    dtAcc -= dtMs;                                                 // carry the sub-ms remainder to the next frame
-    if (paused) { await sleep(80); lastT = performance.now(); dtAcc = 0; continue; }   // ⏸ freeze guest time too
+    dtAcc+=Math.max(0,now-lastT)*1000000;
+    lastT=now;
+    dtNs=Math.min(100000000,Math.floor(dtAcc));
+    dtAcc-=Math.floor(dtAcc);
+    dtMs=dtNs/1000000;
+    if (paused) {
+      await sleep(80);
+      lastT=performance.now();
+      dtAcc=0;
+      continue;
+    }
     try { guestInput.beforeFrame(); inst.exports.__main(); guestInput.afterFrame(); }                                 // emulate one TempleOS frame (+ present via the host)
     catch (err) { postMessage({ cmd: "error", msg: "hemu trap: " + err.message }); return; }
     if (smpCfg && !apsReleased && ++bootFrames > 120) {            // desktop settled -> release the AP workers (parallel from here)

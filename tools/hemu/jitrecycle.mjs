@@ -1,3 +1,4 @@
+import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
 // jitrecycle.mjs: regression test for JIT correctness when TempleOS recycles compiled-code memory.
 // Every command-line statement is JIT-compiled by the OS into a fresh MAlloc'd block, executed and
 // freed; the next statement usually lands at the SAME address with DIFFERENT machine code. A block
@@ -12,14 +13,14 @@ import * as jit from "../../engine/jit.js";
 import { createGuestExec } from "../../engine/guestexec.js";
 import { readFileSync } from "node:fs";
 const RAMSZ = 402653184;
-const liveBuf = readFileSync(process.env.LIVE || "/tmp/live.bin"), diskBuf = readFileSync(process.env.RAW || "/tmp/templeos.raw");
+const liveBuf = SnapshotRead(), disk = DiskRead();
 const r = compileHemu();
 const mod = await WebAssembly.compile(r.bytes);
-let gBase = 0, inst; const ovl = new Map(); const badops = [];
+let gBase = 0, inst; const ovl = disk.overlay; const badops = [];
 const host = createHemuHost({ onText: (s) => { if (s && s.indexOf("BADOP") >= 0) badops.push(s.trim()); }, snd: { tone: () => {} },
   snapLoad: (base, u8) => { gBase = base; u8.set(liveBuf.subarray(0, RAMSZ), base); },
-  diskRead: (lba, cnt, u8, dst) => { for (let s = 0; s < cnt; s++) { const o = ovl.get(lba + s); if (o) u8.set(o, dst + s * 512); else u8.set(diskBuf.subarray((lba + s) * 512, (lba + s) * 512 + 512), dst + s * 512); } },
-  diskWrite: (lba, cnt, u8, s2) => { for (let s = 0; s < cnt; s++) ovl.set(lba + s, u8.slice(s2 + s * 512, s2 + s * 512 + 512)); },
+  diskRead:(lba,count,bytes,offset)=>disk.readInto(lba,count,bytes,offset),
+  diskWrite:(lba,count,bytes,offset)=>disk.writeInto(lba,count,bytes,offset),
   present: () => {} });
 host.env.__host_key = () => -1n; host.env.__host_budget = () => 12000000n; host.env.__host_dt = () => 16n;
 const NOJIT = !!process.env.NOJIT;

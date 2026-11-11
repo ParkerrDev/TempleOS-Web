@@ -1,3 +1,4 @@
+import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
 // guestcheck.mjs: headless proof of the backend guest-execution API (guestexec.js + src/guestcall.HC).
 // Boots the bundled TempleOS snapshot with the JIT on and, WITHOUT a single synthetic keystroke or
 // TaskMsg, exercises: symbol probe, source execution in Adam, honest compile/runtime error reporting,
@@ -22,14 +23,14 @@ function crc32(b){let c=~0;for(let i=0;i<b.length;i++){c^=b[i];for(let k=0;k<8;k
 function chunk(t,d){const l=Buffer.alloc(4);l.writeUInt32BE(d.length);const tt=Buffer.from(t,"latin1");const cr=Buffer.alloc(4);cr.writeUInt32BE(crc32(Buffer.concat([tt,d])));return Buffer.concat([l,tt,d,cr]);}
 function dumpPng(p,idx,w,h){const raw=Buffer.alloc((w*3+1)*h);let o=0;for(let y=0;y<h;y++){raw[o++]=0;for(let x=0;x<w;x++){const c=PAL[idx[y*w+x]&15];raw[o++]=c[0];raw[o++]=c[1];raw[o++]=c[2];}}const ih=Buffer.alloc(13);ih.writeUInt32BE(w,0);ih.writeUInt32BE(h,4);ih[8]=8;ih[9]=2;writeFileSync(p,Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk("IHDR",ih),chunk("IDAT",deflateSync(raw)),chunk("IEND",Buffer.alloc(0))]));}
 const RAMSZ = 402653184;
-const liveBuf = readFileSync(process.env.LIVE || "/tmp/live.bin"), diskBuf = readFileSync(process.env.RAW || "/tmp/templeos.raw");
+const liveBuf = SnapshotRead(), disk = DiskRead();
 const r = compileHemu();
 const mod = await WebAssembly.compile(r.bytes);
-let gBase = 0, inst, lastFb = null; const ovl = new Map(); const badops = [];
+let gBase = 0, inst, lastFb = null; const ovl = disk.overlay; const badops = [];
 const host = createHemuHost({ onText: (s) => { if (s && s.indexOf("BADOP") >= 0) badops.push(s.trim()); }, snd: { tone: () => {} },
   snapLoad: (base, u8) => { gBase = base; u8.set(liveBuf.subarray(0, RAMSZ), base); },
-  diskRead: (lba, cnt, u8, dst) => { for (let s = 0; s < cnt; s++) { const o = ovl.get(lba + s); if (o) u8.set(o, dst + s * 512); else u8.set(diskBuf.subarray((lba + s) * 512, (lba + s) * 512 + 512), dst + s * 512); } },
-  diskWrite: (lba, cnt, u8, src) => { for (let s = 0; s < cnt; s++) ovl.set(lba + s, u8.slice(src + s * 512, src + s * 512 + 512)); },
+  diskRead:(lba,count,bytes,offset)=>disk.readInto(lba,count,bytes,offset),
+  diskWrite:(lba,count,bytes,offset)=>disk.writeInto(lba,count,bytes,offset),
   present: (a, w, h, u8) => { lastFb = { a, w, h, u8 }; } });
 host.env.__host_msx = () => 320n; host.env.__host_msy = () => 240n; host.env.__host_msb = () => 0n; host.env.__host_wheel = () => 0n;
 host.env.__host_key = () => -1n;      // NO keystrokes, ever
@@ -64,7 +65,7 @@ const finalStates = ["done", "failed", "error"];
 
 // ---- boot: let the desktop settle (no input) ----
 await run(Number(process.env.BOOT || 300));
-say(`booted ${frames} frames, icount ${(rd64(Number(r.globals.get("icount").addr) - gBase) / 1e6).toFixed(0)}M`);
+say(`booted ${frames} frames, icount ${(Number(inst.exports.GuestInfo(8n)) / 1e6).toFixed(0)}M`);
 const scr0 = screenText().split("\n");
 say("screen (top 6 lines): " + JSON.stringify(scr0.slice(0, 6)));
 say("screen (bottom 4 lines): " + JSON.stringify(scr0.slice(-4)));
@@ -119,9 +120,7 @@ await waitState(t4b, finalStates, 1200);
   check("T4 mkdir + FileWrite(12345 b) into C:/Home/GuestChk/Sub, bit-exact FileRead readback", gx.status(t4).state === "done" && gx.status(t4b).state === "done" && same, `write=${gx.status(t4).state} readback size=${sz}`); }
 
 // Verify persisted sectors independently of TempleOS's file cache.
-const diskReader = {readInto(lba,count,dst,offset=0) {
-  for(let i=0;i<count;i++) dst.set(ovl.get(lba+i) || diskBuf.subarray((lba+i)*512,(lba+i+1)*512),offset+i*512);
-}};
+const diskReader=disk;
 const persisted = fat32Read(diskReader,"Home/GuestChk/Sub","asset.bin");
 check("T4 disk sectors preserve the binary asset", !!persisted && persisted.length === asset.length && persisted.every((b,i)=>b===asset[i]), `overlay sectors=${ovl.size}`);
 
