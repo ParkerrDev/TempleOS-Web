@@ -61,6 +61,8 @@ try {
       if(cores===4)await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==='smpReady')&&window.machine.events.some(m=>m.cmd==='busReady'&&m.ready));
       await Request(page,{cmd:'pause',value:true},'paused');
       if(outcome!=='scheduled')await diskHeld;
+      const missing=await Request(page,{cmd:'listDir',id:'before-disk',dir:'Home'},'dirList');
+      assert.equal(missing.ok,false);assert.match(missing.msg,/disk is not available/);
       const invalid=await Request(page,{cmd:'importDisk',bytes:[0x51,0x46,0x49,0xfb]},'diskInfo');
       assert.equal(invalid.ok,false);assert.equal(invalid.diskReady,false);assert.equal(invalid.diskPending,true);
       const bytes=Array.from({length:1024},(_,i)=>(i*11+9)&255);

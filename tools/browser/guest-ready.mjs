@@ -96,12 +96,23 @@ try {
         assert.equal(await page.evaluate(()=>window.guestResults.source.ok),true);
         assert.deepEqual(await page.evaluate(()=>window.guestSent.map(m=>m.cmd)),['osLaunch']);
         assert.equal(await page.evaluate(()=>window.guestBytes.byteLength),8);
+        if(outcome==='ready') {
+          await page.locator('#diskBtn').click();
+          await page.locator('#lsHome').click();
+          assert.equal(await page.locator('#lsHome').isDisabled(),true);
+          assert.equal(await page.locator('#diskStatus').textContent(),'Reading /Home…');
+        }
         await Wait(diskWait);releaseDisk();
         await page.waitForFunction(()=>window.guestResults.file);
         const result=await page.evaluate(()=>({file:window.guestResults.file,sent:window.guestSent,bytes:window.guestBytes.byteLength}));
         assert.equal(result.file.ok,outcome==='ready',result.file.msg);
         assert.deepEqual(result.sent.map(m=>m.cmd),outcome==='ready'?['osLaunch','osWrite']:['osLaunch']);
         assert.equal(result.bytes,outcome==='ready'?0:8);
+        if(outcome==='ready') {
+          await page.waitForFunction(()=>/entries in \/Home$/.test(document.getElementById('diskStatus').textContent));
+          assert(await page.locator('#homeList li').count()>0,'A loaded stock /Home is not empty.');
+          assert.equal(await page.locator('#lsHome').isEnabled(),true);
+        }
         if(outcome==='early-disk-error') {
           assert.equal(await page.evaluate(()=>window.machine.events.find(m=>m.cmd==='guestReady').diskPending),false);
           const after=await page.evaluate(async()=>{

@@ -72,6 +72,21 @@ try {
   mock.timers.tick(120000);assert.match((await timeout).msg,/timed out/);
   requests.Receive({cmd:'guestReady',ok:true,diskReady:true});assert.equal(sent.length,7);
 
+  const dirSent=[],dirs=GuestRequests(m=>dirSent.push(m));
+  let settled=false;
+  const listing=dirs.Request({cmd:'listDir',dir:'Home'}).then(result=>{settled=true;return result;});
+  dirs.Receive({cmd:'guestReady',ok:true,diskReady:false,diskPending:true});
+  assert.equal(dirSent.length,0);
+  dirs.Receive({cmd:'diskInfo',ok:true,diskReady:true});assert.equal(dirSent.length,1);
+  dirs.Receive({cmd:'fileResult',id:dirSent[0].id,ok:true});
+  await Promise.resolve();assert.equal(settled,false,'A different reply type cannot finish a directory request.');
+  const files=[{name:'Test.HC',size:12,dir:false}];
+  dirs.Receive({cmd:'dirList',id:dirSent[0].id,ok:true,dir:'Home',files});
+  assert.deepEqual((await listing).files,files);
+  dirs.Reset();
+  const cancelled=dirs.Request({cmd:'listDir',dir:'Home'});dirs.Reset();
+  assert.equal((await cancelled).ok,false);assert.equal(dirSent.length,1);
+
   const broken=GuestRequests(()=>{throw new Error('transport failure');});
   broken.Receive({cmd:'guestReady',ok:true,diskReady:true});
   assert.equal((await broken.Request({cmd:'osLaunch',src:'"No transport";'})).msg,'transport failure');

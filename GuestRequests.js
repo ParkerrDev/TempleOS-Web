@@ -31,7 +31,8 @@ export function GuestRequests(post)
     Request(message,transfer=[]) {
       return new Promise(resolve=>{
         const id=next++,request={id,message,transfer,resolve,sent:false,
-          disk:message.cmd==='osWrite'||message.cmd==='osInstall'||
+          reply:message.cmd==='listDir'?'dirList':'fileResult',
+          disk:message.cmd==='osWrite'||message.cmd==='osInstall'||message.cmd==='listDir'||
             message.cmd==='osLaunch'&&message.src===undefined};
         request.timeout=setTimeout(()=>finish(request,{id,ok:false,
           msg:"The OS request timed out. Check the guest before trying again."}),120000);
@@ -40,9 +41,9 @@ export function GuestRequests(post)
       });
     },
     Receive(message) {
-      if (message.cmd==='fileResult') {
+      if (message.cmd==='fileResult'||message.cmd==='dirList') {
         const request=pending.get(message.id);
-        if (request?.sent) finish(request,message);
+        if (request?.sent&&request.reply===message.cmd) finish(request,message);
       } else if (message.cmd==='guestReady') {
         guest=!!message.ok;
         if (!guest) Fail(message.probe?.errors?.join('; ') || "The TempleOS program interface could not start.");

@@ -759,6 +759,7 @@ const diskMsg = (m) => {
   os_disk.msg?.(m);
 };
 const osRequest=(message,transfer=[])=>guestRequests.Request(message,transfer);
+const listOSDir=dir=>osRequest({cmd:"listDir",dir});
 const writeOSFile = (path, bytes) => osRequest({cmd:"osWrite",path,name:path.split("/").pop(),run:false,bytes},[bytes]);
 const uploadToHome = (name, text, run) => {
   const bytes = new TextEncoder().encode(text).buffer;
@@ -816,5 +817,5 @@ const firstBoot=osGen;
 OsBoot().catch(error=>{if(firstBoot===osGen)engineFail(error);});
 addEventListener("pagehide",e=>{if(!e.persisted)engine.stop?.();});
 export {$,dbg,engine,pal32,OsGen,releaseOSInput as OsInputRelease,releaseHeld as OsInputReset,
-  setGameCapture as OsCaptureSet,holdOSForGame as OsHold,writeOSFile as OsFileWrite,
+  setGameCapture as OsCaptureSet,holdOSForGame as OsHold,writeOSFile as OsFileWrite,listOSDir as OsDirList,
   uploadToHome as OsHomeWrite,launchInOS as OsLaunch};

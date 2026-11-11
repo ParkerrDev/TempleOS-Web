@@ -251,7 +251,15 @@ onmessage = (e) => {
       postMessage({ cmd: "fileResult", id: m.id, ok: true, msg: `wrote ${m.name} to /${m.dir || "Home"} (${r.clusters} clusters; ${changed.length} sectors, ${cleared} cached refreshed)` });
     } catch (err) { postMessage({ cmd: "fileResult", id: m.id, ok: false, msg: String(err.message || err) }); }
   }
-  else if (m.cmd === "listDir") { try { postMessage({ cmd: "dirList", id: m.id, ok: true, dir: m.dir, files: disk ? fat32List(disk, m.dir || "Home").map(e => ({ name: e.name, size: e.size, dir: !!(e.attr & 0x10) })) : [] }); } catch (err) { postMessage({ cmd: "dirList", id: m.id, ok: false, msg: String(err.message || err) }); } }
+  else if (m.cmd === "listDir") {
+    try {
+      if(!disk)throw new Error("The TempleOS disk is not available.");
+      const files=fat32List(disk,m.dir||"Home").map(e=>({name:e.name,size:e.size,dir:!!(e.attr&0x10)}));
+      postMessage({cmd:"dirList",id:m.id,ok:true,dir:m.dir,files});
+    } catch(err) {
+      postMessage({cmd:"dirList",id:m.id,ok:false,msg:String(err.message||err)});
+    }
+  }
 };
 
 async function exportImage(kind) {

@@ -1,5 +1,5 @@
 import {WinAdd,WinRaise} from "./WinMgr.js";
-import {$,dbg,engine,os_disk,OsReady,OsFileWrite} from "./Os.js";
+import {$,dbg,engine,os_disk,OsReady,OsFileWrite,OsDirList} from "./Os.js";
 import {BootFileSave} from "./BootFile.js";
 import {SnapshotInspect} from "./engine/Snapshot.js";
 import {makeDisk} from "./engine/qcow2.js";
@@ -104,7 +104,7 @@ async function DiskBytes(file)
 
 os_disk.msg=function (m)
 {
-  let stamp,ul,li;
+  let stamp;
   if (m.cmd=="exportResult") {
     Busy();
     if (!m.ok) {
@@ -122,24 +122,6 @@ os_disk.msg=function (m)
   } else if (m.cmd=="guestResult" &&
       ["failed","error"].includes(m.state) && m.op=="launch")
     Say("Launch failed: "+m.msg);
-  else if (m.cmd=="dirList") {
-    Busy();
-    ul=$("homeList");
-    ul.replaceChildren();
-    if (!m.ok) {
-      Say("List failed: "+m.msg);
-      return;
-    }
-    for (let file of m.files) {
-      li=document.createElement("li");
-      if (file.dir)
-        li.textContent="[D] "+file.name;
-      else
-        li.textContent="    "+file.name+"  "+file.size+"b";
-      ul.appendChild(li);
-    }
-    Say(m.files.length+" entries in /"+(m.dir || "Home"));
-  }
 };
 
 function Export(kind)
@@ -209,15 +191,24 @@ $("dlDisk").addEventListener("click",function () {Export("disk");});
 $("ulSnap").addEventListener("click",function () {Import("snapshot");});
 $("ulDisk").addEventListener("click",function () {Import("disk");});
 $("ulFile").addEventListener("click",Upload);
-$("lsHome").addEventListener("click",function () {
+$("lsHome").addEventListener("click",async function () {
   if (!OsReady() || pending) return;
   Busy("list");
   Say("Reading /Home…");
   try {
-    engine.post({cmd:"listDir",dir:"Home"});
+    const result=await OsDirList("Home"),ul=$("homeList");
+    ul.replaceChildren();
+    if (!result.ok) throw new Error(result.msg);
+    for (const file of result.files) {
+      const li=document.createElement("li");
+      li.textContent=file.dir?"[D] "+file.name:"    "+file.name+"  "+file.size+"b";
+      ul.appendChild(li);
+    }
+    Say(result.files.length+" entries in /Home");
   } catch (e) {
-    Busy();
     Say("List failed: "+e.message);
+  } finally {
+    Busy();
   }
 });
 addEventListener("osstate",function (e) {
