@@ -24,13 +24,22 @@ try {
     let generationEvents=0;
     const restart=app==="page"?"#restartBtn":"#restart",pause=app==="page"?"#pauseBtn":"#pause";
     for(const action of ["cancel","fault"]) {
-      await page.waitForFunction(after=>window.machine.events.slice(after).some(m=>
-        m.cmd==="guestPatch"&&m.state==="installed"),generationEvents,{timeout:45000});
+      await page.waitForFunction(after=>{
+        const events=window.machine.events.slice(after);
+        return events.some(m=>m.cmd==="guestPatch"&&m.state==="installed")&&
+          events.some(m=>m.cmd==="guestResult"&&m.name==="Welcome"&&m.state==="done");
+      },generationEvents,{timeout:45000});
       const before=await page.evaluate(()=>({events:window.machine.events.length,terms:window.machine.terminations.length}));
       await page.evaluate(()=>Atomics.store(new Int32Array(window.machine.gate),0,1));
-      await MachinePost(page,{cmd:"osExec",id:"held-"+action,target:"adam",src:source});
-      try {await page.waitForFunction(()=>Atomics.load(new Int32Array(window.machine.gate),0)===2,null,{timeout:20000});}
-      catch(error) {
+      const id="held-"+action;
+      await MachinePost(page,{cmd:"osExec",id,target:"adam",src:source});
+      try {
+        await page.waitForFunction(({id,after})=>Atomics.load(new Int32Array(window.machine.gate),0)===2||
+          window.machine.events.slice(after).some(m=>m.cmd==="guestResult"&&m.id===id&&
+            ["done","failed","error"].includes(m.state)),{id,after:before.events},{timeout:20000});
+        assert.equal(await page.evaluate(()=>Atomics.load(new Int32Array(window.machine.gate),0)),2,
+          "The injected program must reach the held AP instruction.");
+      } catch(error) {
         console.log(app,action,await page.evaluate(n=>({
           gate:Array.from(new Int32Array(window.machine.gate)),
           events:window.machine.events.slice(n),
