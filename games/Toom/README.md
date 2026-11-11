@@ -75,7 +75,10 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - Ordinary monster shots retain their sound/facing/aim order, shared shotgun
   slope and per-pellet RNG. Imp, demon, cacodemon, bruiser and revenant melee
   retain their distinct sound and damage order; projectile actions use the
-  native actor-targeted launch path. Refire checks preserve the early random
+  native actor-targeted launch path. Mancubus volleys preserve the initial
+  missile step before spread changes horizontal velocity; lost-soul charge
+  preserves sound/flag/facing order and aims at the target center.
+  Refire checks preserve the early random
   return before health and sight tests. Enemy and player shots pass an explicit
   level context to shootable-line actions; captured impact data survives nested
   callbacks, and exceptions release temporary storage.
@@ -281,6 +284,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/combat-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/combat.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/effect-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/effect.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fat-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fat.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -511,6 +516,11 @@ and callback-failure cleanup. The 279-case blast fixture now exercises explosion
 and BFG action entry points, including blocked sight, boss immunity, missing
 firers, all forty rays and callback failure. Native and pinned HEMU results
 are in `tools/toom/effect-evidence.json`; the full dispatcher remains unfinished.
+Mancubus spread and lost-soul charge match 2,334 original-C cases, including
+all random starts, angle wrap and full event traces. Ninety actual two-missile
+cases verify that initial positions precede spread changes, and twelve more
+cover guards, callback failure, ownership and charge motion. Native and pinned
+HEMU evidence is recorded in `tools/toom/fat-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

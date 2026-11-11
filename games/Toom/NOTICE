@@ -35,7 +35,8 @@ p_user.c, p_sight.c, p_floor.c, p_doors.c, p_plats.c, p_ceilng.c, p_telept.c,
 the door/neighbor/donut/player-sector/line-event/animation/scrolling portions of
 p_spec.c, switch texture/button/use portions of p_switch.c, constants from
 p_spec.h, lighting effects in p_lights.c, scheduling in p_tick.c, and the
-perception/chase routines, ordinary monster attacks/refire, death/pain/fall
+perception/chase routines, ordinary monster attacks/refire, mancubus spread,
+lost-soul charge, death/pain/fall
 and footstep actions, explosion wiring and three
 double-shotgun sound actions in p_enemy.c
 at the same id Software revision. Reference paths and digests are in

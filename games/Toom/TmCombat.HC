@@ -127,3 +127,53 @@ U0 EnemyWhoosh(Enemies *tmpe,Actor *actor)
   if (!EnemyTarget(tmpe,actor)) return;
   EnemyFace(tmpe,actor); EnemySnd(tmpe,actor,TM_SFX_SKESWG);
 }
+
+U0 MissileTurn(Actor *actor,I64 delta)
+{//Spread changes horizontal velocity after the original initial half-step.
+  GameData *data=actor->world->data;
+  I64 speed=data->info[actor->type].speed;
+  actor->angle=(actor->angle+delta)&0xFFFFFFFF;
+  actor->vx=FixedMul(speed,AngleCos(data,actor->angle));
+  actor->vy=FixedMul(speed,AngleSin(data,actor->angle));
+}
+
+U0 EnemyFatRaise(Enemies *tmpe,Actor *actor)
+{
+  EnemyFace(tmpe,actor); EnemySnd(tmpe,actor,TM_SFX_MANATK);
+}
+
+U0 EnemyFatAttack(Enemies *tmpe,Actor *actor,I64 n)
+{
+  Motion *motion=tmpe->specials->sectors->motion;
+  Actor *target=EnemyTarget(tmpe,actor),*missile;
+  I64 first=0,second=0x08000000;
+  if (!(1<=n<=3)) throw('Attack');
+  if (!target) return;
+  EnemyFace(tmpe,actor);
+  switch (n) {
+    case 1: actor->angle+=0x08000000; break;
+    case 2: actor->angle-=0x08000000; second=-0x10000000; break;
+    case 3: first=-0x04000000; second=0x04000000; break;
+  }
+  actor->angle&=0xFFFFFFFF;
+  missile=ActorMissileNew(motion,actor,target,TM_MT_FATSHOT);
+  if (missile && first) MissileTurn(missile,first);
+  missile=ActorMissileNew(motion,actor,target,TM_MT_FATSHOT);
+  if (missile) MissileTurn(missile,second);
+}
+
+U0 EnemySkull(Enemies *tmpe,Actor *actor)
+{
+  World *world=tmpe->specials->sectors->motion->world;
+  Actor *target=EnemyTarget(tmpe,actor);
+  I64 distance;
+  if (!target) return;
+  actor->flags|=TM_MF_SKULLFLY;
+  EnemySnd(tmpe,actor,world->data->info[actor->type].attack_snd);
+  EnemyFace(tmpe,actor);
+  actor->vx=FixedMul(20*65536,AngleCos(world->data,actor->angle));
+  actor->vy=FixedMul(20*65536,AngleSin(world->data,actor->angle));
+  distance=MaxI64(DistanceApprox(target->x-actor->x,target->y-actor->y)/
+	(20*65536),1);
+  actor->vz=(target->z+target->height/2-actor->z)/distance;
+}
