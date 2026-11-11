@@ -11,7 +11,8 @@ node tools/hemu/check.mjs --full
 node tools/hemu/check.mjs --desktop
 ```
 
-The default suite checks CPU/JIT/device primitives, atomic threads, clocks,
+The default suite checks CPU/JIT/device primitives, emulated atomic instructions
+on four actual worker threads, clocks,
 input, completed captures, barriers and snapshot validation. `--full` also
 builds both engines and runs native raster/video, guest API, saved-machine,
 production worker, welcome and God Tools acceptance checks. `--desktop` adds
@@ -80,6 +81,42 @@ not complete physical-device emulation. Device reset also has a public-port
 regression: a partial ATA command, PS/2 reply and speaker tone must not survive.
 `snapregs.test.mjs` compiles regenerated one/four-core QEMU register fixtures
 against the actual CPU layout and requires V5.03's 1192-count PIT period.
+
+`cpu-native.mjs` requires a source-hashed original V5.03 compile/run of the
+entire interpreter and its unchanged instruction battery. The native host
+adapter provides a core ID, serialized atomics and explicit headless callbacks;
+it supplies neither a desktop, disk nor native JIT. The same 31 checks execute
+with zero badops in both builds; instruction totals exclude HLT time budgets. Use
+`HOLYC_QEMU_ORACLE=/path/to/tests/oracle/Qemu.mjs node tools/hemu/cpu-native.mjs --record`
+to refresh this evidence after interpreter changes. This is a bounded native
+source test, not proof of complete x86 coverage or a native TempleOS host app.
+
+`atomic.test.mjs` runs 71 contending guest programs on four emulator workers:
+implicit-lock XCHG protects an ordinary counter, LOCK arithmetic and unary
+operations modify shared operands, and CMPXCHG/8B retries retain each increment.
+Unaligned fields sharing a 64-bit CAS word preserve each other and adjacent native byte atomics.
+Every supported width is exercised. `atomic-flags.test.mjs` compares 42,930
+locked, ordinary, immediate and compiled memory-RMW cases with 6,768 actual
+x86-64 instruction results; 8,982 comparisons execute compiled blocks. It
+includes 10,152 contained unaligned placements, all architecturally defined
+flags and register writeback. The stored source/output hashes and CPU/compiler metadata bind the hardware evidence;
+`node tools/hemu/atomic-flags.test.mjs --record` regenerates it on x86-64.
+
+Aligned RAM, contained unaligned fields and the TempleOS RAM alias are
+supported atomic operands. Invalid LOCK forms, cross-word and MMIO atomics
+retain an explicit fault without changing operands. This deliberately rejects unsupported x86 bus-lock cases;
+it does not emulate their hardware behavior or architectural exception
+delivery. CMPXCHG16B is not implemented. LOCK prefixes always end a JIT
+block so that the interpreter owns their atomic operation.
+
+`bit.test.mjs` compares 2,112 bit-string operations (264 compiled) with exact
+x86 opcodes: signed register offsets and width-masked encoded immediates,
+including neighboring bytes and defined CF/ZF. `cmpxchg8b.test.mjs` compares
+384 memory/register/flag cases, covering success/failure, high register halves,
+aligned LOCK and ordinary unaligned operands. Both use `OpcodeOracle.mjs` to
+record source-hashed native fixtures with CPU/compiler metadata; add `--record`
+on x86-64 to regenerate them. Reserved forms and unsupported CMPXCHG16B must
+retain faults without writing operands.
 
 ## Frame protocol
 

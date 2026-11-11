@@ -212,8 +212,12 @@ export function jitChain(jitRipOff, jitNOff) { JITRIP = Number(jitRipOff); JITN 
 function rdRM(f, m, sz, rex) { if (!m.isMem) { rdReg(f, m.rm, sz, rex); return; } if (m.knownRam) { memAddr(f); f.load(LDSZ[sz], 0, ALN[sz]); return; } f.local_get(3); i64c(f, MEMSIZE); f.op("i64_lt_u"); f.if_(VT.i64); memAddr(f); f.load(LDSZ[sz], 0, ALN[sz]); f.else_(); f.local_get(3); i64c(f, sz); f.call(RD_IDX); f.end(); }
 function wrRM(f, m, sz, rex, emitVal) { if (!m.isMem) { wrReg(f, m.rm, sz, rex, emitVal); return; } if (m.knownRam) { memAddr(f); emitVal(); f.store(STSZ[sz], 0, ALN[sz]); return; } f.local_get(3); i64c(f, MEMSIZE); f.op("i64_lt_u"); f.if_(); memAddr(f); emitVal(); f.store(STSZ[sz], 0, ALN[sz]); f.else_(); f.local_get(3); i64c(f, sz); emitVal(); f.call(WR_IDX); f.end(); }
 // EAGER flags == interpreter (cpu.HC): rfl = (rfl & ~0x8C5) | ZF|SF|PF|CF|OF. a=local0,b=local1,r=local2.
+function emitAuxCarry(f) {
+  f.local_get(0);f.local_get(1);f.op("i64_xor");f.local_get(2);f.op("i64_xor");
+  i64c(f,0x10);f.op("i64_and");f.op("i64_or");
+}
 function emitFlags(f, kind, sz) {
-  const hb = sz * 8 - 1, mask = sz === 8 ? null : (1n << BigInt(sz * 8)) - 1n; const maskR = () => { if (mask !== null) { i64c(f, mask); f.op("i64_and"); } }; i32c(f, RFL); i32c(f, RFL); ld64(f); i64c(f, -0x8C6); f.op("i64_and"); f.local_get(2); maskR(); f.op("i64_eqz"); f.op("i64_extend_i32_u"); i64c(f, 0x40); f.op("i64_mul"); f.op("i64_or");
+  const hb = sz * 8 - 1, mask = sz === 8 ? null : (1n << BigInt(sz * 8)) - 1n; const maskR = () => { if (mask !== null) { i64c(f, mask); f.op("i64_and"); } }; i32c(f, RFL); i32c(f, RFL); ld64(f); i64c(f, ~0x8D5); f.op("i64_and"); f.local_get(2); maskR(); f.op("i64_eqz"); f.op("i64_extend_i32_u"); i64c(f, 0x40); f.op("i64_mul"); f.op("i64_or");
   f.local_get(2); i64c(f, hb); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x80); f.op("i64_mul"); f.op("i64_or"); // SF
   f.local_get(2); i64c(f, 0xFF); f.op("i64_and"); f.op("i64_popcnt"); i64c(f, 1); f.op("i64_and"); f.op("i64_eqz"); f.op("i64_extend_i32_u"); i64c(f, 4); f.op("i64_mul"); f.op("i64_or"); // PF
   if (kind === "add") { f.local_get(2); maskR(); f.local_get(0); maskR(); f.op("i64_lt_u"); f.op("i64_extend_i32_u"); f.op("i64_or"); f.local_get(0); f.local_get(2); f.op("i64_xor"); f.local_get(1); f.local_get(2); f.op("i64_xor"); f.op("i64_and"); i64c(f, hb); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x800); f.op("i64_mul"); f.op("i64_or");
@@ -221,6 +225,7 @@ function emitFlags(f, kind, sz) {
     f.local_get(0); maskR(); f.local_get(1); maskR(); f.op("i64_lt_u"); f.op("i64_extend_i32_u"); f.op("i64_or");             // CF=a<b
     f.local_get(0); f.local_get(1); f.op("i64_xor"); f.local_get(0); f.local_get(2); f.op("i64_xor"); f.op("i64_and"); i64c(f, hb); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x800); f.op("i64_mul"); f.op("i64_or"); // OF
   }                                                                                                                            // logic: CF=OF=0
+  if(kind!=="logic")emitAuxCarry(f);
   st64(f); }
 // Full writers replace pending arithmetic flags. Partial writers retain the
 // prior CF/OF and save operands in private locals until a reader or block exit.
@@ -249,12 +254,12 @@ function materialize(f) {
   FLAGPEND=null;
 }
 function incFlags(f,sz,ext) {
-  i32c(f, RFL); i32c(f, RFL); ld64(f); i64c(f, -0x8C6 | 0x1); f.op("i64_and");   // clear ZSPOF, KEEP CF
+  i32c(f, RFL); i32c(f, RFL); ld64(f); i64c(f, ~0x8D4); f.op("i64_and");   // clear ZSPOF, KEEP CF
   f.local_get(2); if (sz !== 8) { i64c(f, (1n << BigInt(sz * 8)) - 1n); f.op("i64_and"); } f.op("i64_eqz"); f.op("i64_extend_i32_u"); i64c(f, 0x40); f.op("i64_mul"); f.op("i64_or"); f.local_get(2); i64c(f, sz * 8 - 1); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x80); f.op("i64_mul"); f.op("i64_or");
   f.local_get(2); i64c(f, 0xFF); f.op("i64_and"); f.op("i64_popcnt"); i64c(f, 1); f.op("i64_and"); f.op("i64_eqz"); f.op("i64_extend_i32_u"); i64c(f, 4); f.op("i64_mul"); f.op("i64_or");
   if (ext === 0) { f.local_get(0); f.local_get(2); f.op("i64_xor"); f.local_get(1); f.local_get(2); f.op("i64_xor"); f.op("i64_and"); }
   else { f.local_get(0); f.local_get(1); f.op("i64_xor"); f.local_get(0); f.local_get(2); f.op("i64_xor"); f.op("i64_and"); }
-  i64c(f, sz * 8 - 1); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x800); f.op("i64_mul"); f.op("i64_or"); st64(f);
+  i64c(f, sz * 8 - 1); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x800); f.op("i64_mul"); f.op("i64_or"); emitAuxCarry(f); st64(f);
 }
 function shiftFlags(f,sz,cnt,opn) {
   const hb=sz*8-1,mask=sz===8?null:(1n<<BigInt(sz*8))-1n;
@@ -279,7 +284,7 @@ function emitAdcSbb(f, sz, isSbb, rd, wr, srcEmit) {
   if (mask !== null) { i64c(f, mask); f.op("i64_and"); }                          // r = (a±b±cin) & m
   f.local_set(2); wr(() => f.local_get(2)); emitAdcSbbFlags(f, isSbb, sz); }
 function emitAdcSbbFlags(f, isSbb, sz) {
-  const bits = sz * 8, hb = bits - 1, mask = sz === 8 ? null : (1n << BigInt(bits)) - 1n; const maskR = () => { if (mask !== null) { i64c(f, mask); f.op("i64_and"); } }; i32c(f, RFL); i32c(f, RFL); ld64(f); i64c(f, -0x8C6); f.op("i64_and"); f.local_get(2); f.op("i64_eqz"); f.op("i64_extend_i32_u"); i64c(f, 0x40); f.op("i64_mul"); f.op("i64_or");
+  const bits = sz * 8, hb = bits - 1, mask = sz === 8 ? null : (1n << BigInt(bits)) - 1n; const maskR = () => { if (mask !== null) { i64c(f, mask); f.op("i64_and"); } }; i32c(f, RFL); i32c(f, RFL); ld64(f); i64c(f, ~0x8D5); f.op("i64_and"); f.local_get(2); f.op("i64_eqz"); f.op("i64_extend_i32_u"); i64c(f, 0x40); f.op("i64_mul"); f.op("i64_or");
   f.local_get(2); i64c(f, hb); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x80); f.op("i64_mul"); f.op("i64_or"); // SF
   f.local_get(2); i64c(f, 0xFF); f.op("i64_and"); f.op("i64_popcnt"); i64c(f, 1); f.op("i64_and"); f.op("i64_eqz"); f.op("i64_extend_i32_u"); i64c(f, 4); f.op("i64_mul"); f.op("i64_or"); // PF
   if (!isSbb) {                                                                   // ADC CF
@@ -290,7 +295,7 @@ function emitAdcSbbFlags(f, isSbb, sz) {
     f.local_get(0); maskR(); f.local_get(1); maskR(); f.op("i64_lt_u"); f.local_get(0); maskR(); f.local_get(1); maskR(); f.op("i64_eq"); f.local_get(6); i64c(f, 0); f.op("i64_ne"); f.op("i32_and"); f.op("i32_or"); f.op("i64_extend_i32_u"); f.op("i64_or"); }
   if (!isSbb) { f.local_get(0); f.local_get(2); f.op("i64_xor"); f.local_get(1); f.local_get(2); f.op("i64_xor"); f.op("i64_and"); }   // ADC OF=(a^r)&(b^r)&sb
   else { f.local_get(0); f.local_get(1); f.op("i64_xor"); f.local_get(0); f.local_get(2); f.op("i64_xor"); f.op("i64_and"); }          // SBB OF=(a^b)&(a^r)&sb
-  i64c(f, hb); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x800); f.op("i64_mul"); f.op("i64_or"); st64(f); }
+  i64c(f, hb); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x800); f.op("i64_mul"); f.op("i64_or"); emitAuxCarry(f); st64(f); }
 // push i32 condition (0/1) for jcc code cc (0..15), computed from rfl.
 function emitCond(f, cc) {
   const bit = (b) => { i32c(f, RFL); f.load("i32_load", 0, 2); i32c(f, b); f.op("i32_shr_u"); i32c(f, 1); f.op("i32_and"); }; const base = cc >> 1;
@@ -396,7 +401,7 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
       else if (b === 0x65) { SEG = 2; j++; }              // GS:
       else if (b === 0xF3 && !globalThis.__NOREP) { rep = 1; j++; }   // REP/REPE (honored only for string ops below; harmless before others, which the CPU also ignores)
       else if (b === 0xF2 && !globalThis.__NOREP) { rep = 2; j++; }   // REPNE
-      else if (b === 0xF0 && !globalThis.__NOLOCK) { locked = 1; j++; }   // LOCK: end the block here so the INTERPRETER runs this op atomically (SMP: JIT'd RMW isn't atomic)
+      else if (b === 0xF0) { locked = 1; j++; }   // LOCK: end the block here so the INTERPRETER runs this op atomically (SMP: JIT'd RMW isn't atomic)
       else if (b === 0x2E || b === 0x36 || b === 0x3E || b === 0x26) { j++; }   // CS/SS/DS/ES = flat in 64-bit (skip)
       else if (b >= 0x40 && b <= 0x4F) { rex = 1; rexW = (b >> 3) & 1; rexR = (b >> 2) & 1; rexX = (b >> 1) & 1; rexB = b & 1; j++; break; }
       else break; }
@@ -755,10 +760,10 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
         else { i64c(f, tgt); i64c(f, j - GBASE); emitCond(f, op & 0xF); f.op("select"); }
         term = true; n++; i = j; break;
       } else if (op === 0xBA) {                                              // grp8 bt/bts/btr/btc r/m, imm8
-        const mm = decodeModRM(j, rexR, rexX, rexB); const which = ((U8[j] >> 3) & 7) - 4; j = mm.j; const imm = U8[j]; j += 1;
+        const mm = decodeModRM(j, rexR, rexX, rexB); const which = ((U8[j] >> 3) & 7) - 4; j = mm.j; const imm = U8[j] & (szV * 8 - 1); j += 1;
         if (which >= 0) {
           materialize(f);                                                    // bt reads+sets CF -> deferred flags live first (frees local 0)
-          if (mm.isMem) {                                                   // MEMORY: byte-addressed bit string (cpu.HC DoBit: ea+=bit>>3; bit&=7; asz=1)
+          if (mm.isMem) {                                                   //Encoded imm8 selects within the operand width.
             emitEA(f, mm, j - GBASE); const byteOff = imm >> 3, bit = imm & 7, mb = 1n << BigInt(bit);
             if (byteOff) { f.local_get(3); i64c(f, byteOff); f.op("i64_add"); f.local_set(3); }  // ea += imm>>3 (compile-time const)
             rdRM(f, mm, 1, rex); f.local_set(0); i32c(f, RFL); i32c(f, RFL); ld64(f); i64c(f, -2); f.op("i64_and");

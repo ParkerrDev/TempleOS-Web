@@ -8,6 +8,7 @@ import {fileURLToPath} from "node:url";
 let inst=null,ex=null,g_base=0,work_ms=0,mains=0,syms=null,probe_tries=0,tsc_addr=0;
 //Credit gap has the initial boot-credit offset; differences measure new lag.
 let clock_input_ns=0,clock_tick_ns=0,clock_start=null,clock_read=0;
+const fetch_holds=new Map((workerData.fetchHold||[]).map(url=>[url,[]]));
 
 function MemDv()
 {//A view of the guest's memory, made again when it grows.
@@ -75,6 +76,13 @@ function MsgOut(m,transfer)
 
 function MsgIn(m)
 {
+  if(m && m.cmd==="__fetchRelease") {
+    const pending=fetch_holds.get(m.url);
+    fetch_holds.delete(m.url);
+    for(const resolve of pending||[])resolve();
+    parentPort.postMessage({cmd:"__fetchReleased",url:m.url,count:pending?.length||0});
+    return;
+  }
   if(m && m.cmd==="__stall") {
     const before=ProbeRd();
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,m.ms);
@@ -95,6 +103,10 @@ function MsgIn(m)
 async function FileFetch(url)
 {//The browser's fetch, for files under the site.
   let u=new URL(String(url),globalThis.location.href);
+  if(fetch_holds.has(u.href)) {
+    parentPort.postMessage({cmd:"__fetchHeld",url:u.href});
+    await new Promise(resolve=>fetch_holds.get(u.href).push(resolve));
+  }
   try {
     return new Response(readFileSync(fileURLToPath(u)),{status:200});
   } catch (err) {

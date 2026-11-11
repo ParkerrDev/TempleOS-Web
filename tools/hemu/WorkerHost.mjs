@@ -9,10 +9,10 @@ import {FONT} from "../../holyc-wasm/src/runtime/font.js";
 export const SITE=new URL("../../",import.meta.url);
 const SHIM=new URL("./WorkerShim.mjs",import.meta.url);
 
-function WorkerNew(file)
+function WorkerNew(file,fetchHold=[])
 {
   let url=new URL(file,SITE).href;
-  return new Worker(SHIM,{workerData:{url:url}});
+  return new Worker(SHIM,{workerData:{url,fetchHold:fetchHold.map(path=>new URL(path,SITE).href)}});
 }
 
 function HashBuf(u8)
@@ -128,7 +128,7 @@ export async function HemuBoot(opt)
   gz=opt.snapshot||readFileSync(new URL(live,SITE));
   const saved=opt.snapshot?await SnapshotInspect(gz):null;
   if (saved) opt={...opt,smp:saved.meta.cores===4?4:0};
-  h.workers.push(WorkerNew("engine/hemu-worker.js"+(opt.nojit?"?nojit":"")));
+  h.workers.push(WorkerNew("engine/hemu-worker.js"+(opt.nojit?"?nojit":""),opt.fetchHold));
   h.workers[0].on("message",MsgIn);
   h.workers[0].on("error",function WorkerErr(e) {console.log("worker threw: "+e.stack);});
   init={cmd:"init",gz:gz,wasmUrl:new URL(wasm,SITE).href,fixedB:opt.fixed_b||0,
