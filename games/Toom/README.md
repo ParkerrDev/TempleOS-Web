@@ -32,6 +32,9 @@ The implemented foundation uses native V5.03 file and memory APIs:
   allocation. Sprites are not decoded until requested.
 - Masked middle-wall textures use shared wall projection, preserve transparent
   holes and top/bottom pegging, and clip against nearer walls and objects.
+- Fixed-point map collision uses the original blockmap, stable side/tie rules,
+  line flags, portal headroom, 24-unit steps and dropoffs. Successful position
+  queries retain touched special lines for the later movement/action stage.
 
 Fuzz effects, simulation, weapons, actors, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
@@ -84,6 +87,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sprite.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/mask.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/collision.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -105,6 +109,11 @@ frames remain absent; validating gameplay-reachable state assets is a later gate
 The masked-wall check compares 48 full pixel/depth views, covering oblique and
 near-clipped segs, top/bottom pegging, scroll offsets, holes, reverse faces and
 opaque/sky occluders.
+The collision check compares 68,035 fixed-point queries across all 36 maps
+with an independent full-linedef scan, including player, monster, missile,
+teleport, floating and noclip flags. It checks passability, sectors, headroom,
+steps/dropoffs and contacted specials. Actor contacts and crossed-line effects
+are still part of the pending simulation stage.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private
@@ -114,3 +123,15 @@ gameplay, display-frame performance or parity with every hypervisor.
 
 The design and audit are recorded in `untangle/survey/toom.md` in the parent
 workspace. Measured evidence is recorded there as each stage is completed.
+
+## Native renderer preview
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/preview.mjs
+```
+
+This compiles the current sources in original TempleOS and writes
+`/tmp/toom-E1M1.png`. Set `MAP=E2M3` or `OUT=/path/view.png` as needed. It renders
+the original player-start view and medium-skill map sprites in their initial
+states. It is a static renderer preview, with no actor actions, weapon/HUD or
+player simulation, and must not be presented as a playable game.

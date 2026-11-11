@@ -4,6 +4,7 @@
 #include "TmGr"
 #include "TmTex"
 #include "TmData.HH"
+#include "TmClip"
 #include "TmState"
 #include "TmPal"
 #include "TmDraw"

@@ -18,6 +18,10 @@ That tool retrieves and verifies the corresponding original source, keeping
 its notices intact. No original C runtime, platform shim or network code is
 linked into the TempleOS implementation.
 
+Map collision and fixed-point side behavior were re-expressed in native HolyC
+from p_map.c and p_maputl.c at the same id Software revision on 2026-11-11.
+Reference paths and digests are in tools/toom/source/collision.json.
+
 The native implementation and derived data are distributed under version 2
 of the GNU General Public License. See COPYING for the full license and
 disclaimer of warranty. Distribution must include the corresponding source
