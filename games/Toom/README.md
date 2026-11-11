@@ -101,6 +101,8 @@ The implemented foundation uses native V5.03 file and memory APIs:
   single player where the original does. Same-type survivors block victory;
   Keen fall still clears solidity before that check. Numeric sector tags start
   the existing floor/door controllers without fabricating a linedef.
+  Brain ending effects retain their full-volume sounds, 65-explosion sweep,
+  original fixed-point height offset and random-draw/timer order.
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
   contact callbacks defer reclamation until the end of the tic. Nested contact
@@ -313,6 +315,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fire-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fire.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/boss-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/boss.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/ending-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/ending.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -581,6 +585,12 @@ check level exits and preserve every linedef. The existing 14,873 door cases
 and 768 floor cases (107,940 tics) also pass both backends. Exact scope and
 source hashes are in `tools/toom/boss-evidence.json`; brain and complete host
 actions remain unfinished.
+Brain ending effects match 1,024 original-C cases covering all random starts
+and every emitted actor's position, velocity, state/frame and timer. Nine
+native and pinned HEMU lifecycle cases include 80 actual thinker tics and
+exception cleanup. Exact controlled boundaries and hashes are recorded in
+`tools/toom/ending-evidence.json`. Brain target collection and spawn cubes are
+still unfinished.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

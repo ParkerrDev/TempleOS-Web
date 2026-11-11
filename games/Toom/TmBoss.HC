@@ -61,3 +61,46 @@ U0 BossDeath(Specials *specials,Actor *actor,I64 episode,I64 map_num,
     DoorTagNum(sectors,666,TM_DOOR_BLAZE_OPEN);
   else world->exit_rqst=TM_EXIT_NORMAL;
 }
+
+U0 BossSnd(Specials *specials,I64 sound)
+{
+  Motion *motion=specials->sectors->motion;
+  if (motion->sound) (*motion->sound)(NULL,sound);
+}
+
+Actor *BossExplosion(Specials *specials,I64 x,I64 y,I64 z)
+{
+  Motion *motion=specials->sectors->motion;
+  World *world=motion->world;
+  Actor *actor=WorldSpawn(world,TM_MT_ROCKET,x,y,z);
+  actor->vz=WorldRand(world)*512;
+  ActorState(world->data,actor,TM_S_BRAINEXPLODE1,motion->action);
+  actor->tics-=WorldRand(world)&7;
+  if (actor->tics<1) actor->tics=1;
+  return actor;
+}
+
+U0 BossFinal(Specials *specials,Actor *actor,I64 action)
+{//The original explosion height has a 128/65536-unit base, not 128 units.
+  World *world=specials->sectors->motion->world;
+  I64 x,y,z;
+  if (actor->world!=world) throw('World');
+  if (!actor->active) return;
+  switch (action) {
+    case TM_A_BRAIN_PAIN: BossSnd(specials,TM_SFX_BOSPN); break;
+    case TM_A_BRAIN_DIE: world->exit_rqst=TM_EXIT_NORMAL; break;
+    case TM_A_BRAIN_SCREAM:
+      for (x=actor->x-196*65536;x<actor->x+320*65536;x+=8*65536) {
+	y=actor->y-320*65536; z=128+WorldRand(world)*2*65536;
+	BossExplosion(specials,x,y,z);
+      }
+      BossSnd(specials,TM_SFX_BOSDTH);
+      break;
+    case TM_A_BRAIN_EXPLODE:
+      x=actor->x+WorldRandDiff(world)*2048;
+      z=128+WorldRand(world)*2*65536;
+      BossExplosion(specials,x,actor->y,z);
+      break;
+    default: throw('Action');
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "status": "bounded-native-brain-ending-proof",
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "cases": 1024,
+      "native": "qemu-kecwek_t",
+      "hemu": true,
+      "sourceSha256": "1af38e321932449d9d3c24cce9caacad8a6aee5e1f0ca2171236cd2cea036678",
+      "reference": "Unmodified original A_BrainPain, A_BrainScream, A_BrainExplode and A_BrainDie compiled as host C. Spawn and state-entry boundaries use selected canonical data and the original random stream. Native probes call actual WorldSpawn/ActorState, recording resulting actors. All 592 result slots match.",
+      "scope": [
+        "All 256 random starts for each ending action",
+        "All 65 scream explosions and every subsequent single explosion: x/y/z, vertical velocity, lastlook, state/frame/sprite and timer",
+        "Original 128/65536-unit height offset and eight-unit horizontal sweep",
+        "Random draw order and wrap, full-volume sound origin and timing, normal-exit replacement"
+      ]
+    },
+    "integration": {
+      "cases": 9,
+      "native": "qemu-du625e74",
+      "hemu": true,
+      "sourceSha256": "3b31aae564ec62931ea8a5ddf769207bc05695491f27781e8935bca03f2d03fa",
+      "scope": [
+        "Sound exceptions after a complete sweep and during pain",
+        "State callback exception after spawn/velocity publication, with no extra timer draw",
+        "Wrong owner, inactive source, invalid action and direct explosion helper checks",
+        "Unconditional brain death exit without a live player",
+        "Eighty actual ThinkersTick calls with continuing explosion chains, old-actor removal and bounded actor population",
+        "Complete fresh-task heap cleanup"
+      ],
+      "controlledFailureSetup": "One case temporarily attaches the valid pain action to the explosion entry state to exercise callback failure; the original state action is restored afterward."
+    }
+  },
+  "remaining": [
+    "Brain target collection and spawning cubes",
+    "Complete actor dispatcher and persistent native game host",
+    "UI/audio, saves and episode/intermission progression"
+  ]
+}
