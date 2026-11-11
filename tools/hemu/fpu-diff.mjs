@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {execFileSync} from "node:child_process";
 import {dirname,extname} from "node:path";
 import {compileHolyC} from "../../holyc-wasm/src/compiler.js";
-import {hemuFile,HEMU_SRC,HEMU_EXPORTS} from "../../engine/compile.js";
+import {hemuFile,HEMU_SRC,JIT_EXPORTS} from "../../engine/compile.js";
 import {createHemuHost} from "../../engine/host.js";
 
 const ref=process.argv[2];
@@ -29,7 +29,7 @@ U64 FpuAddr(I64 n)
 async function Make(before) {
   const Read=before?Previous:hemuFile,
     c=compileHolyC(Read("snapshot.HC")+extra,{filename:"snapshot.HC",lenient:false,
-      exports:[...HEMU_EXPORTS,"InitMem","FpuAddr"],includeResolver:Read});
+      exports:[...JIT_EXPORTS,"InitMem","FpuAddr"],includeResolver:Read});
   assert.deepEqual(c.warnings,[]);
   const host=createHemuHost({onText:()=>{}}),
     {instance}=await WebAssembly.instantiate(c.bytes,{env:host.env});

@@ -43,10 +43,10 @@ export function createHemuHost(opts = {}) {
   return host;
 }
 
-export function CpuFaultText(ex) {
-  const packed=Number(ex.CpuFault?ex.CpuFault(0n):ex.GuestInfo?.(7n)||0n),reason=packed&255;
+export function CpuFaultText(ex,reported=0) {
+  const packed=reported||Number(ex.CpuFault?ex.CpuFault(0n):ex.GuestInfo?.(7n)||0n),reason=packed&255;
   if(reason<2)return "";
-  const core=packed>>>8,pc=BigInt.asUintN(64,ex.CpuFault?ex.CpuFault(1n):ex.GuestInfo(5n)),
+  const core=packed>>>8,pc=BigInt.asUintN(64,!reported&&ex.CpuFault?ex.CpuFault(1n):ex.GuestInfo(5n)),
     cause=reason===2?"an unsupported instruction":reason===3?"an integer divide fault":`CPU fault ${reason}`;
   return `CPU ${core} stopped after ${cause}, near 0x${pc.toString(16)}. Restore a working snapshot or restart TempleOS.`;
 }

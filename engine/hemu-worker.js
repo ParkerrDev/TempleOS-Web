@@ -427,7 +427,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
     try {
       guestInput.beforeFrame();inst.exports.__main();guestInput.afterFrame();
       const fault=CpuFaultText(inst.exports);
-      if(fault) {PauseSet(true);postMessage({cmd:"error",msg:fault});continue;}
+      if(fault) {PauseSet(true);postMessage({cmd:"error",msg:fault,retained:true,paused:true});continue;}
     }
     catch (err) { postMessage({ cmd: "error", msg: "hemu trap: " + err.message }); return; }
     if (smpCfg && !apsReleased && ++bootFrames > 120) {            // desktop settled -> release the AP workers (parallel from here)

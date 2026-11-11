@@ -47,7 +47,7 @@ async function RunAp({core,mem,ctrl:control,wasmBytes,heapAbi}) {
     if(CaptureWait(ctrl,core))continue;
     if(faulted){await new Promise(r=>setTimeout(r,10));continue;}
     const did=Number(inst.exports.RunCore(2000000n));
-    if(did<0&&!faulted){faulted=true;postMessage({cmd:"error",msg:CpuFaultText(inst.exports)||`CPU ${core} stopped: fault ${-did}.`});}
+    if(did<0&&!faulted){faulted=true;postMessage({cmd:"error",msg:CpuFaultText(inst.exports,core<<8|-did),retained:true,core});}
     if((did<1000&&++spins>4)||spins>100){await new Promise(r=>setTimeout(r,0));spins=0;}
     else if(did>=1000)spins++;
   }

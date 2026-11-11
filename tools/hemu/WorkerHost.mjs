@@ -83,7 +83,7 @@ export function FpsFromTop(top)
 
 export async function HemuBoot(opt)
 {//opt: smp (cores, 0 for one), nojit, welcome, rate, repeat, fixed_b.
-  let h={frames:[],nframes:0,last:null,msgs:[],waiters:[],workers:[],
+  let h={apMsgs:[],frames:[],nframes:0,last:null,msgs:[],waiters:[],workers:[],
 	keep:opt.keep||20000,ack:true,palette:Array(16).fill(null)},
 	live,gz,wasm,init,mem,ctrl,sc,k,ap,wasm_bytes;
   function FrameIn(m)
@@ -124,6 +124,7 @@ export async function HemuBoot(opt)
     live="hemu/live-smp.bin.gz";
     wasm="build/hemu-smp.wasm";
   }
+  if(opt.engine)wasm=opt.engine;
   gz=opt.snapshot||readFileSync(new URL(live,SITE));
   const saved=opt.snapshot?await SnapshotInspect(gz):null;
   if (saved) opt={...opt,smp:saved.meta.cores===4?4:0};
@@ -135,7 +136,7 @@ export async function HemuBoot(opt)
   if (opt.welcome)
     init.welcome=true;
   if (opt.smp) {
-    sc=JSON.parse(readFileSync(new URL("build/hemu-smp.json",SITE),"latin1"));
+    sc=opt.engineMeta||JSON.parse(readFileSync(new URL("build/hemu-smp.json",SITE),"latin1"));
     sc.ncore=opt.smp;
     mem=new WebAssembly.Memory({initial:512,maximum:8192,shared:true});
     ctrl=new SharedArrayBuffer(64);
@@ -143,7 +144,13 @@ export async function HemuBoot(opt)
     if (saved) sc.globals.g_ipi_pending=saved.meta.ipiAddr;
     for (k=1;k<opt.smp;k++) {
       ap=WorkerNew("engine/hemu-smp-worker.js");
-      ap.on("message",function ApMsg(m) {if (m.cmd=="error") console.log("ap: "+m.msg);});
+      ap.on("message",function ApMsg(m) {
+        h.apMsgs.push(m);
+        if(m.cmd==="error") {
+          console.log("ap: "+m.msg);
+          if(m.retained&&opt.pauseOnApError)h.workers[0].postMessage({cmd:"pause",value:true});
+        }
+      });
       ap.postMessage({cmd:"init",role:"ap",core:k,mem:mem,ctrl:ctrl,sc:sc,
 	    wasmBytes:wasm_bytes,heapAbi:saved?.meta.heapAbi});
       h.workers.push(ap);

@@ -24,6 +24,7 @@ Spawn(&FaultTask,,,${smp?1:-1});
 `});
     const [submitted,error]=await Promise.all([launched,failed,paused]);
     assert.equal(submitted.ok,true,JSON.stringify(submitted));
+    assert.equal(error.retained,true);assert.equal(error.paused,true);
     assert.match(error.msg,/unsupported instruction.*Restore a working snapshot or restart TempleOS/);
     await Sleep(100);
     const first=await Request(h,{cmd:"__peek"},m=>m.cmd==="__peek"),frames=h.nframes;

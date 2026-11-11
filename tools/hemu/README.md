@@ -128,6 +128,9 @@ offsets to discover a fault. Reasons 2 and 3 are unsupported instruction and
 integer divide faults. `RunCore` retains the fault on every later call; the
 old one-time automatic recovery has been removed. HLT remains normal idle.
 
+CPU fault messages have `retained:true`; BSP errors also carry `paused:true`,
+while AP errors identify `core`. Boot/instantiation errors stay unflagged so
+the page can distinguish a retained stopped machine from a failed boot.
 The BSP reports an actionable `error`, publishes `paused:true`, and keeps all
 APs in the capture barrier. AP workers also report errors and stop executing
 that core. The real worker regression compiles native faulting child tasks on
@@ -135,6 +138,16 @@ core0 and core1, then verifies frozen registers, RIP, frames and all barrier
 acknowledgements. Older saved engines without `CpuFault` retain the BSP
 `GuestInfo` fallback; their AP `error` messages should also pause the BSP in
 the page host. Their embedded instruction implementation is unchanged.
+
+`worker-legacy-fault.test.mjs` boots the tracked historical four-core engine
+in `fixtures/legacy-smp.wasm`, exports a real full save embedding it, then
+restores that save under the current host. Native UD2 on AP1 verifies the
+retained error, page-style BSP pause, frozen state/frames and held AP barrier.
+The old module intentionally has no CpuFault export and contains the former
+first-fault recovery behavior. Its compiler/source refs, hash and IPI address
+are recorded alongside it. `legacy-engine.mjs ENGINE_REF COMPILER_REF` rebuilds
+that fixture explicitly using the matching compiler checkout; normal tests
+consume the pinned bytes and never regenerate their reference.
 
 ## Settings and keyboard
 
