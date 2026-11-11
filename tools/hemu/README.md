@@ -120,3 +120,42 @@ save with the bundled 256 MiB disk compresses to about 53.5 MB. It is not a
 small-memory guarantee for every phone. The tests compare CPU/device bytes
 and the saved frame across fresh one- and four-core workers, verify disk
 readback, game exclusivity and saved 120 Hz settings returning to stock 30 Hz.
+
+## Desktop window
+
+From this checkout, after `node engine/build.mjs build`:
+
+```
+node tools/hemu/desktop.mjs
+node tools/hemu/desktop.mjs --cores 4
+node tools/hemu/desktop.mjs --snapshot /path/to/session.hemu
+```
+
+This starts a loopback-only server and opens an application window in an
+installed Chromium, Chrome or Edge. `--browser PATH` selects one explicitly;
+`--no-open` prints a local URL for another WebAssembly-capable browser. No
+Electron package or second browser runtime is bundled. Closing the browser
+process or pressing Ctrl+C stops the local server; its temporary browser
+profile is separate from the user's normal profile. Save sessions before
+closing to retain guest changes. The launcher can boot a configured full
+snapshot, including its original one- or four-core topology and current disk.
+
+The canvas uses the production worker/JIT, native palette, speaker and shared
+Keyboard.js mapping. Click it to type; Full screen offers keyboard capture.
+Pointer-lock games acquire the mouse on a click; Escape releases it. Pause,
+BIOS repeat, refresh rate, session save and open are available in the toolbar.
+No internet service is required once the build and bundled images are local.
+
+`node tools/hemu/desktop.test.mjs` drives a real installed Chromium headlessly;
+`HEMU_DESKTOP_CORES=4` exercises the parallel path. Both were verified on Linux
+x86-64: offline boot, actual frames/FPS, disk readiness, pause/resume and rate
+changes, with the screenshot inspected. Mac and Windows executable lookup is
+implemented but untested. This is a portable WASM host in a desktop window,
+not native-code HEMU, direct hardware access, or a measured memory reduction.
+
+Both disk-only and full-machine exports hold the shared core barrier until
+compression finishes and defer incoming mutations. Disk-only export is a
+point-in-time block image; full-machine saves also retain the CPU state needed
+to resume an interrupted filesystem operation. The legacy SMP demo's BSP now
+adapts to the same production worker; APs no longer import a second BSP or the
+site's game catalog.
