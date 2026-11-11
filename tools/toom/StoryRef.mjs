@@ -27,7 +27,9 @@ function fn(original,name) {
 export const storyKeys=[...Array.from({length:36},(_,i)=>`HUSTR_E${Math.floor(i/9)+1}M${i%9+1}`),
   ...Array.from({length:32},(_,i)=>`HUSTR_${i+1}`),
   ...['E1','E2','E3','E4','C1','C2','C3','C4','C5','C6'].map(s=>s+'TEXT'),
-  ...['E1','E2','E3','E4','06','11','20','30','15','31'].map(s=>'BGFLAT'+s)];
+  ...['E1','E2','E3','E4','06','11','20','30','15','31'].map(s=>'BGFLAT'+s),
+  ...['ZOMBIE','SHOTGUN','HEAVY','IMP','DEMON','LOST','CACO','HELL','BARON','ARACH',
+    'PAIN','REVEN','MANCU','ARCH','SPIDER','CYBER','HERO'].map(s=>'CC_'+s)];
 
 export async function StoryReference() {
   const io=await source('deh_io.c'),main=await source('deh_main.c');
@@ -67,6 +69,7 @@ int main(void){deh_context_t ctx={0};char *line,*name,*value;int strings=0;
     inputs.push(Buffer.from(['[STRINGS]','HUSTR_E1M1 = first','HUSTR_E1M1 = last\\nline\\',
       indent+' continued\\q\\\\ end  ','E1TEXT = A\\n\\',indent+'B\\n\\',indent+'\\nC',
       'BGFLATE1 = TEST','UNKNOWN = harmless','HUSTR_32 = final',
+      'CC_ZOMBIE = first','CC_ZOMBIE = last','CC_HERO = ',
       '','[PARS]','par 1 1 0 # authored zero','par 32 100','par 1 2 123',
       '', '[STRINGS]','C6TEXT = no final linefeed'].join(newline)+trailing,'latin1'));
   }

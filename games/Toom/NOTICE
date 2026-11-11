@@ -109,8 +109,14 @@ at the same revision. It renders lazily decoded Freedoom assets into private
 indexed pixels and native TempleOS CDC palette patterns. Both original source
 digests are recorded in tools/toom/source/finale.json.
 
-TmStory consumes the authored Freedoom BEX map names, ending text, ending
-flats and par times. Its text/continuation rules follow Chocolate Doom
+TmCast.HC and TmCastGr.HC re-express the cast order, F_StartCast,
+F_CastTicker, F_CastResponder, F_CastPrint and F_CastDrawer from f_finale.c
+at the same revision. Mirrored patch placement follows V_DrawPatchFlipped
+in v_video.c. The native components borrow the verified state records and
+decode only official Freedoom graphics and authored cast names.
+
+TmStory consumes the authored Freedoom BEX map/cast names, ending text,
+ending flats and par times. Its text/continuation rules follow Chocolate Doom
 DEH_ReadLine and DEH_ParseAssignment, copyright 2005-2014 Simon Howard,
 licensed under GNU GPL version 2 or later. Pinned source provenance and the
 unchanged-function oracle are in tools/toom/source/story.json and StoryRef.mjs.

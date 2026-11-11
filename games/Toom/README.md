@@ -978,7 +978,7 @@ rejected instead of reusing a stale target.
 
 `TmStory.HC` reads the small authored DEHACKED text lump into one owned buffer.
 It retains level names, ending text/background names and par times for both
-Freedoom phases. The native/frozen-HEMU `story.test.mjs` checks 27 cases, 238
+Freedoom phases. The native/frozen-HEMU `story.test.mjs` checks 27 cases, 296
 strings, ten malformed inputs and four allocation/read failures against
 unchanged pinned Chocolate Doom text-reader functions. Exact evidence and
 limits are in `story-evidence.json`. The host uses these titles and pars and
@@ -1047,7 +1047,7 @@ HOLYC_WASM=/path/to/HolyC-wasm EPISODE=3 STAGE=1 TIC=1210 node tools/toom/finale
 
 The preview command exports an actual native frame. `EPISODE=1 STAGE=0
 TIC=3000` shows the completed first-episode text. These components remain
-outside `Load`/`Run` while cast animation and host continuation are connected;
+outside `Load`/`Run` while the live finale connection is completed;
 the development host still has the earlier static finale screen.
 
 `TmCast.HC` supplies the separate ending cast state machine. It borrows the
@@ -1063,5 +1063,26 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cast.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/cast.test.mjs
 ```
 
-Cast artwork, authored names and actual host input routing remain separate
-integration work. These standalone components still do not change `Run`.
+Cast artwork and authored names now have their own proof below. Actual host
+input routing remains separate; these standalone components do not change `Run`.
+
+`TmCastGr.HC` draws the commercial ending's authored BOSSBACK, cast names and
+front-facing sprites. The native and frozen-HEMU image gate directly compares
+259 scenes (16,576,000 pixels) with the released C renderer: every distinct
+see/attack/death frame for all 17 cast entries plus explicit mirrored scenes.
+The cleanup gate covers all 84 allocation/read failures along initial
+background/font/sprite construction, with no heap, file or drive-lock leaks.
+The prior 154 finale scenes remain exact. Evidence is in
+`cast-gr-evidence.json`; the actual native preview uses the TempleOS palette.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cast-gr.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cast-alloc.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/cast-gr.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/cast-alloc.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm ACTOR=14 node tools/toom/cast-preview.mjs
+```
+
+This is the commercial Phase 2 cast. Phase 1 has no cast endpoint and omits
+several Doom 2 actor sprite sets. The prepared host integration must still
+cover actual key routing, pause/focus ownership, continuation and cleanup.

@@ -1,0 +1,166 @@
+{
+  "scope": "Standalone native commercial cast presentation and authored names, outside Load/Run until host integration.",
+  "sourceHashes": {
+    "games/Toom/TmCastGr.HC": "c1a5cec798eb95342da11d6595a8d154e422c246d6f5d81b4a1c219ade9dac74",
+    "games/Toom/TmCast.HC": "d414747eacaca31d2689a8f072f1517519e21af74d6b52a0d5ba1fcb9a3bf132",
+    "games/Toom/TmFinaleGr.HC": "39dd13058ff0e60cfdc3209a97494e5563f885a06ef1fdc60ede1d1d6eacb52e",
+    "games/Toom/TmStory.HC": "f5cdd86de9d8048a96989bb537e0352c94c7b92ba451531b72a86be6d5ef3b9a",
+    "games/Toom/TmSprite.HC": "d3f27d4b403a7c554cb0608665b1606e302b686087290441d0be131e2a8905c6",
+    "tools/toom/CastGr.HC": "30adc6e70d8a63844732a11ac58a464f1c1e6f824085e3a139b0da6a50f105ac",
+    "tools/toom/CastDrawRef.mjs": "5274c11f372ed45037f5c3f1a92f514addf99242f6368992b96a5e68ea936713",
+    "tools/toom/cast-gr.test.mjs": "00941ee158156af874b173d394be32d6f3e8e59ff932c7047e440cd428e3cb2d",
+    "tools/toom/CastAlloc.HC": "bf0c32a3adf7d6b26ba71bb05d5f00362bdc9e97868229ca26daf89a850e4324",
+    "tools/toom/cast-alloc.test.mjs": "a665e40154c2e911994c306b30215c9f19880bf98042609a25e8864537c8ae42",
+    "tools/toom/cast-preview.mjs": "9f58dcd4be8b507073747e45884b8dfcc2e592089ad3bb7ec0889a09e742ee62",
+    "tools/toom/StoryRef.mjs": "7b2bf027626802bbdbaca1403d8a5360c4663b8d85707a79bc9c91d5085f681b",
+    "tools/toom/FinaleRef.mjs": "77e5aa7c09b74c49ed3eddd02f2b5cb5c58383b6e3262a9453a9fa15b88b3da5",
+    "tools/toom/source/finale.json": "4f3ac8258145282f69b22d900557989e0caff5f3121e51f9bc76be678cb0143e"
+  },
+  "reference": {
+    "repository": "https://github.com/id-Software/DOOM",
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "files": [
+      {
+        "path": "linuxdoom-1.10/f_finale.c",
+        "sha256": "c443ab18b6fa27df7033ac1ced0e86ab7c43c6e2cf2f8e428348d67d40a35670"
+      },
+      {
+        "path": "linuxdoom-1.10/v_video.c",
+        "sha256": "52fb89efb1e6de3842c197b32009d620dcd1578f7111a7502abe6110a925e5eb"
+      }
+    ]
+  },
+  "native": {
+    "results": [
+      {
+        "out": "CAST GR 259 CASES 16576000 PIXELS BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-027a15o9",
+    "sourceSha256": "5ddc061094327c8f03f66f195877cc5b47c05dad88dc7c3fce1d644e6ea04103",
+    "referenceSha256": "11852a3bf726543a2828f976ed864bb93f0fda23b3866ec08b2822d8e3025e98",
+    "referenceSourceSha256": "7f6c26e3aceadc50b68309be61793ea5a199a075c24032b4e019f98670876204",
+    "assetHashes": [
+      "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
+    ]
+  },
+  "hemu": {
+    "backend": "hemu",
+    "sourceSha256": "5ddc061094327c8f03f66f195877cc5b47c05dad88dc7c3fce1d644e6ea04103",
+    "referenceSha256": "11852a3bf726543a2828f976ed864bb93f0fda23b3866ec08b2822d8e3025e98",
+    "referenceSourceSha256": "7f6c26e3aceadc50b68309be61793ea5a199a075c24032b4e019f98670876204",
+    "assetHashes": [
+      "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
+    ],
+    "cases": 259,
+    "pixels": 16576000,
+    "bad": 0
+  },
+  "allocation": {
+    "native": {
+      "results": [
+        {
+          "out": "CAST ALLOC 86 CASES 84 FAULTS BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-uf8948zx",
+      "sourceSha256": "f1c8748eaa282f1f8960b1355ded3d1b66db48d3a830f49312d685d674038e3c",
+      "assetSha256": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
+    },
+    "hemu": {
+      "backend": "hemu",
+      "sourceSha256": "f1c8748eaa282f1f8960b1355ded3d1b66db48d3a830f49312d685d674038e3c",
+      "assetSha256": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+      "bad": 0
+    }
+  },
+  "existingFinaleRegression": {
+    "native": {
+      "results": [
+        {
+          "out": "FINALE GR 154 CASES 9856000 PIXELS BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-g41q3sb7",
+      "sourceSha256": "42174aa4625b1b963f77c908bca5f2675dca32c31f8cd09db0f185b9372719d6",
+      "referenceSha256": "7700308032ea3ffed6d400bf438d4a44d0507fe9d6b72a007d620d530eb79276",
+      "referenceSourceSha256": "c3945c6f9c32854e8b5266d11b02f16588129470bba24325429dbd9be263d539",
+      "assetHashes": [
+        "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
+      ]
+    },
+    "hemu": {
+      "backend": "hemu",
+      "sourceSha256": "42174aa4625b1b963f77c908bca5f2675dca32c31f8cd09db0f185b9372719d6",
+      "referenceSha256": "7700308032ea3ffed6d400bf438d4a44d0507fe9d6b72a007d620d530eb79276",
+      "referenceSourceSha256": "c3945c6f9c32854e8b5266d11b02f16588129470bba24325429dbd9be263d539",
+      "assetHashes": [
+        "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
+      ],
+      "cases": 154,
+      "pixels": 9856000,
+      "bad": 0
+    }
+  },
+  "preview": {
+    "path": "/tmp/toom-cast-14-0.png",
+    "summary": "CAST 14 TIC 0",
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-5x52d5pu"
+  },
+  "runtime": {
+    "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
+    "compiler": "d0e394e",
+    "hemu": "0eff35b",
+    "sha256": {
+      "build/hemu.wasm": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+      "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
+      "tools/hemu/GuestHarness.mjs": "ef21e4d8cc8711fd85469906258cae17538c2252caf48841d2fe2201d3de0f45",
+      "hemu/live.bin.gz": "42db6570ffd1610ea2a39a60dd59e63095c60ac39610350a649c5671528a449a",
+      "hemu/stock.json": "fce58673729385cbe119f9307277ab646edb59239c1a77eb1bcae3b2d1c1856b",
+      "hemu/stock.disk": "032751a6b626aea216ab9d675d2b404f27a5e9f61261903cec8b6ea792d964a8",
+      "vendor/images/templeos-hd.qcow2.gz": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+    }
+  },
+  "coverage": [
+    "259 scenes compare 16,576,000 pixels directly with unchanged F_CastPrint/F_CastDrawer/V_DrawPatch/V_DrawPatchFlipped from the released C source, compiled with range and undefined-behavior checks.",
+    "242 distinct actor sprite/frame pairs cover the see, melee, missile and death-state chains of all17 original cast entries;17 additional scenes explicitly mirror their first frames. Native indexing must select the independently identified WAD lump and orientation.",
+    "The commercial ending uses official Freedoom Phase2 BOSSBACK, original patch offsets/transparency/front rotation and authored CC_* names. Phase1 has no commercial cast and does not contain every Doom2 actor sprite.",
+    "The authored metadata gate now compares296 exact strings, including all17 names from both official IWADs and duplicate/empty synthetic assignments.",
+    "86 cleanup cases include every84 allocator/read failure along initial sprite-cache/background/font/frame construction, plus normal/retry execution; native heap, file count and drive ownership return to their prior state.",
+    "The shared mirrored-image extension retains all154 prior finale scenes and9,856,000 exact pixels on both native TempleOS and frozen HEMU.",
+    "Actual native preview qemu-5x52d5pu was visually inspected at640x400 through FinaleGrBlot and the TempleOS palette."
+  ],
+  "limits": [
+    "Cast state/input animation is separately qualified in cast-evidence.json; this fixture does not establish live keyboard/event routing.",
+    "The C image oracle receives independent front-rotation lump selection from official WAD names; sprite indexing is checked against that selection, not claimed as an unchanged R_InitSprites oracle.",
+    "Undefined original font lookup inputs are excluded; authored names contain none. Native unsupported glyphs advance four pixels safely.",
+    "Live host finale routing, music, complete-game acceptance and performance remain unqualified. No catalog promotion."
+  ]
+}

@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
-import {StoryReference} from './StoryRef.mjs';
+import {StoryReference,storyKeys} from './StoryRef.mjs';
 
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
@@ -21,7 +21,7 @@ function row(input,exception='',expected=null,missing=false){
   const bytes=Buffer.concat(body);rows.push(word(bytes.length),bytes);
 }
 for(const c of reference.cases)row(c.input,'',c);
-row(Buffer.alloc(0),'',{pars:Array(68).fill(0),strings:Array(88).fill(null)},true);
+row(Buffer.alloc(0),'',{pars:Array(68).fill(0),strings:Array(storyKeys.length).fill(null)},true);
 const malformed=[['[PARS]\npar 0 1 30','Map'],['[PARS]\npar 5 1 30','Map'],
   ['[PARS]\npar 1 10 30','Map'],['[PARS]\npar 0 30','Map'],['[PARS]\npar 33 30','Map'],
   ['[PARS]\npar 1 -1','Number'],['[PARS]\npar 1 99999999999999999999999','Number'],

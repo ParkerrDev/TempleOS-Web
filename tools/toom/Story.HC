@@ -35,11 +35,13 @@ U0 TmStoryTest()
     } else {
       for (i=0;i<TM_STORY_MAPS;i++)
 	if (story->par[i]!=TmStoryWord(&ptr)) throw('Par');
-      for (i=0;i<TM_STORY_MAPS+TM_STORY_ENDS*2;i++) {
+      for (i=0;i<TM_STORY_MAPS+TM_STORY_ENDS*2+TM_STORY_CASTS;i++) {
 	if (i<TM_STORY_MAPS) st=story->name[i];
 	else if (i<TM_STORY_MAPS+TM_STORY_ENDS)
 	  st=story->end[i-TM_STORY_MAPS];
-	else st=story->flat[i-TM_STORY_MAPS-TM_STORY_ENDS];
+	else if (i<TM_STORY_MAPS+TM_STORY_ENDS*2)
+	  st=story->flat[i-TM_STORY_MAPS-TM_STORY_ENDS];
+	else st=story->cast[i-TM_STORY_MAPS-TM_STORY_ENDS*2];
 	len=TmStoryWord(&ptr);
 	if (len<0) {
 	  if (st) throw('Absent');
