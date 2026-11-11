@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "dc6ee9945212786e5c2592f522fecd20e91282d593d00da39530da0f550cc05b",
+  "runtimeSha256": "e46cd798e2690f4ecc755bb2620ad61f3b140e491625d970fcf58361a40cd734",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -9,7 +9,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "6905f0c61295856366603b0a06ae96b2daffcaf00a1e78c40c77a2da48230fc3"
+      "wasmSha256": "77326aebb404ff8287d219861032cc618cbd2d71b126276f14ef82090503ecee"
     },
     "toom": {
       "name": "TOOM",
@@ -27,7 +27,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "294e838dc815a49f6fe08aec8d3bb1c8e1fb96cf4affafd29b907565fdec3beb"
+      "wasmSha256": "6a852d0b16ff4128bd754caf28cfafae99211e03ac709afdfc5cc81a1e963075"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -36,7 +36,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "3856595e799c98b76287fa3bf4e959b46604c557fe93a2f22d3273b769bae30c"
+      "wasmSha256": "5011afba824c97da21c8d0f040392190b59aa405242b35c954fecfd319df1ce4"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -45,7 +45,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "3b937562060b72317303a7ebfdcadef294a484a24c0a99c59345918c9c93aa1b"
+      "wasmSha256": "aadc1a07c69c007b1172a4fe2700067bb7f29a360acd77cd0700bbe7f805066d"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -162,7 +162,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "96fb004ac49fc61959cde0736f7a9472f87b62340766e4124bb0d08977089a27"
+      "wasmSha256": "7457df85be2bee3f12784b5cef7900c66c56863669a7db320debe3b3d0ef2177"
     },
     "tinker-Whap": {
       "name": "Whap",
@@ -549,7 +549,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/MarioClone/Wad.HC:134: not an lvalue: Binary"
+      "error": "class CHashClass has no field 'member_lst_and_root'"
     },
     "library-MaliciousTestimonies": {
       "name": "Malicious Testimonies",
