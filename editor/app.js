@@ -314,7 +314,7 @@ async function run(source=editor.value,project={}) {
   const present = () => {
     if (!running) return;
     const frame=Atomics.load(ctrl,CTRL.FRAME)>>>0;
-    if(frame!==lastFrame){mainFb.present();rateFrames+=(frame-lastFrame)>>>0;lastFrame=frame;}
+    if(frame!==lastFrame){mainFb.present();rateFrames++;lastFrame=frame;}
     const now = performance.now();
     if(now-rateStart>=1000){window.__nativeFps=Math.round(rateFrames*1000/(now-rateStart));setStatus('running · '+window.__nativeFps+' fps (native)');rateFrames=0;rateStart=now;}
     rafId = requestAnimationFrame(present);

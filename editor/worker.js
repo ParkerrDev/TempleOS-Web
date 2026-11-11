@@ -130,6 +130,14 @@ self.onmessage = async (e) => {
         const update=host.env.__gr_update;
         host.env.__gr_update=(...args)=>{update(...args);drawPending=true;};
       }
+      if(host.env.__gr_update_mono){
+        const update=host.env.__gr_update_mono;
+        // Raw diagnostics can run without yielding; publish their pixels
+        // without admitting keyboard input or running another task.
+        host.env.__gr_update_mono=(...args)=>{
+          update(...args);drawPending=false;presentMaybe(true);
+        };
+      }
       const inst = await WebAssembly.instantiate(mod, { env: host.env });
       host.attach(inst);
 

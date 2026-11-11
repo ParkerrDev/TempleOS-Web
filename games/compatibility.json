@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "48ebd547f629ba5ebf2120c33edb5aeef862d22ab72d4df7fac81f046856e5e4",
+  "runtimeSha256": "ba52ac4e02e614d177432899a7411e23b88379992a325cac1fa1cfa1741fe887",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -9,7 +9,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "1fe3d2de73867b57f77b7df2e5bee9009a0358d913ccc296805e103670e2204b"
+      "wasmSha256": "db7f4b0fc84f89373125c8dd274c3d666939dd6ee7272f7db3b5a0d05d86b872"
     },
     "toom": {
       "name": "TOOM",
@@ -27,7 +27,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "a369b6cfcf28aac8f49e3965b83022a087e9f535e073abf8842df3f18a68c908"
+      "wasmSha256": "3b631dd644e7f61874d86d87263de3f683d0565c9c942be9bd86df6288e3ff3e"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -36,7 +36,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "da5962a4218b963ec906e8ed2c1aaffd5d39bdd7247095b0fc9c32dfe83e7c18"
+      "wasmSha256": "d7aaf39f5163b4ec73db32b906357a788aa12e5c534d3524f2306d05b747fef4"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -45,7 +45,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "b29bf54eaa640a8438343045389a6d20397ba2de4477e77a0ca83c2abd3b6b62"
+      "wasmSha256": "ed0159471f7d2e6a8f9ed89000e73b4cf84a8d9e8fe9103d636c1539a1f07df9"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -162,7 +162,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "7b879497e4cfc0ef188461b52f2dbcb58e6a6059f9683b3d1d1ddf4586096232"
+      "wasmSha256": "e0f12e90d61e597fe2531555df081a1da1f1da187f6eb80dfad53c9269371945"
     },
     "tinker-Whap": {
       "name": "Whap",
@@ -171,7 +171,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Whap.HC:25: undefined symbol 'balls'"
+      "error": "C:/Home/Games/TinkerOS/Whap.HC:25: Not array or ptr"
     },
     "tinker-Wenceslas": {
       "name": "Wenceslas",
