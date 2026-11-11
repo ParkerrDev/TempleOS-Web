@@ -9,7 +9,7 @@ import {BrainMaps} from './BrainMaps.mjs';
 import {WadRead} from './Wad.mjs';
 import {EnemyFunction} from './EnemyRef.mjs';
 
-export async function SoundReference() {
+export async function PcSoundRead() {
   const manifest=JSON.parse(readFileSync(new URL('source/pcsound.json',import.meta.url))),
     path=resolve(root,'tools/toom/source/i_pcsound.c'),hash=b=>createHash('sha256').update(b).digest('hex');
   if(!existsSync(path)) {
@@ -17,6 +17,11 @@ export async function SoundReference() {
     assert(response.ok);writeFileSync(path,Buffer.from(await response.arrayBuffer()));
   }
   const bytes=readFileSync(path);assert.equal(hash(bytes),manifest.sha256);
+  return {manifest,bytes};
+}
+
+export async function SoundReference() {
+  const {manifest,bytes}=await PcSoundRead(),hash=b=>createHash('sha256').update(b).digest('hex');
   const original=bytes.toString('ascii').replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,''),
     table=original.match(/static const uint16_t divisors\[\] = \{[^}]+\};/);assert(table);
   const phase1=FreedoomRead(),{bytes:phase2}=await BrainMaps(),lumps=[];

@@ -1,0 +1,218 @@
+{
+  "scope": "Lazy native PC-speaker clip selection/cache; not yet included in interactive Load/Run.",
+  "files": {
+    "games/Toom/TmSoundBank.HC": "7b0bc8790f30bd00579a7f53e305d62f8a9d1e65785365c263862f4894260d01",
+    "games/Toom/TmSnd.HC": "38d7d1cafdf87131a6b89953b32b1b836dba6fa7fbd26c0354ed80ad877db197",
+    "tools/toom/SoundBank.HC": "d0c731e6833736289aefdb8a06a7351ae7a484487ec1a1450d26ac1677c6a37e",
+    "tools/toom/SoundBankRef.mjs": "67820727e8ec0db4b367e609fe07ad866f5992dadf2baad4dd2d6e9df19898cf",
+    "tools/toom/sound-bank.test.mjs": "4cc9028d86747321bb11f27aeaea6bad708c33bed7c42d89025deb1ecdc0b446",
+    "tools/toom/SoundRef.mjs": "cadf33c8b8b60eb982fbf9468910220468845bcb14679574c8882e51395f26f0",
+    "tools/toom/EnemyRef.mjs": "08a099876f8e6099197d2753c08bdc3896521330434ca2dcbe1031b1468a206a",
+    "tools/toom/SoundHook.HC": "da20f932d39e8aad5c3ed7cf9cc7772588c068e3c191e5815679d1902ccf08c9"
+  },
+  "native": {
+    "results": [
+      {
+        "out": "SOUND BANK 218 CASES 24 FAULTS LAZY NAMES HEAP BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-u2tiqa0n",
+    "sourceSha256": "cd3dee1d7984babc2ee812721dfe3fa4ebca89939bf18006e557cfc8ebb111d8",
+    "assetHashes": {
+      "PHASE1.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "PHASE2.WAD": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+      "BANK.BIN": "f1eae782e177359032b9d7d7b0a7e08c020e33fdc62eb22515b5d6bc2d9b488e",
+      "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+    },
+    "reference": {
+      "pc": {
+        "repository": "https://github.com/chocolate-doom/chocolate-doom",
+        "tag": "chocolate-doom-3.1.0",
+        "revision": "35fb1372d10756ca27eca05665bd8a7cebc71c05",
+        "path": "src/i_pcsound.c",
+        "sha256": "acf9209a377fba2aadeaea0676a8bf3bbb508178852677defab9bc612398033c",
+        "license": "GPL-2.0-or-later",
+        "copyright": "Copyright(C) 2005-2014 Simon Howard",
+        "formatReference": "https://soulsphere.org/apocrypha/pcspkr/"
+      },
+      "idRevision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+      "idFiles": [
+        {
+          "path": "linuxdoom-1.10/sounds.h",
+          "sha256": "fa5a6c19c689eeb6e4a2df08b1d4efe5c445b3d0cb4081dc3a7d28fdadfd39f8"
+        },
+        {
+          "path": "linuxdoom-1.10/sounds.c",
+          "sha256": "d489534e93fdb20cad1757f6625913bddf10646ab3b21badbeafdc6cecc027d2"
+        }
+      ],
+      "cases": 218,
+      "present": [
+        61,
+        101
+      ],
+      "lookupPolicy": "Unchanged PC-speaker lookup uses each effect name; sampled-sound link resolution is not inferred.",
+      "disabled": [
+        {
+          "id": 11,
+          "index": 0,
+          "name": "dpsawidl"
+        },
+        {
+          "id": 26,
+          "index": 0,
+          "name": "dpdmpain"
+        },
+        {
+          "id": 27,
+          "index": 0,
+          "name": "dppopain"
+        },
+        {
+          "id": 75,
+          "index": 0,
+          "name": "dpposact"
+        },
+        {
+          "id": 76,
+          "index": 0,
+          "name": "dpbgact"
+        },
+        {
+          "id": 77,
+          "index": 0,
+          "name": "dpdmact"
+        }
+      ]
+    }
+  },
+  "hemu": {
+    "backend": "hemu",
+    "sourceSha256": "cd3dee1d7984babc2ee812721dfe3fa4ebca89939bf18006e557cfc8ebb111d8",
+    "assetHashes": {
+      "PHASE1.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "PHASE2.WAD": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+      "BANK.BIN": "f1eae782e177359032b9d7d7b0a7e08c020e33fdc62eb22515b5d6bc2d9b488e",
+      "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+    },
+    "reference": {
+      "pc": {
+        "repository": "https://github.com/chocolate-doom/chocolate-doom",
+        "tag": "chocolate-doom-3.1.0",
+        "revision": "35fb1372d10756ca27eca05665bd8a7cebc71c05",
+        "path": "src/i_pcsound.c",
+        "sha256": "acf9209a377fba2aadeaea0676a8bf3bbb508178852677defab9bc612398033c",
+        "license": "GPL-2.0-or-later",
+        "copyright": "Copyright(C) 2005-2014 Simon Howard",
+        "formatReference": "https://soulsphere.org/apocrypha/pcspkr/"
+      },
+      "idRevision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+      "idFiles": [
+        {
+          "path": "linuxdoom-1.10/sounds.h",
+          "sha256": "fa5a6c19c689eeb6e4a2df08b1d4efe5c445b3d0cb4081dc3a7d28fdadfd39f8"
+        },
+        {
+          "path": "linuxdoom-1.10/sounds.c",
+          "sha256": "d489534e93fdb20cad1757f6625913bddf10646ab3b21badbeafdc6cecc027d2"
+        }
+      ],
+      "cases": 218,
+      "present": [
+        61,
+        101
+      ],
+      "lookupPolicy": "Unchanged PC-speaker lookup uses each effect name; sampled-sound link resolution is not inferred.",
+      "disabled": [
+        {
+          "id": 11,
+          "index": 0,
+          "name": "dpsawidl"
+        },
+        {
+          "id": 26,
+          "index": 0,
+          "name": "dpdmpain"
+        },
+        {
+          "id": 27,
+          "index": 0,
+          "name": "dppopain"
+        },
+        {
+          "id": 75,
+          "index": 0,
+          "name": "dpposact"
+        },
+        {
+          "id": 76,
+          "index": 0,
+          "name": "dpbgact"
+        },
+        {
+          "id": 77,
+          "index": 0,
+          "name": "dpdmact"
+        }
+      ]
+    },
+    "cases": 218,
+    "faults": 24,
+    "bad": 0
+  },
+  "decoderRefactor": {
+    "backend": "hemu",
+    "sourceSha256": "89f9bc4ee5965e2fba377a0e8823d2838f5452cc1753b5848c553c0e1e837f6b",
+    "assetHashes": {
+      "SOUNDS.WAD": "472d394a989f99bd122bb47702af9e527acaf9216908e5cd798b089d7d53c998",
+      "SOUND.BIN": "60cda39bc54ac00649717e742ee5271b6c1b42301c1a8b4bb72ed82535d864d8"
+    },
+    "reference": {
+      "repository": "https://github.com/chocolate-doom/chocolate-doom",
+      "tag": "chocolate-doom-3.1.0",
+      "revision": "35fb1372d10756ca27eca05665bd8a7cebc71c05",
+      "path": "src/i_pcsound.c",
+      "sha256": "acf9209a377fba2aadeaea0676a8bf3bbb508178852677defab9bc612398033c",
+      "license": "GPL-2.0-or-later",
+      "copyright": "Copyright(C) 2005-2014 Simon Howard",
+      "formatReference": "https://soulsphere.org/apocrypha/pcspkr/",
+      "phase1Sha256": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "phase2Sha256": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+      "assetLumps": 174,
+      "cases": 188,
+      "samples": 78073,
+      "shortHeaderRule": "The reference reads its first4 bytes unconditionally; native decoding explicitly rejects shorter buffers.",
+      "timingScope": "Only format, PIT periods and callback frequency outputs are compared; the reference7ms callback is not used as native scheduler proof."
+    },
+    "cases": 188,
+    "samples": 78073,
+    "faults": 8,
+    "bad": 0
+  },
+  "runtime": {
+    "web": "b7e6e0790118aae885886ee0b49a0ef1e90231d8",
+    "compiler": "dbd1946838cfd33dd7c86cda51acb8528c824697",
+    "hemu": "486f8a68bca0ca872cc99c28d1429830d5b53e84",
+    "sha256": {
+      "build/hemu.wasm": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "build/hemu-smp.wasm": "bd16c80c4c8920d29692f4b7f4f6cbd20e7a843348fa9217955fda8ccb09851c",
+      "engine/jit.js": "98ef4631b01bc7a95a46505c3951d6d222ba397865d87e70ce8001f298fd5b32",
+      "engine/hemu-worker.js": "b72a4c771125b0fae7b3867142f4585c33535b7df070377f01b4200077b316f9",
+      "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+      "tools/hemu/GuestHarness.mjs": "9fe6f769b458f6399e5041ca4a7586e49a4a90a1d224239a92d3e95cd4f9e057"
+    }
+  },
+  "limits": [
+    "Reference compiles unchanged IsDisabledSound and I_PCS_GetSfxLumpNum from pinned Chocolate Doom with original id sound names/enums. It does not infer sampled-sound aliases.",
+    "Both official Freedoom phases are checked across all109 effect IDs. Missing clips and deliberately disabled effects remain silent; malformed present clips throw before publishing cache state.",
+    "Twenty-four exceptional paths cover invalid owners, bank allocation failure, clip read/allocate failures, malformed headers, cleanup and retry. Repeated requests perform no WAD reads; complete teardown restores the task heap.",
+    "Actor/sector selection, spatial audibility, channel priority and actual Play ownership remain separate implementation work.",
+    "Native chaingun weapon action already requests pistol directly. Unused chgun metadata resolves its own DPCHGUN name, as the pinned PC driver does."
+  ]
+}

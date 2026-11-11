@@ -915,3 +915,19 @@ game. `speaker-render-evidence.json` retains these diagnostic bounds and
 source/runtime hashes. `GAME_DIR` and `YIELD_MS` allow explicit private
 candidate checks; `speaker-timing.test.mjs` compares `CANDIDATE` against the
 current source using six fresh native tasks in alternating order.
+
+`TmSoundBank.HC` lazily owns decoded clips while borrowing the game's WAD/data.
+Its native/HEMU gate checks all 109 effect IDs against both official sound
+sets, exact retained payloads, disabled/missing effects, repeat-read avoidance
+and 24 ownership/allocation/read/format failure paths. The unchanged reference
+PC driver resolves each effect's own `DP` name; sampled-sound aliases are not
+inferred. The actual chaingun action already requests the pistol sound.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sound-bank.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/sound-bank.test.mjs
+```
+
+`sound-bank-evidence.json` records exact sources and results. The bank remains
+outside `Load`/`Run`; actor/sector audibility, channel selection and actual
+host ownership still require integration.
