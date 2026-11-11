@@ -41,6 +41,9 @@ The implemented foundation uses native V5.03 file and memory APIs:
   and the canonical RNG sequence. The block lists respect NOBLOCKMAP, and
   NOSECTOR objects remain invisible. A separate thinker list preserves update
   order when a new actor reuses an earlier handle slot.
+- Actor contact queries preserve missile source/species rules, skull impacts
+  and pickup-before-wall ordering. The spatial query accommodates large actors;
+  contact callbacks defer reclamation until the end of the tic.
 
 Fuzz effects, simulation, weapons, actors, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
@@ -96,6 +99,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sprite.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/mask.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/collision.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/world.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/contact.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -123,13 +127,18 @@ opaque/sky occluders.
 The collision check compares 68,035 fixed-point queries across all 36 maps
 with an independent full-linedef scan, including player, monster, missile,
 teleport, floating and noclip flags. It checks passability, sectors, headroom,
-steps/dropoffs and contacted specials. Actor contacts and crossed-line effects
-are still part of the pending simulation stage.
+steps/dropoffs and contacted specials. Crossed-line effects remain part of the
+pending simulation stage.
 The world check covers 108 map/skill combinations and 37,779 initial actors,
 including exact spawn state/timers, RNG, flags, positions and totals. It also
 checks linked block lists, stable allocation through table growth, stale
 handles, slot reuse and out-of-map unlinking. Actor actions and movement are
 not yet implemented.
+The contact check covers 1,756 interaction cases and 1,024 spatial queries
+against a full actor scan. It checks large actors across block cells, vertical
+missile separation, source/species immunity, skull impacts, deferred pickup
+callbacks, stale handles and contact ordering. Actual damage, inventory and
+movement effects remain part of the pending simulation stage.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

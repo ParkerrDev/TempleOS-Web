@@ -115,12 +115,10 @@ cl_block:
   return FALSE;
 }
 
-Bool CollisionCheck(Collision *tmpc,I64 x,I64 y,I64 z,I64 radius,
-	I64 height,I64 flags,Bool player=FALSE)
-{//A position query; actor contacts and crossed-line effects are separate.
-  I64 x1,x2,y1,y2,bx,by,i,n,w,h,ox,oy;
+U0 CollisionBegin(Collision *tmpc,I64 x,I64 y,I64 radius,I64 flags,
+	Bool player=FALSE)
+{//Actor contacts and map lines share the same initialized position query.
   Map *tmpm=tmpc->map;
-  U16 *blocks=tmpm->blockmap;
   Sector *tmps;
   tmpc->sector=FixedSector(tmpm,x,y);
   tmps=tmpm->sector+tmpc->sector;
@@ -128,13 +126,20 @@ Bool CollisionCheck(Collision *tmpc,I64 x,I64 y,I64 z,I64 radius,
   tmpc->ceil=tmps->ceil*65536;
   tmpc->flags=flags; tmpc->player=player;
   tmpc->special_cnt=0; tmpc->blocking=-1;
-  if (flags&TM_MF_NOCLIP) return TRUE;
   tmpc->left=x-radius; tmpc->right=x+radius;
   tmpc->bottom=y-radius; tmpc->top=y+radius;
   if (!++tmpc->stamp) {
     MemSet(tmpc->seen,0,tmpm->line_cnt*sizeof(I64));
     tmpc->stamp=1;
   }
+}
+
+Bool CollisionLines(Collision *tmpc,I64 z,I64 height)
+{
+  I64 x1,x2,y1,y2,bx,by,i,n,w,h,ox,oy,flags=tmpc->flags;
+  Map *tmpm=tmpc->map;
+  U16 *blocks=tmpm->blockmap;
+  if (flags&TM_MF_NOCLIP) return TRUE;
   w=blocks[2]; h=blocks[3];
   ox=tmpm->blockmap[0]*65536; oy=tmpm->blockmap[1]*65536;
   x1=MaxI64((tmpc->left-ox)>>23,0);
@@ -156,4 +161,11 @@ Bool CollisionCheck(Collision *tmpc,I64 x,I64 y,I64 z,I64 radius,
   if (!(flags&(TM_MF_DROPOFF|TM_MF_FLOAT)) &&
 	tmpc->floor-tmpc->dropoff>24*65536) return FALSE;
   return TRUE;
+}
+
+Bool CollisionCheck(Collision *tmpc,I64 x,I64 y,I64 z,I64 radius,
+	I64 height,I64 flags,Bool player=FALSE)
+{//A pure static-map query, also used independently of world actors.
+  CollisionBegin(tmpc,x,y,radius,flags,player);
+  return CollisionLines(tmpc,z,height);
 }

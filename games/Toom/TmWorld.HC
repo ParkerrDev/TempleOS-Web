@@ -14,7 +14,8 @@ class World
   Collision *collision;
   ActorSlot *slot;
   I64 slot_cap,free_slot,actor_cnt,*blocks,skill,random,tic,player,
-	player_start,total_kills,total_items,max_radius,first,last;
+	player_start,total_kills,total_items,max_radius,first,last,
+	hit_actor,hit_kind;
 };
 
 Actor *WorldActorGet(World *tmpw,I64 id,Bool active=TRUE)

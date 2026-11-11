@@ -8,6 +8,7 @@
 #include "TmState"
 #include "TmMath"
 #include "TmWorld"
+#include "TmContact"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"
