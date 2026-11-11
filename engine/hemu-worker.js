@@ -10,6 +10,7 @@ import {FrameTop,FrameFps} from "./FrameText.js";
 import {SnapshotOpen,SnapshotSave} from "./Snapshot.js";
 import {KeyQueue} from "./KeyQueue.js";
 import {CaptureBarrier} from "./CoreBarrier.js";
+import {CoreBus,BusStop,BUS_VERSION} from "./CoreBus.js";
 import { createHemuHost,CpuFaultText } from "./host.js";
 import { loadDisk, makeDisk, fat32Upload, fat32List } from "./qcow2.js";
 import * as jit from "./jit.js";             // x86-64 -> WASM block JIT (the speed: interp ~6fps -> JIT 30-65fps games)
@@ -29,9 +30,17 @@ function SettingsApply(rateChanged=true)
 let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0, instRef = null;
 let paused=false,saving=false,machineBarrier=null,engineBytes=null,hostRef=null,showStoppedFrame=null;
+let machineBus=null;
+const RamAccess=fn=>machineBus?machineBus.Access(fn):fn();
 const deferred=[];
 let docClip=null;
 function PauseSet(value) {
+  if(machineBus?.Stopped()) {
+    paused=true;
+    postMessage({cmd:"paused",value:true});
+    if(!value)postMessage({cmd:"error",msg:"Shared RAM coordination stopped. Restart TempleOS before resuming.",retained:true,paused:true});
+    return;
+  }
   if (value && machineBarrier && !machineBarrier.Lock())
     throw new Error("The application cores did not stop; pause again.");
   paused=!!value;
@@ -47,6 +56,7 @@ function GuestCacheInvalidate(lbas)
 //of them when lbas is null). Each cached CCacheBlk of those blocks gets
 //dv=NULL, so DskCacheFind misses it and reads the disk. Only dv is
 //written: the hash chains and LRU links stay as the guest made them.
+  return RamAccess(()=>{
   let want=null,dvw,cap,base,o_ctrl,o_next,o_dv,o_blk,ctrl,p,blk,n=0,
 	cleared=0,sample=[];
   function Rd(a)
@@ -87,6 +97,7 @@ function GuestCacheInvalidate(lbas)
     console.log("[hemu] cacherefresh: changedLBAs=["+[...want].slice(0,6)+
 	  "] sampleCachedBlks=["+sample+"] cleared="+cleared+"/"+want.size);
   return cleared;
+  });
 }
 
 // ===== BACKEND GUEST EXECUTION (no keystrokes, no per-character TaskMsg) ======================
@@ -194,12 +205,15 @@ function gxTick() {                          // once per emulated frame: service
   try { gx.tick(); } catch (e) { console.warn("[hemu] guest tick threw", e); }
 }
 
-const guestInput = createGuestInput({guest:()=>gx,memory:()=>instRef?.exports.memory,base:()=>gBase,
+const guestInput = createGuestInput({guest:()=>gx,
   onState:state=>postMessage({cmd:"inputMode",...state})});
 onmessage = (e) => {
   const m = e.data;
   if (saving && m.cmd!=="ack") {deferred.push(m);return;}
-  if (m.cmd === "init") boot(m).catch(err => postMessage({ cmd: "error", msg: String(err?.message || err) }));
+  if (m.cmd === "init") boot(m).catch(err => {
+    if(machineBus)BusStop(new Int32Array(smpCfg.ctrl));
+    postMessage({cmd:"error",msg:String(err?.message||err),...(loaded?{retained:true,paused:true}:{})});
+  });
   else if (m.cmd === "input") { if (m.keys) keyq.Push(m.keys); if (m.keysUp) keyq.Release(); guestInput.accept(m); }
   else if (m.cmd==="keysUp") keyq.Release();
   else if (m.cmd==="set") {
@@ -231,7 +245,7 @@ onmessage = (e) => {
 };
 
 async function exportImage(kind) {
-  let locked=false;
+  let locked=false,frozen=false;
   try {
     if (!loaded || !disk || !gx?.ready) throw new Error("Wait for the machine and disk to finish loading.");
     if (machineBarrier && !machineBarrier.Lock()) throw new Error("The application cores did not stop; save again.");
@@ -243,12 +257,16 @@ async function exportImage(kind) {
     const launch=gx.snapshot();
     const meta={cores:smpCfg?.ncore||1,base:gBase,heapPtr:hostRef.state.heapPtr,heapAbi:hostRef.state.heapAbi??0,
       sp:Number(instRef.exports.__sp.value),ipiAddr:smpCfg?.ipiAddr||0,
+      requiredBusProtocol:machineBus?.Ready()?BUS_VERSION:undefined,
       paused,rate:refreshRate,actualRate,repeat:repeatKeys,budget:curBudget,
       keyboard:keyq.Save(),pointer:guestInput.save(),launch,guestPatches:docClip?.Meta()||[]};
+    if(machineBus){machineBus.Freeze();frozen=true;}
     const buf=kind==="snapshot"?await SnapshotSave({meta,wasm:engineBytes,memory:instRef.exports.memory,disk}):await DiskImage();
+    if(machineBus?.Stopped())throw new Error("Shared RAM coordination stopped during capture");
     postMessage({cmd:"exportResult",kind,ok:true,buf},[buf]);
   } catch(err) {postMessage({cmd:"exportResult",kind,ok:false,msg:err.message});}
   finally {
+    if(frozen)machineBus.Thaw();
     if (locked && !paused) machineBarrier?.Unlock();
     saving=false;
     for (const m of deferred.splice(0)) onmessage({data:m});
@@ -290,13 +308,17 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
   smpCfg = smp || null;
   if (fixedB) curBudget = fixedB;
   postMessage({cmd:"progress",text:"reading saved machine…",pct:60});
-  const saved=await SnapshotOpen(gz);
+  const saved=await SnapshotOpen(gz,{busProtocol:smpCfg?.busProtocol||0});
   if (saved && saved.meta.cores!==(smpCfg?.ncore||1)) {await saved.Close();throw new Error("Snapshot core count does not match the worker topology");}
   if (!saved) snap=await gunzipInto(gz,402653184);
   gz=null;
   if (!saved && diskBytes) disk=makeDisk(new Uint8Array(diskBytes));
   engineBytes=saved?saved.wasm:new Uint8Array(await (await fetch(wasmUrl,{cache:"no-cache"})).arrayBuffer());
   const mod=await WebAssembly.compile(engineBytes);
+  if(smpCfg?.busProtocol!==undefined) {
+    if(smpCfg.busProtocol!==BUS_VERSION)throw new Error("Unsupported shared bus protocol");
+    machineBus=CoreBus(new Int32Array(smpCfg.ctrl),0,smpCfg.ncore);
+  }
 
   let sequence=0,lastFrame=null;
   function SendFrame(addr,w,h,u8,force=false) {
@@ -306,10 +328,10 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
     postMessage({cmd:"frame",buf:buf.buffer,w,h,fps:FrameFps(top),updates:++sequence,top},[buf.buffer]);
   }
   showStoppedFrame=()=>{
-    if (lastFrame) SendFrame(...lastFrame,new Uint8Array(instRef.exports.memory.buffer),true);
+    if (lastFrame) RamAccess(()=>SendFrame(...lastFrame,new Uint8Array(instRef.exports.memory.buffer),true));
   };
-  const barrier=machineBarrier=smpCfg?CaptureBarrier(new Int32Array(smpCfg.ctrl),
-        smpCfg.ncore,()=>apsReleased):null;
+  const capture=smpCfg?CaptureBarrier(new Int32Array(smpCfg.ctrl),smpCfg.ncore,()=>apsReleased):null,
+    barrier=machineBarrier=capture?{Lock:()=>machineBus?machineBus.Suspend(capture.Lock):capture.Lock(),Unlock:capture.Unlock}:null;
   const host=hostRef=createHemuHost({
     ...(saved?{heapAbi:saved.meta.heapAbi}:{}),
     captureLock:()=>barrier?barrier.Lock():true,
@@ -324,6 +346,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
       lastFrame=[addr,w,h];SendFrame(addr,w,h,u8);
     },
   });
+  if(machineBus)Object.assign(host.env,machineBus.Imports());
   if (saved && (host.state.heapAbi??0)!==saved.meta.heapAbi) {
     await saved.Close();throw new Error("Snapshot allocator ABI is unsupported by this host");
   }
@@ -354,6 +377,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
 
   if (smpCfg) host.env.mem = smpCfg.mem;                          // SMP BSP: instantiate over the shared memory (hemu-smp.wasm imports env.mem)
   inst = await WebAssembly.instantiate(mod, { env: host.env });
+  if(machineBus)inst=machineBus.Attach(inst,mod);
   instRef = inst;
   host.attach(inst);
   if (smpCfg) {
@@ -364,15 +388,18 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
         await new Promise(r=>setTimeout(r,10));
       }
   }
+  if(machineBus)postMessage({cmd:"busReady",version:BUS_VERSION,ready:machineBus.Ready()});
   if (saved) {
-    disk=await saved.Restore(inst.exports.memory);
+    if(saved.meta.requiredBusProtocol && !machineBus?.Ready())
+      throw new Error("Saved machine requires every core to coordinate RAM access");
+    disk=await saved.Restore(inst.exports.memory,{busProtocol:smpCfg?.busProtocol||0});
     const m=saved.meta;
     gBase=m.base;host.state.heapPtr=m.heapPtr;inst.exports.__sp.value=BigInt(m.sp);
     if (Number(inst.exports.RamBase())!==gBase) throw new Error("Snapshot RAM base does not match its engine");
     paused=m.paused;refreshRate=m.rate;actualRate=m.actualRate;repeatKeys=m.repeat;
     curBudget=m.budget;keyq.Restore(m.keyboard);guestInput.restore(m.pointer);welcomePending=false;
     loaded=true;inst.exports.SnapshotResume();
-    gx=createGuestExec({inst,gBase,onEvent:gxEvent});gxProbe=gx.probe();
+    gx=createGuestExec({inst,gBase,onEvent:gxEvent,access:RamAccess});gxProbe=gx.probe();
     if (!gxProbe.ok) throw new Error("Saved guest API could not be restored: "+gxProbe.errors.join("; "));
     gx.restoreLaunch(m.launch);
     postMessage({cmd:"guestReady",ok:true,probe:gxProbe,restored:true});
@@ -388,7 +415,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
     }
 
   } else inst.exports.__rt_init();
-  docClip=DocClipPatch({guest:()=>gx,instance:()=>instRef,base:()=>gBase,
+  docClip=DocClipPatch({guest:()=>gx,instance:()=>instRef,
     lock:()=>machineBarrier?machineBarrier.Lock():true,
     unlock:()=>{if(!paused && !saving)machineBarrier?.Unlock();},
     onState:msg=>postMessage(msg),canRun:()=>!paused && !saving,restored:saved?saved.meta.guestPatches:patches===false?[]:null});
@@ -426,7 +453,11 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
       const fault=CpuFaultText(inst.exports);
       if(fault) {PauseSet(true);postMessage({cmd:"error",msg:fault,retained:true,paused:true});continue;}
     }
-    catch (err) { postMessage({ cmd: "error", msg: "hemu trap: " + err.message }); return; }
+    catch (err) {
+      if(machineBus) {BusStop(new Int32Array(smpCfg.ctrl));paused=true;}
+      postMessage({cmd:"error",msg:"hemu trap: "+err.message,...(machineBus?{retained:true,paused:true}:{})});
+      return;
+    }
     if (smpCfg && !apsReleased && ++bootFrames > 120) {            // desktop settled -> release the AP workers (parallel from here)
       const dvm = new DataView(smpCfg.mem.buffer);
       for (let k = 1; k < smpCfg.ncore; k++) dvm.setBigUint64(smpCfg.ipiAddr + k * 8, 0n, true);   // drop stale boot-IPIs
@@ -439,7 +470,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
       // difference between living and dying on iOS Safari's per-tab memory budget.
       if (!disk) setTimeout(() => loadDisk("../vendor/images/templeos-hd.qcow2.gz").then(d => {disk=d;postMessage({cmd:"diskInfo",ok:true,msg:"Disk ready"});}).catch(err => {disk=null;postMessage({cmd:"diskInfo",ok:false,msg:err.message});}), 2500);
       // guest execution API: bound to this instance now that gBase is known (snapLoad ran in the first frame)
-      try { gx = createGuestExec({ inst, gBase, onEvent: gxEvent, log: (s) => console.log("[hemu gx] " + s) }); }
+      try { gx = createGuestExec({ inst, gBase, onEvent: gxEvent, access:RamAccess, log: (s) => console.log("[hemu gx] " + s) }); }
       catch (e) { console.warn("[hemu] guest execution API unavailable: " + e.message); postMessage({ cmd: "guestReady", ok: false, probe: { ok: false, errors: [String(e.message || e)], warnings: [] } }); }
     }
     gxTick();                                                      // between frames: probe once, then service queued jobs

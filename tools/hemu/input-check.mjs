@@ -62,7 +62,7 @@ const info0 = gx.info();
 say("focus: " + JSON.stringify(info0.focus) + " adam: " + JSON.stringify({ name: info0.adam.name, idle: info0.adam.idle, awaitingMsg: info0.adam.awaitingMsg, jobsWaiting: info0.adam.jobsWaiting }));
 
 
-input=createGuestInput({guest:()=>gx,memory:()=>inst.exports.memory,base:()=>gBase});
+input=createGuestInput({guest:()=>gx});
 say('Input layout: '+JSON.stringify(gx.inputState()));
 assert(gx.inputState()?.down,'Input class metadata resolves');
 const source='#define TOS_NATIVE 1\n'+readFileSync(SITE_DIR + '/holycraft/HolyCraft.HC', 'latin1');

@@ -11,6 +11,8 @@ export function CaptureBarrier(ctrl,cores,active,clock=performance.now.bind(perf
   }
   function Lock()
   {
+    if (Atomics.load(ctrl,1))
+      return false;
     if (held || !active())
       return true;
     seq=seq%0x7FFFFFFF+1;
@@ -26,6 +28,10 @@ export function CaptureBarrier(ctrl,cores,active,clock=performance.now.bind(perf
         }
         Atomics.wait(ctrl,4+core,Atomics.load(ctrl,4+core),left);
       }
+    if (Atomics.load(ctrl,1)) {
+      Unlock();
+      return false;
+    }
     return true;
   }
   return {Lock,Unlock};

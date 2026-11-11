@@ -56,7 +56,7 @@ function Message(m) {
   }
 }
 async function Boot(gz,config) {
-  const saved=await SnapshotInspect(gz),cores=saved?.meta.cores||config.cores;
+  const saved=await SnapshotInspect(gz,{busProtocol:0}),cores=saved?.meta.cores||config.cores;
   if (cores===4 && !crossOriginIsolated) throw new Error("Four cores need a cross-origin isolated local server");
   Stop();const current=++generation;
   paused=false;$("pause").textContent="Pause";canvas.dataset.frames="0";canvas.dataset.cores="1";Status("Starting TempleOS…");

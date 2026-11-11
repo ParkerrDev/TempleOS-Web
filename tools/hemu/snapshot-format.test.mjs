@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import {gzipSync} from "node:zlib";
 import {readFileSync} from "node:fs";
+import {createHash} from "node:crypto";
 import {SnapshotInspect,SnapshotOpen} from "../../engine/Snapshot.js";
+import {SnapshotInspect as OldInspect} from "./fixtures/Snapshot-v1.mjs";
+
+//Unmodified engine/Snapshot.js from Web b0d51bf, before mandatory protocol versions.
+assert.equal(createHash("sha256").update(readFileSync(new URL("./fixtures/Snapshot-v1.mjs",import.meta.url))).digest("hex"),
+  "62bfef1344ab78bcbe0a376a5c84578829c409fbc74c39fa8ce23c9a79c81c76");
 
 const wasm=readFileSync(new URL("../../build/hemu.wasm",import.meta.url));
 const meta={version:1,cores:1,memoryBytes:436666368,wasmBytes:wasm.length,
@@ -32,4 +38,21 @@ try {
 } finally {await open.Close();}
 const corrupt=Pack();corrupt[corrupt.length-5]^=1;
 await assert.rejects(()=>SnapshotInspect(corrupt));
+const coordinated=readFileSync(new URL("../../build/hemu-smp.wasm",import.meta.url)),
+  v2={...meta,version:2,requiredBusProtocol:1,cores:4,wasmBytes:coordinated.length,
+    engineHash:Buffer.from(await crypto.subtle.digest("SHA-256",coordinated)).toString("hex")},
+  packed=Pack(v2,coordinated),saved=await SnapshotOpen(packed,{busProtocol:1});
+assert.equal(saved.meta.requiredBusProtocol,1);
+await assert.rejects(()=>OldInspect(packed),/unsupported version/,"the actual old decoder rejects before loading the embedded engine");
+await assert.rejects(()=>SnapshotOpen(packed,{busProtocol:0}),/requires shared RAM protocol/);
+await assert.rejects(()=>SnapshotInspect(packed),/requires shared RAM protocol/);
+try {
+  const memory=new WebAssembly.Memory({initial:512,maximum:8192}),first=new Uint8Array(memory.buffer);
+  first[0]=0xA5;
+  await assert.rejects(()=>saved.Restore(memory),/requires shared RAM protocol/);
+  assert.equal(memory.buffer.byteLength,32*1024*1024,"refusal precedes memory growth");
+  assert.equal(first[0],0xA5,"refusal precedes RAM mutation");
+} finally {await saved.Close();}
+await assert.rejects(()=>SnapshotInspect(Pack({...meta,version:1,requiredBusProtocol:1})),/ownership requirement/);
+await assert.rejects(()=>SnapshotInspect(Pack({...v2,requiredBusProtocol:2},coordinated)),/ownership requirement/);
 console.log("Snapshot format: legacy detection, engine hash/module, bounded metadata, unsupported versions, corruption and truncation rejected.");

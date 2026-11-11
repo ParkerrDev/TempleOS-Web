@@ -1,16 +1,27 @@
 import {CaptureWait} from "./CoreBarrier.js";
+import {CoreBus,BusStop,BUS_VERSION} from "./CoreBus.js";
 import {createHemuHost,CpuFaultText} from "./host.js";
 import * as jit from "./jit.js";
 
 onmessage=e=>{
   if(e.data.cmd!=="init")return;
   (e.data.role==="bsp"?import("./LegacyBsp.js").then(m=>m.LegacyBsp(e.data)):RunAp(e.data))
-    .catch(err=>postMessage({cmd:"error",msg:String(err.message||err)}));
+    .catch(err=>{
+      const m=e.data,ctrl=m.ctrl&&new Int32Array(m.ctrl),valid=ctrl?.length>=16,
+        retained=m.busProtocol===BUS_VERSION&&valid&&Number.isInteger(m.core)&&m.core>=1&&m.core<=3&&!!Atomics.load(ctrl,8+m.core);
+      if(m.busProtocol===BUS_VERSION&&valid)BusStop(ctrl);
+      postMessage({cmd:"error",msg:String(err.message||err),...(retained?{retained:true,core:m.core}:{})});
+    });
 };
 
-async function RunAp({core,mem,ctrl:control,wasmBytes,heapAbi}) {
+async function RunAp({core,mem,ctrl:control,wasmBytes,heapAbi,busProtocol,requiredBusProtocol,sc}) {
   if(!Number.isInteger(core)||core<1||core>3)throw new Error("Invalid application core");
+  if(requiredBusProtocol!==undefined&&requiredBusProtocol!==0&&
+      (requiredBusProtocol!==BUS_VERSION||busProtocol!==requiredBusProtocol))
+    throw new Error("Saved machine requires shared RAM protocol "+requiredBusProtocol);
   const ctrl=new Int32Array(control),hot=new Map();
+  if(busProtocol!==undefined&&busProtocol!==BUS_VERSION)throw new Error("Unsupported shared bus protocol");
+  const bus=busProtocol===BUS_VERSION?CoreBus(ctrl,core,sc?.ncore):null;
   let inst,base=0;
   const host=createHemuHost({...(heapAbi===undefined?{}:{heapAbi}),onText:s=>{if(s.includes("BADOP"))postMessage({cmd:"log",msg:`core${core} ${s.trim()}`});}});
   Object.assign(host.env,{
@@ -31,11 +42,13 @@ async function RunAp({core,mem,ctrl:control,wasmBytes,heapAbi}) {
       return BigInt(jit.jitDispatch(Number(budget)));
     }
   });
+  if(bus)Object.assign(host.env,bus.Imports());
   jit.jitReset();
   const mod=await WebAssembly.compile(wasmBytes);
   inst=await WebAssembly.instantiate(mod,{env:host.env});
   inst.exports.__core.value=BigInt(core);
   inst.exports.__sp.value=BigInt(0x1000000-core*0x100000);
+  if(bus)inst=bus.Attach(inst,mod);
   host.attach(inst);
   Atomics.store(ctrl,8+core,1);Atomics.notify(ctrl,8+core);
   while(!Atomics.load(ctrl,0)&&!Atomics.load(ctrl,1))Atomics.wait(ctrl,0,0,100);

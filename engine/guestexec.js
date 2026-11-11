@@ -44,19 +44,20 @@ export function createGuestExec(opts) {
   const inst = opts.inst, gBase = opts.gBase | 0, ex = inst.exports;
   const log = opts.log || (() => {});
   const onEvent = opts.onEvent || (() => {});
+  const access=opts.access||((fn)=>fn());
   for (const n of HEMU_CALLS) if (typeof ex[n] !== "function") throw new Error("hemu.wasm lacks export " + n + " (rebuild: node engine/build.mjs)");
   const memSize = Number(ex.GuestInfo(0n)), scrBase = Number(ex.GuestInfo(1n)), scrSize = Number(ex.GuestInfo(2n));
   const dataSize = Math.floor((scrSize - SCR.DATA - 256) / 512) * 512;       // payload area (leaves the sentinel alone)
   let bufRef = null, dv = null, u8 = null;
   const views = () => { const b = ex.memory.buffer; if (b !== bufRef) { bufRef = b; dv = new DataView(b); u8 = new Uint8Array(b); } };
   const inRam = (a) => a > 0 && a + 8 <= memSize;
-  const rd64 = (a) => { views(); return inRam(a) ? Number(dv.getBigUint64(gBase + a, true)) : 0; };
-  const rd64b = (a) => { views(); return inRam(a) ? dv.getBigUint64(gBase + a, true) : 0n; };
-  const rd32 = (a) => { views(); return inRam(a) ? dv.getUint32(gBase + a, true) : 0; };
-  const rd8 = (a) => { views(); return (a >= 0 && a < memSize) ? u8[gBase + a] : 0; };
-  const wr64 = (a, v) => { views(); dv.setBigUint64(gBase + a, BigInt.asUintN(64, BigInt(v)), true); };
-  const wrBytes = (a, bytes) => { views(); u8.set(bytes, gBase + a); };
-  const rdBytes = (a, n) => { views(); return u8.slice(gBase + a, gBase + a + n); };
+  const rd64 = (a) => access(()=>{ views(); return inRam(a) ? Number(dv.getBigUint64(gBase + a, true)) : 0; });
+  const rd64b = (a) => access(()=>{ views(); return inRam(a) ? dv.getBigUint64(gBase + a, true) : 0n; });
+  const rd32 = (a) => access(()=>{ views(); return inRam(a) ? dv.getUint32(gBase + a, true) : 0; });
+  const rd8 = (a) => access(()=>{ views(); return (a >= 0 && a < memSize) ? u8[gBase + a] : 0; });
+  const wr64 = (a, v) => access(()=>{ views(); dv.setBigUint64(gBase + a, BigInt.asUintN(64, BigInt(v)), true); });
+  const wrBytes = (a, bytes) => access(()=>{ views(); u8.set(bytes, gBase + a); });
+  const rdBytes = (a, n) => access(()=>{ views(); return u8.slice(gBase + a, gBase + a + n); });
   const rdStr = (a, max = 96) => { let s = ""; for (let i = 0; i < max; i++) { const c = rd8(a + i); if (!c) break; s += String.fromCharCode(c); } return s; };
 
   const S = {}, G = {};                             // resolved functions / global variable addresses
@@ -68,12 +69,14 @@ export function createGuestExec(opts) {
   function NameStage(off,st)
   {//st as a C string in the scratch window. Returns its address in the
   //engine's memory, which is what HEMU's U8 * arguments hold.
-    let a=gBase+scrBase+off,i;
-    views();
-    for (i=0;i<st.length && i<NAME_LEN-1;i++)
-      u8[a+i]=st.charCodeAt(i)&0xFF;
-    u8[a+i]=0;
-    return BigInt(a);
+    return access(()=>{
+      let a=gBase+scrBase+off,i;
+      views();
+      for (i=0;i<st.length && i<NAME_LEN-1;i++)
+        u8[a+i]=st.charCodeAt(i)&0xFF;
+      u8[a+i]=0;
+      return BigInt(a);
+    });
   }
 
   function FunFind(st)
@@ -490,9 +493,11 @@ export function createGuestExec(opts) {
   }
   function frameStats() {
     if (!ready || !DISPLAY.fps || !DISPLAY.updates) return null;
-    views();
-    const fps = dv.getFloat64(gBase + DISPLAY.fps, true), updates = dv.getBigUint64(gBase + DISPLAY.updates, true);
-    return Number.isFinite(fps) && fps >= 0 && fps <= 10000 ? {fps, updates: Number(updates)} : null;
+    return access(()=>{
+      views();
+      const fps = dv.getFloat64(gBase + DISPLAY.fps, true), updates = dv.getBigUint64(gBase + DISPLAY.updates, true);
+      return Number.isFinite(fps) && fps >= 0 && fps <= 10000 ? {fps, updates: Number(updates)} : null;
+    });
   }
   return { snapshot, restoreLaunch, probe: Probe, tick, info, inputState, frameStats, taskInfo, taskRing, exec, include, launch, writeFile, mkdir, popup, call, status: (id) => (reqs.get(id) || {}).last || null,
     funFind: FunFind, varFind: VarFind, memberFind: MemberFind,

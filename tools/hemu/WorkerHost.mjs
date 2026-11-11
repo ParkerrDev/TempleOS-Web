@@ -5,6 +5,7 @@ import {Worker} from "node:worker_threads";
 import {readFileSync} from "node:fs";
 import {SnapshotInspect} from "../../engine/Snapshot.js";
 import {FONT} from "../../holyc-wasm/src/runtime/font.js";
+import {BusStop,BUS_VERSION} from "../../engine/CoreBus.js";
 
 export const SITE=new URL("../../",import.meta.url);
 const SHIM=new URL("./WorkerShim.mjs",import.meta.url);
@@ -126,11 +127,13 @@ export async function HemuBoot(opt)
   }
   if(opt.engine)wasm=opt.engine;
   gz=opt.snapshot||readFileSync(new URL(live,SITE));
-  const saved=opt.snapshot?await SnapshotInspect(gz):null;
+  const saved=opt.snapshot?await SnapshotInspect(gz,{busProtocol:opt.busProtocol||0}):null;
   if (saved) opt={...opt,smp:saved.meta.cores===4?4:0};
   h.workers.push(WorkerNew("engine/hemu-worker.js"+(opt.nojit?"?nojit":""),opt.fetchHold));
   h.workers[0].on("message",MsgIn);
   h.workers[0].on("error",function WorkerErr(e) {console.log("worker threw: "+e.stack);});
+  h.workers[0].on("error",()=>{if(opt.busProtocol===BUS_VERSION&&h.ctrl)BusStop(h.ctrl);});
+  h.workers[0].on("exit",()=>{if(opt.busProtocol===BUS_VERSION&&h.ctrl&&!h.stopping)BusStop(h.ctrl);});
   init={cmd:"init",gz:gz,wasmUrl:new URL(wasm,SITE).href,fixedB:opt.fixed_b||0,
 	diskBytes:null,patches:opt.patches};
   if (opt.welcome)
@@ -144,6 +147,8 @@ export async function HemuBoot(opt)
     if (saved) sc.globals.g_ipi_pending=saved.meta.ipiAddr;
     for (k=1;k<opt.smp;k++) {
       ap=WorkerNew("engine/hemu-smp-worker.js");
+      ap.on("error",()=>{if(opt.busProtocol===BUS_VERSION)BusStop(new Int32Array(ctrl));});
+      ap.on("exit",()=>{if(opt.busProtocol===BUS_VERSION&&!h.stopping)BusStop(new Int32Array(ctrl));});
       ap.on("message",function ApMsg(m) {
         h.apMsgs.push(m);
         if(m.cmd==="error") {
@@ -152,11 +157,12 @@ export async function HemuBoot(opt)
         }
       });
       ap.postMessage({cmd:"init",role:"ap",core:k,mem:mem,ctrl:ctrl,sc:sc,
-	    wasmBytes:wasm_bytes,heapAbi:saved?.meta.heapAbi});
+	    wasmBytes:wasm_bytes,heapAbi:saved?.meta.heapAbi,busProtocol:opt.busProtocol,
+        requiredBusProtocol:saved?.meta.requiredBusProtocol});
       h.workers.push(ap);
     }
     init.smp={mem:mem,ctrl:ctrl,ipiAddr:sc.globals&&sc.globals.g_ipi_pending,
-	  ncore:opt.smp};
+	  ncore:opt.smp,busProtocol:opt.busProtocol};
     h.ctrl=new Int32Array(ctrl);
   }
   if (opt.rate!=null)
@@ -173,8 +179,9 @@ export async function HemuBoot(opt)
   };
   h.Stop=async function Stop() {
     let i;
+    h.stopping=true;
     if (h.ctrl)
-      Atomics.store(h.ctrl,1,1);
+      BusStop(h.ctrl);
     for (i=0;i<h.workers.length;i++)
       await h.workers[i].terminate();
   };

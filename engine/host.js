@@ -39,6 +39,9 @@ export function createHemuHost(opts = {}) {
     __jit_state(_r, _f, _p) { return 0n; }, __jit_compile(_rip) { return 0n; }, __jit_run(rip) { return rip; },
     __jit_x87(_a, _b, _c) {}, __jit_dispatch(_b) { return 0n; }, __jit_chain(_a, _b) {}, __jit_seg(..._a) {},
     __ap_run(_rip, _bud) { return 0n; },
+    __bus_poll() {return 1n;},
+    __bus_lock() {return 0n;},
+    __bus_unlock() {},
   });
   return host;
 }

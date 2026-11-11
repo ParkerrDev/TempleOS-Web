@@ -7,11 +7,12 @@ const fixture=new URL("./fixtures/legacy-smp.wasm",import.meta.url),bytes=readFi
   meta=JSON.parse(readFileSync(new URL("./fixtures/legacy-smp.json",import.meta.url))),
   Hash=data=>createHash("sha256").update(data).digest("hex"),
   Request=(h,m,p,ms=30000)=>{const waiting=h.Wait(p,ms);h.Post(m);return waiting;};
+const busProtocol=process.env.HEMU_BUS_PROTOCOL?Number(process.env.HEMU_BUS_PROTOCOL):undefined;
 assert.equal(Hash(bytes),meta.sha256);
 assert.ok(!WebAssembly.Module.exports(new WebAssembly.Module(bytes)).some(x=>x.name==="CpuFault"));
 let h;
 try {
-  h=await HemuBoot({smp:4,engine:fixture.href,engineMeta:meta,rate:30,patches:false});
+  h=await HemuBoot({smp:4,busProtocol,engine:fixture.href,engineMeta:meta,rate:30,patches:false});
   assert.equal((await ReadyWait(h,20000)).ok,true);
   if(!h.msgs.some(m=>m.cmd==="diskInfo"&&m.ok))await h.Wait(m=>m.cmd==="diskInfo"&&m.ok,30000);
   if(!h.msgs.some(m=>m.cmd==="smpReady"))await h.Wait(m=>m.cmd==="smpReady",10000);
@@ -20,10 +21,13 @@ try {
   assert.equal(saved.ok,true,saved.msg);
   const info=await SnapshotInspect(saved.buf);
   assert.equal(info.meta.cores,4);assert.equal(info.meta.heapAbi,meta.heapAbi);
+  assert.equal(info.meta.version,1,"legacy engines retain their version 1 envelope");
+  assert.equal(info.meta.requiredBusProtocol,undefined,"a nonpolling engine cannot acquire exclusive ownership");
+  if(busProtocol)assert.deepEqual(h.msgs.find(m=>m.cmd==="busReady"),{cmd:"busReady",version:1,ready:false});
   assert.equal(Hash(info.wasm),meta.sha256,"the full save embeds the actual historical engine");
   await h.Stop();h=null;
 
-  h=await HemuBoot({snapshot:saved.buf,pauseOnApError:true});
+  h=await HemuBoot({snapshot:saved.buf,busProtocol,pauseOnApError:true});
   await h.Wait(m=>m.cmd==="restored",30000);
   await Request(h,{cmd:"pause",value:false},m=>m.cmd==="paused"&&!m.value);
   const paused=h.Wait(m=>m.cmd==="paused"&&m.value,20000),
