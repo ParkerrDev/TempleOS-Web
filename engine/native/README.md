@@ -59,8 +59,12 @@ message; unsupported compositors and X11 retain absolute input with an explicit
 capture diagnostic. macOS relative input remains unimplemented.
 
 Qt's public Wayland interface provides the connection and pointer; its private
-QPA boundary supplies only the window's `wl_surface`. The adapter dispatches its
-own event queue on the GUI thread while Qt owns connection reads. Capture is
+QPA boundary supplies only the window's `wl_surface`. The registry, managers and lock objects use Qt's default queue: its Wayland
+reader wakes the GUI thread to dispatch their callbacks. There is no periodic
+pointer poll while active or idle; only an outstanding capture request starts
+a bounded refusal timer. Registry removal and reannouncement remain event driven.
+The [Qt dispatch source](https://codebrowser.dev/qt6/qtbase/src/plugins/platforms/wayland/qwaylanddisplay.cpp.html#529)
+shows the default queue's `EmitToDispatch`/queued `flushRequests` boundary. Capture is
 refused if the runtime Qt version differs from the build headers; rebuild after
 upgrading Qt. This private boundary is confined to `Pointer.cpp`.
 

@@ -87,6 +87,8 @@ int main(int argc,char **argv) {
     else if(op=="focus"&&top){top->sendConfigure(QSize(640,480),QList<QWaylandXdgToplevel::State>{QWaylandXdgToplevel::ActivatedState});compositor.defaultSeat()->setKeyboardFocus(view->surface());compositor.defaultSeat()->sendMouseMoveEvent(view,{320,240});}
     else if(op=="blur"&&top){top->sendConfigure(QSize(640,480),QList<QWaylandXdgToplevel::State>{});compositor.defaultSeat()->setKeyboardFocus(nullptr);}
     else if(op=="remove"){wl_global_destroy(protocol.constraints);protocol.constraints=nullptr;}
+    else if(op=="restore"&&!protocol.constraints)protocol.constraints=wl_global_create(compositor.display(),&zwp_pointer_constraints_v1_interface,1,&protocol,Protocol::BindConstraints);
+    else if(op=="quiet")frames.stop();
     else if(op=="quit")app.quit();
     wl_display_flush_clients(compositor.display());Reply({{"event","command"},{"cmd",op}});
   });

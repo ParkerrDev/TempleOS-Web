@@ -6,8 +6,14 @@ try {
   await server.wait(e=>e.event==="surface",0);await client.wait(e=>e.event==="focus"&&e.active,0);
   async function Command(child,cmd,after){const at=child.events.length;child.send({cmd});return child.wait(after,at);}
   const Active=e=>e.event==="state"&&e.active,Released=e=>e.event==="state"&&!e.active&&!e.pending;
+  async function Show() {
+    const surface=server.events.length,focus=client.events.length;
+    const shown=await Command(client,"show",e=>e.event==="command"&&e.cmd==="show");
+    await server.wait(e=>e.event==="surface",surface);
+    if(!shown.active)await client.wait(e=>e.event==="focus"&&e.active,focus);
+  }
   await Command(client,"capture",Active);
-  assert.equal(server.events.find(e=>e.event==="lock-request").lifetime,1);
+  assert.equal((await server.wait(e=>e.event==="lock-request",0)).lifetime,1);
   let at=client.events.length;server.send({cmd:"delta",dx:13.25,dy:-7.5});assert.deepEqual(await client.wait(e=>e.event==="motion",at),{event:"motion",dx:13.25,dy:-7.5});
   const destroyed=server.events.length;await Command(client,"release",Released);await server.wait(e=>e.event==="lock-destroyed",destroyed);
   await Command(client,"capture",Active);
@@ -28,10 +34,17 @@ try {
   await Command(server,"grant",e=>e.event==="command"&&e.cmd==="grant");
   await Command(client,"capture",Active);await Command(client,"hide",Released);
   await Command(server,"grant",e=>e.event==="command"&&e.cmd==="grant");
-  at=server.events.length;await Command(client,"show",e=>e.event==="command"&&e.cmd==="show");await server.wait(e=>e.event==="surface",at);
+  await Show();
   await Command(client,"capture",Active);await Command(client,"destroy",Released);
-  at=server.events.length;await Command(client,"show",e=>e.event==="command"&&e.cmd==="show");await server.wait(e=>e.event==="surface",at);
+  await Show();
   await Command(client,"capture",Active);at=client.events.length;server.send({cmd:"remove"});await client.wait(Released,at);
   assert.match((await Command(client,"capture",e=>e.event==="error")).text,/requires Wayland/);
-  console.log("Actual Qt/Wayland protocol: compositor grant, fractional unaccelerated deltas, pending input/cancel/timeout, compositor unlock, release/focus/hide/surface/global teardown and unsupported capture passed.");
+  await Command(server,"quiet",e=>e.event==="command"&&e.cmd==="quiet");
+  await Command(client,"hide",e=>e.event==="command"&&e.cmd==="hide");
+  const idle=await Command(client,"idle",e=>e.event==="idle");assert.ok(idle.wakes<20,JSON.stringify(idle));
+  await Command(server,"restore",e=>e.event==="command"&&e.cmd==="restore");
+  await Command(client,"sync",e=>e.event==="synced");
+  await Show();
+  await Command(client,"capture",Active);await Command(client,"release",Released);
+  console.log("Actual Qt/Wayland protocol: compositor grant, fractional unaccelerated deltas, pending input/cancel/timeout, compositor unlock, release/focus/hide/surface/global teardown, idle reannouncement, GUI-thread callbacks and no periodic idle dispatch passed ("+idle.wakes+" wakes/500ms).");
  } catch(error) {Diagnose();throw error;} finally {await Close();}

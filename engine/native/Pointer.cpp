@@ -13,10 +13,9 @@
 
 struct PointerCapture::Platform {
   PointerCapture *owner;
-  QTimer dispatch,timeout;
+  QTimer timeout;
 #ifdef Q_OS_LINUX
   wl_display *display=nullptr;
-  wl_event_queue *queue=nullptr;
   wl_registry *registry=nullptr;
   zwp_pointer_constraints_v1 *constraints=nullptr;
   zwp_relative_pointer_manager_v1 *manager=nullptr;
@@ -56,27 +55,20 @@ struct PointerCapture::Platform {
     if(strcmp(qVersion(),QT_VERSION_STR))return;
     const auto app=qGuiApp->nativeInterface<QNativeInterface::QWaylandApplication>();
     if(!app)return;
-    display=app->display();queue=wl_display_create_queue(display);registry=wl_display_get_registry(display);
-    wl_proxy_set_queue(reinterpret_cast<wl_proxy *>(registry),queue);
+    display=app->display();registry=wl_display_get_registry(display);
+    //Qt dispatches its default queue on the GUI thread, including our listeners.
     static const wl_registry_listener listener={Global,Removed};wl_registry_add_listener(registry,&listener,this);
-    //Qt owns reading the shared connection. Only this GUI-thread queue dispatches our callbacks.
-    dispatch.setInterval(4);
-    QObject::connect(&dispatch,&QTimer::timeout,owner,[this]{
-      if(wl_display_dispatch_queue_pending(display,queue)<0){dispatch.stop();owner->Release();emit owner->error(QObject::tr("Wayland pointer connection failed"));}
-      else wl_display_flush(display);
-    });
-    dispatch.start();wl_display_flush(display);
+    wl_display_flush(display);
 #endif
   }
   ~Platform() {
-    dispatch.stop();timeout.stop();
+    timeout.stop();
 #ifdef Q_OS_LINUX
     if(relative)zwp_relative_pointer_v1_destroy(relative);
     if(lock)zwp_locked_pointer_v1_destroy(lock);
     if(manager)zwp_relative_pointer_manager_v1_destroy(manager);
     if(constraints)zwp_pointer_constraints_v1_destroy(constraints);
     if(registry)wl_registry_destroy(registry);
-    if(queue)wl_event_queue_destroy(queue);
 #endif
   }
 };
