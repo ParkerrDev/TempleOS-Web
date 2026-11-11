@@ -14,6 +14,7 @@
     "build:bible": "node tools/bible-build.mjs",
     "serve": "node server.mjs",
     "test:chat": "node tools/browser/chat.mjs",
+    "test:search": "node search/Query.test.mjs && node search/QueryMemory.test.mjs && node tools/browser/search.mjs",
     "test:lighthouse": "node tools/lighthouse/check.mjs"
   },
   "devDependencies": {

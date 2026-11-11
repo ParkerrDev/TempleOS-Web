@@ -106,7 +106,7 @@ WinAdd(CSS,HTML);
 
 const ov = $("tsOverlay"), out = $("tsOut"), q = $("tsQ"), st = $("tsStatus");
 let w = null, qid = 0, vid = 0, deb = null, lastHits = [], lastTerms = [], lastTotal = 0;
-let scope = "all", sortBy = "rel";                     // scope mirrors the in: operator; sortBy = the dropdown
+let sortBy="rel";
 let lastVids = [], browseTotal = 0, lastMsg = null, lastView = null;
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const hms = (s) => { s = Math.max(0, s | 0); const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
@@ -227,6 +227,7 @@ const renderBrowse = () => {
   st.textContent = `${browseTotal.toLocaleString()} videos · ${sortBy === "old" ? "oldest" : "newest"} first - type to search, ▶ plays, click a card for the transcript`;
 };
 const render = (m) => {
+  if (m.note=="loading") return;
   lastHits = m.hits; lastTerms = m.terms || []; lastTotal = m.total || 0;
   lastVids = m.vids || []; lastMsg = m; lastView = () => render(lastMsg);
   let html = "";
@@ -249,7 +250,7 @@ const render = (m) => {
     (q.value.trim() ? `<div class="ts-none">no matches - typos are OK, but he may never have said it</div>` : "");
   const bits = [];
   if (m.dateOnly) bits.push(`${m.vtotal} video${m.vtotal === 1 ? "" : "s"} in range`);
-  else { if (scope !== "title") bits.push(`${m.total} matching passages`);
+  else { if (m.scope !== "title") bits.push(`${m.total} matching passages`);
          if (m.vtotal) bits.push(`${m.vtotal} matching title${m.vtotal === 1 ? "" : "s"}`); }
   if (m.hits.length || lastVids.length) st.textContent = bits.join(" · ") + " - ▶ plays in a window, ⧉ copies, click a card for the full transcript";
 };
@@ -313,80 +314,89 @@ const ask = () => { if (!w) return; qid++;
   const qq = q.value.trim();
   if (!qq) w.postMessage({ type: "browse", id: qid, sort: sortBy, offset: 0 });
   else w.postMessage({ type: "query", q: qq, id: qid, sort: sortBy }); };   // everything else rides IN the query (Google-style operators)
-// ---- the GUI writes the query: scope buttons and the year picker EDIT the search text, and
-//      typing the operators updates the GUI right back (one source of truth: the box). ----
-const YRRE = "(?:19|20)\\d{2}";
-const PUREYRS = `${YRRE}(?:-${YRRE})?(?:,${YRRE}(?:-${YRRE})?)*`;        // pure-year lists/ranges (what the picker owns)
-const stripScopeOps = (v) => v.replace(/\s*(?:in|scope):(?:titles?|transcripts?|text|all)(?=\s|$)/g, "");
-const stripYearOps = (v) => v
-  .replace(new RegExp(`\\s*(?:date|year):${PUREYRS}(?=\\s|$)`, "g"), "")
-  .replace(new RegExp(`(^|\\s)${PUREYRS}(?=\\s|$)`, "g"), "$1");
-const yearsInQuery = () => { const out = new Set();
-  for (const m of q.value.matchAll(new RegExp(`(?:^|\\s)(?:(?:date|year):)?(${PUREYRS})(?=\\s|$)`, "g")))
-    for (const item of m[1].split(",")) {
-      const r = item.match(new RegExp(`^(${YRRE})-(${YRRE})$`));
-      if (r) { let a = +r[1], b = +r[2]; if (a > b) [a, b] = [b, a];
-        for (let y = a; y <= Math.min(b, a + 50); y++) out.add(String(y)); }
-      else out.add(item); }
-  return out; };
-const scopeInQuery = () => { let sc = "all";
-  for (const m of q.value.matchAll(/(?:^|\s)(?:in|scope):(titles?|transcripts?|text|all)(?=\s|$)/g))
-    sc = m[1].startsWith("title") ? "title" : m[1] === "all" ? "all" : "text";
-  return sc; };
-// compact a year set: consecutive runs of 3+ collapse to FROM-TO; e.g. 2012-2014,2016
-const compactYears = (set) => { const ys = [...set].map(Number).sort((a, b) => a - b), parts = [];
-  for (let i = 0; i < ys.length;) { let j = i;
-    while (j + 1 < ys.length && ys[j + 1] === ys[j] + 1) j++;
-    parts.push(j - i >= 2 ? ys[i] + "-" + ys[j] : ys.slice(i, j + 1).join(","));
-    i = j + 1; }
-  return parts.join(","); };
-const rewrite = (v) => { q.value = v.replace(/\s+/g, " ").trim(); syncFromQuery(); ask(); };
-const syncFromQuery = () => {
-  scope = scopeInQuery();
-  for (const b of document.querySelectorAll(".ts-seg button")) b.classList.toggle("on", b.dataset.sc === scope || (scope === "all" && b.dataset.sc === "all"));
-  const ys = yearsInQuery();
-  for (const c of $("tsYearPanel").querySelectorAll("input")) c.checked = ys.has(c.value);
-  $("tsYearBtn").textContent = (ys.size ? `year (${ys.size})` : "year") + " ▾"; };
-for (const b of document.querySelectorAll(".ts-seg button")) b.addEventListener("click", () => {
-  let v = stripScopeOps(q.value);
-  if (b.dataset.sc === "title") v += " in:titles";
-  else if (b.dataset.sc === "text") v += " in:transcript";
-  rewrite(v); });
+let parse_id=0,edit_id=0,pending_edit=null,edit_queue=Promise.resolve();
+const syncFromQuery=()=>{
+  if (w) w.postMessage({type:"parse",q:q.value,id:++parse_id});
+};
+const showControls=(parsed)=>{
+  for (const button of document.querySelectorAll(".ts-seg button"))
+    button.classList.toggle("on",button.dataset.sc==parsed.scope);
+  const years=new Set(parsed.years);
+  for (const checkbox of $("tsYearPanel").querySelectorAll("input"))
+    checkbox.checked=years.has(checkbox.value);
+  $("tsYearBtn").textContent=(years.size?`year (${years.size})`:"year")+" ▾";
+};
+const editQuery=(change)=>{
+  edit_queue=edit_queue.then(()=>new Promise((resolve,reject)=>{
+    if (!w) init();
+    pending_edit={id:++edit_id,resolve,reject};
+    w.postMessage({type:"edit",id:edit_id,q:q.value,change});
+  })).then(result=>{
+    if (q.value==result.text) {
+      q.value=result.value.trim();
+      ask();
+    }
+    syncFromQuery();
+  }).catch(error=>{
+    st.textContent=error.message;
+    syncFromQuery();
+  });
+};
+for (const button of document.querySelectorAll(".ts-seg button"))
+  button.addEventListener("click",()=>editQuery({scope:button.dataset.sc}));
 $("tsMode").addEventListener("change", () => { sortBy = $("tsMode").value; ask(); });
 let yearFill = null;
 { const btn = $("tsYearBtn"), panel = $("tsYearPanel");
-  const setYears = (ys) => { let v = stripYearOps(q.value);
-    if (ys.size) v += " date:" + compactYears(ys);
-    rewrite(v); };
   yearFill = (ys) => {
     panel.innerHTML = "";
     for (const y of ys) {
       const l = document.createElement("label"), c = document.createElement("input"), cb = document.createElement("span");
       c.type = "checkbox"; c.value = y; cb.className = "cb";
-      c.addEventListener("change", () => { const cur = yearsInQuery(); c.checked ? cur.add(y) : cur.delete(y); setYears(cur); });
+      c.addEventListener("change",()=>editQuery({year:y,selected:c.checked}));
       l.append(c, cb, document.createTextNode(y)); panel.appendChild(l);
     }
     const any = document.createElement("button"); any.textContent = "any year";
-    any.addEventListener("click", () => setYears(new Set()));
+    any.addEventListener("click",()=>editQuery({year:null}));
     panel.appendChild(any);
   };
   btn.addEventListener("click", () => panel.classList.toggle("open"));
   document.addEventListener("pointerdown", (e) => { if (!e.target.closest("#tsYearWrap")) panel.classList.remove("open"); });
 }
 const init = () => { if (w) return;
-  w = new Worker("./transearch.js");
+  w = new Worker("./transearch.js",{type:"module"});
   st.textContent = "loading transcripts…";
   w.onmessage = (e) => { const m = e.data;
     if (m.type === "progress") st.textContent = `loading transcripts… ${m.loaded}/${m.total} shards · ${m.videos} videos`;
     else if (m.type === "ready") { st.textContent = `${m.videos.toLocaleString()} videos · ${m.chunks.toLocaleString()} passages · ${m.words.toLocaleString()} distinct words - type to search`;
       if (m.years) yearFill(m.years);
-      ask(); }                                         // empty query -> browse: the LATEST videos show by default
-    else if (m.type === "error") st.textContent = "failed to load transcripts: " + m.message;
+      syncFromQuery();ask(); }                                         // empty query -> browse: the LATEST videos show by default
+    else if (m.type=="parsed" && m.id==parse_id && m.text==q.value) showControls(m.parsed);
+    else if (m.type=="edited" && pending_edit?.id==m.id) {
+      const reply=pending_edit;pending_edit=null;reply.resolve(m);
+    } else if (m.type=="error") {
+      if (m.phase=="edit" && pending_edit?.id==m.id) {
+        const reply=pending_edit;pending_edit=null;reply.reject(new Error(m.message));
+      } else if (m.phase=="load") {
+        st.textContent="Could not load transcripts: "+m.message+" ";
+        const retry=document.createElement("button");retry.textContent="Retry";
+        retry.addEventListener("click",()=>{
+          st.textContent="loading transcripts…";
+          w.postMessage({type:"load",base:"./assets/transcripts/"});
+        });
+        st.append(retry);
+      } else if (m.phase=="parse" && m.id==parse_id || m.phase=="query" && m.id==qid)
+        st.textContent=m.message;
+    }
     else if (m.type === "results" && m.id === qid) render(m);
     else if (m.type === "browse" && m.id === qid) { browseTotal = m.total; lastVids = m.offset ? lastVids.concat(m.vids) : m.vids; renderBrowse(); }
     else if (m.type === "video" && m.id === vid && m.video) renderTranscript(m.video); };
-  w.postMessage({ type: "load", base: "./assets/transcripts/" }); };
-q.addEventListener("input", () => { syncFromQuery(); clearTimeout(deb); deb = setTimeout(ask, 250); });
+  w.onerror=function (event) {
+    pending_edit?.reject(new Error(event.message || "Search worker stopped."));
+    pending_edit=null;w.terminate();w=null;
+    st.textContent="Search stopped. Close and reopen this window to retry.";
+  };
+  w.postMessage({type:"load",base:"./assets/transcripts/"});syncFromQuery(); };
+q.addEventListener("input", () => { qid++;syncFromQuery(); clearTimeout(deb); deb = setTimeout(ask, 250); });
 $("tsClear").addEventListener("click", () => { q.value = ""; syncFromQuery(); ask(); q.focus(); });
 $("tsHelp").addEventListener("click", () => $("tsHelp").classList.toggle("open"));   // tap support (hover covers desktop)
 ov.addEventListener("pointerdown", (e) => { if (e.target === ov) ov.classList.remove("open"); });

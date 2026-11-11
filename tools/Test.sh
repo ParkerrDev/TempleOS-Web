@@ -14,3 +14,5 @@ for t in presence/Room.test.mjs chat/ChatRoom.test.mjs cdn/Files.test.mjs; do
 done
 node tools/verify-games.mjs
 node tools/native-games-audit.mjs --check
+node search/Query.test.mjs
+node search/QueryMemory.test.mjs
