@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "3fe3f337a948812127cc6dcdd3be777d5c1cc97cbc7ace57b4002763c1f63eba",
+  "renderSourceSha256": "910af1322904eefbdec1098783c9adbb7c0a45c21eb1e5745de2e711ee3436a4",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-pfx2_a0_",
+      "native": "qemu-iwds1hb3",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -135,7 +135,7 @@
       "keyMaskCombinations": 1024,
       "native": "qemu-u9wtyxg_",
       "hemu": true,
-      "scope": "Door controllers, manual/tagged/locked activation, timers, obstruction and mover ownership; full line dispatch and UI/audio remain pending"
+      "scope": "Door controllers, manual/tagged/locked activation, timers, obstruction and mover ownership; line activation checked separately; UI/audio remain pending"
     },
     "floors": {
       "presets": 12,
@@ -143,7 +143,7 @@
       "timelineTics": 107940,
       "native": "qemu-l3kvyz53",
       "hemu": true,
-      "scope": "Direct floor presets, flat/special timing, texture metadata, actual crush/block recovery and ownership; full line dispatch pending"
+      "scope": "Direct floor presets, flat/special timing, texture metadata, actual crush/block recovery and ownership; line activation checked separately"
     },
     "floorLinks": {
       "cases": 607,
@@ -157,7 +157,7 @@
       "native": "qemu-pfy1leoj",
       "hemu": true,
       "concurrentMovers": 64,
-      "scope": "Five platform and six ceiling presets, sound/timing states, obstruction/crush/slowdown, zero-wait retry, tagged pause/resume and 64-controller ownership; line dispatch pending"
+      "scope": "Five platform and six ceiling presets, sound/timing states, obstruction/crush/slowdown, zero-wait retry, tagged pause/resume and 64-controller ownership; line activation checked separately"
     },
     "teleport": {
       "cases": 544,
@@ -216,6 +216,24 @@
       "native": "qemu-to6xydyw",
       "hemu": true,
       "scope": "Damage/boots/RNG/secrets/exit-sector primitives across384 protection/ground/skill/seed combinations plus7 map-floor/invulnerability/actor-role contracts; explicit exit callback, no actual level transition."
+    },
+    "lineEvents": {
+      "integrationCases": 62,
+      "native": "qemu-cu6x0i6z",
+      "hemu": true,
+      "scope": "Actual use traces/controllers, permissions, busy actions, once/repeat crossings, teleport movement callbacks, shot switches, lights and exit requests; no complete gameplay loop."
+    },
+    "lineDispatch": {
+      "cases": 65232,
+      "actionCalls": 9222,
+      "specials": {
+        "use": 63,
+        "cross": 72,
+        "shoot": 3
+      },
+      "native": "qemu-plmofgae",
+      "hemu": true,
+      "reference": "Pinned original p_switch.c and p_spec.c parsed for action calls, arguments, order, permissions and consumption rules; actions instrumented separately from the real-controller integration fixture."
     }
   },
   "frames": [

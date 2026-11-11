@@ -67,6 +67,11 @@ The implemented foundation uses native V5.03 file and memory APIs:
   protection/leak RNG, secrets and the damaging exit sector. Exit sectors
   clear god mode, preserve invulnerability and use an explicit exit callback;
   actual level transition remains separate.
+- Use, crossing and shot events dispatch all original line specials. Use traces
+  stop at the first special line or closed opening; one-shot/repeat behavior,
+  actor permissions, failed actions, keys and normal/secret exit requests retain
+  their distinct rules. The context owns its switches and lights, borrowing
+  the plane controllers and motion context.
 - Texture coordinates, increments and lighting buckets use nearest Q16 values
   with even ties. This defines sampling at texel and light boundaries across
   native x87 and HEMU. Sky row coordinates are computed once per row.
@@ -216,6 +221,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/switch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/light.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/light-map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/hazard.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/special-use.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/special-dispatch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
@@ -362,8 +369,8 @@ limits. Teleport fixtures exercise 544 occupancy, effect, ordering, nested-query
 retirement and exception-cleanup cases. A separate real-map fixture compares
 456 transport lines in all 36 maps against independently decoded WAD records,
 including two medium-skill lines without a destination. These call
-the transport API directly; line activation permissions and dispatch remain
-unfinished. Switch/button checks add 154 state/ownership cases and 240
+the transport API directly; activation is checked separately below.
+Switch/button checks add 154 state/ownership cases and 240
 real-asset field changes/resets across all forty pairs. They cover repeat
 presses, pair-before-field priority, forty concurrent buttons, callback append
 and exception cleanup, with no image decoding or additional asset reads.
@@ -375,8 +382,18 @@ across 36 maps.
 Sector-effect fixtures compare 49,152 tics across 384 combinations of
 sector type, protection, ground contact, skill and random seed, plus seven
 map-floor/invulnerability/non-player/retirement contracts.
+Line-event fixtures add 62 real-controller cases for use occlusion, keys,
+failed/busy actions, permissions, teleport crossings, switches, lights and exit
+requests. A separate oracle extracts action calls, enum arguments, order and
+one-shot rules directly from hash-pinned original C, then checks 65,232 native
+dispatch combinations and 9,222 action calls. It varies every special from
+0 through 150, event kind, player role, actor type, side, secrecy and action
+success. These establish activation wiring; the shared game clock, actor AI,
+complete action dispatcher and level progression remain unfinished.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector, door, floor, mover, teleport, switch, lighting or sector-effect checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector,
+door, floor, mover, teleport, switch, lighting, sector-effect or line-event
+checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

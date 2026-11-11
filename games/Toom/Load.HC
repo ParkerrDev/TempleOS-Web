@@ -31,6 +31,7 @@
 #include "TmSwitch"
 #include "TmLight"
 #include "TmHazard"
+#include "TmSpecial"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"
