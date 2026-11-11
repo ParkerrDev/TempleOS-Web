@@ -18,6 +18,7 @@ node --max-old-space-size=3072 tools/hemu/worker-rate.test.mjs
 node --max-old-space-size=3072 tools/hemu/welcome.test.mjs
 node tools/hemu/guestcheck.mjs
 node tools/hemu/jitdiff1.mjs
+node tools/hemu/jit-primitives.test.mjs
 node tools/hemu/fpu-check.mjs
 node tools/hemu/fpu-convert.test.mjs
 ```
@@ -84,3 +85,8 @@ OS keyboard bitmap. Repeat is implemented in HolyC using the guest's PS/2
 
 Welcome is the guest's PopUp/Ed of ::/Doc/Welcome.DD, queued once after the
 native execution API and disk are ready. Restored sessions omit welcome.
+
+`jit-primitives.test.mjs` covers x87 constants, control-word loads/stores,
+rounding and deferred integer flags, plus all conditional moves and byte sets
+across flag combinations and operand widths. It also checks that an untaken
+32-bit CMOV clears the upper half of its destination, as x86 specifies.
