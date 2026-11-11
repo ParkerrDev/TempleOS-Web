@@ -7,7 +7,7 @@
 // HEMU is the site's ../hemu clone (lowercase, as Netlify clones it; symlinked locally); HEMU_SRC
 // overrides. SITE_DIR is the site root (some harnesses read game sources from it); SITE overrides.
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolve,extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileHolyC } from "../holyc-wasm/src/compiler.js";
 
@@ -21,7 +21,7 @@ export const GUEST_EXPORTS = ["GuestCallPost", "GuestCallTry", "GuestCallState",
   "GuestPatchJump", "GuestFun", "GuestArgCnt", "GuestVar", "GuestMember", "RamBase", "CoreAttach", "KbdRptSet", "WinRateSet", "SnapshotResume"];
 export const HEMU_EXPORTS = [...JIT_EXPORTS, ...GUEST_EXPORTS];
 
-export function hemuFile(name) { return readFileSync(resolve(HEMU_SRC, name), "latin1"); }
+export function hemuFile(name) { return readFileSync(resolve(HEMU_SRC,extname(name)?name:name+".HC"), "latin1"); }
 export function hemuIncludeResolver(p) { try { return hemuFile(p); } catch { return null; } }
 
 // compileHemu({ smp, exports, extraSource, defines, source, filename }) -> the compileHolyC result.
