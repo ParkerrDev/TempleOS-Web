@@ -10,3 +10,7 @@ RESOURCES += ../../../engine/native/resources.qrc
 HEADERS += ../../../engine/native/App.hpp
 
 include(../../../engine/native/Pointer.pri)
+
+QT += dbus
+HEADERS += ../../../engine/native/Files.hpp
+HEADERS += Portal.hpp

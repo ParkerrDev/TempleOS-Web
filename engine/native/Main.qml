@@ -17,7 +17,7 @@ ApplicationWindow {
     onAccepted: {window.confirmedClose=true;window.close()}
   }
   Dialog {
-    id: replaceDialog; anchors.centerIn: parent; modal: true
+    id: replaceDialog; objectName: "replaceDialog"; anchors.centerIn: parent; modal: true
     property string nextPath
     title: qsTr("Replace the current session?"); standardButtons: Dialog.Ok|Dialog.Cancel
     Label { text: qsTr("Changes since your last save will be lost.") }
@@ -26,6 +26,10 @@ ApplicationWindow {
   function openSession(nextPath) {
     if(backend.ready){replaceDialog.nextPath=nextPath;replaceDialog.open()}
     else backend.open(nextPath)
+  }
+  Connections {
+    target: backend
+    function onFileChosen(path,save) {if(save)backend.save(path);else window.openSession(path)}
   }
   ColumnLayout {
     anchors.fill: parent; spacing: 6
@@ -50,15 +54,15 @@ ApplicationWindow {
     }
     RowLayout {
       Layout.fillWidth: true
-      TextField { id: path; Layout.fillWidth: true; placeholderText: qsTr("Complete .hemu session path"); text: backend.path }
-      Button { text: qsTr("Open"); enabled: !backend.busy; onClicked: window.openSession(path.text) }
-      Button { text: qsTr("Save"); enabled: backend.ready&&!backend.busy; onClicked: backend.save(path.text) }
+      Label { Layout.fillWidth: true; text: backend.path||qsTr("Open a complete .hemu session"); textFormat: Text.PlainText; elide: Text.ElideMiddle; color: "white" }
+      Button { objectName: "openFile"; text: qsTr("Open"); enabled: !backend.busy; onClicked: backend.choose(false) }
+      Button { objectName: "saveFile"; text: qsTr("Save"); enabled: backend.ready&&!backend.busy; onClicked: backend.choose(true) }
     }
     RowLayout {
       Button { text: backend.paused?qsTr("Resume"):qsTr("Pause"); enabled: backend.ready&&!backend.busy&&!backend.faulted; onClicked: {backend.pause();screen.forceActiveFocus()} }
       Button { text: qsTr("Restart"); enabled: backend.ready&&!backend.busy; onClicked: window.openSession(backend.path) }
       Button { text: qsTr("Cancel"); enabled: backend.busy; onClicked: backend.cancel() }
-      Label { text: backend.captured?qsTr("Pointer captured — Ctrl+Alt releases it"):backend.status; color: "white"; wrapMode: Text.Wrap; Layout.fillWidth: true }
+      Label { text: backend.captured?qsTr("Pointer captured — Ctrl+Alt releases it"):backend.status; color: "white"; textFormat: Text.PlainText; wrapMode: Text.Wrap; Layout.fillWidth: true }
     }
   }
 }

@@ -80,6 +80,13 @@ and QSaveFile atomic replacement; failure or cancellation preserves the old
 file. During replacement, both old and candidate memory can coexist. This is
 not a low-memory peak claim.
 
+Open and Save use the desktop's [FileChooser portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.FileChooser.html)
+over session D-Bus. Save chooses a destination and makes a successful save the
+current restart path. Cancel closes only that request; late responses cannot
+replace a newer selection. Only one local file is accepted. A missing or exited
+portal leaves the existing session available with a visible diagnostic. This
+requires the standard token-based request handles introduced in portal 0.9.
+
 The snapshot framing, SHA-256 engine validation, heap ABI and restore logic are
 shared with the web host. Native zlib and browser CompressionStream are
 transport adapters. Existing version 1 saves remain readable. The CPU, heap
@@ -109,8 +116,14 @@ observe the expected relative coordinates; tests also save/reopen, reject a bad
 replacement and execute a real retained CPU fault while captured. These use an
 isolated compositor and do not send input to the user's desktop.
 
+The file chooser tests use a separate private D-Bus session and service to force
+response-before-reply, cancellation/successor ordering, service exit and bad URI
+cases. The production QML/Backend test opens and saves a complete machine through
+that protocol, and checks replacement confirmation and the new restart path.
+They do not open a dialog on the user's desktop.
+
 Remaining qualification includes audible PCM timing/lifecycle,
-UI file selection through the desktop portal, native packaging and
+native packaging and
 installation, performance/resource measurement, and non-Linux platforms. The
 browser host's four-core protocol remains separate; this window does not yet
 satisfy that native SMP requirement.

@@ -1,5 +1,6 @@
 #include "../../../engine/native/App.hpp"
 #include <QtTest>
+#include "Portal.hpp"
 #include <QTemporaryDir>
 #include <QSignalSpy>
 #include <condition_variable>
@@ -117,6 +118,32 @@ private slots:
     QVERIFY(backend.faulted());QVERIFY(backend.paused());
     QCOMPARE(backend.status(),state["fault"].toString());
     QCOMPARE(pixels(backend.image()),before);
+  }
+  void fileSelection() {
+    Portal portal;QVERIFY(portal.bus.isConnected());
+    QVERIFY(portal.bus.registerService("org.freedesktop.portal.Desktop"));
+    QVERIFY(portal.bus.registerVirtualObject("/org/freedesktop/portal/desktop",&portal,QDBusConnection::SubPath));
+    qmlRegisterType<Screen>("HemuNative",1,0,"HemuScreen");Backend backend;
+    QQmlApplicationEngine qml;qml.rootContext()->setContextProperty("backend",&backend);qml.load(QUrl("qrc:/hemu/Main.qml"));
+    QVERIFY(!qml.rootObjects().isEmpty());auto *window=qobject_cast<QQuickWindow *>(qml.rootObjects().first());QVERIFY(window);
+    backend.Attach(window);auto *open=window->findChild<QQuickItem *>("openFile"),*save=window->findChild<QQuickItem *>("saveFile");QVERIFY(open);QVERIFY(save);
+    QSignalSpy keys(&backend,&Backend::keyRequested),released(&backend,&Backend::releaseRequested);
+    QVERIFY(QMetaObject::invokeMethod(open,"clicked"));QTRY_COMPARE(portal.calls,1);QVERIFY(backend.busy());QVERIFY(!released.isEmpty());
+    portal.Response(portal.handle,0,{QUrl::fromLocalFile(input).toString()});
+    QTRY_VERIFY_WITH_TIMEOUT(backend.ready()&&!backend.busy(),30000);QCOMPARE(backend.path(),input);
+    QTemporaryDir dir;QVERIFY(dir.isValid());const auto saved=dir.filePath("chosen session.hemu");
+    QVERIFY(QMetaObject::invokeMethod(save,"clicked"));QTRY_COMPARE(portal.calls,2);QCOMPARE(portal.method,QString("SaveFile"));
+    QCOMPARE(portal.options["current_name"].toString(),QFileInfo(input).fileName());
+    portal.Response(portal.handle,0,{QUrl::fromLocalFile(saved).toString()});
+    QTRY_VERIFY_WITH_TIMEOUT(!backend.busy(),30000);QVERIFY(QFile::exists(saved));QCOMPARE(backend.path(),saved);
+    QVERIFY(QMetaObject::invokeMethod(open,"clicked"));QTRY_COMPARE(portal.calls,3);
+    portal.Response(portal.handle,0,{QUrl::fromLocalFile(input).toString()});QTRY_VERIFY(!backend.busy());
+    auto *replace=window->findChild<QObject *>("replaceDialog");QVERIFY(replace);QTRY_VERIFY(replace->property("visible").toBool());
+    QCOMPARE(backend.path(),saved);QVERIFY(QMetaObject::invokeMethod(replace,"reject"));QTRY_VERIFY(!replace->property("visible").toBool());QCOMPARE(backend.path(),saved);
+    QVERIFY(QMetaObject::invokeMethod(open,"clicked"));QTRY_COMPARE(portal.calls,4);backend.cancel();QTRY_VERIFY(!backend.busy());
+    QCOMPARE(backend.path(),saved);QVERIFY(backend.status().contains("cancelled"));QCOMPARE(keys.count(),0);
+    portal.bus.unregisterObject("/org/freedesktop/portal/desktop",QDBusConnection::UnregisterTree);
+    portal.bus.unregisterService("org.freedesktop.portal.Desktop");
   }
   void gui() {
     qmlRegisterType<Screen>("HemuNative",1,0,"HemuScreen");Backend backend;

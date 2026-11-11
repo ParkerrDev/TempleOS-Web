@@ -11,3 +11,6 @@ RESOURCES += resources.qrc
 HEADERS += Input.hpp App.hpp
 
 include(Pointer.pri)
+
+QT += dbus
+HEADERS += Files.hpp

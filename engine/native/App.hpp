@@ -2,6 +2,7 @@
 #include "Machine.hpp"
 #include "Input.hpp"
 #include "Pointer.hpp"
+#include "Files.hpp"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -146,10 +147,14 @@ class Backend:public QObject {
   Q_PROPERTY(bool captureWanted READ captureWanted NOTIFY changed)
   QThread thread;std::atomic<bool> cancelFlag{false};FrameMailbox mailbox;Engine *engine=nullptr;
   QImage value;QString message,filename;bool working=false,stopped=true,loaded=false;
-  QJsonObject state;PointerCapture pointerLock;QPointer<QQuickWindow> window;int buttons=0,wheel=0;Tone tone;std::unique_ptr<QAudioSink> audio;
+  QJsonObject state;PointerCapture pointerLock;Files files;QPointer<QQuickWindow> window;int buttons=0,wheel=0;Tone tone;std::unique_ptr<QAudioSink> audio;
 public:
   Backend() {
     JsInit();engine=new Engine(&cancelFlag,&mailbox);
+    connect(&files,&Files::changed,this,&Backend::changed);
+    connect(&files,&Files::selected,this,&Backend::fileChosen);
+    connect(&files,&Files::cancelled,this,[this]{message=tr("File selection cancelled");emit changed();});
+    connect(&files,&Files::error,this,[this](QString error){message=error;emit changed();});
     connect(&pointerLock,&PointerCapture::motion,this,[this](double dx,double dy){
       if(!working&&!stopped&&captureWanted())emit mouseRequested({{"relative",true},{"dx",dx},{"dy",dy},{"b",buttons},{"wheel",wheel}});
     });
@@ -173,25 +178,26 @@ public:
     connect(engine,&Engine::errorOccurred,this,[this](QString error){message=error;tone.Set(0);emit changed();});
     connect(engine,&Engine::fatal,this,[this]{pointerLock.Release();stopped=true;tone.Set(0);emit changed();});
     connect(engine,&Engine::opened,this,[this](QString file){filename=file;loaded=true;message=faulted()?state["fault"].toString():tr("Session restored");emit changed();});
-    connect(engine,&Engine::saved,this,[this](QString file){message=tr("Saved %1").arg(file);emit changed();});
+    connect(engine,&Engine::saved,this,[this](QString file){filename=file;message=tr("Saved %1").arg(file);emit changed();});
     const auto device=QMediaDevices::defaultAudioOutput();QAudioFormat format;format.setSampleRate(48000);format.setChannelCount(1);format.setSampleFormat(QAudioFormat::Float);
     if(!device.isNull()&&device.isFormatSupported(format)){tone.Rate(48000);audio=std::make_unique<QAudioSink>(device,format);audio->start(&tone);}
     else message=tr("No supported audio output is available");
     thread.start();
   }
   ~Backend(){pointerLock.Release();tone.Set(0);if(audio)audio->stop();cancelFlag.store(true);thread.quit();thread.wait();}
-  QImage image()const{return value;}QString status()const{return message;}bool busy()const{return working;}
+  QImage image()const{return value;}QString status()const{return message;}bool busy()const{return working||files.Pending();}
   bool paused()const{return stopped;}bool ready()const{return loaded;}QString path()const{return filename;}bool faulted()const{return !state["fault"].toString().isEmpty();}
   bool captured()const{return pointerLock.Active();}bool captureWanted()const{return state["capture"].toBool();}
   void Attach(QQuickWindow *next){if(window)window->removeEventFilter(this);pointerLock.Release();window=next;if(window)window->installEventFilter(this);}
-  Q_INVOKABLE void open(const QString &path){if(working||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Set(0);message=tr("Loading session…");emit changed();emit openRequested(path);}
-  Q_INVOKABLE void save(const QString &path){if(working||!loaded||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Set(0);message=tr("Saving session…");emit changed();emit saveRequested(path);}
-  Q_INVOKABLE void cancel(){if(working)cancelFlag.store(true);}
-  Q_INVOKABLE void pause(){if(!working&&loaded){release();tone.Set(0);emit pauseRequested(!stopped);}}
+  Q_INVOKABLE void open(const QString &path){if(busy()||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Set(0);message=tr("Loading session…");emit changed();emit openRequested(path);}
+  Q_INVOKABLE void save(const QString &path){if(busy()||!loaded||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Set(0);message=tr("Saving session…");emit changed();emit saveRequested(path);}
+  Q_INVOKABLE void choose(bool save){if(busy()||(save&&!loaded))return;release();message=save?tr("Choose where to save the session"):tr("Choose a complete .hemu session");files.Choose(save,filename);}
+  Q_INVOKABLE void cancel(){if(files.Pending())files.Cancel();else if(working)cancelFlag.store(true);}
+  Q_INVOKABLE void pause(){if(!busy()&&loaded){release();tone.Set(0);emit pauseRequested(!stopped);}}
   Q_INVOKABLE void release(){pointerLock.Release();buttons=0;emit releaseRequested();}
-  Q_INVOKABLE void capture(){if(!working&&!stopped&&captureWanted())pointerLock.Start(window);}
+  Q_INVOKABLE void capture(){if(!busy()&&!stopped&&captureWanted())pointerLock.Start(window);}
   Q_INVOKABLE void mouse(double x,double y,int value,int rotation=0){
-    if(working)return;
+    if(busy())return;
     buttons=value&3;wheel=rotation;
     if(pointerLock.Active())emit mouseRequested({{"relative",true},{"b",buttons},{"wheel",wheel}});
     else emit mouseRequested({{"x",std::clamp(x,0.0,639.0)},{"y",std::clamp(y,0.0,479.0)},{"relative",false},{"b",buttons},{"wheel",wheel}});
@@ -205,12 +211,12 @@ public:
           ((key->modifiers()|(key->key()==Qt::Key_Control?Qt::ControlModifier:Qt::AltModifier))&(Qt::ControlModifier|Qt::AltModifier))==(Qt::ControlModifier|Qt::AltModifier)){release();return true;}
       auto *window=qobject_cast<QQuickWindow *>(target);
       if(window&&window->activeFocusItem()&&window->activeFocusItem()->objectName()=="screen") {
-        const int code=ScanKey(*key);if(code){if(!working&&!key->isAutoRepeat())emit keyRequested(code,event->type()==QEvent::KeyPress);return true;}
+        const int code=ScanKey(*key);if(code){if(!busy()&&!key->isAutoRepeat())emit keyRequested(code,event->type()==QEvent::KeyPress);return true;}
       }
     }
     return QObject::eventFilter(target,event);
   }
 signals:
   void imageChanged();void changed();void openRequested(QString);void saveRequested(QString);void pauseRequested(bool);
-  void keyRequested(int,bool);void mouseRequested(QJsonObject);void releaseRequested();
+  void keyRequested(int,bool);void mouseRequested(QJsonObject);void releaseRequested();void fileChosen(QString path,bool save);
 };

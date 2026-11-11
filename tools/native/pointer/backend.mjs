@@ -46,7 +46,7 @@ try {
   await Capture();at=server.events.length;await Command(client,{cmd:"pause"},State(s=>s.paused&&!s.captured));await server.wait(e=>e.event==="lock-destroyed",at);
   await Resume();await Capture();at=client.events.length;server.send({cmd:"blur"});await client.wait(State(s=>!s.captured),at);
   at=client.events.length;server.send({cmd:"focus"});await client.wait(e=>e.event==="focus"&&e.active,at);
-  await Capture();at=server.events.length;state=await Open(bad);assert.equal(state.paused,true);assert.equal(state.captured,false);assert.equal(state.path,normal);await server.wait(e=>e.event==="lock-destroyed",at);
+  await Capture();at=server.events.length;state=await Open(bad);assert.equal(state.paused,true);assert.equal(state.captured,false);assert.equal(state.path,saved);await server.wait(e=>e.event==="lock-destroyed",at);
   state=await Open(saved);assert.equal(state.captured,false,"loading a logical pointer state must not acquire a compositor lease");
   if(state.paused)await Resume();else await client.wait(State(s=>!s.busy&&s.wanted),generation);
   await Capture();at=server.events.length;state=await Open(fault);assert.equal(state.captured,false);await server.wait(e=>e.event==="lock-destroyed",at);

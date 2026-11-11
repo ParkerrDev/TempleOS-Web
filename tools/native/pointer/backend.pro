@@ -7,3 +7,6 @@ SOURCES += backend.cpp
 HEADERS += ../../../engine/native/App.hpp
 RESOURCES += ../../../engine/native/resources.qrc
 include(../../../engine/native/Pointer.pri)
+
+QT += dbus
+HEADERS += ../../../engine/native/Files.hpp
