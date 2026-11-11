@@ -34,6 +34,7 @@ if(args.has("--full"))for(const path of ["worker-legacy-fault.test.mjs","worker-
 if(args.has("--desktop"))for(const cores of [1,4])
   Run("tools/hemu/desktop.test.mjs",{HEMU_DESKTOP_CORES:String(cores)});
 if(args.has("--desktop")) {
+  Run("tools/hemu/speaker-browser.test.mjs");
   Run("tools/hemu/desktop-lifecycle.test.mjs");
   Run("tools/browser/snapshot.mjs");
   Run("tools/browser/snapshot.mjs",{HEMU_LEGACY:"1"});

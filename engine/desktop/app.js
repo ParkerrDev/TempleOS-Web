@@ -1,13 +1,15 @@
 import {KEY,KeyInput} from "../../Keyboard.js";
 import {SnapshotInspect} from "../Snapshot.js";
 import {BusStop,BUS_VERSION} from "../CoreBus.js";
+import {Speaker} from "../Speaker.js";
 
 const $=id=>document.getElementById(id),canvas=$("screen"),ctx=canvas.getContext("2d",{alpha:false}),
   pixels=ctx.createImageData(640,480),rgba=new Uint32Array(pixels.data.buffer),palette=new Uint32Array(256);
-let worker=null,aps=[],ctrl=null,paused=false,gamePointer=false,audio=null,tone=null,gain=null,
+let worker=null,aps=[],ctrl=null,paused=false,gamePointer=false,
   pointer={x:320,y:240,b:0,wheel:0},diskReady=false,guestReady=false,generation=0,
   bootRequest=0,lastBoot=null,faulted=false,busFailed=false;
 const input=KeyInput(keys=>Post({cmd:"input",...pointer,keys,held:input.held()}));
+const speaker=Speaker();
 function Post(m) {
   if(busFailed&&m.cmd==="exportSnapshot") {
     Status("Shared RAM coordination failed. Restart TempleOS before saving.");return;
@@ -27,26 +29,17 @@ function Stop(cancel=true) {
   generation++;
   if(ctrl)BusStop(ctrl);
   worker?.terminate();for (const ap of aps) ap.terminate();
-  worker=null;aps=[];ctrl=null;guestReady=diskReady=false;Sound(0);Ready();
+  worker=null;aps=[];ctrl=null;guestReady=diskReady=false;speaker.Stop();Ready();
 }
 function Fault(message,coordination=false) {
   faulted=true;
   if(coordination){busFailed=true;if(ctrl)BusStop(ctrl);}
-  paused=true;Post({cmd:"pause",value:true});$("pause").textContent="Resume";
+  paused=true;speaker.Pause(true);Post({cmd:"pause",value:true});$("pause").textContent="Resume";
   Ready();Status(message+" Restart TempleOS to retry.");console.error(message);
 }
-function Sound(freq) {
-  if (!audio) return;
-  if (freq>0) {tone.frequency.setValueAtTime(freq,audio.currentTime);gain.gain.setValueAtTime(.04,audio.currentTime);}
-  else gain.gain.setValueAtTime(0,audio.currentTime);
-}
-function SoundStart() {
-  if (!audio) {
-    audio=new AudioContext();tone=audio.createOscillator();gain=audio.createGain();
-    tone.type="square";gain.gain.value=0;tone.connect(gain).connect(audio.destination);tone.start();
-  }
-  audio.resume().catch(()=>{});
-}
+function SoundStart() {speaker.Resume().catch(error=>console.warn("Speaker:",error));}
+window.addEventListener("pointerdown",SoundStart);
+window.addEventListener("keydown",SoundStart);
 function Message(m) {
   if (m.cmd==="frame") {
     const src=new Uint8Array(m.buf);
@@ -65,9 +58,9 @@ function Message(m) {
   else if (m.cmd==="settings") {
     if (m.rate!==null) $("rate").value=String(m.rate);$("repeat").checked=m.repeat;
     if (!m.ok) Status(m.msg);
-  } else if (m.cmd==="paused") {if(faulted&&!m.value)return;paused=m.value;$("pause").textContent=paused?"Resume":"Pause";}
+  } else if (m.cmd==="paused") {if(faulted&&!m.value)return;paused=m.value;speaker.Pause(paused);$("pause").textContent=paused?"Resume":"Pause";}
   else if (m.cmd==="inputMode") gamePointer=!!m.capture;
-  else if (m.cmd==="snd") Sound(m.f);
+  else if (m.cmd==="snd") speaker.Tone(m.f);
   else if (m.cmd==="error")Fault(m.msg,!!(ctrl&&Atomics.load(ctrl,1))||!m.retained);
   else if (m.cmd==="exportResult" && m.kind==="snapshot") {
     Ready();
@@ -94,6 +87,7 @@ async function Boot(gz,config) {
     if(request!==bootRequest)return;
     Stop(false);const current=generation;
     lastBoot={gz,config};paused=faulted=busFailed=false;Ready();
+    speaker.Pause(saved?.meta.paused??false);
     $("pause").textContent="Pause";canvas.dataset.frames="0";canvas.dataset.cores="1";
     canvas.dataset.bus=cores===4?"pending":"single";Status("Starting TempleOS…");
     const init={cmd:"init",gz,wasmUrl,rate:Number($("rate").value),repeat:$("repeat").checked,welcome:config.stock&&!saved};
@@ -127,7 +121,7 @@ function Point(e) {
   pointer.y=Math.max(0,Math.min(479,Math.round((e.clientY-r.top-(r.height-480*scale)/2)/scale)));
 }
 canvas.addEventListener("pointerdown",e=>{
-  e.preventDefault();canvas.focus();SoundStart();canvas.setPointerCapture(e.pointerId);
+  e.preventDefault();canvas.focus();canvas.setPointerCapture(e.pointerId);
   if(gamePointer && document.pointerLockElement!==canvas)canvas.requestPointerLock()?.catch(()=>{});
   Point(e);pointer.b=e.buttons&3;Post({cmd:"input",...pointer});
 });
@@ -145,7 +139,7 @@ window.addEventListener("keydown",e=>{
 window.addEventListener("keyup",e=>{if(input.up(e.code))e.preventDefault();});
 window.addEventListener("blur",Release);document.addEventListener("visibilitychange",()=>{if(document.hidden)Release();});
 document.addEventListener("pointerlockchange",()=>{Release();});
-$("pause").onclick=()=>Post({cmd:"pause",value:!paused});
+$("pause").onclick=()=>{speaker.Pause(!paused);Post({cmd:"pause",value:!paused});};
 $("restart").onclick=async()=>{
   if(!lastBoot||worker&&!faulted&&!confirm("Restart TempleOS from its boot session? Save first to keep your current work."))return;
   try {const {gz,config}=lastBoot;await Boot(gz,config);} catch(error) {Status(error.message);}

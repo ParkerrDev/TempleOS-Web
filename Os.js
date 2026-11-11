@@ -9,6 +9,7 @@ import {SnapshotInspect} from "./engine/Snapshot.js";
 import {BusStop,BUS_VERSION} from "./engine/CoreBus.js";
 import {GuestRequests} from "./GuestRequests.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
+import {Speaker} from "./engine/Speaker.js";
 import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
 const $ = (id) => document.getElementById(id);
@@ -80,9 +81,7 @@ import("./presence.js").then(({createPresence}) => {
   addEventListener("online", presence.wake);
 }).catch((e) => dbg("presence: " + e.message, true));
 
-let presentCount = 0;
 function blit(idx, w, h, immutable = false, stats = null) {
-  presentCount++;
   drawFrame(idx,w,h,immutable);
   if(stats) {
     fpsMeter.sample(stats.fps,stats.updates);
@@ -110,14 +109,7 @@ function firstFrame()
 }
 let notifyInput = () => {};
 const FIXED_B = +((new URLSearchParams(location.search)).get("b")) || 0;
-{ let staleBlits = 0;
-  setInterval(() => {
-    updateFps();
-    // beep watchdog: if the guest froze mid-tone (e.g. a game that hangs on launch), the PC-speaker
-    // oscillator is stuck on with no Snd(0) coming - mute it after ~1.5s of no new frames.
-    if (presentCount === 0 && !fpsMeter.paused && !document.hidden) { if (++staleBlits >= 3 && gain && gain.gain.value > 0) gain.gain.value = 0; }
-    else staleBlits = 0;
-    presentCount = 0; }, 500); }
+setInterval(updateFps,500);
 // one-time banner shown when a heavy game freezes the single-core engine -> 1-click switch to multi-core
 
 // ---- input: a host-owned cursor + a set-1 scancode queue, pulled by snapshot.HC each frame ----
@@ -419,14 +411,10 @@ MobileInput({frame:$("frame"),target:()=>{
   return {canvas,mouse:touchMouse,keys:()=>keyboard};
 }});
 
-// ---- optional PC-speaker sound ----
-let actx = null, osc = null, gain = null;
-function snd(freq) { if (!actx) return; if (freq > 0) { osc.frequency.value = freq; gain.gain.value = 0.04; } else gain.gain.value = 0; }
-addEventListener("pointerdown", () => {
-  if (actx) return;
-  try { actx = new (window.AudioContext || window.webkitAudioContext)(); osc = actx.createOscillator(); gain = actx.createGain();
-        osc.type = "square"; gain.gain.value = 0; osc.connect(gain).connect(actx.destination); osc.start(); } catch {}
-});
+const speaker=Speaker();
+function SoundStart() {speaker.Resume().catch(error=>dbg("speaker: "+error.message,true));}
+addEventListener("pointerdown",SoundStart);
+addEventListener("keydown",SoundStart);
 
 //Desktop uses four guest CPUs. Only a stock boot failure can fall back to one;
 //running faults retain their stopped machine until restart.
@@ -528,6 +516,7 @@ export function OsCfgStatus()
 // ---- engine: one worker, or the multi-core one below ----
 let importDisk = null;   // a disk image imported before the reload
 function engineFail(why) {
+  speaker.Stop();
   guestRequests.Fail(String(why));
   started=false;
   ld.style.display = ""; setLoad("The emulator could not start (" + why + "). Tap ↻ Restart.", 0);
@@ -554,7 +543,7 @@ function singleCore(why,generation=osGen) {   // multi-core failed before its fi
   useSMP = false;
   downloadSnapshot().then(b => {
     if(generation!==osGen)return;
-    gzBytes=b;if(!runWorker())engineFail(why);
+    gzBytes=b;bootEngine();
   }).catch(e=>{if(generation===osGen)engineFail(e.message);});
 }
 function runWorker() {
@@ -563,7 +552,7 @@ function runWorker() {
   try { worker = new Worker("./engine/hemu-worker.js", { type: "module" }); } catch (e) { return false; }
   engine.kind = "worker"; engine.post = (m, t) => worker?.postMessage(m, t || []);
   const stop=()=>{clearTimeout(watchdog);worker?.terminate();worker=null;
-    if(engine.stop===stop){engine.kind=null;notifyInput=()=>{};}};
+    if(engine.stop===stop){speaker.Stop();engine.kind=null;notifyInput=()=>{};}};
   engine.stop=stop;
   notifyInput = () => worker?.postMessage(inputMessage());
   const fallback = (why) => {
@@ -586,7 +575,7 @@ function runWorker() {
       if (!alive && stockBoot && document.body.classList.contains("touch")) gzBytes = null;
       blit(new Uint8Array(m.buf), m.w, m.h, true, m); worker.postMessage({ cmd: "ack" }); alive = true; firstFrame();
     }
-    else if (m.cmd === "snd") snd(m.f);
+    else if (m.cmd === "snd") speaker.Tone(m.f);
     else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
     else if (m.cmd === "error") {
       if (m.retained) engineFault(m.msg);
@@ -613,7 +602,7 @@ async function runSMP() {
     if(ctrl)BusStop(new Int32Array(ctrl));
     bsp?.terminate();for(const ap of aps)ap.terminate();
     bsp=null;aps=[];
-    if(engine.stop===stop){engine.kind=null;notifyInput=()=>{};}
+    if(engine.stop===stop){speaker.Stop();engine.kind=null;notifyInput=()=>{};}
   }
   engine.stop=stop;
   function fault(why) {
@@ -661,7 +650,7 @@ async function runSMP() {
     bsp.onmessage = (e) => {
       if (!bsp || !current()) return; const m = e.data;
       if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h, true, m); bsp.postMessage({ cmd: "ack" }); alive = true; firstFrame(); }
-      else if (m.cmd === "snd") snd(m.f);
+      else if (m.cmd === "snd") speaker.Tone(m.f);
       else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
       else if (m.cmd === "smpReady") dbg("SMP: " + m.ncore + " cores running in parallel");
       else if (m.cmd === "error") {
@@ -705,6 +694,7 @@ async function runSMP() {
 }
 
 function bootEngine() {
+  speaker.Pause(snapshotInfo?.meta.paused??paused);
   if (useSMP) runSMP();   // BSP + AP workers; falls back to one core itself
   else if (!runWorker()) engineFail("this browser cannot start a module Worker");
 }
@@ -713,7 +703,7 @@ function bootEngine() {
 let paused = false, pauseRevision = 0, osFault=false;
 const pauseBtn = $("pauseBtn");
 const pauseShow = () => { pauseBtn.innerHTML = '<span class="ico"><svg><use href="#i-' + (paused ? "play" : "pause") + '"/></svg></span> ' + (paused ? "Play" : "Pause"); };
-const setPaused = value => { if (osFault && !value) return; paused = value; fpsMeter.setPaused(paused); updateFps(); engine.post({ cmd: "pause", value: paused }); pauseShow(); };
+const setPaused = value => { if (osFault && !value) return; paused = value; speaker.Pause(paused); fpsMeter.setPaused(paused); updateFps(); engine.post({ cmd: "pause", value: paused }); pauseShow(); };
 pauseBtn.addEventListener("click", () => { ++pauseRevision; setPaused(!paused); });
 const holdOSForGame = () => {
   const previous=paused, revision=pauseRevision;setPaused(true);
@@ -737,6 +727,7 @@ const diskMsg = (m) => {
   if (m.cmd==="paused") {
     if(osFault&&!m.value)return;
     paused=m.value;
+    speaker.Pause(paused);
     fpsMeter.setPaused(paused);
     updateFps();
     pauseShow();
