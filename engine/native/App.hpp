@@ -157,7 +157,7 @@ public:
     connect(engine,&Engine::stateChanged,this,[this](QJsonObject next){state=next;stopped=state["paused"].toBool();if(!state["fault"].toString().isEmpty())message=state["fault"].toString();tone.Set(working?0:state["tone"].toDouble());emit changed();});
     connect(engine,&Engine::errorOccurred,this,[this](QString error){message=error;tone.Set(0);emit changed();});
     connect(engine,&Engine::fatal,this,[this]{stopped=true;tone.Set(0);emit changed();});
-    connect(engine,&Engine::opened,this,[this](QString file){filename=file;loaded=true;message=tr("Session restored");emit changed();});
+    connect(engine,&Engine::opened,this,[this](QString file){filename=file;loaded=true;message=faulted()?state["fault"].toString():tr("Session restored");emit changed();});
     connect(engine,&Engine::saved,this,[this](QString file){message=tr("Saved %1").arg(file);emit changed();});
     const auto device=QMediaDevices::defaultAudioOutput();QAudioFormat format;format.setSampleRate(48000);format.setChannelCount(1);format.setSampleFormat(QAudioFormat::Float);
     if(!device.isNull()&&device.isFormatSupported(format)){tone.Rate(48000);audio=std::make_unique<QAudioSink>(device,format);audio->start(&tone);}

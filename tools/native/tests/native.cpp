@@ -82,6 +82,12 @@ private slots:
     QVERIFY(state["fault"].toString().contains("CPU 0 stopped"));QVERIFY(state["paused"].toBool());
     const auto before=pixels(machine.Image());machine.Call("Tick",{16000000});QCOMPARE(pixels(machine.Image()),before);
     QVERIFY_THROWS_EXCEPTION(std::runtime_error,machine.Call("Pause",{false}));
+    QTemporaryDir dir;QVERIFY(dir.isValid());const auto saved=dir.filePath("faulted.hemu");
+    machine.Call("Save",{saved});Backend backend;backend.open(saved);
+    QTRY_VERIFY_WITH_TIMEOUT(!backend.busy(),30000);QVERIFY(backend.ready());
+    QVERIFY(backend.faulted());QVERIFY(backend.paused());
+    QCOMPARE(backend.status(),state["fault"].toString());
+    QCOMPARE(pixels(backend.image()),before);
   }
   void gui() {
     qmlRegisterType<Screen>("HemuNative",1,0,"HemuScreen");Backend backend;
