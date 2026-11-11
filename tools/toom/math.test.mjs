@@ -6,7 +6,7 @@ import {root} from './Assets.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const data=readFileSync(resolve(root,'games/Toom/TMDATA.BIN')),meta=JSON.parse(readFileSync(resolve(root,'games/Toom/data.json')));
-assert.equal(meta.format,2);
+assert.equal(meta.format,3);
 const offset=32+meta.states*28+meta.actors*92+meta.sprites*4+meta.sounds*8;
 const sine=Array.from({length:10240},(_,i)=>data.readInt32LE(offset+i*4));
 const angle=Array.from({length:2049},(_,i)=>data.readUInt32LE(offset+40960+i*4));

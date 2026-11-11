@@ -1490,7 +1490,7 @@
 #define TM_SND_NUM	109
 #define TM_SINE_NUM	10240
 #define TM_ANGLE_NUM	2049
-#define TM_DATA_SIZE	90548
+#define TM_DATA_SIZE	90764
 #define TM_WEAPON_NUM	9
 #define TM_AMMO_NUM	4
 #define TM_POWER_NUM	6

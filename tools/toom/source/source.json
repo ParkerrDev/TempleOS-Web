@@ -37,6 +37,10 @@
     {
       "path": "linuxdoom-1.10/doomdef.h",
       "sha256": "643daca966fb762fa86f39ce9a1779355117578527bf2e295163647f9ad0d74e"
+    },
+    {
+      "path": "linuxdoom-1.10/d_items.c",
+      "sha256": "76531d5366de1157cf3d8510ef749617cfc46b6e721845bda4324cd697028fe6"
     }
   ]
 }

@@ -36,6 +36,10 @@ for (let first=0;first<states.length;first++) {
   [current,tics,actions,hash].forEach((value,i)=>expected.writeUInt32LE(value>>>0,first*16+i*4));
 }
 const invalid=Buffer.from(data);invalid.writeUInt32LE(0xFFFFFFFF,32+16);
+const weaponOffset=data.length-256-meta.weapons*24;
+const badAmmo=Buffer.from(data);badAmmo.writeInt32LE(4,weaponOffset);
+const badWeapon=Buffer.from(data);badWeapon.writeInt32LE(meta.states,weaponOffset+4);
+const oldFormat=Buffer.from(data);oldFormat.writeUInt32LE(2,4);
 let source=['TmData.HH','TmState.HC']
   .map(name=>readFileSync(resolve(root,'games/Toom',name),'latin1')).join('\n');
 source+=`
@@ -71,7 +75,10 @@ U0 TmStateTest()
     hash=(hash*33+j)&0xFFFFFFFF;
   }
   if (rng) throw('Wrap');
-  if (GameDataNew("C:/ORACLE/BAD.BIN")) throw('Invalid');
+  if (GameDataNew("C:/ORACLE/BAD.BIN")) throw('StateBad');
+  if (GameDataNew("C:/ORACLE/BADAMMO.BIN")) throw('AmmoBad');
+  if (GameDataNew("C:/ORACLE/BADWPN.BIN")) throw('WpnBad');
+  if (GameDataNew("C:/ORACLE/OLD.BIN")) throw('OldBad');
   "STATES %d TICS %d BAD %d RANDOM %d\\n",TM_STATE_NUM,
         TM_STATE_NUM*120,bad,hash;
   GameDataDel(tmpd);
@@ -83,7 +90,8 @@ TmStateTest;
 `;
 const result=await QemuRun([Buffer.from(source,'latin1')],{files:[
   {name:'TMDATA.BIN',bytes:data},{name:'STATES.BIN',bytes:expected},
-  {name:'BAD.BIN',bytes:invalid}],timeout:120});
+  {name:'BAD.BIN',bytes:invalid},{name:'BADAMMO.BIN',bytes:badAmmo},
+  {name:'BADWPN.BIN',bytes:badWeapon},{name:'OLD.BIN',bytes:oldFormat}],timeout:120});
 console.log(JSON.stringify(result,null,2));
 assert.equal(result.results[0].except,'');
 assert.match(result.results[0].out,/STATES 967 TICS 116040 BAD 0/);

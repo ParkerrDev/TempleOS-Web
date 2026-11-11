@@ -31,7 +31,7 @@ cases.flat().forEach((n,i)=>records.writeBigInt64LE(BigInt(n),8+i*8));
 const badMass=Buffer.from(bytes);badMass.writeInt32LE(0,32+967*28+18*4);
 const total=cases.length+20;
 const source=['TmGlbls.HH','TmWad.HC','TmMap.HC','TmData.HH','TmClip.HC',
-  'TmState.HC','TmMath.HC','TmWorld.HC','TmContact.HC','TmMove.HC','TmPath.HC','TmSlide.HC','TmMotion.HC','TmDamage.HC']
+  'TmState.HC','TmMath.HC','TmWorld.HC','TmContact.HC','TmMove.HC','TmPath.HC','TmSlide.HC','TmPlayer.HH','TmMotion.HC','TmDamage.HC']
   .map(n=>readFileSync(resolve(root,'games/Toom',n),'latin1')).join('\n')+'\n'+
   ['Rooms.HC','Damage.HC'].map(n=>readFileSync(resolve(root,'tools/toom',n),'latin1')).join('\n');
 const files=[{name:'TMDATA.BIN',bytes},{name:'DAMAGE.BIN',bytes:records},{name:'BADMASS.BIN',bytes:badMass}];

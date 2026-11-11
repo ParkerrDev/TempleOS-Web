@@ -10,11 +10,17 @@ class ActorInfo
 	mass,damage,active_snd,flags,raise;
 };
 
+class WeaponInfo
+{
+  I32 ammo,up,down,ready,attack,flash;
+};
+
 class GameData
 {
   U8 *body,*sprite,*sound,*random;
   State *state;
   ActorInfo *info;
+  WeaponInfo *weapon;
   I32 *sine;
   U32 *angle;
 };
@@ -50,11 +56,12 @@ GameData *GameDataNew(U8 *filename="TMDATA.BIN")
   U32 *header;
   State *tmps;
   ActorInfo *tmpi;
+  WeaponInfo *tmpw;
   GameData *tmpd=CAlloc(sizeof(GameData));
   if (!(tmpd->body=FileRead(filename,&size))) goto gd_fail;
   if (size!=TM_DATA_SIZE) goto gd_fail;
   header=tmpd->body;
-  if (header[0]!='TMST' || header[1]!=2 ||
+  if (header[0]!='TMST' || header[1]!=3 ||
 	header[2]!=TM_STATE_NUM || header[3]!=TM_ACTOR_NUM ||
 	header[4]!=TM_SPRITE_NUM || header[5]!=TM_ACTION_NUM ||
 	header[6]!=TM_SND_NUM || header[7]!=256)
@@ -65,7 +72,8 @@ GameData *GameDataNew(U8 *filename="TMDATA.BIN")
   tmpd->sound=tmpd->sprite+TM_SPRITE_NUM*4;
   tmpd->sine=tmpd->sound+TM_SND_NUM*8;
   tmpd->angle=tmpd->sine+TM_SINE_NUM;
-  tmpd->random=tmpd->angle+TM_ANGLE_NUM;
+  tmpd->weapon=tmpd->angle+TM_ANGLE_NUM;
+  tmpd->random=tmpd->weapon+TM_WEAPON_NUM;
   for (i=0;i<TM_STATE_NUM;i++) {
     tmps=tmpd->state+i;
     if (!(0<=tmps->sprite<TM_SPRITE_NUM) || tmps->tics< -1 ||
@@ -80,6 +88,13 @@ GameData *GameDataNew(U8 *filename="TMDATA.BIN")
 	!StateValid(tmpi->xdeath) || !StateValid(tmpi->raise) ||
 	tmpi->radius<0 || tmpi->height<0 || tmpi->mass<=0)
       goto gd_fail;
+  }
+  for (i=0;i<TM_WEAPON_NUM;i++) {
+    tmpw=tmpd->weapon+i;
+    if (!(0<=tmpw->ammo<TM_AMMO_NUM || tmpw->ammo==TM_AM_NOAMMO) ||
+	  !StateValid(tmpw->up) ||
+	  !StateValid(tmpw->down) || !StateValid(tmpw->ready) ||
+	  !StateValid(tmpw->attack) || !StateValid(tmpw->flash)) goto gd_fail;
   }
   for (i=0;i<TM_SINE_NUM;i++)
     if (!(-65536<=tmpd->sine[i]<=65536)) goto gd_fail;

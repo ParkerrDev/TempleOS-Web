@@ -7,7 +7,7 @@ import {root} from './Assets.mjs';
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const bytes=readFileSync(resolve(root,'games/Toom/TMDATA.BIN'));
 const source=['TmGlbls.HH','TmWad.HC','TmMap.HC','TmData.HH','TmClip.HC',
-  'TmState.HC','TmMath.HC','TmWorld.HC','TmContact.HC','TmMove.HC','TmPath.HC','TmSlide.HC','TmMotion.HC','TmAttack.HC']
+  'TmState.HC','TmMath.HC','TmWorld.HC','TmContact.HC','TmMove.HC','TmPath.HC','TmSlide.HC','TmPlayer.HH','TmMotion.HC','TmAttack.HC']
   .map(n=>readFileSync(resolve(root,'games/Toom',n),'latin1')).join('\n')+'\n'+
   ['Rooms.HC','Attack.HC'].map(n=>readFileSync(resolve(root,'tools/toom',n),'latin1')).join('\n');
 const files=[{name:'TMDATA.BIN',bytes}];
