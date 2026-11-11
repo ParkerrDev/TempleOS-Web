@@ -13,6 +13,7 @@
 #include "TmPath"
 #include "TmSlide"
 #include "TmMotion"
+#include "TmAttack"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

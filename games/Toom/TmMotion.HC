@@ -58,8 +58,7 @@ Bool MissileSky(Motion *tmpm)
   I64 n=tmpw->collision->ceil_line,back;
   if (n<0) return FALSE;
   back=tmpw->collision->line[n].back;
-  return back>=0 && !tmpw->map->sector[back].ceil_name[6] &&
-	!MemCmp(tmpw->map->sector[back].ceil_name,"F_SKY1",6);
+  return back>=0 && SectorSky(tmpw->map->sector+back);
 }
 
 U0 ActorXY(Motion *tmpm,Actor *tmpa)

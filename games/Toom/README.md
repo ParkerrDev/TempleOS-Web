@@ -65,6 +65,10 @@ The implemented foundation uses native V5.03 file and memory APIs:
   smooth steps, landing effects, floating actors, skull charges and missile
   impacts. State/sound/contact/line effects use native callbacks.
 
+- Native weapon traces narrow the aim cone through portals and return the
+  nearest shootable target or wall/sky impact. Ordered shot-trigger lines are
+  collected before effects, so querying does not mutate the world.
+
 Fuzz effects, the full simulation loop, weapons, actor actions, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
@@ -124,6 +128,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/movement.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/path.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/slide.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/motion.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/attack.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -183,8 +188,12 @@ Fast movement splits both signs and preserves the exact integer displacement;
 wall sliding consumes only the uncommitted remainder. These explicitly correct
 legacy directional splitting and repeated movement, rather than promise demo
 synchronization. The state clock remains separate from motion.
-Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding
-or motion checks using the original TempleOS compiler and file I/O under HEMU.
+The attack check covers 35 cases for all eight aiming octants, range,
+shootable/nearer actors, floor/ceiling portal limits, exact closed-door
+boundaries, sky impacts and 41 ordered line triggers through buffer growth.
+Shot results do not yet apply damage, weapon states or line effects.
+Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
+motion or attack checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

@@ -18,8 +18,8 @@ That tool retrieves and verifies the corresponding original source, keeping
 its notices intact. No original C runtime, platform shim or network code is
 linked into the TempleOS implementation.
 
-Map collision, wall sliding, fixed-tic actor motion, hit cross-sections and
-axis/vertex conventions were re-expressed in native HolyC from p_map.c,
+Map collision, wall sliding, fixed-tic actor motion, aiming/shot queries,
+hit cross-sections and axis/vertex conventions were re-expressed in native HolyC from p_map.c,
 p_maputl.c and p_mobj.c at the same id Software
 revision. Reference paths and digests are in tools/toom/source/collision.json.
 The native path collector uses exact integer intersections, complete grid

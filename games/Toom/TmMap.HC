@@ -168,3 +168,8 @@ I64 MapSector(Map *tmpm,F64 x,F64 y)
 {
   return tmpm->subsector_sector[MapSubsector(tmpm,x,y)];
 }
+
+Bool SectorSky(Sector *tmps)
+{
+  return !tmps->ceil_name[6] && !MemCmp(tmps->ceil_name,"F_SKY1",6);
+}
