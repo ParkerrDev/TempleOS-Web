@@ -697,7 +697,8 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
             f.local_get(0); if (sz === 4) f.op("i64_extend32_s"); else if (sz === 2) f.op("i64_extend16_s"); else if (sz === 1) f.op("i64_extend8_s"); i64c(f, cnt); f.op("i64_shr_s"); if (mask !== null) { i64c(f, mask); f.op("i64_and"); } f.local_set(2); f.local_get(0); i64c(f, Math.min(cnt, bits) - 1); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); f.local_set(1); }
           wrRM(f, mm, sz, rex, () => f.local_get(2)); deferPartialFlags(f,g=>shiftFlags(g,sz,cnt,opn)); handled = true;
         } else if (cnt === 0 && (opn === 4 || opn === 5 || opn === 7)) {
-          if (!mm.isMem && sz === 4) wrReg(f, mm.rm, sz, rex, () => rdReg(f, mm.rm, sz, rex));
+          rdRM(f, mm, sz, rex); f.local_set(0);
+          wrRM(f, mm, sz, rex, () => f.local_get(0));
           handled = true;
         }
       } else if (op === 0xF6 || op === 0xF7) {                               // grp3: test/not/neg (mul/div deferred)
