@@ -382,8 +382,9 @@ Weapon *WeaponNew(Motion *tmpm)
 U0 WeaponStart(Weapon *tmpw)
 {
   Player *tmpp=tmpw->motion->player;
+  I64 i;
   if (!(0<=tmpp->ready_weapon<TM_WEAPON_NUM)) throw('Weapon');
-  MemSet(tmpp->psprite,0,2*sizeof(Psprite));
+  for (i=0;i<2;i++) tmpp->psprite[i].state=0;
   tmpp->pending_weapon=tmpp->ready_weapon;
   WeaponRaise(tmpw);
 }

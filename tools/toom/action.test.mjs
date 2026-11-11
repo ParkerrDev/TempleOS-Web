@@ -11,7 +11,7 @@ const {rows,source:reference}=await ActionReference(),values=[rows.length,...row
 values.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
 const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
 const actions=readFileSync(resolve(game,'TmActions.HC'),'latin1'),split=actions.indexOf('U0 ActorAction(');assert(split>0);
-const source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmActions')
+const source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmActions','TmLevel'].includes(m[1]))
   .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+actions.slice(0,split)+'\n'+
   readFileSync(resolve(root,'tools/toom/ActionProbe.HC'),'latin1')+'\n'+
   Object.entries(ActionBindings).map(([name,alias])=>`#define ${name} ${alias}`).join('\n')+'\n'+

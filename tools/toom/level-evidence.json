@@ -1,0 +1,760 @@
+{
+  "status": "bounded-native-session-and-level-owner-proof",
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "functions": [
+      "G_PlayerReborn",
+      "G_PlayerFinishLevel",
+      "P_SpawnPlayer",
+      "P_SetupPsprites",
+      "P_BringUpWeapon",
+      "P_SetPsprite",
+      "A_Raise",
+      "G_InitNew fast-state block"
+    ],
+    "files": [
+      {
+        "path": "linuxdoom-1.10/g_game.c",
+        "sha256": "bc8e2e0d76a70f8120174946641a82c46f0116a624f51c011b292e2ffcb78a29"
+      },
+      {
+        "path": "linuxdoom-1.10/p_mobj.c",
+        "sha256": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f"
+      },
+      {
+        "path": "linuxdoom-1.10/p_pspr.c",
+        "sha256": "b47100f9c2c2c4f7913831c170bff55161af2d5d01f5467dbbc6be081c4f1af1"
+      }
+    ],
+    "ordering": "P_SetupLevel sets viewz=1 before P_LoadThings; rebirth in P_SpawnPlayer clears it."
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "assets": {
+    "PHASE1.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+    "PHASE2.WAD": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+    "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f",
+    "LVLMAPS.BIN": "6bf5b6f96416b3bc772584343373975d5a61b39cbd76656b53f6fd995a7c0651"
+  },
+  "checks": {
+    "lifecycle": {
+      "cases": 20,
+      "native": "qemu-u3f35ho1",
+      "hemu": true,
+      "scope": [
+        "Create, run 35 real simulation tics, pause, reject an invalid map, carry inventory to E1M2, and explicitly rebirth.",
+        "The persistent session clock advances during pause and pending exits; the world tic and player remain paused.",
+        "Active deletion, session reentry, thinking/ticking world, clock range and invalid skill guards retain the active owner and heap."
+      ],
+      "sourceSha256": "65905899c4b89b3f6857ea6d7c21efcd6b8a8dcdc00a97245477e99bee39e4af"
+    },
+    "allocation": {
+      "cases": 432,
+      "native": "qemu-x67uhm8s",
+      "hemu": true,
+      "scope": [
+        "429 counted application MAlloc/CAlloc, FOpen/FileRead entry and FBlkRead failure points across GameNew and candidate level replacement.",
+        "Every failed replacement retains active level/player bytes, world RNG/actor count/tic, persistent clock, action binding and brain phase; memory and open file handles return to baseline.",
+        "Successful construction/replacement and teardown remain possible after injected failures."
+      ],
+      "sourceSha256": "4cad6878cc205a56e9694513d5a9efacdf5e7eaa1c822465bd2cf22fca884fec"
+    },
+    "setup": {
+      "cases": 111,
+      "native": "qemu-ykp2v04j",
+      "hemu": true,
+      "scope": [
+        "108 carry/death/explicit-rebirth profiles compare 55 player/weapon-overlay fields against unchanged original C setup routines.",
+        "Three complete 90,764-byte data packs compare ordinary, nightmare and forced-fast initialization with the original fast-state block, using independent private owners.",
+        "The witness stubs actor spawning and sound/status/HUD presentation; it does not run the full original engine or qualify nightmare respawn."
+      ],
+      "sourceSha256": "3dc908c269e6deaf19123199411543b6b02f3eb33061a91eef15d9e4e37dc30c"
+    },
+    "maps": {
+      "cases": 68,
+      "native": "qemu-ah_wwxj0",
+      "hemu": true,
+      "scope": [
+        "Both official Freedoom 0.13.0 phases construct 22,987 actors over 68 maps; independent WAD records supply expected actor/kill/item/secret counts and sky selection.",
+        "Native and HEMU match all 68 six-field traces: phase, episode, map, actor count, RNG position and ordered actor-type hash.",
+        "The check verifies MAP30 monster telefrag rules, persistent clock, zero initial world tic and final heap cleanup. No gameplay tics or frame-rate measurement occur."
+      ],
+      "sourceSha256": "713c239d6c7c7c5f52d45fd0752f70a390c0627dc24a4600e11974c25341d540",
+      "trace": [
+        [
+          1,
+          1,
+          1,
+          210,
+          59,
+          3872081587
+        ],
+        [
+          1,
+          1,
+          2,
+          273,
+          250,
+          1409630468
+        ],
+        [
+          1,
+          1,
+          3,
+          311,
+          6,
+          3524488302
+        ],
+        [
+          1,
+          1,
+          4,
+          300,
+          24,
+          3551912476
+        ],
+        [
+          1,
+          1,
+          5,
+          254,
+          236,
+          956016484
+        ],
+        [
+          1,
+          1,
+          6,
+          372,
+          116,
+          966381237
+        ],
+        [
+          1,
+          1,
+          7,
+          560,
+          238,
+          2120253667
+        ],
+        [
+          1,
+          1,
+          8,
+          42,
+          41,
+          3181496215
+        ],
+        [
+          1,
+          1,
+          9,
+          304,
+          249,
+          2947273034
+        ],
+        [
+          1,
+          2,
+          1,
+          247,
+          146,
+          3378936259
+        ],
+        [
+          1,
+          2,
+          2,
+          73,
+          8,
+          822719104
+        ],
+        [
+          1,
+          2,
+          3,
+          199,
+          73,
+          1871578803
+        ],
+        [
+          1,
+          2,
+          4,
+          304,
+          66,
+          3552703012
+        ],
+        [
+          1,
+          2,
+          5,
+          343,
+          91,
+          788381197
+        ],
+        [
+          1,
+          2,
+          6,
+          348,
+          133,
+          436116559
+        ],
+        [
+          1,
+          2,
+          7,
+          419,
+          55,
+          439109995
+        ],
+        [
+          1,
+          2,
+          8,
+          42,
+          107,
+          556239468
+        ],
+        [
+          1,
+          2,
+          9,
+          458,
+          23,
+          3263266079
+        ],
+        [
+          1,
+          3,
+          1,
+          138,
+          209,
+          242273998
+        ],
+        [
+          1,
+          3,
+          2,
+          171,
+          251,
+          68475956
+        ],
+        [
+          1,
+          3,
+          3,
+          540,
+          100,
+          1559930554
+        ],
+        [
+          1,
+          3,
+          4,
+          417,
+          245,
+          2773927479
+        ],
+        [
+          1,
+          3,
+          5,
+          351,
+          47,
+          1035368259
+        ],
+        [
+          1,
+          3,
+          6,
+          213,
+          111,
+          3563027384
+        ],
+        [
+          1,
+          3,
+          7,
+          349,
+          124,
+          2222616138
+        ],
+        [
+          1,
+          3,
+          8,
+          97,
+          253,
+          1057007973
+        ],
+        [
+          1,
+          3,
+          9,
+          538,
+          31,
+          4139707755
+        ],
+        [
+          1,
+          4,
+          1,
+          259,
+          233,
+          646294716
+        ],
+        [
+          1,
+          4,
+          2,
+          671,
+          95,
+          2748285086
+        ],
+        [
+          1,
+          4,
+          3,
+          382,
+          10,
+          3130241465
+        ],
+        [
+          1,
+          4,
+          4,
+          458,
+          249,
+          860301995
+        ],
+        [
+          1,
+          4,
+          5,
+          404,
+          182,
+          122758748
+        ],
+        [
+          1,
+          4,
+          6,
+          564,
+          140,
+          3319545651
+        ],
+        [
+          1,
+          4,
+          7,
+          958,
+          12,
+          825733872
+        ],
+        [
+          1,
+          4,
+          8,
+          334,
+          68,
+          4292598862
+        ],
+        [
+          1,
+          4,
+          9,
+          789,
+          158,
+          2452815065
+        ],
+        [
+          2,
+          1,
+          1,
+          122,
+          184,
+          526546371
+        ],
+        [
+          2,
+          1,
+          2,
+          149,
+          186,
+          2359879661
+        ],
+        [
+          2,
+          1,
+          3,
+          158,
+          205,
+          4032695745
+        ],
+        [
+          2,
+          1,
+          4,
+          293,
+          214,
+          3573417745
+        ],
+        [
+          2,
+          1,
+          5,
+          275,
+          136,
+          184703742
+        ],
+        [
+          2,
+          1,
+          6,
+          167,
+          176,
+          2441250379
+        ],
+        [
+          2,
+          1,
+          7,
+          275,
+          71,
+          3236713099
+        ],
+        [
+          2,
+          1,
+          8,
+          221,
+          176,
+          1753972749
+        ],
+        [
+          2,
+          1,
+          9,
+          369,
+          38,
+          1275254049
+        ],
+        [
+          2,
+          1,
+          10,
+          454,
+          145,
+          3076130496
+        ],
+        [
+          2,
+          1,
+          11,
+          793,
+          155,
+          1708691946
+        ],
+        [
+          2,
+          1,
+          12,
+          538,
+          126,
+          2026207236
+        ],
+        [
+          2,
+          1,
+          13,
+          222,
+          254,
+          1337738782
+        ],
+        [
+          2,
+          1,
+          14,
+          220,
+          112,
+          4094693003
+        ],
+        [
+          2,
+          1,
+          15,
+          392,
+          217,
+          968195142
+        ],
+        [
+          2,
+          1,
+          16,
+          187,
+          0,
+          2657007889
+        ],
+        [
+          2,
+          1,
+          17,
+          241,
+          134,
+          1762221399
+        ],
+        [
+          2,
+          1,
+          18,
+          526,
+          125,
+          815081181
+        ],
+        [
+          2,
+          1,
+          19,
+          301,
+          121,
+          3518867444
+        ],
+        [
+          2,
+          1,
+          20,
+          311,
+          137,
+          2292141569
+        ],
+        [
+          2,
+          1,
+          21,
+          307,
+          73,
+          3948752253
+        ],
+        [
+          2,
+          1,
+          22,
+          237,
+          162,
+          3857354198
+        ],
+        [
+          2,
+          1,
+          23,
+          618,
+          103,
+          1747439449
+        ],
+        [
+          2,
+          1,
+          24,
+          226,
+          190,
+          283383892
+        ],
+        [
+          2,
+          1,
+          25,
+          385,
+          253,
+          4243498859
+        ],
+        [
+          2,
+          1,
+          26,
+          565,
+          186,
+          3638700910
+        ],
+        [
+          2,
+          1,
+          27,
+          402,
+          63,
+          2406825915
+        ],
+        [
+          2,
+          1,
+          28,
+          668,
+          2,
+          204408967
+        ],
+        [
+          2,
+          1,
+          29,
+          335,
+          254,
+          904069279
+        ],
+        [
+          2,
+          1,
+          30,
+          108,
+          125,
+          3598220532
+        ],
+        [
+          2,
+          1,
+          31,
+          43,
+          195,
+          2494831277
+        ],
+        [
+          2,
+          1,
+          32,
+          187,
+          229,
+          482576347
+        ]
+      ]
+    },
+    "weaponRegression": {
+      "cases": 13859,
+      "native": "qemu-ill4rmq3",
+      "hemu": true,
+      "scope": [
+        "Existing weapon state/ammo/action and timing fixture passes after preserving overlay coordinates in WeaponStart."
+      ]
+    },
+    "actionRegression": {
+      "cases": 530,
+      "native": "qemu-gwq1k0jx",
+      "hemu": true,
+      "scope": [
+        "Controlled action routing remains intact after excluding the downstream Level owner from the probe."
+      ],
+      "sourceSha256": "fa99c2d54c0124e2baf8035527fac9ae60fec761a9f05617a0c27d011f10c97e"
+    },
+    "touchRegression": {
+      "cases": 4640,
+      "native": "qemu-9pyr9l9r",
+      "hemu": true,
+      "scope": [
+        "Controlled original-C contact decisions remain exact with the downstream Level owner excluded."
+      ],
+      "sourceSha256": "1f40413edc58fcecfb42f3243ee2567323298b29900b22eb4f5342743da07458"
+    },
+    "realContactRegression": {
+      "cases": 1037,
+      "native": "qemu-w2_0g5aq",
+      "hemu": true,
+      "scope": [
+        "Actual damage, pickup, skull-state and cleanup checks compile with the complete Load.HC module closure."
+      ],
+      "sourceSha256": "a40d9ed43886326311e5315e4f2fb054701b9eedd471258780d105a97d8c68b1"
+    }
+  },
+  "before": [
+    {
+      "native": "qemu-w326d77c",
+      "sourceSha256": "bad5a354533bf911563590dec9d42adf47980e9ba452dd244f98ef3e22b3127c",
+      "out": "SETUP 0 FIELD 49 GOT 0 EXPECT 123456\n",
+      "exception": "Setup",
+      "scope": "WeaponStart cleared carried overlay X instead of only state pointers.",
+      "revision": "Uncommitted initial Level candidate; exact source retained by the native oracle."
+    },
+    {
+      "native": "qemu-mz8wska4",
+      "sourceSha256": "5fc0409171986087808eec5d5c0c5f122e7fa04f71de8b5e26d7f02a0d301dc3",
+      "out": "SETUP 36 FIELD 15 GOT 1 EXPECT 0\n",
+      "exception": "Setup",
+      "scope": "The initial Level candidate set view_z after PlayerBorn, preserving a sentinel that the original rebirth clears.",
+      "revision": "Uncommitted initial Level candidate; exact source retained by the native oracle."
+    }
+  ],
+  "controlledProbeClosure": {
+    "base": "85e2469",
+    "runners": [
+      "tools/toom/action.test.mjs",
+      "tools/toom/boss-decisions.test.mjs",
+      "tools/toom/chase-decisions.test.mjs",
+      "tools/toom/clock-order.test.mjs",
+      "tools/toom/combat-decisions.test.mjs",
+      "tools/toom/cube.test.mjs",
+      "tools/toom/effect-decisions.test.mjs",
+      "tools/toom/ending-decisions.test.mjs",
+      "tools/toom/enemy-decisions.test.mjs",
+      "tools/toom/fat-decisions.test.mjs",
+      "tools/toom/fire-decisions.test.mjs",
+      "tools/toom/pain-decisions.test.mjs",
+      "tools/toom/projectile-decisions.test.mjs",
+      "tools/toom/special-dispatch.test.mjs",
+      "tools/toom/spit.test.mjs",
+      "tools/toom/think-order.test.mjs",
+      "tools/toom/touch.test.mjs",
+      "tools/toom/tracer-decisions.test.mjs",
+      "tools/toom/vile-decisions.test.mjs",
+      "tools/toom/walk-decisions.test.mjs"
+    ],
+    "modules": 49,
+    "scope": "All previous module bytes are identical except the independently checked WeaponStart state-pointer correction. These 20 runners change only their downstream module exclusion; they retain their original module order and proxy semantics."
+  },
+  "inputs": {
+    "games/Toom/Load.HC": "a354ffb34044599d0cc51792b0f9ce4686a179748201c92dd9a3d86b17c5c998",
+    "games/Toom/TmLevel.HC": "1e20d4b8cbb6a0b07666bb71d84713037b3c5d045e64571ab4f9ed1e7249fdbb",
+    "games/Toom/TmWeapon.HC": "2904054222cc7f8bbf19307da47dac9c16e8a8bb5768bd56b17ce1e95733189c",
+    "tools/toom/Level.HC": "217e6da7862f237280a23398be9d9d7b45855e4577c6b6f1552a954c2453f25c",
+    "tools/toom/LevelAlloc.HC": "1f8ae2eddd9076b6cf279d1726499f26462b57fb254040cef11bf1713c60ddd2",
+    "tools/toom/LevelMaps.HC": "56c71de0f36ec96d2e79367f397009a2860a59b00147f8b2896a62b8c16d5911",
+    "tools/toom/Setup.HC": "5340f6634894f25a771e8cddd96f16347f9b7cb905fe3a525056100efb80c069",
+    "tools/toom/SetupRef.mjs": "3fb0ba1ea322b7cf6a2242e7b7a8eb21bddcd244b108d478eaf5037705c72f2c",
+    "tools/toom/level.test.mjs": "506f09fa4322f134d0d757ecd26a7c69094535aa3f93c66f99972b8eae60a1b1",
+    "tools/toom/level-alloc.test.mjs": "7a64dd4a84284cb14431b826ba68dc540abb8ffb8f3e1586a5d4df54096536e8",
+    "tools/toom/level-maps.test.mjs": "a76b465053b73bb537b74298c0e7f5582803f5e4e74239c3c0b7bd3a536ded8b",
+    "tools/toom/setup.test.mjs": "1b21669b39e04792097bef1c0b46d094b7ff45673965c63553e94f35cf7e3338",
+    "tools/toom/source/collision.json": "a675099d841a4b9195e330f6c111ff29057e014dc18480530a9210ed9365a9ae",
+    "tools/toom/action.test.mjs": "8e7215990b4afb00b81799ec2cf0d8a8ffbc6a6d8bc6e822db6832157a17e602",
+    "tools/toom/boss-decisions.test.mjs": "ef92d92bb03f0a64ef20ae1f5f48502ff2875450b02d79da9bd78750a2ee3300",
+    "tools/toom/chase-decisions.test.mjs": "6f13298137e5ae6a5200b91791f4edd3a7c7758b4af5207c19f3e8a515fb214f",
+    "tools/toom/clock-order.test.mjs": "191787c797311fbf065ca8e272e24aa7d99311e8616dae2f190cc122e844fb98",
+    "tools/toom/combat-decisions.test.mjs": "47b5d7559ce05f7e1ecf5c9ba5a93d572fe0b035893415a4b9ec4819df655b3e",
+    "tools/toom/cube.test.mjs": "385b50f78298881fc73564becdb9cc5b3a3079c80a37e601d73e572937fe9816",
+    "tools/toom/effect-decisions.test.mjs": "9c861256512d5abaf590c4f55d8ce10b843a0379ddf564bc2712ef63f63ea6c1",
+    "tools/toom/ending-decisions.test.mjs": "c17eea3fc481d10e29fc2461b1c14b4709f63689246d207b599d45968fc015da",
+    "tools/toom/enemy-decisions.test.mjs": "a005ac9c090f9b97d98e6c4bbbe993000dcbb22d1cc3064db3c437925ec4bb6a",
+    "tools/toom/fat-decisions.test.mjs": "5b5d78114784692ff3f9d8fdbcc037cdd4e5713ae74c1214763a7bde7645fc1a",
+    "tools/toom/fire-decisions.test.mjs": "dc59f52b42ce76fb58ad0b0920cbea45d260f7e1edbca3d415b8bbae593806c3",
+    "tools/toom/pain-decisions.test.mjs": "02442858cd7dcb1178290448187e03d79612c7ef65e39fd1b5af41c67d3587e3",
+    "tools/toom/projectile-decisions.test.mjs": "004a8d3039f9628bfed945c8e17f3aa024ed935c6aede2f42cd6425a6456e0a3",
+    "tools/toom/special-dispatch.test.mjs": "f6dc7de632959cd520b20ffdb9ef20a11ca305431f36ebafaff4df752ea90d15",
+    "tools/toom/spit.test.mjs": "57317a3916d4e53b8d5d4e00cd17e1c300f5a24995f60acca93110a8683dac4e",
+    "tools/toom/think-order.test.mjs": "47cf45c9b2f025124bcbbb1325fc6387e52cce5e4fb0f9d315eb905a670aa8d7",
+    "tools/toom/touch.test.mjs": "9fd65ff7af429bc21ed4bf959564047cab138f49fd496e5fd474226c123357fc",
+    "tools/toom/tracer-decisions.test.mjs": "b62cfc3ae7a307579a076ca53556a9b568f3de1875df26f0e274326677a89471",
+    "tools/toom/vile-decisions.test.mjs": "b73195887b4cd4ba671cc75855202ab0d2fdeef108a7ce1a4f6932b80b23513b",
+    "tools/toom/walk-decisions.test.mjs": "4ecb4caba08f8279e26aaddb204233e18e24d3738082905b5b6f11c002679165"
+  },
+  "limitations": [
+    "This is native session/level ownership and simulation composition, not a playable host or catalog qualification.",
+    "No automatic progression/intermission, save/load, HUD/weapon rendering, audio output or host scheduling is implemented here.",
+    "Nightmare/forced-fast state initialization is checked; nightmare monster respawn is still unimplemented.",
+    "Allocation failures are injected at application boundaries; this does not prove OS-internal cleanup or physical-memory exhaustion behavior.",
+    "Map checks cover official Freedoom 0.13.0; arbitrary mods, old demo synchronization and all hypervisors are not qualified."
+  ]
+}

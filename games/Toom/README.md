@@ -54,6 +54,12 @@ The implemented foundation uses native V5.03 file and memory APIs:
   interleaves timed doors and lights by sector order and counts secret sectors.
   The thinker pass advances neither the level clock nor rendering. Reentry and
   destruction of live contexts during that pass fail before changing ownership.
+- A session owns its WAD, private state data, graphics and sprite caches. A
+  candidate level owns the complete simulation and view graph; failed loads
+  retain the active level. Successful replacement carries inventory, RNG and
+  brain phase with original rebirth/setup rules. Contact, line, sound-alert and
+  actor actions bind to the same level. Fast/nightmare state changes affect
+  only that session's data; nightmare monster respawn is not yet implemented.
 - A single-player tic runs player logic, shared thinkers, surface updates and
   buttons before advancing the common level clock. Pause stops that sequence;
   player and weapon bob use the same clock as hazards and animation. Normal and
@@ -329,6 +335,11 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cube-real.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cube-map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/action.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/action-real.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level-alloc.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/setup.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level-maps.test.mjs > /tmp/toom-level-maps.json
+BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-level-maps.json node tools/toom/level-maps.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -402,7 +413,7 @@ of rooms: step/dropoff/headroom boundaries, float/teleport/noclip flags, atomic
 rejection, actor links, pickup contacts and crossed-line ordering, including
 callbacks that perform another query or throw after the position commits.
 Step and headroom tests include one-Q16-unit boundaries.
-Actual line actions remain part of the pending simulation stage.
+Actual line actions are covered by the line-event and level composition gates.
 The path check compares all hit records for 5,012 rays across the 36 maps and
 an independent full geometry/actor scan. It includes long rays, exact grid and
 vertex boundaries, large actors in neighboring cells, wall/actor ties, all four
@@ -624,8 +635,8 @@ cleanup, unsupported weapon-only actions, nested cross-world callbacks, live
 persistent clocks and a cube flight through the installed dispatcher.
 The 324 shared-thinker scenarios and 2,628 calls remain exact. These are routing
 and composition checks, with behavior evidence supplied by the individual
-component oracles above. See `tools/toom/action-evidence.json`. Full level
-ownership, the playable host and progression remain unfinished.
+component oracles above. See `tools/toom/action-evidence.json`. Level ownership
+is now checked separately below; the playable host and progression remain unfinished.
 Simulation allocation gates inject all 54 counted failure points across 15
 constructor/create-delete paths and four buffer growth paths. The 77 cases
 include eight busy-world guards; native TempleOS and pinned HEMU preserve heap,
@@ -642,8 +653,17 @@ not an audit of OS internals. See `tools/toom/load-alloc-evidence.json`.
 The contact-effect dispatcher matches 4,640 decisions from the original C
 collision routine, including RNG, damage source and skull reset order. Another
 1,037 native/HEMU cases execute real damage, pickups, state actions and cleanup.
-The complete level owner still needs to install the binding; these checks do
-not turn the renderer preview into gameplay. See `tools/toom/touch-evidence.json`.
+The level owner installs this binding. These component checks do not turn the
+renderer preview into gameplay. See `tools/toom/touch-evidence.json`.
+Session/level gates add 20 lifecycle cases and 429 injected allocation/read
+failures, preserving the active level and heap on rejection. The original C
+setup routines supply 108 player/overlay profiles; complete data-pack comparisons
+check ordinary, nightmare and forced-fast setup. These caught and corrected a
+carried overlay-X reset and the rebirth view-position sentinel ordering. All 68
+official maps construct 22,987 actors with matching native/HEMU RNG positions
+and actor-type traces. This is level composition, not a complete playable host,
+nightmare-respawn implementation or frame-rate proof. See
+`tools/toom/level-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

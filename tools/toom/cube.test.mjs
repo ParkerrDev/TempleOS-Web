@@ -10,7 +10,7 @@ const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backen
 const rows=await CubeReference(),values=[rows.length,...rows.flat()],packed=Buffer.alloc(values.length*8);
 values.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
 const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-const source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmActions').filter(m=>m[1]!=='TmBrain')
+const source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmActions','TmLevel'].includes(m[1])).filter(m=>m[1]!=='TmBrain')
   .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
   readFileSync(resolve(root,'tools/toom/CubeProbe.HC'),'latin1')+
   '\n#define WorldSpawn TmCubeSpawn\n#define EnemyPlayer TmCubePlayer\n'+
