@@ -76,8 +76,8 @@ const fSt = (f, i, ev) => { fStAddr(f, i); ev(); f.store("f64_store", 0, 3); }; 
 const fInc = (f, d) => { rcX87 = 1; f.local_get(FSPLOC); i64c(f, d); f.op("i64_add"); i64c(f, 7); f.op("i64_and"); f.local_set(FSPLOC); }; // fsp=(fsp+d)&7 (local only)
 const fPush = (f, ev) => { ev(); f.local_set(5); fInc(f, -1); fSt(f, 0, () => f.local_get(5)); };  // local5(f64): v(old fsp) -> dec fsp -> store
 const fPop = (f) => fInc(f, 1);
-function fIntValue(f,bits,trunc)
-{//x87 masked integer stores: round first, then check the destination range.
+function fRoundValue(f,trunc)
+{//Round in F64 so large finite values and infinities stay unchanged.
   f.local_set(36);
   if (trunc) {
     f.local_get(36);f.op("f64_trunc");
@@ -97,6 +97,11 @@ function fIntValue(f,bits,trunc)
       f.end();
     f.end();
   }
+}
+
+function fIntValue(f,bits,trunc)
+{
+  fRoundValue(f,trunc);
   f.local_set(5);
   i32c(f,X87SW);i32c(f,X87SW);ld64(f);i64c(f,~0x200);f.op("i64_and");st64(f);
   f.local_get(5);fc64(f,-(2**(bits-1)));f.op("f64_ge");
@@ -502,16 +507,19 @@ export function jitCompile(rip) {
         if (!FPR) break;                                                     // x87 offsets not wired
         const modrm = U8[j], sub = (modrm >> 3) & 7, isMemX = (modrm >> 6) !== 3, sti = modrm & 7;
         if (isMemX) {
-          const memOK = (op === 0xDD && (sub === 0 || sub === 1 || sub === 2 || sub === 3))   // FLD/FISTTP/FST/FSTP m64
+          const memOK = (op === 0xD9 && X87CW && (sub === 5 || sub === 7))
+            || (op === 0xDD && (sub === 0 || sub === 1 || sub === 2 || sub === 3))   // FLD/FISTTP/FST/FSTP m64
             || (op === 0xDF && (sub === 1 || sub === 5 || sub === 7))                // FISTTP m16/FILD/FISTP m64int
             || (op === 0xDB && (sub === 0 || sub === 1 || sub === 3))                // FILD/FISTTP/FISTP m32int
             || (op === 0xDC && sub !== 2 && sub !== 3);                            // FADD/FMUL/FSUB(R)/FDIV(R) m64
           if (!memOK) break;
           const intStore=sub===1 && op!==0xDC || op===0xDF && sub===7 || op===0xDB && sub===3;
           if (intStore && (!X87CW || !X87SW)) break;
-          if (intStore) { i32c(f,X87CW);ld64(f);i64c(f,0x21);f.op("i64_and");i64c(f,0x21);f.op("i64_ne");f.if_();materialize(f);i32c(f,RIP);i64c(f,i-GBASE);st64(f);wbDirty(f);i32c(f,n);f.op("return");f.end(); }
+          if (intStore) { materialize(f); i32c(f,X87CW);ld64(f);i64c(f,0x21);f.op("i64_and");i64c(f,0x21);f.op("i64_ne");f.if_();materialize(f);i32c(f,RIP);i64c(f,i-GBASE);st64(f);wbDirty(f);i32c(f,n);f.op("return");f.end(); }
           const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; emitEA(f, mm, j - GBASE); const STW = { 0xDD: ["i64_store", 3], 0xDB: ["i64_store32", 2], 0xDF: ["i64_store16", 1] };
-          if (sub === 1 && op !== 0xDC) { memAddr(f); fLd(f, 0); fIntValue(f,op===0xDD?64:op===0xDB?32:16,true); f.store(STW[op][0], 0, STW[op][1]); fPop(f); }
+          if (op===0xD9 && sub===5) { i32c(f,X87CW);rdRM(f,mm,2,rex);st64(f); }
+          else if (op===0xD9 && sub===7) wrRM(f,mm,2,rex,()=>{i32c(f,X87CW);ld64(f);});
+          else if (sub === 1 && op !== 0xDC) { memAddr(f); fLd(f, 0); fIntValue(f,op===0xDD?64:op===0xDB?32:16,true); f.store(STW[op][0], 0, STW[op][1]); fPop(f); }
           else if (op === 0xDD && sub === 0) fPush(f, () => { memAddr(f); f.load("f64_load", 0, 3); });
           else if (op === 0xDD && sub === 2) { memAddr(f); fLd(f, 0); f.store("f64_store", 0, 3); }
           else if (op === 0xDD && sub === 3) { memAddr(f); fLd(f, 0); f.store("f64_store", 0, 3); fPop(f); }
@@ -529,7 +537,8 @@ export function jitCompile(rip) {
           const regOK = ((op === 0xD8 || op === 0xDC || op === 0xDE) && sub !== 2 && sub !== 3)   // st0 OP st(i) / st(i) OP st0 / st(i) OP st0,pop
             || (op === 0xD9 && (sub === 0 || sub === 1 || (sub === 4 && (sti <= 1 || sti === 4))
               || (sub === 6 && (sti === 6 || sti === 7))                           // FDECSTP / FINCSTP (the pop-discard idiom after FFREE)
-              || (sub === 7 && sti === 2)))                                        // FLD st(i) / FXCH / FCHS,FABS / FSQRT
+              || (sub === 5 && sti <= 6)
+              || (sub === 7 && (sti === 2 || sti === 4 && X87CW))))                                        // FLD st(i) / FXCH / FCHS,FABS / FSQRT
             || (op === 0xDD && (sub === 0 || sub === 2 || sub === 3))              // FFREE(no-op)/FST/FSTP st(i) - was breaking the JIT block millions of times in HolyCraft's hot F64 path
             || (op === 0xDF && sub === 4 && sti === 0)
             || ((op === 0xDB || op === 0xDF) && (sub === 6 || sub === 7));         // FCOMI/FUCOMI (0xDF = ...P, pops) -> EFLAGS
@@ -543,6 +552,14 @@ export function jitCompile(rip) {
             fLd(f, 0); f.local_set(5); const W = sub === 1 ? "f64_mul" : sub === 0 ? "f64_add" : (sub === 4 || sub === 5) ? "f64_sub" : "f64_div"; const rev = sub === 4 || sub === 6; fSt(f, sti, () => { if (rev) { f.local_get(5); fLd(f, sti); } else { fLd(f, sti); f.local_get(5); } f.op(W); }); fPop(f);
           } else if (op === 0xD9 && sub === 0) fPush(f, () => fLd(f, sti));        // FLD st(i)
           else if (op === 0xD9 && sub === 1) { fLd(f, 0); f.local_set(5); fSt(f, 0, () => fLd(f, sti)); fSt(f, sti, () => f.local_get(5)); }  // FXCH
+          else if (op===0xD9 && sub===5) {
+            const constants=[1,3.32192809488736235,1.44269504088896341,
+              3.14159265358979324,0.30102999566398120,0.69314718055994531,0];
+            fPush(f,()=>fc64(f,constants[sti]));
+          }
+          else if (op===0xD9 && sub===7 && sti===4) {
+            materialize(f);fSt(f,0,()=>{fLd(f,0);fRoundValue(f,false);});
+          }
           else if (op === 0xD9 && sub === 4 && sti === 0) fSt(f, 0, () => { fLd(f, 0); f.op("f64_neg"); });    // FCHS
           else if (op === 0xD9 && sub === 4 && sti === 1) fSt(f, 0, () => { fLd(f, 0); f.op("f64_abs"); });    // FABS
           else if (op === 0xD9 && sub === 4 && sti === 4) {                    // FTST: compare ST0 to zero without popping or changing EFLAGS.
@@ -586,6 +603,21 @@ export function jitCompile(rip) {
     } else {                                                                 // 0F two-byte
       if (op === 0x31 && TSC) {                                             //RDTSC reads the shared device clock; only core zero advances it.
         wrReg(f, 0, 4, rex, () => { i32c(f, TSC); ld64(f); }); wrReg(f, 2, 4, rex, () => { i32c(f, TSC); ld64(f); i64c(f, 32); f.op("i64_shr_u"); }); handled = true;
+      } else if (op>=0x40 && op<=0x4F) {
+        const m=decodeModRM(j,rexR,rexX,rexB);j=m.j;
+        materialize(f);
+        if (m.isMem) emitEA(f,m,j-GBASE);
+        wrReg(f,m.reg,szV,rex,()=>{
+          rdRM(f,m,szV,rex);rdReg(f,m.reg,szV,rex);
+          emitCond(f,op&15);f.op("select");
+        });
+        handled=true;
+      } else if (op>=0x90 && op<=0x9F) {
+        const m=decodeModRM(j,rexR,rexX,rexB);j=m.j;
+        materialize(f);
+        if (m.isMem) emitEA(f,m,j-GBASE);
+        wrRM(f,m,1,rex,()=>{emitCond(f,op&15);f.op("i64_extend_i32_u");});
+        handled=true;
       } else if (op === 0xB6 || op === 0xB7) {                              // movzx
         const ssz = op === 0xB6 ? 1 : 2; const m = decodeModRM(j, rexR, rexX, rexB); j = m.j; if (m.isMem) emitEA(f, m, j - GBASE); wrReg(f, m.reg, szV, rex, () => rdRM(f, m, ssz, rex)); handled = true;
       } else if (op === 0xBE || op === 0xBF) {                               // movsx
