@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "aadd16927206a8f35e3239e2ed4c26b54b99585717413c2664e967fbf31c4148",
+  "runtimeSha256": "32b31a4e1f45f1bd34514673e8e9e85c6c2270072137a4e4591ac46084552cb7",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -8,7 +8,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "d7820333ceb81e19c4f0be9edb091ef901f29605fa1dc5985da9bceec04cc921"
+      "wasmSha256": "fe4fc6988248ab6d135974d1dce7ba50380f5829ab2a11adcd0ad88963bbb5ed"
     },
     "toom": {
       "name": "TOOM",
@@ -24,7 +24,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "d473c306a8964086dd7d7284cd088578eb04c5945399172b84794c5be07554d2"
+      "wasmSha256": "921f1edb580f38ce4483a7e351d8a7f77e4a9a877bf79fe7a0ed993a000dc9bd"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -32,7 +32,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "d53959e5bb055c93752e4d3d75fd3bd4ff90e0e081826bc85e9999c1e44cba3c"
+      "wasmSha256": "967748705d55f7d1c516a5dc70266451cb8f4e716a376d788b973140704584cc"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -40,7 +40,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "914d29d32ba2f831c837dd33541d715adcb1c53b3899702229cb9b5c15a07980"
+      "wasmSha256": "21e342c5f67abc0d712d64d49fe948dae92d40ea520c1fcd5ec0756230abeb61"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -256,7 +256,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/CircleTrace.HC:21: Too many function arguments"
+      "error": "C:/Home/Games/TinkerOS/CircleTrace.HC:22: undefined symbol 'best_score'"
     },
     "tinker-ElephantWalk": {
       "name": "ElephantWalk",
@@ -376,7 +376,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/Cube/Cube.HC:30: Undefined identifier or untyped call: CatPrint"
+      "error": "C:/Home/Games/TinkerOS/Apps/Cube/Cube.HC:32: Undefined identifier or untyped call: RegDft"
     },
     "library-GlowUFOs": {
       "name": "GlowUFOs",
@@ -384,7 +384,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/GlowUFOs.HC:1579: Too many function arguments"
+      "error": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/GlowUFOs.HC:1751: undefined symbol 'SettingsPush'"
     },
     "library-OregonTrail1975": {
       "name": "Oregon Trail 1975",
@@ -416,7 +416,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/Sudoku/Sudoku.HC:51: Undefined identifier or untyped call: MStrPrint"
+      "error": "C:/Home/Games/TinkerOS/Apps/Sudoku/Sudoku.HC:52: Undefined identifier or untyped call: HashFind"
     },
     "library-Tetris": {
       "name": "Tetris",
@@ -424,7 +424,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/Tetris/Tetris.HC:301: Too many function arguments"
+      "error": "C:/Home/Games/TinkerOS/Apps/Tetris/Tetris.HC:345: undefined symbol 'Blink'"
     },
     "library-B17": {
       "name": "B17",
@@ -488,7 +488,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/MarioClone/Wad.HC:72: Undefined identifier or untyped call: MStrPrint"
+      "error": "C:/Home/Games/MarioClone/Wad.HC:134: not an lvalue: Binary"
     },
     "library-MaliciousTestimonies": {
       "name": "Malicious Testimonies",
