@@ -3,8 +3,9 @@
 // sound ring into WebAudio, and shows console output.
 import { Speaker } from "../holyc-wasm/src/runtime/sound.js";
 import {
-  CTRL, KB_BASE, KB_RING, SND_BASE, SND_RING, SND_TONE, SND_NOTE, KEY_STATE_BASE, makeControlSAB,
+  CTRL, KB_BASE, KB_RING, SND_BASE, SND_RING, SND_TONE, SND_NOTE, KEY_STATE_BASE, makeControlSAB, keyPacketPush, keyPacketReset,
 } from "../holyc-wasm/src/runtime/protocol.js";
+import {KEY,KeyBytes,KeyInput} from "../Keyboard.js";
 import { DEMOS } from "./demos.js";
 import { Framebuffer } from "../holyc-wasm/src/runtime/graphics.js";
 import { SOURCES } from "./demo-sources.js";
@@ -21,6 +22,7 @@ let worker = null;
 let ctrl = null;
 let sndTimer = null;
 let running = false;
+let nativeKeys = false;
 let mainFb = null;     // main-thread presenter over the shared framebuffer
 let curCanvas = canvas;
 let rafId = 0;
@@ -75,13 +77,39 @@ function pushKey(code) {
   Atomics.notify(ctrl, CTRL.SLEEP_FUTEX);
 }
 
+let nativeResetting=false;
+const nativeInput=KeyInput(sendNative);
+const legacyInput=KeyInput((bytes,key,down)=>{
+  if(ctrl)Atomics.store(ctrl,KEY_STATE_BASE+(key&127),Number(down));
+});
+const screenKeys={
+  down(source,key){
+    if(!legacyInput.down(source,key&127))return false;
+    const shift=legacyInput.held().some(key=>key===KEY.ShiftLeft||key===KEY.ShiftRight);
+    const ch=key===KEY.Escape?(shift?28:27):key===KEY.Space?(shift?31:32):
+      key===KEY.Enter?10:key===KEY.Tab?9:0;
+    if(ch)pushKey(ch);
+    return true;
+  },
+  up:source=>legacyInput.up(source),
+};
+function clearNative(){
+  nativeResetting=true;nativeInput.reset();nativeResetting=false;
+}
+function sendNative(bytes) {
+  if(!ctrl || !nativeKeys || nativeResetting || !bytes.length)return;
+  if(!keyPacketPush(ctrl,bytes)){clearNative();dispatchEvent(new Event('preview-input-reset'));}
+  worker?.postMessage({type:"input"});
+}
+
 function keyToChar(e) {
   if (e.key === "Enter") return 10;
-  if (e.key === "Escape") return 0x1b;
+  if (e.key === "Escape") return e.shiftKey?0x1c:0x1b;
+  if (e.key === " " && e.shiftKey) return 0x1f;
   if (e.key === "Backspace") return 8;
   if (e.key === "Tab") return 9;
   if (e.key.length === 1) return e.key.charCodeAt(0);
-  // arrows -> TempleOS-ish scan placeholders (kept simple)
+  //The legacy character stream has no arrow characters.
   return 0;
 }
 
@@ -93,7 +121,10 @@ const scanKeys={KeyW:0x11,KeyA:0x1e,KeyS:0x1f,KeyD:0x20,KeyR:0x13,KeyF:0x21,KeyJ
 const hasInputFocus=()=>document.activeElement===curCanvas || document.pointerLockElement===curCanvas;
 function releaseInput(){
   hybridTracking=false;
+  clearNative();legacyInput.reset();
+  dispatchEvent(new Event('preview-input-reset'));
   if(!ctrl)return;
+  if(nativeKeys){keyPacketReset(ctrl);worker?.postMessage({type:"input"});}
   for(let i=0;i<128;i++)Atomics.store(ctrl,KEY_STATE_BASE+i,0);
   for(const i of [CTRL.MS_DX,CTRL.MS_DY,CTRL.MS_LB,CTRL.MS_RB])Atomics.store(ctrl,i,0);
   Atomics.store(ctrl,CTRL.MS_PRESSED,0);Atomics.add(ctrl,CTRL.INPUT_RESET,1);
@@ -102,10 +133,18 @@ function releaseInput(){
 addEventListener('keydown',e=>{
   if(!running||!hasInputFocus())return;
   if(e.code==='Escape'&&isMouseCaptured()){releaseMouse();return;}
-  const sc=scanKeys[e.code];if(sc!==undefined){Atomics.store(ctrl,KEY_STATE_BASE+sc,1);e.preventDefault();}
-  const c=keyToChar(e);if(c){if(!e.repeat || sc===undefined)pushKey(c);e.preventDefault();}
+  if(nativeKeys){
+    const key=KEY[e.code];
+    if(key!==undefined){
+      if(!nativeInput.down(e.code,key) && e.repeat)sendNative(KeyBytes(key,true));
+      e.preventDefault();
+    }
+    return;
+  }
+  const sc=KEY[e.code];if(sc!==undefined){legacyInput.down(e.code,sc&127);e.preventDefault();}
+  const c=keyToChar(e);if(c){if(!e.repeat || scanKeys[e.code]===undefined)pushKey(c);e.preventDefault();}
 });
-addEventListener('keyup',e=>{const sc=scanKeys[e.code];if(ctrl&&sc!==undefined)Atomics.store(ctrl,KEY_STATE_BASE+sc,0);});
+addEventListener('keyup',e=>{nativeInput.up(e.code);legacyInput.up(e.code);});
 addEventListener('blur',()=>{releaseInput();if(document.pointerLockElement===curCanvas)document.exitPointerLock();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseInput();if(document.pointerLockElement===curCanvas)document.exitPointerLock();}});
 document.addEventListener('pointerlockchange',()=>{
@@ -115,7 +154,7 @@ document.addEventListener('pointerlockchange',()=>{
   document.body.classList.toggle('mouse-locked',!!document.pointerLockElement);
   mouseStateChanged();
 });
-document.addEventListener('pointerdown',e=>{if(e.target!==curCanvas)releaseInput();},true);
+document.addEventListener('pointerdown',e=>{if(e.target!==curCanvas&&!e.target?.closest?.('#keysbar'))releaseInput();},true);
 document.addEventListener('mousemove',e=>{
   if(!running)return;
   if(document.pointerLockElement!==curCanvas){
@@ -171,6 +210,7 @@ function releaseMouse() {
   if(isMouseCaptured())document.exitPointerLock();
 }
 function attachInput(target) {
+  target.addEventListener("blur",()=>{if(target===curCanvas&&!isMouseCaptured())releaseInput();});
   const mouseDown=e=>{
     if(!running||target!==curCanvas||![0,2].includes(e.button))return;
     if(((captureWanted&&!hybridMouse)||e.shiftKey)&&!isMouseCaptured()){
@@ -242,7 +282,7 @@ function stop() {
   if (ctrl) { Atomics.store(ctrl, CTRL.RUNNING, 0); Atomics.notify(ctrl, CTRL.SLEEP_FUTEX); }
   if (worker) { worker.terminate(); worker = null; }
   if (sndTimer) { clearInterval(sndTimer); sndTimer = null; }
-  running = false;
+  running = false;nativeKeys=false;
   mouseStateChanged();
   speaker.tone(0);
   $("runBtn").textContent = "▶ Run";
@@ -262,28 +302,33 @@ async function run(source=editor.value,project={}) {
   // Shared framebuffer: the worker draws into it (even while blocked in a
   // synchronous program loop); the MAIN thread presents it via rAF, because a
   // blocked worker never composites its own canvas. NO OffscreenCanvas transfer.
-  const fbSAB = new SharedArrayBuffer(640 * 480);
+  const fbSAB = new SharedArrayBuffer(640 * 480),paletteSAB=new SharedArrayBuffer(256*4);
   const fresh = curCanvas.cloneNode(false);
   curCanvas.parentNode.replaceChild(fresh, curCanvas);
   curCanvas = fresh;
   reattachCanvas(fresh);
-  mainFb = new Framebuffer(fresh.getContext("2d"), 640, 480, SCALE, new Uint8Array(fbSAB));
+  mainFb = new Framebuffer(fresh.getContext("2d"), 640, 480, SCALE, new Uint8Array(fbSAB),new Uint32Array(paletteSAB));
   // The worker already signals frame boundaries. Reading that sequence avoids a
   // full-frame hash on every browser refresh, and skips uploads while it sleeps.
   let lastFrame=0,rateFrames=0,rateStart=performance.now();
   const present = () => {
     if (!running) return;
     const frame=Atomics.load(ctrl,CTRL.FRAME)>>>0;
-    if(frame!==lastFrame){mainFb.present();rateFrames+=(frame-lastFrame)>>>0;lastFrame=frame;}
+    if(frame!==lastFrame){mainFb.present();rateFrames++;lastFrame=frame;}
     const now = performance.now();
     if(now-rateStart>=1000){window.__nativeFps=Math.round(rateFrames*1000/(now-rateStart));setStatus('running · '+window.__nativeFps+' fps (native)');rateFrames=0;rateStart=now;}
     rafId = requestAnimationFrame(present);
   };
 
   worker = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
+  const startedWorker=worker;
   worker.onmessage = (e) => {
+    if(worker!==startedWorker)return;
     const m = e.data;
-    if(m.type === 'inputMode'){
+    if(m.type === 'keyboardMode'){
+      nativeKeys=!!m.native;releaseInput();
+    }
+    else if(m.type === 'inputMode'){
       captureWanted=!!m.capture;releaseInput();
       if(captureWanted)setStatus(hybridMouse?'Hybrid mouse. Use Capture mouse or Shift+click to capture again.':'Click the screen to capture the mouse. Esc releases.');
       else if(!manualCapture&&isMouseCaptured())document.exitPointerLock();
@@ -298,7 +343,12 @@ async function run(source=editor.value,project={}) {
   mouseStateChanged();
   $("runBtn").textContent = "■ Stop";
   setStatus("running…");
-  worker.postMessage({ type: "run", source, controlSAB: sab, fbSAB, ...project });
+  worker.onerror=event=>{
+    if(worker!==startedWorker)return;
+    event.preventDefault();
+    appendConsole("\n[error] "+(event.message||"The program worker could not start.")+"\n");setStatus("error");stop();
+  };
+  worker.postMessage({ type: "run", source, controlSAB: sab, fbSAB, paletteSAB, ...project });
   rafId = requestAnimationFrame(present);
 
   sndTimer = setInterval(pumpSound, 16);
@@ -341,4 +391,4 @@ if (!self.crossOriginIsolated) {
 }
 // Expose run/stop so the host page (the overlay opener) can drive the editor:
 // run the default demo when the window opens, stop it when the window closes.
-window.__holycEditor = { run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured };
+window.__holycEditor = { run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null };

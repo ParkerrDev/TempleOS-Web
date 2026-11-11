@@ -1,8 +1,8 @@
 // Exercise the actual native-compiler game input path without its render loop.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {compileHolyC} from '../../holyc-wasm/src/compiler.js';
-import {createHost} from '../../holyc-wasm/src/runtime/host.js';
+import {compileHolyC} from '../holyc-wasm/src/compiler.js';
+import {createHost} from '../holyc-wasm/src/runtime/host.js';
 const source=readFileSync(new URL('../holycraft/HolyCraft.HC',import.meta.url),'utf8').replace(/HolyCraft;\s*$/,'');
 const result=compileHolyC(source,{lenient:true,resilient:true,exports:['Init','HandleInput']});
 const host=createHost({scanChar:()=>0});

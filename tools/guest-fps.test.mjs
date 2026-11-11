@@ -1,32 +1,31 @@
-import assert from 'node:assert/strict';
-import {createGuestFpsMeter} from '../guest-fps.js';
+import assert from "node:assert/strict";
+import {createGuestFpsMeter} from "../guest-fps.js";
 
-let now=0;
-const meter=createGuestFpsMeter(()=>now);
-assert.equal(meter.text(),'FPS: …');
-meter.sample(29.6,10);
-assert.equal(meter.text(),'FPS: 30','Use the guest FPS even when the host refreshes at a different rate');
-for(let n=0;n<120;n++){now+=16;meter.sample(60,10);}
-assert.equal(meter.text(),'FPS: 0','Repeated host frame messages cannot make a stalled guest look active');
-meter.sample(24.2,11);
-assert.equal(meter.text(),'FPS: 24','An advancing guest recovers immediately');
-now+=1000;
-meter.sample(24.2,12);
-assert.equal(meter.text(),'FPS: 24','Identical pixels still count when the guest renders another frame');
-for(const [fps,updates] of [[NaN,13],[Infinity,13],[-1,13],[30,NaN],[30,1.5],[30,-1],[30,Number.MAX_SAFE_INTEGER+1]])meter.sample(fps,updates);
-assert.equal(meter.text(),'FPS: 24','Invalid telemetry does not replace the last valid sample');
+const meter=createGuestFpsMeter();
+assert.equal(meter.text(),"FPS: \u2014");
+meter.sample(29,10);
+assert.equal(meter.text(),"FPS: 29");
+for (let n=0;n<120;n++)
+  meter.sample(60,10);
+assert.equal(meter.text(),"FPS: 29","duplicate frames cannot invent FPS");
+meter.sample(24,11);
+assert.equal(meter.text(),"FPS: 24");
+meter.sample(24,9);
+assert.equal(meter.text(),"FPS: 24","out-of-order frames do not change the label");
+for (const [fps,updates] of [[NaN,13],[Infinity,13],[-1,13],[30,NaN],
+  [30,1.5],[30,-1],[30,Number.MAX_SAFE_INTEGER+1],[29.6,13]])
+  meter.sample(fps,updates);
+assert.equal(meter.text(),"FPS: 24","only displayed integers are valid");
 meter.setPaused(true);
 assert.equal(meter.paused,true);
-assert.equal(meter.text(),'FPS: 0');
-meter.sample(30,14);
+assert.equal(meter.text(),"FPS: 24","pausing retains the frozen screen's label");
 meter.setPaused(false);
-assert.equal(meter.text(),'FPS: …','Wait for a fresh sample after resuming');
-meter.sample(60,15);
-assert.equal(meter.text(),'FPS: 60');
+meter.sample(null,14);
+assert.equal(meter.text(),"FPS: \u2014","a covered guest label has no invented FPS");
+meter.sample(120,15);
+assert.equal(meter.text(),"FPS: 120");
 meter.reset();
-assert.equal(meter.text(),'FPS: …');
 meter.sample(10,0);
-assert.equal(meter.text(),'FPS: 10','A restarted guest may reset its counter');
-now+=1500;
-assert.equal(meter.text(),'FPS: 0');
-console.log('Guest FPS meter passed: guest cadence, duplicate messages, stalls, pause/resume, reset and invalid telemetry.');
+assert.equal(meter.text(),"FPS: 10","reset accepts a restarted frame counter");
+console.log("Guest FPS label: exact frame values, duplicates, invalid data, "+
+  "covered labels, pause and restart passed.");

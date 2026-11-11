@@ -1,0 +1,122 @@
+{
+  "description": "Q16 runtime sector heights preserve native images and fractional collision/render boundaries. This is not a complete playable-game or gameplay-FPS claim.",
+  "baselineCommit": "2e414bf",
+  "engine": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "timingMethod": "Three alternating baseline/current E1M1 runs per backend, eight fixed poses; median of each run's eight-view mean. Final runs followed engine-suite idle notice.",
+  "timing": {
+    "qemu": {
+      "framesPerPose": 200,
+      "runs": {
+        "base": [
+          {
+            "run": 1,
+            "meanMs": 0.6085,
+            "sourceSha256": "5df7635fb1dc2f9a1d0200a23b650aa34cf7390039e476d746ef19cbcceb5625",
+            "nativeEvidence": "qemu-safkitnf"
+          },
+          {
+            "run": 2,
+            "meanMs": 0.60875,
+            "sourceSha256": "5df7635fb1dc2f9a1d0200a23b650aa34cf7390039e476d746ef19cbcceb5625",
+            "nativeEvidence": "qemu-j3y_n2ec"
+          },
+          {
+            "run": 3,
+            "meanMs": 0.62325,
+            "sourceSha256": "5df7635fb1dc2f9a1d0200a23b650aa34cf7390039e476d746ef19cbcceb5625",
+            "nativeEvidence": "qemu-7rk521bi"
+          }
+        ],
+        "current": [
+          {
+            "run": 1,
+            "meanMs": 0.639,
+            "sourceSha256": "dc626aa58b1de9aa4cd7d675047303371244160d39b73ed190594d6c921ac8ea",
+            "nativeEvidence": "qemu-cqm5399o"
+          },
+          {
+            "run": 2,
+            "meanMs": 0.613125,
+            "sourceSha256": "dc626aa58b1de9aa4cd7d675047303371244160d39b73ed190594d6c921ac8ea",
+            "nativeEvidence": "qemu-83fexclu"
+          },
+          {
+            "run": 3,
+            "meanMs": 0.600625,
+            "sourceSha256": "dc626aa58b1de9aa4cd7d675047303371244160d39b73ed190594d6c921ac8ea",
+            "nativeEvidence": "qemu-37oq50fg"
+          }
+        ]
+      },
+      "baseMedianMs": 0.60875,
+      "currentMedianMs": 0.613125,
+      "percentChange": 0.7186858316221789
+    },
+    "hemu": {
+      "framesPerPose": 30,
+      "runs": {
+        "base": [
+          {
+            "run": 1,
+            "meanMs": 14.171849770833333,
+            "sourceSha256": "5df7635fb1dc2f9a1d0200a23b650aa34cf7390039e476d746ef19cbcceb5625"
+          },
+          {
+            "run": 2,
+            "meanMs": 14.192205300000001,
+            "sourceSha256": "5df7635fb1dc2f9a1d0200a23b650aa34cf7390039e476d746ef19cbcceb5625"
+          },
+          {
+            "run": 3,
+            "meanMs": 14.247470508333329,
+            "sourceSha256": "5df7635fb1dc2f9a1d0200a23b650aa34cf7390039e476d746ef19cbcceb5625"
+          }
+        ],
+        "current": [
+          {
+            "run": 1,
+            "meanMs": 14.291817450000002,
+            "sourceSha256": "dc626aa58b1de9aa4cd7d675047303371244160d39b73ed190594d6c921ac8ea"
+          },
+          {
+            "run": 2,
+            "meanMs": 14.568088100000004,
+            "sourceSha256": "dc626aa58b1de9aa4cd7d675047303371244160d39b73ed190594d6c921ac8ea"
+          },
+          {
+            "run": 3,
+            "meanMs": 14.183146087500003,
+            "sourceSha256": "dc626aa58b1de9aa4cd7d675047303371244160d39b73ed190594d6c921ac8ea"
+          }
+        ]
+      },
+      "baseMedianMs": 14.192205300000001,
+      "currentMedianMs": 14.291817450000002,
+      "percentChange": 0.7018792914445848
+    }
+  },
+  "checks": {
+    "nativeMap": "qemu-gqf_ijz_",
+    "nativeMovement": "qemu-7c2xbbob",
+    "nativeCollision": "qemu-altr6tei",
+    "nativeWorld": "qemu-r4_13w4r",
+    "nativeMask": "qemu-rzg2hgui",
+    "nativeRender": "qemu-aqhupfiq",
+    "renderViews": 288,
+    "fractionalMaskViews": 96,
+    "hemuRenderMatches": true,
+    "hemuFractionalMaskMatches": true,
+    "hemuSightRays": 6912
+  },
+  "cpu": "Intel(R) Core(TM) i9-14900HX",
+  "node": "v26.12.0",
+  "assetHashes": {
+    "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+    "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+  },
+  "limitation": "Both median differences are under 0.8%, inside observed run variation; individual paired results change direction. No speedup or universal no-regression claim follows."
+}

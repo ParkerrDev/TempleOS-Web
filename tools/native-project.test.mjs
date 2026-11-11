@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {compileNativeProject} from '../editor/project.js';
-import {createHost} from '../../holyc-wasm/src/runtime/host.js';
+import {createHost} from '../holyc-wasm/src/runtime/host.js';
 import {gameProject} from '../game-source.js';
 
 const entry='C:/Home/Test/Main.HC';
@@ -37,7 +37,10 @@ const native=await WebAssembly.instantiate(compiled.bytes,{env:nativeHost.env});
 assert.equal(new DataView(native.instance.exports.memory.buffer).getBigInt64(Number(compiled.globals.get('answer').addr),true),42n);
 assert((await project.native()).files.find(f=>f.path===sourceFile.path).source.includes('return 99'));
 await project.reset(sourceFile.path);await project.reset(project.entry);
-assert.equal((await project.native()).files.find(f=>f.path===sourceFile.path).source,original.original);
+assert.deepEqual(Uint8Array.from((await project.native()).files.find(
+ f=>f.path===sourceFile.path).source,ch=>ch.charCodeAt(0)),
+ new Uint8Array(original.encode(original.original)),
+ 'Restore gives the compiler the original document, including binary records');
 const launcher=await readFile(new URL('../games.js',import.meta.url),'utf8');
 const browserRun=launcher.slice(launcher.indexOf('async function runInBrowser('),launcher.indexOf('function closeGameWin('));
 assert(!/iframe|runInTempleOS|__launchInOS|gameSession/.test(browserRun),'browser launch cannot invoke emulation');

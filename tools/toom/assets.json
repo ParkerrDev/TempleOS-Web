@@ -1,0 +1,27 @@
+{
+  "default": "0.13.0",
+  "latestRelease": {
+    "url": "https://api.github.com/repos/freedoom/freedoom/releases/latest",
+    "tag": "v0.13.0",
+    "publishedAt": "2024-01-29T23:32:37Z"
+  },
+  "versions": {
+    "0.12.1": {
+      "sha256": "c403ea7c27b5b2b77e4c0ca0b691669186790e572065e7eb2b0382801bcb18cc",
+      "bytes": 27284988,
+      "licenseSha256": "c2ef54b3f8eb22c3eebceb379db74fe86265ffd1d662092aa6e57ba9380f4fab",
+      "textures": 903,
+      "lumps": 3081
+    },
+    "0.13.0": {
+      "sha256": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "bytes": 28795076,
+      "licenseSha256": "7c62f2c520769c798774f416637eec4921e5f0aafdac1245ae7c8a8cf65fe102",
+      "textures": 963,
+      "lumps": 3163,
+      "url": "https://github.com/freedoom/freedoom/releases/download/v0.13.0/freedoom-0.13.0.zip",
+      "archiveSha256": "3f9b264f3e3ce503b4fb7f6bdcb1f419d93c7b546f4df3e874dd878db9688f59",
+      "archiveEntry": "freedoom-0.13.0/freedoom1.wad"
+    }
+  }
+}

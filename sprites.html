@@ -14,7 +14,7 @@
     <h2>Sprite settings</h2>
     <div class="settings-scroll">
       <label class="pick" for="file">Image, GIF, video or .GR</label>
-      <input id="file" type="file" accept="image/*,video/*,.gr" aria-describedby="filename">
+      <input id="file" type="file" accept="image/*,video/*,.gr" aria-describedby="filename" disabled>
       <p id="filename">Choose a file or drop it here.</p>
       <fieldset><legend>Size &amp; color</legend>
         <label class="field">Width <span class="value"><input id="width" type="number" min="8" max="640" step="1" value="160"><span>px</span></span></label>
@@ -51,6 +51,6 @@ DCDel(dc);</pre><p>Transparent pixels keep their transparency. PNG and GIF expor
     </div>
   </section>
 </main>
-<footer>Format research: <a href="https://github.com/greg0-4/PNG2GR">PNG2GR</a> and <a href="https://github.com/tinkeros/TinkerOS/blob/main/Adam/Gr/GrDC.HC">TempleOS graphics source</a>. Video decoding uses the site's bundled FFmpeg.</footer>
+<footer>Format research: <a href="https://github.com/greg0-4/PNG2GR">PNG2GR</a> and <a href="https://github.com/tinkeros/TinkerOS/blob/main/Adam/Gr/GrDC.HC">TempleOS graphics source</a>. Videos use your browser's decoder when supported. GIFs and older browsers use the site's bundled FFmpeg.</footer>
 <script type="module" src="sprite-studio.js"></script>
 </body></html>

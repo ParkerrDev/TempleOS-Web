@@ -3,7 +3,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import * as protocol from '../../holyc-wasm/src/runtime/protocol.js';
+import * as protocol from '../holyc-wasm/src/runtime/protocol.js';
+import {KEY,KeyBytes,KeyInput} from '../Keyboard.js';
 
 const nodes=new Map(),workers=[],windowEvents=new EventTarget();
 const document=new EventTarget();
@@ -38,7 +39,7 @@ class Worker {
   terminate(){}
 }
 const context=vm.createContext({
-  ...protocol,document,console,URL,Event,Worker,Int32Array,Uint8Array,SharedArrayBuffer,Atomics,
+  ...protocol,KEY,KeyBytes,KeyInput,document,console,URL,Event,Worker,Int32Array,Uint8Array,SharedArrayBuffer,Atomics,
   DEMOS:[],SOURCES:{'Demo/Graphics/Lines.HC':'// test source'},PointerEvent:true,crossOriginIsolated:true,performance,
   Speaker:class {resume(){} tone(){}},Framebuffer:class {present(){}},
   addEventListener:windowEvents.addEventListener.bind(windowEvents),
@@ -102,10 +103,11 @@ console.log('Native capture: manual and automatic input modes, 2D motion, Escape
 const games=readFileSync(new URL('../games.js',import.meta.url),'utf8');
 const router=games.slice(games.indexOf('const previewCapture='),games.indexOf('async function runInBrowser('));
 context.previewOverlay={classList:{contains:()=>false}};
+context.os_game={get ed(){return context.__holycEditor;},mouse:null};
 new vm.Script('let runnerTarget=null;const ovE=previewOverlay;'+router).runInContext(context);
-assert.equal(context.__gameMouse.toggle(),false,'inactive previews leave desktop capture alone');
+assert.equal(context.os_game.mouse.toggle(),false,'inactive previews leave desktop capture alone');
 vm.runInContext("runnerTarget='editor';",context);
-assert.equal(context.__gameMouse.toggle(),true,'loading previews cannot fall through to desktop capture');
+assert.equal(context.os_game.mouse.toggle(),true,'loading previews cannot fall through to desktop capture');
 await api.runIn(document.getElementById('screen'),'editor capture probe');
 const captureButton=document.getElementById('gameCapture');
 assert.equal(captureButton.disabled,false);
@@ -114,7 +116,7 @@ emit(captureButton,'click');await flush();assert(api.isMouseCaptured());
 assert.equal(captureButton['aria-pressed'],'true');
 assert.equal(captureButton.querySelector('span').textContent,'Release mouse');
 assert.equal(document.getElementById('gameWinCapture').querySelector('span').textContent,'Release mouse');
-context.__gameMouse.toggle();await flush();assert.equal(api.isMouseCaptured(),false);
+context.os_game.mouse.toggle();await flush();assert.equal(api.isMouseCaptured(),false);
 assert.equal(captureButton['aria-pressed'],'false');
 api.stop();await flush();assert.equal(captureButton.disabled,true);
 await api.runIn(document.getElementById('screen'),'blocked capture probe');

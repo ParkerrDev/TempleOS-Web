@@ -1,72 +1,83 @@
-// transearch.js - Terry A. Davis transcript fuzzy-search worker (zero dependencies).
-// Loads the prebuilt shards (assets/transcripts/, see build-transcripts.mjs), builds a vocabulary,
-// and answers queries with typo-tolerant matching: each query token matches exactly OR via
-// bounded Damerau-Levenshtein alternates drawn from the corpus vocabulary, with phrase and
-// word-boundary bonuses. Results carry the source video (title/date/archive path) + timestamp.
+import {QueryLoad,QueryEdit} from "./search/Query.js";
 
 let videos = [];          // { t, d, f, n, s:[[sec,text],...] }
-let chunkV = [];          // chunk -> video index
-let chunkI = [];          // chunk -> index into video.s
+let chunk_video = [];          // chunk -> video index
+let chunk_index = [];          // chunk -> index into video.s
 let lower = [];           // chunk -> lowercase text
 let vocab = new Map();    // word -> occurrence count
-let vocabByLen = [];      // word length -> [words]
+let vocab_len = [];      // word length -> [words]
 let ready = false;
 
-onmessage = (e) => {
-  const m = e.data;
-  if (m.type === "load") load(m.base).catch((err) => postMessage({ type: "error", message: String(err && err.message || err) }));
-  else if (m.type === "query") query(String(m.q || ""), m.id, m);
-  else if (m.type === "browse") browse(m);       // no query: list videos (sortable, year-filterable, paged)
-  else if (m.type === "video") {                 // full transcript of one video (for the copy/transcript view)
-    const v = videos[byPath.get(m.f)];
-    postMessage({ type: "video", id: m.id, video: v || null });
+let load_task;
+onmessage=async function (e) {
+  const m=e.data,text=String(m.q || "");
+  try {
+    if (m.type=="load") {
+      if (!load_task) load_task=CorpusLoad(m.base).finally(()=>load_task=null);
+      await load_task;
+    } else if (m.type=="query") Query(text,m.id,m,await QueryLoad());
+    else if (m.type=="parse") {
+      const Parse=await QueryLoad();
+      postMessage({type:"parsed",id:m.id,text,parsed:Parse(text)});
+    } else if (m.type=="edit") {
+      const Parse=await QueryLoad();
+      postMessage({type:"edited",id:m.id,text,value:QueryEdit(Parse,text,m.change)});
+    } else if (m.type=="browse") Browse(m);
+    else if (m.type=="video") {
+      const v=videos[by_path.get(m.f)];
+      postMessage({type:"video",id:m.id,video:v || null});
+    }
+  } catch (error) {
+    postMessage({type:"error",phase:m.type,id:m.id,text,message:error.message || String(error)});
   }
 };
-const byPath = new Map();                        // archive path -> videos[] index
+const by_path = new Map();                        // archive path -> videos[] index
 
-async function load(base) {
-  const man = await (await fetch(base + "manifest.json")).json();
-  // every shard download starts at once (each is a redirect to the CDN), they are parsed in order
-  const pending = man.shards.map((s) => fetch(base + s.f));
-  pending.forEach((p) => p.catch(() => {}));     // a failure surfaces at its own await below
+async function CorpusLoad(base) {
+  ready=false;videos=[];chunk_video=[];chunk_index=[];lower=[];
+  vocab=new Map();vocab_len=[];by_path.clear();date_order=null;
+  const manifest=await fetch(base+"manifest.json");
+  if (!manifest.ok) throw new Error("transcript manifest fetch "+manifest.status);
+  const man=await manifest.json(),
+    pending=man.shards.map(s=>fetch(base+s.f).then(response=>({response}),error=>({error})));
   for (let k = 0; k < man.shards.length; k++) {
-    const resp = await pending[k];
+    const result=await pending[k];
+    if (result.error) throw result.error;
+    const resp=result.response;
     if (!resp.ok) throw new Error("shard fetch " + resp.status);
     const arr = JSON.parse(await new Response(resp.body.pipeThrough(new DecompressionStream("gzip"))).text());
     for (const v of arr) {
-      const vi = videos.length; videos.push(v); byPath.set(v.f, vi);
-      for (let i = 0; i < v.s.length; i++) { chunkV.push(vi); chunkI.push(i); lower.push(v.s[i][1].toLowerCase()); }
+      const vi = videos.length; videos.push(v); by_path.set(v.f, vi);
+      for (let i = 0; i < v.s.length; i++) { chunk_video.push(vi); chunk_index.push(i); lower.push(v.s[i][1].toLowerCase()); }
     }
     postMessage({ type: "progress", loaded: k + 1, total: man.shards.length, videos: videos.length, chunks: lower.length });
   }
   for (const t of lower) for (const w of t.split(/[^a-z0-9']+/)) if (w.length >= 3 && w.length <= 24) vocab.set(w, (vocab.get(w) || 0) + 1);
-  for (const w of vocab.keys()) { const L = w.length; (vocabByLen[L] || (vocabByLen[L] = [])).push(w); }
+  for (const w of vocab.keys()) { const L = w.length; (vocab_len[L] || (vocab_len[L] = [])).push(w); }
   ready = true;
   const years = [...new Set(videos.map((v) => v.d.slice(0, 4)).filter((y) => /^\d{4}$/.test(y)))].sort();
   postMessage({ type: "ready", videos: videos.length, chunks: lower.length, words: vocab.size, years });
 }
 
-// video list entry for browse / title-search results (no chunk payload - the teaser is enough)
-function vmeta(vi) { const v = videos[vi];
+function VideoInfo(vi) { const v = videos[vi];
   return { t: v.t, d: v.d, f: v.f, n: v.n, p: v.p, k: v.s.length, x: v.s[0] ? v.s[0][1].slice(0, 150) : "" }; }
 
-let dateIdx = null;       // video indices sorted newest-first (date, then title)
-function ensureDateIdx() {
-  if (!dateIdx) dateIdx = videos.map((_, i) => i).sort((a, b) => (videos[b].d + videos[b].t).localeCompare(videos[a].d + videos[a].t));
-  return dateIdx;
+let date_order = null;       // video indices sorted newest-first (date, then title)
+function DateOrder() {
+  if (!date_order) date_order = videos.map((_, i) => i).sort((a, b) => (videos[b].d + videos[b].t).localeCompare(videos[a].d + videos[a].t));
+  return date_order;
 }
 
-function browse(m) {
+function Browse(m) {
   if (!ready) { postMessage({ type: "browse", id: m.id, vids: [], total: 0, offset: 0 }); return; }
-  let idx = ensureDateIdx();
+  let idx = DateOrder();
   if (m.sort === "old") idx = [...idx].reverse();
 
   const offset = m.offset || 0, limit = m.limit || 40;
-  postMessage({ type: "browse", id: m.id, total: idx.length, offset, vids: idx.slice(offset, offset + limit).map(vmeta) });
+  postMessage({ type: "browse", id: m.id, total: idx.length, offset, vids: idx.slice(offset, offset + limit).map(VideoInfo) });
 }
 
-// score one lowercase string against the matchers; returns [score, matchedCount]
-function scoreText(t, matchers) {
+function TextScore(t, matchers) {
   let score = 0, matched = 0;
   for (const mlist of matchers) {
     for (const m of mlist) {
@@ -75,7 +86,7 @@ function scoreText(t, matchers) {
         let s = m.s;
         const before = at === 0 || !/[a-z0-9]/.test(t[at - 1]);
         const after = at + m.w.length >= t.length || !/[a-z0-9]/.test(t[at + m.w.length]);
-        if (before && after) s += 1;               // whole-word hit
+        if (before && after) s += 1;
         score += s; matched++; break;
       }
     }
@@ -83,8 +94,7 @@ function scoreText(t, matchers) {
   return [score, matched];
 }
 
-// bounded Damerau-Levenshtein: returns distance if <= maxEd, else maxEd+1 (banded DP, early exit)
-function dlDist(a, b, maxEd) {
+function WordDistance(a, b, maxEd) {
   const la = a.length, lb = b.length;
   if (Math.abs(la - lb) > maxEd) return maxEd + 1;
   let prev2 = null, prev = new Array(lb + 1), cur = new Array(lb + 1);
@@ -106,16 +116,15 @@ function dlDist(a, b, maxEd) {
   return prev[lb] <= maxEd ? prev[lb] : maxEd + 1;
 }
 
-// fuzzy alternates for one query token, from the corpus vocabulary
-function altsFor(tok) {
+function WordAlternates(tok) {
   const out = [];
-  if (tok.length < 4) return out;                       // short tokens: exact only (fuzz = noise)
+  if (tok.length < 4) return out;
   const maxEd = tok.length >= 8 ? 2 : 1;
   for (let L = tok.length - maxEd; L <= tok.length + maxEd; L++) {
-    const bucket = vocabByLen[L]; if (!bucket) continue;
+    const bucket = vocab_len[L]; if (!bucket) continue;
     for (const w of bucket) {
       if (w === tok) continue;
-      const d = dlDist(tok, w, maxEd);
+      const d = WordDistance(tok, w, maxEd);
       if (d <= maxEd) out.push({ w, d, c: vocab.get(w) });
     }
   }
@@ -123,52 +132,11 @@ function altsFor(tok) {
   return out.slice(0, 6);
 }
 
-function query(q, id, opts = {}) {
-  if (!ready) { postMessage({ type: "results", id, hits: [], vids: [], note: "loading" }); return; }
+function Query(q, id, opts, Parse) {
+  const {scope,phrases,notPhrases,notWords,dateAny,dateFrom,dateTo,groups}=Parse(q);
+  if (!ready) { postMessage({ type: "results", id, scope, hits: [], vids: [], note: "loading" }); return; }
   const sort = opts.sort || "rel";
-  let scope = opts.scope || "all";                 // in:titles / in:transcript operators override below
-
-  // ---- Twitter-style operator parsing ----------------------------------------------------------
-  //   "exact phrase"   must contain it verbatim (case-insensitive, NO fuzzy)
-  //   -word  -"..."    exclude chunks containing the word (boundary-checked) / phrase
-  //   since:/until:    date range, each YYYY | YYYY-MM | YYYY-MM-DD (inclusive, prefix semantics)
-  //   date:YYYY-MM-DD  exact date (also: a bare 19xx/20xx ISO date token acts as date:)
-  //   plain words      fuzzy-matched as before
-  const phrases = [], notPhrases = [], notWords = [], dateAny = [];
-  let dateFrom = "", dateTo = "";
-  q = q.replace(/(\s)OR(\s)/g, "$1\u0001$2");      // Google-style OR (uppercase only) -> marker that survives lowercasing
-  // date grammar: an ITEM is a year range (2012-2014), or a date prefix (2017 / 2017-11 / 2017-11-19);
-  // a LIST is comma-separated items (date:2012-2014,2017). Bare lists work without the prefix.
-  const YR = "(?:19|20)\\d{2}";
-  const ITEM = `${YR}-${YR}|${YR}(?:-\\d{2}(?:-\\d{2})?)?`;
-  const LIST = `(?:${ITEM})(?:,(?:${ITEM}))*`;
-  const pushDates = (list) => { for (const it of list.split(",")) {
-    const r = it.match(new RegExp(`^(${YR})-(${YR})$`));
-    if (r) { let a = +r[1], b = +r[2]; if (a > b) [a, b] = [b, a]; b = Math.min(b, a + 50);
-      for (let y = a; y <= b; y++) dateAny.push(String(y)); }
-    else dateAny.push(it); } };
-  let rest = q.toLowerCase()
-    .replace(/(-?)"([^"]*)"/g, (m, neg, p) => { p = p.trim().replace(/\s+/g, " "); if (p) (neg ? notPhrases : phrases).push(p); return " "; })
-    .replace(/(?:^|\s)(?:in|scope):(titles?|transcripts?|text|all)(?=\s|$)/g, (m, sc) => { scope = sc.startsWith("title") ? "title" : sc === "all" ? "all" : "text"; return " "; })
-    .replace(new RegExp(`(?:^|\\s)(?:since|from|after):(${ITEM})(?=\\s|$)`, "g"), (m, d) => { dateFrom = d.split("-").length === 2 && d.length === 9 ? d.slice(0, 4) : d; return " "; })
-    .replace(new RegExp(`(?:^|\\s)(?:until|to|before):(${ITEM})(?=\\s|$)`, "g"), (m, d) => { dateTo = d.split("-").length === 2 && d.length === 9 ? d.slice(5) : d; return " "; })
-    .replace(new RegExp(`(?:^|\\s)(?:date|on|year):(${LIST})(?=\\s|$)`, "g"), (m, l) => { pushDates(l); return " "; })
-    .replace(new RegExp(`(^|\\s)(${LIST})(?=\\s|$)`, "g"), (m, sp, l) => { pushDates(l); return sp; })
-    .replace(/(^|\s)-([a-z0-9']+)/g, (m, sp, w) => { notWords.push(w); return sp; });
-  // tokenize into OR-groups: "terry OR dave linux" -> [[terry,dave],[linux]] - a group matches
-  // if ANY member (or its fuzzy alternates) hits; plain tokens are single-member groups.
-  const groups = [];
-  { let joinNext = false;
-    for (const wRaw of rest.split(/\s+/)) {
-      if (wRaw === "\u0001") { joinNext = groups.length > 0; continue; }
-      const w = wRaw.replace(/[^a-z0-9']/g, "");
-      if (w.length < 2) { joinNext = false; continue; }
-      if (joinNext) groups[groups.length - 1].push(w);
-      else groups.push([w]);
-      joinNext = false;
-    } }
-  const toks = groups.map((g) => g[0]);              // representative per group (counts/need thresholds)
-  // multiple date:/bare dates UNION (any of them); since:/until: bound the range (inclusive prefixes)
+  const toks = groups.map((g) => g[0]);
   const dateOk = (d) => (!dateAny.length || dateAny.some((p) => d.startsWith(p))) &&
     (!dateFrom || d.slice(0, dateFrom.length) >= dateFrom) &&
     (!dateTo || d.slice(0, dateTo.length) <= dateTo);
@@ -179,36 +147,32 @@ function query(q, id, opts = {}) {
     return false; };
   const excluded = (t) => notWords.some((w) => hasWord(t, w)) || notPhrases.some((p) => t.includes(p));
 
-  // date-only query (no words, no phrases): LIST the videos in that range, like a filtered browse
   if (!toks.length && !phrases.length) {
     if (dateAny.length || dateFrom || dateTo) {
-      let idx = ensureDateIdx().filter((i) => dateOk(videos[i].d));
+      let idx = DateOrder().filter((i) => dateOk(videos[i].d));
       if (sort === "old") idx = [...idx].reverse();
-      postMessage({ type: "results", id, hits: [], vids: idx.slice(0, 60).map(vmeta), vtotal: idx.length, terms: [], total: 0, dateOnly: true });
-    } else postMessage({ type: "results", id, hits: [], vids: [] });
+      postMessage({ type: "results", id, scope, hits: [], vids: idx.slice(0, 60).map(VideoInfo), vtotal: idx.length, terms: [], total: 0, dateOnly: true });
+    } else postMessage({ type: "results", id, scope, hits: [], vids: [] });
     return;
   }
 
-  // matchers per GROUP: each member token exact first, then its bounded-edit-distance alternates
   const matchers = groups.map((g) => {
     const m = [];
     for (const tok of g) m.push({ w: tok, s: 3 });
-    for (const tok of g) for (const a of altsFor(tok)) m.push({ w: a.w, s: 2 - (a.d - 1) * 0.6 });
+    for (const tok of g) for (const a of WordAlternates(tok)) m.push({ w: a.w, s: 2 - (a.d - 1) * 0.6 });
     return m;
   });
   const terms = [...phrases];
   for (const mlist of matchers) for (const m of mlist) terms.push(m.w);
-  // a chunk/title qualifies if it has EVERY quoted phrase, NO excluded terms, and enough fuzzy tokens
   const need = toks.length <= 2 ? toks.length : Math.ceil(toks.length * 0.6);
   const qualifies = (t) => {
     if (phrases.some((p) => !t.includes(p))) return -1;
     if (excluded(t)) return -1;
-    const [score, matched] = scoreText(t, matchers);
+    const [score, matched] = TextScore(t, matchers);
     if (matched < need) return -1;
     return score + phrases.length * 8 + (toks.length && matched === toks.length ? 2 : 0);
   };
 
-  // ---- title search (scope all/title): whole videos --------------------------------------------
   let titleHits = [];
   if (scope !== "text") {
     const needT = toks.length ? Math.max(1, toks.length - (toks.length >= 3 ? 1 : 0)) : 0;
@@ -218,7 +182,7 @@ function query(q, id, opts = {}) {
       const t = v.t.toLowerCase();
       if (phrases.some((p) => !t.includes(p))) continue;
       if (excluded(t)) continue;
-      const [score, matched] = scoreText(t, matchers);
+      const [score, matched] = TextScore(t, matchers);
       if (matched < needT) continue;
       if (!toks.length && !phrases.length) continue;
       titleHits.push([score + phrases.length * 8 + (toks.length && matched === toks.length ? 2 : 0), vi]);
@@ -228,29 +192,27 @@ function query(q, id, opts = {}) {
     else titleHits.sort((a, b) => b[0] - a[0] || videos[b[1]].d.localeCompare(videos[a[1]].d));
   }
   const vtotal = titleHits.length;
-  const vids = titleHits.slice(0, scope === "title" ? 60 : 5).map(([score, vi]) => vmeta(vi));
-  if (scope === "title") { postMessage({ type: "results", id, hits: [], vids, vtotal, terms, total: 0 }); return; }
+  const vids = titleHits.slice(0, scope === "title" ? 60 : 5).map(([score, vi]) => VideoInfo(vi));
+  if (scope === "title") { postMessage({ type: "results", id, scope, hits: [], vids, vtotal, terms, total: 0 }); return; }
 
-  // ---- passage search (scope all/text) ----------------------------------------------------------
   const scored = [];
   for (let c = 0; c < lower.length; c++) {
-    if (!dateOk(videos[chunkV[c]].d)) continue;
+    if (!dateOk(videos[chunk_video[c]].d)) continue;
     const score = qualifies(lower[c]);
     if (score >= 0) scored.push([score, c]);
   }
-  if (sort === "new" || sort === "old") scored.sort((a, b) => { const da = videos[chunkV[a[1]]].d, db = videos[chunkV[b[1]]].d;
+  if (sort === "new" || sort === "old") scored.sort((a, b) => { const da = videos[chunk_video[a[1]]].d, db = videos[chunk_video[b[1]]].d;
     const c0 = sort === "new" ? db.localeCompare(da) : da.localeCompare(db); return c0 || b[0] - a[0]; });
   else scored.sort((a, b) => b[0] - a[0]);
-  // cap hits per video so one 6-hour stream doesn't flood the list; carry the SOURCE VIDEO on each hit
   const perVid = new Map(), hits = [];
   for (const [score, c] of scored) {
-    const vi = chunkV[c], v = videos[vi];
+    const vi = chunk_video[c], v = videos[vi];
     const nVid = (perVid.get(vi) || 0);
     if (nVid >= 3) continue;
     perVid.set(vi, nVid + 1);
-    const [sec, text] = v.s[chunkI[c]];
+    const [sec, text] = v.s[chunk_index[c]];
     hits.push({ score, t: v.t, d: v.d, f: v.f, n: v.n, p: v.p, sec, text });
     if (hits.length >= 60) break;
   }
-  postMessage({ type: "results", id, hits, vids: scope === "all" ? vids : [], vtotal: scope === "all" ? vtotal : 0, terms, total: scored.length });
+  postMessage({ type: "results", id, scope, hits, vids: scope === "all" ? vids : [], vtotal: scope === "all" ? vtotal : 0, terms, total: scored.length });
 }

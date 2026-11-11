@@ -1,10 +1,12 @@
-// Chat: the page's side of the Chat window. The first time someone opens it, the page connects to the chat
-// Worker (chat/worker.js) and stays connected, so the Menu can count what arrives while the window is shut.
+// Chat: the page's side of the Chat window. Once the page is idle it connects to the chat Worker
+// (chat/ChatRoom.js) and stays connected, so the Menu and the tab's title can count what arrives while the
+// window is shut.
 // The browser id is the same one "Visitors" uses (presence.js); the Worker never shows it, only a short tag
 // made from it. Everything that comes in is checked here before the page believes it, and the window only
 // ever puts it on screen as text. Keeping the socket up is livesocket.js; the limits are chat/rules.js.
 import {createLiveSocket} from './livesocket.js';
 import {browserId} from './presence.js';
+import {PONG} from './presence/RoomGlbls.js';
 import {KEEP,MAX_NICK,MAX_TEXT} from './chat/rules.js';
 
 export {MAX_NICK,MAX_TEXT};
@@ -45,7 +47,7 @@ export function createChat(on,{url=CHAT_URL,id=browserId(),open}={}) {
     open,
     lost(){live=false;on({t:'offline'});},
     message(data){
-      if(data==='pong')return;
+      if(data===PONG)return;
       const e=readEvent(data);
       if(!e)return;
       if(e.t==='hello')live=true;

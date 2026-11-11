@@ -1,6 +1,6 @@
-// TempleOS uncompressed CDC/GR codec. Layout verified against Adam/Gr/GrDC.HC.
 // PNG2GR by greg0-4 informed the format investigation; this is an independent implementation.
-import {PALETTE,mapPalette} from './sprite-color.js';
+import {mapPalette} from './sprite-color.js';
+import {PALETTE} from './framebuffer.js';
 export {PALETTE};
 export const MAX_PIXELS = 20_000_000;
 export const MAX_FRAMES = 600;
@@ -39,27 +39,6 @@ export function toRGBA(indices, width, height) {
     out.set(PALETTE[c], i*4); out[i*4+3] = 255;
   }
   return out;
-}
-export function encodeGR(indices, width, height) {
-  const stride = dimensions(width, height);
-  toRGBA(indices, width, height); // Reject invalid palette values before exporting.
-  const bytes = new Uint8Array(32 + stride * height), dv = new DataView(bytes.buffer);
-  dv.setUint32(16, width, true); dv.setUint32(20, stride, true); dv.setUint32(24, height, true);
-  bytes.fill(255, 32);
-  for (let y = 0; y < height; y++) bytes.set(indices.subarray(y*width, (y+1)*width), 32+y*stride);
-  return bytes;
-}
-export function decodeGR(bytes) {
-  if (bytes.length < 32) throw new Error('Truncated GR header.');
-  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const width = dv.getUint32(16,true), stride = dv.getUint32(20,true), height = dv.getUint32(24,true);
-  if (stride !== dimensions(width,height) || dv.getUint32(28,true) !== 0)
-    throw new Error('Only uncompressed GR files with the standard palette are supported.');
-  if (bytes.length !== 32+stride*height) throw new Error('Invalid GR body length.');
-  const indices = new Uint8Array(width*height);
-  for (let y = 0; y < height; y++) indices.set(bytes.subarray(32+y*stride,32+y*stride+width),y*width);
-  toRGBA(indices,width,height);
-  return {width,height,indices};
 }
 export function encodeGIF(frames, width, height, delayMs) {
   dimensions(width,height);
@@ -119,10 +98,13 @@ export function zipFiles(files) {
   v.setUint32(12,central.reduce((n,c)=>n+c.length,0),true); v.setUint32(16,offset,true);
   return concat([...local,...central,tail]);
 }
-export function spritePackage(frames, width, height, delayMs) {
+export const SPRITE_PLAYER=new URL("./sprites/Play.HC",import.meta.url);
+export function spritePackage(frames, width, height, delayMs,playerSource) {
+  if (typeof playerSource!="string") throw new Error("The native sprite player is missing.");
   const enc = new TextEncoder();
-  const files = frames.map((f,i)=>({name:`Frame${String(i).padStart(3,'0')}.GR`,bytes:encodeGR(f,width,height)}));
-  files.push({name:'Play.HC',bytes:enc.encode(`#exe {Cd(__DIR__);}\nU0 PlaySprites()\n{\n  I64 i, frame, previous=-1;\n  F64 started;\n  CDC *images[${frames.length}];\n  U8 name[32];\n  for (i=0;i<${frames.length};i++) { StrPrint(name,"Frame%03d.GR",i); images[i]=GRRead(name); if(!images[i]) throw('Sprite'); }\n  AutoComplete(OFF);\n  WinBorder(OFF);\n  WinMax;\n  DocCursor(OFF);\n  DocClear;\n  started=tS;\n  while (!ScanChar) {\n    frame=ToI64((tS-started)*1000/${delayMs})%${frames.length};\n    if (frame!=previous) {\n    previous=frame;\n    DCFill;\n    GrBlot(,(GR_WIDTH-images[frame]->width)/2,(GR_HEIGHT-images[frame]->height)/2,images[frame]);\n    Refresh;\n    }\n    Sleep(1);\n  }\n  for (i=0;i<${frames.length};i++) DCDel(images[i]);\n}\nPlaySprites;\n`)});
+  const files = frames.map((f,i)=>({name:`Frame${String(i).padStart(3,'0')}.GR`,bytes:f}));
+  files.push({name:'Play.HC',bytes:enc.encode(
+    `#define SPRITE_COUNT ${frames.length}\n#define SPRITE_DELAY ${delayMs}\n`+playerSource)});
   files.push({name:'README.TXT',bytes:enc.encode('Copy this folder to TempleOS, then include Play.HC. Press a key to stop.\nFor a reusable sprite: CDC *dc=GRRead("Frame000.GR"); U8 *sprite=DC2Sprite(dc); Sprite(,x,y,sprite);\nFree(sprite); DCDel(dc);\n')});
   files.push({name:'animation.json',bytes:enc.encode(JSON.stringify({width,height,frames:frames.length,delayMs,palette:'TempleOS standard',transparent:255},null,2))});
   return zipFiles(files);

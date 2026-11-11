@@ -20,6 +20,10 @@ assert.throws(()=>sourceDocument(new Uint8Array([65])).encode('A\0B'),/NUL/);
 const project=await gameProject({name:'CastleFrankenstein',packageId:'tinker-CastleFrankenstein'});
 const doc=await project.open(project.entry);project.change(project.entry,'// Saved draft\n'+doc.text);
 const entryFile=catalog.packages.find(p=>p.id===project.id).files.find(f=>f.path===project.entry);
+const native=await project.native(),compiled=native.files.find(f=>f.path==project.entry).source;
+assert.deepEqual(Uint8Array.from(compiled,ch=>ch.charCodeAt(0)),
+ new Uint8Array(await project.bytes(project.entry)),
+ 'Compilation receives the edited source and its complete binary sprite records');
 assert([...storage.keys()].some(key=>key.includes(entryFile.sha256)),'Drafts belong to the original source and sprite revision');
 assert.equal((await project.open(project.entry)).text.startsWith('// Saved draft'),true);
 const reloaded=await import('../game-source.js?reload-test');
@@ -42,7 +46,7 @@ assert.notDeepEqual(new Uint8Array((await project.overrides()).get(nextFile.path
 let attempted=0;
 await assert.rejects(installGame(project.id,async()=>({ok:++attempted===1,msg:'simulated disk failure'}),()=>{},await project.overrides()),/simulated disk failure/);
 writes.length=0;await installGame(project.id,write);assert.equal(writes.length,2,'Retry restores partial installs');
-globalThis.__osGeneration=1;writes.length=0;await installGame(project.id,write);assert.equal(writes.length,2);
+writes.length=0;await installGame(project.id,write,()=>{},new Map(),()=>1);assert.equal(writes.length,2);
 await assert.rejects(installGame(project.id,write,()=>{},new Map([['C:/Home/foreign.HC',new ArrayBuffer(0)]])),/not a game source/);
 const file=catalog.packages[0].files[0],copy=await gameFile(file);new Uint8Array(copy).fill(0);
 assert.notDeepEqual(new Uint8Array(await gameFile(file)),new Uint8Array(copy),'Cached bytes remain intact');

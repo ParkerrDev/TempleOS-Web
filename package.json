@@ -1,0 +1,28 @@
+{
+  "name": "templeos-web",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.19"
+  },
+  "scripts": {
+    "test": "sh tools/Test.sh",
+    "test:browser": "node tools/browser/shell.mjs",
+    "test:editor": "node tools/browser/editor-keys.mjs && node tools/browser/palette.mjs && node tools/browser/raw.mjs",
+    "test:games:browser": "node tools/browser/games.mjs",
+    "test:engine": "node tools/browser/engine.mjs",
+    "test:snapshot": "node tools/browser/snapshot.mjs",
+    "test:clip": "node tools/clip/mp4.mjs && node tools/clip/mkv.mjs && node tools/clip/memory.mjs && node tools/clip/browser.mjs",
+    "build:bible": "node tools/bible-build.mjs",
+    "serve": "node server.mjs",
+    "test:chat": "node tools/browser/chat.mjs",
+    "test:search": "node search/Query.test.mjs && node search/QueryMemory.test.mjs && node tools/browser/search.mjs",
+    "test:sprites": "node sprites/Gr.test.mjs && node sprites/Play.test.mjs && node tools/sprite-codec.test.mjs && node tools/browser/sprites.mjs && node tools/browser/video-frames.mjs",
+    "test:lighthouse": "node tools/lighthouse/check.mjs"
+  },
+  "devDependencies": {
+    "chrome-launcher": "1.2.1",
+    "lighthouse": "13.6.0",
+    "playwright-core": "1.58.2"
+  }
+}

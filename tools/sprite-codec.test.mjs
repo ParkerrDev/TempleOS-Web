@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
-import {PALETTE,quantize,toRGBA,encodeGR,decodeGR,encodeGIF,spritePackage} from '../sprite-codec.js';
+import {PALETTE,quantize,toRGBA,encodeGIF,spritePackage,SPRITE_PLAYER} from '../sprite-codec.js';
+import {GrNew} from '../sprites/Gr.js';
+const {encodeGR,decodeGR}=await GrNew(readFileSync(new URL('../sprites/Gr.HC',import.meta.url),'utf8'));
 const width=17,height=3, pixels=Uint8Array.from({length:width*height},(_,i)=>i%17===16?255:i%16);
 const rgba=toRGBA(pixels,width,height);
 assert.deepEqual(quantize(rgba,width,height),pixels);
@@ -82,6 +84,6 @@ if(process.argv[2]){
  const path=process.argv[2];writeFileSync(path+'.GR',gr);writeFileSync(path+'.rgba',rgba);
  const reversed=Uint8Array.from(pixels,(_,i)=>pixels[pixels.length-i-1]);
  writeFileSync(path+'.gif',encodeGIF([pixels,reversed],width,height,100));
- writeFileSync(path+'.zip',spritePackage([pixels,reversed],width,height,100));
+ writeFileSync(path+'.zip',spritePackage([pixels,reversed].map(f=>encodeGR(f,width,height)),width,height,100,readFileSync(SPRITE_PLAYER,"utf8")));
 }
 console.log('Sprite codec: palette, unboosted warm/cool tones, zero-strength solid colors, stable dithering, local smoothing, alpha, GR round-trip, GIF timing and frame limits passed.');

@@ -3,7 +3,7 @@
 // Every visitor fetches the 43 MB disk image and a 10 MB RAM snapshot, which used up the whole
 // month's Netlify bandwidth in October 2026; Terry Search (10 MB of shards), the games (38 MB) and
 // ffmpeg (32 MB) are as heavy when used. They are 302'd to the templeosweb-files Worker instead
-// (cdn/worker.js: R2 behind it, filled from raw GitHub on first request, CORS and CORP set so COEP
+// (cdn/Files.js: R2 behind it, filled from raw GitHub on first request, CORS and CORP set so COEP
 // credentialless is happy), each pinned to a commit: this repo's files to the last commit that
 // changed them, so unrelated commits reuse the copies already in R2, and the snapshots to the HEMU
 // commit cloned next to this build, so a snapshot always matches the engine compiled from that same
@@ -11,18 +11,13 @@
 // manifest always matches its shards and every game file matches games/catalog.json's checksums.
 // Before writing, it HEADs every file behind every rule and wants the local file's length back: that
 // makes the Worker copy anything missing into R2 now, so no visitor waits on GitHub, and a wrong host,
-// pin or allowlist fails the build (the live deploy stays) instead of breaking the site.
+// pin or allowlist (cdn/Offload.js) fails the build (the live deploy stays) instead of breaking the site.
 import { writeFileSync, statSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { OFFLOAD } from "../cdn/Offload.js";
 
 const CDN = "https://templeosweb-files.parkerrhunt.workers.dev";
-const OWN = [                       // [path, folder?] - keep in step with FILES and DIRS in cdn/worker.js
-  ["vendor/images/templeos-hd.qcow2.gz", false],
-  ["vendor/ffmpeg/core/ffmpeg-core.wasm", false],
-  ["assets/terry-sprites.gr.gz", false],
-  ["assets/transcripts", true],
-  ["games/upstream", true],
-];
+const OWN = OFFLOAD["TempleOS-Web"].map((p) => [p.replace(/\/$/, ""), p.endsWith("/")]);   // [path, folder?]
 const git = (...args) => execFileSync("git", args, { encoding: "utf8" }).trim();
 // fail the build (the live deploy stays) rather than publish redirects to nowhere
 const pinned = (sha) => { if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error(`no commit to pin: "${sha}"`); return sha; };
@@ -30,7 +25,7 @@ const pinned = (sha) => { if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error(`no c
 // a shallow clone gives its tip, still right
 const pins = OWN.map(([path, dir]) => [path, dir, pinned(git("log", "-1", "--format=%H", "--", path))]);
 const hemu = pinned(git("-C", "hemu", "rev-parse", "HEAD"));
-const SNAPSHOTS = ["live.bin.gz", "live-smp.bin.gz"];
+const SNAPSHOTS = OFFLOAD.HEMU;
 const rules = pins.map(([path, dir, sha]) =>
   dir ? [`/${path}/*`, `${CDN}/TempleOS-Web/${sha}/${path}/:splat`] : [`/${path}`, `${CDN}/TempleOS-Web/${sha}/${path}`]);
 rules.push(...SNAPSHOTS.map((f) => [`/hemu/${f}`, `${CDN}/HEMU/${hemu}/${f}`]));

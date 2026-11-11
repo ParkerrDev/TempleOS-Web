@@ -2,7 +2,9 @@
 // It pings every 30 s, which the Workers answer without waking (setWebSocketAutoResponse), replaces a socket
 // that has gone silent, and after a loss retries further apart each time, up to a minute. Nothing connects
 // until wake(), and wake() on a page coming back retries at once.
-const PING_MS=30000,SILENT_MS=95000,RETRY_MS=2000,RETRY_MAX_MS=60000;
+import {PING,PING_MS} from './presence/RoomGlbls.js';
+
+const SILENT_MS=95000,RETRY_MS=2000,RETRY_MAX_MS=60000;
 
 export function createLiveSocket(url,{message,lost,open=(u)=>new WebSocket(u)}) {
   let ws=null,ping=null,retry=null,delay=RETRY_MS,heard=0;
@@ -33,7 +35,7 @@ export function createLiveSocket(url,{message,lost,open=(u)=>new WebSocket(u)}) 
     // a sleeping laptop or a dead network can leave a socket that looks open and never closes
     ping=setInterval(()=>{
       if(Date.now()-heard>SILENT_MS)lose();
-      else if(ws.readyState===1)ws.send('ping');
+      else if(ws.readyState===1)ws.send(PING);
     },PING_MS);
   }
   return {

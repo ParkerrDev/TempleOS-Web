@@ -45,6 +45,7 @@
       * { scrollbar-color: #000 #fff; scrollbar-width: auto; }
     }
   </style>
+  <link rel="stylesheet" href="clip/Panel.css">
 </head>
 <body>
   <div id="bar">
@@ -57,10 +58,15 @@
     <video id="v" controls autoplay playsinline preload="metadata"></video>
     <div id="msg"></div>
   </div>
-  <script>
+  <script type="module">
+    import {ArchiveFile,ArchiveDetails} from "./Archive.js";
+    import {ClipPanel} from "./clip/Panel.js";
     const P = new URLSearchParams(location.search);
     const f = P.get("f") || "", t = Math.max(0, Number(P.get("t")) || 0), name = P.get("n") || f.split("/").pop();
-    const src = "https://archive.org/download/TerryADavis_TempleOS_Archive/" + f.split("/").map(encodeURIComponent).join("/");
+    const src=ArchiveFile(f);
+    const clip=ClipPanel({f,t:name},t,t+20);
+    document.getElementById("wrap").append(clip.element);
+    addEventListener("pagehide",clip.Close);
     const v = document.getElementById("v"), msg = document.getElementById("msg");
     const hms = (s) => { s |= 0; const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
       return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(ss).padStart(2, "0"); };
@@ -71,9 +77,7 @@
       if (history.length > 1) history.back(); else location.href = "./"; });
     if (P.get("p") === "1" && f) {        // playable on archive.org too -> offer their player (double-decoded path form)
       const a = document.getElementById("arch");
-      a.href = "https://archive.org/details/TerryADavis_TempleOS_Archive/" +
-        f.split("/").map(encodeURIComponent).join("/").replace(/%2B/g, "%252B").replace(/%20/g, "+") +
-        (t ? "?start=" + t : "");
+      a.href=ArchiveDetails(f,t);
       a.style.display = "";
     }
     // ---- in-browser converter: shared module (convert.js - same code as the video windows). ----

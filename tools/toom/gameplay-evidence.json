@@ -1,0 +1,752 @@
+{
+  "description": "Native HolyC gameplay foundations; no complete playable-game claim.",
+  "freedoomVersion": "0.13.0",
+  "dataFormat": 3,
+  "dataBytes": 90764,
+  "assetHashes": {
+    "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+    "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+  },
+  "renderSourceSha256": "fc2f1043ec8ea135d7ff0fdeac8a6b503034231d6317dd7605842b69e2db578e",
+  "engine": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "engine": "qemu",
+    "accelerator": "kvm",
+    "templeos": "5.03"
+  },
+  "checks": {
+    "items": {
+      "cases": 2356,
+      "native": "qemu-63mpdt07",
+      "hemu": true
+    },
+    "states": {
+      "states": 967,
+      "tics": 116040,
+      "native": "qemu-g72yppdl",
+      "rejects": [
+        "invalid state",
+        "unused ammo enum marker",
+        "invalid weapon state",
+        "format 2"
+      ]
+    },
+    "world": {
+      "levelsAndSkills": 108,
+      "actors": 37779,
+      "native": "qemu-uuiazran"
+    },
+    "damage": {
+      "cases": 4772,
+      "native": "qemu-9dq4egcb"
+    },
+    "math": {
+      "fixedVectors": 4457,
+      "trig": 16384,
+      "wideProducts": 8594,
+      "fractions": 4128,
+      "native": "qemu-yar36o2x"
+    },
+    "render": {
+      "levels": 36,
+      "views": 288,
+      "native": "qemu-u032wpz7",
+      "hemu": true,
+      "matchesPreGameplayImages": true,
+      "repeatCount": 1,
+      "purpose": "Image equivalence, not a performance measurement"
+    },
+    "impact": {
+      "cases": 18,
+      "native": "qemu-1zw0iryj",
+      "hemu": true
+    },
+    "weapon": {
+      "cases": 13859,
+      "native": "qemu-7pnrbfph",
+      "hemu": true,
+      "weaponActions": 22
+    },
+    "player": {
+      "cases": 1681,
+      "native": "qemu-syw03kj9",
+      "hemu": true,
+      "commandVectors": 1500
+    },
+    "blast": {
+      "cases": 279,
+      "native": "qemu-an_fiwx_",
+      "hemu": true
+    },
+    "sight": {
+      "rays": 6912,
+      "visible": 927,
+      "maps": 36,
+      "native": "qemu-pjw5tp6o",
+      "hemu": true
+    },
+    "map": {
+      "maps": 36,
+      "queries": 103909,
+      "native": "qemu-gqf_ijz_"
+    },
+    "movement": {
+      "cases": 27,
+      "native": "qemu-j7f8ehcf"
+    },
+    "collision": {
+      "queries": 68035,
+      "native": "qemu-altr6tei"
+    },
+    "mask": {
+      "views": 96,
+      "fractionalHeights": true,
+      "native": "qemu-rzg2hgui",
+      "hemu": true
+    },
+    "sectorMotion": {
+      "cases": 430,
+      "native": "qemu-bd348jgc",
+      "hemu": true,
+      "scope": "Q16 moving planes, height clipping, crushing, callback isolation and geometry recovery",
+      "perTicScratchAllocations": 0
+    },
+    "sectorIndex": {
+      "maps": 36,
+      "sectors": 14556,
+      "edges": 127943,
+      "native": "qemu-kdmbd_0o",
+      "hemu": true,
+      "reference": "Independent full-linedef scan of the pinned IWAD"
+    },
+    "contacts": {
+      "cases": 1756,
+      "gridQueries": 1024,
+      "native": "qemu-alayzdgr",
+      "nestedQueryCoverage": "sectorMotion"
+    },
+    "doors": {
+      "cases": 14873,
+      "timelineTics": 12778,
+      "keyMaskCombinations": 1024,
+      "native": "qemu-hnjpugpx",
+      "hemu": true,
+      "scope": "Door controllers, manual/tagged/locked activation, timers, obstruction and mover ownership; line activation checked separately; UI/audio remain pending",
+      "appendPolicy": "A controller appended during an action runs later in the same pass; the earlier next-tic helper assumption is corrected."
+    },
+    "floors": {
+      "presets": 12,
+      "heightConfigurations": 768,
+      "timelineTics": 107940,
+      "native": "qemu-l3kvyz53",
+      "hemu": true,
+      "scope": "Direct floor presets, flat/special timing, texture metadata, actual crush/block recovery and ownership; line activation checked separately"
+    },
+    "floorLinks": {
+      "cases": 607,
+      "native": "qemu-a62opgr8",
+      "hemu": true,
+      "scope": "Synthetic directed-sector topology fixtures for both stair speeds, fractional heights, busy branches, cycles, tagged roots and donut movement/flat changes; complete map progression not tested"
+    },
+    "movers": {
+      "presets": 11,
+      "timelineTics": 7300,
+      "native": "qemu-pfy1leoj",
+      "hemu": true,
+      "concurrentMovers": 64,
+      "scope": "Five platform and six ceiling presets, sound/timing states, obstruction/crush/slowdown, zero-wait retry, tagged pause/resume and 64-controller ownership; line activation checked separately"
+    },
+    "teleport": {
+      "cases": 544,
+      "native": "qemu-fnkrpaxr",
+      "hemu": true,
+      "scope": "Direct transport API: square occupancy, player/monster stomping, fog/sound/angle/freeze, destination ordering, nested queries, retirement and exception cleanup."
+    },
+    "teleportMaps": {
+      "maps": 36,
+      "lines": 456,
+      "noDestination": 2,
+      "native": "qemu-_dwdn9ic",
+      "hemu": true,
+      "missing": [
+        {
+          "map": "E1M5",
+          "line": 633,
+          "special": 126,
+          "tag": 5
+        },
+        {
+          "map": "E4M7",
+          "line": 5189,
+          "special": 97,
+          "tag": 46
+        }
+      ],
+      "scope": "Medium-skill destinations from independent WAD records; calls transport directly, not map-line activation dispatch."
+    },
+    "switches": {
+      "stateCases": 154,
+      "assetCases": 240,
+      "pairs": 40,
+      "native": "qemu-ioux01of",
+      "hemu": true,
+      "scope": "Texture/state API,35-tic resets, pair/field ordering, repeated presses,40 active buttons, callback append and exception cleanup; no eager image decoding or WAD reads. Line dispatch remains separate."
+    },
+    "lights": {
+      "cases": 209,
+      "tics": 51200,
+      "native": "qemu-o1uuz6_g",
+      "hemu": true,
+      "scope": "Flash/strobe/glow/fire timelines and RNG, external brightness changes, tagged neighbor semantics, mover exclusion, repeated strobe order and ownership."
+    },
+    "lightMaps": {
+      "maps": 36,
+      "lights": 626,
+      "sectors": 14556,
+      "native": "qemu-z26qijfi",
+      "hemu": true,
+      "scope": "Actual WAD neighbor bounds, source-ordered initialization/RNG and retained sector specials, without actor simulation."
+    },
+    "sectorEffects": {
+      "cases": 391,
+      "tics": 49152,
+      "native": "qemu-to6xydyw",
+      "hemu": true,
+      "scope": "Damage/boots/RNG/secrets/exit-sector primitives across384 protection/ground/skill/seed combinations plus7 map-floor/invulnerability/actor-role contracts; explicit exit callback, no actual level transition."
+    },
+    "lineEvents": {
+      "integrationCases": 62,
+      "native": "qemu-cu6x0i6z",
+      "hemu": true,
+      "scope": "Actual use traces/controllers, permissions, busy actions, once/repeat crossings, teleport movement callbacks, shot switches, lights and exit requests; no complete gameplay loop."
+    },
+    "lineDispatch": {
+      "cases": 65232,
+      "actionCalls": 9222,
+      "specials": {
+        "use": 63,
+        "cross": 72,
+        "shoot": 3
+      },
+      "native": "qemu-o_gycwen",
+      "hemu": true,
+      "reference": "Pinned original p_switch.c and p_spec.c parsed for action calls, arguments, order, permissions and consumption rules; actions instrumented separately from the real-controller integration fixture."
+    },
+    "thinkerOrder": {
+      "cases": 324,
+      "actionCalls": 2628,
+      "native": "qemu-7y_4gmib",
+      "hemu": true,
+      "reference": "The original P_InitThinkers/P_AddThinker/P_RemoveThinker/P_RunThinkers compiled as an isolated host oracle with retained records; six initial actor/mover/light permutations, callback appends, nested appends and retirement before/after/current turn over two passes."
+    },
+    "thinkers": {
+      "cases": 18,
+      "native": "qemu-btge5y3l",
+      "hemu": true,
+      "scope": "Real interleaved actor/light RNG, floor/actor order, callback-created actors/movers, retirement, reentry/owner destruction rejection, exception cleanup and mixed light/timed-door initialization. No complete-game or demo synchronization claim."
+    },
+    "thinkerMaps": {
+      "maps": 36,
+      "sectors": 14556,
+      "controllers": 626,
+      "secrets": 183,
+      "native": "qemu-yi3kdxk0",
+      "hemu": true,
+      "scope": "Original map sector order and retained specials with actors loaded first; all controllers in the official Phase 1 maps are lights, with mixed delayed-door order covered by synthetic integration cases."
+    },
+    "surfaceFrames": {
+      "cycles": 22,
+      "ticValues": 135,
+      "mappings": 163215,
+      "scrollLines": 327,
+      "sides": 128180,
+      "native": "qemu-z7ecq9kd",
+      "hemu": true
+    },
+    "surfaceDraw": {
+      "maps": 36,
+      "phasesPerMap": 12,
+      "expectedPixelAndDepthComparisons": 432,
+      "changedSuccessiveViews": 77,
+      "cacheAndOwnershipCases": 6,
+      "native": "qemu-nj3wmus7",
+      "hemuPixelHashesMatch": true,
+      "details": "surface-evidence.json"
+    }
+  },
+  "frames": [
+    {
+      "map": "E1M1",
+      "hashes": [
+        433670241,
+        3184353455,
+        641245019,
+        3390563395,
+        2489665566,
+        2998757713,
+        942994054,
+        451522741
+      ]
+    },
+    {
+      "map": "E1M2",
+      "hashes": [
+        3321765832,
+        3332721420,
+        1024021011,
+        1800382056,
+        2004218111,
+        896260753,
+        3199077463,
+        2575113153
+      ]
+    },
+    {
+      "map": "E1M3",
+      "hashes": [
+        3951798753,
+        3962740316,
+        1390693678,
+        3560286660,
+        1186089677,
+        1491109353,
+        3666925850,
+        2161831855
+      ]
+    },
+    {
+      "map": "E1M4",
+      "hashes": [
+        3244867279,
+        3947920117,
+        31170383,
+        3085623114,
+        1757950980,
+        1667440020,
+        2823829518,
+        3088607614
+      ]
+    },
+    {
+      "map": "E1M5",
+      "hashes": [
+        1136366868,
+        3625386975,
+        2557281060,
+        2694722762,
+        2559254785,
+        1835577564,
+        947698255,
+        1333589947
+      ]
+    },
+    {
+      "map": "E1M6",
+      "hashes": [
+        3081439130,
+        2355967612,
+        1480490886,
+        1097753779,
+        2979807865,
+        924321016,
+        2350927586,
+        3143855321
+      ]
+    },
+    {
+      "map": "E1M7",
+      "hashes": [
+        911958718,
+        332325565,
+        4272645596,
+        4273005961,
+        3531389265,
+        2809500476,
+        3748342332,
+        2390012105
+      ]
+    },
+    {
+      "map": "E1M8",
+      "hashes": [
+        1833977417,
+        3530344557,
+        3053159496,
+        3228127728,
+        2854611084,
+        2518426046,
+        1567550480,
+        2293405845
+      ]
+    },
+    {
+      "map": "E1M9",
+      "hashes": [
+        1909269914,
+        2872835674,
+        2488878706,
+        2733925266,
+        3914909649,
+        1236445458,
+        882166820,
+        1162070322
+      ]
+    },
+    {
+      "map": "E2M1",
+      "hashes": [
+        2277863252,
+        1832504679,
+        3801230112,
+        4012844277,
+        66070744,
+        3773958981,
+        1631908799,
+        3555566644
+      ]
+    },
+    {
+      "map": "E2M2",
+      "hashes": [
+        593956215,
+        625399278,
+        3660160299,
+        193155984,
+        1620336869,
+        3286317980,
+        2640475169,
+        2847728021
+      ]
+    },
+    {
+      "map": "E2M3",
+      "hashes": [
+        1812987972,
+        832435344,
+        1428426018,
+        389813397,
+        1621989150,
+        3835284787,
+        168312185,
+        340020353
+      ]
+    },
+    {
+      "map": "E2M4",
+      "hashes": [
+        132402452,
+        89844312,
+        1948317815,
+        1610937227,
+        1057402689,
+        2152375247,
+        204712888,
+        1389906852
+      ]
+    },
+    {
+      "map": "E2M5",
+      "hashes": [
+        4115480384,
+        3862848772,
+        3914374205,
+        3153918326,
+        1374847987,
+        1504742441,
+        2089519202,
+        1194927500
+      ]
+    },
+    {
+      "map": "E2M6",
+      "hashes": [
+        519591805,
+        2897324162,
+        985803916,
+        3163954297,
+        2346456640,
+        2920942401,
+        4139756492,
+        479328176
+      ]
+    },
+    {
+      "map": "E2M7",
+      "hashes": [
+        1726736592,
+        2511164477,
+        3977314500,
+        2288524966,
+        3634188874,
+        3587781831,
+        2736034587,
+        2099835493
+      ]
+    },
+    {
+      "map": "E2M8",
+      "hashes": [
+        2560341761,
+        2937852119,
+        2942971176,
+        2822123679,
+        1210740725,
+        888883874,
+        1701210882,
+        3873731419
+      ]
+    },
+    {
+      "map": "E2M9",
+      "hashes": [
+        3619120163,
+        2049194356,
+        182770060,
+        1343554270,
+        960796605,
+        4164502477,
+        4187987041,
+        346948195
+      ]
+    },
+    {
+      "map": "E3M1",
+      "hashes": [
+        104942340,
+        4134834755,
+        284015869,
+        2821376434,
+        1892048717,
+        3857309463,
+        3435665993,
+        592292900
+      ]
+    },
+    {
+      "map": "E3M2",
+      "hashes": [
+        694732029,
+        2254113247,
+        402137815,
+        3990532972,
+        2183568285,
+        3801855364,
+        3935714597,
+        852400743
+      ]
+    },
+    {
+      "map": "E3M3",
+      "hashes": [
+        3295671000,
+        4202014723,
+        704891917,
+        3891171817,
+        1618071650,
+        1980633059,
+        2284699827,
+        27008345
+      ]
+    },
+    {
+      "map": "E3M4",
+      "hashes": [
+        418095677,
+        1005028910,
+        1748823292,
+        2982820841,
+        185189917,
+        2754861849,
+        173472992,
+        3125238823
+      ]
+    },
+    {
+      "map": "E3M5",
+      "hashes": [
+        132267952,
+        2747634131,
+        2951303810,
+        2051056634,
+        3239578487,
+        2947147824,
+        2715038804,
+        62856467
+      ]
+    },
+    {
+      "map": "E3M6",
+      "hashes": [
+        1785545706,
+        88164405,
+        4083045236,
+        2355617301,
+        1750775266,
+        3806558730,
+        1423201520,
+        2059454117
+      ]
+    },
+    {
+      "map": "E3M7",
+      "hashes": [
+        1622911778,
+        3266096354,
+        3645995961,
+        2892585005,
+        1268812897,
+        2717363709,
+        2434614497,
+        1836822312
+      ]
+    },
+    {
+      "map": "E3M8",
+      "hashes": [
+        3066019931,
+        2771726511,
+        3703084245,
+        3518550383,
+        1660243194,
+        510940312,
+        1819280067,
+        615901727
+      ]
+    },
+    {
+      "map": "E3M9",
+      "hashes": [
+        892155712,
+        1241304906,
+        694260656,
+        3338253836,
+        178402550,
+        2973178056,
+        2786167110,
+        1373756515
+      ]
+    },
+    {
+      "map": "E4M1",
+      "hashes": [
+        867402072,
+        2470706831,
+        2632960066,
+        534963483,
+        4260048795,
+        1354382627,
+        1348868229,
+        978655989
+      ]
+    },
+    {
+      "map": "E4M2",
+      "hashes": [
+        371114586,
+        3337693825,
+        1159515613,
+        1345390665,
+        2456355975,
+        953099891,
+        4120571793,
+        1856755222
+      ]
+    },
+    {
+      "map": "E4M3",
+      "hashes": [
+        1574940878,
+        1506566439,
+        4123671461,
+        4121119494,
+        1661103995,
+        1814901675,
+        747257957,
+        2980215975
+      ]
+    },
+    {
+      "map": "E4M4",
+      "hashes": [
+        4013579337,
+        3339200174,
+        3298580302,
+        3225479858,
+        996738169,
+        78638648,
+        4223192229,
+        3303060173
+      ]
+    },
+    {
+      "map": "E4M5",
+      "hashes": [
+        1208785441,
+        2177906449,
+        502893015,
+        2116762208,
+        655930558,
+        3984432468,
+        3773910769,
+        2019678877
+      ]
+    },
+    {
+      "map": "E4M6",
+      "hashes": [
+        832172513,
+        3208444335,
+        3584092843,
+        2125290660,
+        2734917542,
+        3083213844,
+        1012519646,
+        2814368853
+      ]
+    },
+    {
+      "map": "E4M7",
+      "hashes": [
+        4137692819,
+        161639088,
+        3500939377,
+        3974596094,
+        3118830501,
+        3997793370,
+        578277042,
+        4077532445
+      ]
+    },
+    {
+      "map": "E4M8",
+      "hashes": [
+        3570098700,
+        2013861070,
+        1004300519,
+        954695497,
+        2530975400,
+        1589363384,
+        2250187397,
+        3572565646
+      ]
+    },
+    {
+      "map": "E4M9",
+      "hashes": [
+        3822789866,
+        2723783857,
+        696794657,
+        1411871618,
+        1362891611,
+        958142446,
+        2370132057,
+        2959846259
+      ]
+    }
+  ],
+  "sectorHeightFormat": "Signed Q16 in runtime Sector; signed integer units in packed 26-byte SectorDisk"
+}

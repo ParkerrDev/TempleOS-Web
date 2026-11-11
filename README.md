@@ -98,10 +98,10 @@ for file I/O. (The `.gz` assets are decompressed in the browser.)
 | [HolyCraft](https://github.com/ParkerrDev/HolyCraft) | the HolyCraft voxel game, in HolyC, for the browser and for TempleOS | cloned into `./holycraft` at build time |
 | [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline - its output is baked into `assets/transcripts/` by `tools/build-transcripts.mjs` |
 
-`netlify.toml`'s build command `git clone --depth 1`s the four sibling repos and compiles the emulator into `build/`, so **every
-deploy ships their latest main** - no submodule pins, no packages. To auto-redeploy when
-*they* change, create one Netlify build hook (Site settings → Build & deploy → Build hooks)
-and add its URL as a plain push webhook on each of them.
+`Siblings.txt` pins each sibling repo to a commit. Netlify's build, `tools/NetlifyBuild.sh`, fetches
+each one at its commit, runs the fast tests (`tools/Test.sh`), compiles the emulator into `build/`,
+writes the CDN redirects, and publishes only the files the site serves (`node server.mjs Site`).
+A sibling's new work reaches the site when its commit in `Siblings.txt` is moved.
 
 The heavy files never come from Netlify: the build's last step, `tools/offload-redirects.mjs`, writes
 `_redirects` that send the disk image, the RAM snapshots, the games, Terry Search's shards, Terry's
@@ -109,7 +109,7 @@ sprites and ffmpeg's wasm to `templeosweb-files`, a Cloudflare Worker over an R2
 pinned to the commits they came from. The Worker copies a pinned file in from raw GitHub on its first
 request, and the build HEADs every file first, so a bad pin or host fails the build instead of the
 site. Deploy the Worker with `cd cdn && npx wrangler deploy`; a new file or folder to offload goes
-in both `cdn/worker.js` (FILES, DIRS) and `tools/offload-redirects.mjs` (OWN).
+in `cdn/Offload.js`, which both the Worker (`cdn/Files.js`) and `tools/offload-redirects.mjs` read.
 
 "Visitors" in the top bar comes from `templeosweb-presence` (`presence/`), a separate Worker with one
 Durable Object. Each open page holds a WebSocket to it, the number goes out when it changes, and the
@@ -155,25 +155,23 @@ is served from localhost itself.
 | `tools/` | tests and dev scripts (run from this directory); `tools/hemu/` the emulator harnesses, `tools/snapshot/` the QEMU recipes that produce HEMU's boot snapshots |
 | `build/` | gitignored: `hemu.wasm`, `hemu-smp.wasm`, `hemu-smp.json`, compiled at deploy |
 | `vendor/` | committed binary assets: the TempleOS disk image, fonts |
-| `cdn/` | the Cloudflare Worker that serves the heavy files from R2 (`worker.js`, `wrangler.toml`) |
-| `presence/` | the Cloudflare Worker that counts the people on the site (`worker.js`, `wrangler.toml`) |
-| `chat/` | the Cloudflare Worker behind the Chat window (`worker.js`, `wrangler.toml`) and the rules it shares with the page (`rules.js`) |
+| `cdn/` | the Cloudflare Worker that serves the heavy files from R2 (`Files.js`, its list `Offload.js`, `wrangler.toml`) |
+| `presence/` | the Cloudflare Worker that counts the people on the site (`Room.js`, the room both Workers are built on, `wrangler.toml`), and `RoomGlbls.js`, what the rooms and the pages agree on |
+| `chat/` | the Cloudflare Worker behind the Chat window (`ChatRoom.js`, `wrangler.toml`) and the rules it shares with the page (`rules.js`) |
 | `holyc-wasm/`, `hemu/`, `holyc-fmt/`, `holycraft/` | the sibling repos, cloned here at build time (gitignored) |
 
 ## Running locally
 
 ```bash
-git clone https://github.com/ParkerrDev/TempleOS-Web && cd TempleOS-web
-git clone --depth 1 https://github.com/ParkerrDev/HolyC-wasm holyc-wasm   # same layout the build creates
-git clone --depth 1 https://github.com/ParkerrDev/HEMU hemu
-git clone --depth 1 https://github.com/ParkerrDev/HolyC-fmt holyc-fmt
-git clone --depth 1 https://github.com/ParkerrDev/HolyCraft holycraft
-node engine/build.mjs build                                            # compile the emulator into build/
-node server.mjs               # → http://localhost:8080  (zero-dependency)
+git clone https://github.com/ParkerrDev/TempleOS-Web && cd TempleOS-Web
+while read dir url sha; do git clone -q $url $dir && git -C $dir checkout -q $sha; done <Siblings.txt
+node engine/build.mjs build   # compile the emulator into build/
+sh tools/Test.sh              # the fast tests
+node server.mjs               # http://localhost:8080, with _headers (and _redirects, if written)
 ```
 
-(For hacking on the engine/compiler, clone them as siblings and symlink instead:
-`ln -s ../holyc-wasm ../hemu ../holyc-fmt ../holycraft .`, then the same `node engine/build.mjs build`)
+(For work on the engine or the compiler, clone the repos side by side and symlink them instead:
+`ln -s ../HolyC-wasm holyc-wasm`, and the same for `hemu`, `holyc-fmt` and `holycraft`.)
 
 ## Credits & licenses
 
@@ -195,7 +193,7 @@ node server.mjs               # → http://localhost:8080  (zero-dependency)
 
 ## Sprite Studio and current game packages
 
-Open Sprite Studio from the desktop menu to convert PNG/JPEG/WebP images, GIFs, or video clips to the TempleOS palette. It stays closed on arrival, including visits through old `/#sprites` links. It opens in a draggable desktop window and keeps the current conversion when closed and reopened. Exports include transparent .GR frames, a PNG sheet, an animated GIF, and a ZIP with .GR frames and Play.HC. Clips default to 25 fps, with options up to 50 fps, 600 frames and 20 million pixels. Conversion runs locally using the vendored FFmpeg for GIF/video decoding and a separate palette worker. The editor visibly credits greg0-4's PNG2GR for the conversion inspiration and format reference. The uncompressed .GR codec was checked against TempleOS's CDC layout and a PNG2GR fixture.
+Open Sprite Studio from the desktop menu to convert PNG/JPEG/WebP images, GIFs, or video clips to the TempleOS palette. It stays closed on arrival, including visits through old `/#sprites` links. It opens in a draggable desktop window and keeps the current conversion when closed and reopened. Exports include transparent .GR frames, a PNG sheet, an animated GIF, and a ZIP with .GR frames and Play.HC. Clips default to 25 fps, with options up to 50 fps, 600 frames and 20 million pixels. Conversion runs locally: videos use the browser decoder and bounded canvas frame extraction; GIFs and browsers without video-frame callbacks still use the vendored FFmpeg, and palette mapping runs in a separate worker. Supported browsers do not download the 31 MB FFmpeg module for video conversion. The editor visibly credits greg0-4's PNG2GR for the conversion inspiration and format reference. The uncompressed standard-palette .GR reader and writer are shared HolyC in `sprites/Gr.HC`, compiled for Sprite Studio and the Terry player. Native QEMU checks compare them with TempleOS's own `DCLoad` and `DCSave`; `npm run test:sprites` checks the browser preview, downloads, MP4/WebM frame selection, cancellation and cleanup (Python and FFmpeg are needed for its independent fixtures). Exported `Play.HC` restores native window settings and cleans up images on exit or load failure; `node sprites/Play.test.mjs --native` verifies the actual package in TempleOS under QEMU.
 
 Natural shading is the default. It fits the unmodified source color with up to three nearby-hue entries from the stock palette, balancing display-RGB error against the contrast of the resulting pattern. There is no saturation boost or penalty for choosing gray. A fixed blue-noise mask keeps the same pattern across animation frames. Local source smoothing removes isolated compression flecks, with exact palette artwork and transparency preserved. Dither strength defaults to 35%; lower values reduce texture and 0% selects solid colors. Reconvert after changing it. The mask is reproducible with `node tools/build-sprite-noise.mjs`. Error diffusion and nearest-color matching remain selectable. Playback caches ImageData and uses elapsed time to recover after late frames; GIF exports distribute fractional delays across frames to preserve the clip duration.
 
@@ -205,7 +203,7 @@ Games request mouse capture through the guest input bridge. Click the game scree
 
 The Games menu puts HolyCraft, TOOM, Babel, Volley and Snake first. Every description credits the author and links to the original source. Its 65 entries include 47 games and interactive demos by Terry, 8 games or adaptations by TheTinkerer, 6 HolyC games by Austin Sierra, and HolyCraft, Snake, Babel and Volley. Authors are checked against Terry's official discs and the developers' source histories. See [games/AUTHORS.md](games/AUTHORS.md) for the inventory and attribution evidence. Both destinations read the same pinned, checksum-verified sources; only Run in TempleOS installs files in the guest. See [games/README.md](games/README.md) for sources and refresh instructions.
 
-Developers can propose a game from the submission section at the bottom of the Games window. It opens a GitHub issue draft asking for the game's source, author credit, launch instructions, screenshots and permission to share its code and assets.
+Developers can propose a game from the submission notice at the top of the Games window. It opens a GitHub issue draft asking for the game's source, author credit, launch instructions, screenshots and permission to share its code and assets.
 
 Edit source opens the selected game's project in HolyC Editor. The source selector includes all HolyC files in a package, including TOOM's renderer and weapons. Edits save on the current device and apply to both launch destinations. Save downloads the selected file with its embedded sprites; Restore file restores its original source. Drafts for upstream files belong to their pinned file revision so an upstream update cannot attach old source to different sprite records.
 
@@ -213,7 +211,7 @@ Run plays the game beside its source using the same runner as Run in Browser. Yo
 
 Browser games open in a larger window and scale the 640x480 canvas to fit while preserving its aspect ratio. Capture mouse and Fullscreen are available inside the game window. HolyC Editor offers Fullscreen editor for the whole workspace and Fullscreen game for just its preview. Escape or Exit fullscreen restores the previous layout and releases the mouse. Fullscreen survives preview reruns and uses a viewport fallback when the browser does not support element fullscreen. Native input handles left/right button combinations and retains quick clicks between worker polls.
 
-Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. HolyCraft, Snake, Babel and Volley are native games; the 61 original upstream packages still require native compatibility work and remain available through the explicit Run in TempleOS button. Run `node tools/native-games-audit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability.
+Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. Browser compilation currently passes for HolyCraft, Snake, Babel, Volley and TicTacToe. The first four also pass recorded worker-startup, advancing-frame and stop checks. TicTacToe remains pending until its browser runtime works. The launcher requires both compilation and startup evidence; changing the program, compiler or browser runner invalidates that evidence. Startup does not establish input response or full gameplay parity. All packages remain available through the explicit Run in TempleOS button. Run `node tools/native-games-audit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability. The separate [native game checks](tools/games/README.md) verify input, rendering and repeated-launch cleanup in original TempleOS and HEMU; the catalog smoke runner records installation and startup without treating them as gameplay proof.
 
 The editor's runner (`editor/worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `tools/holycraft-input.test.mjs`.
 
@@ -238,6 +236,10 @@ python3 tools/redsea.test.py
 python3 tools/check-text.py
 ```
 
-The emulator harnesses (`tools/hemu/`, memory-hungry, need the decompressed snapshot and a raw disk) and the QEMU capture recipes (`tools/snapshot/`) are documented in `engine/README.md`. The headless site checks `tools/tscheck.mjs`, `tools/pwtest-smp.mjs` and `tools/whitecheck.mjs` need Playwright.
+The emulator harnesses (`tools/hemu/`, memory-hungry, need the decompressed snapshot and a raw disk) and the QEMU capture recipes (`tools/snapshot/`) are documented in `engine/README.md`. `npm run test:browser` checks the desktop/mobile shell, including fullscreen keyboard focus. `npm run test:search` checks the native query parser and real search worker, copied/downloaded transcripts, archive links and video windows. These browser checks start their own local server and use Playwright with `CHROMIUM` (default `/usr/bin/chromium`). The search check also needs FFmpeg to generate small MP4/MKV fixtures; network routes supply these known files without depending on archive availability. Live archive/CDN delivery remains a separate deployment check.
 
 ```sh```
+
+The editor uses native TempleOS keyboard decoding and cooperative tasks when a program needs them. `npm run test:editor` checks extended keys, modifiers, held-state release, queue overflow, blocked-input wakeups, child failures and worker-load errors in the actual browser worker. Unsupported blocking APIs fail before program initialization.
+
+The Keys window routes presses to the active HolyC preview or TempleOS. Each release goes back to the program that accepted the press; physical and on-screen holds share ownership. Mobile keys stay above dialogs, and focus loss clears both held keys and latched modifiers. The browser editor check includes actual touch taps and legacy preview input.

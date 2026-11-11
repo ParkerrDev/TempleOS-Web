@@ -1,0 +1,79 @@
+{
+  "repository": "https://github.com/id-Software/DOOM",
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "purpose": "Reference collision, motion, combat, weapon/player state, visibility, sector controllers, teleports, switches, lighting, player sector effects line activation and shared thinker scheduling, re-expressed in native HolyC. These C files are not compiled or linked into TOOM.",
+  "files": [
+    {
+      "path": "linuxdoom-1.10/p_map.c",
+      "sha256": "752c7873c81fe6b10b77a08b7ef5716fe49c3103f6caa02097ed299e6e04736c"
+    },
+    {
+      "path": "linuxdoom-1.10/p_maputl.c",
+      "sha256": "4d93e06d11160fb935e94750babbdcc9a4469d96f593764872db87cefd37c0a1"
+    },
+    {
+      "path": "linuxdoom-1.10/p_mobj.c",
+      "sha256": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f"
+    },
+    {
+      "path": "linuxdoom-1.10/p_inter.c",
+      "sha256": "72e9bbabe560ef548c2f2522494786347d5c831b0e1f0ecb5cb29d8d8e682356"
+    },
+    {
+      "path": "linuxdoom-1.10/p_pspr.c",
+      "sha256": "b47100f9c2c2c4f7913831c170bff55161af2d5d01f5467dbbc6be081c4f1af1"
+    },
+    {
+      "path": "linuxdoom-1.10/p_enemy.c",
+      "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+    },
+    {
+      "path": "linuxdoom-1.10/p_user.c",
+      "sha256": "ecb5bab44ab9326c9c0d14bd607bc49c669bf048eecda27f7dc4634023a6c4a4"
+    },
+    {
+      "path": "linuxdoom-1.10/p_sight.c",
+      "sha256": "81014a71e4155db6da0af21e6ecf14687daf18075fb75322b63bdc254ce11120"
+    },
+    {
+      "path": "linuxdoom-1.10/p_floor.c",
+      "sha256": "c22ad7b7112d28c8b8c54a26ff611b98664a6d7a40d8d300680e6ca465468d47"
+    },
+    {
+      "path": "linuxdoom-1.10/p_doors.c",
+      "sha256": "2e44a6051f27206971c7bf9629431db201e1dc3441d974119ec9d88655e5ec12"
+    },
+    {
+      "path": "linuxdoom-1.10/p_spec.c",
+      "sha256": "1eed828498af033bd2322402a727e5b66913f5814e4d3fb002712fbcc8825cb1"
+    },
+    {
+      "path": "linuxdoom-1.10/p_switch.c",
+      "sha256": "ac7effb3c4cfce1ecd8f7d25c93690c9b74cda99c639a47f76c4151a73010358"
+    },
+    {
+      "path": "linuxdoom-1.10/p_plats.c",
+      "sha256": "15f27dd1282ef9730ffce010b1fcaec1283a9cd37e143b863576a690aba514f6"
+    },
+    {
+      "path": "linuxdoom-1.10/p_ceilng.c",
+      "sha256": "0b4de846cef16d92f95275e70e568ffabef6d6ee1a2b60609604dce42f011907"
+    },
+    {
+      "path": "linuxdoom-1.10/p_telept.c",
+      "sha256": "b717afb76c138954ca4aef44de3c3c081f91039cb485385afe2fd334fe4802c6"
+    },
+    {
+      "path": "linuxdoom-1.10/p_spec.h",
+      "sha256": "95d93e2e3b803126b0ecf6ea42de41d2bce7b2d09ea701e03992f0cc6dae22a3"
+    },
+    {
+      "path": "linuxdoom-1.10/p_lights.c",
+      "sha256": "0ade56b8514b3e11fd13af2be7a787531e4ffb6b84c49e489d678d42b5abfdca"
+    },
+    {
+      "path": "linuxdoom-1.10/p_tick.c",
+      "sha256": "21a638b7b1ae4fcb6b6892a731cd27d20f44e2df12dd3325c8215ca4c9aee22f"
+    }
+  ]
+}

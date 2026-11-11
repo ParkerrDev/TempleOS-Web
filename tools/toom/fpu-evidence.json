@@ -1,0 +1,34 @@
+{
+  "scope": "Raw floating-point renderer intermediates before the shared Q16 sampling rule. This records a remaining HEMU x87 fidelity limitation, not a fixed engine opcode.",
+  "native": "Original TempleOS V5.03, QEMU 11.1.2/KVM, Intel Core i9-14900HX",
+  "hemu": "Web 0259cec / HEMU ccf04ac / HolyC-wasm 7f80635; E4M3 also used the generic large-upload update",
+  "reference": "https://www.intel.com/content/www/us/en/developer/articles/technical/the-difference-between-x87-instructions-and-mathematical-functions.html",
+  "cases": [
+    {
+      "map": "E1M1",
+      "pose": 2,
+      "x": 122,
+      "nativeEvidence": "qemu-9ll0wl04",
+      "angleBits": "4609753056924675352",
+      "nativeCosBits": "4364452032828932096",
+      "hemuCosBits": "4364452196894661639",
+      "nativeUBits": "4634415122796773376",
+      "hemuUBits": "4634415122796773375",
+      "nativeU": 67,
+      "hemuU": 66.99999999999999
+    },
+    {
+      "map": "E4M3",
+      "pose": 2,
+      "x": 100,
+      "nativeEvidence": "qemu-wbffkt7n",
+      "angleBits": "4609753056924675352",
+      "nativeDistanceBits": "4636134130690256264",
+      "hemuDistanceBits": "4636134130690256350",
+      "nativeDistance": 91.42857142857076,
+      "hemuDistance": 91.42857142857198,
+      "nativeLight": 2,
+      "hemuLight": 3
+    }
+  ]
+}

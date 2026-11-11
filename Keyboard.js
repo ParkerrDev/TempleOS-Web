@@ -69,8 +69,8 @@ export function KeyInput(send)
     if (key!=KEY.Pause)
       sources.set(source,key);
     if (!pressed)
-      send(KeyBytes(key,true));
-    return true;
+      send(KeyBytes(key,true),key,true);
+    return key===KEY.Pause || sources.get(source)===key;
   }
   function up(source)
   {
@@ -78,7 +78,7 @@ export function KeyInput(send)
     if (!sources.delete(source))
       return false;
     if (!held().includes(key))
-      send(KeyBytes(key,false));
+      send(KeyBytes(key,false),key,false);
     return true;
   }
   function tap(key)
@@ -110,9 +110,37 @@ export function KeyInput(send)
     let keys=held();
     sources.clear();
     for (let key of keys)
-      send(KeyBytes(key,false));
+      send(KeyBytes(key,false),key,false);
   }
   return {down,up,tap,chord,text,held,reset};
+}
+
+export function KeyRoute(target)
+{
+  const owners=new Map();
+  function down(source,key)
+  {
+    if (owners.has(source)) return false;
+    const input=target();
+    if (!input) return false;
+    owners.set(source,input);
+    if (input.down(source,key)) return owners.has(source);
+    owners.delete(source);
+    return false;
+  }
+  function up(source)
+  {
+    const input=owners.get(source);
+    owners.delete(source);
+    return input?.up(source) || false;
+  }
+  function tap(key)
+  {
+    const source=Symbol();
+    down(source,key);
+    up(source);
+  }
+  return {down,up,tap};
 }
 
 export function KeyBar(bar,input)
@@ -136,8 +164,7 @@ export function KeyBar(bar,input)
       input.up(button);
       latched.delete(button);
     } else {
-      input.down(button,key);
-      latched.add(button);
+      if (input.down(button,key)) latched.add(button);
     }
     button.classList.toggle("on",latched.has(button));
     button.setAttribute("aria-pressed",String(latched.has(button)));
@@ -167,8 +194,7 @@ export function KeyBar(bar,input)
       if (modifier)
         toggle(button,key);
       else {
-        input.down(press,key);
-        button.classList.add("on");
+        if (input.down(press,key)) button.classList.add("on");
       }
     });
     button.addEventListener("pointerup",function (e) {

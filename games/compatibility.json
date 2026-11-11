@@ -1,0 +1,591 @@
+{
+  "format": 1,
+  "runtimeSha256": "ba52ac4e02e614d177432899a7411e23b88379992a325cac1fa1cfa1741fe887",
+  "programs": {
+    "HolyCraft.HC": {
+      "name": "HolyCraft",
+      "sourceSha256": "4f44168549cd15a677139dcbb273d1c77144d2a6f54b356e7c1dccb31ef600ca",
+      "compile": true,
+      "browserStartup": true,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "wasmSha256": "db7f4b0fc84f89373125c8dd274c3d666939dd6ee7272f7db3b5a0d05d86b872"
+    },
+    "toom": {
+      "name": "TOOM",
+      "sourceSha256": "3236192fa473646cb16878ba0dfb356139b5ea53ed0fe7c5ebda3d0876dccba8",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/TOOM/ScreenMelt.HC:11:11: parse error: unexpected token in expression (near '=')"
+    },
+    "Babel.HC": {
+      "name": "Babel",
+      "sourceSha256": "e111c3b64263cf2f3a258e2638487404f79fb68b7d23a25790ddcdd0cb6de28a",
+      "compile": true,
+      "browserStartup": true,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "wasmSha256": "3b631dd644e7f61874d86d87263de3f683d0565c9c942be9bd86df6288e3ff3e"
+    },
+    "Volley.HC": {
+      "name": "Volley",
+      "sourceSha256": "8daca89b20ba428f94607a47503728f3b2a2ab304ef4c348b476b48b5073c809",
+      "compile": true,
+      "browserStartup": true,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "wasmSha256": "d7aaf39f5163b4ec73db32b906357a788aa12e5c534d3524f2306d05b747fef4"
+    },
+    "Snake.HC": {
+      "name": "Snake",
+      "sourceSha256": "54502f40078974cd397113f5da6184f586d550cc90ef19fbe2070054ac0b2280",
+      "compile": true,
+      "browserStartup": true,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "wasmSha256": "ed0159471f7d2e6a8f9ed89000e73b4cf84a8d9e8fe9103d636c1539a1f07df9"
+    },
+    "tinker-Varoom": {
+      "name": "Varoom",
+      "sourceSha256": "6859626d516ac82665bf07bc50e15c51cad36698d34ea60640afdc892339a370",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "array dimension is not a constant integer at line 113"
+    },
+    "tinker-Talons": {
+      "name": "Talons",
+      "sourceSha256": "07eb815120601a16f87a4760b41a56b472c366141cdeb62d4812aecae72dd0e0",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "array dimension is not a constant integer at line 151"
+    },
+    "tinker-BlackDiamond": {
+      "name": "BlackDiamond",
+      "sourceSha256": "fc48669e079c2a865b8192bf1616abde1c33c6f0bd040eb59099d8035167e429",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/BlackDiamond.HC:203: Undefined identifier or untyped call: Cosh"
+    },
+    "tinker-FlatTops": {
+      "name": "FlatTops",
+      "sourceSha256": "46299a1fde666a33af3b0f2daee578c0543377940c80b44bc509e177176f0858",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/FlatTops.HC:100: undefined symbol 'F64_MAX'"
+    },
+    "tinker-Halogen": {
+      "name": "Halogen",
+      "sourceSha256": "b1bdf05447702985185ecf22b9e3ef0bfe2d9ca501f2ae0c3b57fb3446786ddd",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Halogen.HC:80: undefined symbol 'SettingsPush'"
+    },
+    "tinker-CastleFrankenstein": {
+      "name": "CastleFrankenstein",
+      "sourceSha256": "ad4a860adce300294d6cb83e49d5c64ac4756bd1c3abd7026cfed93a9463b1ef",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/BrowserCastle.HC:3: cannot address undefined 'ms_hard'"
+    },
+    "tinker-BattleLines": {
+      "name": "BattleLines",
+      "sourceSha256": "7b83a484dc2368f88a04cdae046c3c3bf5e1fc6ac7795b6891597fc5f036162d",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/BattleLines.HC:107: Undefined identifier or untyped call: SpriteInterpolate"
+    },
+    "tinker-BigGuns": {
+      "name": "BigGuns",
+      "sourceSha256": "a8d761dce8015da54068c96feff5ffb7add1967755dea7739614d2637e4b5368",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/BigGuns.HC:54: undefined symbol 'ode'"
+    },
+    "tinker-BomberGolf": {
+      "name": "BomberGolf",
+      "sourceSha256": "ac17441ba15369398fed48165c9ce8afdfd791651f53ffa7d71d7016c060a6f6",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/BomberGolf.HC:113: Undefined identifier or untyped call: Blink"
+    },
+    "tinker-FlapBat": {
+      "name": "FlapBat",
+      "sourceSha256": "b0b7b99fceb6550be038a4680e4b40fbe810cd620f751d73cc3d3a7329957660",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/FlapBat.HC:61: Undefined identifier or untyped call: SpriteInterpolate"
+    },
+    "tinker-Maze": {
+      "name": "Maze",
+      "sourceSha256": "a643d69dc57e2ce0d7442d8b63c8a4a77b63a205f0e6f95a913e9dac5768f5c8",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "class CGr has no field 'text_base'"
+    },
+    "tinker-TreeCheckers": {
+      "name": "TreeCheckers",
+      "sourceSha256": "29cfd36ebca8e316690fa53444bba20d813587a0a3c811a38ffb6b495049e784",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "array dimension is not a constant integer at line 20"
+    },
+    "tinker-TicTacToe": {
+      "name": "TicTacToe",
+      "sourceSha256": "af7dfa613107c8dfb46486d600aeca1a0ad53ffefbe6353435f16805117a3c6a",
+      "compile": true,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "wasmSha256": "e0f12e90d61e597fe2531555df081a1da1f1da187f6eb80dfad53c9269371945"
+    },
+    "tinker-Whap": {
+      "name": "Whap",
+      "sourceSha256": "27d854fe5517d5b1babdc6d8bc94454bca726a76bf44910d35008c999a00e1f7",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Whap.HC:25: Not array or ptr"
+    },
+    "tinker-Wenceslas": {
+      "name": "Wenceslas",
+      "sourceSha256": "fbb99c9ab1f06d36b962c849a7f34ffe30d6c0fedac515a61e5f09e14dd15f26",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Wenceslas.HC:180: undefined symbol 'GR_Z_ALL'"
+    },
+    "tinker-RawHide": {
+      "name": "RawHide",
+      "sourceSha256": "e7b8e7a90dfbdc7b7d0025094857cab7f55d450e939242916042b9e581c049f6",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/RawHide.HC:250: undefined symbol 'Blink'"
+    },
+    "tinker-TheDead": {
+      "name": "TheDead",
+      "sourceSha256": "5cb9c959f149aac587f5152838a0456b13cb45043ed40e587b4a8026c411e7e3",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/TheDead.HC:87: Undefined identifier or untyped call: MenuPush"
+    },
+    "tinker-Squirt": {
+      "name": "Squirt",
+      "sourceSha256": "26c8521d12e0f57ff6fd1b91b1e5fba34894f2725893cc76385558f10d763e5b",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Squirt.HC:64: undefined symbol 'ode'"
+    },
+    "tinker-Zing": {
+      "name": "Zing",
+      "sourceSha256": "8f58573c328eec3440aee039cd321dbcc137c4559ff99f659c1ce0cb236126ab",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Zing.HC:97: Undefined identifier or untyped call: MsSet"
+    },
+    "tinker-ZoneOut": {
+      "name": "ZoneOut",
+      "sourceSha256": "2f5ce3b8de295fac7c88c65b02781ede30d814669e0b74157b19dbb60c26fe5b",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/ZoneOut.HC:100: Undefined identifier or untyped call: Wrap"
+    },
+    "tinker-RocketScience": {
+      "name": "RocketScience",
+      "sourceSha256": "6c7ce2af44c942c6314a2b5f8494bbf0d6ce7f6939a0902555f6292a30319810",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/RocketScience.HC:54: cannot address undefined 'm2'"
+    },
+    "tinker-Rocket": {
+      "name": "Rocket",
+      "sourceSha256": "8bbf14bb508027ac663008feec2e31f357acd8fe0c509216e409ac132f3db894",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Rocket.HC:37: cannot address undefined 'm2'"
+    },
+    "tinker-DunGen": {
+      "name": "DunGen",
+      "sourceSha256": "0278556f7ff7b0e3b8f5f257a89f18a9eded6fc65fbda27255a5e47895bc9fc1",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/DunGen.HC:102: Undefined identifier or untyped call: Blink"
+    },
+    "tinker-MassSpring": {
+      "name": "MassSpring",
+      "sourceSha256": "46996f114bec2646c92540c73f4dda2956a507010cf77594cb0165243a9288c8",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/MassSpring.HC:17: undefined symbol 'ode'"
+    },
+    "tinker-Collision": {
+      "name": "Collision",
+      "sourceSha256": "53035f9525c6dcf561d166f8bba6880dc66721469d7e642ca96f0b42b8a9dd47",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Collision.HC:144: undefined symbol 'SettingsPush'"
+    },
+    "tinker-RainDrops": {
+      "name": "RainDrops",
+      "sourceSha256": "7b1caf46b3047ba14910d7c3179bb130b09efa288c6971452aed3c401b0033ee",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/RainDrops.HC:155: Undefined identifier or untyped call: MenuPush"
+    },
+    "tinker-CircleTrace": {
+      "name": "CircleTrace",
+      "sourceSha256": "b6f9ca7c8d1ee4b7ffb172e480031b0a5ea496be7db3625c06a5dc29b5107ea5",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/CircleTrace.HC:22: undefined symbol 'best_score'"
+    },
+    "tinker-ElephantWalk": {
+      "name": "ElephantWalk",
+      "sourceSha256": "bf99773a087b2f9695801b24b8919505ab321486bf29bd3d73e8b72f6cc1969c",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/ElephantWalk.HC:39: undefined symbol 'AutoComplete'"
+    },
+    "tinker-CharDemo": {
+      "name": "CharDemo",
+      "sourceSha256": "929f3cb7968ac3cdbc749ee09eda8feacde4270ced348fafd0e1494fc968186c",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "class CGr has no field 'hide_col'"
+    },
+    "tinker-Digits": {
+      "name": "Digits",
+      "sourceSha256": "77b4d703a32bdab32c0c7bf8f1e09f0551c8038814f954c09c3dca19bda5a854",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Digits.HC:26: undefined symbol 'SettingsPush'"
+    },
+    "tinker-Stadium": {
+      "name": "Stadium",
+      "sourceSha256": "873c51662043fb0ee691e8ae89987d551bae9262ea24569f0f47c4cca7ce29d4",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Stadium/Stadium.HC:92: undefined symbol 'SettingsPush'"
+    },
+    "library-AfterEgypt": {
+      "name": "AfterEgypt",
+      "sourceSha256": "763bf6596a3be19b41bfaa89e28be4ef80ed49b1afa43fc133a4967cbadc805d",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/Camp.HC:200:35: lex error: DolDoc binary 9 is missing"
+    },
+    "library-Chess": {
+      "name": "Chess",
+      "sourceSha256": "52f220f63f4e2ed0be8fa43c04db3143877775fd9a8061c1fd9975a259ccfc2d",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/Chess/Chess.HC:410: undefined symbol 'DocNew'"
+    },
+    "library-KeepAway": {
+      "name": "KeepAway",
+      "sourceSha256": "71dc254207a72b8d6b13891957d6c8e95a5a51ba9a49fe66d452b7cd169b650c",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/KeepAway/KeepAway.HC:267: undefined symbol 'GR_Z_ALL'"
+    },
+    "library-Span": {
+      "name": "Span",
+      "sourceSha256": "7530d2af1ac990dab808e7804b6434c6746c6f4a75f42881df245c07ac91b636",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "class MyMass has no field 'drag_profile_factor'"
+    },
+    "library-Strut": {
+      "name": "Strut",
+      "sourceSha256": "1df0b036f899ac11a33a05142b66627c11f6d1576a5471fc50399157cb978a87",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/Strut/Strut.HC:86: undefined symbol 'ode'"
+    },
+    "library-Titanium": {
+      "name": "Titanium",
+      "sourceSha256": "84adb7ac0fb3ac6187de44d293223c5050d5622a3d5c8f768ee59d337e996817",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/Titanium/Titanium.HC:277: undefined symbol 'Gs'"
+    },
+    "library-ToTheFront": {
+      "name": "ToTheFront",
+      "sourceSha256": "339fc4050d0c5667b148251317b7a94715c99f6e4f57b2532a35acb2495ffa32",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "array dimension is not a constant integer at line 21"
+    },
+    "library-Vocabulary": {
+      "name": "Vocabulary",
+      "sourceSha256": "0964d0bd59a8533488dd6fbcb186d3e0860920b23247989ad7517ef973385c35",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/Vocabulary/VocabQuiz.HC:5: cannot address undefined 'acd'"
+    },
+    "library-XCaliber": {
+      "name": "X-Caliber",
+      "sourceSha256": "d94d96c2858b9d0ae8f77b60d43449f19de05b259c8f6e00731f9e8a443b6314",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "member access '.state' on non-class type"
+    },
+    "library-CastleFrankenstein2": {
+      "name": "Castle Frankenstein 2",
+      "sourceSha256": "750974eeff129e46a195915128a6d8559f087c5f6d309909fac8b0ffa2be86d3",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/CF2/CF2.HC:3: cannot address undefined 'ms_hard'"
+    },
+    "library-Cube": {
+      "name": "Cube",
+      "sourceSha256": "59f2c78c033d5e615a373cd62ddec2c2169ec589ae6da47235018b03640b340d",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/Cube/Cube.HC:32: Undefined identifier or untyped call: RegDft"
+    },
+    "library-GlowUFOs": {
+      "name": "GlowUFOs",
+      "sourceSha256": "baec8fdedef7cd23b28c304b204517b177ea0bc1e632a4ff8ecd67976278ac9d",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/GlowUFOs.HC:1751: undefined symbol 'SettingsPush'"
+    },
+    "library-OregonTrail1975": {
+      "name": "Oregon Trail 1975",
+      "sourceSha256": "477d0cc38ed49aa125d989126e12277b4b307cf66d6e4c3dda574cb355404eac",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/OT1975/OT1975.HC:15: Undefined identifier or untyped call: GetI64"
+    },
+    "library-Scorch": {
+      "name": "Scorch",
+      "sourceSha256": "9a6b0376fc894f4e023504b98f6b564cfed3d2502bb828b5c5c7d321fc4a4176",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "<prelude>:81:13: parse error: expected declarator name (near '(')"
+    },
+    "library-SpyHunt": {
+      "name": "SpyHunt",
+      "sourceSha256": "fce754f5becb0f7a671279ddd38e6cfc961c044d3305867bfc994b54e7b8cfd6",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/SpyHunt/SpyHunt.HC:266: undefined symbol 'Gs'"
+    },
+    "library-Sudoku": {
+      "name": "Sudoku",
+      "sourceSha256": "f2d1c86d79a1823d435ad9f467585290ef701d83289743c229d6eed6b2f3f50c",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/Sudoku/Sudoku.HC:52: Undefined identifier or untyped call: HashFind"
+    },
+    "library-Tetris": {
+      "name": "Tetris",
+      "sourceSha256": "aba98fabad78f71ca25cc979e94acadc4b01f98be1b99bfa06f8c5bce97a8694",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TinkerOS/Apps/Tetris/Tetris.HC:345: undefined symbol 'Blink'"
+    },
+    "library-B17": {
+      "name": "B17",
+      "sourceSha256": "41fbbca35230db33f1f42c029e52985d67831e51518534a8a39989a33d8f28e0",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TerrySupplement/B17/B17.HC:97: undefined symbol 'SettingsPush'"
+    },
+    "library-Coach": {
+      "name": "Coach",
+      "sourceSha256": "f610c9a8c88c1df73aff5a3fe834b0308e45aedf2578d69dc0ef235cf01227e6",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TerrySupplement/Coach/Coach.HC:53: Undefined identifier or untyped call: SpriteInterpolate"
+    },
+    "library-DiningStars": {
+      "name": "DiningStars",
+      "sourceSha256": "53247182446bfd047d3e92d00a84f263a72c52f0504289dab63e360b05622d83",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TerrySupplement/DiningStars/DiningStars.HC:206: undefined symbol 'Gs'"
+    },
+    "library-Flappy": {
+      "name": "Flappy",
+      "sourceSha256": "e8e0393fa4795c3ab70c82b0054e411750d00a5c490bbb434b9842ebdba8db57",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TerrySupplement/Flappy/Flappy.HC:97: undefined symbol 'SettingsPush'"
+    },
+    "library-MissileDefense": {
+      "name": "MissileDefense",
+      "sourceSha256": "5a1c4f4750918bf76732205ac5fdc1e9ee395889c9dff548bc8192b7044a8adf",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TerrySupplement/MissileDefense/MissileDefense.HC:61: cannot address undefined 'winmgr'"
+    },
+    "library-Rocks": {
+      "name": "Rocks",
+      "sourceSha256": "6207e077a8e6c7cc58e32737e3982f8632d3a3ae332aa12beee64b921582f153",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TerrySupplement/Rocks/Rocks.HC:545: Undefined identifier or untyped call: In"
+    },
+    "library-Pilgrims": {
+      "name": "Pilgrims",
+      "sourceSha256": "32c21652498abb3c29fc990b3bf5aa56e8733a95fb35979eca2c3e78d80acd31",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/TerrySupplement/Pilgrims/GrVectMap.HC:123: undefined symbol 'Gs'"
+    },
+    "library-MarioClone": {
+      "name": "MarioClone",
+      "sourceSha256": "0720064f6aa0061737228ad16ef270aa9417e9373b2d44a73855af6cb6986019",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/MarioClone/Wad.HC:134: not an lvalue: Binary"
+    },
+    "library-MaliciousTestimonies": {
+      "name": "Malicious Testimonies",
+      "sourceSha256": "780e87f1c9fcd9f7a1173d56dbad46e3758dda6844d5226c89a4ad6b6d1cd412",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Player.HC:94:21: parse error: unexpected token in expression (near ')')"
+    },
+    "library-Ezekiel": {
+      "name": "Ezekiel",
+      "sourceSha256": "1ad9464870f6c0f54c342ffb739c5a6af51f7c4e2182e103a38d97d707065e01",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/AustinArchive/Ezekiel/Sinner.HC:243: undefined symbol 'SettingsPush'"
+    },
+    "library-LordofHosts": {
+      "name": "Lord of Hosts",
+      "sourceSha256": "b983161405eec567b43774578be7206f053776202f38bdf2ce00296bafda1141",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/AustinArchive/LordOfHosts/Matrix.HC:130:65: parse error: expected ')' (near 'X')"
+    },
+    "library-SolomonsTemple": {
+      "name": "Solomon's Temple",
+      "sourceSha256": "0791a98844e1e92ac935f8de6fcfd225feb56517be0a68c5178579334cdba13c",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "C:/Home/Games/AustinArchive/Temple/cellar.HC:437:60: parse error: expected ')' (near 't')"
+    }
+  }
+}

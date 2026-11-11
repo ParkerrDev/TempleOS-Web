@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "launchesPerTask": 2,
+  "harnessSha256": "26ce5ebfc9c39f6783763c7140b1ad036e181276ab1b0fc0f487ed2a30ec31d6",
+  "runnerSha256": "455a1dc9a9aec57b64fbb8098a99d0095430bd9eff73ae9b5c9cd72b85ebb637",
+  "fixtures": {
+    "snapshot": {
+      "gzip": true,
+      "sha256": "99389d6deade3fae598862bdee1856e8157d62b1843fe901f3530014485ff3d6"
+    },
+    "disk": {
+      "gzip": true,
+      "sha256": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+    }
+  },
+  "fixtureLoaderSha256": "686a8889ff4a97d8c7128ae0711750838d9d46dddbc6287de8300ad8f6880c21",
+  "guestHarnessSha256": "9fe6f769b458f6399e5041ca4a7586e49a4a90a1d224239a92d3e95cd4f9e057",
+  "webRuntimeSha256": "063333a2fd808e74ce03969ebbaf7d19a52482b0665dbc81b36d3564f9e46035",
+  "siblings": [
+    "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm 6f366a5622418130d828baadea34d8b81d7bbc81",
+    "hemu https://github.com/ParkerrDev/HEMU 1f5854ecff55c0535ccbe3c7e9b033361b3bcb80"
+  ],
+  "engineSha256": "e23e6194a9a6045178cdfc27f779339e54654594c943b7ae0924053c0f359423",
+  "backend": {
+    "engine": "qemu",
+    "accelerator": "kvm",
+    "version": "QEMU emulator version 11.1.2"
+  },
+  "oracle": "qemu-efi8x0ky",
+  "programs": {
+    "Babel": {
+      "sourceSha256": "8f9fa354dda68f563b96a15d4b1219d79bc0fbeb39f285b102022a4b75279300",
+      "frameFnv64": "1BEB230827ABCDD3",
+      "native": [
+        "FRAME:Babel:1BEB230827ABCDD3",
+        "INPUT:Babel:pause,cross,left,right,drop",
+        "EXIT:Babel:settings,draw,window,tasks",
+        "FRAME:Babel:1BEB230827ABCDD3",
+        "INPUT:Babel:pause,cross,left,right,drop",
+        "EXIT:Babel:settings,draw,window,tasks"
+      ],
+      "hemu": "same input, frame and exit checks passed"
+    },
+    "Volley": {
+      "sourceSha256": "76a4c978a8d850b7ac294f56381d8e563694c33b0ec9892f67b951f2793ba30d",
+      "frameFnv64": "070264F24E97EB62",
+      "native": [
+        "FRAME:Volley:070264F24E97EB62",
+        "INPUT:Volley:both-players,serve,pause",
+        "EXIT:Volley:settings,draw,window,tasks",
+        "FRAME:Volley:070264F24E97EB62",
+        "INPUT:Volley:both-players,serve,pause",
+        "EXIT:Volley:settings,draw,window,tasks"
+      ],
+      "hemu": "same input, frame and exit checks passed"
+    }
+  }
+}

@@ -1,13 +1,20 @@
-# templeosweb-presence: counts the people on the site (see worker.js).
+# templeosweb-presence: counts the people on the site (see Room.js).
 name = "templeosweb-presence"
-main = "worker.js"
+main = "Room.js"
 compatibility_date = "2026-10-01"
 workers_dev = true
+
+[vars]
+# pages that may connect, comma separated (wrangler dev --var ORIGINS:http://localhost:8080 for local work)
+ORIGINS = "https://templeosweb.netlify.app"
 
 [[durable_objects.bindings]]
 name = "ROOM"
 class_name = "Room"
 
+# This stays though the room keeps nothing but its alarm: Durable Object
+# migrations are append-only, a class's storage backend is fixed when the class
+# is made, and a fresh deploy makes Room from this entry.
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Room"]
