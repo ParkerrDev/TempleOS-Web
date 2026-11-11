@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
-import {FreedoomRead,root} from './Assets.mjs';
+import {FreedoomRead,root,version,wadHash} from './Assets.mjs';
 import {WadRead} from './Wad.mjs';
 
 const dir=resolve(root,'tools/toom/source'),out=resolve(root,'games/Toom');
@@ -71,13 +71,23 @@ const random=clean(sources['m_random.c']).match(/rndtable\[256\]\s*=\s*\{([^}]+)
 assert.equal(random.length,256);
 const deh=WadRead(FreedoomRead()).find(l=>l.name==='DEHACKED').bytes.toString('ascii');
 const changes=[];
-for (const m of deh.matchAll(/^Frame (\d+)\s+Sprite subnumber = (\d+)/gm)) {
-  const frame=Number(m[1]),value=Number(m[2]);
-  assert(frame<states.length&&value>=0&&value<=65535);
-  changes.push({frame,from:states[frame][1],to:value});
-  states[frame][1]=value;
+const fields=new Map([['Sprite number',0],['Sprite subnumber',1],['Duration',2],
+  ['Next frame',4],['Unknown 1',5],['Unknown 2',6]]);
+let frame=null;
+for (const text of deh.split('\n')) {
+  const line=text.trim();
+  if(line.startsWith('['))break;
+  if(!line||line.startsWith('#'))continue;
+  const start=line.match(/^Frame (\d+)$/);
+  if(start) {frame=Number(start[1]);assert(frame<states.length);continue;}
+  if(frame===null)continue;
+  const field=line.match(/^([^=]+?)\s*=\s*(-?\d+)$/);
+  assert(field&&fields.has(field[1]),`Unsupported DEHACKED frame entry: ${line}`);
+  const column=fields.get(field[1]),value=Number(field[2]);
+  changes.push({frame,field:field[1],column,from:states[frame][column],to:value});
+  states[frame][column]=value;
 }
-assert.equal(changes.length,5);
+assert.equal(changes.length,version==='0.13.0'?7:5);
 const header=Buffer.alloc(32);
 header.write('TMST');header.writeUInt32LE(1,4);
 [states.length,actors.length,sprites.length,actions.length,sounds.length,random.length]
@@ -105,6 +115,7 @@ for (const [name,value] of Object.entries({STATE_NUM:states.length,ACTOR_NUM:act
   defines+=`#define TM_${name}\t${value}\n`;
 put('TmData.HH',defines);
 put('data.json',JSON.stringify({format:1,revision:manifest.revision,
+  freedoomVersion:version,freedoomSha256:wadHash,
   sha256:createHash('sha256').update(data).digest('hex'),bytes:data.length,
   states:states.length,actors:actors.length,sprites:sprites.length,sounds:sounds.length,
   actions,freedoomFrameChanges:changes},null,2)+'\n');

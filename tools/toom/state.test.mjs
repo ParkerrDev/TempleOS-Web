@@ -13,7 +13,8 @@ const meta=JSON.parse(readFileSync(resolve(root,'games/Toom/data.json')));
 assert.equal(createHash('sha256').update(data).digest('hex'),meta.sha256);
 const states=Array.from({length:meta.states},(_,i)=>Array.from({length:7},(_,j)=>
   data.readInt32LE(32+(i*7+j)*4)));
-for (const {frame,to} of meta.freedoomFrameChanges)assert.equal(states[frame][1],to);
+for (const {frame,column,to} of meta.freedoomFrameChanges)
+  assert.equal(states[frame][column??1],to);
 const expected=Buffer.alloc(meta.states*16);
 for (let first=0;first<states.length;first++) {
   let current=first,tics=0,actions=0,hash=0,active=true;

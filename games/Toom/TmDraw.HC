@@ -55,9 +55,12 @@ View *ViewNew(Map *tmpm,Graphics *tmpg)
   name[8]=0;
   for (i=0;i<tmpm->sector_cnt;i++) {
     MemCpy(name,tmpm->sector[i].floor_name,8);
-    tmpv->floor[i]=LumpFind(tmpg->wad,name);
-    n=tmpv->floor[i];
-    if (n<0 || tmpg->wad->dir[n].size!=4096) goto vn_fail;
+    if (!StrCmp(name,"F_SKY1")) n=-1;
+    else {
+      n=LumpFind(tmpg->wad,name);
+      if (n<0 || tmpg->wad->dir[n].size!=4096) goto vn_fail;
+    }
+    tmpv->floor[i]=n;
     MemCpy(name,tmpm->sector[i].ceil_name,8);
     if (!StrCmp(name,"F_SKY1")) n=-1;
     else {
@@ -186,6 +189,11 @@ U0 WallColumn(View *tmpv,Image *tmpi,I64 x,I64 ya,I64 yb,
   }
 }
 
+I64 ViewY(View *tmpv,I64 height,F64 iz)
+{//An exact pixel-center tie belongs to the lower row, despite roundoff.
+  return Ceil(tmpv->cy-(height-tmpv->z)*tmpv->fy*iz-0.500000001);
+}
+
 U0 ViewSeg(View *tmpv,Seg *tmps)
 {//Near clipping and perspective interpolation precede per-column portals.
   I64 i,x,x1,x2,front,back,top,bottom,up,down,light,base_light,
@@ -254,10 +262,11 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
     if (tmpv->top[x]<=tmpv->bottom[x]) {
       d=1.0/iz; u=iu*d;
       light=ClampI64(base_light-MinI64(Floor(tmpv->fx*16*iz),47)/2,0,31);
-      top=Ceil(tmpv->cy-(sf->ceil-tmpv->z)*tmpv->fy*iz-0.5);
-      bottom=Ceil(tmpv->cy-(sf->floor-tmpv->z)*tmpv->fy*iz-0.5)-1;
+      top=ViewY(tmpv,sf->ceil,iz);
+      bottom=ViewY(tmpv,sf->floor,iz)-1;
       if (tmpv->ceil[front]>=0) PlaneMark(tmpv,x,tmpv->top[x],top-1,front*2+2);
-      PlaneMark(tmpv,x,bottom+1,tmpv->bottom[x],front*2+1);
+      if (tmpv->floor[front]>=0)
+	PlaneMark(tmpv,x,bottom+1,tmpv->bottom[x],front*2+1);
       if (!sb) {
 	origin=sf->ceil+side->y;
 	if (mid && tmpl->flags&16) origin=sf->floor+mid->height+side->y;
@@ -265,8 +274,8 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
 	tmpv->top[x]=tmpv->height;
 	tmpv->bottom[x]=-1;
       } else {
-	up=Ceil(tmpv->cy-(sb->ceil-tmpv->z)*tmpv->fy*iz-0.5);
-	down=Ceil(tmpv->cy-(sb->floor-tmpv->z)*tmpv->fy*iz-0.5)-1;
+	up=ViewY(tmpv,sb->ceil,iz);
+	down=ViewY(tmpv,sb->floor,iz)-1;
 	if (tmpv->ceil[front]<0 && tmpv->ceil[back]<0) top=up;
 	if (up>top) {
 	  origin=sf->ceil+side->y;

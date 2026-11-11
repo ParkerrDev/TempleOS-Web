@@ -1,7 +1,9 @@
 {
   "format": 1,
   "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
-  "sha256": "487dbbc4edac5af2bb38d6c4556ffe067956bee1a86385ad9fd1c8f1ec326c74",
+  "freedoomVersion": "0.13.0",
+  "freedoomSha256": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+  "sha256": "aa9f336d04af7322009fbe21d7e59ce1783afe53285f2e2e33eb93899520745f",
   "bytes": 41392,
   "states": 967,
   "actors": 137,
@@ -87,28 +89,52 @@
   "freedoomFrameChanges": [
     {
       "frame": 185,
+      "field": "Sprite subnumber",
+      "column": 1,
       "from": 5,
       "to": 32773
     },
     {
       "frame": 419,
+      "field": "Sprite subnumber",
+      "column": 1,
       "from": 5,
       "to": 32773
     },
     {
       "frame": 685,
+      "field": "Sprite subnumber",
+      "column": 1,
       "from": 5,
       "to": 32773
     },
     {
       "frame": 687,
+      "field": "Sprite subnumber",
+      "column": 1,
       "from": 5,
       "to": 32773
     },
     {
       "frame": 689,
+      "field": "Sprite subnumber",
+      "column": 1,
       "from": 5,
       "to": 32773
+    },
+    {
+      "frame": 47,
+      "field": "Duration",
+      "column": 2,
+      "from": 5,
+      "to": 4
+    },
+    {
+      "frame": 48,
+      "field": "Duration",
+      "column": 2,
+      "from": 4,
+      "to": 3
     }
   ]
 }

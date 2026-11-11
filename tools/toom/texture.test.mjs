@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {FreedoomRead,root} from './Assets.mjs';
+import {FreedoomRead,root,asset} from './Assets.mjs';
 import {WadRead} from './Wad.mjs';
 
 assert(process.env.HOLYC_WASM,'Set HOLYC_WASM to the compiler checkout with the native oracle.');
@@ -39,7 +39,7 @@ for (const name of ['TEXTURE1','TEXTURE2']) {
     records.push([w,h,hash]);
   }
 }
-assert.equal(records.length,903);
+assert.equal(records.length,asset.textures);
 const expected=Buffer.alloc(records.length*12);
 records.flat().forEach((value,i)=>expected.writeUInt32LE(value>>>0,i*4));
 let source=['TmGlbls.HH','TmWad.HC','TmGr.HC','TmTex.HC']
@@ -55,11 +55,11 @@ U0 TmTextureTest()
   Image *tmpi;
   if (!tmpw || !expected) throw('Files');
   tmpg=GraphicsNew(tmpw);
-  if (!tmpg || tmpg->tex_cnt!=903) throw('Graphics');
+  if (!tmpg || tmpg->tex_cnt!=${records.length}) throw('Graphics');
   if (tmpg->cache_size) throw('Eager');
   read_bytes=tmpw->read_bytes;
   if (read_bytes>150000) throw('ReadAll');
-  for (i=0;i<903;i++) {
+  for (i=0;i<${records.length};i++) {
     tmpi=TextureGet(tmpg,i);
     if (!tmpi) {"REJECT TEXTURE %d\\n",i;throw('Texture');}
     if (tmpi->width!=expected[i*3] || tmpi->height!=expected[i*3+1])
@@ -82,14 +82,14 @@ U0 TmTextureTest()
     hash=(hash^tmpi->pix[j])*16777619&0xFFFFFFFF;
   if (hash!=expected[2]) throw('Evict');
   tmpi=TextureHold(tmpg,0);
-  for (i=0;i<903;i++) {
+  for (i=0;i<${records.length};i++) {
     if (!TextureGet(tmpg,i)) throw('Pinned');
     if (tmpg->texture[0].image!=tmpi) throw('FreedPin');
     if (tmpg->cache_size>TM_CACHE_SIZE) throw('Limit');
   }
   TextureDrop(tmpg,0);
   if (tmpg->texture[0].pins) throw('Unpin');
-  "TEXTURES 903 PIXELS %d BAD %d START_READ %d CACHE_PEAK %d MS %.1f\\n",
+  "TEXTURES ${records.length} PIXELS %d BAD %d START_READ %d CACHE_PEAK %d MS %.1f\\n",
         pixels,bad,read_bytes,peak,(tS-start)*1000;
   GraphicsDel(tmpg);
   WadDel(tmpw);
@@ -103,4 +103,4 @@ const result=await QemuRun([Buffer.from(source,'latin1')],{files:[
 console.log(JSON.stringify(result,null,2));
 assert.equal(result.results.length,1);
 assert.equal(result.results[0].except,'');
-assert.match(result.results[0].out,/TEXTURES 903 PIXELS \d+ BAD 0/);
+assert.match(result.results[0].out,new RegExp(`TEXTURES ${records.length} PIXELS \\d+ BAD 0`));

@@ -35,12 +35,15 @@ for (let pos=0;pos<2;pos++)for(let turn=0;turn<4;turn++) {
   }
   for(let py=2;py<168;py+=4)for(let col=0;col<80;col++) {
     const dz=(84-py-0.5)/160;
-    let current=rays[col].sector,previous=1,answer=0;
+    let current=rays[col].sector,previous=1,answer=null;
     const plane=(until)=>{
       const s=map.sectors[current],height=dz>0?s.ceil:s.floor;
       const t=(height-z)/dz;
+      // The shared outdoor ceiling follows the next sky sector's height.
+      // Doom r_segs.c sets worldtop=worldhigh for two sky ceilings.
+      if(dz>0&&s.ceilName==='F_SKY1')return null;
       if(t>=previous-1e-6&&t<until-1e-6)
-        return dz>0&&s.ceilName==='F_SKY1'?0:t;
+        return dz<0&&s.floorName==='F_SKY1'?0:t;
       return null;
     };
     for(const {t,line,side} of rays[col].hits) {
@@ -50,16 +53,16 @@ for (let pos=0;pos<2;pos++)for(let turn=0;turn<4;turn++) {
       const p=plane(t);
       if(p!==null) {answer=p;break;}
       const other=front===current?back:front,at=z+dz*t;
-      if(other>=0&&map.sectors[current].ceilName==='F_SKY1'&&
-          map.sectors[other].ceilName==='F_SKY1'&&
-          at>=Math.min(map.sectors[current].ceil,map.sectors[other].ceil))break;
-      if(other<0||at<Math.max(map.sectors[current].floor,map.sectors[other].floor)||
-          at>=Math.min(map.sectors[current].ceil,map.sectors[other].ceil)) {
+      const s=map.sectors[current],b=other<0?null:map.sectors[other];
+      const bothSky=b&&s.ceilName==='F_SKY1'&&b.ceilName==='F_SKY1';
+      if(s.ceilName==='F_SKY1'&&at>(bothSky?b.ceil:s.ceil)+1e-9) {answer=0;break;}
+      if(other<0||at<=Math.max(s.floor,b.floor)+1e-9||
+          !bothSky&&at>Math.min(s.ceil,b.ceil)+1e-9) {
         answer=t;break;
       }
       current=other;previous=t;
     }
-    if(!answer)answer=plane(Infinity)||0;
+    if(answer===null)answer=plane(Infinity)||0;
     expected.push(answer>0?Math.min(2147483647,Math.round(100000000/answer)):0);
   }
 }
