@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "8da8b11549e047954381f637ba434a293162602de74fc51f1d59f87e3b4466da",
+  "renderSourceSha256": "3fe3f337a948812127cc6dcdd3be777d5c1cc97cbc7ace57b4002763c1f63eba",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-7_cc43pi",
+      "native": "qemu-pfx2_a0_",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -209,6 +209,13 @@
       "native": "qemu-z26qijfi",
       "hemu": true,
       "scope": "Actual WAD neighbor bounds, source-ordered initialization/RNG and retained sector specials, without actor simulation."
+    },
+    "sectorEffects": {
+      "cases": 391,
+      "tics": 49152,
+      "native": "qemu-to6xydyw",
+      "hemu": true,
+      "scope": "Damage/boots/RNG/secrets/exit-sector primitives across384 protection/ground/skill/seed combinations plus7 map-floor/invulnerability/actor-role contracts; explicit exit callback, no actual level transition."
     }
   },
   "frames": [

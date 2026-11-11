@@ -30,6 +30,7 @@
 #include "TmTeleport"
 #include "TmSwitch"
 #include "TmLight"
+#include "TmHazard"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"
