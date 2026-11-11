@@ -3,6 +3,7 @@ import {spawn} from "node:child_process";
 import {once} from "node:events";
 import {readFile,mkdir,unlink} from "node:fs/promises";
 import {chromium} from "playwright-core";
+import {SnapshotInspect} from "../../engine/Snapshot.js";
 
 const root=new URL("../../",import.meta.url),
   server=spawn(process.execPath,["server.mjs"],{cwd:root,
@@ -11,9 +12,16 @@ await once(server.stdout,"data");
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM ||
   "/usr/bin/chromium",headless:true,args:["--no-sandbox"]});
 let page;
+const legacy=process.env.HEMU_LEGACY==="1";
 try {
-  for (const cores of [1,4]) {
+  for (const cores of legacy?[4]:[1,4]) {
     const context=await browser.newContext({viewport:{width:1280,height:800}});
+    if(legacy) {
+      await context.route("**/build/hemu-smp.wasm",async route=>route.fulfill({contentType:"application/wasm",
+        body:await readFile(new URL("tools/hemu/fixtures/legacy-smp.wasm",root))}));
+      await context.route("**/build/hemu-smp.json",async route=>route.fulfill({contentType:"application/json",
+        body:await readFile(new URL("tools/hemu/fixtures/legacy-smp.json",root))}));
+    }
     await context.route("**/hemu/*.gz",async function (route) {
       const name=new URL(route.request().url()).pathname.split("/").pop();
       await route.fulfill({body:await readFile(new URL("hemu/"+name,root)),
@@ -23,6 +31,7 @@ try {
       route.fulfill({body:await readFile(new URL(
         "vendor/images/templeos-hd.qcow2.gz",root)),contentType:"application/gzip"}));
     await context.route("https://templeosweb-*.workers.dev/**",route=>route.abort());
+    await context.routeWebSocket(/templeosweb-.*\.workers\.dev/,socket=>socket.close());
     await context.addInitScript(function () {
       localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
       window.guestEvents=[];
@@ -43,8 +52,8 @@ try {
     await page.goto("http://localhost:8183/?"+(cores==1?"single":"smp"));
     await page.waitForFunction(()=>document.getElementById("loadui").style.display=="none");
     await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd=="diskInfo" && m.ok));
-    await page.waitForFunction(()=>window.guestEvents.some(m=>
-      m.cmd=="guestPatch" && m.state=="installed"),null,{timeout:30000});
+    await page.waitForFunction(old=>window.guestEvents.some(m=>
+      m.cmd=="guestPatch" && (m.state=="installed" || old && m.state==="failed")),legacy,{timeout:30000});
     if (cores==4)
       await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd=="smpReady"));
     await page.locator("#diskBtn").click();
@@ -102,6 +111,11 @@ try {
     const download=await downloading,path=new URL("tmp/ui-snapshot-"+cores+".hemu.gz",root).pathname;
     await mkdir(new URL("tmp",root),{recursive:true});
     await download.saveAs(path);
+    const saved=await SnapshotInspect(await readFile(path),{busProtocol:1});
+    assert.equal(saved.meta.version,cores===4&&!legacy?2:1);
+    assert.equal(saved.meta.requiredBusProtocol,cores===4&&!legacy?1:undefined);
+    if(legacy)assert.equal(saved.meta.engineHash,
+      JSON.parse(await readFile(new URL("tools/hemu/fixtures/legacy-smp.json",root),"utf8")).sha256);
     assert.equal(await page.locator("#dlSnap").isEnabled(),true);
     const choosing=page.waitForEvent("filechooser");
     await page.locator("#ulSnap").click();
@@ -128,7 +142,7 @@ try {
     assert.deepEqual(errors,[]);
     await context.close();
     await unlink(path);
-    console.log(cores+"-core browser snapshot: export/import/reload/restart restores pause and settings.");
+    console.log((legacy?"Legacy ":"")+cores+"-core browser snapshot: export/import/reload/restart restores exact RGBA, pause and settings.");
   }
 } catch (e) {
   if (page && !page.isClosed()) {

@@ -1,7 +1,8 @@
 # Opt-in SMP memory protocol
 
-Worker integration requires explicit `busProtocol:1`; the existing page and
-desktop controllers remain opted out. Without full participant registration,
+Worker integration requires explicit `busProtocol:1`. The page and desktop
+controllers declare it for their normal four-core machines. Single-core
+operation needs no shared protocol. Without full participant registration,
 wide SMP operations still stop without operand writes. HEMU 1f5854e / Web
 b0d51bf is the preceding single-core-only checkpoint.
 
@@ -86,8 +87,13 @@ The controller passes busProtocol:1 to BSP smp configuration and every AP,
 plus sc.ncore (1..4). It must call BusStop on cancellation and unexpected worker
 failure/exit, before termination. The bounded owner wait is a final fail-stop
 fallback. A controller must validate a saved requiredBusProtocol before
-creating workers, and forward that requirement to AP initialization. WorkerHost
-does so. The page must adopt the same contract before opting in.
+creating workers, and forward that requirement to AP initialization. WorkerHost,
+Os.js and the desktop controller implement this contract. Every cancellation
+and worker termination first stops coordination. Unexpected running worker
+failures retain a visibly stopped machine and reject export; ordinary completed
+CPU faults retain their existing capture path. Restart uses fresh control
+storage. Stale callbacks and late boot success/failure cannot replace the new
+machine or start a second set of workers.
 
 A fully coordinated save has requiredBusProtocol:1 and mandatory header
 version 2 within the existing HEMUSNP1 envelope. The actual unmodified
@@ -102,3 +108,24 @@ before touching their shared memory/control state. Full saves whose legacy
 module cannot coordinate retain version 1 and never claim wide-operation
 support. CMPXCHG16B and native host implementations of this protocol remain
 outside this checkpoint.
+
+## Controller checks
+
+`tools/browser/snapshot.mjs` verifies real page one/four-core export, import,
+reload and restart, including exact displayed RGBA/FPS and the mandatory
+version-2 header. `desktop-lifecycle.test.mjs` covers the same desktop lifecycle,
+native CPU faults and the historical embedded engine's version-1 safe refusal.
+`HEMU_LEGACY=1 node tools/browser/snapshot.mjs` also restores that actual older
+embedded engine through the page's export/import/reload/restart UI.
+Current desktop sessions must install the native document clipping correction;
+the local server explicitly serves its HolyC source.
+
+`tools/browser/bus.mjs` inserts a test-only gate into the real worker module,
+after AP1 has acquired exclusive ownership. The page and desktop both cancel
+and fault that operation. Actual Worker.terminate calls observe stop=1 before
+termination, the unfinished owner is never stolen, no successful full snapshot
+leaves the old machine, and restart registers fresh cores. The modified module
+exists only in intercepted test responses and retains the isolation headers
+needed by a shared-memory worker. `tools/browser/boot-cancel.mjs` holds an
+earlier engine fetch until a replacement is running, then releases success or
+failure to check the separate asynchronous boot race.

@@ -8,7 +8,7 @@ import {spawn} from "node:child_process";
 
 const ROOT=fileURLToPath(new URL("../../",import.meta.url));
 const MIME={".js":"text/javascript",".mjs":"text/javascript",".html":"text/html",".css":"text/css",
-  ".json":"application/json",".wasm":"application/wasm",".gz":"application/gzip",".hemu":"application/gzip"};
+  ".json":"application/json",".wasm":"application/wasm",".gz":"application/gzip",".hemu":"application/gzip",".HC":"text/plain"};
 
 export async function DesktopServer({root=ROOT,snapshot=null,cores=1,port=0}={}) {
   root=resolve(root);

@@ -33,4 +33,11 @@ if(args.has("--full"))for(const path of ["worker-legacy-fault.test.mjs","worker-
   Run("tools/hemu/"+path,{HEMU_BUS_PROTOCOL:"1"});
 if(args.has("--desktop"))for(const cores of [1,4])
   Run("tools/hemu/desktop.test.mjs",{HEMU_DESKTOP_CORES:String(cores)});
+if(args.has("--desktop")) {
+  Run("tools/hemu/desktop-lifecycle.test.mjs");
+  Run("tools/browser/snapshot.mjs");
+  Run("tools/browser/snapshot.mjs",{HEMU_LEGACY:"1"});
+  Run("tools/browser/bus.mjs");
+  Run("tools/browser/boot-cancel.mjs");
+}
 console.log(`${count} engine checks passed in ${((performance.now()-start)/1000).toFixed(1)}s.`);
