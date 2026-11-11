@@ -75,6 +75,37 @@ and redirect that executable's output to the fixture. The independent
 QEMU/KVM TempleOS conversion probe agrees on 64-bit invalid conversions.
 This does not cover 80-bit extended intermediates or every FPU exception.
 
+`fpu-compare-oracle.txt` retains 784 actual Intel i9-14900HX comparisons,
+including masked and unmasked invalid operands. `fpu-compare.test.mjs` tests
+both execution engines at three stack tops and two operand slots, preserving
+C0/C2/C3 and clearing C1. The corrected FUCOMI encodings are DB/DF E8+i;
+FCOMI is DB/DF F0+i. The stream regression also checks that NaN interpreter
+fallbacks preserve earlier cached stack values and pending integer flags.
+
+The exception contract follows Intel SDM revision 089, volume 2A pp. 3-320–321:
+OF/SF/AF clear even for invalid operands; an unmasked invalid comparison
+retains ZF/PF/CF, sets IE/ES/B, and suppresses the stack pop. The recorded Intel
+CPU instead sets unordered ZF/PF/CF before exception delivery. Of the 52
+unmasked-invalid fixture rows, 26 have flags different from the documented
+contract. These raw results are retained, counted and explicitly separated
+from the architecture expectations, never rewritten as matching hardware.
+
+`FpuFlags.HC` executes those exact raw opcodes under original TempleOS, seeds
+EFLAGS immediately before comparison and captures flags and nonwaiting FNSTSW
+before FNINIT clears the pending exception. QEMU/KVM matches the Intel CPU;
+QEMU/TCG 11.1.2 also sets unordered flags but additionally pops on unmasked
+FCOMIP. Both 16-case recordings are retained in `fpu-flags-{kvm,tcg}.json`.
+To repeat them, set `HOLYC_QEMU_ORACLE` to HolyC-wasm's `tests/oracle/Qemu.mjs`
+and run `ORACLE_ACCEL=kvm node tools/hemu/fpu-flags-native.mjs` (or `tcg`).
+`--record` deliberately refreshes a fixture. The original C fixture builds
+with `cc -O2 -mno-red-zone tools/hemu/fpu-compare-oracle.c -o /tmp/fpu-compare`.
+Do not erase its CPU/compiler metadata when recording another processor.
+
+The full x87 tag model, 80-bit precision, pending #MF delivery and every
+floating exception are not implemented. These tests establish the stated
+comparison behavior, not full x87 conformance. The authoritative instruction
+reference is [Intel SDM revision 089](https://cdrdv2-public.intel.com/868137/325462-089-sdm-vol-1-2abcd-3abcd-4.pdf).
+
 ## Settings and keyboard
 
 `init` accepts `rate` (0, 30, 60, 120; default 0), `repeat` (default false),

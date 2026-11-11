@@ -3,6 +3,9 @@
 #define F_CF 1
 #define F_PF 4
 #define F_ZF 0x40
+#define F_AF 0x10
+#define F_SF 0x80
+#define F_OF 0x800
 U64 reg[16],rfl,x87_cw=0x37F,x87_sw,ea,rg,rm;
 I64 fsp;
 Bool isMem;

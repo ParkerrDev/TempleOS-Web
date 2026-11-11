@@ -585,7 +585,7 @@ export function jitCompile(rip,noFprCache=false) {
               || (sub === 7 && (sti === 2 || sti === 4 && X87CW))))                                        // FLD st(i) / FXCH / FCHS,FABS / FSQRT
             || (op === 0xDD && (sub === 0 || sub === 2 || sub === 3))              // FFREE(no-op)/FST/FSTP st(i) - was breaking the JIT block millions of times in HolyCraft's hot F64 path
             || (op === 0xDF && sub === 4 && sti === 0)
-            || ((op === 0xDB || op === 0xDF) && (sub === 6 || sub === 7));         // FCOMI/FUCOMI (0xDF = ...P, pops) -> EFLAGS
+            || ((op === 0xDB || op === 0xDF) && (sub === 5 || sub === 6) && X87SW);         // FCOMI/FUCOMI (0xDF = ...P, pops) -> EFLAGS
           if (!regOK) break;
           j += 1;                                                                  // consume modrm
           if (op === 0xD8) {                                                       // st0 = st0 OP st(i)
@@ -620,17 +620,22 @@ export function jitCompile(rip,noFprCache=false) {
           else if (op === 0xDD && sub === 0) {}                                    // FFREE st(i): no-op (matches cpu.HC OpX87 - no tag model)
           else if (op === 0xDD && sub === 2) fSt(f, sti, () => fLd(f, 0));         // FST  st(i) = st0
           else if (op === 0xDD && sub === 3) { fSt(f, sti, () => fLd(f, 0)); fPop(f); }  // FSTP st(i) = st0, then pop
-          else if ((op === 0xDB || op === 0xDF) && (sub === 6 || sub === 7)) {     // FCOMI/FUCOMI st0,st(i) -> EFLAGS (the raycaster's F64 compares; were breaking the JIT block into the interpreter)
-            materialize(f);                                                        // commit deferred flags first; we keep OF/SF/AF and set ZF/PF/CF (matches cpu.HC FCmpFL)
-            fLd(f, 0); f.local_set(5); fLd(f, sti); f.local_set(36);               // a=ST0, b=ST(i)
-            i32c(f, RFL);
-              i32c(f, RFL); f.load("i64_load", 0, 3); i64c(f, ~0x45); f.op("i64_and");   // rfl & ~(ZF|PF|CF)
-              i64c(f, 0x45); i64c(f, 0x40); i64c(f, 0x01); i64c(f, 0);
-              f.local_get(5); f.local_get(36); f.op("f64_lt"); f.op("select");           // a<b  ? CF      : 0
-              f.local_get(5); f.local_get(36); f.op("f64_eq"); f.op("select");           // a==b ? ZF      : prev
-              f.local_get(5); f.local_get(5); f.op("f64_ne"); f.local_get(36); f.local_get(36); f.op("f64_ne"); f.op("i32_or"); f.op("select");  // NaN ? ZF|PF|CF : prev
-              f.op("i64_or");
-            st64(f);
+          else if ((op === 0xDB || op === 0xDF) && (sub === 5 || sub === 6)) {     // FCOMI/FUCOMI st0,st(i) -> EFLAGS
+            materialize(f);
+            fLd(f,0);f.local_set(5);fLd(f,sti);f.local_set(36);
+            //NaNs need the interpreter's invalid-exception and masking rules.
+            f.local_get(5);f.local_get(5);f.op("f64_ne");
+            f.local_get(36);f.local_get(36);f.op("f64_ne");f.op("i32_or");
+            f.if_();
+              i32c(f,RIP);i64c(f,i-GBASE);st64(f);wbDirty(f);
+              i32c(f,n);f.op("return");
+            f.end();
+            i32c(f,X87SW);i32c(f,X87SW);ld64(f);i64c(f,~0x200);f.op("i64_and");st64(f);
+            i32c(f,RFL);i32c(f,RFL);ld64(f);i64c(f,~0x8D5);f.op("i64_and");
+            i64c(f,0x40);i64c(f,1);i64c(f,0);
+            f.local_get(5);f.local_get(36);f.op("f64_lt");f.op("select");
+            f.local_get(5);f.local_get(36);f.op("f64_eq");f.op("select");
+            f.op("i64_or");st64(f);
             if (op === 0xDF) fInc(f, 1);                                           // FCOMIP/FUCOMIP: pop ST0
           }
           handled = true; }
