@@ -1,0 +1,160 @@
+{
+  "status": "Component proof only; not connected to Load/Run and not catalog qualified.",
+  "source": {
+    "TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+    "TmWad.HC": "a6eb46daecd0c97c5a25e13dad93e6ac1a6c1516532d05d104da537052732517",
+    "TmMap.HC": "7b096f40305398fa6114c76788b158dc7c912348469cabe56393258f4abc5069",
+    "TmGr.HC": "dcf3bfd9e476ba620d1479658410ee72c75e0599e96a8bf171df1b9dbdf7bc8e",
+    "TmTex.HC": "1058c3d88663bfd5d511ceef1ca99ccbfa356465405fb58adf7b77e8e5968807",
+    "TmAnim.HC": "88bacb84b0802181b51c5efe643415c5690b0c9babad2064f44c79608085c504",
+    "TmData.HH": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+    "TmClip.HC": "22fbb94fca32b0f1b19bde07c591c088cf2324fd129ace1df060ca90cc09f55b",
+    "TmState.HC": "0a7e57036b0d51d5a153e5cf0a8ffa76ac9f2d70061c48e429a0865899b12fdb",
+    "TmMath.HC": "5da8d9243d01fcae7afc35858f1d17586d5addcadef1dad7052c4a86e5f684cf",
+    "TmWorld.HC": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+    "TmContact.HC": "b8e15824529b0dafb7abf11164a53795c06759e07b1265f6abecce8602c8ed08",
+    "TmMove.HC": "d7235b8aa67b4eb72ca08c1b21d64ff56257c51314374a3523962b9bcffc18dd",
+    "TmPath.HC": "1897a4cc6c617a93f1556344111dabd4cb2247e3d3550c1102c841debe31eef4",
+    "TmSlide.HC": "e7ea0760e058b1d12c474bc135d4466c71ecfe5d5482ba5a6f23c6a7dd5e3da1",
+    "TmPlayer.HH": "ee536c8b0ceb057e3dda7e7320eb33520741d5d54487bb312f803ad7513cc8cf",
+    "TmMotion.HC": "d478a24beda3de1bb61756869d95df4d3952f97a89168b9a08c4831544a9f4ee",
+    "TmAttack.HC": "146737ee26c29ca330eb1b583f4e7131c1cd3580c4ca355610cd02f58d68802d",
+    "TmDamage.HC": "56e1d56ea69609cdcd34c7b5c22694367643cf51f8cd9cb0d72272522a1ab5bd",
+    "TmItems.HC": "4f265fd533b2e7820e6fb939517ad9ab5a5e3a7a8f7f8abd548494649ec448d3",
+    "TmTouch.HC": "b589423b0ea307643655babf3e8861ded6f2c837d5c99c17273d2a768dc3a53c",
+    "TmImpact.HC": "bfe59592e58dff4e799cd93f3db7937bf02d2fa9cf1fc1046d4b860f4f42acb9",
+    "TmWeapon.HC": "2904054222cc7f8bbf19307da47dac9c16e8a8bb5768bd56b17ce1e95733189c",
+    "TmPlayer.HC": "8260fa3085ce6ec002872269c244456eeda5315cc35ece10708f9830ef9eb449",
+    "TmSight.HC": "dba548702f1a63870416251da4473277a82de0a8e3670309a394e37b53569461",
+    "TmBlast.HC": "197e0c23bb1612d510e0c7094f33bf1162fea98aa1471dd83eca3bb424e1fb4f",
+    "TmSector.HC": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+    "TmDoor.HC": "ce49864f381d55361788f5efdc070fc377e2b4178f629856f7db74118c612a6a",
+    "TmFloor.HC": "b86eaee35d5a448c722f063c651f61c2ba3f4160637dda2af13c6084968fa00a",
+    "TmPlat.HC": "e9541607e935b3f43a3cc0b36d5d79a7ed51849efdb78e5e75d5bf973802bff3",
+    "TmCeil.HC": "13ce4bc669f4deec87c82d09bb08bb4ef75f623c8da7131f4eb66014ecb15379",
+    "TmTeleport.HC": "04efd4b10193f52d767883a0decf0e9176e0ff0213af184153b081b6bd7c8f36",
+    "TmSwitch.HC": "a158dd8d290558945063ec3d0a6678817335d0d59cbab323f9f303499285aee9",
+    "TmLight.HC": "18751745beb55e970363df09f8e03a0979e1eb66fe8e8efe835f10cbad754850",
+    "TmHazard.HC": "b69bdffac3c4a9394fcf757339ee6a7c915f27946b881e2b25a5673f04a8603e",
+    "TmSpecial.HC": "44a5ef52acf0022dc580e5cb90e9cb3747def44e890a5aa985db90d2fbfe615b",
+    "TmTick.HC": "cdeb5c411d52244bdc66643719ad7d05e4463896b010c925632f854dbed30a88",
+    "TmEnemy.HC": "332464bcf40c7c8f07dd9fb3776f744659cd3906662848067064b0ab069957b8",
+    "TmChase.HC": "c3a53ed3ddae5f1c05a5df3851c194ada85027d81f32acff6df6e1230bdcbc7b",
+    "TmCombat.HC": "069bf282d4ba8ca9faf69c10acbba6f8cf3e578a67fdd118142de7742f89a963",
+    "TmVile.HC": "bde6455466b79fcbc10369df53b60ad5eb96a20ff72bbbe769e5705fc85c64de",
+    "TmBoss.HC": "0892a31e7c65ee6f31f3b497e940721b800b5d126a518d97ad360383113c62f7",
+    "TmBrain.HC": "605e90147315d888f9d6493cdc8f65092e24f79fd24d96c3306d3d05fa105554",
+    "TmEffect.HC": "cdfd0f26beff5f99eeb609ee2d0820472cda0d91f6121a345529dd87071ab80b",
+    "TmActions.HC": "ae3bff931d7431a5c8cc9a993275114dc99cbb931670356846f4a940eabc57bb",
+    "TmPal.HC": "657c0c69082fad07cffe9b8800abf1d12df8eaa7603efa04dd62144b6142651f",
+    "TmDraw.HC": "89ff3d412fe95123e136228916792b84b0bf6d841f5d6b0c628a3f77569f174e",
+    "TmMask.HC": "49be08c8e34a92fad7989e3a28672f26fac33877ac2fe212cba2174f1252a33a",
+    "TmSprite.HC": "d3f27d4b403a7c554cb0608665b1606e302b686087290441d0be131e2a8905c6",
+    "TmLevel.HC": "be6c6e92e8f3e4ee9eebe5ea25217a903f324ce358e393c24eb406800cbacb43",
+    "TmInput.HC": "5589178e7cd8c3a1884c5e5250adc73812691fa8d32cba4e0a380707f55a2ee9",
+    "TmSnd.HC": "38d7d1cafdf87131a6b89953b32b1b836dba6fa7fbd26c0354ed80ad877db197",
+    "TmSpeaker.HC": "5ebe9169f145cf5585fa0af96ef54456b520562a3fd375b89fc44746c20e6847",
+    "TmSoundBank.HC": "7b0bc8790f30bd00579a7f53e305d62f8a9d1e65785365c263862f4894260d01",
+    "TmSoundData.HH": "71ca3a12ea1acacaadbe9ff97046511422aced00972eb093a4a0e23bab319b7c",
+    "TmAudio.HC": "ee93c78b6c173389f25bfa7c4f047c0a52cf427344fcee8b0616c7f68c530fd7",
+    "TmSoundScene.HC": "94f3aff023f520f08577652d703f0ffde75171be5ebee790bd0194ec6df7af9a",
+    "TmIntermission.HC": "eb6720e9d3422ec27a7f57f60a2c184a0c986ff65c162410c1cc3053dc26fe0e"
+  },
+  "fixtures": {
+    "ProgressRef.mjs": "6a68e0d6c1a23430a56d2d60f71f3db64fa205b0b8367ebdef250300e55556c2",
+    "Route.HC": "b07dd855ebe11433fd98466e456871b856dd83179e26418dc3d9ac80fe7c483f",
+    "Intermission.HC": "8d4a95e5fdc75752a15d8822408cfd28cff61bf1b3f602f3e9c622354a500728",
+    "route.test.mjs": "6db14c3dd9eae00e667dd4fce14b53a4eea8a2098fb2c021a74406ba29523f2b",
+    "intermission.test.mjs": "9aa072b5e2c57378b4287e94b0cac77f13e8dd61beb9eb75cb851ce366788508",
+    "source/progression.json": "1c0ce05cd81e54fa723cb01286e3e9225b368527161b4c8db280403752e86cb8"
+  },
+  "reference": {
+    "repository": "https://github.com/id-Software/DOOM",
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "files": [
+      {
+        "path": "linuxdoom-1.10/g_game.c",
+        "sha256": "bc8e2e0d76a70f8120174946641a82c46f0116a624f51c011b292e2ffcb78a29"
+      },
+      {
+        "path": "linuxdoom-1.10/wi_stuff.c",
+        "sha256": "d894ead3416d3d21eb9c197b0644882637725b0339ef28a4fd9afa0a43ff9581"
+      }
+    ]
+  },
+  "native": {
+    "route": {
+      "results": [
+        {
+          "out": "ROUTE 212 CASES 36 FAULTS BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-ev68ot1h",
+      "sourceSha256": "db76d86b7c65bc4f659fba3e473749c0b9daba0dea1f6c68ed22bc9bd4bb65a3",
+      "referenceSha256": "796aa29d23104591c76a10fe1175d3da53fd458926cf502e6235a151cee51a51"
+    },
+    "intermission": {
+      "results": [
+        {
+          "out": "INTERMISSION 144 CASES 92160 TICS BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-szg4m3p7",
+      "sourceSha256": "2d843f981ca3a76428618019283c8e0818ada5a9c4673f88d6c30c0ae4547b4c",
+      "referenceSha256": "e8f85b49ac9bce77be68cebd4900720aede5de4cfd13eb94335730270e72de80"
+    }
+  },
+  "hemu": {
+    "runtime": {
+      "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
+      "compiler": "d0e394e",
+      "hemu": "0eff35b",
+      "sha256": {
+        "build/hemu.wasm": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
+        "tools/hemu/GuestHarness.mjs": "ef21e4d8cc8711fd85469906258cae17538c2252caf48841d2fe2201d3de0f45",
+        "hemu/live.bin.gz": "42db6570ffd1610ea2a39a60dd59e63095c60ac39610350a649c5671528a449a",
+        "hemu/stock.json": "fce58673729385cbe119f9307277ab646edb59239c1a77eb1bcae3b2d1c1856b",
+        "hemu/stock.disk": "032751a6b626aea216ab9d675d2b404f27a5e9f61261903cec8b6ea792d964a8",
+        "vendor/images/templeos-hd.qcow2.gz": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+      }
+    },
+    "route": {
+      "backend": "hemu",
+      "sourceSha256": "db76d86b7c65bc4f659fba3e473749c0b9daba0dea1f6c68ed22bc9bd4bb65a3",
+      "referenceSha256": "796aa29d23104591c76a10fe1175d3da53fd458926cf502e6235a151cee51a51",
+      "cases": 212,
+      "faults": 36,
+      "bad": 0
+    },
+    "intermission": {
+      "backend": "hemu",
+      "sourceSha256": "2d843f981ca3a76428618019283c8e0818ada5a9c4673f88d6c30c0ae4547b4c",
+      "referenceSha256": "e8f85b49ac9bce77be68cebd4900720aede5de4cfd13eb94335730270e72de80",
+      "cases": 144,
+      "tics": 92160,
+      "bad": 0
+    }
+  },
+  "limits": [
+    "The independent C oracle extracts unchanged released G_DoCompleted/G_WorldDone and WI single-player counter/input functions. Unrelated music, graphics and multiplayer callbacks are stubbed; those behaviors are not proved here.",
+    "212 route/history cases cover all episodic maps, normal Phase 2 routes and the authored MAP15/MAP31 secret routes. Thirty-six invalid map or unsupported commercial secret-route calls throw.",
+    "144 scenarios compare 92,160 tick records including percentage/time/par values, held and newly pressed attack/use bits, effect sound order and completion phase. Native task heap returns to its original usage.",
+    "The released episode-four par lookup reads outside its array. The routing oracle supplies a safe dummy row and does not compare par time. The native component takes an explicit par value with zero default; authored metadata loading remains separate.",
+    "Official Freedoom 0.13.0 Phase 1 secret exits occur in E1M3/E2M5/E3M6/E4M2. Phase 2 secret exits occur only in MAP15/MAP31. Unsupported Phase 2 secret routes are rejected rather than carrying a stale target.",
+    "TmIntermission is outside Load/Run. Current Play still shows LEVEL COMPLETE; actual next-map ownership, intermission rendering, persistent secret tracking, authored metadata, music and finale UI are unfinished.",
+    "These checks establish native and frozen-HEMU component behavior. They do not establish full gameplay, performance, every CPU architecture or bare-metal compatibility."
+  ]
+}

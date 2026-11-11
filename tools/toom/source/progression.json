@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/id-Software/DOOM",
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "files": [
+    {
+      "path": "linuxdoom-1.10/g_game.c",
+      "sha256": "bc8e2e0d76a70f8120174946641a82c46f0116a624f51c011b292e2ffcb78a29"
+    },
+    {
+      "path": "linuxdoom-1.10/wi_stuff.c",
+      "sha256": "d894ead3416d3d21eb9c197b0644882637725b0339ef28a4fd9afa0a43ff9581"
+    }
+  ]
+}

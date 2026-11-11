@@ -918,3 +918,34 @@ The site's worker sends frequency messages without guest event timestamps.
 Nonzero browser PCM plus pause/exit silence proves audible delivery and
 lifecycle, not correct 140 Hz spacing. No complete-game or sustained-performance
 qualification is implied by the current audio host.
+
+
+## Intermission component under development
+
+`TmIntermission.HC` snapshots completed-level percentages/time, chooses the
+normal or secret next map, and advances the original single-player statistics
+count-up, input-edge skips, next-location delay and ten-tic completion wait.
+It is not yet connected to `Load`/`Run`; the current host still displays
+`LEVEL COMPLETE` without changing maps.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/route.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/intermission.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/route.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/intermission.test.mjs
+```
+
+The native and HEMU checks compare 212 routing/history cases and 92,160
+intermission state/input/sound-effect steps with unchanged released C
+functions. They include zero totals, fractional/over-100% counts, time/par
+counting, held attack/use keys, fast skips and natural countdowns. Thirty-six
+invalid map/secret routes are rejected. `intermission-evidence.json` records
+the exact scope; rendering, authored metadata, music and actual next-level
+ownership remain separate integration work.
+
+The original episode-four par lookup reads beyond its array. The routing
+oracle provides a safe dummy row because par time is outside that comparison;
+the native component accepts an explicit par value, defaulting to zero. It
+does not reproduce undefined memory access. Official Freedoom Phase 2 uses
+secret exits only on MAP15 and MAP31; other commercial secret routes are
+rejected instead of reusing a stale target.

@@ -89,6 +89,15 @@ linuxdoom-1.10/p_setup.c, recorded in tools/toom/source/collision.json.
 Actor origins use generation handles, and level replacement stops all old
 channels before borrowing the published level.
 
+TmIntermission.HC routing and single-player statistics timing derive from
+G_DoCompleted/G_WorldDone and WI_Ticker's single-player helpers in the
+pinned id Software g_game.c and wi_stuff.c. Their source hashes are recorded
+in tools/toom/source/progression.json. The native component rejects
+unsupported commercial secret routes instead of retaining an old map target.
+Episode-four par time is supplied explicitly; no undefined original array
+read is reproduced. Intermission graphics and music are separate from the
+verified state and sound-effect ordering.
+
 The native implementation and derived data are distributed under version 2
 of the GNU General Public License. See COPYING for the full license and
 disclaimer of warranty. Distribution must include the corresponding source
