@@ -1,7 +1,9 @@
 import {gameProject} from './game-source.js';
 import {gameCredits} from './game-credits.js';
-import {EXTRA_GAMES} from './game-library.js';
-import {WinAdd,WinDress,WinRaise} from './WinMgr.js';
+import {GAMES} from "./GameCatalog.js";
+export {GAMES} from "./GameCatalog.js";
+import {WinAdd,WinRaise,WinTitle} from './WinMgr.js';
+import {HelpGame} from './HelpWin.js';
 import {engine,os_game,OsCaptureSet,OsFileWrite,OsGen,OsHold,OsInputRelease,OsInputReset,OsLaunch} from './Os.js';
 import {EdLoad,ed_game,ed_view} from './EditorWin.js';
 
@@ -18,7 +20,7 @@ const CSS='    /* ---- Games launcher ---- */\n'+
   '    #gamesWin { display:flex; flex-direction:column; width:min(880px,92vw); max-height:calc(100vh - 84px); }\n'+
   '    .gm-search { flex:0 0 auto; box-sizing:border-box; width:100%; margin:2px 0 8px; padding:5px 9px;\n'+
   '                 font-family:inherit; font-size:13px; background:#fff; color:var(--blue); border:3px double var(--blue); outline:none; }\n'+
-  '    .gm-search::placeholder { color:#88a; }\n'+
+  '    .gm-search::placeholder { color:var(--dkgray); }\n'+
   '    .gm-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; padding-right:2px; }\n'+
   '    .gm-none { color:var(--red); font-size:13px; padding:14px 4px; }\n'+
   '    .gm-card.gm-hide { display:none; }   /* search filter (beats .gm-card\'s display:flex) */\n'+
@@ -65,54 +67,6 @@ Cover both the source code and any game assets.
 `);
 for(const link of document.querySelectorAll('[data-game-submit]'))link.href=submission.href;
 
-export const GAMES = [
-  // custom dual-target games (run in the browser bypass OR the real OS; your edits are cached)
-  { file: "HolyCraft.HC", name: "HolyCraft", blurb: "A 3D voxel sandbox - walk a blocky world, break & place blocks. A real-time raycaster in HolyC.",
-    how: "W/S move · A/D strafe · R/F up/down · move MOUSE or J/L/I/K to look · LEFT-click break · RIGHT-click place · 1-9 pick block · Esc quit" },
-  { file: "Snake.HC", name: "Snake", blurb: "The classic. Eat the apples, don't bite your tail.",
-    how: "W/A/S/D to steer · Esc to quit" },
-  { file: "Babel.HC", name: "Babel", blurb: "Stones fall onto the tower. Turn them, place them, and clear every full row.",
-    how: "A/D or Left/Right move · W or Up turns · S or Down falls faster · Space drops · P pauses · Esc quits" },
-  { file: "Volley.HC", name: "Volley", blurb: "Two players, one ball, first to 7. Player 1 plays W/S, player 2 plays the Up and Down arrows.",
-    how: "Player 1: W/S · Player 2: Up/Down · Space serves · P pauses · Esc quits" },
-  // Both source collections use HolyC-WASM for browser play; TempleOS is explicit.
-  { name: "Varoom",        disk: "C:/Home/Games/TinkerOS/Varoom.HC", packageId: "tinker-Varoom",        blurb: "Top-down racing - keep your foot down and hold the track." },
-  { name: "Talons",        disk: "C:/Home/Games/TinkerOS/Talons.HC", packageId: "tinker-Talons",        blurb: "Joust-style aerial combat: flap above your foe and skewer them." },
-  { name: "BlackDiamond",  disk: "C:/Home/Games/TinkerOS/BlackDiamond.HC", packageId: "tinker-BlackDiamond",  blurb: "Downhill skiing - carve the slope and dodge the trees." },
-  { name: "FlatTops",      disk: "C:/Home/Games/TinkerOS/FlatTops.HC", packageId: "tinker-FlatTops",      blurb: "WWII Pacific aircraft-carrier warfare." },
-  { name: "Halogen",       disk: "C:/Home/Games/TinkerOS/Halogen.HC", packageId: "tinker-Halogen",       blurb: "A fast top-down arena shooter." },
-  { name: "CastleFrankenstein", disk: "C:/Home/Games/TinkerOS/CastleFrankenstein.HC", packageId: "tinker-CastleFrankenstein", blurb: "Sneak through the castle - a Castle Wolfenstein homage." },
-  { name: "BattleLines",   disk: "C:/Home/Games/TinkerOS/BattleLines.HC", packageId: "tinker-BattleLines",   blurb: "A tactical battle along the front lines." },
-  { name: "BigGuns",       disk: "C:/Home/Games/TinkerOS/BigGuns.HC", packageId: "tinker-BigGuns",       blurb: "Artillery duel - pick your angle and power." },
-  { name: "BomberGolf",    disk: "C:/Home/Games/TinkerOS/BomberGolf.HC", packageId: "tinker-BomberGolf",    blurb: "Golf, with bombs." },
-  { name: "FlapBat",       disk: "C:/Home/Games/TinkerOS/FlapBat.HC", packageId: "tinker-FlapBat",       blurb: "Flap through the gaps - a Flappy-Bird-like." },
-  { name: "Maze",          disk: "C:/Home/Games/TinkerOS/Maze.HC", packageId: "tinker-Maze",          blurb: "Find your way out of the maze." },
-  { name: "TreeCheckers",  disk: "C:/Home/Games/TinkerOS/TreeCheckers.HC", packageId: "tinker-TreeCheckers",  blurb: "Checkers (draughts) against the computer." },
-  { name: "TicTacToe",     disk: "C:/Home/Games/TinkerOS/TicTacToe.HC", packageId: "tinker-TicTacToe",     blurb: "Classic noughts and crosses." },
-  { name: "Whap",          disk: "C:/Home/Games/TinkerOS/Whap.HC", packageId: "tinker-Whap",          blurb: "Protect your base - whack the attackers." },
-  { name: "Wenceslas",     disk: "C:/Home/Games/TinkerOS/Wenceslas.HC", packageId: "tinker-Wenceslas",     blurb: "A wintry arcade romp." },
-  { name: "RawHide",       disk: "C:/Home/Games/TinkerOS/RawHide.HC", packageId: "tinker-RawHide",       blurb: "An arcade game from the TempleOS collection." },
-  { name: "TheDead",       disk: "C:/Home/Games/TinkerOS/TheDead.HC", packageId: "tinker-TheDead",       blurb: "Survive against the dead." },
-  { name: "Squirt",        disk: "C:/Home/Games/TinkerOS/Squirt.HC", packageId: "tinker-Squirt",        blurb: "An arcade game from the TempleOS collection." },
-  { name: "Zing",          disk: "C:/Home/Games/TinkerOS/Zing.HC", packageId: "tinker-Zing",          blurb: "A fast reflex arcade game." },
-  { name: "ZoneOut",       disk: "C:/Home/Games/TinkerOS/ZoneOut.HC", packageId: "tinker-ZoneOut",       blurb: "A block-busting arcade game." },
-  { name: "RocketScience", disk: "C:/Home/Games/TinkerOS/RocketScience.HC", packageId: "tinker-RocketScience", blurb: "Rocket flight, the hard way." },
-  { name: "Rocket",        disk: "C:/Home/Games/TinkerOS/Rocket.HC", packageId: "tinker-Rocket",        blurb: "Lunar-lander-style rocket physics." },
-  { name: "DunGen",        disk: "C:/Home/Games/TinkerOS/DunGen.HC", packageId: "tinker-DunGen",        blurb: "A procedural dungeon generator." },
-  // ---- graphics / physics demos that live in the Games folder ----
-  { name: "MassSpring",    disk: "C:/Home/Games/TinkerOS/MassSpring.HC", packageId: "tinker-MassSpring",    blurb: "Mass-and-spring physics sandbox - left-click to place masses." },
-  { name: "Collision",     disk: "C:/Home/Games/TinkerOS/Collision.HC", packageId: "tinker-Collision",     blurb: "An elastic-collision physics demo." },
-  { name: "RainDrops",     disk: "C:/Home/Games/TinkerOS/RainDrops.HC", packageId: "tinker-RainDrops",     blurb: "A falling-raindrops graphics demo." },
-  { name: "CircleTrace",   disk: "C:/Home/Games/TinkerOS/CircleTrace.HC", packageId: "tinker-CircleTrace",   blurb: "A spirograph-style circle-tracing demo." },
-  { name: "ElephantWalk",  disk: "C:/Home/Games/TinkerOS/ElephantWalk.HC", packageId: "tinker-ElephantWalk",  blurb: "An animated walk-cycle demo." },
-  { name: "CharDemo",      disk: "C:/Home/Games/TinkerOS/CharDemo.HC", packageId: "tinker-CharDemo",      blurb: "A character-set and font demo." },
-  { name: "Digits",        disk: "C:/Home/Games/TinkerOS/Digits.HC", packageId: "tinker-Digits",        blurb: "A rainbow-digits graphics demo." },
-  { name: "Stadium", disk: "C:/Home/Games/TinkerOS/Stadium/Stadium.HC", packageId: "tinker-Stadium", blurb: "A stadium ball game with the original sprite background." },
-  { name: "TOOM", disk: "C:/Home/TOOM/BrowserStart.HC", packageId: "toom", blurb: "The DOOM engine in TempleOS, bundled with Freedoom.", how: "TOOM may take a minute or two to open. Wait for its menu, then choose New Game, episode and difficulty. WASD or arrows move, mouse looks, left click fires, Space opens doors, Tab opens the map." },
-];
-GAMES.push(...EXTRA_GAMES);
-const featured=['HolyCraft','TOOM','Babel','Volley','Snake'];
-GAMES.sort((a,b)=>(featured.includes(a.name)?featured.indexOf(a.name):featured.length)-(featured.includes(b.name)?featured.indexOf(b.name):featured.length));
 let packageLaunchBusy = false;
 const ovG = document.getElementById("gamesOverlay");
 const ovE = document.getElementById("editorOverlay");
@@ -122,6 +76,12 @@ async function gameSrc(g) {
   return (await project.open(project.entry)).text;
 }
 const cards = [];
+const evidence=await fetch(new URL("./games/compatibility.json",import.meta.url)).
+  then(function (res) {
+    if (!res.ok)
+      throw new Error("Game verification data could not be loaded.");
+    return res.json();
+  }).catch(function (e) {console.warn(e.message);return null;});
 for (const g of GAMES) {
   const c = document.createElement("div"); c.className = "gm-card";
   c.innerHTML = `<h3>${g.name}</h3><p>${g.blurb}</p>`;
@@ -132,12 +92,22 @@ for (const g of GAMES) {
   const row = document.createElement("div"); row.className = "gm-btns";
   const bB=document.createElement("button");bB.className="gm-play";bB.textContent="Run in Browser";
   bB.title="Compile HolyC directly to WebAssembly";
+  const support=evidence?.programs[g.packageId || g.file];
+  if (!support?.compile) {
+    bB.disabled=true;
+    bB.textContent="Browser support pending";
+    bB.title="This program has not passed the browser compiler checks.";
+  }
   bB.addEventListener("click",()=>runInBrowser(g));row.append(bB);
   const bT=document.createElement("button");bT.className="gm-play";bT.textContent="Run in TempleOS";
+  bT.title="Launch in the real OS. Full gameplay has not yet been qualified.";
   bT.addEventListener("click",()=>runInTempleOS(g));row.append(bT);
   const edit=document.createElement("button");edit.textContent="Edit source";
   edit.addEventListener("click",()=>editGame(g));row.append(edit);
   c.appendChild(row);grid.appendChild(c);
+  const note=document.createElement("small");
+  note.textContent="Gameplay verification pending";
+  c.append(note);
   cards.push({ el: c, hay: (g.name + " " + g.blurb+' '+credit.author).toLowerCase() });
 }
 // ---- live search: filter the cards by name/description as you type ----
@@ -243,6 +213,7 @@ async function runInBrowser(g,{inEditor=false}={}) {
   ed_game.cancel();
   const view=document.getElementById(inEditor?'editorWin':'gameWin');
   closeGameWin({keepFullscreen:ed_view.isWithin(view)});const token=launchToken;curGame=g;closeGames();
+  HelpGame(g);
   runnerTarget=inEditor?'editor':'window';
   if(!inEditor)ovE.classList.remove('open','free');
   OsInputRelease();
@@ -253,8 +224,7 @@ async function runInBrowser(g,{inEditor=false}={}) {
     document.getElementById('gameStop').disabled=false;
     document.getElementById('gameRun').textContent='↻ Run again';
   }else{
-    win._title=g.name;
-    if(!win.querySelector(':scope > .wbar')){win.dataset.title=g.name;WinDress(win);}
+    WinTitle(win,g.name);
     overlay.classList.add('open');WinRaise(overlay);
   }
   status.textContent='Compiling with HolyC-WASM...';
@@ -275,6 +245,7 @@ async function runInBrowser(g,{inEditor=false}={}) {
 }
 
 function closeGameWin({keepFullscreen=false}={}) {
+  HelpGame(null);
   ++launchToken;
   if(!keepFullscreen){
     ed_view.exitWithin(document.getElementById('gameWin'));
@@ -307,7 +278,7 @@ function toast(html, ms = 11000) {
     t = document.createElement("div"); t.id = "gmToast";
     t.style.cssText = "position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:99999;"
       + "max-width:min(680px,92vw);background:#fff;color:var(--blue);border:3px double var(--blue);"
-      + "box-shadow:0 6px 26px rgba(0,0,0,.45);padding:10px 34px 11px 14px;font-size:13px;line-height:1.4;";
+      + "padding:10px 34px 11px 14px;font-size:13px;line-height:1.4;";
     const x = document.createElement("button");
     x.textContent = "✕"; x.title = "dismiss";
     x.style.cssText = "position:absolute;top:3px;right:5px;min-width:0;border:0;outline:0;background:transparent;color:var(--blue);font-size:14px;line-height:1;padding:2px 4px;";
@@ -376,6 +347,7 @@ async function runInTempleOS(g,suppliedOverrides=null) {                        
     toast("Opening <b>" + g.name + "</b> in a TempleOS task.<br>" + how + "<br>Press <b>Esc</b> to quit.");
     setStatus(g.name + ": TempleOS is compiling or running the game.");
     os_game.active = true;
+    HelpGame(g);
     OsCaptureSet(g.name === "HolyCraft" || g.name === "TOOM");
     OsInputReset();   // clear any stuck keys + recentre the look on spawn
   } else {

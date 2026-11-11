@@ -13,15 +13,15 @@ const ROOT=fileURLToPath(new URL(".",import.meta.url));
 //are not.
 const SERVED=new RegExp("^([^/]+\\.(html|js|css)|_headers|_redirects|"+
   "chat/rules\\.js|presence/RoomGlbls\\.js|"+
-  "(assets|build|editor|engine|fonts|games|vendor|holyc-wasm/src)/.+|"+
+  "(assets|build|editor|engine|fonts|games|god|vendor|holyc-wasm/src)/.+|"+
   "(holyc-fmt|holycraft)/[^/]+\\.HC|hemu/[^/]+\\.gz)$");
-const NOT_SERVED=/\.(md|mjs|py|gif)$|(^|\/)package\.json$|templeos_orig/;
+const NOT_SERVED=/\.(md|mjs|py)$|(^|\/)package\.json$|templeos_orig/;
 const MIME={".html":"text/html; charset=UTF-8",
   ".js":"application/javascript; charset=UTF-8",
   ".css":"text/css; charset=UTF-8",".txt":"text/plain; charset=UTF-8",
   ".json":"application/json",".wasm":"application/wasm",".png":"image/png",
   ".svg":"image/svg+xml",".jpg":"image/jpeg",".ttf":"font/ttf",
-  ".woff2":"font/woff2"};
+  ".woff2":"font/woff2",".gif":"image/gif",".mp3":"audio/mpeg"};
 const CACHE_DFT="public,max-age=0,must-revalidate";//Netlify's own
 
 function PatRegExp(pat)
@@ -62,6 +62,8 @@ const HEADERS=HeadersRead(),REDIRECTS=RedirectsRead();
 function Served(rel)
 {
   let r;
+  if (rel.endsWith(".gif") && !rel.startsWith("assets/afterdavis/"))
+    return false;
   for (r of REDIRECTS)
     if (r[0].test("/"+rel))
       return false;

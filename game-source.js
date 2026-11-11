@@ -5,14 +5,21 @@ const editable=path=>/\.(HC|HH)$/i.test(path);
 // HolyCraft is its own repo (ParkerrDev/HolyCraft), cloned into ./holycraft at build time.
 const SITE_GAMES={'HolyCraft.HC':'holycraft/HolyCraft.HC','Snake.HC':'games/Snake.HC','Babel.HC':'games/Babel.HC','Volley.HC':'games/Volley.HC'};
 
+export function sourceString(buffer,utf8=false) {
+  const bytes=new Uint8Array(buffer);
+  if(utf8)return new TextDecoder().decode(bytes);
+  let text='';
+  for(let start=0;start<bytes.length;start+=8192)
+    text+=String.fromCharCode(...bytes.subarray(start,start+8192));
+  return text;
+}
+
 // TempleOS documents are byte strings followed by optional binary sprite records.
 // Keep the records outside the textarea and append them unchanged on export.
 export function sourceDocument(buffer,utf8=false) {
   const bytes=new Uint8Array(buffer),zero=utf8?-1:bytes.indexOf(0);
   const end=zero<0?bytes.length:zero;
-  let text='';
-  if(utf8)text=new TextDecoder().decode(bytes);
-  else for(let start=0;start<end;start+=8192)text+=String.fromCharCode(...bytes.subarray(start,Math.min(end,start+8192)));
+  const text=sourceString(bytes.subarray(0,end),utf8);
   const original=text.replace(/\r\n?/g,'\n');
   return {
     original,hasSprites:zero>=0,
@@ -102,7 +109,7 @@ async function loadProject(game,id) {
       const drafts=await overrides(),files=[];
       for(const file of sources){
         const raw=drafts.get(file.path) ?? (game.packageId?await gameFile(file):(await open(file.path)).encode((await open(file.path)).original));
-        files.push({path:file.path,source:sourceDocument(raw,!game.packageId).original});
+        files.push({path:file.path,source:sourceString(raw,!game.packageId)});
       }
       return {source:files.find(file=>file.path===pkg.entry).source,filename:pkg.entry,files,nativeGame:true};
     },

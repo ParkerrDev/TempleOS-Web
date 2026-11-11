@@ -1,0 +1,22 @@
+{
+  "repository": "https://github.com/ParkerrDev/afterdavis",
+  "revision": "4b22ebc05fca71ee0897fab5343c19f9d75d833c",
+  "files": {
+    "parrot.gif": {
+      "source": "assets/parrot.gif",
+      "sha256": "afde205cf55c6a28dfd0b6762f7a43feebe17dca08bfa31f4c3b60c2cd988faf"
+    },
+    "bird.mp3": {
+      "source": "sounds/bird.mp3",
+      "sha256": "ec1fa8779da898ef1c08b4c2ead20d59b6ce38c15401befb637c7e40b48047ec"
+    },
+    "shut-up-bird.mp3": {
+      "source": "sounds/shut-up-bird.mp3",
+      "sha256": "684b5575e32e1f178a12c11e995df7040572e7c74f54bab321fe1d2fa8f2085c"
+    },
+    "glowie.mp3": {
+      "source": "sounds/glowie.mp3",
+      "sha256": "0ff1283db6cb04884b8de7fa2bc5f7446c2e4829726ba6cb13395503e63535f0"
+    }
+  }
+}

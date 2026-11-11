@@ -2,8 +2,9 @@
 //built by build-transcripts.mjs and transearch.js scores them in a worker.
 //Each hit links to its video on archive.org at the hit's time, and any
 //passage, the shown results or a whole transcript can be copied.
-import {WinAdd,WinDress,WinFocus,WinMarquee,WinRaise} from "./WinMgr.js";
+import {WinAdd,WinDress,WinFocus,WinRaise} from "./WinMgr.js";
 import {$} from "./Os.js";
+import {ArchiveFile,ArchiveWatch} from "./Archive.js";
 
 const CSS='    /* Terry transcript search window */\n'+
   '    #tsWin { display:flex; flex-direction:column; gap:8px; width:min(860px,94vw); height:min(82vh,720px); margin:0; padding:10px; }\n'+
@@ -39,19 +40,19 @@ const CSS='    /* Terry transcript search window */\n'+
   '    #tsOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); padding:6px; }\n'+
   '    #tsWin button { width:auto; font-size:12px; padding:2px 8px; }\n'+
   '    .ts-hit { display:block; background:#fff; margin:0 0 6px; padding:5px 8px; border:2px solid #fff; }\n'+
-  '    .ts-hit:hover { border-color:yellow; }\n'+
+  '    .ts-hit:hover { border-color:var(--yellow); }\n'+
   '    .ts-row { display:flex; align-items:baseline; gap:8px; }\n'+
   '    .ts-t { color:var(--red); font-weight:bold; font-size:12px; text-decoration:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\n'+
   '    .ts-t:hover { text-decoration:underline; }\n'+
   '    .ts-m { color:var(--blue); font-size:12px; white-space:nowrap; }\n'+
   '    .ts-act { margin-left:auto; display:flex; gap:4px; flex:0 0 auto; }\n'+
   '    .ts-act button { padding:0 6px; line-height:1.0; }\n'+
-  '    .ts-x { display:block; color:#16163a; font-size:12px; line-height:1.0; margin-top:2px; word-break:break-word; text-decoration:none; }\n'+
+  '    .ts-x { display:block; color:#000; font-size:12px; line-height:1.0; margin-top:2px; word-break:break-word; text-decoration:none; }\n'+
   '    .ts-x b { color:#fff; background:var(--red); font-weight:normal; padding:0 1px; }\n'+
   '    .ts-none { color:#fff; font-size:12px; padding:8px; }\n'+
   '    .ts-trh { display:flex; gap:6px; align-items:center; flex-wrap:wrap; position:sticky; top:-6px; background:var(--blue); padding:6px 0; z-index:1; }\n'+
-  '    .ts-trh a { color:yellow; font-size:12px; }\n'+
-  '    .ts-line { background:#fff; color:#16163a; font-size:12px; line-height:1.0; padding:2px 8px; word-break:break-word; }\n'+
+  '    .ts-trh a { color:var(--yellow); font-size:12px; }\n'+
+  '    .ts-line { background:#fff; color:#000; font-size:12px; line-height:1.0; padding:2px 8px; word-break:break-word; }\n'+
   '    .ts-line .ts-ts { color:var(--red); text-decoration:underline; margin-right:6px; }\n'+
   '    .ts-line .ts-ts:hover { color:#fff; background:var(--red); }\n'+
   '    /* floating video windows (▶ in Terry Search): real TempleOS chrome via dress(); many at once */\n'+
@@ -59,12 +60,12 @@ const CSS='    /* Terry transcript search window */\n'+
   '    .vidwin video { display:block; width:100%; max-height:62vh; background:#000; }\n'+
   '    .vidwin .ts-verr { background:#000; }\n'+
   '    .ts-verr { color:#fff; padding:12px; font-size:12px; line-height:1.0; }\n'+
-  '    .ts-verr a { color:yellow; }\n'+
+  '    .ts-verr a { color:var(--yellow); }\n'+
   '    .ts-verr button, .ts-convbar button { width:auto; font-size:12px; padding:2px 10px; }\n'+
-  '    .ts-convst { color:yellow; min-height:1.3em; margin-top:8px; }\n'+
+  '    .ts-convst { color:var(--yellow); min-height:1.3em; margin-top:8px; }\n'+
   '    .ts-convdone video { display:block; width:100%; max-height:62vh; background:#000; }\n'+
   '    .ts-convbar { display:flex; gap:10px; align-items:center; background:#000; color:#fff; font-size:12px; padding:4px 8px; }\n'+
-  '    .ts-convbar span:last-child { color:yellow; }\n'+
+  '    .ts-convbar span:last-child { color:var(--yellow); }\n'+
   '    /* [?] hover help: attribution + the operator cheatsheet, only when you ask for it */\n'+
   '    #tsHelp { margin-left:auto; position:relative; color:var(--blue); font-size:12px; padding:2px 4px; user-select:none; }\n'+
   '    #tsHelpPop { display:none; position:absolute; right:0; top:calc(100% + 4px); z-index:7; width:min(430px, 80vw);\n'+
@@ -100,31 +101,19 @@ const HTML='  <div id="tsOverlay" class="overlay" role="dialog" aria-modal="true
 WinAdd(CSS,HTML);
 
 const ov = $("tsOverlay"), out = $("tsOut"), q = $("tsQ"), st = $("tsStatus");
-const ARCH = "https://archive.org/details/TerryADavis_TempleOS_Archive/";
 let w = null, qid = 0, vid = 0, deb = null, lastHits = [], lastTerms = [], lastTotal = 0;
 let scope = "all", sortBy = "rel";                     // scope mirrors the in: operator; sortBy = the dropdown
 let lastVids = [], browseTotal = 0, lastMsg = null, lastView = null;
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const hms = (s) => { s = Math.max(0, s | 0); const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
   return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(ss).padStart(2, "0"); };
-// archive.org URL builder (takes a hit/video object: .f path + .p playable flag). The /details/
-// player DOUBLE-decodes its sub-file path, so the form that selects the right track is:
-// spaces -> "+", literal "+" -> "%252B" - a plain %2B/%20 encoding silently bounces to a
-// DIFFERENT video (verified against the live player). Videos whose original isn't in the
-// player's playlist (718 originals - 669 .mkv - that archive.org never web-encoded; p:0
-// from the build) open OUR mini-player (player.html, COEP-exempt) which streams the original
-// straight from archive.org - Chromium plays Matroska natively; it falls back to a download
-// UI only for the ~49 .avi/.wmv no browser can decode.
-const url = (h, sec) => h.p
-  ? ARCH + h.f.split("/").map(encodeURIComponent).join("/").replace(/%2B/g, "%252B").replace(/%20/g, "+") + (sec != null ? "?start=" + Math.max(0, sec - 2) : "")
-  : new URL("player.html?f=" + encodeURIComponent(h.f) + (sec ? "&t=" + Math.max(0, sec - 2) : "") + "&n=" + encodeURIComponent(h.t || ""), location.href).href;
+const url=(h,sec)=>ArchiveWatch(h,sec==null?null:Math.max(0,sec-2));
 // ---- VIDEO WINDOWS: each ▶ opens the video in its own draggable TempleOS window (real
 //      chrome via WinDress); any number can play at once. They stack in their own
 //      z tier ABOVE the search overlay, persist after it closes, and [X] destroys them.
 //      Streams the original from archive.org (no isolation on this site, so cross-origin
 //      <video> just works; .mkv plays in Chromium-family; undecodable formats fall back). ----
-const DLBASE = "https://archive.org/download/TerryADavis_TempleOS_Archive/";
-const dl = (h, sec) => DLBASE + h.f.split("/").map(encodeURIComponent).join("/") + (sec ? "#t=" + Math.max(0, sec - 2) : "");
+const dl=(h,sec)=>ArchiveFile(h.f)+(sec?"#t="+Math.max(0,sec-2):"");
 let vidN = 0;
 const vidWins = new Set();
 const openVideoWindow = (h, sec) => {
@@ -188,7 +177,7 @@ const openVideoWindow = (h, sec) => {
     try { vv.pause(); if (vv.src && vv.src.startsWith("blob:")) URL.revokeObjectURL(vv.src); vv.removeAttribute("src"); vv.load(); } catch {}
     w.remove(); vidWins.delete(w); };
   WinDress(w, { onClose: destroy });
-  WinMarquee(w); WinFocus(w);   // setActive also raises to the front
+  WinFocus(w);
   return w;
 };
 // a transcript [h:mm:ss] click seeks an open window of that same video (raising it)

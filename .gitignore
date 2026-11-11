@@ -15,8 +15,6 @@ TerryADavis-archive-transcriber/
 /_redirects
 # what Netlify publishes: node server.mjs Site
 /Site/
-package.json
-package-lock.json
 
 # Python archive-tool caches
 __pycache__/

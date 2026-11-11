@@ -15,6 +15,7 @@
 #define BB_H      20
 #define BB_CELL   20        // pixels per cell
 #define BB_DT     (1.0/60.0)
+#define BB_STONES_NUM 8
 
 #define BB_K_W     0x11     // merged scan codes, the same in TempleOS and the browser bridge
 #define BB_K_A     0x1E
@@ -39,18 +40,21 @@
 U8 BrowserKeys[128];        // HolyC-WASM fills this with the held keys
 #endif
 
-// The seven stones in a 4x4 box, bit r*4+c, and the size of the box each one turns in.
-I64 bb_base[7]={0x00F0,0x0033,0x0072,0x0036,0x0063,0x0071,0x0074};
-I64 bb_size[7]={4,2,3,3,3,3,3};
-I64 bb_light[7]={LTCYAN,YELLOW,LTPURPLE,LTGREEN,LTRED,LTBLUE,WHITE};
-I64 bb_dark[7]={CYAN,BROWN,PURPLE,GREEN,RED,BLUE,LTGRAY};
+//Stones occupy a 4x4 box. The Latin cross has one upright orientation.
+I64 bb_base[BB_STONES_NUM]={
+  0x00F0,0x0033,0x0072,0x0036,0x0063,0x0071,0x0074,0x2272};
+I64 bb_size[BB_STONES_NUM]={4,2,3,3,3,3,3,4};
+I64 bb_turn_num[BB_STONES_NUM]={4,4,4,4,4,4,4,1};
+I64 bb_light[BB_STONES_NUM]={
+  LTCYAN,YELLOW,LTPURPLE,LTGREEN,LTRED,LTBLUE,WHITE,YELLOW};
+I64 bb_dark[BB_STONES_NUM]={CYAN,BROWN,PURPLE,GREEN,RED,BLUE,LTGRAY,RED};
 I64 bb_points[5]={0,100,300,600,1000};
 I64 bb_kicks[5]={0,-1,1,-2,2};   // sideways nudges tried when a turn is blocked
-I64 bb_rot[28];             // [stone*4+turn]
+I64 bb_rot[BB_STONES_NUM*4];             // [stone*4+turn]
 
 U8  bb_board[BB_W*BB_H];    // 0 empty, else stone+1
 U8  bb_full[BB_H];          // rows being cleared
-I64 bb_bag[7], bb_bag_left;
+I64 bb_bag[BB_STONES_NUM], bb_bag_left;
 I64 bb_cur, bb_turn, bb_x, bb_y, bb_next;
 I64 bb_fall_t, bb_lock_t, bb_lock_moves, bb_clear_t, bb_rep_t;
 I64 bb_score, bb_lines, bb_level, bb_best=0;
@@ -70,11 +74,12 @@ I64 BbTurned(I64 mask, I64 n)   // a quarter turn clockwise inside an n x n box
 U0 BbMakeTurns()
 {
   I64 i, t, m;
-  for (i=0; i<7; i++) {
+  for (i=0; i<BB_STONES_NUM; i++) {
     m=bb_base[i];
     for (t=0; t<4; t++) {
       bb_rot[i*4+t]=m;
-      m=BbTurned(m, bb_size[i]);
+      if (bb_turn_num[i]>1)
+        m=BbTurned(m, bb_size[i]);
     }
   }
 }
@@ -92,16 +97,16 @@ I64 BbFits(I64 mask, I64 px, I64 py)
   return TRUE;
 }
 
-I64 BbFromBag()             // each run of seven holds every stone once
+I64 BbFromBag()
 {
   I64 i, j, t;
   if (bb_bag_left<=0) {
-    for (i=0; i<7; i++) bb_bag[i]=i;
-    for (i=6; i>0; i--) {
+    for (i=0; i<BB_STONES_NUM; i++) bb_bag[i]=i;
+    for (i=BB_STONES_NUM-1; i>0; i--) {
       j=RandU16()%(i+1);
       t=bb_bag[i]; bb_bag[i]=bb_bag[j]; bb_bag[j]=t;
     }
-    bb_bag_left=7;
+    bb_bag_left=BB_STONES_NUM;
   }
   bb_bag_left--;
   return bb_bag[bb_bag_left];
@@ -195,6 +200,8 @@ I64 BbMove(I64 dx, I64 dy)
 U0 BbTurn()
 {
   I64 i, t=(bb_turn+1)&3;
+  if (bb_turn_num[bb_cur]==1)
+    return;
   for (i=0; i<5; i++)
     if (BbFits(bb_rot[bb_cur*4+t], bb_x+bb_kicks[i], bb_y)) {
       bb_x+=bb_kicks[i]; bb_turn=t;
@@ -377,15 +384,15 @@ U0 BbDraw(CTask *task, CDC *dc)
   px=ox+BB_W*BB_CELL+28;
   dc->color=BLUE;
   GrPrint(dc, px, oy, "NEXT STONE");
-  BbBox(dc, px, oy+12, 4*BB_CELL+8, 3*BB_CELL+8, BLUE);
-  BbBox(dc, px+2, oy+14, 4*BB_CELL+4, 3*BB_CELL+4, BLACK);
+  BbBox(dc, px, oy+12, 4*BB_CELL+8, 4*BB_CELL+8, BLUE);
+  BbBox(dc, px+2, oy+14, 4*BB_CELL+4, 4*BB_CELL+4, BLACK);
   mask=bb_rot[bb_next*4];
-  if (bb_next==0) BbShape(dc, mask, px+4, oy+16, bb_next, FALSE);
+  if (bb_size[bb_next]==4) BbShape(dc, mask, px+4, oy+16, bb_next, FALSE);
   else BbShape(dc, mask, px+4+BB_CELL/2*(4-bb_size[bb_next]), oy+16+BB_CELL/2, bb_next, FALSE);
-  BbLabel(dc, px, oy+96, "SCORE", bb_score);
-  BbLabel(dc, px, oy+128, "ROWS", bb_lines);
-  BbLabel(dc, px, oy+160, "LEVEL", bb_level);
-  BbLabel(dc, px, oy+192, "BEST", bb_best);
+  BbLabel(dc, px, oy+120, "SCORE", bb_score);
+  BbLabel(dc, px, oy+152, "ROWS", bb_lines);
+  BbLabel(dc, px, oy+184, "LEVEL", bb_level);
+  BbLabel(dc, px, oy+216, "BEST", bb_best);
 
   x=16;
   dc->color=RED;
@@ -399,6 +406,7 @@ U0 BbDraw(CTask *task, CDC *dc)
   GrPrint(dc, x, oy+72, "S    Down   fall");
   GrPrint(dc, x, oy+84, "Space       drop");
   GrPrint(dc, x, oy+96, "P pause  Esc quit");
+  GrPrint(dc, x, oy+120, "Cross stays upright.");
 
   if (bb_paused || bb_over) {
     BbBox(dc, ox+12, oy+BB_H*BB_CELL/2-26, BB_W*BB_CELL-24, 52, BLUE);

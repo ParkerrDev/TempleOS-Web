@@ -2,10 +2,7 @@
 // Zero strength gives solid colors; animation frames share a bounded cache.
 // Oklab transform: https://bottosson.github.io/posts/oklab/ (public domain).
 import {SPRITE_NOISE,SPRITE_NOISE_SIDE} from './sprite-noise.js';
-export const PALETTE = Object.freeze([
-  [0,0,0],[0,0,170],[0,170,0],[0,170,170],[170,0,0],[170,0,170],[170,85,0],[170,170,170],
-  [85,85,85],[85,85,255],[85,255,85],[85,255,255],[255,85,85],[255,85,255],[255,255,85],[255,255,255],
-].map(Object.freeze));
+import {PALETTE} from './framebuffer.js';
 const linear = v => {v/=255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4;};
 const LINEAR = PALETTE.map(c=>c.map(linear));
 const SRGB = Float64Array.from({length:256},(_,i)=>linear(i));

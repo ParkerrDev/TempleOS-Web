@@ -1,0 +1,15 @@
+{
+  "name": "templeos-web",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.15" },
+  "scripts": {
+    "test": "sh tools/Test.sh",
+    "test:browser": "node tools/browser/shell.mjs",
+    "test:engine": "node tools/browser/engine.mjs",
+    "test:snapshot": "node tools/browser/snapshot.mjs",
+    "build:bible": "node tools/bible-build.mjs",
+    "serve": "node server.mjs"
+  },
+  "devDependencies": { "playwright-core": "1.58.2" }
+}

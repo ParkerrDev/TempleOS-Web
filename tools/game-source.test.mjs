@@ -20,6 +20,10 @@ assert.throws(()=>sourceDocument(new Uint8Array([65])).encode('A\0B'),/NUL/);
 const project=await gameProject({name:'CastleFrankenstein',packageId:'tinker-CastleFrankenstein'});
 const doc=await project.open(project.entry);project.change(project.entry,'// Saved draft\n'+doc.text);
 const entryFile=catalog.packages.find(p=>p.id===project.id).files.find(f=>f.path===project.entry);
+const native=await project.native(),compiled=native.files.find(f=>f.path==project.entry).source;
+assert.deepEqual(Uint8Array.from(compiled,ch=>ch.charCodeAt(0)),
+ new Uint8Array(await project.bytes(project.entry)),
+ 'Compilation receives the edited source and its complete binary sprite records');
 assert([...storage.keys()].some(key=>key.includes(entryFile.sha256)),'Drafts belong to the original source and sprite revision');
 assert.equal((await project.open(project.entry)).text.startsWith('// Saved draft'),true);
 const reloaded=await import('../game-source.js?reload-test');

@@ -1,8 +1,7 @@
-//Disk & Save: export and import the RAM snapshot and the C: disk, put a
-//file in C:/Home, and list it. An import is kept in IndexedDB across the
-//reload that boots it (Os.js).
 import {WinAdd,WinRaise} from "./WinMgr.js";
-import {$,dbg,engine,idb,os_disk} from "./Os.js";
+import {$,dbg,engine,os_disk,OsReady,OsFileWrite} from "./Os.js";
+import {BootFileSave} from "./BootFile.js";
+import {SnapshotInspect} from "./engine/Snapshot.js";
 
 const CSS='    /* Disk & Save window */\n'+
   '    #diskWin { display:flex; flex-direction:column; width:min(560px,94vw); max-height:88vh; margin:0; padding:10px; }\n'+
@@ -23,7 +22,7 @@ const HTML='  <div id="diskOverlay" class="overlay" role="dialog" aria-modal="tr
   '      <div class="disk-body">\n'+
   '        <div class="disk-sec">\n'+
   '          <h3>Save your progress</h3>\n'+
-  '          <p>A <b>snapshot</b> captures the entire running OS (memory + state) - reload it later to resume exactly where you left off. A <b>disk image</b> is your whole C: drive, including files you saved in TempleOS.</p>\n'+
+  '          <p>A <b>snapshot</b> saves the running machine, its C: disk and settings together. Import it to resume that session. A <b>disk image</b> saves the C: drive by itself.</p>\n'+
   '          <div class="disk-row">\n'+
   '            <button id="dlSnap">↑ Export snapshot</button>\n'+
   '            <button id="dlDisk">↑ Export C: disk</button>\n'+
@@ -46,69 +45,198 @@ const HTML='  <div id="diskOverlay" class="overlay" role="dialog" aria-modal="tr
   '          </div>\n'+
   '          <ul id="homeList"></ul>\n'+
   '        </div>\n'+
-  '        <div id="diskStatus"></div>\n'+
+  '        <div id="diskStatus" role="status"></div>\n'+
   '      </div>\n'+
   '    </div>\n'+
   '  </div>\n';
 WinAdd(CSS,HTML);
 
-const ov = $("diskOverlay"), st = $("diskStatus");
-const say = (s) => { st.textContent = s; dbg("disk: " + s); };
-const dl = (bytes, name, type) => { const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([bytes], { type: type || "application/octet-stream" }));
-  a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
-const pickFile = (accept) => new Promise((res) => { const i = document.createElement("input"); i.type = "file"; if (accept) i.accept = accept;
-  i.onchange = () => res(i.files[0] || null); i.click(); });
-const maybeGunzip = async (buf) => { const u = new Uint8Array(buf);
-  if (u[0] === 0x1f && u[1] === 0x8b) return new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
-  return u; };
+const ov=$("diskOverlay"),st=$("diskStatus"),
+  actions=["dlSnap","dlDisk","ulFile","lsHome"],
+  imports=["ulSnap","ulDisk"];
+let pending=null;
 
-os_disk.msg = (m) => {
-  if (m.cmd === "exportResult") {
-    if (!m.ok) { say("export failed: " + m.msg); return; }
-    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
-    if (m.kind === "snapshot") dl(m.buf, `templeos-${stamp}.hemu.gz`), say("snapshot exported");
-    else dl(m.buf, `templeos-C-${stamp}.img.gz`, "application/gzip"), say("C: disk exported");
-  }
-  else if (m.cmd === "guestResult" && ["failed","error"].includes(m.state) && m.op === "launch") say("Launch failed: "+m.msg);
-  else if (m.cmd === "fileResult") say(m.ok ? "✓ " + m.msg : "✗ " + m.msg);
-  else if (m.cmd === "diskInfo") say(m.ok ? "✓ " + m.msg : "✗ " + m.msg);
-  else if (m.cmd === "dirList") {
-    const ul = $("homeList"); ul.innerHTML = "";
-    if (!m.ok) { say("list failed: " + m.msg); return; }
-    for (const f of m.files) { const li = document.createElement("li"); li.textContent = (f.dir ? "[D] " : "    ") + f.name + (f.dir ? "" : "  " + f.size + "b"); ul.appendChild(li); }
-    say(m.files.length + " entries in /" + (m.dir || "Home"));
+function Say(text)
+{
+  st.textContent=text;
+  dbg("disk: "+text);
+}
+
+function Busy(kind=null)
+{
+  pending=kind;
+  for (let id of actions)
+    $(id).disabled=!!pending || !OsReady();
+  for (let id of imports)
+    $(id).disabled=!!pending;
+}
+
+function Download(bytes,name,type="application/octet-stream")
+{
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([bytes],{type}));
+  a.download=name;
+  a.click();
+  setTimeout(function () {URL.revokeObjectURL(a.href);},4000);
+}
+
+function PickFile(accept="")
+{
+  return new Promise(function (Resolve) {
+    let input=document.createElement("input");
+    input.type="file";
+    input.accept=accept;
+    input.onchange=function () {Resolve(input.files[0] || null);};
+    input.oncancel=function () {Resolve(null);};
+    input.click();
+  });
+}
+
+async function DiskBytes(file)
+{
+  let bytes=new Uint8Array(await file.arrayBuffer());
+  if (bytes[0]==0x1F && bytes[1]==0x8B)
+    return new Response(new Blob([bytes]).stream().pipeThrough(
+      new DecompressionStream("gzip"))).arrayBuffer();
+  return bytes.buffer;
+}
+
+os_disk.msg=function (m)
+{
+  let stamp,ul,li;
+  if (m.cmd=="exportResult") {
+    Busy();
+    if (!m.ok) {
+      Say("Export failed: "+m.msg);
+      return;
+    }
+    stamp=new Date().toISOString().slice(0,16).replace(/[:T]/g,"-");
+    if (m.kind=="snapshot") {
+      Download(m.buf,"templeos-"+stamp+".hemu.gz","application/gzip");
+      Say("Snapshot exported.");
+    } else {
+      Download(m.buf,"templeos-C-"+stamp+".img.gz","application/gzip");
+      Say("C: disk exported.");
+    }
+  } else if (m.cmd=="guestResult" &&
+      ["failed","error"].includes(m.state) && m.op=="launch")
+    Say("Launch failed: "+m.msg);
+  else if (m.cmd=="dirList") {
+    Busy();
+    ul=$("homeList");
+    ul.replaceChildren();
+    if (!m.ok) {
+      Say("List failed: "+m.msg);
+      return;
+    }
+    for (let file of m.files) {
+      li=document.createElement("li");
+      if (file.dir)
+        li.textContent="[D] "+file.name;
+      else
+        li.textContent="    "+file.name+"  "+file.size+"b";
+      ul.appendChild(li);
+    }
+    Say(m.files.length+" entries in /"+(m.dir || "Home"));
   }
 };
 
+function Export(kind)
+{
+  if (!OsReady() || pending) return;
+  Busy(kind);
+  Say("Saving "+kind+"…");
+  try {
+    if (kind=="snapshot")
+      engine.post({cmd:"exportSnapshot"});
+    else
+      engine.post({cmd:"exportDisk"});
+  } catch (e) {
+    Busy();
+    Say("Export failed: "+e.message);
+  }
+}
 
-$("dlSnap").addEventListener("click", () => { say("compressing 384 MB… (a few seconds)"); engine.post({ cmd: "exportSnapshot" }); });
-$("dlDisk").addEventListener("click", () => { say("reading + compressing C:…"); engine.post({ cmd: "exportDisk" }); });
-$("ulSnap").addEventListener("click", async () => {
-  const f = await pickFile(".gz,.hemu,application/gzip"); if (!f) return;
-  say("storing snapshot, reloading…");
-  await idb.set("importSnap", await f.arrayBuffer());
-  location.reload();
-});
-$("ulDisk").addEventListener("click", async () => {
-  const f = await pickFile(".img,.raw,.qcow2,.gz"); if (!f) return;
-  say("decompressing disk image…");
-  const bytes = await maybeGunzip(await f.arrayBuffer());
-  await idb.set("importDisk", bytes.buffer);
-  say("stored, reloading…"); location.reload();
-});
-$("ulFile").addEventListener("click", async () => {
-  const f = await pickFile(); if (!f) return;
-  const name = f.name.length > 37 ? f.name.slice(0, 37) : f.name;
-  const bytes = new Uint8Array(await f.arrayBuffer());
-  say("writing " + name + " to C:/Home…");
-  engine.post({ cmd: "osWrite", name, run: false, bytes: bytes.buffer }, [bytes.buffer]);   // OS-side FileWrite (no host cache poke)
-});
-$("lsHome").addEventListener("click", () => { say("reading /Home…"); engine.post({ cmd: "listDir", dir: "Home" }); });
+async function Import(kind)
+{
+  if (pending) return;
+  Busy("import");
+  try {
+    let accept=".gz,.hemu,application/gzip",file,bytes;
+    if (kind=="disk") accept=".img,.raw,.qcow2,.gz";
+    file=await PickFile(accept);
+    if (!file) return;
+    Say("Checking "+kind+"…");
+    if (kind=="snapshot") {
+      bytes=await file.arrayBuffer();
+      await SnapshotInspect(bytes);
+    } else
+      bytes=await DiskBytes(file);
+    Say("Storing "+kind+"…");
+    await BootFileSave(kind,bytes);
+    Say("Stored. Reloading…");
+    location.reload();
+  } catch (e) {
+    Say("Import failed: "+e.message);
+  } finally {
+    Busy();
+  }
+}
 
-const open = () => { ov.classList.add("open"); WinRaise(ov); st.textContent = engine.kind ? "" : "engine not ready yet"; };
-const close = () => ov.classList.remove("open", "free");
-$("diskClose").addEventListener("click", close);
-ov.addEventListener("pointerdown", (e) => { if (e.target === ov) close(); });
+async function Upload()
+{
+  if (!OsReady() || pending) return;
+  Busy("upload");
+  try {
+    let file=await PickFile(),res;
+    if (!file) return;
+    Say("Writing "+file.name+" to C:/Home…");
+    res=await OsFileWrite("C:/Home/"+file.name.slice(0,37),
+      await file.arrayBuffer());
+    Say(res.msg);
+  } catch (e) {
+    Say("Upload failed: "+e.message);
+  } finally {
+    Busy();
+  }
+}
 
-export {open as Open};
+$("dlSnap").addEventListener("click",function () {Export("snapshot");});
+$("dlDisk").addEventListener("click",function () {Export("disk");});
+$("ulSnap").addEventListener("click",function () {Import("snapshot");});
+$("ulDisk").addEventListener("click",function () {Import("disk");});
+$("ulFile").addEventListener("click",Upload);
+$("lsHome").addEventListener("click",function () {
+  if (!OsReady() || pending) return;
+  Busy("list");
+  Say("Reading /Home…");
+  try {
+    engine.post({cmd:"listDir",dir:"Home"});
+  } catch (e) {
+    Busy();
+    Say("List failed: "+e.message);
+  }
+});
+addEventListener("osstate",function (e) {
+  Busy();
+  if (!e.detail.ready)
+    Say(e.detail.msg);
+});
+
+export function Open()
+{
+  ov.classList.add("open");
+  WinRaise(ov);
+  Busy(pending);
+  if (!OsReady())
+    Say("Start TempleOS to export or access its disk.");
+}
+
+function Close()
+{
+  ov.classList.remove("open","free");
+}
+$("diskClose").addEventListener("click",Close);
+ov.addEventListener("pointerdown",function (e) {
+  if (e.target==ov) Close();
+});

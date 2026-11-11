@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>TempleOS - the real 64-bit OS in your browser</title>
-  <meta name="description" content="The complete, unmodified TempleOS V5.03 running in your browser on HEMU, an x86-64 emulator written in HolyC and compiled to WebAssembly. Play its games, write HolyC, search everything Terry A. Davis said on video, and chat." />
+  <meta name="description" content="TempleOS V5.03 running in your browser on HEMU, an x86-64 emulator written in HolyC and compiled to WebAssembly. Play its games, write HolyC, search Terry A. Davis video transcripts, and chat." />
   <link rel="icon" href="assets/Logo128x152.jpg" type="image/jpeg" />
   <link rel="apple-touch-icon" href="assets/Logo128x152.jpg" />
   <!-- the snapshot, disk, games and Terry Search are redirected to this CDN (tools/offload-redirects.mjs):
@@ -24,7 +24,10 @@
                  unicode-range:U+1-7F,U+9D-9E,U+A0-FF,U+2000-200A,U+2010-2014,U+2018-201A,U+201C-201E,U+2022,U+2026,U+202F,
                  U+2039-203A,U+205F,U+20AC,U+2122,U+25FC; }   /* its own glyphs: never fetched for one it lacks */
     @font-face { font-family:'dos_vga'; src:url(data:font/woff2;base64,d09GMgABAAAAAAV8AA8AAAAACkQAAAUlAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGhYGYABcCBIJhGURCAqGRIVwATYCJAMSCxAABCAFgm4HIAx7G9UIUZQsThvgqwPekPdRA/CgILAmRSvKq+iyt3ZYnMH+QUwAvgbPk91/nVtsPk0PXAP2sN+QSzJSFKhq5dDpOpKy3eyDh/8/9WZMGkA5oWq9QluwgP2IryYlHdMvbezvesyDbCbgG2hFbYPa9GI9k656uLRiX6wqf38DgKevL8yMuID/+WOp712G3TaKJJ3oRH5c/lX+i6JsPFsUzrSLqoAmNpzgdmMV0rYk4pb71QP6DgRUAEARwhG6vExexDIZYnSPlSZAjvU+BgX5ljNPB0/jgLfnlY4pwFErQABeBQjp7KDTDU2a3Tjur/RkFOdt34QZYW5YEFZOT4PuN6dPmG7tb7cEiz2WIZ3RIzlSDSNLGcR3oLNX0L7mEJiaFLgiqXL6D9919IUwvjjFQph+I6LIQnFHvzQZpy00r6QQDvSKxgFnYTh8B230lvxTz075RuW/+leIGg1r7EDzmiPs8SkWliPHRy0c7y8N93oFtHfRuALOwvP+crW2tjDjuFgqKxHiOdNuoVs/qWdH0DlthmBy2xH0il/wMySUlyqtnfIaZT8vOlrMcDFGxejKLEqmjyXdr2IqgS8aF6IW0zyzSkLzs2mYr6irU5gk7wI+bXzwy0oKU2AKtTTllIy9YgFo3EyPt3Gn7ylaK/ruO/rlrmojMCTJuWu2z4a+T+B4Q9IxoDTEiYfJbTNBpHuPJzHTnEQItRj8FRgnhouAuKEwEn7oNbBsejUMojOYPBfPbl1h+7zxHoSyUt1Zz2z4kNqwtr4+7DiLCeaCEQuYPltGO5whZpaAqVcAcrIjHOiXg4CChrn6g5DCoxY0h9SF9HpyJsMiDRh8v7U4Qv7T9AF4AD2Qg7PANQDAQO4Uud5LkdJUjcmca8oH+/dfUefVhbqUmjIvqDIrta9dSYNrqrbKi2YrQx7MSl17eR98UqaQy63ssFlfaDQhwKi4lCPYQ3gf9kPDr26YfpTH0glbQeK/ADjFzUo5O9ON2/3bMgOpx9Kjj4IdR3kMZy7pWvcBpIyNm9e88f92ydkfQa8VMSkKhU285l02AUp5SLQx/DiJ+jPa7jWkb18/QNG1rwlNJ3pRYuXXUHwdVZdy08EY8kKfe0OR6wpKUy0tm9ZZY9eyP6Y6+TPZvCMYbY911xej7zo0ypFqaBgNdSONcThIPWmjs2MNmaHu6epyS5pZkNZi70WBkZdbU+tCIIupr5O9Cgk3yZvIXXNpSRnDKdqdR6rcGN14VzAHzeYIlZdQ1M168IYxVGXrSxXx5KTdlJk3SoNnC2DwD+XPTFiCzObd7Jb+uWD3ojSjneNoEAfha9GMU/8GZxj0DQNssvpxsFO9MzKM3s5kRAMerMgW8BMECN58f3mD/p7/s8UZAO8vnwbwe3PbDUxhkgPIKAACZ/JbMAlGIK0sofJ/OGJznfbHPAZSh9dQn6znKrMg5AwAeBfQpMyBbZB7xUrbepWei3q1Q27oNbZ5qdca+anZCf7jOnfxztvsslF570kbXONyd7nVHa50+bjzThtciTcXX+EOp7ka8Zr//kp3CY441ZmCcxzroGCLse3OcLVr3e0ml7vDA652nV2C01zvPle7SchWfpar3ey2OO9dyFF2NvGN6CqvFIhnoFbcLTfbILfmciFHF85obLiJT3jMrd7Jpp+GPMeJkZ12XhJ5/vx0zAeqOAbnd8TmDOERj52/MFx7kRCzcBS6PQIVjh7IQLUK1CZVhsJo3MAWXGAu0/RY0sfcQ+jAulRxF5sWAAAA) format('woff2'); unicode-range:U+B7,U+D7,U+2013,U+2019,U+201C,U+2026; font-display:block; }
-    :root { --blue:#0000A8; --red:rgb(161,6,8); --green:#33cc33; --gold:gold; --ctlh:26px; }
+    /* The 16 colors, the guest's own (PALETTE in framebuffer.js, Adam/Gr/GrPalette.HC). */
+    :root { --black:#000000; --blue:#0000AA; --green:#00AA00; --cyan:#00AAAA; --red:#AA0000; --purple:#AA00AA;
+            --brown:#AA5500; --ltgray:#AAAAAA; --dkgray:#555555; --ltblue:#5555FF; --ltgreen:#55FF55;
+            --ltcyan:#55FFFF; --ltred:#FF5555; --ltpurple:#FF55FF; --yellow:#FFFF55; --white:#FFFFFF; --ctlh:26px; }
     * { margin:0; padding:0; box-sizing:border-box; font-family:'TempleOS','dos_vga',"Courier New",monospace; cursor:url('assets/cursor.png'),auto;
         -webkit-font-smoothing:none; font-smooth:never; text-rendering:optimizeSpeed; }
     /* The mouse is the real TempleOS pointer: the cursor.png arrow is reconstructed pixel-for-pixel
@@ -37,11 +40,10 @@
         filter:brightness(0) invert(1); mix-blend-mode:difference; }
     body.xcursor #xcursor { display:block; }
     body.xcursor, body.xcursor * { cursor:none !important; }   /* the inverting arrow replaces the native cursor */
-    .wbar, .wbar *, .wvert, .wvert * { font-family:'TempleOS','dos_vga',monospace; }
     html { overflow-y:auto; }
     body { background:var(--blue); color:#fff; font-size:12px; line-height:1.0; min-height:100vh; display:flex; flex-direction:column; }
-    ::selection { background:#000; color:yellow; }
-    a { color:var(--gold); }
+    ::selection { background:#000; color:var(--yellow); }
+    a { color:var(--yellow); }
 
     /* live top status bar (always visible - survives fullscreen games, unlike the in-OS wallpaper bar) */
     #topbar { display:flex; line-height:16px; justify-content:space-between; align-items:center; gap:10px;
@@ -52,55 +54,50 @@
     /* room for what the clock and the counts will say, so the bar never moves */
     #tb-date { min-width:9ch; } #tb-time { min-width:8ch; } #tb-fps { min-width:8ch; }
     #tb-people.off { visibility:hidden; }
-    .y { color:yellow; } #tb-key { text-transform:uppercase; color:yellow; white-space:nowrap; }
+    .y { color:var(--yellow); } #tb-key { text-transform:uppercase; color:var(--yellow); white-space:nowrap; }
 
     /* header shares the centered content width of the desktop row below it */
     header { display:flex; align-items:stretch; gap:10px; padding:4px 8px 1px;
              width:fit-content; max-width:96vw; margin:0 auto; text-align:left; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; height:auto; border:2px solid #fff;
-                   background:#55FFFF; object-fit:contain; }
+                   background:var(--ltcyan); object-fit:contain; }
     header h1 { font-size:12px; font-weight:normal; color:#fff; font-family:'TempleOS','dos_vga',monospace; }
-    header p { font-size:12px; color:#dfe6ff; max-width:1000px; line-height:1.0; }
+    header p { font-size:12px; max-width:1000px; line-height:1.0; }
 
-    /* a TempleOS window: white box, double-blue border, white outline, blinking title + [X] */
-    /* one 8px border cell per side, exactly like the OS text border; the pattern (measured 1:1
-       from the framebuffer: V double = 2W 2B 1W 2B 1W, H double = 2W 1B 1W 1B 3W; singles when
-       unfocused) is painted into a border-image at runtime. No outline halo - the cell's outer
-       2px of white IS the margin, as measured. */
-    .win, #frame { position:relative; background:#fff; color:var(--blue); border:14px solid #fff;
-                   margin:3px 5px; overflow:visible; }
+    /* A TempleOS window (TextBorder, Adam/Gr/GrTextBase.HC): a text cell of BLUE border round a WHITE
+       text area, drawn with the font's chars 2 to 13 (Kernel/FontStd.HC), double on the focused window.
+       The site's 12px text is the 8x8 font at 1.5x, so a cell is 12px. */
+    .win, #frame { position:relative; background:var(--white); color:var(--blue); margin:3px 5px; overflow:visible;
+                   border:12px solid transparent; border-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' shape-rendering='crispEdges' fill='%230000AA'%3E%3Cpath d='M3 4h18v1H3zM3 20h18v1H3zM3 5h2v15H3zM19 5h2v15h-2z'/%3E%3C/svg%3E") 12 / 12px; }
+    .win.active, #frame.active { border-image-source:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' shape-rendering='crispEdges' fill='%230000AA'%3E%3Cpath d='M2 2h21v1H2zM2 20h21v1H2zM2 3h2v17H2zM21 3h2v17h-2zM5 4h15v1H5zM5 18h15v1H5zM5 5h2v13H5zM18 5h2v13h-2z'/%3E%3C/svg%3E"); }
     .win { padding:.7em; }
-    /* TempleOS window bar: rides ON the top border line (slight overhang only), like the real
-       WinMgr's  ≡MENU----- title -----[X]≡  row. Chips paint white over the border; the
-       scrolling title's own background sweeps the full width between the corners. */
-    /* the border row, TempleOS-style: one text-cell-high bar CENTERED on the double lines
-       (border box is 6px tall at y 0..6 -> 13px bar spans -4..9, equal overhang).
-       Layout per DocBorderNew: MENU(+LX, $$BK$$) | border line | title(+CX+IV, capped) hex | [X](+RX) */
-    .wbar { position:absolute; top:-14px; left:0; right:0; height:14px; display:flex; align-items:center;
-            background:transparent; z-index:2; overflow:hidden; user-select:none; }
-    .wmenu { flex:0 0 auto; color:var(--blue); background:#fff; font-size:12px; line-height:14px; padding:0 1px;
-             animation:menuBlink .4s step-start infinite; }   /* Blink(Hz=2.5) -> 400ms period */
-    @keyframes menuBlink { 50% { background:var(--blue); color:#fff; } }
-    .wgap { flex:1 1 auto; }                       /* transparent - the double lines show through */
-    .wtitle { flex:0 1 auto; min-width:64px; max-width:46%; overflow:hidden; height:14px; font-size:12px;
-              line-height:14px; white-space:nowrap; background:var(--blue); color:#fff; }
-    .wtitle > span { display:inline-block; white-space:pre; animation:wscroll linear infinite; }
+    .wc { position:absolute; z-index:2; font-size:12px; line-height:12px; user-select:none; touch-action:none; }
+    /* the top row (DocBorderNew, Adam/DolDoc/DocTerm.HC): MENU blinking at the left, the title inverted
+       in the middle 15 columns, scrolling, and [X] at the right */
+    .wbar { top:-12px; left:0; right:0; height:12px; display:flex; justify-content:space-between; overflow:hidden; }
+    .wmenu, .wbar > .close { position:relative; z-index:1; background:var(--white); color:var(--blue); }
+    .wmenu { animation:menuBlink .4s step-start infinite; }   /* Blink at 2.5 Hz, Kernel/KMisc.HC */
+    @keyframes menuBlink { 50% { background:var(--blue); color:var(--white); } }
+    .wtitle { position:absolute; left:calc(50% - 90px); width:180px; overflow:hidden; white-space:pre;
+              background:var(--blue); color:var(--white); }
+    .wtitle > span { display:inline-block; animation:wscroll linear infinite; }
     @keyframes wscroll { to { transform:translateX(-50%); } }
-    /* vertical doc-name list ON the left border column (DocBorderLstDraw: TextChar at x=-1):
-       one 8px text cell, centered over the 6px double lines, white only where glyphs sit */
-    .wvert { position:absolute; top:0; bottom:14px; left:-14px; width:14px; overflow:hidden; z-index:2;
-             writing-mode:vertical-rl; text-orientation:upright; background:transparent; color:var(--blue);
-             font-size:12px; line-height:14px; letter-spacing:0; text-align:start; user-select:none; }
-    .wvert > span { background:#fff; }            /* white only where the glyphs are */
-    .close { flex:0 0 auto; font-size:12px; line-height:14px; padding:0 1px; color:var(--blue); background:#fff; }
+    /* the left column: the document's desc, upright (DocBorderLstDraw, Adam/DolDoc/DocRecalcLib.HC) */
+    .wvert { top:0; bottom:0; left:-12px; width:12px; overflow:hidden; writing-mode:vertical-rl; text-orientation:upright; }
+    .wvert > span { background:var(--white); }
     .win > .close, #frame > .close { position:absolute; visibility:hidden; }   /* until WinMgr puts it in the bar */
-    /* yellow corner handles on the focused window, like the real WinMgr */
-    .wcorn { position:absolute; width:14px; height:14px; background:yellow; z-index:3; display:none; pointer-events:none; }
-    .wcorn::after { content:""; position:absolute; inset:5px; background:var(--blue); }
-    .active > .wcorn { display:block; }
-    .wcorn.tr { top:0; right:-14px; } .wcorn.bl { bottom:-14px; left:0; }
-    .win-ph { visibility:hidden; }   /* placeholder keeps the layout while a window floats */
+    /* the scroll boxes (Adam/Ctrls/CtrlsA.HC): 8x8 YELLOW round 4x4 BLUE, the two swapped while held.
+       At the start of the document they straddle the top right and bottom left corners. */
+    .wsv, .wsh { z-index:3; width:12px; height:12px; background:var(--blue); border:3px solid var(--yellow); }
+    .wsv.on, .wsh.on { background:var(--yellow); border-color:var(--blue); }
+    .wsv { top:-6px; right:-12px; } .wsh { bottom:-12px; left:-6px; }
+    /* the right column sizes the width, the bottom row the height, their corner both */
+    .wszr { top:0; bottom:0; right:-12px; width:12px; }
+    .wszb { left:0; right:-12px; bottom:-12px; height:12px; }
+    .win *, #frame * { scrollbar-width:none; }   /* the scroll boxes stand for the scroll bars */
+    .win ::-webkit-scrollbar, #frame ::-webkit-scrollbar { display:none; }
+    .win-ph { visibility:hidden; }   /* keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
     .desktop-row { display:flex; gap:8px; justify-content:center; align-items:flex-start; flex-wrap:wrap; padding:2px; }
@@ -116,32 +113,32 @@
     button { font-family:'TempleOS','dos_vga',monospace; font-size:12px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
-    button:disabled { opacity:.4; }
+    button:disabled { color:var(--ltgray); }
 
     #frame { padding:5px; }
     canvas#canvas { display:block; height:clamp(300px, min(72vh, calc((100vw - 690px) * 3 / 4)), 600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
     /* fullscreen: black letterbox, centered 4:3 screen, window chrome hidden */
     #frame:fullscreen { display:flex; align-items:center; justify-content:center; background:#000; border:0; border-image:none; outline:0; margin:0; padding:0 !important; }
     #frame:fullscreen canvas#canvas { height:min(100vh, 75vw); width:auto; max-width:100vw; }
-    #frame:fullscreen .wbar, #frame:fullscreen .wvert, #frame:fullscreen #loadui { display:none; }
+    #frame:fullscreen > .wc, #frame:fullscreen #loadui { display:none; }
     #frame::backdrop { background:#000; }
     #frame:-webkit-full-screen { display:flex; align-items:center; justify-content:center; background:#000; border:0; outline:0; margin:0; padding:0; }
     #frame:-webkit-full-screen canvas#canvas { height:min(100vh, 75vw); width:auto; max-width:100vw; }
-    #frame:-webkit-full-screen .wbar, #frame:-webkit-full-screen .wvert { display:none; }
+    #frame:-webkit-full-screen > .wc { display:none; }
     /* faux fullscreen - iPhone Safari has no element-fullscreen API; pin the frame over the viewport */
     body.fakefs { overflow:hidden; }
-    /* z-index MUST beat any window's raised inline z-index (setActive uses zTop ≥ 1000) AND the
+    /* z-index MUST beat any window's raised inline z-index (WinFocus counts up from 1000) AND the
        overlays (1000) - otherwise a tapped Menu/Help window pokes through the black letterbox.
        !important is required because the raise sets an INLINE z-index on #frame. */
     body.fakefs #frame { position:fixed; inset:0; z-index:2147483647 !important; margin:0; padding:0 !important; border:0; border-image:none; outline:0; background:#000;
                          display:flex; align-items:center; justify-content:center; }
-    body.fakefs #frame .wbar, body.fakefs #frame .wvert, body.fakefs #loadui { display:none; }
+    body.fakefs #frame > .wc, body.fakefs #loadui { display:none; }
     /* #frame qualifier raises specificity to TWO ids so this beats `body.stack canvas#canvas`
        (line below, same specificity but later source) - otherwise fullscreen gets the small
        stacked size (capped ~332px on a phone, and overflowing the screen in landscape). */
     body.fakefs #frame canvas#canvas { height:min(100dvh, 75vw); width:auto; max-width:100vw; }
-    /* REAL fullscreen: kill the window chrome's white border-image fill - the letterbox around
-       the 4:3 canvas must be plain black (fakefs below already does this) */
+    /* fullscreen, real or faux: no border image (:-webkit-full-screen has none of its own), and
+       a plain black letterbox round the 4:3 canvas */
     #frame.fsmode { border-image:none !important; background:#000; }
     /* mobile/touch fullscreen: pin the OS to the TOP so the on-screen keyboard (which opens over the
        bottom) never covers the screen; the black letterbox fills the space below. Desktop stays
@@ -151,19 +148,19 @@
     body.touch #frame:-webkit-full-screen { align-items:flex-start; }
     body.touch.fakefs #frame { align-items:flex-start; }
     #fsExit { display:none; position:absolute; top:var(--fsx-top, 6px); left:8px; z-index:8; width:auto; font-size:15px;
-              padding:4px 9px; opacity:.92; transition:top .18s ease; }
+              padding:4px 9px; }
     /* portrait: the OS has a black letterbox beneath it → center the [X] there, clear of the
        right-side keyboard/mouse buttons. (Landscape has no room below the OS, so it stays top-left
        in the side bar - set by JS via the absence of .fsx-mid.) */
     #frame.fsx-mid #fsExit { left:50%; transform:translateX(-50%); }
-    body.touch #fsExit { font-size:18px; padding:6px 11px; opacity:1; }   /* bigger tap target on phones */
+    body.touch #fsExit { font-size:18px; padding:6px 11px; }   /* bigger tap target on phones */
     body.touch #frame.fsmode #fsExit { display:block; }   /* touch only: desktop fullscreen confines the mouse to the OS (Esc exits) */
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
     #ldtext { font-size:12px; width:100%; max-width:560px; line-height:1.0; min-height:2.4em; }   /* a fixed box: new text never moves it */
-    .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#0a0a0a; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
-    .ldbarwrap > i { display:block; height:100%; width:0; transition:width .2s; background:var(--green); }
-    .ldbarwrap::after { content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(90deg, transparent 0 22px, #0a0a0a 22px 24px); }
+    .ldbarwrap { position:relative; height:20px; width:80%; max-width:480px; background:#000; border:2px solid #000; outline:2px solid #fff; overflow:hidden; }
+    .ldbarwrap > i { display:block; height:100%; width:0; background:var(--ltgreen); }
+    .ldbarwrap::after { content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(90deg, transparent 0 22px, #000 22px 24px); }
 
     /* on-screen function/modifier keys - works on desktop and mobile; modifiers latch (✱) */
     #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; }
@@ -173,16 +170,17 @@
     /* touch controls: joystick + mouse buttons + keyboard summon, overlaid on the frame */
     #touchui { display:none; position:absolute; inset:0; pointer-events:none; z-index:4; }
     body.touch #touchui { display:block; }
-    #joy { position:absolute; left:12px; bottom:calc(12px + var(--kbinset, 0px)); width:124px; height:124px; border-radius:50%;
-           background:rgba(0,0,168,.28); border:2px solid rgba(255,255,255,.6); pointer-events:auto; touch-action:none; transition:bottom .18s ease; }
-    #joyk { position:absolute; left:50%; top:50%; width:48px; height:48px; margin:-24px 0 0 -24px; border-radius:50%;
-            background:rgba(255,255,255,.75); }
-    .tbtn { position:absolute; width:64px; height:64px; border-radius:50%; pointer-events:auto; touch-action:none;
-            background:rgba(255,255,255,.7); color:#000; font-size:15px; display:flex; align-items:center; justify-content:center;
-            border:2px solid #fff; outline:2px solid #000; user-select:none; transition:bottom .18s ease; }
+    /* The 16 colors have no see-through: a pad over the screen is a dither, as TempleOS shades */
+    #joy { position:absolute; left:12px; bottom:calc(12px + var(--kbinset, 0px)); width:124px; height:124px;
+           background:repeating-conic-gradient(var(--blue) 0 25%, transparent 0 100%) 0 0 / 2px 2px;
+           border:2px solid #fff; pointer-events:auto; touch-action:none; }
+    #joyk { position:absolute; left:50%; top:50%; width:48px; height:48px; margin:-24px 0 0 -24px; background:#fff; }
+    .tbtn { position:absolute; width:64px; height:64px; pointer-events:auto; touch-action:none;
+            background:#fff; color:#000; font-size:15px; display:flex; align-items:center; justify-content:center;
+            border:2px solid #fff; outline:2px solid #000; user-select:none; }
     .tbtn:active, .tbtn.on { background:var(--red); color:#fff; }
     #tL { right:96px; bottom:calc(14px + var(--kbinset, 0px)); } #tR { right:18px; bottom:calc(14px + var(--kbinset, 0px)); }
-    #tKb { right:18px; bottom:calc(92px + var(--kbinset, 0px)); width:54px; height:42px; border-radius:8px; font-size:18px; }
+    #tKb { right:18px; bottom:calc(92px + var(--kbinset, 0px)); width:54px; height:42px; font-size:18px; }
     #mobInput { position:fixed; left:-30px; bottom:0; width:20px; height:20px; opacity:.01; font-size:12px; }
 
     .col-right #guide { font-size:12px; }
@@ -192,11 +190,11 @@
     body.mouse-locked #xcursor { visibility:hidden !important; }
     .terrywin canvas { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
-    footer { text-align:center; padding:4px; font-size:12px; color:#cfe; opacity:.85; }
-    footer a { color:var(--gold); }
+    footer { text-align:center; padding:4px; font-size:12px; color:var(--ltgray); }
 
     /* ---- overlays (HolyC editor / God Words): a window floating over the desktop ---- */
-    .overlay { position:fixed; inset:0; z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,.66); }
+    .overlay { position:fixed; inset:0; z-index:1000; display:none; align-items:center; justify-content:center; padding:20px;
+                background:repeating-conic-gradient(#000 0 25%, transparent 0 50%) 0 0 / 2px 2px; }   /* half BLACK, dithered */
     .overlay.open { display:flex; }
     /* detached ([_]): the dark backdrop goes away and the window joins the desktop - the page
        (and the OS) stay fully interactive behind it */
@@ -205,27 +203,23 @@
     .ovfree { position:absolute; top:8px; right:10px; width:auto; font-size:12px; padding:3px 8px; pointer-events:auto; }
     .ovfree::after { content:"[X]"; }
     .overlay.free .ovfree { display:none; }   /* one-way: close + reopen the popup to get the backdrop back */
-    .overlay .close { cursor:pointer; }
-    .overlay .close:hover { color:#fff; background:var(--blue); }
-    /* links sitting on WHITE window backgrounds: red + underline (gold is for the blue/black surfaces) */
+    /* links on WHITE are RED and underlined, as DolDoc draws them (YELLOW is for BLUE and BLACK) */
     #tsHelpPop a, #guide a, .disk-sec a, .ed-foot a, .ts-hit .ts-t { color:var(--red); text-decoration:underline; }
     #tsHelpPop a:hover, #guide a:hover, .disk-sec a:hover, .ed-foot a:hover { color:#fff; background:var(--red); }
 
 
-    /* ---- TempleOS scrollbars: chunky squares, blue-on-white, arrow endcaps ---- */
+    /* ---- the page's own scroll bar (windows have scroll boxes instead) ---- */
     ::-webkit-scrollbar { width:14px; height:14px; }
     ::-webkit-scrollbar-track { background:#fff; }
     ::-webkit-scrollbar-thumb { background:#000; border:2px solid #fff; }
-    ::-webkit-scrollbar-thumb:hover { background:#333; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--dkgray); }
     ::-webkit-scrollbar-corner { background:#fff; }
     ::-webkit-scrollbar-button { background:#fff; width:14px; height:14px; }
     ::-webkit-scrollbar-button:vertical:decrement { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 1 L9 8 H1 Z' fill='%23000000'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
     ::-webkit-scrollbar-button:vertical:increment { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 9 L9 2 H1 Z' fill='%23000000'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
     ::-webkit-scrollbar-button:horizontal:decrement { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M1 5 L8 1 V9 Z' fill='%23000000'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
     ::-webkit-scrollbar-button:horizontal:increment { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M9 5 L2 1 V9 Z' fill='%23000000'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
-    @supports not selector(::-webkit-scrollbar) {   /* Firefox: closest equivalent */
-      * { scrollbar-color: #000 #fff; scrollbar-width: auto; }
-    }
+    @supports not selector(::-webkit-scrollbar) { html { scrollbar-color:#000 #fff; } }   /* Firefox */
 
     /* ---- responsive: phones & narrow windows ---- */
     /* stacked layout under 980px */
@@ -240,6 +234,60 @@
     @media (max-width:979.98px) { header { max-width:none; } }
     @media (max-width:979.98px) { #topbar { font-size:12px; } }
     @media (max-width:979.98px) { .terrywin canvas { height:120px; } }
+    .wszr { cursor:ew-resize !important; }
+    .wszb { cursor:ns-resize !important; }
+    .wszcorner { right:-12px; bottom:-12px; width:12px; height:12px; cursor:nwse-resize !important; }
+    body.xcursor .wszr { cursor:ew-resize !important; }
+    body.xcursor .wszb { cursor:ns-resize !important; }
+    body.xcursor .wszcorner { cursor:nwse-resize !important; }
+    .wmenu:focus-visible, .close:focus-visible { outline:1px solid var(--red); outline-offset:-1px; }
+    #touchBtn, #mobileBar, #menuShade { display:none; }
+    @media (pointer:coarse) { #touchBtn { display:block; } }
+    #guide { display:flex; flex-direction:column; min-height:220px; max-height:70dvh; }
+    #helpBody { min-height:0; overflow:auto; flex:1; }
+    #helpContext { color:var(--red); margin-bottom:8px; font-size:12px; }
+    #helpBubble { border:2px solid var(--blue); padding:10px; line-height:1.4; min-height:100px; position:relative; }
+    #helpBubble::after { content:""; position:absolute; bottom:-10px; left:20px; width:12px; height:10px; border-left:2px solid var(--blue); border-bottom:2px solid var(--blue); background:var(--white); }
+    #helpLabel { display:block; color:var(--red); margin-bottom:6px; }
+    #helpSprite { display:flex; align-items:center; gap:8px; margin-top:12px; }
+    #helpSprite canvas { width:64px; height:88px; image-rendering:pixelated; }
+    #helpSprite #helpTerry { border:0; padding:0; background:transparent; flex:none; }
+    #helpActions { display:flex; flex-wrap:wrap; gap:6px; }
+    #helpActions button { width:auto; white-space:normal; font-size:11px; }
+    #helpSprite button { width:auto; white-space:normal; }
+    @media (prefers-reduced-motion:reduce) { .wtitle > span, .wmenu { animation:none; } }
+    @media (max-width:979.98px) {
+      body { padding-bottom:68px; }
+      header { width:100%; padding:4px 10px; }
+      header .logo, header p { display:none; }
+      header h1 { font-size:11px; }
+      #topbar { padding:2px 6px; }
+      #tb-key, #tb-date, #tb-time, #topbar .status > span:nth-child(4) { display:none; }
+      #mobileBar { display:flex; position:sticky; top:0; z-index:900; gap:6px; padding:5px 8px; background:var(--blue); }
+      #mobileBar button { width:auto; min-height:30px; text-align:center; flex:1; }
+      main.stage { justify-content:flex-start; }
+      .desktop-row { gap:0; padding:0; }
+      .col-left, .col-right { display:contents; }
+      .col-center { width:100%; }
+      .toolbar { display:none; position:fixed; top:58px; left:12px; right:12px; width:auto; max-height:calc(100dvh - 140px); overflow-y:auto; margin:0; z-index:2000000 !important; }
+      body.menu-open .toolbar { display:flex; }
+      body.menu-open #menuShade { display:block; position:fixed; inset:0; z-index:1999999; background:repeating-conic-gradient(#000 0 25%, transparent 0 50%) 0 0 / 2px 2px; }
+      #frame:not(.fsmode):not([data-floating]) { margin:4px 0; max-width:100%; padding:0; }
+      canvas#canvas { width:calc(100vw - 24px); max-width:calc((100dvh - 140px)*4/3); height:auto; }
+      .keyswin { position:fixed; bottom:env(safe-area-inset-bottom,0px); left:0; right:0; margin:0; padding:4px; z-index:900; }
+      #keysbar { flex-wrap:nowrap; justify-content:flex-start; overflow-x:auto; padding:2px; touch-action:pan-x; }
+      #keysbar button { flex:0 0 auto; min-height:30px; min-width:36px; }
+      #guide { display:none; position:fixed; left:12px; top:64px; width:calc(100vw - 24px); max-height:calc(100dvh - 150px); margin:0; }
+      #guide.help-open { display:flex; }
+      .overlay { padding:16px 12px 76px; }
+      .overlay > .win { max-width:calc(100vw - 24px); max-height:calc(100dvh - 110px); }
+      footer { margin:8px; font-size:10px; line-height:1.3; }
+      #joy { width:84px; height:84px; left:4px; bottom:4px; }
+      #joyk { width:32px; height:32px; margin:-16px 0 0 -16px; }
+      .tbtn { width:42px; height:42px; }
+      #tL { right:56px; bottom:4px; } #tR { right:6px; bottom:4px; }
+      #tKb { right:6px; bottom:54px; width:42px; height:32px; }
+    }
     .fontwait body { visibility:hidden; }
   </style>
   <script>
@@ -287,16 +335,22 @@
     <img class="logo" src="assets/TempleOS.svg" width="416" height="470" alt="TempleOS" title="TempleOS" />
     <div class="htxt">
       <h1>TempleOS - the real 64-bit OS, booting in your browser</h1>
-      <p>The <b>complete, unmodified TempleOS V5.03</b> on <b>HEMU</b> - a clean-room x86-64 emulator written in
+      <p><b>TempleOS V5.03</b> on <b>HEMU</b> - a clean-room x86-64 emulator written in
          HolyC, compiled to WebAssembly. Real kernel, HolyC JIT, graphics, games, keyboard &amp; mouse.
          <a href="https://github.com/ParkerrDev/TempleOS-Web">source &amp; build notes →</a></p>
     </div>
   </header>
 
+  <div id="mobileBar" aria-label="Desktop tools">
+    <button id="mobileMenu" aria-controls="desktopMenu" aria-expanded="false">Menu</button>
+    <button id="mobileFull">Fullscreen</button>
+    <button id="mobileHelp">Help</button>
+  </div>
+  <div id="menuShade"></div>
   <main class="stage">
   <div class="desktop-row">
     <div class="col-left">
-      <div class="toolbar win" data-title="Menu">
+      <div id="desktopMenu" class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
         <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico"><svg><use href="#i-pause"/></svg></span> Pause</button>
         <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico"><svg><use href="#i-restart"/></svg></span> Restart</button>
@@ -309,6 +363,8 @@
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico"><svg><use href="#i-search"/></svg></span> Terry Search</button>
         <button id="chatBtn" title="Talk with everyone else on the site right now"><span class="ico"><svg><use href="#i-chat"/></svg></span> Chat<span id="chatUnread"></span></button>
         <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico"><svg><use href="#i-mouse"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
+        <button id="settingsBtn"><span class="ico"><svg><use href="#i-window"/></svg></span> Settings</button>
+        <button id="helpBtn"><span class="ico"><svg><use href="#i-window"/></svg></span> Terry &amp; Help</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico"><svg><use href="#i-touch"/></svg></span> Touch controls</button>
       </div>
       <div class="win keyswin" data-title="Keys"><span class="close">[X]</span><div id="keysbar">
@@ -341,9 +397,9 @@
         </script>
         <div id="touchui">
           <div id="joy"><div id="joyk"></div></div>
-          <div id="tKb" class="tbtn" title="open keyboard">⌨︎</div>
-          <div id="tL" class="tbtn">L</div>
-          <div id="tR" class="tbtn">R</div>
+          <button id="tKb" class="tbtn" title="Open keyboard" aria-label="Open keyboard">⌨︎</button>
+          <button id="tL" class="tbtn" aria-label="Left mouse button">L</button>
+          <button id="tR" class="tbtn" aria-label="Right mouse button">R</button>
         </div>
         <button id="fsExit" type="button" title="exit fullscreen" aria-label="exit fullscreen">[X]</button>
         <div id="loadui">
@@ -354,15 +410,19 @@
     </div>
 
     <div class="col-right">
-      <div id="guide" class="win" data-title="Help">
+      <div id="guide" class="win" data-title="Terry &amp; Help">
         <span class="close">[X]</span>
-        <b>Click the screen</b>, then move the mouse and type - you're using the real OS.
-        <b>Esc</b> releases a captured mouse into hybrid mode. Click Capture mouse to capture again. The Keys window’s Esc button sends Esc to TempleOS to exit a game.
-        Press <kbd>Ctrl+M</kbd> for the games menu, click a sprite to play - many games open on a title/setup
-        screen, so press <kbd>Space</kbd> or <kbd>Enter</kbd> to start (both are in the Keys window for touch). <kbd>F7</kbd> draws a God word.
-        Fullscreen enlarges the OS; Esc still releases a captured mouse.
+        <div id="helpBody">
+          <h2 id="helpContext">TempleOS</h2>
+          <div id="helpBubble"><small id="helpLabel">Desktop tip</small><p id="helpText">Click the screen to use TempleOS. Ctrl+M opens its games menu.</p><a id="helpSource" hidden target="_blank" rel="noopener">Watch source</a></div>
+          <div id="helpSprite">
+            <button id="helpTerry" type="button" aria-label="Next tip from Terry"><canvas id="terrySprite" width="128" height="176" role="img" aria-label="Terry A. Davis, animated TempleOS sprite"></canvas></button>
+            <button id="helpNext" type="button">Next tip</button>
+            <button id="helpQuotes" type="button" aria-pressed="false">Terry quotes</button>
+          </div>
+        </div>
+        <div id="helpActions"></div>
       </div>
-      <div class="win terrywin" data-title="Terry"><span class="close">[X]</span><canvas id="terrySprite" width="128" height="176" role="img" aria-label="Terry A. Davis, animated TempleOS sprite"></canvas></div>
     </div>
   </div>
 

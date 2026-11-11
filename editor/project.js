@@ -35,6 +35,6 @@ export function compileNativeProject({source,filename='program.HC',files=[]}){
       throw new Error(`${from}: include not in this game project: ${path}`);
     },
   });
-  if(result.diagnostics.length||result.warnings.length)throw new Error([...result.diagnostics,...result.warnings].join('\n'));
+  if(result.diagnostics.length)throw new Error(result.diagnostics.join('\n'));
   return result;
 }

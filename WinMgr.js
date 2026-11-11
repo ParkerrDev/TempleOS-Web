@@ -1,151 +1,274 @@
-//The window manager: TempleOS's chrome on every window, raising, dragging,
-//and the windows the Menu opens, each loaded the first time it opens.
-const $ = (id) => document.getElementById(id);
-let zTop = 1000;   // one stack for every window, overlay and video window
-let unsized = [];   // dressed windows whose title has not been sized
-const closeWin = (w) => { w.style.display = "none"; if (w._ph) { w._ph.remove(); w._ph = null; } };
-const makeDraggable = (w, handle, raiseFn) => {
-  const raise = raiseFn || (() => { w.style.zIndex = ++zTop; });
-  w.addEventListener("pointerdown", () => { if (w.dataset.floating) raise(); }, true);
-  handle.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "touch") return;   // touch never moves windows; the bar pans the page like everything else
-    if (e.target.closest(".close,button,select,a,input,textarea")) return;
-    const r = w.getBoundingClientRect();
-    if (!w.dataset.floating) {
-      if (!w.closest(".overlay")) {                       // overlays are already fixed-context
-        const ph = document.createElement("div");
-        ph.className = "win-ph"; ph.style.width = r.width + "px"; ph.style.height = r.height + "px";
-        ph.style.flex = "0 0 auto"; ph.style.margin = getComputedStyle(w).margin;
-        w.parentNode.insertBefore(ph, w); w._ph = ph;
-      }
-      w.dataset.floating = "1";
-      w.style.position = "fixed"; w.style.margin = "0";
-      w.style.left = r.left + "px"; w.style.top = r.top + "px";
-      w.style.width = r.width + "px";   // height stays auto so content can grow (e.g. Menu's reopen buttons)
-    }
-    raise();
-    const sx = e.clientX - parseFloat(w.style.left), sy = e.clientY - parseFloat(w.style.top);
-    const move = (ev) => {
-      w.style.left = Math.max(40 - w.offsetWidth, Math.min(innerWidth - 40, ev.clientX - sx)) + "px";
-      w.style.top = Math.max(0, Math.min(innerHeight - 24, ev.clientY - sy)) + "px";
-    };
-    const up = () => { handle.removeEventListener("pointermove", move); handle.removeEventListener("pointerup", up); handle.removeEventListener("pointercancel", up); };
-    try { handle.setPointerCapture(e.pointerId); } catch {}
-    handle.addEventListener("pointermove", move);
-    handle.addEventListener("pointerup", up);
-    handle.addEventListener("pointercancel", up);
-    e.preventDefault();
-  });
-};
-// border-image cells, painted to the EXACT framebuffer-measured patterns.
-// focused (double): V = 2W 2B 1W 2B 1W · H = 2W 1B 1W 1B 3W; unfocused (single): centered strokes.
-{ // 24x24 border-image, 8px cells, the 1:1 framebuffer-measured patterns.
-  // Corners are proper 90-degree JOINS (the lines turn, they never cross):
-  // outer stroke turns at its own offset, inner stroke at its deeper offset.
-  const mk = (focused) => {
-    const c = document.createElement("canvas"); c.width = c.height = 42;
-    const g = c.getContext("2d");
-    g.fillStyle = "#fff"; g.fillRect(0, 0, 42, 42);
-    g.fillStyle = "#0000A8";
-    // [offset, thickness] from the outside. V = vertical strokes (2px), H = horizontal (1px).
-    const V = focused ? [[3, 3], [8, 3]] : [[5, 3]];
-    const H = focused ? [[3, 2], [7, 2]] : [[5, 2]];
-    // edge bands (the middle 8px slice of each side)
-    for (const [o, t] of H) { g.fillRect(14, o, 14, t); g.fillRect(14, 42 - o - t, 14, t); }
-    for (const [o, t] of V) { g.fillRect(o, 14, t, 14); g.fillRect(42 - o - t, 14, t, 14); }
-    // corners: each V/H stroke pair turns at the SAME rank (outer with outer, inner with inner)
-    for (let i = 0; i < V.length; i++) {
-      const [vo, vt] = V[i], [ho, ht] = H[i];
-      // top-left: vertical run from the horizontal stroke down; horizontal run from the vertical stroke right
-      g.fillRect(vo, ho, vt, 28 - ho);               // down into the left edge band
-      g.fillRect(vo, ho, 28 - vo, ht);               // right into the top edge band
-      g.fillRect(42 - vo - vt, ho, vt, 28 - ho);     // top-right
-      g.fillRect(14, ho, 28 - vo, ht);
-      g.fillRect(vo, 14, vt, 28 - ho);               // bottom-left
-      g.fillRect(vo, 42 - ho - ht, 28 - vo, ht);
-      g.fillRect(42 - vo - vt, 14, vt, 28 - ho);     // bottom-right
-      g.fillRect(14, 42 - ho - ht, 28 - vo, ht);
-    }
-    return c.toDataURL();
-  };
-  const st = document.createElement("style");
-  st.textContent = `.win, #frame { border-image:url("${mk(0)}") 14 fill / 14px repeat; }
-.win.active, #frame.active { border-image:url("${mk(1)}") 14 fill / 14px repeat; }`;
-  document.head.appendChild(st);
+import {PointerDrag} from "./WinPointer.js";
+const $=(id)=>document.getElementById(id);
+const CELL=12; //a text cell: the site's 12px text is the 8x8 font at 1.5x
+let z_top=1000; //one stack for every window, overlay and video window
+
+function Clamp(n,lo,hi)
+{
+  return Math.min(Math.max(n,lo),hi);
 }
-const setActive = (w) => { for (const a of document.querySelectorAll(".active")) a.classList.remove("active"); w.classList.add("active");
-  // ...and RAISE it: a window inside an overlay raises the overlay (its stacking context);
-  // a static-flow window gets position:relative so z-index applies without moving it.
-  const ov = w.closest(".overlay");
-  if (ov) ov.style.zIndex = ++zTop;
-  else { if (getComputedStyle(w).position === "static") w.style.position = "relative"; w.style.zIndex = ++zTop; } };
-const raise = (el) => { el.style.zIndex = ++zTop; };
-// dress(): give ANY element the full TempleOS window chrome (bar, marquee, vertical title,
-// corner handles, dragging). opts.menuReopen = the static-desktop close behavior (hide +
-// reopen button in Menu); opts.onClose = custom [X] handler (e.g. video windows DESTROY);
-// opts.raise = custom z-raise (video windows stack in their own tier above the overlay).
-const dress = (w, opts = {}) => {
-  const bar = document.createElement("div"); bar.className = "wbar";
-  const mn = document.createElement("span"); mn.className = "wmenu"; mn.textContent = "MENU";
-  const gap = document.createElement("span"); gap.className = "wgap";
-  const ti = document.createElement("div"); ti.className = "wtitle";
-  const ts = document.createElement("span"); ti.appendChild(ts);
-  bar.append(mn, gap, ti);
-  const gap2 = document.createElement("span"); gap2.className = "wgap"; bar.appendChild(gap2);
-  let x = w.querySelector(":scope > .close");
-  if (x) bar.appendChild(x);
-  if (x && opts.onClose) x.addEventListener("click", opts.onClose);
-  else if (x && opts.menuReopen && w.id !== "frame" && !w.closest(".overlay") && !w.classList.contains("toolbar")) {
-    // closing reveals a reopen button in the Menu window; reopening hides it again
-    const rb = document.createElement("button");
-    rb.style.display = "none";
-    rb.innerHTML = '<span class="ico"><svg><use href="#i-window"/></svg></span> ' + w.dataset.title;
-    document.querySelector(".toolbar").appendChild(rb);
-    x.addEventListener("click", () => { closeWin(w); rb.style.display = ""; });
-    rb.addEventListener("click", () => { w.style.display = ""; rb.style.display = "none"; w.classList.add("active"); });
+
+function Snap(n)
+{//Windows move and change size in whole text cells, as TempleOS's do.
+  return Math.round(n/CELL)*CELL;
+}
+
+function Frac(pos,range)
+{//pos as a percentage of range, 0 when nothing scrolls
+  if (range<1)
+    return 0;
+  return 100*pos/range;
+}
+
+function Scrolls(el)
+{
+  return /auto|scroll/.test(getComputedStyle(el).overflow);
+}
+
+export function WinRaise(el)
+{
+  el.style.zIndex=++z_top;
+}
+
+export function WinFocus(w)
+{//Gives w the double border and the top of the stack. A window in an
+//overlay raises its overlay.
+  let a;
+  for (a of document.querySelectorAll(".win.active,#frame.active"))
+    a.classList.remove("active");
+  w.classList.add("active");
+  WinRaise(w.closest(".overlay") || w);
+  w.dispatchEvent(new CustomEvent("winfocus",{bubbles:true,
+    detail:{id:w.id}}));
+}
+
+function WinClose(w)
+{
+  w.style.display="none";
+  if (w._ph) {
+    w._ph.remove();
+    w._ph=null;
   }
-  const v = document.createElement("span"); v.className = "wvert";
-  const vt = w.dataset.title.split("·")[0].trim();
-  const vs = document.createElement("span"); vs.textContent = vt.length > 16 ? vt.slice(0, 15).trimEnd() + "…" : vt;   // long video titles would run down the whole border
-  v.appendChild(vs);
-  for (const c of ["tr", "bl"]) { const d = document.createElement("div"); d.className = "wcorn " + c; w.appendChild(d); }
-  w.prepend(v); w.prepend(bar);
-  w._title = w.dataset.title; w.removeAttribute("data-title"); unsized.push(w);
-  w.addEventListener("pointerdown", () => setActive(w), true);
-  makeDraggable(w, bar, opts.raise);
-  return w;
-};
-// cycling border titles, DocBorderNew-style: "title..." repeated with NO whitespace, scrolled
-// seamlessly (content = 2x a repeated unit, animate to -50%). Size AFTER layout.
-const sizeMarquee = (w) => {
-  const meas = document.createElement("span");
-  meas.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-size:12px;font-family:'TempleOS','dos_vga',monospace";
-  document.body.appendChild(meas);
-  const ti = w.querySelector(".wtitle"), ts = ti && ti.firstChild;
-  if (ts) {
-    const unit = w._title + "...";
-    meas.textContent = unit;
-    const upx = Math.max(20, meas.getBoundingClientRect().width);
-    const n = Math.max(2, Math.ceil((ti.getBoundingClientRect().width || 400) / upx) + 1);
-    ts.textContent = unit.repeat(n * 2);
-    ts.style.animationDuration = ((upx * n) / 64).toFixed(2) + "s";   // DOC_SCROLL_SPEED(8) * FONT_WIDTH(8) = 64 px/s
+}
+
+function WinFloat(w)
+{//Takes w out of the page's flow where it stands, leaving a placeholder
+//its size, so it can move and change size.
+  let r=w.getBoundingClientRect(),ph;
+  if (w.dataset.floating)
+    return;
+  if (!w.closest(".overlay")) {
+    ph=document.createElement("div");
+    ph.className="win-ph";
+    ph.style.cssText="flex:0 0 auto;width:"+r.width+"px;height:"+
+      r.height+"px;margin:"+getComputedStyle(w).margin;
+    w.before(ph);
+    w._ph=ph;
   }
-  meas.remove();
-};
-const wins = [...document.querySelectorAll("[data-title]")];
-for (const w of wins) dress(w, { menuReopen: true });
-setActive($("frame"));
-requestAnimationFrame(MarqueesSize);
-function MarqueesSize()
-{//Sizes the title of each window shown since it was dressed.
-  let w,rest=[];
-  for (w of unsized)
-    if (w.offsetWidth)
-      sizeMarquee(w);
+  w.dataset.floating="1";
+  w.style.position="fixed";
+  w.style.margin="0";
+  w.style.left=r.left+"px";
+  w.style.top=r.top+"px";
+  w.style.width=r.width+"px";
+}
+
+function BorderDown(e)
+{//A press on the border, taken as WinMgr.HC takes one: the top row and the
+//left column move the window, the bottom row sizes its height, the right
+//column its width, and the bottom right corner both.
+  let w=e.currentTarget,t=e.target,r=w.getBoundingClientRect(),x,y,
+    width,height,move=t.closest(".wbar,.wvert") ||
+      t==w && (e.clientY<r.top+CELL || e.clientX<r.left+CELL),
+    sy=t.classList.contains("wszb") || t.classList.contains("wszcorner"),
+    sx=t.classList.contains("wszr") || t.classList.contains("wszcorner");
+  function Move(ev)
+  {
+    let dx=Snap(ev.clientX-e.clientX),dy=Snap(ev.clientY-e.clientY);
+    if (move) {
+      w.style.left=Clamp(x+dx,4*CELL-width,innerWidth-4*CELL)+"px";
+      w.style.top=Clamp(y+dy,0,innerHeight-2*CELL)+"px";
+    } else {
+      if (sx)
+        w.style.width=Math.max(width+dx,12*CELL)+"px";
+      if (sy)
+        w.style.height=Math.max(height+dy,5*CELL)+"px";
+      w.dataset.sized="1";
+      w.dispatchEvent(new Event("winsize"));
+    }
+  }
+  if (e.button || t.closest(".wmenu,.close,.wsv,.wsh") || !move && !sx && !sy)
+    return;
+  WinFloat(w);
+  x=parseFloat(w.style.left);
+  y=parseFloat(w.style.top);
+  width=w.offsetWidth;
+  height=w.offsetHeight;
+  PointerDrag(e,Move);
+}
+
+function WinDoc(w)
+{//What scrolls in w: what scrolled last, or else the first thing that can.
+  let el;
+  if (w._doc && w.contains(w._doc))
+    return w._doc;
+  for (el of w.querySelectorAll("*"))
+    if ((el.scrollHeight>el.clientHeight || el.scrollWidth>el.clientWidth) &&
+	  Scrolls(el))
+      return w._doc=el;
+  return null;
+}
+
+function WinScrolled(e)
+{//The two scroll boxes follow what scrolls in the window: at the start of
+//its document they straddle the top right and bottom left corners, at the
+//end the bottom right (WinDerivedScrollValsUpdate, Adam/Ctrls/CtrlsA.HC).
+  let w=e.currentTarget,el=e.target;
+  if (!Scrolls(el))
+    return;
+  w._doc=el;
+  w._sh.style.left="calc("+Frac(el.scrollLeft,el.scrollWidth-el.clientWidth)+
+    "% - 6px)";
+  w._sv.style.top="calc("+Frac(el.scrollTop,el.scrollHeight-el.clientHeight)+
+    "% - 6px)";
+}
+
+function BoxDown(e)
+{//A scroll box swaps its colors while it is held, and dragging it scrolls
+//the window's document to match (LeftClickVWinScroll).
+  let b=e.currentTarget,w=b.parentNode,el=WinDoc(w);
+  function Move(ev)
+  {
+    let r=w.getBoundingClientRect();
+    if (!el)
+      return;
+    if (b==w._sh)
+      el.scrollLeft=Clamp((ev.clientX-r.left-w.clientLeft)/w.clientWidth,0,1)*
+	    (el.scrollWidth-el.clientWidth);
     else
-      rest.push(w);
-  unsized=rest;
+      el.scrollTop=Clamp((ev.clientY-r.top-w.clientTop)/w.clientHeight,0,1)*
+	    (el.scrollHeight-el.clientHeight);
+  }
+  function Up()
+  {
+    b.classList.remove("on");
+  }
+  if (e.button)
+    return;
+  b.classList.add("on");
+  Move(e);
+  PointerDrag(e,Move,Up);
 }
+
+function WinMenu()
+{//MENU brings up the Menu, as Ctrl+M brings up TempleOS's. (The screen's
+//own MENU sends the guest Ctrl+M: Os.js.)
+  let m=document.querySelector(".toolbar");
+  MenuShow(true);
+  WinFocus(m);
+  m.scrollIntoView({block:"nearest"});
+}
+
+function WinDown(e)
+{
+  WinFocus(e.currentTarget);
+}
+
+export function WinTitle(w,title)
+{//The title goes in the top row as DocBorderNew puts it, "title..."
+//inverted in 15 columns, scrolling 8 chars a second (DocRecalc.HC), and
+//its first word, 8 chars at most, down the left column, where
+//DocBorderLstDraw puts a document's desc.
+  let unit=title+"...",n=Math.ceil(15/unit.length)+1,
+    s=w.querySelector(".wtitle > span");
+  s.textContent=unit.repeat(2*n);
+  s.style.animationDuration=n*unit.length/8+"s";
+  w.querySelector(".wvert > span").textContent=title.split(" ")[0].slice(0,8);
+}
+
+function Chrome(w,cls)
+{
+  let el=document.createElement("div");
+  el.className="wc "+cls;
+  w.append(el);
+  return el;
+}
+
+export function WinDress(w,opts={})
+{//Puts TempleOS's chrome on w: the top row with MENU, the title and [X],
+//the desc down the left column, the two scroll boxes, and the handles on
+//the right and bottom edges. opts.onClose is what [X] does in place of
+//hiding w; with opts.menuReopen a closed window leaves a button in the
+//Menu that opens it again.
+  let bar=Chrome(w,"wbar"),x=w.querySelector(":scope > .close"),
+    title=w.dataset.title,rb;
+  function Close()
+  {
+    WinClose(w);
+    rb.style.display="";
+  }
+  function Reopen()
+  {
+    w.style.display="";
+    rb.style.display="none";
+    WinFocus(w);
+  }
+  bar.innerHTML='<span class="wmenu">MENU</span>'+
+    '<div class="wtitle"><span></span></div>';
+  Chrome(w,"wvert").innerHTML="<span></span>";
+  w._sv=Chrome(w,"wsv");
+  w._sh=Chrome(w,"wsh");
+  Chrome(w,"wszr");
+  Chrome(w,"wszb");
+  Chrome(w,"wszcorner");
+  if (w.id!="frame")
+    bar.firstChild.addEventListener("click",WinMenu);
+  ButtonDress(bar.firstChild,"Open menu");
+  if (x) {
+    ButtonDress(x,"Close "+title);
+    bar.append(x);
+    if (opts.onClose)
+      x.addEventListener("click",opts.onClose);
+    else if (opts.menuReopen) {
+      rb=document.createElement("button");
+      rb.style.display="none";
+      rb.innerHTML='<span class="ico"><svg><use href="#i-window"/></svg>'+
+	    '</span> '+title;
+      document.querySelector(".toolbar").append(rb);
+      x.addEventListener("click",Close);
+      rb.addEventListener("click",Reopen);
+    }
+  }
+  WinTitle(w,title);
+  w.removeAttribute("data-title");
+  w.addEventListener("pointerdown",WinDown,true);
+  w.addEventListener("pointerdown",BorderDown);
+  w.addEventListener("scroll",WinScrolled,true);
+  w._sv.addEventListener("pointerdown",BoxDown);
+  w._sh.addEventListener("pointerdown",BoxDown);
+  return w;
+}
+
+function ButtonDress(el,label)
+{
+  el.setAttribute("role","button");
+  el.setAttribute("tabindex","0");
+  el.setAttribute("aria-label",label);
+  el.addEventListener("keydown",ButtonKey);
+}
+
+function ButtonKey(e)
+{
+  if (e.key=="Enter" || e.key==" ") {
+    e.preventDefault();
+    e.currentTarget.click();
+  }
+}
+
+for (const w of document.querySelectorAll("[data-title]"))
+  WinDress(w,{menuReopen:w.id!="frame" && w.id!="guide" &&
+    !w.classList.contains("toolbar")});
+WinFocus($("frame"));
 
 function OvFree(ov)
 {//The [X] at the screen's corner sends the dark backdrop away, and the
@@ -154,7 +277,8 @@ function OvFree(ov)
   function Free()
   {
     ov.classList.add("free");
-    raise(ov);
+    ov.setAttribute("aria-modal","false");
+    WinRaise(ov);
   }
   b.className="ovfree";
   b.title="close the dark backdrop - the window joins the desktop "+
@@ -170,7 +294,7 @@ export function WinAdd(css,html)
   document.head.appendChild(st);
   box.innerHTML=html;
   for (el of box.querySelectorAll("[data-title]"))
-    dress(el);
+    WinDress(el);
   for (el of box.querySelectorAll(".overlay"))
     OvFree(el);
   document.body.append(...box.children);
@@ -178,13 +302,15 @@ export function WinAdd(css,html)
 
 const WINS={editorBtn:"./EditorWin.js",gamesBtn:"./games.js",
   spritesBtn:"./SpritesWin.js",godBtn:"./GodWin.js",diskBtn:"./DiskWin.js",
-  tsBtn:"./SearchWin.js",chatBtn:"./ChatWin.js"};
+  tsBtn:"./SearchWin.js",chatBtn:"./ChatWin.js",helpBtn:"./HelpWin.js",
+  settingsBtn:"./SettingsWin.js"};
 
 async function WinOpen(id)
 {//Opens the window a Menu button names, loading its module the first time.
   let m=await import(WINS[id]);
   m.Open();
-  requestAnimationFrame(MarqueesSize);
+  MenuShow(false);
+  document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id}}));
 }
 
 function MenuClick(e)
@@ -208,5 +334,26 @@ function PageLoaded()
 for (const id in WINS)
   $(id).addEventListener("click",MenuClick);
 addEventListener("load",PageLoaded);
-export {dress as WinDress,sizeMarquee as WinMarquee,setActive as WinFocus,
-  raise as WinRaise};
+
+function MenuShow(open)
+{
+  document.body.classList.toggle("menu-open",open);
+  $("mobileMenu").setAttribute("aria-expanded",String(open));
+  if (open)
+    document.querySelector(".toolbar").style.display="";
+}
+
+$("mobileMenu").addEventListener("click",function () {
+  MenuShow(!document.body.classList.contains("menu-open"));
+});
+$("menuShade").addEventListener("click",function () {MenuShow(false);});
+document.querySelector(".toolbar .close").addEventListener("click",
+  function () {
+    MenuShow(false);
+    if (!matchMedia("(max-width:980px)").matches)
+      document.querySelector(".toolbar").style.display="none";
+  });
+$("mobileFull").addEventListener("click",function () {$("fsBtn").click();});
+$("mobileHelp").addEventListener("click",function () {WinOpen("helpBtn");});
+
+import("./HelpWin.js").catch(console.error);

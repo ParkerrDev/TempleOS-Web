@@ -1,6 +1,7 @@
 // TempleOS uncompressed CDC/GR codec. Layout verified against Adam/Gr/GrDC.HC.
 // PNG2GR by greg0-4 informed the format investigation; this is an independent implementation.
-import {PALETTE,mapPalette} from './sprite-color.js';
+import {mapPalette} from './sprite-color.js';
+import {PALETTE} from './framebuffer.js';
 export {PALETTE};
 export const MAX_PIXELS = 20_000_000;
 export const MAX_FRAMES = 600;
