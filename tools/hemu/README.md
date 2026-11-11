@@ -12,6 +12,8 @@ node tools/hemu/keyboard.test.mjs
 node tools/hemu/rate.test.mjs
 node tools/hemu/capture.test.mjs
 node tools/hemu/barrier.test.mjs
+node tools/hemu/snapshot-format.test.mjs
+node --max-old-space-size=3072 tools/hemu/worker-snapshot.test.mjs
 node --max-old-space-size=2048 tools/hemu/raster.test.mjs
 node --max-old-space-size=3072 tools/hemu/worker.test.mjs
 node --max-old-space-size=3072 tools/hemu/worker-rate.test.mjs
@@ -90,3 +92,31 @@ native execution API and disk are ready. Restored sessions omit welcome.
 rounding and deferred integer flags, plus all conditional moves and byte sets
 across flag combinations and operand widths. It also checks that an untaken
 32-bit CMOV clears the upper half of its destination, as x86 specifies.
+
+## Full machine snapshots
+
+`exportSnapshot` writes a gzip-compressed HEMUSNP1 container. Version 1 stores
+validated JSON metadata, the exact SHA-256-identified engine WASM, every byte
+of its linear memory, and the whole current disk. This includes all CPU cores,
+x87/SSE registers, device queues, clocks, palette, guest RAM, scratch mailboxes,
+and disk writes. Host allocator/input/settings state and a running game's
+mailbox are recorded separately. Compiled JIT functions are rebuilt on restore.
+Saving stops every core; pending guest commands must finish first. Pause now
+stops application cores as well as the display core.
+
+Call `SnapshotInspect(gz)` before creating workers. It returns null for the
+original stock RAM-only format; otherwise `{meta,wasm}`. For a four-core save,
+instantiate APs with that wasm and a shared memory (initial 512, maximum 8192
+pages), and pass the BSP `smp:{mem,ctrl,ipiAddr:meta.ipiAddr,ncore:meta.cores}`.
+The BSP's existing `init.gz` detects and restores either format. Full saves
+supply their own disk/settings and retain pause; `restored` signals success.
+Every AP must finish instantiating before the BSP writes restored memory.
+
+Validation checks version, dimensions, module hash, metadata and full gzip
+integrity/length before a restored CPU runs. Disk restore retains nonzero
+128 KiB chunks so empty disk space does not become resident host memory.
+This remains a large machine: 384 MiB of guest RAM plus emulator state; a test
+save with the bundled 256 MiB disk compresses to about 53.5 MB. It is not a
+small-memory guarantee for every phone. The tests compare CPU/device bytes
+and the saved frame across fresh one- and four-core workers, verify disk
+readback, game exclusivity and saved 120 Hz settings returning to stock 30 Hz.

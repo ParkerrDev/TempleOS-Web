@@ -21,6 +21,8 @@ export function createGuestInput({guest,memory,base,onState=()=>{}}) {
     const hint=state?{capture:state.capture,game:state.game}: {capture:false,game:false};
     const key=JSON.stringify(hint);if(key!==lastHint){lastHint=key;onState(hint);}
   }
-  return {accept,beforeFrame,afterFrame:()=>{},
+  function save() {return {x,y,b,wheel,dx,dy,relative,reset,frameX,frameY};}
+  function restore(p) {({x,y,b,wheel,dx,dy,relative,reset,frameX,frameY}=p);lastHint='';}
+  return {accept,beforeFrame,save,restore,afterFrame:()=>{},
     x:()=>BigInt(frameX),y:()=>BigInt(frameY),buttons:()=>BigInt(b),wheel:()=>BigInt(wheel)};
 }

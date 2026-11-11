@@ -123,6 +123,7 @@ async function runBsp() {
 }
 
 async function runAp() {
+  Atomics.store(ctrl,8+core,1);Atomics.notify(ctrl,8+core);
   Atomics.wait(ctrl, CTRL.READY, 0);                         // block until BSP loaded snapshot + seeded regs
   gBase = Number(inst.exports.RamBase());                    // APs never run snapLoad
   inst.exports.CoreAttach();                                 // this core's state to its own JIT

@@ -452,13 +452,33 @@ export function createGuestExec(opts) {
       capture:!!(valid && ((!rd8(INPUT.show)) || (drawing && (inhibit & 0x28) === 0x28))),
       task, game:!!activeLaunch};
   }
+  function snapshot() {
+    if (!ready || inflight || callQ.length || jobs.length ||
+        [...reqs.values()].some(r=>r!==activeLaunch && !["done","failed","error"].includes(r.state)) ||
+        launches.some(j=>!j.spawned || !j.started))
+      throw new Error("Wait for the current guest command to finish before saving.");
+    const j=launches[0];
+    return j?{name:j.r.name,task:j.r.task,slot:(j.mb-scrBase-SCR.MBOX)/SCR.MBOX_SZ}:null;
+  }
+  function restoreLaunch(saved) {
+    if (!saved) return;
+    const slot=saved.slot,index=mboxFree.indexOf(slot);
+    if (!ready || index<0 || !isTask(saved.task)) throw new Error("Saved game task is invalid");
+    mboxFree.splice(index,1);
+    const r={id:"restored-game",op:"launch",name:saved.name,task:saved.task,t0:Date.now(),state:"running",p:{}};
+    activeLaunch=r;busy.set(r.task,r);reqs.set(r.id,r);
+    launches.push({r,mb:mboxAddr(slot),spawned:true,started:true,resolve:result=>{
+      mboxFree.push(slot);activeLaunch=null;busy.delete(r.task);emit(r,result.state,result);
+    }});
+    emit(r,"running",{ok:true,task:hex(r.task),msg:r.name+" restored"});
+  }
   function frameStats() {
     if (!ready || !DISPLAY.fps || !DISPLAY.updates) return null;
     views();
     const fps = dv.getFloat64(gBase + DISPLAY.fps, true), updates = dv.getBigUint64(gBase + DISPLAY.updates, true);
     return Number.isFinite(fps) && fps >= 0 && fps <= 10000 ? {fps, updates: Number(updates)} : null;
   }
-  return { probe: Probe, tick, info, inputState, frameStats, taskInfo, taskRing, exec, include, launch, writeFile, mkdir, popup, call, status: (id) => (reqs.get(id) || {}).last || null,
+  return { snapshot, restoreLaunch, probe: Probe, tick, info, inputState, frameStats, taskInfo, taskRing, exec, include, launch, writeFile, mkdir, popup, call, status: (id) => (reqs.get(id) || {}).last || null,
     funFind: FunFind, varFind: VarFind, memberFind: MemberFind,
     get ready() { return ready; }, syms: S, vars: G, offsets: { CT, CJ, CJC }, scratch: { base: scrBase, size: scrSize, data: scrBase + SCR.DATA, dataSize, text: scrBase + SCR.TEXT }, rd64, rd8, rdBytes, rdStr, wrBytes, wr64 };
 }

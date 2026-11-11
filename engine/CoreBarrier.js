@@ -11,7 +11,7 @@ export function CaptureBarrier(ctrl,cores,active,clock=performance.now.bind(perf
   }
   function Lock()
   {
-    if (!active())
+    if (held || !active())
       return true;
     seq=seq%0x7FFFFFFF+1;
     Atomics.store(ctrl,2,seq);

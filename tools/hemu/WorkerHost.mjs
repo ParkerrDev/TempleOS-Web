@@ -3,6 +3,7 @@
 //shared memory, and engine/hemu-smp-worker.js for each other core.
 import {Worker} from "node:worker_threads";
 import {readFileSync} from "node:fs";
+import {SnapshotInspect} from "../../engine/Snapshot.js";
 import {FONT} from "../../holyc-wasm/src/runtime/font.js";
 
 export const SITE=new URL("../../",import.meta.url);
@@ -122,7 +123,9 @@ export async function HemuBoot(opt)
     live="hemu/live-smp.bin.gz";
     wasm="build/hemu-smp.wasm";
   }
-  gz=readFileSync(new URL(live,SITE));
+  gz=opt.snapshot||readFileSync(new URL(live,SITE));
+  const saved=opt.snapshot?await SnapshotInspect(gz):null;
+  if (saved) opt={...opt,smp:saved.meta.cores===4?4:0};
   h.workers.push(WorkerNew("engine/hemu-worker.js"+(opt.nojit?"?nojit":"")));
   h.workers[0].on("message",MsgIn);
   h.workers[0].on("error",function WorkerErr(e) {console.log("worker threw: "+e.stack);});
@@ -135,7 +138,8 @@ export async function HemuBoot(opt)
     sc.ncore=opt.smp;
     mem=new WebAssembly.Memory({initial:512,maximum:8192,shared:true});
     ctrl=new SharedArrayBuffer(64);
-    wasm_bytes=readFileSync(new URL(wasm,SITE));
+    wasm_bytes=saved?saved.wasm:readFileSync(new URL(wasm,SITE));
+    if (saved) sc.globals.g_ipi_pending=saved.meta.ipiAddr;
     for (k=1;k<opt.smp;k++) {
       ap=WorkerNew("engine/hemu-smp-worker.js");
       ap.on("message",function ApMsg(m) {if (m.cmd=="error") console.log("ap: "+m.msg);});
