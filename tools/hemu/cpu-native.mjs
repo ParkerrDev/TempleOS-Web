@@ -7,7 +7,7 @@ import {createHemuHost} from "../../engine/host.js";
 const adapter=readFileSync(new URL("./CpuNativeHost.HC",import.meta.url),"latin1"),
   expand=source=>source.replace(/#include "([^"]+)"/g,(_,name)=>
     name==="host.HC"?adapter:expand(hemuFile(name))),
-  source=expand(hemuFile("test.HC"))+muldivSource()+atomSource()+stackSource()+cpuIdSource()+cmp16Source(),
+  source=expand(hemuFile("test.HC"))+muldivSource()+atomSource()+stackSource()+cpuIdSource()+cmp16Source()+cmpWriteSource(),
   hash=createHash("sha256").update(Buffer.from(source,"latin1")).digest("hex"),
   file=new URL("./cpu-native.json",import.meta.url);
 if(process.argv.includes("--record")) {
@@ -22,14 +22,14 @@ if(process.argv.includes("--record")) {
 }
 const expected=JSON.parse(readFileSync(file,"utf8"));
 assert.equal(hash,expected.sourceHash,"rerun original V5.03 after changing the interpreter or its native fixture");
-const compiled=compileHemu({filename:"test.HC",extraSource:muldivSource()+atomSource()+stackSource()+cpuIdSource()+cmp16Source()});assert.deepEqual(compiled.warnings,[]);
+const compiled=compileHemu({filename:"test.HC",extraSource:muldivSource()+atomSource()+stackSource()+cpuIdSource()+cmp16Source()+cmpWriteSource()});assert.deepEqual(compiled.warnings,[]);
 let output="";
 const host=createHemuHost({onText:text=>output+=text}),
   {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env});
 host.attach(instance);instance.exports.__rt_init();instance.exports.__main();
 assert.equal(output,expected.out);
 const total=Number(expected.out.match(/total guest instr=(\d+)/)[1]);
-console.log(`Full interpreter source compiles natively: 31 battery checks, multiply/divide, stack, split-field atomic, CPUID and 128-bit CAS vectors, and ${total.toLocaleString()} executed battery instructions agree in original V5.03 and WASM; zero badops.`);
+console.log(`Full interpreter source compiles natively: 31 battery checks, multiply/divide, stack, split-field atomic, CPUID, 128-bit CAS and write-cycle vectors, and ${total.toLocaleString()} executed battery instructions agree in original V5.03 and WASM; zero badops.`);
 
 function muldivSource() {
   const rows=readFileSync(new URL("./muldiv-oracle.txt",import.meta.url),"utf8").trim().split("\n"),
@@ -172,5 +172,38 @@ ${lines.join("\n")}
   "cmp16 native: %d passed, %d failed\\n",g_pass-before,g_fail;
 }
 Cmp16NativeCheck;
+`;
+}
+
+function cmpWriteSource() {
+  const rows=readFileSync(new URL("./cmpwrite-oracle.txt",import.meta.url),"utf8").trim().split("\n"),lines=[];
+  rows.forEach((row,index)=>{
+    const words=row.split(" "),[kind,size]=words.slice(0,2).map(Number),v=words.slice(5).map(n=>"0x"+n),
+      bytes=[...(size===2?[0x66]:size===8&&kind<2?[0x48]:[]),0x0F,kind===2?0xC7:size===1?0xB0:0xB1,kind===1?0xCA:0x0F],
+      code=bytes.reduce((word,byte,i)=>word|BigInt(byte)<<BigInt(i*8),0n);
+    lines.push(`  reg[0]=${v[1]};reg[2]=${v[2]};reg[3]=${v[3]};reg[1]=${v[4]};`,
+      `  reg[7]=0x3000;rfl=${v[5]};rip=4096;halted=0;`,
+      `  WrMem(0x3000,8,${v[0]});WrMem(4096,8,0x${code.toString(16).toUpperCase()});Step;`,
+      `  Check("cmpwrite ${index} mem",RdMem(0x3000,8),${v[6]});`);
+    [0,2,3,1].forEach((reg,i)=>lines.push(`  Check("cmpwrite ${index} R${reg}",reg[${reg}],${v[7+i]});`));
+    lines.push(`  Check("cmpwrite ${index} flags",rfl&0xED5,${v[11]});`,
+      `  Check("cmpwrite ${index} fault",halted,0);`);
+  });
+  for(const code of ["0x0FB10F","0x0FC70F"])lines.push(
+    "  reg[0]=1;reg[2]=0;reg[3]=3;reg[1]=4;reg[7]=0xFEE00300;",
+    "  g_ncore=4;g_icr_high[0]=1<<24;g_ipi_pending[1]=0;",
+    `  rip=4096;halted=0;rfl=0xAD7;WrMem(4096,8,${code});Step;`,
+    '  Check("cmpwrite IPI",g_ipi_pending[1],0x100);',
+    '  Check("cmpwrite IPI fault",halted,0);');
+  return `
+U0 CmpWriteNativeCheck()
+{//Native register results and the emulator's actual device write endpoint.
+  I64 before=g_pass;
+  g_ncore=1;
+${lines.join("\n")}
+  Check("cmpwrite native count",g_pass-before,${rows.length*7+4});
+  "cmpwrite native: %d passed, %d failed\\n",g_pass-before,g_fail;
+}
+CmpWriteNativeCheck;
 `;
 }

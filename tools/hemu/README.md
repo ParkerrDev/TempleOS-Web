@@ -224,6 +224,23 @@ record source-hashed native fixtures with CPU/compiler metadata; add `--record`
 on x86-64 to regenerate them. Reserved forms must
 retain faults without writing operands.
 
+`cmpwrite.test.mjs` catches failed unlocked CMPXCHG/CMPXCHG8B operations that
+omit their mandatory memory write cycle. It compares 72 physical and original
+V5.03 register/RAM results through 384 HEMU executions, observes real write
+calls, and checks 32 ICR command/latch side effects. The old engine fails the
+actual emulated IPI-mailbox check before any test-only write observation.
+An unconditional register write is also rejected: failed CMPXCHG32 preserves
+the destination's upper half on real hardware.
+
+Independent evidence includes 40 read-only-page write faults and a native
+QEMU/KVM APIC self-IPI probe. The latter sends one interrupt, then a failed
+CMPXCHG32 writes the old command back and sends a second interrupt; its saved
+IDT entry is restored afterward. This is separate from HEMU's simpler saved-
+guest ICR model, whose readback, widths and self-delivery are not claimed as a
+complete hardware APIC implementation. Guest page protection and architectural
+#PF delivery remain open. Set `HOLYC_QEMU_ORACLE` and pass `--record` to refresh
+the native and physical source-bound references.
+
 `cmpxchg16b.test.mjs` compares 768 original V5.03 results with a separate
 physical oracle, then makes 15,360 interpreter/JIT-fallback comparisons across
 private/shared RAM, aliases and coordinated core configurations. It checks
