@@ -166,11 +166,8 @@ function fIntValue(f,bits,trunc)
 // compile); it reads rip + hemu's g_jit_rip[]/g_jit_n[] (offsets from jitChain) to verify each block. ----
 let JITRIP = 0, JITN = 0, RUNTBL = null, RUNDISP = null, RASTERHLE = null;
 const runBudget=new WebAssembly.Global({value:"i64",mutable:true},0x7FFFFFFFn);
-// The native dispatch loop runs JIT'd blocks back-to-back without a host round-trip. PATH 1 = a normal
-// compiled block (g_jit_n[slot]>0): call_indirect it. PATH 2 (when an HLE host fn is wired) = an HLE block
-// (g_jit_n[slot]==-2): call RasterHLE INLINE - so the per-scanline GrHLine call doesn't break the chain
-// (it was 62% of all chain breaks -> a WASM<->JS<->WASM round-trip each). RasterHLE returns 1=handled (rip
-// already advanced past the call, continue) or 0=fall through (exit so the interpreter runs the real fn).
+// RasterHLE owns named-hook matching. Its availability must not depend on
+// the direct-mapped block cache: ordinary guest code can evict those slots.
 function buildRuntime() {
   if (!RIP || !JITRIP || !MEM) return; const rm = new Module();
   const left=rm.importGlobal("env","budget",VT.i64,true);
@@ -201,11 +198,10 @@ function buildRuntime() {
       f.local_get(4); i32c(f, 0x3FFFFFFF); f.op("i32_and"); i32c(f, 0); f.op("i32_ne");                                 // count != 0
       f.local_get(6); f.local_get(4); i32c(f, 30); f.op("i32_shr_u"); i32c(f, 1); f.op("i32_and"); f.op("i32_and"); f.op("i32_eqz");   // !(brk && IF-window flag)
       f.op("i32_and"); f.br_if(1);                                                                                      // chain on; else fall out (cpu.HC delivers)
+      f.local_get(1);f.return_(); //An IRQ or instruction fallback must reach Run before another hook.
     f.end();
-    if (HLE) {                                                        // PATH 2: g_jit_rip[slot]==rip && g_jit_n[slot]==-2 && ran<bud -> RasterHLE() inline
-      i32c(f, JITRIP); f.local_get(3); i32c(f, 8); f.op("i32_mul"); f.op("i32_add"); f.load("i32_load", 0, 2); f.local_get(2); f.op("i32_eq");
-      i32c(f, JITN); f.local_get(3); i32c(f, 8); f.op("i32_mul"); f.op("i32_add"); f.load("i32_load", 0, 2); i32c(f, -2); f.op("i32_eq"); f.op("i32_and");
-      f.local_get(1); f.local_get(5); f.op("i32_lt_s"); f.op("i32_and"); f.if_(0x40);
+    if (HLE) {
+      f.local_get(1); f.local_get(5); f.op("i32_lt_s"); f.if_(0x40);
         f.call(RH); f.op("i32_wrap_i64"); f.local_set(4); f.local_get(1); f.local_get(4); f.op("i32_add"); f.local_set(1); f.local_get(4); f.br_if(1); f.br(2);   // handled(1)->continue loop ; fall-through(0)->exit outer block
       f.end();
     }
