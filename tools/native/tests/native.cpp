@@ -66,6 +66,30 @@ private slots:
     for(int i=0;i<2000;i++){disk.Call("Tick",{16000000});if(disk.Call("Job",{read}).toObject()["state"].toString()=="done"){done=true;break;}}
     QVERIFY(done);
   }
+  void timerLifecycle() {
+    std::atomic<bool> cancel{false};FrameMailbox mailbox;Engine engine(&cancel,&mailbox);
+    auto *timer=engine.findChild<QTimer *>();QVERIFY(timer);QVERIFY(!timer->isActive());
+    engine.Open(input);engine.Pause(true);QVERIFY(!timer->isActive());
+    engine.Pause(false);QVERIFY(timer->isActive());engine.Pause(true);QVERIFY(!timer->isActive());
+    QTemporaryDir dir;QVERIFY(dir.isValid());const auto saved=dir.filePath("running.hemu");
+    engine.Save(saved);QVERIFY(!timer->isActive());engine.Open(saved);QVERIFY(!timer->isActive());
+    engine.Pause(false);engine.Save(saved);QVERIFY(timer->isActive());
+    engine.Open(dir.filePath("missing.hemu"));QVERIFY(!timer->isActive());
+    engine.Open(saved);QVERIFY(timer->isActive());engine.Pause(true);QVERIFY(!timer->isActive());
+    Machine fault(&cancel);fault.Call("Open",{input});fault.Call("Pause",{false});
+    const auto id=fault.Call("Exec",{"U0 IdleFault() {Sleep(200);asm {DU8 0xD9,0xD1;}}Spawn(&IdleFault);"});
+    bool done=false;
+    for(int i=0;i<1000;i++) {
+      fault.Call("Tick",{1000000});const auto job=fault.Call("Job",{id}).toObject();
+      if(job["state"].toString()=="done"){done=true;break;}
+      QVERIFY2(job["state"].toString()!="failed",QJsonDocument(job).toJson().constData());
+    }
+    QVERIFY(done);fault.Call("Pause",{true});const auto pending=dir.filePath("pending.hemu");fault.Call("Save",{pending});
+    engine.Open(pending);QVERIFY(!timer->isActive());engine.Pause(false);QVERIFY(timer->isActive());
+    QSignalSpy states(&engine,&Engine::stateChanged);QTRY_VERIFY_WITH_TIMEOUT(!timer->isActive(),10000);
+    QVERIFY(!states.isEmpty());const auto stopped=qvariant_cast<QJsonObject>(states.last()[0]);
+    QVERIFY(stopped["paused"].toBool());QVERIFY(stopped["fault"].toString().contains("CPU 0 stopped"));
+  }
   void inputAndFault() {
     std::atomic<bool> cancel{false};Machine machine(&cancel);machine.Call("Open",{input});machine.Call("Pause",{false});
     auto settle=[&](const QString &source) {

@@ -68,6 +68,10 @@ shows the default queue's `EmitToDispatch`/queued `flushRequests` boundary. Capt
 refused if the runtime Qt version differs from the build headers; rebuild after
 upgrading Qt. This private boundary is confined to `Pointer.cpp`.
 
+Paused and faulted machines stop the worker tick timer; resume explicitly restarts
+it with a fresh clock origin so paused time is not credited to the guest. Save
+and replacement retain the running/paused choice in the saved session.
+
 Loading and saving run on the dedicated JSC thread. A replacement uses a fresh
 JSC context, keeping its JIT state separate from the previous machine. Only a
 fully validated candidate publishes its frame. Failed or cancelled loads leave

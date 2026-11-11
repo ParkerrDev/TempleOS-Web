@@ -66,6 +66,7 @@ class Engine:public QObject {
   QString fatalMessage;
   QJsonObject lastState;
   void State(const QJsonObject &state){if(state!=lastState){lastState=state;emit stateChanged(state);}}
+  void Wake(){if(machine&&fatalMessage.isEmpty()&&!lastState["paused"].toBool())timer.start();else timer.stop();}
   void Frame(const QImage &image) {
     bool notify=false;
     {QMutexLocker lock(&mailbox->mutex);mailbox->image=image;notify=!mailbox->pending;mailbox->pending=true;}
@@ -77,6 +78,7 @@ class Engine:public QObject {
     if(state["frameSerial"].toInt()!=frameSerial) {
       frameSerial=state["frameSerial"].toInt();Frame(machine->Image());
     }
+    if(state["paused"].toBool())timer.stop();
     State(state);
   }
   void Failed(const std::exception &error){emit errorOccurred(QString::fromUtf8(error.what()));}
@@ -99,7 +101,7 @@ public slots:
       machine=std::move(next);fatalMessage.clear();frameSerial=state["frameSerial"].toInt();
       Frame(image);State(state);emit opened(path);
     } catch(const std::exception &error){cancel->store(false);Failed(error);if(machine)Present();}
-    cancel->store(false);emit busyChanged(false);clock.restart();if(machine&&fatalMessage.isEmpty())timer.start();
+    cancel->store(false);emit busyChanged(false);clock.restart();Wake();
   }
   void Save(QString path) {
     timer.stop();emit busyChanged(true);
@@ -108,11 +110,11 @@ public slots:
       if(!fatalMessage.isEmpty())throw std::runtime_error("Reopen a working session before saving after a host execution failure");
       machine->Call("Save",{path});emit saved(path);
     } catch(const std::exception &error){Failed(error);}
-    cancel->store(false);emit busyChanged(false);clock.restart();if(machine&&fatalMessage.isEmpty())timer.start();
+    cancel->store(false);emit busyChanged(false);clock.restart();Wake();
   }
   void Pause(bool paused) {
     if(!machine)return;
-    try{if(!paused&&!fatalMessage.isEmpty())throw std::runtime_error(fatalMessage.toStdString());machine->Call("Pause",{paused});Present();clock.restart();}catch(const std::exception &error){Failed(error);}
+    try{if(!paused&&!fatalMessage.isEmpty())throw std::runtime_error(fatalMessage.toStdString());machine->Call("Pause",{paused});Present();clock.restart();Wake();}catch(const std::exception &error){Failed(error);}
   }
   void Key(int key,bool down){if(machine)try{machine->Call("Key",{key,down});}catch(const std::exception &error){Failed(error);}}
   void Mouse(QJsonObject point){if(machine)try{machine->Call("Mouse",{point});}catch(const std::exception &error){Failed(error);}}
