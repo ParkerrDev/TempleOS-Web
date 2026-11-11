@@ -1,3 +1,4 @@
+import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
 // deploycheck.mjs - validate the DEPLOY artifacts exactly as hemu-worker.js uses them: the prebuilt
 // hemu.wasm built by build.mjs (not compile-from-source; HEMU_WASM overrides the site build path), the hardcoded G_FS/G_GS/G_TSC offsets, the 60Hz
 // paced loop with fractional dt, and the JIT wiring. Boots the desktop, checks clock rate + distinct
@@ -6,8 +7,8 @@ import { createHemuHost } from "../../engine/host.js";
 import * as jit from "../../engine/jit.js";
 import { readFileSync } from "node:fs";
 const RAMSZ = 402653184;
-const liveBuf = readFileSync(process.env.LIVE || "/tmp/live.bin");
-const diskBuf = readFileSync(process.env.RAW || "/tmp/templeos.raw");
+const liveBuf = SnapshotRead();
+const disk = DiskRead();
 const NOJIT = !!process.env.NOJIT;
 // segment/TSC addresses flow from the guest via __jit_seg (no hardcoded offsets)
 const mod = await WebAssembly.compile(readFileSync(process.env.HEMU_WASM || new URL("../../build/hemu.wasm", import.meta.url)));   // the deploy artifact
@@ -15,11 +16,11 @@ const mod = await WebAssembly.compile(readFileSync(process.env.HEMU_WASM || new 
 let mx = 320, my = 240, mb = 0, gBase = 0, inst, bad = false;
 let curBudget = 1500000, dtMs = 16;
 let measuring = false, presents = 0, distinct = 0, lastHash = 0, lastNz = 0;
-const keyq = []; const ovl = new Map();
+const keyq = []; const ovl = disk.overlay;
 const host = createHemuHost({ onText: (s) => { if (s && s.indexOf("BADOP") >= 0) { bad = true; process.stdout.write("GUEST: " + s); } }, snd: { tone: () => {} },
   snapLoad: (base, u8) => { gBase = base; u8.set(liveBuf.subarray(0, RAMSZ), base); },
-  diskRead: (lba, cnt, u8, dst) => { for (let s = 0; s < cnt; s++) { const o = ovl.get(lba + s); if (o) u8.set(o, dst + s * 512); else u8.set(diskBuf.subarray((lba + s) * 512, (lba + s) * 512 + 512), dst + s * 512); } },
-  diskWrite: (lba, cnt, u8, src) => { for (let s = 0; s < cnt; s++) ovl.set(lba + s, u8.slice(src + s * 512, src + s * 512 + 512)); },
+  diskRead:(lba,count,bytes,offset)=>disk.readInto(lba,count,bytes,offset),
+  diskWrite:(lba,count,bytes,offset)=>disk.writeInto(lba,count,bytes,offset),
   present: (a, w, h, u8) => { if (!measuring) return; let s = 0x811c9dc5, nz = 0; for (let i = 0; i < w * h; i++) { const v = u8[a + i]; s = ((s ^ v) * 16777619) >>> 0; if (v) nz++; } presents++; lastNz = nz / (w * h); if (s !== lastHash) { distinct++; lastHash = s; } } });
 host.env.__host_msx = () => BigInt(mx); host.env.__host_msy = () => BigInt(my); host.env.__host_msb = () => BigInt(mb); host.env.__host_wheel = () => 0n;
 host.env.__host_key = () => keyq.length ? BigInt(keyq.shift()) : -1n;

@@ -1,3 +1,4 @@
+import {CaptureWait} from "./CoreBarrier.js";
 // hemu-smp-worker.js - one Web Worker == one emulated core, over ONE shared WebAssembly.Memory.
 //   role "bsp" (core 0): loads the snapshot, owns devices/present/input, runs __main frames.
 //   role "ap"  (core k): barrier-waits, wires its per-core JIT, runs RunCore (IPI-woken) in parallel.
@@ -127,13 +128,9 @@ async function runAp() {
   inst.exports.CoreAttach();                                 // this core's state to its own JIT
   postMessage({ cmd: "log", msg: `AP${core} parallel` });
   const APB = 2000000n; let spins = 0, apFaulted = false;
-  const PAUSE_REQ = 2, PAUSE_ACK = 3;                         // ctrl indices (BSP pauses APs to capture a consistent frame)
-  while (!Atomics.load(ctrl, CTRL.STOP)) {
-    if (Atomics.load(ctrl, PAUSE_REQ)) {                      // BSP is capturing a frame -> hold still (no concurrent writes)
-      Atomics.add(ctrl, PAUSE_ACK, 1);                        // ack: the seq-cst handshake also RELEASES our writes to the BSP
-      while (Atomics.load(ctrl, PAUSE_REQ) && !Atomics.load(ctrl, CTRL.STOP)) Atomics.wait(ctrl, PAUSE_REQ, 1, 20);
+  while (!Atomics.load(ctrl,CTRL.STOP)) {
+    if (CaptureWait(ctrl,core))
       continue;
-    }
     const did = Number(inst.exports.RunCore(APB));           // <0: -halted, a fault stopped this core (RunCore clears the first)
     if (did < 0 && !apFaulted) { apFaulted = true; postMessage({ cmd: "log", msg: `AP${core} FAULTED halted=${-did} - recovering` }); }
     if (did < 1000) { spins++; if (spins > 4) { await sleep(0); spins = 0; } }   // idle -> yield (don't pin a core)

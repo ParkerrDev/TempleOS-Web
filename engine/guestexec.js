@@ -441,7 +441,7 @@ export function createGuestExec(opts) {
   }
   function info() {
     const focus = ready ? taskInfo(rd64(G.sys_focus_task)) : null, adam = ready ? taskInfo(rd64(G.adam_task)) : null;
-    return { ready, focus, adam, gameRunning: Number(ex.GuestInfo(9n)), halted: Number(ex.GuestInfo(7n)), ifOpen: !!(Number(ex.GuestInfo(6n)) & 0x200), calls: stats.calls, steps: stats.steps, jobs: stats.jobs, inflight: !!inflight, pendingJobs: jobs.length, probe: probeResult };
+    return { ready, focus, adam, gameRunning: !!activeLaunch, halted: Number(ex.GuestInfo(7n)), ifOpen: !!(Number(ex.GuestInfo(6n)) & 0x200), calls: stats.calls, steps: stats.steps, jobs: stats.jobs, inflight: !!inflight, pendingJobs: jobs.length, probe: probeResult };
   }
   function inputState() {
     if (!ready || !INPUT.pos || !INPUT.down || !INPUT.show) return null;

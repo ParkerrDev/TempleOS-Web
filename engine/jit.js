@@ -541,8 +541,8 @@ export function jitCompile(rip) {
         handled = true;
       } else if (op === 0x90 && !rex) { handled = true; }                    // nop
     } else {                                                                 // 0F two-byte
-      if (op === 0x31 && TSC) {                                             // RDTSC: tsc += 100; EAX=tsc.lo; EDX=tsc.hi  (cpu.HC self-advances tsc so spin-waits end)
-        i32c(f, TSC); i32c(f, TSC); ld64(f); i64c(f, 100); f.op("i64_add"); st64(f); wrReg(f, 0, 4, rex, () => { i32c(f, TSC); ld64(f); }); wrReg(f, 2, 4, rex, () => { i32c(f, TSC); ld64(f); i64c(f, 32); f.op("i64_shr_u"); }); handled = true;
+      if (op === 0x31 && TSC) {                                             //RDTSC reads the shared device clock; only core zero advances it.
+        wrReg(f, 0, 4, rex, () => { i32c(f, TSC); ld64(f); }); wrReg(f, 2, 4, rex, () => { i32c(f, TSC); ld64(f); i64c(f, 32); f.op("i64_shr_u"); }); handled = true;
       } else if (op === 0xB6 || op === 0xB7) {                              // movzx
         const ssz = op === 0xB6 ? 1 : 2; const m = decodeModRM(j, rexR, rexX, rexB); j = m.j; if (m.isMem) emitEA(f, m, j - GBASE); wrReg(f, m.reg, szV, rex, () => rdRM(f, m, ssz, rex)); handled = true;
       } else if (op === 0xBE || op === 0xBF) {                               // movsx

@@ -1,3 +1,4 @@
+import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
 // Desktop JIT test on the bundled snapshot: boot real TempleOS (flat live.bin RAM + raw disk) with the
 // JIT OFF vs ON, verify the desktop renders identically (correctness) and measure the speedup.
 import { compileHemu } from "../../engine/compile.js";
@@ -5,18 +6,18 @@ import { createHemuHost } from "../../engine/host.js";
 import * as jit from "../../engine/jit.js";
 import { readFileSync } from "node:fs";
 const RAMSZ = 402653184;
-const liveBuf = readFileSync(process.env.LIVE || "/tmp/live.bin");          // 402MB flat guest RAM
-const diskBuf = readFileSync(process.env.RAW || "/tmp/templeos.raw");       // 256MB raw C: disk
+const liveBuf = SnapshotRead();          // 402MB flat guest RAM
 const r = compileHemu();
 const mod = await WebAssembly.compile(r.bytes);
 
 async function boot(useJit, warm, timed) {
+  const disk=DiskRead();
   if (useJit) jit.jitReset();
-  let inst, gBase = 0, fb = null; const ovl = new Map();
+  let inst, gBase = 0, fb = null; const ovl = disk.overlay;
   const host = createHemuHost({ onText: () => {}, snd: { tone: () => {} },
     snapLoad: (base, u8) => { gBase = base; u8.set(liveBuf.subarray(0, RAMSZ), base); },
-    diskRead: (lba, cnt, u8, dst) => { for (let s = 0; s < cnt; s++) { const o = ovl.get(lba + s); if (o) u8.set(o, dst + s * 512); else u8.set(diskBuf.subarray((lba + s) * 512, (lba + s) * 512 + 512), dst + s * 512); } },
-    diskWrite: (lba, cnt, u8, src) => { for (let s = 0; s < cnt; s++) ovl.set(lba + s, u8.slice(src + s * 512, src + s * 512 + 512)); },
+  diskRead:(lba,count,bytes,offset)=>disk.readInto(lba,count,bytes,offset),
+  diskWrite:(lba,count,bytes,offset)=>disk.writeInto(lba,count,bytes,offset),
     present: (a, w, h, u8) => { fb = Buffer.from(u8.subarray(a, a + w * h)); } });
   if (useJit) {
     host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem); return 1n; };

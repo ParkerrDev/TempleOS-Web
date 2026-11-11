@@ -5,6 +5,8 @@
 // while the main thread is drawing frame N, this worker is already emulating frame N+1 - so the
 // blit cost leaves the critical path. The canvas stays on the main thread (frames are shipped via
 // postMessage), so hemu.html can fall back to its in-line single-thread engine if this ever fails.
+import {FrameTop,FrameFps} from "./FrameText.js";
+import {CaptureBarrier} from "./CoreBarrier.js";
 import { createHemuHost } from "./host.js";
 import { loadDisk, makeDisk, fat32Upload, fat32List } from "./qcow2.js";
 import * as jit from "./jit.js";             // x86-64 -> WASM block JIT (the speed: interp ~6fps -> JIT 30-65fps games)
@@ -13,7 +15,7 @@ import { createGuestExec } from "./guestexec.js";   // backend guest execution: 
 
 let msX = 320, msY = 240, msB = 0, wheel = 0;   // latest pointer state from the main thread
 const keyq = [];                            // set-1 scancodes from the main thread
-let curBudget = 1500000, dtMs = 16;         // guest instr/frame + real wall-clock ms/frame
+let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0, instRef = null;
 let paused = false;
 const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
@@ -242,7 +244,12 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
   postMessage({ cmd: "progress", text: "starting hemu core (HolyC → WASM)…", pct: 88 });
   const mod = await WebAssembly.compile(await (await fetch(wasmUrl, { cache: "no-cache" })).arrayBuffer());
 
+  let sequence=0;
+  const barrier=smpCfg?CaptureBarrier(new Int32Array(smpCfg.ctrl),
+        smpCfg.ncore,()=>apsReleased):null;
   const host = createHemuHost({
+    captureLock:()=>barrier?barrier.Lock():true,
+    captureUnlock:()=>barrier?.Unlock(),
     palette:(index,rgb)=>postMessage({cmd:"palette",index,rgb}),
     onText: (s) => { if (s && s.indexOf("BADOP") >= 0) console.log("[hemu]", s.trim()); },
     snd: { tone: (f) => postMessage({ cmd: "snd", f: Number(f) }) },   // AudioContext lives on the main thread
@@ -251,19 +258,11 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
     diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },  // ATA writes -> in-session overlay
     present: (addr, w, h, u8) => {
       if (outstanding >= 2) return;                       // main hasn't caught up - drop, keep emulating
-      // SMP: stop-the-world for the frame copy. Pause the AP cores via an atomic handshake, which (a) stops
-      // concurrent writes so the captured frame isn't torn, and (b) makes the BSP ACQUIRE the APs' writes
-      // (seq-cst) so the frame isn't a stale/blank buffer (the white-screen race). Timeout -> never hangs.
-      let pc = null;
-      if (smpCfg) { pc = new Int32Array(smpCfg.ctrl); Atomics.store(pc, 2, 1);   // PAUSE_REQ
-        const dl = performance.now() + 6;
-        while (Atomics.load(pc, 3) < smpCfg.ncore - 1 && performance.now() < dl) { /* spin until APs ack (or timeout) */ } }
       const buf = new Uint8Array(w * h);
       buf.set(u8.subarray(addr, addr + w * h));           // copy the finished frame out of WASM memory
-      const stats = gx?.frameStats?.();
-      if (pc) { Atomics.store(pc, 3, 0); Atomics.store(pc, 2, 0); Atomics.notify(pc, 2); }   // resume APs
+      const top=FrameTop(buf,w);
       outstanding++;
-      postMessage({ cmd: "frame", buf: buf.buffer, w, h, fps: stats?.fps, updates: stats?.updates }, [buf.buffer]);
+      postMessage({ cmd: "frame", buf: buf.buffer, w, h, fps:FrameFps(top),updates:++sequence,top }, [buf.buffer]);
     },
   });
   // |0 on every BigInt crossing: a fractional value (trackpad movementX, joystick velocity)
@@ -275,6 +274,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
   host.env.__host_key = () => keyq.length ? BigInt(keyq.shift() | 0) : -1n;
   host.env.__host_budget = () => BigInt(curBudget | 0);
   host.env.__host_dt = () => BigInt(dtMs | 0);
+  host.env.__host_ns = () => BigInt(dtNs);
   // ---- JIT wiring: blocks read hemu's shared state at the offsets passed via __jit_state/__jit_x87/__jit_chain;
   //      __jit_state returns 1 to ENABLE (return 0n / ?nojit -> pure interpreter). See jit.js. ----
   let inst;
@@ -315,11 +315,17 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp }) {
   let lastT = performance.now(), dtAcc = 0;
   for (;;) {
     const now = performance.now();
-    dtAcc += now - lastT; lastT = now;
-    if (dtAcc > 100) dtAcc = 100;                                  // tab was backgrounded - don't fast-forward
-    dtMs = Math.max(1, Math.min(100, Math.floor(dtAcc)));
-    dtAcc -= dtMs;                                                 // carry the sub-ms remainder to the next frame
-    if (paused) { await sleep(80); lastT = performance.now(); dtAcc = 0; continue; }   // ⏸ freeze guest time too
+    dtAcc+=Math.max(0,now-lastT)*1000000;
+    lastT=now;
+    dtNs=Math.min(100000000,Math.floor(dtAcc));
+    dtAcc-=Math.floor(dtAcc);
+    dtMs=dtNs/1000000;
+    if (paused) {
+      await sleep(80);
+      lastT=performance.now();
+      dtAcc=0;
+      continue;
+    }
     try { guestInput.beforeFrame(); inst.exports.__main(); guestInput.afterFrame(); }                                 // emulate one TempleOS frame (+ present via the host)
     catch (err) { postMessage({ cmd: "error", msg: "hemu trap: " + err.message }); return; }
     if (smpCfg && !apsReleased && ++bootFrames > 120) {            // desktop settled -> release the AP workers (parallel from here)

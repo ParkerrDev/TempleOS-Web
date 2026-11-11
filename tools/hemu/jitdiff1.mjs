@@ -1,3 +1,4 @@
+import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
 // Instruction-level differential test: run each instruction through hemu's interpreter (Step()) AND the
 // JIT block on IDENTICAL inputs, compare reg[0..15]+rfl+written memory. Ground truth = the interpreter,
 // so this PROVES the JIT's values (adc/sbb/mul/div/imul/string/bt) match exactly, free of any IRQ/timing
@@ -7,7 +8,7 @@ import { createHemuHost } from "../../engine/host.js";
 import * as jit from "../../engine/jit.js";
 import { readFileSync } from "node:fs";
 const RAMSZ = 402653184, SCRATCH = 0x10000000, MOPND = 0x10100000;   // guest scratch within real RAM (256MB): code + mem operand
-const liveBuf = readFileSync(process.env.LIVE || "/tmp/live.bin");
+const liveBuf = SnapshotRead();
 const r = compileHemu();
 // reg/rfl/rip/fpr/fsp/x87_sw moved into per-core CCpuState (snapshot.HC); capture their addresses from the
 // guest's __jit_state/__jit_x87 handoff (robust vs the globals map). halted is 16B after rip in CCpuState.

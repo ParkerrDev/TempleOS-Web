@@ -1,3 +1,4 @@
+import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
 // Live HolyCraft input regression: node --max-old-space-size=3072 input-check.mjs
 // Requires /tmp/live.bin and /tmp/templeos.raw, as described in README.md.
 import { compileHemu, SITE_DIR } from "../../engine/compile.js";
@@ -9,14 +10,14 @@ import { createGuestExec } from "../../engine/guestexec.js";
 import { readFileSync } from "node:fs";
 
 const RAMSZ = 402653184;
-const liveBuf = readFileSync(process.env.LIVE || "/tmp/live.bin"), diskBuf = readFileSync(process.env.RAW || "/tmp/templeos.raw");
+const liveBuf = SnapshotRead(), disk = DiskRead();
 const r = compileHemu();
 const mod = await WebAssembly.compile(r.bytes);
-let gBase = 0, inst; const ovl = new Map(); const badops = [];
+let gBase = 0, inst; const ovl = disk.overlay; const badops = [];
 const host = createHemuHost({ onText: (s) => { if (s && s.indexOf("BADOP") >= 0) badops.push(s.trim()); }, snd: { tone: () => {} },
   snapLoad: (base, u8) => { gBase = base; u8.set(liveBuf.subarray(0, RAMSZ), base); },
-  diskRead: (lba, cnt, u8, dst) => { for (let s = 0; s < cnt; s++) { const o = ovl.get(lba + s); if (o) u8.set(o, dst + s * 512); else u8.set(diskBuf.subarray((lba + s) * 512, (lba + s) * 512 + 512), dst + s * 512); } },
-  diskWrite: (lba, cnt, u8, src) => { for (let s = 0; s < cnt; s++) ovl.set(lba + s, u8.slice(src + s * 512, src + s * 512 + 512)); },
+  diskRead:(lba,count,bytes,offset)=>disk.readInto(lba,count,bytes,offset),
+  diskWrite:(lba,count,bytes,offset)=>disk.writeInto(lba,count,bytes,offset),
   present: () => {} });
 let input=null; const keys=[];
 host.env.__host_msx=()=>input?.x()??320n;host.env.__host_msy=()=>input?.y()??240n;host.env.__host_msb=()=>input?.buttons()??0n;host.env.__host_wheel=()=>0n;
@@ -48,7 +49,7 @@ const finalStates = ["done", "failed", "error"];
 
 // ---- boot: let the desktop settle (no input) ----
 await run(Number(process.env.BOOT || 300));
-say(`booted ${frames} frames, icount ${(rd64(Number(r.globals.get("icount").addr) - gBase) / 1e6).toFixed(0)}M`);
+say(`booted ${frames} frames, icount ${(Number(inst.exports.GuestInfo(8n)) / 1e6).toFixed(0)}M`);
 // ---- probe ----
 gx = createGuestExec({ inst, gBase, log: (s) => say("  gx: " + s), onEvent: (ev) => { events.push(ev); say(`  ev #${ev.id} ${ev.op} ${ev.state}${ev.msg ? " | " + ev.msg : ""}`); } });
 const probe = gx.probe();

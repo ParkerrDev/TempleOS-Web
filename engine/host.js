@@ -13,12 +13,15 @@ export function createHemuHost(opts = {}) {
   Object.assign(host.env, {
     __snap_load(base) { opts.snapLoad?.(Number(base), u8()); },
     __present(addr, w, h) { opts.present?.(Number(addr), Number(w), Number(h), u8()); },
+    __capture_lock() { return opts.captureLock ? BigInt(!!opts.captureLock()) : 1n; },
+    __capture_unlock() { opts.captureUnlock?.(); },
     __host_palette(index, rgb) { opts.palette?.(Number(index), Number(rgb)); },
     __host_disk(lba, count, buf) { opts.diskRead?.(Number(lba), Number(count), u8(), Number(buf)); },
     __host_disk_wr(lba, count, buf) { opts.diskWrite?.(Number(lba), Number(count), u8(), Number(buf)); },
     // input + pacing: headless defaults (no cursor, no keys, 1M instructions per 16 ms frame)
     __host_msx() { return 0n; }, __host_msy() { return 0n; }, __host_msb() { return 0n; }, __host_wheel() { return 0n; },
     __host_key() { return -1n; }, __host_budget() { return 1000000n; }, __host_dt() { return 16n; },
+    __host_ns() { return BigInt(host.env.__host_dt())*1000000n; },
     // CMOS RTC fields from the host wall clock, so the guest's Now() tracks real date/time (not the
     // snapshot's frozen clock). idx = the CMOS register the guest selected via OUT 0x70.
     __host_time(idx) {
