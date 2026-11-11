@@ -45,9 +45,8 @@ U0 SetSnapRegs()
   // Timer: IRQ0->vec 0x20 (PIC IW2), unmask IRQ0(timer)+IRQ2(cascade), pulse IRQ0.
   pic1_base=0x20; pic2_base=0x28;
   pic1_mask=0xF8; pic2_mask=0xEF; pic1_irr=0; pic2_irr=0; pic1_isr=0; pic2_isr=0;  // unmask IRQ0/1/2 + IRQ12
-  pit_div=20000; pit_counter=20000; tsc=0; irq_count=0; hpet_ctr=0;
-  // CMOS RTC base (advances with icount); date approximate, time-of-day ticks.
-  rtc_idx=0; rtc_base_sec=5819; rtc_dow=3; rtc_day=3; rtc_mon=6; rtc_year=24;
+  pit_reload=1192; pit_div=1192; pit_counter=1192; tsc=0; irq_count=0; hpet_ctr=0;
+  rtc_idx=0;
 }
 `;
 writeFileSync(new URL("../../hemu/src/snapregs.HC", import.meta.url), out);

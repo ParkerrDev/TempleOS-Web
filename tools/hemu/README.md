@@ -72,6 +72,15 @@ Set `HOLYC_QEMU_ORACLE` to the compiler's `tests/oracle/Qemu.mjs` and use
 `--record` to refresh its source-hashed native fixture. The test host supplies
 core IDs and maps atomic exchange to native `LXchgI64`.
 
+`dev-native.mjs` runs the extracted port devices, clock and keyboard source
+through original V5.03 and the current WASM compiler: 519 output records cover
+PIC selection/EOI, CMOS, PS/2 replies, speaker/DAC, ATA transfers and reset.
+The fixture supplies explicit host callbacks; it verifies source semantics,
+not complete physical-device emulation. Device reset also has a public-port
+regression: a partial ATA command, PS/2 reply and speaker tone must not survive.
+`snapregs.test.mjs` compiles regenerated one/four-core QEMU register fixtures
+against the actual CPU layout and requires V5.03's 1192-count PIT period.
+
 ## Frame protocol
 
 `frame` carries `buf`, `w`, `h`, integer-or-null `fps`, `updates`, and `top`.
