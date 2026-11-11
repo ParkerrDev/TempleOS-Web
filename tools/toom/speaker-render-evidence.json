@@ -1,0 +1,780 @@
+{
+  "scope": "Diagnostic warm fixed-view renderer and native speaker delivery. Private yield candidate is not in production game source.",
+  "records": {
+    "nativeControl": {
+      "results": [
+        {
+          "out": "AUDIO RENDER 1842 FRAMES 3000 MS 420 SAMPLES 0 SKIPPED GAP 11 MS BAD 0\nHARDWARE GATE 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-yw5b5zpj",
+      "sourceSha256": "f10aefd638887805ecca4d28b0db4a9f270e28a906925d89a59f8ed076606a88"
+    },
+    "harnessControl": {
+      "backend": "hemu",
+      "sourceSha256": "f10aefd638887805ecca4d28b0db4a9f270e28a906925d89a59f8ed076606a88",
+      "frames": 249,
+      "elapsed": 3004,
+      "samples": 269,
+      "skipped": 151,
+      "maxGap": 17,
+      "hardwareGate": 0,
+      "bad": 0
+    },
+    "harnessIdle": {
+      "backend": "hemu",
+      "sourceSha256": "e1283b4c5490a814fed86d0221d54bbca075122974205bced3942d65224a8ba8",
+      "render": false,
+      "frames": 0,
+      "elapsed": 3000,
+      "samples": 420,
+      "skipped": 0,
+      "maxGap": 9,
+      "hardwareGate": 0,
+      "bad": 0
+    },
+    "nativeYield": {
+      "results": [
+        {
+          "out": "AUDIO RENDER 2236 FRAMES 3000 MS 420 SAMPLES 0 SKIPPED GAP 8 MS BAD 0\nHARDWARE GATE 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-js69nt4e",
+      "sourceSha256": "fcf841a33df86d5da649096e305c89182ca54e545869302b7911d598ab5b1855",
+      "render": true
+    },
+    "harnessYield": {
+      "backend": "hemu",
+      "sourceSha256": "fcf841a33df86d5da649096e305c89182ca54e545869302b7911d598ab5b1855",
+      "render": true,
+      "frames": 242,
+      "elapsed": 3004,
+      "samples": 420,
+      "skipped": 0,
+      "maxGap": 12,
+      "hardwareGate": 0,
+      "bad": 0
+    },
+    "nativeImage": {
+      "results": [
+        {
+          "out": "SCREEN 1 1 1 0 0 59 1853636048 1514360849\nSCREEN 1 1 1 1 1 61 2508699674 3658992414\nSCREEN 1 1 1 2 5 61 3620738498 2086691066\nSCREEN 1 1 1 3 13 64 3731925937 1160118836\nSCREEN 1 1 1 4 13 64 3731925937 1160118836\nSCREEN 1 1 1 5 48 65 1577278801 2175748109\nSCREEN 1 2 2 0 0 183 1427535584 3837395303\nSCREEN 1 2 2 1 1 184 1676297497 3781605511\nSCREEN 1 2 2 2 5 185 137616328 3329644810\nSCREEN 1 2 2 3 13 185 1008517626 3420659551\nSCREEN 1 2 2 4 13 185 1008517626 3420659551\nSCREEN 1 2 2 5 48 185 1387940304 1399783942\nSCREEN 2 1 1 0 0 184 138289627 611674477\nSCREEN 2 1 1 1 1 185 551329887 3809638267\nSCREEN 2 1 1 2 5 187 3185016294 3118109961\nSCREEN 2 1 1 3 13 195 4127201099 1390229805\nSCREEN 2 1 1 4 13 195 4127201099 1390229805\nSCREEN 2 1 1 5 48 214 2378709774 1832354424\nSCREEN 2 1 30 0 0 85 2340305621 2327972708\nSCREEN 2 1 30 1 1 85 524403606 2716279696\nSCREEN 2 1 30 2 5 85 3243154373 2158898090\nSCREEN 2 1 30 3 13 85 1176713759 2358037675\nSCREEN 2 1 30 4 13 85 1176713759 2358037675\nSCREEN 2 1 30 5 48 85 1351456781 1279616194\nSCREEN 31 CASES BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-avcexhvk",
+      "sourceSha256": "fef2a147c3e5d3d44a724bfb6c0987e7f80ab82821c96e29948decce51d78228",
+      "assetHashes": {
+        "PHASE1.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "PHASE2.WAD": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+        "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+      },
+      "trace": [
+        [
+          1,
+          1,
+          1,
+          0,
+          0,
+          59,
+          1853636048,
+          1514360849
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          61,
+          2508699674,
+          3658992414
+        ],
+        [
+          1,
+          1,
+          1,
+          2,
+          5,
+          61,
+          3620738498,
+          2086691066
+        ],
+        [
+          1,
+          1,
+          1,
+          3,
+          13,
+          64,
+          3731925937,
+          1160118836
+        ],
+        [
+          1,
+          1,
+          1,
+          4,
+          13,
+          64,
+          3731925937,
+          1160118836
+        ],
+        [
+          1,
+          1,
+          1,
+          5,
+          48,
+          65,
+          1577278801,
+          2175748109
+        ],
+        [
+          1,
+          2,
+          2,
+          0,
+          0,
+          183,
+          1427535584,
+          3837395303
+        ],
+        [
+          1,
+          2,
+          2,
+          1,
+          1,
+          184,
+          1676297497,
+          3781605511
+        ],
+        [
+          1,
+          2,
+          2,
+          2,
+          5,
+          185,
+          137616328,
+          3329644810
+        ],
+        [
+          1,
+          2,
+          2,
+          3,
+          13,
+          185,
+          1008517626,
+          3420659551
+        ],
+        [
+          1,
+          2,
+          2,
+          4,
+          13,
+          185,
+          1008517626,
+          3420659551
+        ],
+        [
+          1,
+          2,
+          2,
+          5,
+          48,
+          185,
+          1387940304,
+          1399783942
+        ],
+        [
+          2,
+          1,
+          1,
+          0,
+          0,
+          184,
+          138289627,
+          611674477
+        ],
+        [
+          2,
+          1,
+          1,
+          1,
+          1,
+          185,
+          551329887,
+          3809638267
+        ],
+        [
+          2,
+          1,
+          1,
+          2,
+          5,
+          187,
+          3185016294,
+          3118109961
+        ],
+        [
+          2,
+          1,
+          1,
+          3,
+          13,
+          195,
+          4127201099,
+          1390229805
+        ],
+        [
+          2,
+          1,
+          1,
+          4,
+          13,
+          195,
+          4127201099,
+          1390229805
+        ],
+        [
+          2,
+          1,
+          1,
+          5,
+          48,
+          214,
+          2378709774,
+          1832354424
+        ],
+        [
+          2,
+          1,
+          30,
+          0,
+          0,
+          85,
+          2340305621,
+          2327972708
+        ],
+        [
+          2,
+          1,
+          30,
+          1,
+          1,
+          85,
+          524403606,
+          2716279696
+        ],
+        [
+          2,
+          1,
+          30,
+          2,
+          5,
+          85,
+          3243154373,
+          2158898090
+        ],
+        [
+          2,
+          1,
+          30,
+          3,
+          13,
+          85,
+          1176713759,
+          2358037675
+        ],
+        [
+          2,
+          1,
+          30,
+          4,
+          13,
+          85,
+          1176713759,
+          2358037675
+        ],
+        [
+          2,
+          1,
+          30,
+          5,
+          48,
+          85,
+          1351456781,
+          1279616194
+        ]
+      ]
+    },
+    "harnessImage": {
+      "backend": "hemu",
+      "sourceSha256": "fef2a147c3e5d3d44a724bfb6c0987e7f80ab82821c96e29948decce51d78228",
+      "assetHashes": {
+        "PHASE1.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "PHASE2.WAD": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+        "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+      },
+      "trace": [
+        [
+          1,
+          1,
+          1,
+          0,
+          0,
+          59,
+          1853636048,
+          1514360849
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          61,
+          2508699674,
+          3658992414
+        ],
+        [
+          1,
+          1,
+          1,
+          2,
+          5,
+          61,
+          3620738498,
+          2086691066
+        ],
+        [
+          1,
+          1,
+          1,
+          3,
+          13,
+          64,
+          3731925937,
+          1160118836
+        ],
+        [
+          1,
+          1,
+          1,
+          4,
+          13,
+          64,
+          3731925937,
+          1160118836
+        ],
+        [
+          1,
+          1,
+          1,
+          5,
+          48,
+          65,
+          1577278801,
+          2175748109
+        ],
+        [
+          1,
+          2,
+          2,
+          0,
+          0,
+          183,
+          1427535584,
+          3837395303
+        ],
+        [
+          1,
+          2,
+          2,
+          1,
+          1,
+          184,
+          1676297497,
+          3781605511
+        ],
+        [
+          1,
+          2,
+          2,
+          2,
+          5,
+          185,
+          137616328,
+          3329644810
+        ],
+        [
+          1,
+          2,
+          2,
+          3,
+          13,
+          185,
+          1008517626,
+          3420659551
+        ],
+        [
+          1,
+          2,
+          2,
+          4,
+          13,
+          185,
+          1008517626,
+          3420659551
+        ],
+        [
+          1,
+          2,
+          2,
+          5,
+          48,
+          185,
+          1387940304,
+          1399783942
+        ],
+        [
+          2,
+          1,
+          1,
+          0,
+          0,
+          184,
+          138289627,
+          611674477
+        ],
+        [
+          2,
+          1,
+          1,
+          1,
+          1,
+          185,
+          551329887,
+          3809638267
+        ],
+        [
+          2,
+          1,
+          1,
+          2,
+          5,
+          187,
+          3185016294,
+          3118109961
+        ],
+        [
+          2,
+          1,
+          1,
+          3,
+          13,
+          195,
+          4127201099,
+          1390229805
+        ],
+        [
+          2,
+          1,
+          1,
+          4,
+          13,
+          195,
+          4127201099,
+          1390229805
+        ],
+        [
+          2,
+          1,
+          1,
+          5,
+          48,
+          214,
+          2378709774,
+          1832354424
+        ],
+        [
+          2,
+          1,
+          30,
+          0,
+          0,
+          85,
+          2340305621,
+          2327972708
+        ],
+        [
+          2,
+          1,
+          30,
+          1,
+          1,
+          85,
+          524403606,
+          2716279696
+        ],
+        [
+          2,
+          1,
+          30,
+          2,
+          5,
+          85,
+          3243154373,
+          2158898090
+        ],
+        [
+          2,
+          1,
+          30,
+          3,
+          13,
+          85,
+          1176713759,
+          2358037675
+        ],
+        [
+          2,
+          1,
+          30,
+          4,
+          13,
+          85,
+          1176713759,
+          2358037675
+        ],
+        [
+          2,
+          1,
+          30,
+          5,
+          48,
+          85,
+          1351456781,
+          1279616194
+        ]
+      ],
+      "cases": 31,
+      "bad": 0
+    },
+    "nativeTiming": {
+      "results": [
+        {
+          "out": "AUDIO RENDER 2802 FRAMES 3000 MS 420 SAMPLES 0 SKIPPED GAP 8 MS BAD 0\nHARDWARE GATE 0\n",
+          "except": ""
+        },
+        {
+          "out": "AUDIO RENDER 2723 FRAMES 3000 MS 420 SAMPLES 0 SKIPPED GAP 9 MS BAD 0\nHARDWARE GATE 0\n",
+          "except": ""
+        },
+        {
+          "out": "AUDIO RENDER 2770 FRAMES 3000 MS 420 SAMPLES 0 SKIPPED GAP 8 MS BAD 0\nHARDWARE GATE 0\n",
+          "except": ""
+        },
+        {
+          "out": "AUDIO RENDER 2770 FRAMES 3000 MS 420 SAMPLES 0 SKIPPED GAP 8 MS BAD 0\nHARDWARE GATE 0\n",
+          "except": ""
+        },
+        {
+          "out": "AUDIO RENDER 2687 FRAMES 3000 MS 420 SAMPLES 0 SKIPPED GAP 9 MS BAD 0\nHARDWARE GATE 0\n",
+          "except": ""
+        },
+        {
+          "out": "AUDIO RENDER 2705 FRAMES 3000 MS 420 SAMPLES 0 SKIPPED GAP 8 MS BAD 0\nHARDWARE GATE 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-j85ldf35",
+      "order": [
+        "control",
+        "candidate",
+        "candidate",
+        "control",
+        "control",
+        "candidate"
+      ],
+      "observations": [
+        {
+          "kind": "control",
+          "frames": 2802,
+          "elapsed": 3000,
+          "samples": 420,
+          "skipped": 0,
+          "maxGap": 8,
+          "msPerFrame": 1.0706638115631693
+        },
+        {
+          "kind": "candidate",
+          "frames": 2723,
+          "elapsed": 3000,
+          "samples": 420,
+          "skipped": 0,
+          "maxGap": 9,
+          "msPerFrame": 1.1017260374586852
+        },
+        {
+          "kind": "candidate",
+          "frames": 2770,
+          "elapsed": 3000,
+          "samples": 420,
+          "skipped": 0,
+          "maxGap": 8,
+          "msPerFrame": 1.0830324909747293
+        },
+        {
+          "kind": "control",
+          "frames": 2770,
+          "elapsed": 3000,
+          "samples": 420,
+          "skipped": 0,
+          "maxGap": 8,
+          "msPerFrame": 1.0830324909747293
+        },
+        {
+          "kind": "control",
+          "frames": 2687,
+          "elapsed": 3000,
+          "samples": 420,
+          "skipped": 0,
+          "maxGap": 9,
+          "msPerFrame": 1.1164867882396725
+        },
+        {
+          "kind": "candidate",
+          "frames": 2705,
+          "elapsed": 3000,
+          "samples": 420,
+          "skipped": 0,
+          "maxGap": 8,
+          "msPerFrame": 1.1090573012939002
+        }
+      ],
+      "sourceHashes": {
+        "control": "5c3039546b847d93518368b96cbb3c2ed94e7033db7bb3602b97be63de254786",
+        "candidate": "fcf841a33df86d5da649096e305c89182ca54e545869302b7911d598ab5b1855"
+      }
+    }
+  },
+  "workers": {
+    "oneControl": {
+      "cores": 1,
+      "render": true,
+      "sourceSha256": "5c3039546b847d93518368b96cbb3c2ed94e7033db7bb3602b97be63de254786",
+      "wasmSha256": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "frames": 140,
+      "elapsed": 3003,
+      "samples": 140,
+      "skipped": 280,
+      "maxGap": 53,
+      "limitation": "snd carries frequency only; receipt times do not prove audible guest-time spacing.",
+      "toneEvents": 285
+    },
+    "oneIdle": {
+      "cores": 1,
+      "render": false,
+      "sourceSha256": "e1283b4c5490a814fed86d0221d54bbca075122974205bced3942d65224a8ba8",
+      "wasmSha256": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "frames": 0,
+      "elapsed": 3000,
+      "samples": 420,
+      "skipped": 0,
+      "maxGap": 8,
+      "limitation": "snd carries frequency only; receipt times do not prove audible guest-time spacing.",
+      "toneEvents": 847
+    },
+    "fourControl": {
+      "cores": 4,
+      "render": true,
+      "sourceSha256": "5c3039546b847d93518368b96cbb3c2ed94e7033db7bb3602b97be63de254786",
+      "wasmSha256": "bd16c80c4c8920d29692f4b7f4f6cbd20e7a843348fa9217955fda8ccb09851c",
+      "frames": 125,
+      "elapsed": 3012,
+      "samples": 125,
+      "skipped": 295,
+      "maxGap": 42,
+      "limitation": "snd carries frequency only; receipt times do not prove audible guest-time spacing.",
+      "toneEvents": 255
+    },
+    "oneYield": {
+      "cores": 1,
+      "render": true,
+      "sourceSha256": "fcf841a33df86d5da649096e305c89182ca54e545869302b7911d598ab5b1855",
+      "wasmSha256": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "frames": 148,
+      "elapsed": 3016,
+      "samples": 417,
+      "skipped": 3,
+      "maxGap": 16,
+      "limitation": "snd carries frequency only; receipt times do not prove audible guest-time spacing.",
+      "toneEvents": 841
+    },
+    "fourYield": {
+      "cores": 4,
+      "render": true,
+      "sourceSha256": "fcf841a33df86d5da649096e305c89182ca54e545869302b7911d598ab5b1855",
+      "wasmSha256": "bd16c80c4c8920d29692f4b7f4f6cbd20e7a843348fa9217955fda8ccb09851c",
+      "frames": 118,
+      "elapsed": 3021,
+      "samples": 415,
+      "skipped": 5,
+      "maxGap": 22,
+      "limitation": "snd carries frequency only; receipt times do not prove audible guest-time spacing.",
+      "toneEvents": 837
+    }
+  },
+  "runtime": {
+    "web": "b7e6e0790118aae885886ee0b49a0ef1e90231d8",
+    "compiler": "dbd1946838cfd33dd7c86cda51acb8528c824697",
+    "hemu": "486f8a68bca0ca872cc99c28d1429830d5b53e84",
+    "sha256": {
+      "build/hemu.wasm": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "build/hemu-smp.wasm": "bd16c80c4c8920d29692f4b7f4f6cbd20e7a843348fa9217955fda8ccb09851c",
+      "engine/jit.js": "98ef4631b01bc7a95a46505c3951d6d222ba397865d87e70ce8001f298fd5b32",
+      "engine/hemu-worker.js": "b72a4c771125b0fae7b3867142f4585c33535b7df070377f01b4200077b316f9",
+      "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+      "tools/hemu/GuestHarness.mjs": "9fe6f769b458f6399e5041ca4a7586e49a4a90a1d224239a92d3e95cd4f9e057"
+    }
+  },
+  "privateCandidatePatches": {
+    "yield-v1.patch": "f2629012d95a8f8c1162e720d6ebfaf58ca9b0fcba1ee72a50f4386c1a8d19b1",
+    "yield-v2.patch": "e32fa878d85599490de624c4d9361b2ac4ee2eb0eb368af89f2e4c9d8be1df3f"
+  },
+  "limits": [
+    "Runtime is frozen A66/486f8a6, not current production. Worker sound messages have frequency only: receipt times do not qualify audible140Hz spacing.",
+    "Rendering is into the real private DC, but this fixture does not install PlayDrawIt or run real interactive gameplay. No source simulation changes occur during the fixed-view loop.",
+    "Native six-run timing was CPU-isolated. Other first-pass delivery observations were correctness diagnostics; their frame counts are not comparative performance claims.",
+    "Yieldv1 preserves all24 native/HEMU image/state traces and31 guard checks. Native median loop time changes1.083 to1.102ms/frame, with mixed pairs; zero cost is not established.",
+    "Yieldv1 substantially reduces production-worker skipped samples but leaves3/5 misses in one/four-core observations. It remains private.",
+    "The persisted runners now record additional runtime/asset provenance and permit candidate source directories. SourceHash fields identify the exact composed source for each earlier observation."
+  ]
+}

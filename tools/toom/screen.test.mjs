@@ -7,11 +7,16 @@ import {FreedoomRead,root} from './Assets.mjs';
 import {BrainMaps} from './BrainMaps.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-const source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmScreen')
+const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom')),load=readFileSync(resolve(game,'Load.HC'),'latin1');
+let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmScreen')
   .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
   readFileSync(resolve(game,'TmOverlay.HC'),'latin1')+'\n'+
   readFileSync(resolve(game,'TmScreen.HC'),'latin1')+'\n'+readFileSync(resolve(root,'tools/toom/Screen.HC'),'latin1');
+if(process.env.YIELD_MS) {
+  const ms=Number(process.env.YIELD_MS);assert(Number.isInteger(ms)&&ms>0&&ms<=1000);
+  assert.equal(source.split('ControlsInit(&input);').length,2);
+  source=source.replace('ControlsInit(&input);',`game->level->view->yield_mS=${ms};game->level->view->yield_jiffy=0;ControlsInit(&input);`);
+}
 const {bytes:phase2}=await BrainMaps();
 const files=[{name:'PHASE1.WAD',bytes:FreedoomRead()},{name:'PHASE2.WAD',bytes:phase2},{name:'TMDATA.BIN',bytes:readFileSync(resolve(game,'TMDATA.BIN'))}];
 const sourceSha256=createHash('sha256').update(Buffer.from(source,'latin1')).digest('hex'),

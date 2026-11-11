@@ -896,3 +896,22 @@ gate is observed directly, while original TempleOS also passes native gate
 readback. These modules remain outside `Load`/`Run`. Rendering-load delivery,
 actual host focus cleanup, sound selection and audible browser output remain
 unqualified.
+
+The diagnostic load fixture runs the unchanged renderer and a 420-tone stream
+for three guest seconds. It records delivered/missed samples and the largest
+service gap. Run `speaker-render.test.mjs` with the same QEMU/HEMU environment
+above; `RENDER=0` selects the idle control. `speaker-worker.test.mjs` repeats
+that source on actual one/four-core production workers and records outgoing
+`snd` events. Those messages contain frequency only, so arrival times do not
+establish audible 140 Hz spacing. This fixture draws into a private DC; it
+does not exercise the interactive host's compositor or gameplay.
+
+The frozen worker idle control delivered 420/420 tones; rendering reduced
+that to 140/420 on one core and 125/420 on four cores. A private cooperative
+yield candidate preserves 24 exact image/state traces and improves delivery
+to 417/420 and 415/420, but leaves missed updates. Its isolated native timing
+pairs also do not establish zero rendering cost. It is not adopted into the
+game. `speaker-render-evidence.json` retains these diagnostic bounds and
+source/runtime hashes. `GAME_DIR` and `YIELD_MS` allow explicit private
+candidate checks; `speaker-timing.test.mjs` compares `CANDIDATE` against the
+current source using six fresh native tasks in alternating order.
