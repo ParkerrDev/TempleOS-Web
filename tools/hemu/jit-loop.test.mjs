@@ -42,8 +42,14 @@ function Start(code,limit=0,regs={})
 function State(){return {regs:u8.slice(a[1],a[1]+128),flags:dv.getBigUint64(a[2],true),
   rip:dv.getBigUint64(a[3],true),halt:dv.getBigUint64(a[4],true),ram:u8.slice(a[0]+start,a[0]+8192)};}
 let count=0;
-function Compare(code,limit,bodyCount,{regs={},expected,compiled=bodyCount+3}={})
+function Compare(code,limit,bodyCount,{regs={},expected,compiled=bodyCount+3,auto=false}={})
 {
+  if(auto) {
+    Start(code,limit,regs);expected=0;
+    while(dv.getBigUint64(a[3],true)!==BigInt(start+code.length)&&expected<(bodyCount+3)*1024) {
+      ex.Step();expected++;
+    }
+  }
   Start(code,limit,regs);jit.jitReset();
   assert.equal(jit.jitCompile(start),compiled,"compiled instruction count");
   const ran=jit.jitRun(start),got=State();
@@ -55,6 +61,16 @@ function Compare(code,limit,bodyCount,{regs={},expected,compiled=bodyCount+3}={}
 const body=[0x48,0xFF,0xC0,0x48,0x83,0xC1,1]; // inc rax; add rcx,1
 for(const wide of [false,true])for(const limit of [-3,0,1,2,17,1023,1024,1025,2000])
   Compare(Loop(body,{wide}),limit,2);
+for(const size of [1,2,4,8])for(let cc=0;cc<16;cc++)
+  for(const [left,right]of [[0,0],[0,1],[1,0],[-1,0],[0,-1],
+    ["0x7FFFFFFFFFFFFFFF","0x8000000000000000"],["0x8000000000000000",1]]) {
+    const prefix=size===2?[0x66]:size===8?[0x48]:[];
+    const head=[...prefix,size===1?0x38:0x39,0xD1];
+    Compare(Loop([0x48,0xFF,0xC1],{head,cc}),0,1,{regs:{1:left,2:right},auto:true});
+  }
+// A body may consume the header's deferred CF before its next full writer.
+for(const limit of [0,1,17,1025])
+  Compare(Loop([0x48,0xFF,0xC0,0x48,0x11,0xC3,0x48,0xFF,0xC1]),limit,3);
 // Preserve all widths, memory side effects, and dirty registers across the
 // header's exit, including registers first written later in the loop body.
 for(const limit of [0,1,31,1025]) {

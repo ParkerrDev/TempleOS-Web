@@ -403,12 +403,9 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
   const yieldTick = () => new Promise(r => { resume = r; tick.port2.postMessage(0); });
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-  // Pace the loop at ~60 __main/s. Pre-JIT, emulation was slow enough to self-pace near 60; the JIT
-  // made __main fast, so the unthrottled loop spun 150-220+/s and every per-refresh animation (title
-  // marquee, window wiggle, cursor) ran that much faster - the "everything ~2x speed" bug. The guest's
-  // own refresh gate now paces drawing at ~31fps (snapshot.HC); 60Hz here keeps input/present snappy.
-  // dt carries a fractional accumulator so integer ms truncation doesn't slow the guest clock (~12%
-  // at 240Hz, ~4% at 60Hz - jiffies/tS now track wall-clock exactly).
+  // Host pacing bounds input latency and CPU budgets; guest refresh has its own
+  // setting. Preserve fractional nanoseconds and unsent elapsed time so a slow
+  // iteration cannot permanently lose device time at the per-step limit.
   const FRAME_MS = 1000 / 60;
   let lastT = performance.now(), dtAcc = 0;
   for (;;) {
@@ -416,7 +413,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
     dtAcc+=Math.max(0,now-lastT)*1000000;
     lastT=now;
     dtNs=Math.min(100000000,Math.floor(dtAcc));
-    dtAcc-=Math.floor(dtAcc);
+    dtAcc-=dtNs;
     dtMs=dtNs/1000000;
     if (paused || saving) {
       await sleep(80);

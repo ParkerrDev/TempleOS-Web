@@ -34,6 +34,8 @@ real x86 conversion fixtures, and QEMU snapshot capture tools remain.
 
 - Clock checks exercise fractional elapsed time, PIT reload/latch/IRQ behavior,
   read-only RDTSC and independent core instruction budgets.
+  A production-worker test blocks the worker for 450 ms, verifies that capped
+  steps retain the elapsed backlog, and separately excludes paused wall time.
 - Capture checks reject unfinished frames, keep the captured pixels immutable,
   and decode FPS only when the actual top-line glyphs are readable.
 - Barrier checks reject stale acknowledgements and hold application-core writes

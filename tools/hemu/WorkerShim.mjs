@@ -5,7 +5,7 @@ import {parentPort,workerData} from "node:worker_threads";
 import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 
-let inst=null,ex=null,g_base=0,work_ms=0,mains=0,syms=null,probe_tries=0;
+let inst=null,ex=null,g_base=0,work_ms=0,mains=0,syms=null,probe_tries=0,tsc_addr=0;
 
 function MemDv()
 {//A view of the guest's memory, made again when it grows.
@@ -57,6 +57,7 @@ function ProbeRd()
   if (!syms)
     return {t:performance.now(),work:work_ms,mains:mains};
   return {t:performance.now(),work:work_ms,mains:mains,
+	clock_ns:tsc_addr?Number(dv.getBigUint64(tsc_addr,true)):null,
 	jif:U64(dv,syms.jiffies),upd:U64(dv,syms.updates),
 	fps:dv.getFloat64(g_base+syms.fps,true)};
 }
@@ -70,6 +71,12 @@ function MsgOut(m,transfer)
 
 function MsgIn(m)
 {
+  if(m && m.cmd==="__stall") {
+    const before=ProbeRd();
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,m.ms);
+    parentPort.postMessage({cmd:"__stall",before,after:ProbeRd()});
+    return;
+  }
   if (m && m.cmd=="__peek") {
     parentPort.postMessage({cmd:"__peek",probe:ProbeRd(),
       fault:ex.CpuFault?String(ex.CpuFault(0n)):null,faultPc:ex.CpuFault?String(ex.CpuFault(1n)):null,
@@ -101,13 +108,14 @@ function MainTimed()
 
 async function Instantiate(mod,imports)
 {//Keeps the instance and the guest's base so the probe can read the guest.
-  let env=imports.env,snap_load=env.__snap_load,res;
+  let env=imports.env,snap_load=env.__snap_load,seg=env.__jit_seg,res;
   function SnapLoad(base)
   {
     g_base=Number(base);
     return snap_load(base);
   }
   env.__snap_load=SnapLoad;
+  if(seg)env.__jit_seg=(...args)=>{tsc_addr=Number(args[2]);return seg(...args);};
   res=await wasm_instantiate.call(WebAssembly,mod,imports);
   inst=res.instance||res;
   ex=Object.assign({},inst.exports);
