@@ -6,6 +6,8 @@ import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 
 let inst=null,ex=null,g_base=0,work_ms=0,mains=0,syms=null,probe_tries=0,tsc_addr=0;
+//Credit gap has the initial boot-credit offset; differences measure new lag.
+let clock_input_ns=0,clock_tick_ns=0,clock_start=null,clock_read=0;
 
 function MemDv()
 {//A view of the guest's memory, made again when it grows.
@@ -58,13 +60,15 @@ function ProbeRd()
     return {t:performance.now(),work:work_ms,mains:mains};
   return {t:performance.now(),work:work_ms,mains:mains,
 	clock_ns:tsc_addr?Number(dv.getBigUint64(tsc_addr,true)):null,
+	clock_input_ns,clock_tick_ns,loop_elapsed_ms:performance.now()-clock_read,
+	clock_credit_gap_ms:clock_start===null?null:performance.now()-clock_start-clock_input_ns/1e6,
 	jif:U64(dv,syms.jiffies),upd:U64(dv,syms.updates),
 	fps:dv.getFloat64(g_base+syms.fps,true)};
 }
 
 function MsgOut(m,transfer)
 {//The worker's postMessage.
-  if (m && m.cmd=="frame")
+  if (m && ["frame","diskInfo","guestPatch"].includes(m.cmd) && ex)
     m.probe=ProbeRd();
   parentPort.postMessage(m,transfer);
 }
@@ -108,7 +112,7 @@ function MainTimed()
 
 async function Instantiate(mod,imports)
 {//Keeps the instance and the guest's base so the probe can read the guest.
-  let env=imports.env,snap_load=env.__snap_load,seg=env.__jit_seg,res;
+  let env=imports.env,snap_load=env.__snap_load,seg=env.__jit_seg,ns=env.__host_ns,res;
   function SnapLoad(base)
   {
     g_base=Number(base);
@@ -116,6 +120,11 @@ async function Instantiate(mod,imports)
   }
   env.__snap_load=SnapLoad;
   if(seg)env.__jit_seg=(...args)=>{tsc_addr=Number(args[2]);return seg(...args);};
+  if(ns)env.__host_ns=()=>{
+    const value=ns();clock_read=performance.now();
+    if(clock_start===null)clock_start=clock_read;
+    clock_tick_ns=Number(value);clock_input_ns+=clock_tick_ns;return value;
+  };
   res=await wasm_instantiate.call(WebAssembly,mod,imports);
   inst=res.instance||res;
   ex=Object.assign({},inst.exports);

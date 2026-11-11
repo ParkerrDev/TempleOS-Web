@@ -8,9 +8,18 @@ async function Request(msg,predicate=m=>m.cmd===msg.cmd) {
 const Peek=async()=>(await Request({cmd:"__peek"})).probe;
 try {
   assert.equal((await ReadyWait(h,20000)).ok,true);
+  const boot=await Peek();
   if(!h.msgs.some(m=>m.cmd==="guestPatch"&&m.state==="installed"))
     await h.Wait(m=>m.cmd==="guestPatch"&&m.state==="installed",20000);
+  const installed=await Peek();
   await FramesWait(h,40,5000);
+  const settled=await Peek(),bootWall=settled.t-boot.t,
+    bootClock=(settled.clock_ns-boot.clock_ns)/1e6,bootGuest=settled.jif-boot.jif;
+  console.log(JSON.stringify({initialization:{wall:bootWall,clock:bootClock,guest:bootGuest,
+    patchLag:installed.t-boot.t-(installed.clock_ns-boot.clock_ns)/1e6,
+    settledLag:bootWall-bootClock}}));
+  assert.ok(Math.abs(bootWall-bootClock)<80,"actual disk and document-patch initialization conserves active time");
+  assert.ok(Math.abs(bootWall-bootGuest)<90,"native PIT recovers after document compilation");
   const stalled=await Request({cmd:"__stall",ms:450});
   assert.equal(stalled.after.clock_ns,stalled.before.clock_ns,"a stalled worker executes no guest time");
   assert.ok(stalled.after.t-stalled.before.t>=440);

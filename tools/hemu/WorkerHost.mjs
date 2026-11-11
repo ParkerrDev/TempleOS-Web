@@ -240,6 +240,14 @@ export async function Measure(h,secs)
     res.refr_gs=res.refreshes/res.gsec;
     res.refr_s=res.refreshes/res.wall;
   }
+  if(f0.probe.clock_ns!=null && f1.probe.clock_ns!=null) {
+    res.tsc_s=(f1.probe.clock_ns-f0.probe.clock_ns)/1e9;
+    res.supplied_s=(f1.probe.clock_input_ns-f0.probe.clock_input_ns)/1e9;
+    res.wall_lag_ms=res.wall*1000-res.tsc_s*1000;
+    res.credit_gap_ms=[f0.probe.clock_credit_gap_ms,f1.probe.clock_credit_gap_ms];
+    res.loop_ms=[f0.probe.loop_elapsed_ms,f1.probe.loop_elapsed_ms];
+    res.tick_ns=[f0.probe.clock_tick_ns,f1.probe.clock_tick_ns];
+  }
   res.ms_main=(f1.probe.work-f0.probe.work)/Math.max(1,f1.probe.mains-f0.probe.mains);
   res.mains_s=(f1.probe.mains-f0.probe.mains)/res.wall;
   res.fps_hist=[...hist.entries()].sort(function Cmp(a,b) {return b[1]-a[1];}).

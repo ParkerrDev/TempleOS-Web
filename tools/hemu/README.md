@@ -36,6 +36,9 @@ real x86 conversion fixtures, and QEMU snapshot capture tools remain.
   read-only RDTSC and independent core instruction budgets.
   A production-worker test blocks the worker for 450 ms, verifies that capped
   steps retain the elapsed backlog, and separately excludes paused wall time.
+  It also measures actual deferred disk/document-patch initialization through
+  recovery. Rate checks start after this initialization; they print TSC, PIT,
+  supplied time and wall lag before asserting their unchanged thresholds.
 - Capture checks reject unfinished frames, keep the captured pixels immutable,
   and decode FPS only when the actual top-line glyphs are readable.
 - Barrier checks reject stale acknowledgements and hold application-core writes
@@ -50,14 +53,24 @@ real x86 conversion fixtures, and QEMU snapshot capture tools remain.
 - Guest execution checks cover source errors, exceptions, file readback,
   disk include, launch completion/refusal and an animating native game.
 - JIT loop checks compare complete CPU and memory state after the reported
-  instruction count, including zero iterations, the iteration cap, writes to
-  the loop's own instructions, and bodies that must retain interpreter exits.
+  instruction count, including zero iterations, exact device dispatch budgets,
+  the iteration cap, writes to the loop's own instructions, and second-iteration
+  faults that must retain interpreter exits.
 
 These are bounded checks, not proof that every program or CPU instruction is
 correct on bare metal. Raster expectations run the original TempleOS code in
 HEMU; an independent hardware or QEMU oracle is needed for CPU semantics.
 Random dither depends on TSC and is not claimed to have identical pixels.
 VGA hardware read-plane behavior and non-VGA text modes are not fully covered.
+
+`mem-native.mjs` compiles the actual HEMU memory module under original V5.03
+and compares its 324 outputs with the WASM build. The fixture exercises byte
+widths, unaligned and boundary accesses, RAM aliases and the existing saved
+guest MMIO/IPI contract. It verifies native source compatibility and preserves
+that contract; it does not establish a complete hardware APIC/HPET model.
+Set `HOLYC_QEMU_ORACLE` to the compiler's `tests/oracle/Qemu.mjs` and use
+`--record` to refresh its source-hashed native fixture. The test host supplies
+core IDs and maps atomic exchange to native `LXchgI64`.
 
 ## Frame protocol
 
