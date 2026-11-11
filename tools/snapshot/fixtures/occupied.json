@@ -1,0 +1,80 @@
+{
+  "backend": "QEMU emulator version 11.1.2",
+  "accel": "kvm",
+  "mode": "occupied",
+  "cw": "077f",
+  "sw": "1000",
+  "top": 2,
+  "ftw": "04",
+  "sourceSha256": "0a19198bd4634adeff5164722e5c4468df8f82468b9f8eefe6d053e1d5422518",
+  "registerSha256": "7c4f6720a5818642dbf466b61d335967ebb413de5ff7e0b8984cef28a7eaa2f1",
+  "inputDiskSha256": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148",
+  "fontSha256": "7f15a2b20ae01e909fa8cf6f87301cfdb618fd63f2e42fe1ac454c37865c32b2",
+  "driverSha256": "7fe5e4db9cb0cb8c632aa3778e18998599666181bf199448528d052dd85a5b53",
+  "xmm": [
+    {
+      "lo": "0x123456789abcdef",
+      "hi": "0x22446688aaccef0"
+    },
+    {
+      "lo": "0x32547698badcff1",
+      "hi": "0x426486a8caed0f2"
+    },
+    {
+      "lo": "0x527496b8dafd1f3",
+      "hi": "0x6284a6c8eb0d2f4"
+    },
+    {
+      "lo": "0x7294b6d8fb1d3f5",
+      "hi": "0x82a4c6e90b2d4f6"
+    },
+    {
+      "lo": "0x92b4d6f91b3d5f7",
+      "hi": "0xa2c4e7092b4d6f8"
+    },
+    {
+      "lo": "0xb2d4f7193b5d7f9",
+      "hi": "0xc2e507294b6d8fa"
+    },
+    {
+      "lo": "0xd2f517395b7d9fb",
+      "hi": "0xe30527496b8dafc"
+    },
+    {
+      "lo": "0xf31537597b9dbfd",
+      "hi": "0x1032547698badcfe"
+    },
+    {
+      "lo": "0x1133557799bbddff",
+      "hi": "0x123456789abcdf00"
+    },
+    {
+      "lo": "0x133557799bbde001",
+      "hi": "0x1436587a9cbee102"
+    },
+    {
+      "lo": "0x1537597b9dbfe203",
+      "hi": "0x16385a7c9ec0e304"
+    },
+    {
+      "lo": "0x17395b7d9fc1e405",
+      "hi": "0x183a5c7ea0c2e506"
+    },
+    {
+      "lo": "0x193b5d7fa1c3e607",
+      "hi": "0x1a3c5e80a2c4e708"
+    },
+    {
+      "lo": "0x1b3d5f81a3c5e809",
+      "hi": "0x1c3e6082a4c6e90a"
+    },
+    {
+      "lo": "0x1d3f6183a5c7ea0b",
+      "hi": "0x1e406284a6c8eb0c"
+    },
+    {
+      "lo": "0x1f416385a7c9ec0d",
+      "hi": "0x20426486a8caed0e"
+    }
+  ]
+}

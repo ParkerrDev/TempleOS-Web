@@ -6,5 +6,9 @@
   "heapAbi": 1,
   "globals": {
     "g_ipi_pending": 324200
-  }
+  },
+  "ramSha256": "a37f9adb63782fcd03c50bb753e5c2ec9a404511ab4e034b6ee862f539e0adf6",
+  "ramBytes": 10294985,
+  "ramRef": "b1ae40e:live-smp.bin.gz",
+  "diskSha256": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
 }

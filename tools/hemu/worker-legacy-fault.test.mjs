@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {createHash} from "node:crypto";
 import {SnapshotInspect} from "../../engine/Snapshot.js";
-import {HemuBoot,ReadyWait,Sleep} from "./WorkerHost.mjs";
+import {HemuBoot,ReadyWait,FramesWait,Sleep} from "./WorkerHost.mjs";
+import {LegacySnapshot} from "./LegacySnapshot.mjs";
 const fixture=new URL("./fixtures/legacy-smp.wasm",import.meta.url),bytes=readFileSync(fixture),
   meta=JSON.parse(readFileSync(new URL("./fixtures/legacy-smp.json",import.meta.url))),
   Hash=data=>createHash("sha256").update(data).digest("hex"),
@@ -12,10 +13,11 @@ assert.equal(Hash(bytes),meta.sha256);
 assert.ok(!WebAssembly.Module.exports(new WebAssembly.Module(bytes)).some(x=>x.name==="CpuFault"));
 let h;
 try {
-  h=await HemuBoot({smp:4,busProtocol,engine:fixture.href,engineMeta:meta,rate:30,patches:false});
+  h=await HemuBoot({snapshot:await LegacySnapshot(),busProtocol,patches:false});
   assert.equal((await ReadyWait(h,20000)).ok,true);
-  if(!h.msgs.some(m=>m.cmd==="diskInfo"&&m.ok))await h.Wait(m=>m.cmd==="diskInfo"&&m.ok,30000);
-  if(!h.msgs.some(m=>m.cmd==="smpReady"))await h.Wait(m=>m.cmd==="smpReady",10000);
+  if(!h.msgs.some(m=>m.cmd==="restored"))await h.Wait(m=>m.cmd==="restored",30000);
+  await Request(h,{cmd:"pause",value:false},m=>m.cmd==="paused"&&!m.value);
+  await FramesWait(h,40,15000);
   await Request(h,{cmd:"pause",value:true},m=>m.cmd==="paused"&&m.value);
   const saved=await Request(h,{cmd:"exportSnapshot"},m=>m.cmd==="exportResult",60000);
   assert.equal(saved.ok,true,saved.msg);

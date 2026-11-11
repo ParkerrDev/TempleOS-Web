@@ -6,10 +6,12 @@
 //                   the guest-execution entry points (guestexec.js), and RunCore for the SMP engine.
 // HEMU is the site's ../hemu clone (lowercase, as Netlify clones it; symlinked locally); HEMU_SRC
 // overrides. SITE_DIR is the site root (some harnesses read game sources from it); SITE overrides.
-import { readFileSync } from "node:fs";
+import { readFileSync,existsSync } from "node:fs";
 import { resolve,extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileHolyC } from "../holyc-wasm/src/compiler.js";
+import {createHash} from "node:crypto";
+import {STOCK_SECTION,StockManifestCheck,StockModuleRecord} from "./Stock.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 export const HEMU_SRC = process.env.HEMU_SRC ? resolve(process.env.HEMU_SRC) : resolve(here, "../hemu/src");
@@ -31,10 +33,23 @@ export function hemuIncludeResolver(p) { try { return hemuFile(p); } catch { ret
 //   source       compile this text instead of reading filename from HEMU_SRC (includes still resolve there)
 export function compileHemu({ smp = false, sharedMemory = smp, exports = [], extraSource = "", defines = {}, source, filename = "snapshot.HC" } = {}) {
   const src = (source ?? hemuFile(filename)) + extraSource;
-  return compileHolyC(src, {
+  const result=compileHolyC(src, {
     filename, lenient: false,
     sharedMemory, defines: smp ? { SMP_SNAP: "1", ...defines } : defines,
     exports: [...new Set([...JIT_EXPORTS, ...(smp ? ["RunCore"] : []), ...GUEST_EXPORTS, ...exports])],
     includeResolver: hemuIncludeResolver,
   });
+  const path=resolve(HEMU_SRC,"../stock.json");
+  if(filename==="snapshot.HC"&&existsSync(path)) {
+    const meta=StockManifestCheck(JSON.parse(readFileSync(path,"utf8"))),capture=meta.captures.find(c=>c.cores===(smp?4:1)),
+      registers=readFileSync(resolve(HEMU_SRC,smp?"snapregs-smp.HC":"snapregs.HC"));
+    if(createHash("sha256").update(registers).digest("hex")!==capture.sourceSha256)
+      throw Error("Stock captured-register source differs from its manifest");
+    const leb=n=>{const bytes=[];do{let b=n&127;n>>>=7;if(n)b|=128;bytes.push(b);}while(n);return bytes;},
+      name=new TextEncoder().encode(STOCK_SECTION),record=new TextEncoder().encode(JSON.stringify(StockModuleRecord(capture,meta))),
+      section=new Uint8Array([...leb(name.length),...name,...record]),
+      bytes=new Uint8Array([...result.bytes,0,...leb(section.length),...section]);
+    result.bytes=bytes;
+  }
+  return result;
 }

@@ -8,7 +8,7 @@ import {spawn} from "node:child_process";
 
 const ROOT=fileURLToPath(new URL("../../",import.meta.url));
 const MIME={".js":"text/javascript",".mjs":"text/javascript",".html":"text/html",".css":"text/css",
-  ".json":"application/json",".wasm":"application/wasm",".gz":"application/gzip",".hemu":"application/gzip",".HC":"text/plain"};
+  ".disk":"application/octet-stream",".json":"application/json",".wasm":"application/wasm",".gz":"application/gzip",".hemu":"application/gzip",".HC":"text/plain"};
 
 export async function DesktopServer({root=ROOT,snapshot=null,cores=1,port=0}={}) {
   root=resolve(root);
@@ -31,7 +31,7 @@ export async function DesktopServer({root=ROOT,snapshot=null,cores=1,port=0}={})
       }
       const local=path==="/"?"/engine/desktop/index.html":path;
       const allowed=local==="/Keyboard.js" || /^\/(engine|build|holyc-wasm\/src)\//.test(local) ||
-        /^\/hemu\/live(-smp)?\.bin\.gz$/.test(local) || local==="/vendor/images/templeos-hd.qcow2.gz";
+        /^\/hemu\/(live(-smp)?\.bin\.gz|stock(-smp)?\.disk|stock\.json)$/.test(local) || local==="/vendor/images/templeos-hd.qcow2.gz";
       const file=local==="/session.hemu"&&snapshot?snapshot:resolve(root,"."+local);
       if (!(local==="/session.hemu"&&snapshot) && (!allowed || !file.startsWith(root+sep) || !MIME[extname(file)])) {
         res.writeHead(404,headers);res.end();return;

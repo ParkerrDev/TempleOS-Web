@@ -1,5 +1,6 @@
 import {KEY,KeyInput} from "../../Keyboard.js";
 import {SnapshotInspect} from "../Snapshot.js";
+import {StockIdentify,StockModuleCheck} from "../Stock.js";
 import {BusStop,BUS_VERSION} from "../CoreBus.js";
 import {Speaker} from "../Speaker.js";
 
@@ -74,14 +75,16 @@ async function Boot(gz,config) {
   const request=++bootRequest;
   try {
     const saved=await SnapshotInspect(gz,{busProtocol:BUS_VERSION}),
-      cores=saved?.meta.cores||config.cores;
+      stock=saved?null:await StockIdentify(gz,config.stock?config.cores:undefined),
+      cores=saved?.meta.cores||stock.capture.cores;
     if(request!==bootRequest)return;
     if(![1,4].includes(cores))throw new Error("A saved machine must have one or four CPUs");
     if (cores===4 && !crossOriginIsolated) throw new Error("Four cores need a cross-origin isolated local server");
     const wasmUrl=new URL(cores===4?"../../build/hemu-smp.wasm":"../../build/hemu.wasm",import.meta.url).href;
     let wasm,ipiAddr;
+    wasm=saved?.wasm||new Uint8Array(await (await fetch(wasmUrl)).arrayBuffer());
+    if(stock)StockModuleCheck(await WebAssembly.compile(wasm),stock.capture,stock.manifest);
     if(cores===4) {
-      wasm=saved?.wasm||new Uint8Array(await (await fetch(wasmUrl)).arrayBuffer());
       ipiAddr=saved?.meta.ipiAddr||(await (await fetch(new URL("../../build/hemu-smp.json",import.meta.url))).json()).globals.g_ipi_pending;
     }
     if(request!==bootRequest)return;

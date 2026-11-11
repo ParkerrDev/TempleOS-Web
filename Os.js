@@ -6,6 +6,7 @@ import {createGuestFpsMeter} from "./guest-fps.js";
 import {KEY,KeyInput,KeyBar,KeyRoute} from "./Keyboard.js";
 import {MobileInput} from "./MobileInput.js";
 import {SnapshotInspect} from "./engine/Snapshot.js";
+import {StockIdentify,StockInspect,StockModuleCheck} from "./engine/Stock.js";
 import {BusStop,BUS_VERSION} from "./engine/CoreBus.js";
 import {GuestRequests} from "./GuestRequests.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
@@ -629,6 +630,8 @@ async function runSMP() {
         fetch("./build/hemu-smp.json",{cache:"no-cache"}).then(r=>r.json()),
       ]);
       sc.ncore=SMP_N;
+      const found=await StockIdentify(gzBytes,SMP_N);
+      StockModuleCheck(await WebAssembly.compile(wasmBytes),found.capture,found.manifest);
     }
     if(!current())return false;
     const mem = new WebAssembly.Memory({ initial: 512, maximum: 8192, shared: true });
@@ -784,12 +787,15 @@ async function OsBoot()
     setLoad("Checking imported snapshot…",40);
     info=await SnapshotInspect(snap,{busProtocol:BUS_VERSION});
     if(generation!==osGen)return;
+    if(!info)smp=(await StockInspect(snap)).cores===4;
+    if(generation!==osGen)return;
     if (info) {
       smp=info.meta.cores>1;
       if (smp && !self.crossOriginIsolated)
         throw new Error("This snapshot needs shared memory for its four CPUs. "+
           "Open the site in a browser that supports cross-origin isolation.");
     }
+    if(smp&&!self.crossOriginIsolated)throw new Error("This captured RAM needs shared memory for its four CPUs.");
     bytes=snap;
     setLoad("loading imported snapshot…",50);
   } else

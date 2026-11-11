@@ -8,11 +8,12 @@
 import {DocClipPatch} from "./DocClip.js";
 import {FrameTop,FrameFps} from "./FrameText.js";
 import {SnapshotOpen,SnapshotSave} from "./Snapshot.js";
+import {StockIdentify,StockInflate,StockModuleCheck,StockDiskLoad} from "./Stock.js";
 import {KeyQueue} from "./KeyQueue.js";
 import {CaptureBarrier} from "./CoreBarrier.js";
 import {CoreBus,BusStop,BUS_VERSION} from "./CoreBus.js";
 import { createHemuHost,CpuFaultText } from "./host.js";
-import { loadDisk, makeDisk, fat32Upload, fat32List } from "./qcow2.js";
+import { makeDisk, fat32Upload, fat32List } from "./qcow2.js";
 import * as jit from "./jit.js";             // x86-64 -> WASM block JIT (the speed: interp ~6fps -> JIT 30-65fps games)
 import {createGuestInput} from "./guestinput.js";
 import { createGuestExec } from "./guestexec.js";   // backend guest execution: jobs queued through the OS's own TaskExe, no keystrokes
@@ -30,7 +31,7 @@ function SettingsApply(rateChanged=true)
 let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0, instRef = null;
 let paused=false,saving=false,machineBarrier=null,engineBytes=null,hostRef=null,showStoppedFrame=null;
-let machineBus=null,diskPending=false,diskGeneration=0;
+let machineBus=null,diskPending=false,diskGeneration=0,stockCapture=null,stockManifest=null;
 const RamAccess=fn=>machineBus?machineBus.Access(fn):fn();
 const deferred=[];
 let docClip=null;
@@ -296,19 +297,6 @@ async function DiskImage() {
   return new Response(stream.pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
 }
 
-// Stream-decompress into ONE preallocated buffer: Response.arrayBuffer() would hold all the
-// inflate chunks AND the assembled copy at once (~2x peak) - phones live or die on this.
-async function gunzipInto(gz, size) {
-  const out = new Uint8Array(size);
-  const rd = new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip")).getReader();
-  let off = 0;
-  for (;;) { const { done, value } = await rd.read(); if (done) break;
-    if (off + value.length > size) throw new Error("snapshot larger than expected");
-    out.set(value, off); off += value.length; }
-  if (off!==size) throw new Error("snapshot shorter than expected");
-  return out;
-}
-
 // `smp` (optional) = { mem: shared WebAssembly.Memory, ctrl: SharedArrayBuffer, ipiAddr, ncore } - when
 // present this worker is the SMP BSP (core 0): it instantiates the shared-memory engine over `mem`, and
 // after the desktop settles it releases the AP workers (which run RunCore over the same memory) so games
@@ -323,11 +311,16 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, rate, patches
   postMessage({cmd:"progress",text:"reading saved machine…",pct:60});
   const saved=await SnapshotOpen(gz,{busProtocol:smpCfg?.busProtocol||0});
   if (saved && saved.meta.cores!==(smpCfg?.ncore||1)) {await saved.Close();throw new Error("Snapshot core count does not match the worker topology");}
-  if (!saved) snap=await gunzipInto(gz,402653184);
+  if (!saved) {
+    const found=await StockIdentify(gz,smpCfg?.ncore||1);
+    stockCapture=found.capture;stockManifest=found.manifest;
+    snap=found.ram||await StockInflate(gz,stockCapture.ramBytes);
+  }
   gz=null;
   if (!saved && diskBytes) disk=makeDisk(new Uint8Array(diskBytes));
   engineBytes=saved?saved.wasm:new Uint8Array(await (await fetch(wasmUrl,{cache:"no-cache"})).arrayBuffer());
   const mod=await WebAssembly.compile(engineBytes);
+  if(!saved)StockModuleCheck(mod,stockCapture,stockManifest);
   if(smpCfg?.busProtocol!==undefined) {
     if(smpCfg.busProtocol!==BUS_VERSION)throw new Error("Unsupported shared bus protocol");
     machineBus=CoreBus(new Int32Array(smpCfg.ctrl),0,smpCfg.ncore);
@@ -487,7 +480,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, rate, patches
         setTimeout(async()=>{
           if(generation!==diskGeneration)return;
           try {
-            const next=await loadDisk("../vendor/images/templeos-hd.qcow2.gz");
+            const next=await StockDiskLoad(stockCapture,stockManifest);
             if(generation!==diskGeneration)return;
             disk=next;diskPending=false;
             postMessage({cmd:"diskInfo",ok:true,diskReady:true,diskPending,msg:"Disk ready"});

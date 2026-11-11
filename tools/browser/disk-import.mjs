@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {gzipSync,gunzipSync} from 'node:zlib';
+import {gunzipSync} from 'node:zlib';
 import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {chromium} from 'playwright-core';
@@ -11,7 +11,8 @@ const headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resou
 const root=new URL('../../',import.meta.url),site=createServer(ServeReq).listen(0,'127.0.0.1');
 await once(site,'listening');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
-const worker=await readFile(new URL('engine/hemu-worker.js',root),'utf8');
+const worker=await readFile(new URL('engine/hemu-worker.js',root),'utf8'),
+  diskBody=await readFile(new URL('vendor/images/templeos-hd.qcow2.gz',root));
 function Replace(source,needle,value) {
   assert.equal(source.split(needle).length,2);return source.replace(needle,value);
 }
@@ -39,8 +40,8 @@ try {
           }
         };
       });
-      let source=Replace(worker,'loadDisk, makeDisk','loadDisk as diskLoad, makeDisk');
-      source+='\nasync function loadDisk(url) {try{return await diskLoad(url);}finally{setTimeout(()=>postMessage({cmd:"testDiskSettled"}),0);}}\n';
+      let source=Replace(worker,'StockModuleCheck,StockDiskLoad}', 'StockModuleCheck,StockDiskLoad as diskLoad}');
+      source+='\nasync function StockDiskLoad(...args) {try{return await diskLoad(...args);}finally{setTimeout(()=>postMessage({cmd:"testDiskSettled"}),0);}}\n';
       if(outcome==='scheduled') {
         source=Replace(source,'setTimeout(async()=>{','globalThis.testDiskStart=async()=>{');
         source=Replace(source,'},2500);','};');
@@ -52,7 +53,7 @@ try {
       await context.route('**/vendor/images/templeos-hd.qcow2.gz',async route=>{
         fetches++;held();await new Promise(resolve=>releaseDisk=resolve);
         if(outcome==='failure')await route.abort();
-        else await route.fulfill({body:gzipSync(new Uint8Array(512).fill(0x17)),contentType:'application/gzip'});
+        else await route.fulfill({body:diskBody,contentType:'application/gzip'});
       });
       const page=await context.newPage(),errors=[];
       page.on('pageerror',error=>errors.push(error.message));

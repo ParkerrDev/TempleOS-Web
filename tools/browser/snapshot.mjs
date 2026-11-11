@@ -5,6 +5,7 @@ import {readFile,mkdir,unlink} from "node:fs/promises";
 import {chromium} from "playwright-core";
 import {SnapshotInspect} from "../../engine/Snapshot.js";
 import {gunzipSync} from "node:zlib";
+import {LegacySnapshot} from "../hemu/LegacySnapshot.mjs";
 
 const root=new URL("../../",import.meta.url),
   server=spawn(process.execPath,["server.mjs"],{cwd:root,
@@ -17,12 +18,6 @@ const legacy=process.env.HEMU_LEGACY==="1";
 try {
   for (const cores of legacy?[4]:[1,4]) {
     const context=await browser.newContext({viewport:{width:1280,height:800}});
-    if(legacy) {
-      await context.route("**/build/hemu-smp.wasm",async route=>route.fulfill({contentType:"application/wasm",
-        body:await readFile(new URL("tools/hemu/fixtures/legacy-smp.wasm",root))}));
-      await context.route("**/build/hemu-smp.json",async route=>route.fulfill({contentType:"application/json",
-        body:await readFile(new URL("tools/hemu/fixtures/legacy-smp.json",root))}));
-    }
     await context.route("**/hemu/*.gz",async function (route) {
       const name=new URL(route.request().url()).pathname.split("/").pop();
       await route.fulfill({body:await readFile(new URL("hemu/"+name,root)),
@@ -50,11 +45,24 @@ try {
     page=await context.newPage();
     const errors=[];
     page.on("pageerror",e=>errors.push(e.message));
+    if(legacy) {
+      const old=Buffer.from(await LegacySnapshot());
+      await context.route("**/__legacy.hemu",route=>route.fulfill({body:old,contentType:"application/gzip"}));
+      await page.goto("http://localhost:8183/robots.txt");
+      await page.evaluate(async()=>{const {BootFileSave}=await import("/BootFile.js");
+        await BootFileSave("snapshot",await(await fetch("/__legacy.hemu")).arrayBuffer());});
+    }
     await page.goto("http://localhost:8183/?"+(cores==1?"single":"smp"));
+    if(legacy) {
+      await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd==="restored"));
+      const after=await page.evaluate(()=>window.guestEvents.length);
+      await page.locator("#pauseBtn").click();
+      await page.waitForFunction(n=>window.guestEvents.slice(n).some(m=>m.cmd==="paused"&&!m.value),after);
+    }
     await page.waitForFunction(()=>document.getElementById("loadui").style.display=="none");
-    await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd=="diskInfo" && m.ok));
-    await page.waitForFunction(old=>window.guestEvents.some(m=>
-      m.cmd=="guestPatch" && (m.state=="installed" || old && m.state==="failed")),legacy,{timeout:30000});
+    await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd==="diskInfo"&&m.ok||m.cmd==="restored"));
+    if(!legacy)await page.waitForFunction(()=>window.guestEvents.some(m=>
+      m.cmd==="guestPatch"&&m.state==="installed"),null,{timeout:30000});
     if (cores==4)
       await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd=="smpReady"));
     await page.locator("#diskBtn").click();
@@ -90,6 +98,12 @@ try {
         buffer:Buffer.from("not a gzip snapshot")});
       await page.waitForFunction(()=>document.getElementById("diskStatus").textContent.includes("Import failed"));
       assert.equal(await page.locator("#ulSnap").isEnabled(),true);
+      await page.evaluate(()=>window.stockImportAlive="same machine");
+      const rawChoosing=page.waitForEvent("filechooser");await page.locator("#ulSnap").click();
+      await(await rawChoosing).setFiles(new URL("tools/hemu/fixtures/legacy-smp.ram.gz",root).pathname);
+      await page.waitForFunction(()=>document.getElementById("diskStatus").textContent.includes("missing or mismatched CPU state"));
+      assert.equal(await page.evaluate(()=>window.stockImportAlive),"same machine");
+      assert.equal(await page.evaluate(async()=>(await import("/BootFile.js")).BootFileRead()),null);
       const disk=gunzipSync(await readFile(new URL('tools/disk/zero.qcow2.gz',root)));
       const unsupported=Buffer.from(disk);unsupported.writeBigUInt64BE(4n,72);
       await page.evaluate(()=>window.diskImportCheck='same session');
@@ -110,8 +124,9 @@ try {
     await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd=="settings" &&
       m.rate==120 && m.repeat));
     await page.locator("#settingsClose").click();
+    const pause_after=await page.evaluate(()=>window.guestEvents.length);
     await page.locator("#pauseBtn").click();
-    await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd=="paused" && m.value));
+    await page.waitForFunction(n=>window.guestEvents.slice(n).some(m=>m.cmd=="paused" && m.value),pause_after);
     const before_fps=await page.locator("#tb-fps").innerText();
     const before_pixels=await page.locator("#canvas").evaluate(async e=>
       Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",e.getContext("2d").

@@ -58,7 +58,7 @@ function Reader(gz)
 }
 
 export async function SnapshotOpen(gz,{busProtocol=0}={})
-{//null denotes the original stock RAM-only format, which keeps its old loader.
+{//null denotes RAM-only data; the stock loader must validate its capture identity.
   const rd=Reader(gz);
   try {
     const sig=await rd.Take(8);

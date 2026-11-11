@@ -2,6 +2,7 @@ import {WinAdd,WinRaise} from "./WinMgr.js";
 import {$,dbg,engine,os_disk,OsReady,OsFileWrite,OsDirList} from "./Os.js";
 import {BootFileSave} from "./BootFile.js";
 import {SnapshotInspect} from "./engine/Snapshot.js";
+import {StockIdentify,StockModuleCheck} from "./engine/Stock.js";
 import {makeDisk} from "./engine/qcow2.js";
 
 const CSS='    /* Disk & Save window */\n'+
@@ -152,7 +153,11 @@ async function Import(kind)
     Say("Checking "+kind+"…");
     if (kind=="snapshot") {
       bytes=await file.arrayBuffer();
-      await SnapshotInspect(bytes,{busProtocol:1});
+      if(!await SnapshotInspect(bytes,{busProtocol:1})) {
+        const found=await StockIdentify(bytes),response=await fetch(found.capture.cores===4?"./build/hemu-smp.wasm":"./build/hemu.wasm",{cache:"no-cache"});
+        if(!response.ok)throw Error("Could not read the matching stock engine");
+        StockModuleCheck(await WebAssembly.compile(await response.arrayBuffer()),found.capture,found.manifest);
+      }
     } else {
       bytes=await DiskBytes(file);
       makeDisk(new Uint8Array(bytes));

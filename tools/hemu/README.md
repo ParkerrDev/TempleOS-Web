@@ -473,7 +473,8 @@ controller and host contract.
 Call `SnapshotInspect(gz,{busProtocol:1})` before creating workers in a
 coordinated controller. The default protocol 0 refuses a required protocol
 before memory changes or AP creation. Inspection returns null for the
-original stock RAM-only format; otherwise `{meta,wasm}`. For a four-core save,
+RAM-only format; its capture identity must then pass `StockIdentify` and
+`StockModuleCheck` before AP creation. Otherwise inspection returns `{meta,wasm}`. For a four-core save,
 instantiate APs with that wasm and a shared memory (initial 512, maximum 8192
 pages), `busProtocol:1`, `sc.ncore` and the saved `requiredBusProtocol`.
 Pass the BSP `smp:{mem,ctrl,ipiAddr:meta.ipiAddr,ncore:meta.cores,busProtocol:1}`.
@@ -617,3 +618,13 @@ correction is not an on-disk TempleOS installation. The same HolyC file has a
 native single-core installer, verified in original QEMU/KVM; native SMP entry
 replacement is not claimed. The production HEMU path uses its four-core
 barrier and passes full snapshot roundtrips in both supported topologies.
+
+`stock.test.mjs` validates the hash-bound stock RAM/module identities and
+reconstructs every byte of both captured disks from the original base and
+small sector overlays. `stock-init.test.mjs` checks native FCW/FSW/TOP before
+any guest instruction, then confirms that scheduler context saves retain the
+window manager's 037f control word. `snapregs.test.mjs` includes independent
+native distinct-XMM/TOP witnesses and rejects unrepresentable or malformed
+captures. See `tools/snapshot/README.md` for provenance and the unchanged
+synthetic device/80-bit x87 limitations. Historical module tests now restore
+self-contained full snapshots, never an old engine paired with new stock RAM.

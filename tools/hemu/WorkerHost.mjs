@@ -1,3 +1,4 @@
+import {StockIdentify,StockModuleCheck} from "../../engine/Stock.js";
 //Boots the engine worker under Node as the page does and keeps what it sends.
 //Single core: one engine/hemu-worker.js. SMP: that worker as core 0 over a
 //shared memory, and engine/hemu-smp-worker.js for each other core.
@@ -129,6 +130,11 @@ export async function HemuBoot(opt)
   gz=opt.snapshot||readFileSync(new URL(live,SITE));
   const saved=opt.snapshot?await SnapshotInspect(gz,{busProtocol:opt.busProtocol||0}):null;
   if (saved) opt={...opt,smp:saved.meta.cores===4?4:0};
+  else {
+    const manifest=JSON.parse(readFileSync(new URL("hemu/stock.json",SITE),"utf8")),
+      found=await StockIdentify(gz,opt.smp||1,manifest),module=new WebAssembly.Module(readFileSync(new URL(wasm,SITE)));
+    StockModuleCheck(module,found.capture,manifest);
+  }
   h.workers.push(WorkerNew("engine/hemu-worker.js"+(opt.nojit?"?nojit":""),opt.fetchHold));
   h.workers[0].on("message",MsgIn);
   h.workers[0].on("error",function WorkerErr(e) {console.log("worker threw: "+e.stack);});

@@ -8,11 +8,17 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { compileHemu } from "./compile.js";
+import {STOCK_SECTION} from "./Stock.js";
+function StockRequired(bytes) {
+  if(WebAssembly.Module.customSections(new WebAssembly.Module(bytes),STOCK_SECTION).length!==1)
+    throw Error("A deployable stock engine requires its captured CPU/RAM/disk manifest");
+}
 
 const out = resolve(process.argv[2] || "build");
 mkdirSync(out, { recursive: true });
 
 const r = compileHemu();
+StockRequired(r.bytes);
 writeFileSync(resolve(out, "hemu.wasm"), Buffer.from(r.bytes));
 console.log(`hemu.wasm: ${r.bytes.length} bytes, ${r.warnings.length} warnings`);
 for (const w of r.warnings) console.log("  warn:", w);
@@ -21,6 +27,7 @@ for (const w of r.warnings) console.log("  warn:", w);
 // browser SMP workers (BSP + APs over one shared WebAssembly.Memory) load. The single-core build above
 // is unchanged. Needs the SMP snapshot (multi-core capture) + per-core wiring.
 const smp = compileHemu({ smp: true });
+StockRequired(smp.bytes);
 writeFileSync(resolve(out, "hemu-smp.wasm"), Buffer.from(smp.bytes));
 console.log(`hemu-smp.wasm: ${smp.bytes.length} bytes (shared memory, SMP), ${smp.warnings.length} warnings`);
 // Sidecar: the IPI mailboxes' address, which the page hands the BSP so it can drop stale boot IPIs

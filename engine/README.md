@@ -14,6 +14,7 @@ using the [HolyC-wasm](https://github.com/ParkerrDev/HolyC-wasm) compiler (clone
 | `guestexec.js` | the backend guest-execution API over `HEMU/src/guestcall.HC`: resolves kernel functions and class layouts from the running OS's symbol tables and exposes `exec`, `include`, `mkdir`, `writeFile` and `launch`, with request IDs and queued / running / done / failed states |
 | `guestinput.js` | mouse state resolved through `guestexec.js` metadata: relative deltas and capture hints; raw keyboard bytes use `KeyQueue.js` and HEMU IRQ1 |
 | `qcow2.js` | qcow2/raw sector I/O and host FAT32 listing, upload and read |
+| `Stock.js` | capture manifest, RAM/engine identity checks, bounded inflation and paired disk overlays shared by page, desktop and worker |
 | `hemu-worker.js` | the engine as the site runs it: one Worker, single core (the shipping path); also the BSP of the SMP engine |
 | `hemu-smp-worker.js` | application cores over shared `WebAssembly.Memory`; the BSP always uses the production worker |
 
@@ -70,12 +71,12 @@ the live guest.
 
 ## Snapshots
 
-HEMU boots by resuming a RAM image, not from disk. `tools/snapshot/` holds the recipes that produce
-`hemu/live*.bin.gz` and `hemu/src/snapregs*.HC`: `capture-snapshot.py` boots TempleOS under QEMU (TCG), lets
-the desktop settle, pauses and dumps guest RAM and registers; `parse-migration.mjs` flattens a QEMU migration
-stream into `live.bin`; `bake-regs.mjs` turns the register dump into `snapregs.HC` (re-bake after every
-capture so the registers match the RAM). `smp-capture.py` and `bake-regs-smp.mjs` are the four-core
-equivalents; `find-delta.mjs` locates the code relocation between the two snapshots.
+HEMU starts from a paired RAM/register/disk capture. The native QEMU capture,
+strict FPU/XMM parser and disk-overlay packaging commands are documented in
+[tools/snapshot/README.md](../tools/snapshot/README.md). `hemu/stock.json` binds
+these inputs; the compiled engine carries matching `hemu.stock` metadata.
+Page, desktop and worker loaders reject unknown RAM-only imports before
+execution. Full saved-machine images use their embedded engine and state.
 
 The browser and standalone desktop window both resume that already booted
 64-bit guest. They do not execute TempleOS's 16-bit DVD/BIOS loader or perform
