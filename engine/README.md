@@ -54,7 +54,9 @@ decoded bytes at entry, including native dispatch-table calls, before executing.
 blocks, the dispatch module and optional CPU bindings from the previous owner;
 the caller then supplies its own `jitX87`, `jitSeg` and `jitChain` bindings when
 available. Omitted bindings use unconfigured defaults instead of earlier
-addresses. `jitReset` alone
+addresses. An unregistered FS/GS base ends the compiled prefix so the
+interpreter owns the instruction; a registered base whose value is zero remains
+a valid compiled operand. `jitReset` alone
 clears code caches while retaining the current owner. `jit-owner.test.mjs`
 checks that missing handlers and setup cannot access a previous owner's memory.
 

@@ -513,6 +513,7 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
       else if (b === 0x2E || b === 0x36 || b === 0x3E || b === 0x26) { j++; }   // CS/SS/DS/ES = flat in 64-bit (skip)
       else if (b >= 0x40 && b <= 0x4F) { rex = 1; rexW = (b >> 3) & 1; rexR = (b >> 2) & 1; rexX = (b >> 1) & 1; rexB = b & 1; j++; break; }
       else break; }
+    if (SEG && !(SEG===1?MSRFS:MSRGS)) break;
     if (locked) break;                                   // LOCK-prefixed instr -> end block at `i`; interpreter executes it atomically
     let op = U8[j]; j++;
     if (op === 0x0F) { two = 1; op = U8[j]; j++; }

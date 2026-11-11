@@ -73,8 +73,21 @@ for(const shared of [false,true])for(const code of [
   next.view.setBigUint64(BASE+80,0xBADn,true);
   next.view.setBigUint64(2136,16n,true);next.view.setBigUint64(2144,16n,true);
   if(code[0]===0x64||code[0]===0x65) {
+    assert.equal(jit.jitCompile(PC),0,'Unknown FS/GS bases require interpreter execution.');
+    const prefix=[0x48,0xFF,0xC0];
+    new Uint8Array(next.memory.buffer).set([...prefix,...code,0xF4],BASE+PC);
+    jit.jitReset();next.view.setBigUint64(REG,10n,true);
     assert.equal(jit.jitCompile(PC),1);assert.equal(jit.jitRun(PC),1);
-    assert.equal(next.view.getBigUint64(REG,true),0x1234n,'Missing segment setup cannot read an earlier owner offset.');
+    assert.equal(next.view.getBigUint64(REG,true),11n);
+    assert.equal(next.view.getBigUint64(RIP,true),BigInt(PC+prefix.length));
+    for(const base of [0n,16n]) {
+      new Uint8Array(next.memory.buffer).set([...code,0xF4],BASE+PC);
+      next.view.setBigUint64(2136,base,true);next.view.setBigUint64(2144,base,true);
+      jit.jitSeg(2136,2144,0,0,0,0);jit.jitReset();
+      assert.equal(jit.jitCompile(PC),1);assert.equal(jit.jitRun(PC),1);
+      assert.equal(next.view.getBigUint64(REG,true),base?0xBADn:0x1234n,
+        'A registered base is used even when its value is zero.');
+    }
   } else {
     assert.equal(jit.jitCompile(PC),0,'Missing optional CPU bindings retain the interpreter fallback.');
   }
