@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "05fca76a68e5464e5ff3f6b04a10283dbbf347783f0dca2795ed5fc15a2c20b1",
+  "runtimeSha256": "61c8d7924547d28067e40dbf32363e5311de210b060da943b9c47d2edf302f69",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -468,7 +468,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/Sudoku/Sudoku.HC:52: Undefined identifier or untyped call: HashFind"
+      "error": "C:/Home/Games/TinkerOS/Apps/Sudoku/Sudoku.HC:52: undefined symbol 'adam_task'"
     },
     "library-Tetris": {
       "name": "Tetris",
