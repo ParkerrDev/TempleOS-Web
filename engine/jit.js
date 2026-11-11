@@ -108,6 +108,13 @@ function fInc(f,d) {
   if(fCacheEnabled) {fStackOffset=(fStackOffset+d)&7;return;}
   f.local_get(FSPLOC);i64c(f,d);f.op("i64_add");i64c(f,7);f.op("i64_and");f.local_set(FSPLOC);
 }
+function fStatus(f) {
+  rcX87=1;
+  i32c(f,X87SW);ld64(f);i64c(f,~0x3800);f.op("i64_and");
+  f.local_get(FSPLOC);
+  if(fCacheEnabled&&fStackOffset){i64c(f,fStackOffset);f.op("i64_add");}
+  i64c(f,7);f.op("i64_and");i64c(f,11);f.op("i64_shl");f.op("i64_or");
+}
 const fPush = (f, ev) => { ev(); f.local_set(5); fInc(f, -1); fSt(f, 0, () => f.local_get(5)); };  // local5(f64): v(old fsp) -> dec fsp -> store
 const fPop = (f) => fInc(f, 1);
 function fRoundValue(f,trunc)
@@ -613,7 +620,7 @@ export function jitCompile(rip,noFprCache=false) {
             f.local_get(5);fc64(f,0);f.op("f64_eq");f.op("select");
             f.local_get(5);f.local_get(5);f.op("f64_ne");f.op("select");f.op("i64_or");st64(f);
           }
-          else if (op === 0xDF && sub === 4 && sti === 0) wrReg(f,0,2,true,()=>{i32c(f,X87SW);ld64(f);}); // FNSTSW AX
+          else if (op === 0xDF && sub === 4 && sti === 0) wrReg(f,0,2,true,()=>fStatus(f)); // FNSTSW AX
           else if (op === 0xD9 && sub === 7 && sti === 2) fSt(f, 0, () => { fLd(f, 0); f.op("f64_sqrt"); });   // FSQRT (cpu.HC __pow(d,.5); V8's fdlibm pow(x,.5) IS sqrt(x) bit-for-bit)
           else if (op === 0xD9 && sub === 6 && sti === 6) fInc(f, -1);             // FDECSTP: fsp=(fsp-1)&7
           else if (op === 0xD9 && sub === 6 && sti === 7) fInc(f, 1);              // FINCSTP: fsp=(fsp+1)&7

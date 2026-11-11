@@ -3,7 +3,7 @@
 // writes   hemu.wasm       the single-core engine (hemu-worker.js and the inline engine load it)
 //          hemu-smp.wasm   the shared-memory SMP engine (BSP + AP workers over one WebAssembly.Memory)
 //          hemu-smp.json   sidecar: the address of the SMP IPI mailboxes
-// The Netlify build runs this right after cloning (netlify.toml), so nothing compiled is ever committed.
+// Netlify rebuilds production engines; historical test modules are pinned fixtures.
 // HEMU's source is found by compile.js (../hemu/src; HEMU_SRC overrides).
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";

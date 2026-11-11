@@ -72,6 +72,7 @@ function MsgIn(m)
 {
   if (m && m.cmd=="__peek") {
     parentPort.postMessage({cmd:"__peek",probe:ProbeRd(),
+      fault:ex.CpuFault?String(ex.CpuFault(0n)):null,faultPc:ex.CpuFault?String(ex.CpuFault(1n)):null,
       cpu:Array.from({length:17},(_,i)=>String(ex.GuestInfo(BigInt(i)))),
       ranges:(m.ranges||[]).map(([addr,len])=>new Uint8Array(ex.memory.buffer,addr,len).slice())});
     return;

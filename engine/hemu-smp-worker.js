@@ -1,5 +1,5 @@
 import {CaptureWait} from "./CoreBarrier.js";
-import {createHemuHost} from "./host.js";
+import {createHemuHost,CpuFaultText} from "./host.js";
 import * as jit from "./jit.js";
 
 onmessage=e=>{
@@ -45,8 +45,9 @@ async function RunAp({core,mem,ctrl:control,wasmBytes,heapAbi}) {
   let spins=0,faulted=false;
   while(!Atomics.load(ctrl,1)){
     if(CaptureWait(ctrl,core))continue;
+    if(faulted){await new Promise(r=>setTimeout(r,10));continue;}
     const did=Number(inst.exports.RunCore(2000000n));
-    if(did<0&&!faulted){faulted=true;postMessage({cmd:"log",msg:`AP${core} fault ${-did}`});}
+    if(did<0&&!faulted){faulted=true;postMessage({cmd:"error",msg:CpuFaultText(inst.exports,core<<8|-did),retained:true,core});}
     if((did<1000&&++spins>4)||spins>100){await new Promise(r=>setTimeout(r,0));spins=0;}
     else if(did>=1000)spins++;
   }

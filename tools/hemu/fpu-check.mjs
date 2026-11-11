@@ -39,7 +39,7 @@ for(const mode of ['interpreter','jit'])for(const [value,flags] of [[-2,0x100],[
   else {ex.Step();ex.Step();}
   const status=BigInt(0xA5|flags);
   assert.equal(probe(0),status,`${mode} FTST ${value}`);
-  assert.equal(probe(1),0x123456789ABC0000n|status,`${mode} FNSTSW preserves upper RAX`);
+  assert.equal(probe(1),0x123456789ABC1800n|status,`${mode} FNSTSW preserves upper RAX`);
   assert.equal(probe(2),0xAD7n,'EFLAGS preserved');assert.equal(probe(3),3n,'stack top preserved');
   assert.equal(probe(4),bits,'operand preserved');
 }

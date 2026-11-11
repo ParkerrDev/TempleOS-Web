@@ -10,7 +10,7 @@ import {FrameTop,FrameFps} from "./FrameText.js";
 import {SnapshotOpen,SnapshotSave} from "./Snapshot.js";
 import {KeyQueue} from "./KeyQueue.js";
 import {CaptureBarrier} from "./CoreBarrier.js";
-import { createHemuHost } from "./host.js";
+import { createHemuHost,CpuFaultText } from "./host.js";
 import { loadDisk, makeDisk, fat32Upload, fat32List } from "./qcow2.js";
 import * as jit from "./jit.js";             // x86-64 -> WASM block JIT (the speed: interp ~6fps -> JIT 30-65fps games)
 import {createGuestInput} from "./guestinput.js";
@@ -424,7 +424,11 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
       dtAcc=0;
       continue;
     }
-    try { guestInput.beforeFrame(); inst.exports.__main(); guestInput.afterFrame(); }                                 // emulate one TempleOS frame (+ present via the host)
+    try {
+      guestInput.beforeFrame();inst.exports.__main();guestInput.afterFrame();
+      const fault=CpuFaultText(inst.exports);
+      if(fault) {PauseSet(true);postMessage({cmd:"error",msg:fault,retained:true,paused:true});continue;}
+    }
     catch (err) { postMessage({ cmd: "error", msg: "hemu trap: " + err.message }); return; }
     if (smpCfg && !apsReleased && ++bootFrames > 120) {            // desktop settled -> release the AP workers (parallel from here)
       const dvm = new DataView(smpCfg.mem.buffer);

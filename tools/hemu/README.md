@@ -106,6 +106,49 @@ floating exception are not implemented. These tests establish the stated
 comparison behavior, not full x87 conformance. The authoritative instruction
 reference is [Intel SDM revision 089](https://cdrdv2-public.intel.com/868137/325462-089-sdm-vol-1-2abcd-3abcd-4.pdf).
 
+FPU dispatch reports whether it handled an encoding. Unsupported forms stop
+with `BADOPX87` and both opcode bytes; reserved forms and unsupported native
+instructions cannot silently pass a coverage gate. The former low-64-bit
+80-bit operand approximation is rejected. The valid FFREE operation still
+uses the documented tag-less approximation needed by TempleOS's FFREE /
+FINCSTP discard sequence; success is not a claim of complete stack-tag checks.
+
+`fpu-ops-oracle.c` records 108 additional real x86 results: all eight FCMOV
+conditions against all CF/PF/ZF combinations, FNSTSW/FNCLEX at eight stack
+positions, and signed 16/32-bit FICOM/FICOMP comparisons. The 494-check gate
+repeats them through both execution engines, checks memory-store width and
+register/flag preservation, then requires 22 unsupported cases to stop
+without changing their operands. FNSTSW now includes TOP in both interpreter
+and JIT results. The old integer-memory compare path incorrectly dispatched
+those encodings as arithmetic; it now updates status and pops as required.
+
+`CpuFault(0)` reports the first stopped CPU as `(core<<8)|reason`, or zero;
+`CpuFault(1)` reports its instruction pointer. Hosts do not read CPU structure
+offsets to discover a fault. Reasons 2 and 3 are unsupported instruction and
+integer divide faults. `RunCore` retains the fault on every later call; the
+old one-time automatic recovery has been removed. HLT remains normal idle.
+
+CPU fault messages have `retained:true`; BSP errors also carry `paused:true`,
+while AP errors identify `core`. Boot/instantiation errors stay unflagged so
+the page can distinguish a retained stopped machine from a failed boot.
+The BSP reports an actionable `error`, publishes `paused:true`, and keeps all
+APs in the capture barrier. AP workers also report errors and stop executing
+that core. The real worker regression compiles native faulting child tasks on
+core0 and core1, then verifies frozen registers, RIP, frames and all barrier
+acknowledgements. Older saved engines without `CpuFault` retain the BSP
+`GuestInfo` fallback; their AP `error` messages should also pause the BSP in
+the page host. Their embedded instruction implementation is unchanged.
+
+`worker-legacy-fault.test.mjs` boots the tracked historical four-core engine
+in `fixtures/legacy-smp.wasm`, exports a real full save embedding it, then
+restores that save under the current host. Native UD2 on AP1 verifies the
+retained error, page-style BSP pause, frozen state/frames and held AP barrier.
+The old module intentionally has no CpuFault export and contains the former
+first-fault recovery behavior. Its compiler/source refs, hash and IPI address
+are recorded alongside it. `legacy-engine.mjs ENGINE_REF COMPILER_REF` rebuilds
+that fixture explicitly using the matching compiler checkout; normal tests
+consume the pinned bytes and never regenerate their reference.
+
 ## Settings and keyboard
 
 `init` accepts `rate` (0, 30, 60, 120; default 0), `repeat` (default false),

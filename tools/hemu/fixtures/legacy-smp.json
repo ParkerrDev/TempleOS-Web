@@ -1,0 +1,10 @@
+{
+  "engineRef": "7ea5d3edfac15388ef8e854da1f55a33f3e81228",
+  "compilerRef": "7f80635",
+  "sha256": "91a7098684262a762ae497d7636ea46d9b5df47fbd5d54d9369d44e35c929dc4",
+  "bytes": 91911,
+  "heapAbi": 1,
+  "globals": {
+    "g_ipi_pending": 324200
+  }
+}
