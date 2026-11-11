@@ -50,6 +50,14 @@ upload, independent persisted-sector readback, disk inclusion, launch cleanup, a
 `jitrecycle.mjs` checks repeated compilation into reused guest addresses; each cached JIT block validates its
 decoded bytes at entry, including native dispatch-table calls, before executing.
 
+`jitState` attaches one CPU owner to this module. Attachment discards compiled
+blocks, the dispatch module and optional CPU bindings from the previous owner;
+the caller then supplies its own `jitX87`, `jitSeg` and `jitChain` bindings when
+available. Omitted bindings use unconfigured defaults instead of earlier
+addresses. `jitReset` alone
+clears code caches while retaining the current owner. `jit-owner.test.mjs`
+checks that missing handlers and setup cannot access a previous owner's memory.
+
 `guestinput.js` applies relative mouse deltas once from the guest's current position, respecting games that
 call MsSet to recenter. Keyboard state reaches TempleOS only through set-1 make/break bytes and IRQ1.
 The optional BIOS repeat follows the guest PS/2 typematic configuration. Capture hints follow the foreground task's mouse visibility and input

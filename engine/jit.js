@@ -11,7 +11,14 @@ const blocks = new Map();                  // entry rip -> { fn, ninstr }  (comp
 const blockFn = new Array(65536).fill(null);   // fast dispatch arrays, indexed by slotOf(rip)
 const blockRip = new Int32Array(65536).fill(-1);
 const slotOf = (r) => (r ^ (r >>> 16)) & 0xFFFF;   // MUST match cpu.HC/snapshot.HC: hash (not low bits) so 0x10000-multiple-apart code copies don't fight over one slot
-export function jitState(reg, rfl, rip, gbase, memObj, rdMem, wrMem, rasterHLE) { REG = Number(reg); RFL = Number(rfl); RIP = Number(rip); GBASE = Number(gbase); MEM = memObj; U8 = new Uint8Array(memObj.buffer); RDMEM = rdMem; WRMEM = wrMem; if (rasterHLE) RASTERHLE = rasterHLE; }
+export function jitState(reg,rfl,rip,gbase,memObj,rdMem,wrMem,rasterHLE) {
+  // Compiled modules import an owner's memory and callbacks permanently.
+  jitReset();JITRIP=JITN=0;RUNTBL=RUNDISP=null;
+  jitX87(0,0,0);jitSeg(0,0,0,0,0,0);
+  REG=Number(reg);RFL=Number(rfl);RIP=Number(rip);GBASE=Number(gbase);
+  MEM=memObj;U8=new Uint8Array(memObj.buffer);RDMEM=rdMem;WRMEM=wrMem;
+  RASTERHLE=rasterHLE||null;
+}
 export function jitSeg(fs, gs, tsc, cw, xlo, xhi) { MSRFS = Number(fs); MSRGS = Number(gs); TSC = Number(tsc) || 0;
   X87CW = Number(cw) || 0; XMMLO = Number(xlo) || 0; XMMHI = Number(xhi) || 0; }   // FS/GS base + tsc byte-offsets; optional FPU-cw/XMM offsets gate FXSAVE/FXRSTOR compilation (older 3-arg callers just leave FX ops interp'd)
 export function jitReset() { blocks.clear(); blockFn.fill(null); blockRip.fill(-1); }

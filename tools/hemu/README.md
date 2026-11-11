@@ -58,6 +58,9 @@ real x86 conversion fixtures, and QEMU snapshot capture tools remain.
   instruction count, including zero iterations, exact device dispatch budgets,
   the iteration cap, writes to the loop's own instructions, and second-iteration
   faults that must retain interpreter exits.
+- JIT owner checks attach separate ordinary/shared memories, with and without
+  dispatch chains, and ensure old compiled modules, graphics callbacks and
+  optional CPU offsets cannot survive attachment to a new owner.
 - Forward-branch checks compare each executed prefix with the interpreter for
   all conditions and operand widths, partial/deferred flags, wrapped x87 stacks,
   unmasked conversion fallback, modified later code segments, and dispatch
