@@ -43,6 +43,8 @@ try {
     await page.goto("http://localhost:8183/?"+(cores==1?"single":"smp"));
     await page.waitForFunction(()=>document.getElementById("loadui").style.display=="none");
     await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd=="diskInfo" && m.ok));
+    await page.waitForFunction(()=>window.guestEvents.some(m=>
+      m.cmd=="guestPatch" && m.state=="installed"),null,{timeout:30000});
     if (cores==4)
       await page.waitForFunction(()=>window.guestEvents.some(m=>m.cmd=="smpReady"));
     await page.locator("#diskBtn").click();

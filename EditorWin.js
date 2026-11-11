@@ -209,7 +209,8 @@ fmtBtn.addEventListener("click", async () => {
   try {
     const { formatHolyC } = await import("./holyfmt.js");   // holyc-fmt, compiled+run in-browser
     const out = await formatHolyC(src, { indent: 2, tabs: true });   // Terry's layout: 2 a level, S2T tabs
-    if (out && out !== src) { ta.value = out; ta.dispatchEvent(new Event("input")); setStatus("formatted ✓"); }
+    if (ta.value !== src) setStatus("Source changed. Format again to use your latest edits.");
+    else if (out !== src) { ta.value = out; ta.dispatchEvent(new Event("input")); setStatus("formatted ✓"); }
     else setStatus("already formatted ✓");
   } catch (e) { setStatus("format error: " + e.message); }
   finally { fmtBtn.disabled = false; }

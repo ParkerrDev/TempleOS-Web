@@ -32,7 +32,7 @@ try {
           const m=e.data;
           if (m.cmd=="frame")
             window.lastGuestFrame={fps:m.fps,top:m.top};
-          else if (["guestResult","fileResult","settings"].includes(m.cmd))
+          else if (["guestResult","fileResult","settings","guestPatch"].includes(m.cmd))
             window.guestEvents.push(m);
         });
       }
@@ -51,6 +51,9 @@ try {
     {timeout:30000});
   await page.waitForFunction(()=>window.guestEvents.some(m=>
     m.name=="Welcome" && m.state=="done"),{timeout:30000});
+  await page.waitForFunction(()=>window.guestEvents.some(m=>
+    m.cmd=="guestPatch" && m.state=="installed"),null,{timeout:30000});
+  assert.equal(await page.locator("#osNotice").isVisible(),false);
   await page.evaluate(async function () {
     const {FONT}=await import("/holyc-wasm/src/runtime/font.js");
     window.guestText=function (ox=0,oy=0) {
@@ -122,8 +125,27 @@ try {
   assert(!await page.evaluate(()=>window.guestEvents.some(m=>
     m.name=="God Doodle" && ["failed","error"].includes(m.state))));
   assert.deepEqual(errors,[]);
+  await context.route("**/engine/patches/DocClip.HC",function (route) {
+    return route.fulfill({status:503,body:"unavailable"});
+  });
+  await page.setViewportSize({width:390,height:844});
+  await page.reload();
+  await page.locator("#osNotice").waitFor({state:"visible"});
+  assert.match(await page.locator("#osNotice").innerText(),/icons may flicker/);
+  assert.equal(await page.locator("#loadui").isVisible(),false,
+    "Failure to apply the optional visual fix leaves the OS running.");
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await page.locator("#osNoticeClose").click();
+  assert.equal(await page.locator("#osNotice").isVisible(),false);
+  await context.unroute("**/engine/patches/DocClip.HC");
+  await page.locator("#mobileMenu").click();
+  await page.locator("#restartBtn").click();
+  await page.waitForFunction(()=>window.guestEvents.some(m=>
+    m.cmd=="guestPatch" && m.state=="installed"),null,{timeout:30000});
+  assert.equal(await page.locator("#osNotice").isVisible(),false);
+  assert.deepEqual(errors,[]);
   console.log("Browser engine: stock Welcome, visible FPS, settings acknowledgement, "+
-    "God Doodle launch/input/exit passed. Screen: "+screen);
+    "God Doodle launch/input/exit, document correction and visible failure/retry passed. Screen: "+screen);
 } catch (e) {
   if (page) {
     await page.screenshot({path:new URL("../../tmp/engine-failure.png",import.meta.url).pathname});

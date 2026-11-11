@@ -31,6 +31,13 @@ const updateFps = () => { const text=fpsMeter.text(); if(tbFps.textContent!==tex
 
 const setLoad = (s, pct) => { ldtext.textContent = s; if (pct != null) ldbar.style.width = pct + "%"; };
 
+function OsNotice(message="")
+{
+  $("osNoticeText").textContent=message;
+  $("osNotice").hidden=!message;
+}
+$("osNoticeClose").addEventListener("click",function () {OsNotice();});
+
 // ---- sizes the screen: whole blocks per guest pixel, smoothed the rest of the way (see framebuffer.js) ----
 // The CSS decides how much room there is, so the size set here comes off to measure it.
 const fitScreen = () => {
@@ -469,6 +476,7 @@ async function restartOS() {
   try {
     dbg("↻ restarting TempleOS (reloading the OS, keeping your windows)…");
     cancelOSRequests();
+    OsNotice();
     dispatchEvent(new CustomEvent("osstate",{detail:{ready:false,
       msg:"TempleOS is restarting."}}));
     osGen++;
@@ -668,6 +676,14 @@ const cancelOSRequests = () => {
   uploadWaiters.clear();
 };
 const diskMsg = (m) => {
+  if (m.cmd=="guestPatch") {
+    if (m.state=="failed") {
+      OsNotice("The game-menu graphics fix could not load. Some icons may "+
+        "flicker. Restart TempleOS to retry.");
+      dbg(m.msg,true);
+    } else if (m.state=="installed") OsNotice();
+    return;
+  }
   if (m.cmd==="paused") {
     paused=m.value;
     fpsMeter.setPaused(paused);

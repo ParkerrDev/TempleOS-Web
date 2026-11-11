@@ -77,7 +77,8 @@ function pushKey(code) {
 
 function keyToChar(e) {
   if (e.key === "Enter") return 10;
-  if (e.key === "Escape") return 0x1b;
+  if (e.key === "Escape") return e.shiftKey?0x1c:0x1b;
+  if (e.key === " " && e.shiftKey) return 0x1f;
   if (e.key === "Backspace") return 8;
   if (e.key === "Tab") return 9;
   if (e.key.length === 1) return e.key.charCodeAt(0);

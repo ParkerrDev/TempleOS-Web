@@ -189,6 +189,38 @@ try {
         return [...c.getContext("2d").getImageData(17*scale,19*scale,1,1).data];
       });
       assert.deepEqual(pixel,[170,0,0,255],"Native CDC pixels reach the browser without palette loss.");
+      await page.locator("#editor").fill('"INPUT_READY\\n"; I64 i; '+
+        'for(i=0;i<3;i++) "%d\\n",GetChar;');
+      await page.locator("#runBtn").click();
+      await page.waitForFunction(()=>document.getElementById("console").textContent.includes("INPUT_READY"));
+      await page.locator("#screen").focus();
+      await page.keyboard.press("Shift+Escape");
+      await page.keyboard.press("Shift+Space");
+      await page.keyboard.press("a");
+      await page.waitForFunction(()=>document.getElementById("status").textContent=="done");
+      assert.match(await page.locator("#console").innerText(),/28\n31\n97/,
+        "Shift+Escape and Shift+Space reach native GetChar with TempleOS character values.");
+      let releaseFormatter;
+      const formatterGate=new Promise(resolve=>{releaseFormatter=resolve;});
+      await page.route("**/holyc-fmt/HolyCFmt.HC",async route=>{
+        await formatterGate;
+        await route.continue();
+      });
+      const formatterRequest=page.waitForRequest("**/holyc-fmt/HolyCFmt.HC");
+      await page.locator("#editor").fill('U0 Before()\n{\n}\n');
+      await page.locator("#edFmt").click();
+      await formatterRequest;
+      await page.locator("#editor").fill('U0 After()\n{\n}\n');
+      releaseFormatter();
+      await page.waitForFunction(()=>document.getElementById("status").textContent.startsWith("Source changed."));
+      assert.equal(await page.locator("#editor").inputValue(),'U0 After()\n{\n}\n',
+        "Formatting cannot overwrite edits made while its program is loading.");
+      await page.unroute("**/holyc-fmt/HolyCFmt.HC");
+      await page.locator("#editor").fill('U0 Example()\n{\n"é Ç ╬ 🚀";\n}\n');
+      await page.locator("#edFmt").click();
+      await page.waitForFunction(()=>document.getElementById("status").textContent=="formatted ✓");
+      assert.equal(await page.locator("#editor").inputValue(),
+        'U0 Example()\n{\n  "é Ç ╬ 🚀";\n}\n');
     }
     assert.deepEqual(errors,[]);
     await context.close();

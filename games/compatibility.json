@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "6e0b609ebe76622dc2fda51d707f432b2d2b05da013fc8fe2807e2d30fe7e124",
+  "runtimeSha256": "81ccb923aeb0b26fa63397ff733e908c34bb6dcc68a48f7e1d07860f7b9b263c",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -8,7 +8,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "4a02c81ba1d2b9d7a93839292c5b2b626dcc7c6471fcdfac7857fc4eaf8a6b29"
+      "wasmSha256": "d4423ad099e5980325babdc5de64c1cf5103e336686991a3c50b2dac9ffe3edd"
     },
     "toom": {
       "name": "TOOM",
@@ -24,7 +24,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "53b36188b97f3e4a3e58d15ca6bbccc3153dd731bde4bbdc4e45250fcc07d592"
+      "wasmSha256": "ed77ef6ef31f83c4137a6e827b647331401c70734ae1ce55f3f6bdf1a71402dd"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -32,7 +32,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "391e96f137879d9f5c08098bd5f86552afbac7f5162e961bf98947475eae480b"
+      "wasmSha256": "e707a6f8721e94db7e8b9d85b07558183f92fa5b906780c58171034c58e3ffa0"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -40,7 +40,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "c2d55368d1499e6adc446c3b9a0a553d033ecb51e79d6884e4b51405a66ca620"
+      "wasmSha256": "63323390256304db86d27d4674471409dbefad80a57e7b9a70dbcedbd537ef95"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -400,7 +400,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "<prelude>:53:13: parse error: expected declarator name (near '(')"
+      "error": "<prelude>:80:13: parse error: expected declarator name (near '(')"
     },
     "library-SpyHunt": {
       "name": "SpyHunt",
@@ -496,7 +496,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/InvLogic.HC:36:1: parse error: unexpected token in expression (near '}')"
+      "error": "C:/Home/Games/MaliciousTestimonies/RPG/Gameplay/Player.HC:94:21: parse error: unexpected token in expression (near ')')"
     },
     "library-Ezekiel": {
       "name": "Ezekiel",
