@@ -1,0 +1,68 @@
+{
+  "status": "bounded-native-boss-death-proof",
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "cases": 15340,
+      "native": "qemu-dr90xjkc",
+      "hemu": true,
+      "sourceSha256": "07b8c01fe6fd046039b8ce4aec004eb88bf08633f274b26e67c7b15bdfb7d28e",
+      "reference": "Unmodified original A_Fall, A_KeenDie and A_BossDeath compiled as host C with controlled floor/door event calls; single-player slot zero is the only participating player. All six output fields match.",
+      "scope": [
+        "Commercial map-seven and episode/map/type gates, including original default episode branch",
+        "Living-player requirement, dead/retired/other-type peers and exclusion of the acting boss",
+        "Tag 666/667 floor/door selection, exit request replacement and Keen solidity timing",
+        "Keen same-type checks across all 137 canonical actor identities"
+      ]
+    },
+    "integration": {
+      "cases": 32,
+      "native": "qemu-rhepves5",
+      "hemu": true,
+      "sourceSha256": "d065e00f95618d1727c95eec500dd1ed2830d11f07b8841839f3be4724e7069f",
+      "scope": [
+        "Actual floor lowering, texture-height raising, ordinary/blazing door opening and level exits",
+        "Full controller progression to destination without per-tic allocation",
+        "Absent/dead players, surviving/dead/retired bosses, invalid map/type gates",
+        "Busy sectors, absent tags, foreign mover thinkers and owner/inactive guards",
+        "Sound callback failure leaves its published controller owned and cleanup complete",
+        "Direct numeric tags, old linedef wrappers, invalid source-line guards and source texture transfer",
+        "Exact preservation of all linedefs and complete fresh-task heap cleanup"
+      ]
+    },
+    "doorRegression": {
+      "native": "qemu-o__xe_kv",
+      "hemu": true,
+      "cases": 14873,
+      "out": "DOOR 14873 CASES BAD 0"
+    },
+    "floorRegression": {
+      "native": "qemu-1op748h1",
+      "hemu": true,
+      "cases": 768,
+      "out": "FLOOR 768 CASES 107940 TICS BAD 0"
+    }
+  },
+  "nativeDesign": [
+    "The host supplies episode, map number and commercial mode explicitly; only the supported single-player slot participates.",
+    "Numeric tag helpers share ordinary door/floor construction without creating or mutating a linedef. Linedef entry points retain their index validation and supply the source line when a floor transfer requires it."
+  ],
+  "remaining": [
+    "Brain spawning and end-sequence actions",
+    "Complete actor dispatcher and persistent native game host",
+    "UI/audio, saves and episode/intermission progression"
+  ]
+}

@@ -178,16 +178,22 @@ Mover *FloorNew(Sectors *tmps,I64 sector,I64 type,I64 line=-1)
   return tmpm;
 }
 
-Bool FloorTag(Sectors *tmps,I64 line,I64 type)
+Bool FloorTagNum(Sectors *tmps,I64 tag,I64 type,I64 line=-1)
 {
   Map *map=tmps->motion->world->map;
   I64 i;
   Bool res=FALSE;
-  if (!(0<=line<map->line_cnt)) return FALSE;
   for (i=0;i<map->sector_cnt;i++)
-    if (map->sector[i].tag==map->line[line].tag)
+    if (map->sector[i].tag==tag)
       if (FloorNew(tmps,i,type,line)) res=TRUE;
   return res;
+}
+
+Bool FloorTag(Sectors *tmps,I64 line,I64 type)
+{
+  Map *map=tmps->motion->world->map;
+  if (!(0<=line<map->line_cnt)) return FALSE;
+  return FloorTagNum(tmps,map->line[line].tag,type,line);
 }
 
 Bool FloorStairs(Sectors *tmps,I64 line,Bool turbo=FALSE)

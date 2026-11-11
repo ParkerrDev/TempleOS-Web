@@ -161,16 +161,22 @@ Bool DoorUse(Sectors *tmps,Actor *actor,I64 line,I64 side)
   return TRUE;
 }
 
-Bool DoorTag(Sectors *tmps,I64 line,I64 type)
+Bool DoorTagNum(Sectors *tmps,I64 tag,I64 type)
 {
   Map *map=tmps->motion->world->map;
   I64 i;
   Bool res=FALSE;
-  if (!(0<=line<map->line_cnt)) return FALSE;
   for (i=0;i<map->sector_cnt;i++)
-    if (map->sector[i].tag==map->line[line].tag)
+    if (map->sector[i].tag==tag)
       if (DoorNew(tmps,i,type)) res=TRUE;
   return res;
+}
+
+Bool DoorTag(Sectors *tmps,I64 line,I64 type)
+{
+  Map *map=tmps->motion->world->map;
+  if (!(0<=line<map->line_cnt)) return FALSE;
+  return DoorTagNum(tmps,map->line[line].tag,type);
 }
 
 Bool DoorLocked(Sectors *tmps,Actor *actor,I64 line,I64 type)

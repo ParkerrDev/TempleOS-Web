@@ -97,6 +97,10 @@ The implemented foundation uses native V5.03 file and memory APIs:
   Footstep actions emit their sound before chase, and corpse fall removes only
   solidity. The player death sound takes an explicit episode/commercial rule.
   Explosion and BFG actions share the checked radius and forty-ray damage paths.
+- Boss death actions use explicit episode/map rules and require the living
+  single player where the original does. Same-type survivors block victory;
+  Keen fall still clears solidity before that check. Numeric sector tags start
+  the existing floor/door controllers without fabricating a linedef.
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
   contact callbacks defer reclamation until the end of the tic. Nested contact
@@ -307,6 +311,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/vile-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/vile.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fire-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fire.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/boss-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/boss.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -569,6 +575,12 @@ pass native TempleOS and pinned HEMU. The spawn boundary explicitly corrects
 the original repeated-x coordinate typo; an occluded real-spawn case verifies
 target x/y. Follow and blast moves refresh spatial ownership. Exact hashes,
 callback failure setup and limitations are in `tools/toom/fire-evidence.json`.
+Boss/Keen death decisions match 15,340 original-C cases. Thirty-two native and
+pinned HEMU integration cases run the selected controllers to completion,
+check level exits and preserve every linedef. The existing 14,873 door cases
+and 768 floor cases (107,940 tics) also pass both backends. Exact scope and
+source hashes are in `tools/toom/boss-evidence.json`; brain and complete host
+actions remain unfinished.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation
