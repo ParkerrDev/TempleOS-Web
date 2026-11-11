@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "10b7d09707843a67b82d61d3789da0f3724472924788742d771f486b26a1ff0e",
+  "renderSourceSha256": "fc2f1043ec8ea135d7ff0fdeac8a6b503034231d6317dd7605842b69e2db578e",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-vlc7gr51",
+      "native": "qemu-u032wpz7",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -257,6 +257,25 @@
       "native": "qemu-yi3kdxk0",
       "hemu": true,
       "scope": "Original map sector order and retained specials with actors loaded first; all controllers in the official Phase 1 maps are lights, with mixed delayed-door order covered by synthetic integration cases."
+    },
+    "surfaceFrames": {
+      "cycles": 22,
+      "ticValues": 135,
+      "mappings": 163215,
+      "scrollLines": 327,
+      "sides": 128180,
+      "native": "qemu-z7ecq9kd",
+      "hemu": true
+    },
+    "surfaceDraw": {
+      "maps": 36,
+      "phasesPerMap": 12,
+      "expectedPixelAndDepthComparisons": 432,
+      "changedSuccessiveViews": 77,
+      "cacheAndOwnershipCases": 6,
+      "native": "qemu-nj3wmus7",
+      "hemuPixelHashesMatch": true,
+      "details": "surface-evidence.json"
     }
   },
   "frames": [

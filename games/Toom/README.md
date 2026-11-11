@@ -34,6 +34,12 @@ The implemented foundation uses native V5.03 file and memory APIs:
   allocation. Sprites are not decoded until requested.
 - Masked middle-wall textures use shared wall projection, preserve transparent
   holes and top/bottom pegging, and clip against nearer walls and objects.
+- All 22 original flat and wall animation cycles use compact per-level
+  translation tables. Captured scrolling lines advance their front sidedefs
+  once per simulation tic. Construction reads metadata and allocates one block;
+  frames decode only when drawn. Views borrow this state and refresh changed
+  sector flat names, including sky transitions, without rereading unchanged
+  assets.
 - Fixed-point map collision uses the original blockmap, stable side/tie rules,
   line flags, portal headroom, 24-unit steps and dropoffs. Successful position
   queries retain touched special lines for the later movement/action stage.
@@ -139,8 +145,8 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - Door controllers support normal and fast raise/open/close cycles, thirty-second
   close/reopen and five-minute delayed opening, front-side manual use, tagged
   activation, both key forms for each color, monster/secret restrictions and
-  obstruction reversal. One controller owns each sector; new controllers wait
-  until the next tic and retired nodes free after callbacks. Sound and missing
+  obstruction reversal. One controller owns each sector; new controllers join
+  the shared thinker order and retired nodes free after callbacks. Sound and missing
   key requests are callbacks for the eventual native UI/audio implementation.
   Delayed closing doors initialize their reopening height and wait, correcting
   uninitialized fields in the legacy source. Isolated doors retain their ceiling,
@@ -169,7 +175,7 @@ The implemented foundation uses native V5.03 file and memory APIs:
   lower endpoint and can retry after returning to it; they cannot stall forever
   by decrementing an already-zero wait count.
 
-Fuzz effects, the full simulation loop, actor actions, line dispatch, HUD,
+Fuzz effects, the full simulation loop, actor actions, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
 
@@ -232,6 +238,9 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/special-dispatch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think-order.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think-map.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
@@ -408,9 +417,18 @@ cleanup, reentry/destruction guards and timed-door/light initialization order.
 All 36 real maps retain 626 light controllers and 183 secret sectors in their
 expected order. These are simulation foundations; the full game clock, actor
 AI/actions and level progression remain unfinished.
+Surface fixtures compare 163,215 frame mappings against the original C cycle
+definitions, then check all 327 scrolling lines and 128,180 sidedefs across
+36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation
+changes, missing cycle endpoints and more than 64 scrolling lines. A separate
+432-view fixture compares animated pixels and depth with an independent view
+whose map names are replaced by the expected frames. It also checks changed
+floor/ceiling names, sky transitions, invalid names and context ownership.
+These updates still await connection to the complete simulation clock.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
 motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector,
-door, floor, mover, teleport, switch, lighting, sector-effect, line-event or thinker
+door, floor, mover, teleport, switch, lighting, sector-effect, line-event, thinker
+or surface
 checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
@@ -448,7 +466,8 @@ actor counts, and requires the same source hash. It uses the ordinary guest
 file-upload path and a private disk overlay. `OUT` preserves the measured
 result even when comparison fails.
 
-Omit `ALL=1` for E1M1, or set `MAP=E2M3`. The default 30 repeats per view is
+Omit `ALL=1` for E1M1, set `MAP=E2M3`, or select several maps with
+`MAPS=E1M1,E4M7`. The default 30 repeats per view is
 intended for timing; `N=1` is sufficient for image comparison. Native times use
 the guest's real clock under QEMU/KVM. HEMU times use elapsed host time, including
 job dispatch amortized over the repeats. Asset preparation and emulator startup
@@ -470,3 +489,10 @@ The runtime-sector change is recorded in `tools/toom/sector-evidence.json`.
 All 288 static images remain exact. Three matched timing pairs put native and
 HEMU medians within 0.8% of the prior implementation, inside the observed run
 variation; this does not establish a complete game's frame rate.
+
+Surface integration is recorded in `tools/toom/surface-evidence.json`. All 432
+animated pixel hashes agree between native TempleOS and the fixed HEMU build;
+each backend also compares pixels and depth with explicit expected-frame map
+names. Two matched timing pairs on E1M1 and the 983-sector E4M7 show no measured
+cost from refreshing changed flat names. Those static-scene runs use no active
+surface context, and do not establish animation or complete-game performance.

@@ -18,6 +18,7 @@ U0 MaskSegDraw(View *tmpv,Seg *tmps)
   if (high<=low) return;
   high_y=(high-tmpv->z)*tmpv->fy; low_y=(low-tmpv->z)*tmpv->fy;
   n=TextureFind(tmpv->gr,side->middle);
+  if (tmpv->surfaces) n=TextureFrame(tmpv->surfaces,n);
   if (!(tmpi=TextureHold(tmpv->gr,n))) return;
   origin=high+side->y;
   if (tmpl->flags&16) origin=low+tmpi->height+side->y;

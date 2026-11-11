@@ -8,7 +8,9 @@ import {FreedoomRead,root} from './Assets.mjs';
 
 const backend=process.argv[2]||'hemu',map=process.env.MAP||'E1M1',n=Number(process.env.N||30);
 const dump=process.env.DUMP,dumpPose=Number(process.env.DUMP_POSE||2);
-const maps=process.env.ALL?Array.from({length:36},(_,i)=>`E${1+Math.floor(i/9)}M${1+i%9}`):[map];
+const maps=process.env.MAPS?process.env.MAPS.split(','):process.env.ALL?
+  Array.from({length:36},(_,i)=>`E${1+Math.floor(i/9)}M${1+i%9}`):[map];
+assert(maps.every(name=>/^E[1-4]M[1-9]$/.test(name))&&new Set(maps).size===maps.length);
 assert(maps.length===1||!dump&&!process.env.TRACE,'Use a single MAP with DUMP or TRACE.');
 assert(Number.isInteger(dumpPose)&&dumpPose>=0&&dumpPose<8);
 if(dump)mkdirSync(dump,{recursive:true});

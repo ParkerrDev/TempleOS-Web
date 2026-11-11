@@ -2,14 +2,21 @@
 #define TM_VIEW_HEIGHT	168
 #define TM_VIEW_NEAR	1.0
 
+class FlatRef
+{
+  I64 name,lump;
+};
+
 class View
 {
+  Surfaces *surfaces;
+  FlatRef *floor,*ceil;
   Map *map;
   Seg **masked;
   I64 masked_cnt;
   Graphics *gr;
   F64 x,y,z,angle,cs,sn,fx,fy,cx,cy;
-  I64 width,height,*floor,*ceil,*stack,sky;
+  I64 width,height,*stack,sky;
   I16 *top,*bottom;
   U16 *plane;
   I32 *depth;
@@ -36,12 +43,45 @@ U0 ViewDel(View *tmpv)
   }
 }
 
-View *ViewNew(Map *tmpm,Graphics *tmpg)
+I64 ViewFlatFind(Graphics *tmpg,I64 name)
+{
+  U8 text[9];
+  I64 n;
+  text(I64)=name; text[8]=0;
+  if (!StrCmp(text,"F_SKY1")) return -1;
+  n=LumpFind(tmpg->wad,text);
+  if (n<0 || tmpg->wad->dir[n].size!=4096) return -2;
+  return n;
+}
+
+Bool ViewFlatsSync(View *tmpv)
+{//Movers can change flat names and sky flags after the view is created.
+  I64 i,j,key,n;
+  FlatRef *ref;
+  Sector *sector;
+  for (i=0;i<tmpv->map->sector_cnt;i++) {
+    sector=tmpv->map->sector+i;
+    for (j=0;j<2;j++) {
+      if (j) {ref=tmpv->ceil+i; key=sector->ceil_name(I64);}
+      else {ref=tmpv->floor+i; key=sector->floor_name(I64);}
+      if (key!=ref->name) {
+	n=ViewFlatFind(tmpv->gr,key);
+	if (n< -1) return FALSE;
+	ref->name=key; ref->lump=n;
+      }
+    }
+  }
+  return TRUE;
+}
+
+View *ViewNew(Map *tmpm,Graphics *tmpg,Surfaces *surfaces=NULL)
 {//A small indexed view and screen-space clipping, not a world-space grid.
   I64 i,n,w=TM_VIEW_WIDTH,h=TM_VIEW_HEIGHT;
   U8 name[9];
   View *tmpv=CAlloc(sizeof(View));
-  tmpv->map=tmpm; tmpv->gr=tmpg;
+  tmpv->map=tmpm; tmpv->gr=tmpg; tmpv->surfaces=surfaces;
+  if (surfaces && (surfaces->map!=tmpm || surfaces->graphics!=tmpg))
+    goto vn_fail;
   tmpv->masked=MAlloc(tmpm->seg_cnt*sizeof(Seg *));
   if (tmpm->sector_cnt>32767) goto vn_fail;
   tmpv->width=w; tmpv->height=h;
@@ -53,25 +93,18 @@ View *ViewNew(Map *tmpm,Graphics *tmpg)
   tmpv->depth=MAlloc(w*h*sizeof(I32));
   tmpv->pix=MAlloc(w*h);
   tmpv->stack=MAlloc((tmpm->node_cnt+2)*sizeof(I64));
-  tmpv->floor=MAlloc(tmpm->sector_cnt*sizeof(I64));
-  tmpv->ceil=MAlloc(tmpm->sector_cnt*sizeof(I64));
+  tmpv->floor=MAlloc(tmpm->sector_cnt*sizeof(FlatRef));
+  tmpv->ceil=MAlloc(tmpm->sector_cnt*sizeof(FlatRef));
   tmpv->flat=CAlloc(tmpg->wad->cnt*sizeof(U8 *));
-  name[8]=0;
   for (i=0;i<tmpm->sector_cnt;i++) {
-    MemCpy(name,tmpm->sector[i].floor_name,8);
-    if (!StrCmp(name,"F_SKY1")) n=-1;
-    else {
-      n=LumpFind(tmpg->wad,name);
-      if (n<0 || tmpg->wad->dir[n].size!=4096) goto vn_fail;
-    }
-    tmpv->floor[i]=n;
-    MemCpy(name,tmpm->sector[i].ceil_name,8);
-    if (!StrCmp(name,"F_SKY1")) n=-1;
-    else {
-      n=LumpFind(tmpg->wad,name);
-      if (n<0 || tmpg->wad->dir[n].size!=4096) goto vn_fail;
-    }
-    tmpv->ceil[i]=n;
+    tmpv->floor[i].name=tmpm->sector[i].floor_name(I64);
+    tmpv->ceil[i].name=tmpm->sector[i].ceil_name(I64);
+    n=ViewFlatFind(tmpg,tmpv->floor[i].name);
+    if (n< -1) goto vn_fail;
+    tmpv->floor[i].lump=n;
+    n=ViewFlatFind(tmpg,tmpv->ceil[i].name);
+    if (n< -1) goto vn_fail;
+    tmpv->ceil[i].lump=n;
   }
   MemSet(name,0,sizeof(name));
   StrCpy(name,"SKY1");
@@ -87,6 +120,7 @@ vn_fail:
 
 U8 *ViewFlat(View *tmpv,I64 n)
 {
+  if (tmpv->surfaces) n=FlatFrame(tmpv->surfaces,n);
   if (!(0<=n<tmpv->gr->wad->cnt)) return NULL;
   if (tmpv->gr->wad->dir[n].size!=4096) return NULL;
   if (!tmpv->flat[n]) tmpv->flat[n]=LumpRead(tmpv->gr->wad,n);
@@ -156,9 +190,9 @@ U0 ViewPlanes(View *tmpv)
 	s=(n-1)/2;
 	tmps=tmpv->map->sector+s;
 	if ((n-1)&1) {
-	  flat=tmpv->ceil[s]; height=tmps->ceil/65536.0;
+	  flat=tmpv->ceil[s].lump; height=tmps->ceil/65536.0;
 	} else {
-	  flat=tmpv->floor[s]; height=tmps->floor/65536.0;
+	  flat=tmpv->floor[s].lump; height=tmps->floor/65536.0;
 	}
 	if (src=ViewFlat(tmpv,flat)) {
 	  d=(tmpv->z-height)*tmpv->fy/(y+0.5-tmpv->cy);
@@ -298,14 +332,18 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
   }
   if (!sb) {
     mid_n=TextureFind(tmpv->gr,side->middle);
+    if (tmpv->surfaces) mid_n=TextureFrame(tmpv->surfaces,mid_n);
     mid=TextureHold(tmpv->gr,mid_n);
   } else {
-    if (sb->ceil<sf->ceil && !(tmpv->ceil[front]<0 && tmpv->ceil[back]<0)) {
+    if (sb->ceil<sf->ceil &&
+	  !(tmpv->ceil[front].lump<0 && tmpv->ceil[back].lump<0)) {
       upper_n=TextureFind(tmpv->gr,side->upper);
+      if (tmpv->surfaces) upper_n=TextureFrame(tmpv->surfaces,upper_n);
       upper=TextureHold(tmpv->gr,upper_n);
     }
     if (sb->floor>sf->floor) {
       lower_n=TextureFind(tmpv->gr,side->lower);
+      if (tmpv->surfaces) lower_n=TextureFrame(tmpv->surfaces,lower_n);
       lower=TextureHold(tmpv->gr,lower_n);
     }
   }
@@ -323,13 +361,13 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
       if (sb) {
 	up=ViewRow(tmpv,back_yceil,iz);
 	down=ViewRow(tmpv,back_yfloor,iz)-1;
-	if (tmpv->ceil[front]<0 && tmpv->ceil[back]<0) top=up;
+	if (tmpv->ceil[front].lump<0 && tmpv->ceil[back].lump<0) top=up;
       }
-      if (tmpv->ceil[front]>=0)
+      if (tmpv->ceil[front].lump>=0)
 	PlaneMark(tmpv,x,tmpv->top[x],top-1,front*2+2);
       else
 	SkyColumn(tmpv,x,tmpv->top[x],top-1,iz);
-      if (tmpv->floor[front]>=0)
+      if (tmpv->floor[front].lump>=0)
 	PlaneMark(tmpv,x,bottom+1,tmpv->bottom[x],front*2+1);
       else
 	SkyColumn(tmpv,x,bottom+1,tmpv->bottom[x],iz);
@@ -392,6 +430,7 @@ U0 ViewDraw(View *tmpv)
   I64 i,n,s,sp=0;
   Node *tmpn;
   Subsector *tmps;
+  if (!ViewFlatsSync(tmpv)) throw('Flat');
   tmpv->cs=Cos(tmpv->angle); tmpv->sn=Sin(tmpv->angle);
   tmpv->masked_cnt=0;
   MemSet(tmpv->top,0,tmpv->width*sizeof(I16));

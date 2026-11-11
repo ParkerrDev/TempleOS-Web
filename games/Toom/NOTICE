@@ -25,10 +25,11 @@ control, fixed-tic player movement/view/power/death, actor sight and blast
 damage, moving-plane clipping/crushing, door/floor/lift/ceiling controllers
 and activation, teleport movement/effects, switch texture/button state,
 sector lighting, damaging floors/secrets/exit sectors, line use/crossing/shot
-dispatch, shared thinker scheduling, hit cross-sections and axis/vertex conventions were re-expressed in
+dispatch, shared thinker scheduling, surface animation/scrolling, hit
+cross-sections and axis/vertex conventions were re-expressed in
 native HolyC from p_map.c, p_maputl.c, p_mobj.c, p_inter.c, p_pspr.c,
 p_user.c, p_sight.c, p_floor.c, p_doors.c, p_plats.c, p_ceilng.c, p_telept.c,
-the door/neighbor/donut/player-sector/line-event portions of
+the door/neighbor/donut/player-sector/line-event/animation/scrolling portions of
 p_spec.c, switch texture/button/use portions of p_switch.c, constants from
 p_spec.h, lighting effects in p_lights.c, scheduling in p_tick.c, and the
 three double-shotgun sound actions in p_enemy.c

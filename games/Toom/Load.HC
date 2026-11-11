@@ -3,6 +3,7 @@
 #include "TmMap"
 #include "TmGr"
 #include "TmTex"
+#include "TmAnim"
 #include "TmData.HH"
 #include "TmClip"
 #include "TmState"
