@@ -219,3 +219,56 @@ U0 EnemyPainDie(Enemies *tmpe,Actor *actor)
   EnemyPainSpawn(tmpe,actor,actor->angle+0x80000000);
   EnemyPainSpawn(tmpe,actor,actor->angle+0xC0000000);
 }
+
+U0 EnemySkelMissile(Enemies *tmpe,Actor *actor)
+{
+  Motion *motion=tmpe->specials->sectors->motion;
+  Actor *target=EnemyTarget(tmpe,actor),*missile;
+  I64 old_z=actor->z;
+  if (!target) return;
+  EnemyFace(tmpe,actor); actor->z+=16*65536;
+  try {
+    missile=ActorMissileNew(motion,actor,target,TM_MT_TRACER);
+  } catch {
+    actor->z=old_z;
+  }
+  actor->z=old_z;
+  if (missile && WorldActorPlace(motion->world,missile,
+	missile->x+missile->vx,missile->y+missile->vy,missile->z))
+    missile->tracer=target->id;
+}
+
+U0 EnemyTracer(Enemies *tmpe,Actor *actor,I64 game_tic)
+{//The host supplies the persistent game clock, not the paused level clock.
+  Motion *motion=tmpe->specials->sectors->motion;
+  World *world=motion->world;
+  Actor *smoke,*target;
+  I64 exact,delta,distance,slope;
+  if (actor->world!=world) throw('World');
+  if (!actor->active || game_tic&3) return;
+  ImpactNew(motion,actor->x,actor->y,actor->z,0,FALSE);
+  smoke=WorldSpawn(world,TM_MT_SMOKE,actor->x-actor->vx,
+	actor->y-actor->vy,actor->z);
+  smoke->vz=65536; smoke->tics=MaxI64(smoke->tics-WorldRand(world)&3,1);
+  target=WorldActorGet(world,actor->tracer);
+  if (!target || target->health<=0) return;
+  exact=AngleFrom(world->data,target->x-actor->x,target->y-actor->y);
+  if (exact!=actor->angle) {
+    delta=(exact-actor->angle)&0xFFFFFFFF;
+    if (delta>0x80000000) {
+      actor->angle=(actor->angle-0x0C000000)&0xFFFFFFFF;
+      delta=(exact-actor->angle)&0xFFFFFFFF;
+      if (delta<0x80000000) actor->angle=exact;
+    } else {
+      actor->angle=(actor->angle+0x0C000000)&0xFFFFFFFF;
+      delta=(exact-actor->angle)&0xFFFFFFFF;
+      if (delta>0x80000000) actor->angle=exact;
+    }
+  }
+  MissileTurn(actor,0);
+  distance=MaxI64(DistanceApprox(target->x-actor->x,target->y-actor->y)/
+	world->data->info[actor->type].speed,1);
+  slope=(target->z+40*65536-actor->z)/distance;
+  if (slope<actor->vz) actor->vz-=8192;
+  else actor->vz+=8192;
+}

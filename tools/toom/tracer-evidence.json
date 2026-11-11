@@ -1,0 +1,69 @@
+{
+  "description": "Revenant launch, tracer homing and spatially consistent forced placement; full actor dispatcher and playable game remain unfinished.",
+  "engine": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "cases": 2828,
+      "native": "qemu-crqrg1u7",
+      "hemu": true,
+      "sourceSha256": "cb4e33ef1d3ae8b31ede8202c6a3cae3a970f5df78c240eaae0e63c80deb0b36",
+      "reference": "Unmodified original A_Tracer compiled as host C with a controlled puff call and angle query; actual canonical smoke timers/tables are used. All 25 fields and ordered events match.",
+      "scope": [
+        "Quarter-turn approach, exact-angle boundaries and unsigned wrap",
+        "Live/dead/missing targets, zero/near/far distances and vertical slope",
+        "Game-tic modulo-four gating and all random starts",
+        "Smoke position, velocity, timers and RNG after the controlled puff boundary"
+      ]
+    },
+    "integration": {
+      "cases": 110,
+      "native": "qemu-7yhsxnl4",
+      "hemu": true,
+      "sourceSha256": "43503386ca53d1a81e4528aace5f60decce3323415a2106c0e32efcadcde3cdc",
+      "scope": [
+        "96 shadow/non-shadow launches with independent integer-table/RNG expected results",
+        "Temporary raised source height is restored on success and callback/owner exceptions",
+        "Initial half-step plus extra step, tracer/source handles and spatial metadata",
+        "Eight actual puff/smoke/homing gates, including stale targets and independent level/game clocks",
+        "Six ownership/inactive/exception guards with complete fresh-task cleanup"
+      ]
+    },
+    "placement": {
+      "cases": 165,
+      "native": "qemu-i2j3jghd",
+      "hemu": true,
+      "sourceSha256": "5d7e5ee26ea51a9607f1a94ee8b1daf003e1ba6327c99f66558543039e59e90b",
+      "scope": [
+        "162 placements across BSP axis ties, all grid boundaries and outside-grid coordinates, with and without NOBLOCKMAP",
+        "Exact point-sector floor/ceiling and removal from prior block chains",
+        "Forced overlap/height bypass and owner/inactive atomic guards",
+        "No per-placement allocation"
+      ]
+    }
+  },
+  "nativeDesign": [
+    "EnemyTracer receives the persistent game tick explicitly; the paused/resettable level tick is not substituted.",
+    "Forced placement refreshes coordinates, sector, floor/ceiling and block ownership together, including the revenant extra step. Original direct C coordinate edits can retain prior spatial metadata until another move.",
+    "Tracer puffs use the normal puff animation explicitly. They do not inherit the original shared attackrange variable and its prior punch-animation selection."
+  ],
+  "remaining": [
+    "Arch-vile and boss actions",
+    "Complete actor action dispatcher and persistent game-clock host",
+    "Fast-mode state duration/projectile setup",
+    "Native host input/render pacing and UI/audio",
+    "Save/load and episode/intermission progression"
+  ]
+}

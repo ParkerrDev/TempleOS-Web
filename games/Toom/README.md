@@ -81,6 +81,9 @@ The implemented foundation uses native V5.03 file and memory APIs:
   Pain-elemental spawning counts dying skulls, retains the original 21st-skull
   boundary, and sends blocked spawns through ordinary damage/death handling.
   Its three death spawns observe earlier spawns in the same action.
+  Revenant launch restores its temporarily raised source height on failure;
+  the extra missile step updates spatial ownership. Tracer homing receives the
+  persistent game tick explicitly and emits its trail before checking targets.
   Refire checks preserve the early random
   return before health and sight tests. Enemy and player shots pass an explicit
   level context to shootable-line actions; captured impact data survives nested
@@ -291,6 +294,9 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fat-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fat.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/pain-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/pain.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/place.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/tracer-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/tracer.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -531,6 +537,12 @@ dying/retired actors, placement, damage and ordered charge events. Sixteen real
 cases add actual collision/death handling, generation reuse, targetless spawns,
 shadow RNG and callback-failure cleanup. Native and pinned HEMU results are in
 `tools/toom/pain-evidence.json`.
+Tracer homing matches 2,828 original-C cases with controlled puff/angle queries.
+Its 110 real launch/trail/clock cases and 165 forced-placement cases pass native
+and pinned HEMU; exact scopes are in `tools/toom/tracer-evidence.json`. Forced
+placement refreshes spatial metadata immediately. Tracer puffs explicitly use
+the normal animation, avoiding the original shared punch-range artifact. These
+are stated native design choices, not a demo-synchronization claim.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

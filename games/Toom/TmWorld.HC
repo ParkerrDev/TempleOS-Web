@@ -81,6 +81,20 @@ U0 WorldActorLink(World *tmpw,Actor *tmpa)
   }
 }
 
+Bool WorldActorPlace(World *tmpw,Actor *tmpa,I64 x,I64 y,I64 z)
+{//Forced placement bypasses collision while keeping spatial ownership together.
+  I64 sector,floor,ceil;
+  if (tmpa->world!=tmpw) throw('World');
+  if (!tmpa->active) return FALSE;
+  sector=FixedSector(tmpw->map,x,y);
+  floor=tmpw->map->sector[sector].floor; ceil=tmpw->map->sector[sector].ceil;
+  WorldActorUnlink(tmpw,tmpa);
+  tmpa->x=x; tmpa->y=y; tmpa->z=z; tmpa->sector=sector;
+  tmpa->floor=floor; tmpa->ceil=ceil;
+  WorldActorLink(tmpw,tmpa);
+  return TRUE;
+}
+
 U0 WorldSlotsGrow(World *tmpw)
 {//Actor allocations stay stable when the compact handle table grows.
   I64 i,old=tmpw->slot_cap,n=MaxI64(256,old*2);
