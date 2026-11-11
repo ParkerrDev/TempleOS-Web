@@ -1,0 +1,395 @@
+{
+  "scope": "Native Play PC-speaker binding: original TempleOS lifecycle/cleanup, actual one/four HEMU workers and Chromium DOM/audio output. Development entry only; no complete-game or performance qualification.",
+  "files": {
+    "games/Toom/Load.HC": "30e6be694b601f44521f39ee31a2c9e495638d870345a3f6687e7977633ca658",
+    "games/Toom/TmPlay.HC": "95603170a1158a3bda0ed80a4fe23a200789d2dbe906aa0d6138678b171876a6",
+    "tools/toom/Worker.HC": "aa4183a43742e81fa8675598a4f5b3df5c623fed2c32083de69a0f37ecfad8a8",
+    "tools/toom/AudioWorker.HC": "61bf2698d2be3cf36a9a25dea9e2b72a8a8c7421dcd54dce38d6c0af0099a4b2",
+    "tools/toom/PlayAudioWindow.HC": "40b0f0af6b8031497f1e5a01d9f9bc0eff6fb2815dc5678d13ad4d18729d3f58",
+    "tools/toom/PlayAudioCreate.HC": "8163e0d6ceb3c6a533a6f16823494ee4e873bd8ae9eef1fdcde69e3a56ec51b2",
+    "tools/toom/PlayAudioSpawn.HC": "8181b0687f8b317a8578d84a930a00db2d670d2ab0177be4919aee11b9561a63",
+    "tools/toom/play-audio.test.mjs": "e7c7bc87d12f820bd2bfa87ebd41f2d92bff0ab2a15abfa6e42829b8578b93f7",
+    "tools/toom/worker.test.mjs": "f5429d876684ec5df1c692a429a9f87765ae46f6a8505bb9900897f51f13adc7",
+    "tools/toom/browser.test.mjs": "dcfe991e5acb048abeac1864cd5540ad2450ea32b3626b7a0056532d0e0e0d32",
+    "tools/toom/SpeakerRenderSource.mjs": "3e1278d06fbc1f6baa1ff391e107878edd794c51bce7bb2eb02d238550f1f987",
+    "tools/toom/sound-scene.test.mjs": "ea07aaf48fe3156289744dd4c01006adac3d8e0579c4e60e28ef650d6d42df67"
+  },
+  "package": {
+    "Run.HC": "c96139a8dfd45044dd932a7863d2d331a25eb2cc62f503f3e1e6a58c297c9598",
+    "Load.HC": "30e6be694b601f44521f39ee31a2c9e495638d870345a3f6687e7977633ca658",
+    "TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+    "TmWad.HC": "a6eb46daecd0c97c5a25e13dad93e6ac1a6c1516532d05d104da537052732517",
+    "TmMap.HC": "7b096f40305398fa6114c76788b158dc7c912348469cabe56393258f4abc5069",
+    "TmGr.HC": "dcf3bfd9e476ba620d1479658410ee72c75e0599e96a8bf171df1b9dbdf7bc8e",
+    "TmTex.HC": "1058c3d88663bfd5d511ceef1ca99ccbfa356465405fb58adf7b77e8e5968807",
+    "TmAnim.HC": "88bacb84b0802181b51c5efe643415c5690b0c9babad2064f44c79608085c504",
+    "TmData.HH": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+    "TmClip.HC": "22fbb94fca32b0f1b19bde07c591c088cf2324fd129ace1df060ca90cc09f55b",
+    "TmState.HC": "0a7e57036b0d51d5a153e5cf0a8ffa76ac9f2d70061c48e429a0865899b12fdb",
+    "TmMath.HC": "5da8d9243d01fcae7afc35858f1d17586d5addcadef1dad7052c4a86e5f684cf",
+    "TmWorld.HC": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+    "TmContact.HC": "b8e15824529b0dafb7abf11164a53795c06759e07b1265f6abecce8602c8ed08",
+    "TmMove.HC": "d7235b8aa67b4eb72ca08c1b21d64ff56257c51314374a3523962b9bcffc18dd",
+    "TmPath.HC": "1897a4cc6c617a93f1556344111dabd4cb2247e3d3550c1102c841debe31eef4",
+    "TmSlide.HC": "e7ea0760e058b1d12c474bc135d4466c71ecfe5d5482ba5a6f23c6a7dd5e3da1",
+    "TmPlayer.HH": "ee536c8b0ceb057e3dda7e7320eb33520741d5d54487bb312f803ad7513cc8cf",
+    "TmMotion.HC": "d478a24beda3de1bb61756869d95df4d3952f97a89168b9a08c4831544a9f4ee",
+    "TmAttack.HC": "146737ee26c29ca330eb1b583f4e7131c1cd3580c4ca355610cd02f58d68802d",
+    "TmDamage.HC": "56e1d56ea69609cdcd34c7b5c22694367643cf51f8cd9cb0d72272522a1ab5bd",
+    "TmItems.HC": "4f265fd533b2e7820e6fb939517ad9ab5a5e3a7a8f7f8abd548494649ec448d3",
+    "TmTouch.HC": "b589423b0ea307643655babf3e8861ded6f2c837d5c99c17273d2a768dc3a53c",
+    "TmImpact.HC": "bfe59592e58dff4e799cd93f3db7937bf02d2fa9cf1fc1046d4b860f4f42acb9",
+    "TmWeapon.HC": "2904054222cc7f8bbf19307da47dac9c16e8a8bb5768bd56b17ce1e95733189c",
+    "TmPlayer.HC": "8260fa3085ce6ec002872269c244456eeda5315cc35ece10708f9830ef9eb449",
+    "TmSight.HC": "dba548702f1a63870416251da4473277a82de0a8e3670309a394e37b53569461",
+    "TmBlast.HC": "197e0c23bb1612d510e0c7094f33bf1162fea98aa1471dd83eca3bb424e1fb4f",
+    "TmSector.HC": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+    "TmDoor.HC": "ce49864f381d55361788f5efdc070fc377e2b4178f629856f7db74118c612a6a",
+    "TmFloor.HC": "b86eaee35d5a448c722f063c651f61c2ba3f4160637dda2af13c6084968fa00a",
+    "TmPlat.HC": "e9541607e935b3f43a3cc0b36d5d79a7ed51849efdb78e5e75d5bf973802bff3",
+    "TmCeil.HC": "13ce4bc669f4deec87c82d09bb08bb4ef75f623c8da7131f4eb66014ecb15379",
+    "TmTeleport.HC": "04efd4b10193f52d767883a0decf0e9176e0ff0213af184153b081b6bd7c8f36",
+    "TmSwitch.HC": "a158dd8d290558945063ec3d0a6678817335d0d59cbab323f9f303499285aee9",
+    "TmLight.HC": "18751745beb55e970363df09f8e03a0979e1eb66fe8e8efe835f10cbad754850",
+    "TmHazard.HC": "b69bdffac3c4a9394fcf757339ee6a7c915f27946b881e2b25a5673f04a8603e",
+    "TmSpecial.HC": "44a5ef52acf0022dc580e5cb90e9cb3747def44e890a5aa985db90d2fbfe615b",
+    "TmTick.HC": "cdeb5c411d52244bdc66643719ad7d05e4463896b010c925632f854dbed30a88",
+    "TmEnemy.HC": "332464bcf40c7c8f07dd9fb3776f744659cd3906662848067064b0ab069957b8",
+    "TmChase.HC": "c3a53ed3ddae5f1c05a5df3851c194ada85027d81f32acff6df6e1230bdcbc7b",
+    "TmCombat.HC": "069bf282d4ba8ca9faf69c10acbba6f8cf3e578a67fdd118142de7742f89a963",
+    "TmVile.HC": "bde6455466b79fcbc10369df53b60ad5eb96a20ff72bbbe769e5705fc85c64de",
+    "TmBoss.HC": "0892a31e7c65ee6f31f3b497e940721b800b5d126a518d97ad360383113c62f7",
+    "TmBrain.HC": "605e90147315d888f9d6493cdc8f65092e24f79fd24d96c3306d3d05fa105554",
+    "TmEffect.HC": "cdfd0f26beff5f99eeb609ee2d0820472cda0d91f6121a345529dd87071ab80b",
+    "TmActions.HC": "ae3bff931d7431a5c8cc9a993275114dc99cbb931670356846f4a940eabc57bb",
+    "TmPal.HC": "657c0c69082fad07cffe9b8800abf1d12df8eaa7603efa04dd62144b6142651f",
+    "TmDraw.HC": "89ff3d412fe95123e136228916792b84b0bf6d841f5d6b0c628a3f77569f174e",
+    "TmMask.HC": "49be08c8e34a92fad7989e3a28672f26fac33877ac2fe212cba2174f1252a33a",
+    "TmSprite.HC": "d3f27d4b403a7c554cb0608665b1606e302b686087290441d0be131e2a8905c6",
+    "TmLevel.HC": "be6c6e92e8f3e4ee9eebe5ea25217a903f324ce358e393c24eb406800cbacb43",
+    "TmInput.HC": "5589178e7cd8c3a1884c5e5250adc73812691fa8d32cba4e0a380707f55a2ee9",
+    "TmSnd.HC": "38d7d1cafdf87131a6b89953b32b1b836dba6fa7fbd26c0354ed80ad877db197",
+    "TmSpeaker.HC": "5ebe9169f145cf5585fa0af96ef54456b520562a3fd375b89fc44746c20e6847",
+    "TmSoundBank.HC": "7b0bc8790f30bd00579a7f53e305d62f8a9d1e65785365c263862f4894260d01",
+    "TmSoundData.HH": "71ca3a12ea1acacaadbe9ff97046511422aced00972eb093a4a0e23bab319b7c",
+    "TmAudio.HC": "ee93c78b6c173389f25bfa7c4f047c0a52cf427344fcee8b0616c7f68c530fd7",
+    "TmSoundScene.HC": "94f3aff023f520f08577652d703f0ffde75171be5ebee790bd0194ec6df7af9a",
+    "TmOverlay.HC": "6f4adb56ed7b326a0e6548be673489713c2e58d047689f79072f2fd677a8feca",
+    "TmScreen.HC": "54386654b6eaa3aab7a8f4a8087e59eb989aefdad5d23cd365c2959857e77aa7",
+    "TmPlay.HC": "95603170a1158a3bda0ed80a4fe23a200789d2dbe906aa0d6138678b171876a6",
+    "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+    "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+  },
+  "native": {
+    "playAudio": {
+      "results": [
+        {
+          "out": "AUDIO WINDOW 3 RUNS FIRE FOCUS PAUSE EXIT FAULT RESTORE BAD 0\n",
+          "except": ""
+        },
+        {
+          "out": "AUDIO PLAY CREATE 2 FAULTS HEAP BAD 0\n",
+          "except": ""
+        },
+        {
+          "out": "AUDIO SPAWN FAULT PRIOR TONE RESTORED BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-jklve6zj",
+      "cases": [
+        {
+          "name": "Window",
+          "expected": "AUDIO WINDOW 3 RUNS FIRE FOCUS PAUSE EXIT FAULT RESTORE BAD 0",
+          "sourceSha256": "02f4371a84f2d210d274172d8bd5ec6879754e2c08bdd50779a49635587279a4"
+        },
+        {
+          "name": "Create",
+          "expected": "AUDIO PLAY CREATE 2 FAULTS HEAP BAD 0",
+          "sourceSha256": "84919d5ee254f969c639c9683280502a16400b01df12da444b9bcffb0087f73d"
+        },
+        {
+          "name": "Spawn",
+          "expected": "AUDIO SPAWN FAULT PRIOR TONE RESTORED BAD 0",
+          "sourceSha256": "c6cd37d75a981d13001657f751bb3a69838c70a2d98247f32db8f9252520d823"
+        }
+      ],
+      "files": {
+        "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+      }
+    },
+    "playRegression": {
+      "results": [
+        {
+          "out": "PLAY 18 CASES HASH 3858873714 BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-ksvit8zo",
+      "sourceSha256": "4f874e82cb4d3d79a3772f6e2b23a6d7b9a4473419232c8a775731087e7f4bbe"
+    },
+    "constructorSweep": {
+      "results": [
+        {
+          "out": "PLAY CREATE 1017 CASES 1016 FAULTS BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-eviy4vpg",
+      "sourceSha256": "eeb0cf0efc700510639d6b38176c41e0f44bc6fcb7142a7731c2bd943cc3c76e"
+    },
+    "renderLoadDiagnostic": {
+      "results": [
+        {
+          "out": "AUDIO RENDER 1116 FRAMES 3000 MS 420 SAMPLES 0 SKIPPED GAP 11 MS BAD 0\nHARDWARE GATE 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-b78oknzr",
+      "sourceSha256": "c773bf9ae5f4ec86673894a4173bfb048606ca3e930c283d21ada1621030d160",
+      "render": true
+    }
+  },
+  "worker": {
+    "runtime": {
+      "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
+      "compiler": "d0e394e",
+      "hemu": "0eff35b",
+      "sha256": {
+        "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
+        "engine/hemu-worker.js": "0a760df45cf0697deda5a9c140bfb565320e3f5fef8cda5adb2f088b5b39b6a8",
+        "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+        "engine/guestexec.js": "dcdd39026889418506cadfa96654b55d4e67ada171a789029419784408d7a726",
+        "engine/guestinput.js": "7b2cc55fe61d63d9fec4c6129c58c85ed5d0fd1e2f757419e50b10940a82a3f2",
+        "engine/KeyQueue.js": "769df85ef4dbc5614517b1944c2fc7f7b5f242125ecea1c87b4bcacb9d0f8913",
+        "tools/hemu/WorkerHost.mjs": "a1ef452058b569db660732d078eed93b4d89cb1d1a3407899613b1c3b93e3437",
+        "tools/hemu/WorkerShim.mjs": "1eb8de631fc22bdb1480c988f7b5c684e343dc28be858c24a7207e1ca200d61e",
+        "hemu/live.bin.gz": "42db6570ffd1610ea2a39a60dd59e63095c60ac39610350a649c5671528a449a",
+        "hemu/live-smp.bin.gz": "97269db25c5f9e232f042decde6a6574ea992e625130aaca77d2f1ddabfd3973",
+        "hemu/stock.json": "fce58673729385cbe119f9307277ab646edb59239c1a77eb1bcae3b2d1c1856b",
+        "hemu/stock.disk": "032751a6b626aea216ab9d675d2b404f27a5e9f61261903cec8b6ea792d964a8",
+        "hemu/stock-smp.disk": "9079d2238b708e0fa168558e1fa1a5bed703e35c4f89e4e1fd0698a7330ee327",
+        "engine/Stock.js": "d721d929121e69c20bc05eb5cf8a1b214cad7b95ec697536b3067d585ecaeca4",
+        "vendor/images/templeos-hd.qcow2.gz": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+      }
+    },
+    "probeSha256": "6080183aa3e7260ffd7c6a88dfa6c77068f7941af3ad35a3e9e01c5fc4a52a31",
+    "checks": [
+      {
+        "cores": 1,
+        "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "firstFrameMs": 11820.851792999998,
+        "weaponReadyMs": 10923.729266999999,
+        "soundMessages": [
+          {
+            "cmd": "snd",
+            "f": 0
+          },
+          {
+            "cmd": "snd",
+            "f": 403.102027027027
+          },
+          {
+            "cmd": "snd",
+            "f": 0
+          }
+        ],
+        "frames": 1441,
+        "initialHash": "9d89a7800ddc27b58cd015afd279ff95595d82b14cd5f517544c34a3f3dbe0d5",
+        "pausedHash": "cb38e8cb08d666cd8c4543a1a13b2f4aae8859b373ec21c838d2805729787dc0",
+        "movedHash": "6e472fc33a3e73c6200c2e4047bb42c5d4334740aea0a40ee314ace5022f0b0b"
+      },
+      {
+        "cores": 4,
+        "wasmSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+        "firstFrameMs": 15494.913635999997,
+        "weaponReadyMs": 10596.882154000006,
+        "soundMessages": [
+          {
+            "cmd": "snd",
+            "f": 0
+          },
+          {
+            "cmd": "snd",
+            "f": 403.102027027027
+          },
+          {
+            "cmd": "snd",
+            "f": 370.0936724565757
+          },
+          {
+            "cmd": "snd",
+            "f": 370.0936724565757
+          },
+          {
+            "cmd": "snd",
+            "f": 0
+          }
+        ],
+        "frames": 1528,
+        "initialHash": "1f3d5cf38196af1b84095a15701cf31677c0f81e359bb4947855f83a694f8253",
+        "pausedHash": "563ca4b3d0ffc2e6e1dfa5b3b22ed9a617825452516c0f43b33bfafed79388a9",
+        "movedHash": "958e46179682936fca1637928ed64177fc38f6060ee38c126712abf2d5113e89"
+      }
+    ]
+  },
+  "browser": {
+    "browser": "156.0.8078.79",
+    "runtimeHashes": {
+      "server.mjs": "d5d38523f1789d8542fd9fb066a0424496ab7c1aef5bc324053a6209cffb7dc9",
+      "Keyboard.js": "951b8d76606fb348af1e61592bb61f7add4b4cc178582b6e626ea88ba66741d4",
+      "Os.js": "3ddc7022737d1461ebec7694248a5fb64fc9cd02e4c0c35af2f9826396593d7e",
+      "WinMgr.js": "0c34dd932fdc63eb12be6de2b317dfc6fca137a944e041ece783fcaabb2a6dd2",
+      "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
+      "engine/hemu-worker.js": "0a760df45cf0697deda5a9c140bfb565320e3f5fef8cda5adb2f088b5b39b6a8",
+      "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+      "engine/guestexec.js": "dcdd39026889418506cadfa96654b55d4e67ada171a789029419784408d7a726",
+      "engine/KeyQueue.js": "769df85ef4dbc5614517b1944c2fc7f7b5f242125ecea1c87b4bcacb9d0f8913",
+      "build/hemu.wasm": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+      "build/hemu-smp.wasm": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+      "hemu/live.bin.gz": "42db6570ffd1610ea2a39a60dd59e63095c60ac39610350a649c5671528a449a",
+      "hemu/live-smp.bin.gz": "97269db25c5f9e232f042decde6a6574ea992e625130aaca77d2f1ddabfd3973",
+      "hemu/stock.json": "fce58673729385cbe119f9307277ab646edb59239c1a77eb1bcae3b2d1c1856b",
+      "hemu/stock.disk": "032751a6b626aea216ab9d675d2b404f27a5e9f61261903cec8b6ea792d964a8",
+      "hemu/stock-smp.disk": "9079d2238b708e0fa168558e1fa1a5bed703e35c4f89e4e1fd0698a7330ee327",
+      "engine/Stock.js": "d721d929121e69c20bc05eb5cf8a1b214cad7b95ec697536b3067d585ecaeca4",
+      "engine/Speaker.js": "b29fcaaf04331400b31c0b5d0887870473edaac8a877e33aac784ae97c10622b",
+      "vendor/images/templeos-hd.qcow2.gz": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+    },
+    "probeSha256": "6080183aa3e7260ffd7c6a88dfa6c77068f7941af3ad35a3e9e01c5fc4a52a31",
+    "checks": [
+      {
+        "cores": 1,
+        "weaponReadyMs": 13398.601810000004,
+        "audibleRms": 0.033785926313061605,
+        "soundMessages": [
+          {
+            "cmd": "snd",
+            "f": 0
+          },
+          {
+            "cmd": "snd",
+            "f": 403.102027027027
+          },
+          {
+            "cmd": "snd",
+            "f": 370.0936724565757
+          },
+          {
+            "cmd": "snd",
+            "f": 370.0936724565757
+          }
+        ],
+        "captureReleases": 1,
+        "keys": [
+          29,
+          157,
+          25,
+          153,
+          25,
+          153,
+          224,
+          72,
+          224,
+          200,
+          1,
+          129,
+          42,
+          1,
+          129,
+          170
+        ],
+        "initialHash": "85e60c1d9d3c1ee9a3e957bbc781c2463dc48f514ffa1b0ac6c0dd5cc8bbfd9c",
+        "movedHash": "aa1445c65364ccdf043fa497f67cda54e2330aa4cd5097f488b85e222948ae6c",
+        "screenshot": "/tmp/toom-play-audio-browser/frame-1.png",
+        "screenshotSha256": "322ef81db862a4d49e1b101a7881969342ecfd94327aa0a7c0c29ae5d2ffa9b4"
+      },
+      {
+        "cores": 4,
+        "weaponReadyMs": 14032.557115000003,
+        "audibleRms": 0.033723628981499956,
+        "soundMessages": [
+          {
+            "cmd": "snd",
+            "f": 0
+          },
+          {
+            "cmd": "snd",
+            "f": 403.102027027027
+          },
+          {
+            "cmd": "snd",
+            "f": 0
+          },
+          {
+            "cmd": "snd",
+            "f": 0
+          },
+          {
+            "cmd": "snd",
+            "f": 403.102027027027
+          }
+        ],
+        "captureReleases": 1,
+        "keys": [
+          29,
+          157,
+          25,
+          153,
+          25,
+          153,
+          224,
+          72,
+          224,
+          200,
+          1,
+          129,
+          42,
+          1,
+          129,
+          170
+        ],
+        "initialHash": "f89b03147bb1037a0b4be9e892bbf28b8784b6378731dd54439f2191eec551a6",
+        "movedHash": "adbb7f74203e6754a447cc001becdb36b103dc5a6af4b086da33b70b92e4020c",
+        "screenshot": "/tmp/toom-play-audio-browser/frame-4.png",
+        "screenshotSha256": "82b9d65e09cc97dfeb5dcf5895214268f60182cc456aabfeaaa7660bd3c7083a"
+      }
+    ]
+  },
+  "componentSourceUnchanged": {
+    "soundScene": "282f55e9950c27dcec41ff1a7338d4aaef815f3d895588330d2f0f8a88b805f8",
+    "note": "The component driver excludes audio modules already present in Load before adding its port-hook variants. Its complete assembled native source remains byte-identical to sound-scene-evidence.json."
+  },
+  "limits": [
+    "The three original-TempleOS host cases cover normal Escape, Shift-Escape and a deliberate render failure, native focus/pause silence, song-task teardown, old settings/user_data restoration and prior-song resumption. A long synthetic clip isolates active-tone lifecycle; real DP payload delivery is covered by the package/browser gates.",
+    "The focused constructor proof injects both new audio allocations. The complete native constructor sweep additionally passes 1,016 allocation/read/DC-entry failure positions. Failed song creation restores the old tone, and subsequent PlayDel does not silence that restored prior owner.",
+    "The original 18-case Play image/state regression keeps hash 3858873714; the source-native render-load diagnostic delivers 420/420 samples with no skipped sample. These isolated native diagnostics do not establish sustained interactive performance on all hosts.",
+    "Actual package launch uses individual files from C:/Home, default assets, real native compiler, physical scan codes and one/four production workers. Chromium also routes actual DOM keys and observes nonzero output PCM plus pause/exit silence. No mobile or full-map completion claim is made.",
+    "Tests wait for the actual pistol ready state before firing; the initial displayed frame precedes weapon raising. Frozen-worker diagnostic counts over six five-second intervals were 7/2,19/5,203/52,575/145,755/189,991/249 clock/frame pairs. Several seconds of cold simulation/render delay remain unresolved.",
+    "Readiness latencies recorded here ran under concurrent correctness jobs and an unrelated external build. A private generic-cache diagnostic changed only jit.js but did not establish an overall cold-start benefit; these are not accepted speed measurements.",
+    "Native audio uses absolute 140Hz deadlines and skips expired samples when delayed. The worker/browser transport carries frequency without guest timestamps; actual PCM and silence prove delivery/lifecycle, not audible 140Hz spacing. Prior render-load HEMU starvation evidence remains speaker-render-evidence.json; the private yield candidate is not adopted.",
+    "The captured runtime is immutable Web 09109b0 / compiler A71 d0e394e / HEMU 0eff35b, including paired stock RAM/disk overlays and gate-readback support. Current site/compiler changes do not relabel this source-bound proof.",
+    "Level progression/intermission, saves, nightmare respawn, remaining world visual effects and sustained performance remain unfinished. No TOOM catalog promotion is included."
+  ]
+}

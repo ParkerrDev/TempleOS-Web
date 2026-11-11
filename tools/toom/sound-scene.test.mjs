@@ -9,6 +9,7 @@ import {SoundSceneReference} from './SoundSceneRef.mjs';
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const {files,reference}=await SoundSceneReference(),game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n),'latin1');
 const source=[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
+  .filter(m=>!['TmSnd','TmSpeaker','TmSoundBank','TmSoundData.HH','TmAudio','TmSoundScene'].includes(m[1]))
   .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+read('TmSnd.HC')+'\n'+
   readFileSync(new URL('SpeakerHook.HC',import.meta.url),'latin1')+'\n'+
   read('TmSpeaker.HC').replace(/\bInU8\(/g,'TmSpeakerIn(').replace(/\bOutU8\(/g,'TmSpeakerOut(')+'\n'+

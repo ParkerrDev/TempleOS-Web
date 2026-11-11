@@ -190,7 +190,8 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - Weapon and flash overlays run their canonical state clocks at 35 Hz. All
   22 weapon actions connect firing, melee, projectiles, ammo, sounds and light
   requests. Weapon changes wait for the animation; refiring follows each
-  weapon's state sequence. Drawing and audio playback remain separate work.
+  weapon's state sequence. The native host draws their overlays and routes
+  sound requests to the PC speaker.
 
 - Player commands apply fixed-tic turning and ground thrust, use-button edges,
   weapon selection, view bob/step recovery, timed powers and death/respawn state.
@@ -241,9 +242,9 @@ The implemented foundation uses native V5.03 file and memory APIs:
   lower endpoint and can retry after returning to it; they cannot stall forever
   by decrementing an already-zero wait count.
 
-Fuzz effects, the full simulation loop, actor actions, HUD,
-audio, saves and episode/intermission progression are still being implemented.
-There is deliberately no game launcher or advertised compatibility result yet.
+Fuzz effects, saves, nightmare respawning and episode/intermission progression
+remain unfinished. Sustained rendering/audio performance is not yet qualified,
+and the development entry is not in the production catalog.
 
 ## Assets
 
@@ -783,8 +784,9 @@ TempleOS and include its `Run.HC` entry from any directory. The entry selects
 its own directory before loading modules and default assets. The host uses
 native held-key state, task messages, `SettingsPush`/`SettingsPop` and a
 `DrawIt` callback. It needs no browser API. This entry remains outside the
-production catalog: sound, level progression/intermission, saves, nightmare
-respawning and remaining world visual effects are unfinished.
+production catalog: level progression/intermission, saves, nightmare respawning
+and remaining world visual effects are unfinished; rendering/audio performance
+also needs further work.
 
 Arrows or WASD move/turn; comma/period strafe, Alt modifies turning to strafe,
 Shift runs, Ctrl fires, Space uses, and 1–8 select weapons. P pauses; Esc or
@@ -823,17 +825,19 @@ Exact source, asset and backend scopes are in `tools/toom/play-evidence.json`.
 The package/worker gate installs individual source and asset files, then launches
 `Run.HC` from `C:/Home` using default asset names. It observes the actual native
 HUD/world on one and four production workers, sends physical scan codes, and
-checks pause/repeat/resume, held movement, both exits and fresh relaunch. It
-uses Node workers; browser DOM keyboard routing is a separate boundary.
+checks firing and speaker silence, pause/repeat/resume, held movement, both
+exits and fresh relaunch. It uses Node workers; browser DOM keyboard routing is a separate boundary.
 
 ```sh
 TEMPLEOS_WEB=/path/to/built/TempleOS-Web node tools/toom/worker.test.mjs
 ```
 
-Set `CORES=1` or `CORES=4` to select one mode; the default checks both. Raw VGA
+Set `CORES=1` or `CORES=4` to select one mode; the default checks both.
+`READY_ONLY=1 CORES=1` records cold-readiness diagnostics and skips the
+functional checks; it is not a qualification run. Raw VGA
 frames, palette metadata and result JSON go to `OUT` (default
-`/tmp/toom-workers`). `worker-evidence.json` records exact package/runtime
-bytes and native companion checks. Real keyboard testing caught a previous
+`/tmp/toom-workers`). `worker-evidence.json` records the earlier input-only
+checkpoint; `play-audio-evidence.json` records the current audio binding. Real keyboard testing caught a previous
 pause bug: native task messages have already cleared `SCF_NEW_KEY`. Pause now
 tracks key-down/release explicitly, including keys held across focus changes.
 
@@ -851,122 +855,66 @@ TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/browser.test.mjs
 
 `CORES` selects one mode as above; screenshots/results go to `OUT` (default
 `/tmp/toom-browser`). `browser-evidence.json` records the exact site/game
-bytes and observed bounds. These keyboard checks do not qualify mobile
-controls, sound, full-map completion or sustained performance.
+bytes and observed bounds for the earlier input-only checkpoint. The current
+audio results are in `play-audio-evidence.json`. Neither qualifies mobile
+controls, full-map completion or sustained performance.
 
 
-## PC-speaker decoder under development
+## Native PC-speaker audio
 
-`TmSnd.HC` validates an original DP header and reads only its declared tone
-stream. It preserves the measured 8253 timer periods, silence and empty/end
-behavior. It is not yet included in the interactive entry or connected to
-speaker ports. Both official 0.13.0 Phase 1/Phase 2 sound sets, all tone-byte
-values, maximum lengths, malformed streams and constructor failure cleanup
-are compared with pinned Chocolate Doom reference functions and data.
+The interactive `Play` host owns a lazy sound bank and a Settings-owned song
+task. Actor generation handles and sector indices select the original eight
+logical channels; the PC speaker plays the selected original `DP` stream.
+Native focus loss and P pause freeze playback and silence the PIT gate.
+Normal exit, renderer failure and failed song creation restore the previous
+song owner. Teardown detaches level callbacks before freeing any borrowed clip.
+No browser game or audio logic replaces these HolyC paths.
 
-```sh
-HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sound.test.mjs
-BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/sound.test.mjs
-```
+The decoder checks the type/count header and uses the original 128 timer
+periods. The bank reads each sound at most once, preserves disabled/missing
+sound behavior and never rewrites the IWAD. The channel and distance rules
+come from the released engine. Sector sound origins use the original bounding
+box midpoint; actor origins are generation-checked so a reused slot cannot
+inherit an old sound. Level replacement drops old logical channels.
 
-`sound-evidence.json` scopes this decoder proof. Speaker ownership, sound
-selection, 140 Hz scheduling and pause/focus/exit silence remain separate work.
-The GPL reference notice and source hash are retained in `NOTICE` and
-`tools/toom/source/pcsound.json`; the unreleased DMX library is not used.
+| Check | Scope | Evidence |
+| --- | --- | --- |
+| `sound.test.mjs` | Both official sound sets, all tone bytes and malformed streams against pinned original C | `sound-evidence.json` |
+| `speaker.test.mjs`, `speaker-task.test.mjs` | 1,000 clock cases and real PIT/task ownership, pause, mute and cleanup | `speaker-evidence.json` |
+| `sound-bank.test.mjs` | 218 real-WAD lookups and 24 allocation/read/format failures | `sound-bank-evidence.json` |
+| `audio.test.mjs` | 768 channel cases and 720 distance cases against original C | `audio-evidence.json` |
+| `audio-live.test.mjs` | 108 synthetic effect cases and ten ownership/failure cases | `audio-live-evidence.json` |
+| `sound-scene.test.mjs` | 24,879 sector origins across 68 maps and 39 world/level lifecycle cases | `sound-scene-evidence.json` |
+| `play-audio.test.mjs` | Actual native host, both exits, focus/pause, renderer fault, two constructor failures and failed song creation | `play-audio-evidence.json` |
 
+Run native component checks with `HOLYC_WASM=/path/to/HolyC-wasm node
+tools/toom/<check>`. The first six also support `BACKEND=hemu
+TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web`. The Play audio check uses the
+original TempleOS oracle. Its window case uses a long synthetic clip to
+exercise silence/restoration independently of a short real effect ending.
+The decoder/metadata proofs retain their original GPL notices and hashes;
+Freedoom asset licensing remains separate. The unreleased DMX library is not used.
 
-`TmSpeaker.HC` adds exact PIT channel 2 writes under TempleOS's sound/mute
-semaphores and a Settings-owned `SongTask`. Absolute 140 Hz jiffy deadlines
-avoid accumulating a truncated 7 ms delay. Pause freezes the stream, late
-service skips expired samples, and repeated pitches avoid unnecessary PIT
-restarts. Native speaker gate and piano-key cache changes invalidate the
-cached divisor. The stream is borrowed until playback/task teardown.
+The package and Chromium checks above use real DP pistol data, physical scan
+codes/DOM keys, actual native ports and the site's audio output. They wait for
+the native weapon-ready state before firing and record readiness latency
+separately. The first displayed frame can precede several seconds of slow
+cold simulation/rendering on HEMU; this is an unresolved performance issue.
+HEMU 0eff35b supplies the native port 0x61 gate readback required by this host;
+earlier component evidence explicitly records the older missing-readback limit.
 
-```sh
-HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/speaker.test.mjs
-HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/speaker-task.test.mjs
-BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/speaker.test.mjs
-BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/speaker-task.test.mjs
-```
+Audio scheduling and audible cadence remain distinct. The native song task
+uses absolute 140 Hz jiffy deadlines, so a delayed task skips expired samples.
+The unchanged-render diagnostic delivered all 420 samples in original
+TempleOS, while earlier frozen HEMU workers delivered only 140/420 on one core
+and 125/420 on four cores under load. A private cooperative-yield experiment
+improved those counts but did not establish zero rendering cost and remains
+unadopted. `speaker-render-evidence.json` retains those exact historical inputs;
+`speaker-render.test.mjs` and `speaker-worker.test.mjs` rerun the diagnostic.
+`GAME_DIR`/`YIELD_MS` select a private candidate; `speaker-timing.test.mjs`
+compares it with the current source in fresh native tasks.
 
-`speaker-evidence.json` records 1,000 deterministic clock points and real
-native/HEMU PIT task ownership, pause, normal/exception cleanup and prior
-song restoration. Frozen HEMU has no port 0x61 readback; its final hardware
-gate is observed directly, while original TempleOS also passes native gate
-readback. These modules remain outside `Load`/`Run`. Rendering-load delivery,
-actual host focus cleanup, sound selection and audible browser output remain
-unqualified.
-
-The diagnostic load fixture runs the unchanged renderer and a 420-tone stream
-for three guest seconds. It records delivered/missed samples and the largest
-service gap. Run `speaker-render.test.mjs` with the same QEMU/HEMU environment
-above; `RENDER=0` selects the idle control. `speaker-worker.test.mjs` repeats
-that source on actual one/four-core production workers and records outgoing
-`snd` events. Those messages contain frequency only, so arrival times do not
-establish audible 140 Hz spacing. This fixture draws into a private DC; it
-does not exercise the interactive host's compositor or gameplay.
-
-The frozen worker idle control delivered 420/420 tones; rendering reduced
-that to 140/420 on one core and 125/420 on four cores. A private cooperative
-yield candidate preserves 24 exact image/state traces and improves delivery
-to 417/420 and 415/420, but leaves missed updates. Its isolated native timing
-pairs also do not establish zero rendering cost. It is not adopted into the
-game. `speaker-render-evidence.json` retains these diagnostic bounds and
-source/runtime hashes. `GAME_DIR` and `YIELD_MS` allow explicit private
-candidate checks; `speaker-timing.test.mjs` compares `CANDIDATE` against the
-current source using six fresh native tasks in alternating order.
-
-`TmSoundBank.HC` lazily owns decoded clips while borrowing the game's WAD/data.
-Its native/HEMU gate checks all 109 effect IDs against both official sound
-sets, exact retained payloads, disabled/missing effects, repeat-read avoidance
-and 24 ownership/allocation/read/format failure paths. The unchanged reference
-PC driver resolves each effect's own `DP` name; sampled-sound aliases are not
-inferred. The actual chaingun action already requests the pistol sound.
-
-```sh
-HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sound-bank.test.mjs
-BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/sound-bank.test.mjs
-```
-
-`sound-bank-evidence.json` records exact sources and results. The bank remains
-outside `Load`/`Run`; actor/sector audibility, channel selection and actual
-host ownership still require integration.
-
-`TmAudio.HC` retains the original eight-channel first-free/same-origin/priority
-ordering and distance audibility rule. The generated priority table can be
-checked with `node tools/toom/SoundData.mjs --check`. `audio.test.mjs` compares
-768 channel/stop cases and 720 distance cases with the unchanged released C
-functions on native TempleOS and HEMU. `audio-evidence.json` records the exact
-scope, including the released source's 160-unit close-distance constant.
-These components are still awaiting actual actor/sector and `Play` binding.
-
-`AudioNew`/`AudioDel` now own the lazy bank, and `AudioStart`/`AudioUpdate`
-connect its immutable clips to logical channels and the single physical
-speaker. Inaudible requests preserve the old sound; disabled or missing
-requests still stop an old sound from the same origin. Starting while paused
-emits no tone, and an empty paused clip is already finished. An active task
-must release ownership before deletion; teardown waits for the native sound
-mutex before freeing a borrowed stream.
-
-```sh
-HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/audio-live.test.mjs
-BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/audio-live.test.mjs
-```
-
-`audio-live-evidence.json` records 108 synthetic effect cases and ten failure
-paths on native TempleOS and frozen HEMU, including malformed lazy loads,
-owner separation, pending silence, pause, completion and exact heap cleanup.
-These isolate orchestration from the separately verified real Freedoom
-payloads. The existing original-C channel/distance and real PIT task gates
-also pass after the optional paused-start argument was added. Actual
-actor/sector callbacks, focus ownership and interactive audio remain unwired.
-
-`TmSoundScene.HC` resolves actor generation handles and sector indices without
-retaining actor pointers. It stops removed, inactive or distant sources and
-clears old channels when `GameLoad` replaces a level. The sector source is the
-original bounding-box midpoint. `sound-scene.test.mjs` compares all 24,879
-sector origins across both official WADs with the original C assignments,
-then checks 39 native world/level ownership cases and complete heap cleanup.
-The same QEMU/HEMU environment variables shown above select its backend.
-`sound-scene-evidence.json` records its exact source and asset inputs. This
-scene component still awaits the interactive `Play` callbacks and task owner.
+The site's worker sends frequency messages without guest event timestamps.
+Nonzero browser PCM plus pause/exit silence proves audible delivery and
+lifecycle, not correct 140 Hz spacing. No complete-game or sustained-performance
+qualification is implied by the current audio host.

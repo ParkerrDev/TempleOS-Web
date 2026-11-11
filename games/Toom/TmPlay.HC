@@ -5,6 +5,8 @@
 class Play
 {
   Game *game;
+  Audio *audio;
+  SoundScene sound;
   CDC *front,*back;
   CTask *task;
   Controls controls;
@@ -93,6 +95,59 @@ U0 PlayBlot(Play *tmpp,CDC *dc,I64 x=0,I64 y=0)
   LBtr(&tmpp->flags,TMf_PLAY_FRAME);
 }
 
+U0 PlayActorSnd(Actor *actor,I64 n)
+{
+  Play *tmpp=Fs->user_data;
+  World *world;
+  if (!tmpp || tmpp->task!=Fs || !tmpp->game->level) throw('Owner');
+  world=tmpp->game->level->world;
+  if (actor) {
+    if (actor->world!=world || WorldActorGet(world,actor->id)!=actor)
+      throw('Actor');
+    SoundSceneStart(&tmpp->sound,1,actor->id,n);
+  } else SoundSceneStart(&tmpp->sound,0,0,n);
+}
+
+U0 PlaySectorSnd(I64 sector,I64 n)
+{
+  Play *tmpp=Fs->user_data;
+  if (!tmpp || tmpp->task!=Fs) throw('Owner');
+  SoundSceneStart(&tmpp->sound,2,sector,n);
+}
+
+U0 PlaySndBind(Play *tmpp)
+{
+  Level *level=SoundSceneSync(&tmpp->sound);
+  if (level && tmpp->task) {
+    level->motion->sound=&PlayActorSnd;
+    level->sectors->sound=&PlaySectorSnd;
+  }
+}
+
+U0 PlaySndOff(Play *tmpp)
+{
+  Level *level=tmpp->game->level;
+  if (level) {
+    if (level->motion->sound==&PlayActorSnd) level->motion->sound=NULL;
+    if (level->sectors->sound==&PlaySectorSnd) level->sectors->sound=NULL;
+  }
+  AudioStop(tmpp->audio);
+  while (!SpeakerStop(&tmpp->audio->speaker)) Sleep(1);
+}
+
+U0 PlaySongTask(Play *tmpp)
+{//Focus is checked by the song owner even during a long private frame.
+  Audio *audio=tmpp->audio;
+  Bool paused;
+  Fs->task_end_cb=&SndTaskEndCB;
+  while (TRUE) {
+    paused=tmpp->paused || !tmpp->task || sys_focus_task!=tmpp->task;
+    if (audio->paused!=paused || audio->speaker.paused!=paused)
+      AudioPause(audio,paused);
+    SleepUntil(SpeakerTick(&audio->speaker,cnts.jiffies));
+  }
+}
+
 U0 PlayTick(Play *tmpp,I64 keys,Bool focused)
 {//A newly focused or restarted window waits for held keys to be released.
   Controls *input=&tmpp->controls;
@@ -101,14 +156,18 @@ U0 PlayTick(Play *tmpp,I64 keys,Bool focused)
   try {
     if (!focused || !tmpp->focused) tmpp->blocked=keys;
     tmpp->focused=focused;
+    AudioPause(tmpp->audio,tmpp->paused || !focused);
     tmpp->blocked&=keys;
     if (!focused) keys=0;
     ControlsCmd(input,keys&~tmpp->blocked);
     GameTick(tmpp->game,input->forward,input->side,input->turn,input->buttons,
 	  input->weapon,tmpp->paused || !focused);
+    SoundSceneUpdate(&tmpp->sound);
     level=tmpp->game->level;
     if (level->player.reborn) {
+      AudioStop(tmpp->audio);
       GameLoad(tmpp->game,level->episode,level->map_num,TRUE);
+      PlaySndBind(tmpp);
       ControlsInit(input); tmpp->blocked=keys;
     }
   } catch {
@@ -123,7 +182,7 @@ U0 PlayDel(Play *tmpp)
     PlayEnter(tmpp);
     try {
       if (tmpp->task) throw('Active');
-      GameDel(tmpp->game);
+      AudioDel(tmpp->audio); GameDel(tmpp->game);
       DCDel(tmpp->front); DCDel(tmpp->back);
     } catch {
       PlayLeave(tmpp);
@@ -139,6 +198,8 @@ Play *PlayNew(U8 *wad_name,U8 *data_name="TMDATA.BIN",I64 skill=2,
   try {
     tmpp->game=GameNew(wad_name,data_name,skill,fast);
     GameLoad(tmpp->game);
+    tmpp->audio=AudioNew(tmpp->game->wad,tmpp->game->data);
+    SoundSceneInit(&tmpp->sound,tmpp->audio,tmpp->game);
     ControlsInit(&tmpp->controls);
     tmpp->front=DCNew(TM_VIEW_WIDTH*2,TM_PLAY_HEIGHT);
     tmpp->back=DCNew(TM_VIEW_WIDTH*2,TM_PLAY_HEIGHT);
@@ -172,6 +233,7 @@ Bool PlayKey(Play *tmpp,I64 ch,I64 sc)
   }
   if ((ch=='p' || ch=='P') && !tmpp->pause_down) {
     tmpp->pause_down=TRUE; tmpp->paused=!tmpp->paused;
+    AudioPause(tmpp->audio,tmpp->paused || !tmpp->focused);
     return TRUE;
   }
   return FALSE;
@@ -187,12 +249,14 @@ U0 PlayDrawIt(CTask *task,CDC *dc)
 
 U0 PlayRestore(Play *tmpp,I64 user_data,CTaskSettings *settings)
 {//Drain the old draw callback before changing the task's private pointer.
+  PlaySndOff(tmpp);
   if (settings) {
     Fs->draw_it=NULL; Refresh(,TRUE);
     Fs->user_data=user_data;
   }
   tmpp->task=NULL;
   if (settings) SettingsPop;
+  tmpp->audio->task=NULL;
 }
 
 U0 PlayRun(Play *tmpp)
@@ -214,6 +278,10 @@ U0 PlayRun(Play *tmpp)
     settings=SettingsPush;
     Fs->draw_it=NULL; Refresh(,TRUE);
     Fs->user_data=tmpp;
+    AudioPause(tmpp->audio,TRUE);
+    PlaySndBind(tmpp);
+    tmpp->audio->task=Fs;
+    Fs->song_task=Spawn(&PlaySongTask,tmpp,"TOOM sound",,Fs);
     AutoComplete; WinBorder; WinMax;
     DocCursor; DocClear;
     Fs->win_inhibit=WIG_TASK_DFT-WIF_SELF_FOCUS-WIF_SELF_BORDER;

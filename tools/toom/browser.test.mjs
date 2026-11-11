@@ -14,7 +14,7 @@ const {ServeReq}=await import(pathToFileURL(resolve(web,'server.mjs')));
 const {BrowserMachine,MachinePost,MachineReady}=await import(pathToFileURL(resolve(web,'tools/hemu/BrowserMachine.mjs')));
 const {TextRow}=await import(pathToFileURL(resolve(web,'tools/hemu/WorkerHost.mjs')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
+const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom')),load=readFileSync(resolve(game,'Load.HC'),'latin1');
 const names=['Run.HC','Load.HC',...load.matchAll(/#include "([^"]+)"/g)]
   .map(n=>typeof n==='string'?n:n[1].includes('.')?n[1]:n[1]+'.HC')
   .concat(['TmOverlay.HC','TmScreen.HC','TmPlay.HC']);
@@ -24,9 +24,10 @@ const fileHashes=Object.fromEntries([...files].map(([n,bytes])=>[n,hash(bytes)])
 const runtimeNames=['server.mjs','Keyboard.js','Os.js','WinMgr.js','engine/jit.js',
   'engine/hemu-worker.js','engine/hemu-smp-worker.js','engine/guestexec.js',
   'engine/KeyQueue.js','build/hemu.wasm','build/hemu-smp.wasm',
-  'hemu/live.bin.gz','hemu/live-smp.bin.gz','vendor/images/templeos-hd.qcow2.gz'];
+  'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
+  'engine/Stock.js','engine/Speaker.js','vendor/images/templeos-hd.qcow2.gz'];
 const runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
-const probe=readFileSync(new URL('Worker.HC',import.meta.url),'latin1');
+const probe=readFileSync(new URL('Worker.HC',import.meta.url),'latin1')+'\n'+readFileSync(new URL('AudioWorker.HC',import.meta.url),'latin1');
 const server=createServer(ServeReq).listen(0,'127.0.0.1');await once(server,'listening');
 const url=`http://127.0.0.1:${server.address().port}`;
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
@@ -41,12 +42,27 @@ try {
       return route.fulfill({body:bytes,contentType:'application/octet-stream'});
     });
     await context.addInitScript(()=>{
-      window.toomKeys=[];window.toomFrame=null;
+      window.toomKeys=[];window.toomFrame=null;window.toomSound=[];window.speakerOutputs=[];
+      const AudioBase=AudioContext;
+      window.AudioContext=class extends AudioBase {
+        createGain() {
+          const node=super.createGain(),analyser=super.createAnalyser();
+          analyser.fftSize=512;node.connect(analyser);
+          window.speakerOutputs.push({node,analyser,context:this});return node;
+        }
+      };
+      window.speakerRms=()=>{
+        const out=window.speakerOutputs[0];if(!out)return null;
+        const samples=new Float32Array(out.analyser.fftSize);
+        out.analyser.getFloatTimeDomainData(samples);
+        return Math.sqrt(samples.reduce((sum,x)=>sum+x*x,0)/samples.length);
+      };
       const Base=Worker;
       window.Worker=class extends Base {
         constructor(...args) {
           super(...args);
           this.addEventListener('message',({data:m})=>{
+            if(m.cmd==='snd')window.toomSound.push(m);
             if(m.cmd==='frame')window.toomFrame={w:m.w,h:m.h,buf:new Uint8Array(m.buf).slice()};
           });
         }
@@ -101,8 +117,7 @@ try {
       await page.goto(url+(count===1?'/?single':'/'),{waitUntil:'load'});
       await MachineReady(page,count);
       await page.waitForFunction(()=>document.getElementById('loadui').style.display==='none');
-      await page.waitForFunction(()=>window.machine.events.some(m=>m.name==='Welcome'&&m.state==='done')&&
-        window.machine.events.some(m=>m.cmd==='guestPatch'&&m.state==='installed'),null,{timeout:60000});
+      await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==='guestPatch'&&m.state==='installed'),null,{timeout:60000});
       await Done('probe-vars',probe);
       await page.evaluate(async names=>{
         const files=await Promise.all(names.map(async name=>({path:'C:/TOOM/'+name,
@@ -118,7 +133,22 @@ try {
       const initial=await ScreenWait(/ARROWS\/WASD MOVE/);
       await page.locator('#canvas').click();
       await page.locator('#canvas').screenshot({path:resolve(out,`frame-${count}.png`)});
+      await Done('audio-owner',"TmWorkerAudio;if (!tm_worker_snd_owner) throw('Sound');");
+      const readyStart=performance.now();await Done('weapon-ready','TmWorkerWeaponReady;');
+      const weaponReadyMs=performance.now()-readyStart;
+      const beforeSound=await page.evaluate(()=>window.toomSound.length);
+      await page.keyboard.down('Control');
+      let audibleRms;
+      try {
+        await Done('native-fire','TmWorkerFire;');
+        await page.waitForFunction(()=>window.speakerRms()>.01,null,{timeout:10000});
+        audibleRms=await page.evaluate(()=>window.speakerRms());
+      } finally {await page.keyboard.up('Control');}
+      const soundMessages=await page.evaluate(n=>window.toomSound.slice(n),beforeSound);
+      assert(soundMessages.some(m=>m.f>0));
       await page.keyboard.down('p');await ScreenWait(/PAUSED/);
+      await page.waitForFunction(()=>window.speakerRms()===0,null,{timeout:2000});
+      await Done('audio-paused',"TmWorkerAudio;if (!tm_worker_snd_paused || tm_worker_snd_period || tm_worker_snd_gate) throw('Sound');");
       await Done('pause-before',"TmWorkerProbe;if (!tm_worker_state) throw('Owner');tm_worker_old_tic=tm_worker_tic;");
       await page.keyboard.down('p');await page.waitForTimeout(200);
       await Done('pause-after',"TmWorkerProbe;if (tm_worker_tic!=tm_worker_old_tic) throw('Pause');");
@@ -132,13 +162,15 @@ try {
       assert.notEqual(hash(initial.buf.subarray(640*64,640*320)),hash(moved.buf.subarray(640*64,640*320)));
       await Exit('run','Escape');
       await Done('exit-owner',"TmWorkerProbe;if (tm_worker_state) throw('Owner');");
+      await Done('audio-stopped',"TmWorkerAudio;if (tm_worker_snd_gate) throw('Sound');");
+      await page.waitForFunction(()=>window.speakerRms()===0,null,{timeout:2000});
       await MachinePost(page,{cmd:'osLaunch',id:'again',name:'Native TOOM Again',src});
       assert((await Event('again')).ok);await ScreenWait(/ARROWS\/WASD MOVE/);
       await page.locator('#canvas').click();await Exit('again','Shift+Escape');
       const final=await page.evaluate(()=>({keys:window.toomKeys,errors:window.machine.events.filter(m=>m.cmd==='error'||m.cmd==='guestResult'&&m.state==='failed')}));
-      for(const key of [0x19,0x99,0xE0,0x48,0xC8,0x01,0x81,0x2A,0xAA])assert(final.keys.includes(key),`DOM keyboard produced set1 ${key.toString(16)}`);
+      for(const key of [0x1D,0x9D,0x19,0x99,0xE0,0x48,0xC8,0x01,0x81,0x2A,0xAA])assert(final.keys.includes(key),`DOM keyboard produced set1 ${key.toString(16)}`);
       assert.deepEqual(final.errors,[]);assert.deepEqual(errors,[]);
-      const result={cores:count,captureReleases,keys:final.keys,initialHash:hash(initial.buf),movedHash:hash(moved.buf),
+      const result={cores:count,weaponReadyMs,audibleRms,soundMessages,captureReleases,keys:final.keys,initialHash:hash(initial.buf),movedHash:hash(moved.buf),
         screenshot:resolve(out,`frame-${count}.png`),screenshotSha256:hash(readFileSync(resolve(out,`frame-${count}.png`)))};
       results.push(result);writeFileSync(resolve(out,`browser-${count}.json`),JSON.stringify(result,null,2)+'\n');
     } catch(error) {
