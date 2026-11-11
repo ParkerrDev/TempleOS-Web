@@ -91,6 +91,23 @@ with zero badops in both builds; instruction totals exclude HLT time budgets. Us
 to refresh this evidence after interpreter changes. This is a bounded native
 source test, not proof of complete x86 coverage or a native TempleOS host app.
 
+`atomic.test.mjs` runs 53 contending guest programs on four emulator workers:
+implicit-lock XCHG protects an ordinary counter, LOCK arithmetic and unary
+operations modify shared operands, and CMPXCHG retries retain each increment.
+Every supported width is exercised. `atomic-flags.test.mjs` compares 32,778
+locked, ordinary, immediate and compiled memory-RMW cases with 6,768 actual
+x86-64 instruction results; 8,982 comparisons execute compiled blocks. It
+includes all architecturally defined flags and register writeback. The stored
+source/output hashes and CPU/compiler metadata bind the hardware evidence;
+`node tools/hemu/atomic-flags.test.mjs --record` regenerates it on x86-64.
+
+Aligned RAM and its TempleOS alias are supported atomic operands. Invalid
+LOCK forms, unaligned and MMIO atomics retain an explicit fault without
+changing operands. This deliberately rejects unsupported x86 bus-lock cases;
+it does not emulate their hardware behavior or architectural exception
+delivery. CMPXCHG8B/16B are not implemented. LOCK prefixes always end a JIT
+block so that the interpreter owns their atomic operation.
+
 ## Frame protocol
 
 `frame` carries `buf`, `w`, `h`, integer-or-null `fps`, `updates`, and `top`.

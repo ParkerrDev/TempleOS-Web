@@ -10,7 +10,7 @@ if([...args].some(a=>!["--full","--desktop"].includes(a))) {
 const root=fileURLToPath(new URL("../../",import.meta.url)),start=performance.now();
 console.log("Compiler:",realpathSync(new URL("../../holyc-wasm",import.meta.url)));
 const quick=["host.selftest.mjs","measure.mjs","cpu-native.mjs","boot-test.mjs","diskio-check.mjs",
-  "atomic.test.mjs","time.test.mjs","mem-native.mjs","dev-native.mjs","keyboard.test.mjs","capture.test.mjs","barrier.test.mjs",
+  "atomic.test.mjs","atomic-flags.test.mjs","time.test.mjs","mem-native.mjs","dev-native.mjs","keyboard.test.mjs","capture.test.mjs","barrier.test.mjs",
   "snapshot-format.test.mjs","snapregs.test.mjs","patch.test.mjs","jit-primitives.test.mjs","jit-loop.test.mjs","fpu-check.mjs",
   "fpu-convert.test.mjs","fpu-compare.test.mjs","fpu-ops.test.mjs","cpu-fault.test.mjs","fpu-native.mjs","jit-x87.test.mjs","shift.test.mjs","jitdiff1.mjs"],
   full=["menu-clip.test.mjs","video.test.mjs","raster.test.mjs","rate.test.mjs","guestcheck.mjs","large-file.test.mjs",
