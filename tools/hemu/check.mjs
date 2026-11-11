@@ -15,7 +15,7 @@ const quick=["host.selftest.mjs","measure.mjs","boot-test.mjs","diskio-check.mjs
   "fpu-convert.test.mjs","shift.test.mjs","jitdiff1.mjs"],
   full=["menu-clip.test.mjs","video.test.mjs","raster.test.mjs","rate.test.mjs","guestcheck.mjs",
     "jitrecycle.mjs","worker.test.mjs","worker-rate.test.mjs","worker-pause.test.mjs",
-    "worker-snapshot.test.mjs","welcome.test.mjs","god-tools.test.mjs"];
+    "worker-patch-pause.test.mjs","worker-snapshot.test.mjs","welcome.test.mjs","god-tools.test.mjs"];
 let count=0;
 function Run(path,env={}) {
   console.log("Checking",path);

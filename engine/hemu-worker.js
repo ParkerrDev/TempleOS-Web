@@ -35,7 +35,8 @@ function PauseSet(value) {
   if (value && machineBarrier && !machineBarrier.Lock())
     throw new Error("The application cores did not stop; pause again.");
   paused=!!value;
-  if (paused) {keyq.Release();showStoppedFrame?.();} else machineBarrier?.Unlock();
+  if (paused) {keyq.Release();docClip?.Tick(false);showStoppedFrame?.();}
+  else machineBarrier?.Unlock();
   postMessage({cmd:"paused",value:paused});
 }
 const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
@@ -235,7 +236,10 @@ async function exportImage(kind) {
     if (!loaded || !disk || !gx?.ready) throw new Error("Wait for the machine and disk to finish loading.");
     if (machineBarrier && !machineBarrier.Lock()) throw new Error("The application cores did not stop; save again.");
     locked=true;saving=true;
-    if (docClip?.Pending()) throw new Error("Wait for the document sprite correction to finish.");
+    docClip?.Tick(false);
+    if (docClip?.Pending()) throw new Error(paused?
+      "Resume TempleOS to finish the document sprite correction, then save again.":
+      "Wait for the document sprite correction to finish, then save again.");
     const launch=gx.snapshot();
     const meta={cores:smpCfg?.ncore||1,base:gBase,heapPtr:hostRef.state.heapPtr,heapAbi:hostRef.state.heapAbi??0,
       sp:Number(instRef.exports.__sp.value),ipiAddr:smpCfg?.ipiAddr||0,
@@ -385,8 +389,9 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
 
   } else inst.exports.__rt_init();
   docClip=DocClipPatch({guest:()=>gx,instance:()=>instRef,base:()=>gBase,
-    lock:()=>machineBarrier?machineBarrier.Lock():true,unlock:()=>machineBarrier?.Unlock(),
-    onState:msg=>postMessage(msg),restored:saved?saved.meta.guestPatches:patches===false?[]:null});
+    lock:()=>machineBarrier?machineBarrier.Lock():true,
+    unlock:()=>{if(!paused && !saving)machineBarrier?.Unlock();},
+    onState:msg=>postMessage(msg),canRun:()=>!paused && !saving,restored:saved?saved.meta.guestPatches:patches===false?[]:null});
   if (saved) postMessage({cmd:"restored",cores:saved.meta.cores,paused});
   postMessage({cmd:"progress",text:"starting TempleOS…",pct:100});
 
