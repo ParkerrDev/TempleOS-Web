@@ -284,6 +284,14 @@
       "nativeIntegration": "qemu-5stbwkfm",
       "hemu": true,
       "details": "clock-evidence.json"
+    },
+    "enemy-perception": {
+      "decisions": 30632,
+      "graphs": 3178,
+      "floods": 6356,
+      "integrationCases": 21,
+      "evidence": "enemy-evidence.json",
+      "hemu": true
     }
   },
   "frames": [

@@ -1,0 +1,62 @@
+{
+  "description": "Native TOOM actor perception only; chase and complete actor action dispatch remain unfinished.",
+  "engine": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "sourceSha256": "c9197f9c653be55b31a1ab22b93c5a4b3aadc027826620986c5f4491f9a23e4a",
+      "cases": 30632,
+      "native": "qemu-mc5k8j1z",
+      "hemu": true,
+      "reference": "Five unmodified original C functions, with controlled sight/angle/state/sound observations; all 17 output fields match."
+    },
+    "noise": {
+      "sourceSha256": "2dee13bd0c0c12c997aad7b935a0950a23b96dad24f6aceb55662f8517d73b0d",
+      "graphs": 3178,
+      "floods": 6356,
+      "native": "qemu-q1uvlul6",
+      "hemu": true,
+      "reference": "Original P_RecursiveSound and P_NoiseAlert compiled as host C; all sector target/depth values match after both alerts on every graph.",
+      "scope": [
+        "Four-sector exhaustive edge flag combinations",
+        "Closed and equal-height openings",
+        "Cycles, self edges and improved zero-block routes",
+        "Retained prior targets in unreachable sectors",
+        "65- and 130-sector graphs",
+        "No per-alert allocation or RNG consumption"
+      ]
+    },
+    "integration": {
+      "sourceSha256": "57e3479cfb443c7527640e3b978e1b92ab3a11e1fadc34d99a52dbefb1fff2d0",
+      "cases": 21,
+      "native": "qemu-cvgt6h9t",
+      "hemu": true,
+      "scope": [
+        "Actual sight, facing and state callbacks",
+        "Closed doors, ambush and one sound barrier",
+        "Near melee boundary and four-slot player search",
+        "Exact shadow and retaliation RNG/flags",
+        "Inactive and reused generation handles",
+        "Owner/active-tic guards and callback exception cleanup",
+        "Fresh-task heap returns to baseline"
+      ]
+    }
+  },
+  "remaining": [
+    "Chase movement and the remaining actor actions",
+    "Native host input/render pacing and UI/audio",
+    "Save/load and episode/intermission progression"
+  ]
+}

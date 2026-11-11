@@ -61,6 +61,13 @@ The implemented foundation uses native V5.03 file and memory APIs:
   host replaces a level. Reentry and destruction of world-linked owners during
   an active tic fail before releasing memory. Exceptions release the active
   guard while retaining effects that already occurred.
+- Per-level hearing uses an owned bounded queue and the shared sector edge
+  index. Alerts cross at most one sound-blocking line, stop at closed openings,
+  and revisit a sector if an unblocked route improves its first route. Sound
+  targets are generation handles. Player search retains the four-slot order;
+  ambush, facing, see sounds and melee/missile decisions preserve the original
+  branches and random consumption. These functions are checked separately;
+  chase movement and the complete actor action dispatcher are still unfinished.
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
   contact callbacks defer reclamation until the end of the tic. Nested contact
@@ -247,6 +254,9 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think-map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/clock-order.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/clock.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/enemy-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/noise.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/enemy.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -436,6 +446,16 @@ Clock evidence is recorded in `tools/toom/clock-evidence.json`. Its HEMU
 exception/heap fixture uses the normal fresh-task launch path, matching the
 native oracle: TempleOS logs exceptions to Adam, whose document allocations
 must not be counted as allocations retained by the tested program.
+The perception oracle compiles five original `p_enemy.c` functions and compares
+30,632 native decisions, including target/flag/angle changes, sound and state
+calls, sight/angle query counts and exact RNG positions. A separate oracle uses
+the original recursive hearing functions for 3,178 graphs and 6,356 alerts;
+cycles, closed/equal-height openings, sound barriers, improved routes, retained
+targets and graphs up to 130 sectors are covered. Twenty-one assembled-module
+cases exercise actual sight, doors, facing, state callbacks, stale/reused actor
+handles and cleanup. All pass native TempleOS and the pinned HEMU engine in
+`tools/toom/enemy-evidence.json`. Neither these fixtures nor the perception API
+constitute a completed monster AI or gameplay qualification.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation
