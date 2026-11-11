@@ -94,6 +94,11 @@ The implemented foundation uses native V5.03 file and memory APIs:
   Airborne views remain below the ceiling. Sector/use callbacks precede weapon
   and power clocks; actor motion and state updates follow them.
 
+- Actor sight applies REJECT and narrows the target height interval through
+  exact line-only path queries. Splash damage snapshots nearby actor handles,
+  checks visibility, and preserves boss immunity and self-damage. BFG spray
+  fires its forty canonical rays from the current firer position.
+
 Fuzz effects, the full simulation loop, actor actions, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
@@ -159,6 +164,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/items.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/impact.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/weapon.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/player.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/blast.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sight.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -251,8 +258,14 @@ chainsaw thrust, death facing/respawn and movement through the actual collision
 and state clocks. Angle wrap and death during weapon windup have regressions.
 The static renderer still matches all 288 native map views after these modules
 are included; this does not measure a complete game's frame rate.
+The blast check covers 256 independently calculated portal-height cases and
+23 visibility/splash/BFG contracts, including radius boundaries, boss immunity,
+self-damage, exception cleanup and forty BFG effects with exact RNG/damage.
+The sight check compares 6,912 rays across all 36 maps with an independent
+full-linedef scan, including REJECT and 927 visible pairs. These are actor
+combat foundations; the actor action dispatcher is still unfinished.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage, inventory, impact, weapon or player checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory, impact, weapon, player, blast or sight checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

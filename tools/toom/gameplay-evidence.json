@@ -76,6 +76,18 @@
       "native": "qemu-43e6w_tc",
       "hemu": true,
       "commandVectors": 1500
+    },
+    "blast": {
+      "cases": 279,
+      "native": "qemu-oxa8fhdn",
+      "hemu": true
+    },
+    "sight": {
+      "rays": 6912,
+      "visible": 927,
+      "maps": 36,
+      "native": "qemu-pjw5tp6o",
+      "hemu": true
     }
   },
   "frames": [

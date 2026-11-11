@@ -20,6 +20,8 @@
 #include "TmImpact"
 #include "TmWeapon"
 #include "TmPlayer"
+#include "TmSight"
+#include "TmBlast"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"
