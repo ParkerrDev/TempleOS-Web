@@ -14,6 +14,7 @@
 #include "TmSlide"
 #include "TmMotion"
 #include "TmAttack"
+#include "TmDamage"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

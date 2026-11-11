@@ -78,7 +78,7 @@ GameData *GameDataNew(U8 *filename="TMDATA.BIN")
 	!StateValid(tmpi->pain) || !StateValid(tmpi->melee) ||
 	!StateValid(tmpi->missile) || !StateValid(tmpi->death) ||
 	!StateValid(tmpi->xdeath) || !StateValid(tmpi->raise) ||
-	tmpi->radius<0 || tmpi->height<0)
+	tmpi->radius<0 || tmpi->height<0 || tmpi->mass<=0)
       goto gd_fail;
   }
   for (i=0;i<TM_SINE_NUM;i++)

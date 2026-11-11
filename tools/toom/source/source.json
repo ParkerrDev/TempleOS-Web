@@ -33,6 +33,10 @@
     {
       "path": "linuxdoom-1.10/tables.c",
       "sha256": "db8759f4311654c63785dcffb8f73a00a61cfe2713e4284c238dea420b6e5f89"
+    },
+    {
+      "path": "linuxdoom-1.10/doomdef.h",
+      "sha256": "643daca966fb762fa86f39ce9a1779355117578527bf2e295163647f9ad0d74e"
     }
   ]
 }

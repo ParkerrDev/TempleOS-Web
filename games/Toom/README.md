@@ -69,6 +69,10 @@ The implemented foundation uses native V5.03 file and memory APIs:
   nearest shootable target or wall/sky impact. Ordered shot-trigger lines are
   collected before effects, so querying does not mutate the world.
 
+- Damage applies skill scaling, armor, invulnerability, thrust, pain and
+  retaliation. Deaths update corpse geometry and kill totals, enter canonical
+  death/overkill states and spawn the appropriate dropped items.
+
 Fuzz effects, the full simulation loop, weapons, actor actions, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
@@ -129,6 +133,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/path.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/slide.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/motion.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/attack.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/damage.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -192,8 +197,13 @@ The attack check covers 35 cases for all eight aiming octants, range,
 shootable/nearer actors, floor/ceiling portal limits, exact closed-door
 boundaries, sky impacts and 41 ordered line triggers through buffer growth.
 Shot results do not yet apply damage, weapon states or line effects.
+The damage check covers 4,752 player boundaries for health, armor, difficulty,
+invulnerability, god mode and the end-sector survival rule, plus 20 focused
+monster cases for thrust, pain/retaliation, skulls, corpse flags, overkill,
+item drops and callback removal. Invalid zero-mass actor data is rejected.
+Actual weapon control and action dispatch remain unfinished.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion or attack checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack or damage checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

@@ -35,8 +35,9 @@ function expression(source) {
   return source.trim().split('|').reduce((value,part)=>
     value|part.split('*').reduce((a,b)=>a*atom(b),1),0);
 }
-for (const file of ['info.h','sounds.h','p_mobj.h']) {
+for (const file of ['info.h','sounds.h','p_mobj.h','doomdef.h']) {
   for (const match of clean(sources[file]).matchAll(/typedef\s+enum\s*\{([^}]+)\}/g)) {
+    if(file==='doomdef.h'&&!/^\s*(?:wp_|am_|pw_|it_)/.test(match[1]))continue;
     let value=0;
     for (const item of match[1].split(',').map(s=>s.trim()).filter(Boolean)) {
       const fields=item.split('='),name=fields[0].trim();
@@ -116,14 +117,16 @@ put('TMDATA.BIN',data);
 const upper=s=>s.replace(/^A_/,'').replace(/([a-z0-9])([A-Z])/g,'$1_$2').toUpperCase();
 let defines='//Generated identifiers for TMDATA.BIN; see NOTICE and tools/toom/Data.mjs.\n\n';
 for (const [name,value] of constants)
-  if (/^(SPR_|S_|MT_|MF_|sfx_)/.test(name))
+  if (/^(SPR_|S_|MT_|MF_|sfx_|wp_|am_|pw_|it_)/.test(name))
     defines+=`#define TM_${name.toUpperCase()}\t${value}\n`;
 defines+='\n';
 actions.forEach((name,i)=>defines+=`#define TM_A_${upper(name)}\t${i}\n`);
 defines+='\n';
 for (const [name,value] of Object.entries({STATE_NUM:states.length,ACTOR_NUM:actors.length,
   SPRITE_NUM:sprites.length,ACTION_NUM:actions.length,SND_NUM:sounds.length,
-  SINE_NUM:sine.length,ANGLE_NUM:angle.length,DATA_SIZE:data.length}))
+  SINE_NUM:sine.length,ANGLE_NUM:angle.length,DATA_SIZE:data.length,
+  WEAPON_NUM:constants.get('NUMWEAPONS'),AMMO_NUM:constants.get('NUMAMMO'),
+  POWER_NUM:constants.get('NUMPOWERS'),CARD_NUM:constants.get('NUMCARDS')}))
   defines+=`#define TM_${name}\t${value}\n`;
 put('TmData.HH',defines);
 put('data.json',JSON.stringify({format:2,revision:manifest.revision,
