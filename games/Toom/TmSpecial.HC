@@ -16,8 +16,9 @@ U0 SpecialsDel(Specials *tmps)
 
 Specials *SpecialsNew(Sectors *sectors)
 {//Event state owns its switches and lights, and borrows the plane controllers.
-  Specials *tmps=CAlloc(sizeof(Specials));
-  tmps->sectors=sectors;
+  Specials *tmps;
+  WorldIdle(sectors->motion->world);
+  tmps=CAlloc(sizeof(Specials)); tmps->sectors=sectors;
   try {
     tmps->switches=SwitchesNew(sectors); tmps->lights=LightsNew(sectors);
   } catch {

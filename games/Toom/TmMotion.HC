@@ -25,8 +25,14 @@ U0 MotionDel(Motion *tmpm)
 
 Motion *MotionNew(World *tmpw,Player *tmpp=NULL)
 {//The level and persistent player state are borrowed; the path is owned.
-  Motion *tmpm=CAlloc(sizeof(Motion));
-  tmpm->world=tmpw; tmpm->player=tmpp; tmpm->path=PathNew(tmpw);
+  Motion *tmpm;
+  WorldIdle(tmpw);
+  tmpm=CAlloc(sizeof(Motion)); tmpm->world=tmpw; tmpm->player=tmpp;
+  try {
+    tmpm->path=PathNew(tmpw);
+  } catch {
+    MotionDel(tmpm);
+  }
   return tmpm;
 }
 

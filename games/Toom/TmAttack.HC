@@ -20,8 +20,13 @@ U0 AttackDel(Attack *tmpa)
 Attack *AttackNew(World *tmpw)
 {//A reusable trace borrows its level; apply game effects after collecting.
   Attack *tmpa=CAlloc(sizeof(Attack));
-  tmpa->world=tmpw; tmpa->path=PathNew(tmpw);
-  tmpa->special_cap=16; tmpa->special=MAlloc(16*sizeof(I64));
+  tmpa->world=tmpw;
+  try {
+    tmpa->path=PathNew(tmpw);
+    tmpa->special_cap=16; tmpa->special=MAlloc(16*sizeof(I64));
+  } catch {
+    AttackDel(tmpa);
+  }
   return tmpa;
 }
 
@@ -85,9 +90,9 @@ U0 AttackSpecial(Attack *tmpa,I64 line)
 {
   I64 *special;
   if (tmpa->special_cnt==tmpa->special_cap) {
-    tmpa->special_cap*=2; special=MAlloc(tmpa->special_cap*sizeof(I64));
+    special=MAlloc(2*tmpa->special_cap*sizeof(I64));
     MemCpy(special,tmpa->special,tmpa->special_cnt*sizeof(I64));
-    Free(tmpa->special); tmpa->special=special;
+    Free(tmpa->special); tmpa->special=special; tmpa->special_cap*=2;
   }
   tmpa->special[tmpa->special_cnt++]=line;
 }

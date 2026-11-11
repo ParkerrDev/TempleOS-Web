@@ -45,42 +45,47 @@ U0 SectorsDel(Sectors *tmps)
 Sectors *SectorsNew(Motion *tmpm,Graphics *graphics=NULL)
 {//An immutable sector edge index is shared by movers and sound propagation.
   Map *map=tmpm->world->map;
-  Sectors *tmps=CAlloc(sizeof(Sectors));
+  Sectors *tmps;
   SectorArea *area;
   Line *line;
   Vertex *a,*b;
   I64 i,j,n,last,total=0;
-  tmps->motion=tmpm; tmps->graphics=graphics;
-  tmps->area=CAlloc(map->sector_cnt*sizeof(SectorArea));
-  for (i=0;i<map->line_cnt;i++) {
-    line=map->line+i; last=-1;
-    for (j=0;j<2;j++)
-      if (line->side[j]!=0xFFFF) {
-	n=map->side[line->side[j]].sector;
-	if (n!=last) tmps->area[n].cnt++;
-	last=n;
-      }
-  }
-  for (i=0;i<map->sector_cnt;i++) {
-    area=tmps->area+i; area->first=total; total+=area->cnt; area->cnt=0;
-    area->left=area->bottom=I64_MAX; area->right=area->top=-I64_MAX-1;
-  }
-  tmps->lines=MAlloc(total*sizeof(I64));
-  for (i=0;i<map->line_cnt;i++) {
-    line=map->line+i; a=map->vertex+line->v1; b=map->vertex+line->v2;
-    last=-1;
-    for (j=0;j<2;j++)
-      if (line->side[j]!=0xFFFF) {
-	n=map->side[line->side[j]].sector;
-	if (n!=last) {
-	  area=tmps->area+n; tmps->lines[area->first+area->cnt++]=i;
-	  area->left=MinI64(area->left,MinI64(a->x,b->x)*65536);
-	  area->right=MaxI64(area->right,MaxI64(a->x,b->x)*65536);
-	  area->bottom=MinI64(area->bottom,MinI64(a->y,b->y)*65536);
-	  area->top=MaxI64(area->top,MaxI64(a->y,b->y)*65536);
+  WorldIdle(tmpm->world);
+  tmps=CAlloc(sizeof(Sectors)); tmps->motion=tmpm; tmps->graphics=graphics;
+  try {
+    tmps->area=CAlloc(map->sector_cnt*sizeof(SectorArea));
+    for (i=0;i<map->line_cnt;i++) {
+      line=map->line+i; last=-1;
+      for (j=0;j<2;j++)
+	if (line->side[j]!=0xFFFF) {
+	  n=map->side[line->side[j]].sector;
+	  if (n!=last) tmps->area[n].cnt++;
+	  last=n;
 	}
-	last=n;
-      }
+    }
+    for (i=0;i<map->sector_cnt;i++) {
+      area=tmps->area+i; area->first=total; total+=area->cnt; area->cnt=0;
+      area->left=area->bottom=I64_MAX; area->right=area->top=-I64_MAX-1;
+    }
+    tmps->lines=MAlloc(total*sizeof(I64));
+    for (i=0;i<map->line_cnt;i++) {
+      line=map->line+i; a=map->vertex+line->v1; b=map->vertex+line->v2;
+      last=-1;
+      for (j=0;j<2;j++)
+	if (line->side[j]!=0xFFFF) {
+	  n=map->side[line->side[j]].sector;
+	  if (n!=last) {
+	    area=tmps->area+n; tmps->lines[area->first+area->cnt++]=i;
+	    area->left=MinI64(area->left,MinI64(a->x,b->x)*65536);
+	    area->right=MaxI64(area->right,MaxI64(a->x,b->x)*65536);
+	    area->bottom=MinI64(area->bottom,MinI64(a->y,b->y)*65536);
+	    area->top=MaxI64(area->top,MaxI64(a->y,b->y)*65536);
+	  }
+	  last=n;
+	}
+    }
+  } catch {
+    SectorsDel(tmps);
   }
   return tmps;
 }

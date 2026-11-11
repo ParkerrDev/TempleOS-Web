@@ -1,0 +1,121 @@
+{
+  "status": "bounded-native-allocation-failure-and-retry-proof",
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "allocation": {
+    "cases": 77,
+    "injectedFailures": 54,
+    "busyGuards": 8,
+    "native": "qemu-s629s42w",
+    "hemu": true,
+    "sourceSha256": "2ecc7f7a948fc01ed092a67c4f4fcad60b926fcb4b301b3c67149018edb44c88",
+    "scope": [
+      "Every counted allocation in 15 constructor/create-delete paths fails in turn; fresh-task heap and borrowed owner bindings return to baseline.",
+      "WorldSpawn allocation failure preserves actor count, free slot and RNG.",
+      "Four growing buffers retain valid allocations and capacities after failure and succeed on retry, including preserved trace contents and actor handles.",
+      "Motion, Sectors, Specials and Weapon reject both thinker-active and tick-active creation before allocating."
+    ]
+  },
+  "beforeWitness": {
+    "revision": "0e15354",
+    "native": "qemu-p19odle2",
+    "sourceSha256": "ec58a834bd5344d47ecd1d23d0d7aab492b2b0bd3f8673d66b19a3e2074999c6",
+    "out": "ALLOC 0 FAULT 2 LEAK 160\n",
+    "except": "Leak",
+    "scope": "The second CollisionNew allocation fails after its outer object was allocated; the previous source leaks 160 bytes."
+  },
+  "regressions": {
+    "path": {
+      "cases": 5012,
+      "native": "qemu-4foon71b",
+      "hemu": true,
+      "out": "PATH 5012 RAYS BAD 0 MS 13.938\n"
+    },
+    "weapon": {
+      "cases": 13859,
+      "native": "qemu-fm62dukb",
+      "hemu": true,
+      "out": "WEAPON 13859 CASES BAD 0\n"
+    },
+    "action": {
+      "cases": 50,
+      "native": "qemu-ur6s7gzc",
+      "hemu": true,
+      "out": "ACTION 50 REAL CASES BAD 0\n",
+      "sourceSha256": "38b3239c091d99127d7d9edb205435ed8e648c59c0020120a40be44bce02ea5b"
+    }
+  },
+  "inputs": {
+    "games/Toom/Load.HC": "e4edd050432f936be8bc3d0ec8031277406f92f21306015c29a0bb5bb50f2d41",
+    "games/Toom/TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f",
+    "games/Toom/TmActions.HC": "ae3bff931d7431a5c8cc9a993275114dc99cbb931670356846f4a940eabc57bb",
+    "games/Toom/TmAnim.HC": "88bacb84b0802181b51c5efe643415c5690b0c9babad2064f44c79608085c504",
+    "games/Toom/TmAttack.HC": "146737ee26c29ca330eb1b583f4e7131c1cd3580c4ca355610cd02f58d68802d",
+    "games/Toom/TmBlast.HC": "197e0c23bb1612d510e0c7094f33bf1162fea98aa1471dd83eca3bb424e1fb4f",
+    "games/Toom/TmBoss.HC": "0892a31e7c65ee6f31f3b497e940721b800b5d126a518d97ad360383113c62f7",
+    "games/Toom/TmBrain.HC": "605e90147315d888f9d6493cdc8f65092e24f79fd24d96c3306d3d05fa105554",
+    "games/Toom/TmCeil.HC": "13ce4bc669f4deec87c82d09bb08bb4ef75f623c8da7131f4eb66014ecb15379",
+    "games/Toom/TmChase.HC": "c3a53ed3ddae5f1c05a5df3851c194ada85027d81f32acff6df6e1230bdcbc7b",
+    "games/Toom/TmClip.HC": "22fbb94fca32b0f1b19bde07c591c088cf2324fd129ace1df060ca90cc09f55b",
+    "games/Toom/TmCombat.HC": "069bf282d4ba8ca9faf69c10acbba6f8cf3e578a67fdd118142de7742f89a963",
+    "games/Toom/TmContact.HC": "b8e15824529b0dafb7abf11164a53795c06759e07b1265f6abecce8602c8ed08",
+    "games/Toom/TmDamage.HC": "56e1d56ea69609cdcd34c7b5c22694367643cf51f8cd9cb0d72272522a1ab5bd",
+    "games/Toom/TmData.HH": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+    "games/Toom/TmDoor.HC": "ce49864f381d55361788f5efdc070fc377e2b4178f629856f7db74118c612a6a",
+    "games/Toom/TmDraw.HC": "a092ef1ae6b8ecdb76a42553d1534a26ab2e4549e853121d619e5b7dfd50ad84",
+    "games/Toom/TmEffect.HC": "cdfd0f26beff5f99eeb609ee2d0820472cda0d91f6121a345529dd87071ab80b",
+    "games/Toom/TmEnemy.HC": "332464bcf40c7c8f07dd9fb3776f744659cd3906662848067064b0ab069957b8",
+    "games/Toom/TmFloor.HC": "b86eaee35d5a448c722f063c651f61c2ba3f4160637dda2af13c6084968fa00a",
+    "games/Toom/TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+    "games/Toom/TmGr.HC": "f59117d4e8b9ac9aec9c2c363ae375c64d915e06efe66b0b5c4e36a15254eb8a",
+    "games/Toom/TmHazard.HC": "b69bdffac3c4a9394fcf757339ee6a7c915f27946b881e2b25a5673f04a8603e",
+    "games/Toom/TmImpact.HC": "bfe59592e58dff4e799cd93f3db7937bf02d2fa9cf1fc1046d4b860f4f42acb9",
+    "games/Toom/TmItems.HC": "4f265fd533b2e7820e6fb939517ad9ab5a5e3a7a8f7f8abd548494649ec448d3",
+    "games/Toom/TmLight.HC": "18751745beb55e970363df09f8e03a0979e1eb66fe8e8efe835f10cbad754850",
+    "games/Toom/TmMap.HC": "5252606cf4916aacd5f99a30f534073862dbc8ed616f9d7cab25748856867872",
+    "games/Toom/TmMask.HC": "fca60f4fff19a1155e541f368e1d2b4136951067b52ca7e5bec5577d34570bdf",
+    "games/Toom/TmMath.HC": "5da8d9243d01fcae7afc35858f1d17586d5addcadef1dad7052c4a86e5f684cf",
+    "games/Toom/TmMotion.HC": "d478a24beda3de1bb61756869d95df4d3952f97a89168b9a08c4831544a9f4ee",
+    "games/Toom/TmMove.HC": "d7235b8aa67b4eb72ca08c1b21d64ff56257c51314374a3523962b9bcffc18dd",
+    "games/Toom/TmPal.HC": "657c0c69082fad07cffe9b8800abf1d12df8eaa7603efa04dd62144b6142651f",
+    "games/Toom/TmPath.HC": "1897a4cc6c617a93f1556344111dabd4cb2247e3d3550c1102c841debe31eef4",
+    "games/Toom/TmPlat.HC": "e9541607e935b3f43a3cc0b36d5d79a7ed51849efdb78e5e75d5bf973802bff3",
+    "games/Toom/TmPlayer.HC": "8260fa3085ce6ec002872269c244456eeda5315cc35ece10708f9830ef9eb449",
+    "games/Toom/TmPlayer.HH": "ee536c8b0ceb057e3dda7e7320eb33520741d5d54487bb312f803ad7513cc8cf",
+    "games/Toom/TmSector.HC": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+    "games/Toom/TmSight.HC": "dba548702f1a63870416251da4473277a82de0a8e3670309a394e37b53569461",
+    "games/Toom/TmSlide.HC": "e7ea0760e058b1d12c474bc135d4466c71ecfe5d5482ba5a6f23c6a7dd5e3da1",
+    "games/Toom/TmSpecial.HC": "44a5ef52acf0022dc580e5cb90e9cb3747def44e890a5aa985db90d2fbfe615b",
+    "games/Toom/TmSprite.HC": "b1d4797fb33aacd27878742f29c0b24ee65adc3d54fd552b2375d0b886513745",
+    "games/Toom/TmState.HC": "5063663691a8c902187ad805332d36fecb224b77635c3b1a3a0a2879ff7476e2",
+    "games/Toom/TmSwitch.HC": "a158dd8d290558945063ec3d0a6678817335d0d59cbab323f9f303499285aee9",
+    "games/Toom/TmTeleport.HC": "04efd4b10193f52d767883a0decf0e9176e0ff0213af184153b081b6bd7c8f36",
+    "games/Toom/TmTex.HC": "09e11a60b65148546d109051ef50a6f3453098e327ed10e4d89aed6e2c990063",
+    "games/Toom/TmTick.HC": "cdeb5c411d52244bdc66643719ad7d05e4463896b010c925632f854dbed30a88",
+    "games/Toom/TmVile.HC": "bde6455466b79fcbc10369df53b60ad5eb96a20ff72bbbe769e5705fc85c64de",
+    "games/Toom/TmWad.HC": "1f948379ca9b25a68c4b401d961885705369510e4e9e0f975b8cce7250c64fc3",
+    "games/Toom/TmWeapon.HC": "88be3f147541f9cb0acba2fc9f2e8640c592af6211b551c7836ab99b745198ce",
+    "games/Toom/TmWorld.HC": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+    "tools/toom/alloc.test.mjs": "9233391624ffde8c43716319d197e02dc63cda0c071ef72ba8bb2e75a92d4398",
+    "tools/toom/Alloc.HC": "a1a886121a6588751a304478b7d5e9933472a364da0f3f63ae2f461198db727b",
+    "tools/toom/AllocProbe.HC": "8c7414c0b2c60594aff63921ed4c4a94c2922d75cb62c71b5abea83ba79d472c",
+    "tools/toom/path.test.mjs": "b1cbe9d80633894935be8a72b6801b4372cb9e2ea41d515992765b0e4b41da37",
+    "tools/toom/weapon.test.mjs": "8fb56eea7c3ae0f9273458cb0da6c4aba100bc98eae1d4ba52f482246d59526c",
+    "tools/toom/action-real.test.mjs": "4a0ad63358a31aa7dfbb4bf078dec664c4da4d354c4da8ee091fb94cea2f3642",
+    "tools/toom/Rooms.HC": "b38dcb9303604f9ac1b6718ecfd2eb72998e1a9b42adaa5d7c9978ff41a2461c",
+    "tools/toom/Weapon.HC": "2f70537d1eddaa88c371de595942e49f96f68d00a24d0a3f2d6163bf9e3abc80",
+    "tools/toom/ActionReal.HC": "b4576031f5b754e6f9d37a1bf38b6a35f148add7925c89998c272047a59e291c"
+  },
+  "limitations": [
+    "Injected application allocations exercise exception unwinding; this is not a proof of native heap behavior under physical RAM exhaustion.",
+    "The fixture covers simulation constructors and growth paths. WAD/map/graphics construction and full Level composition are separate work.",
+    "Normal regression gates establish the bounded existing cases, not full gameplay or performance."
+  ]
+}

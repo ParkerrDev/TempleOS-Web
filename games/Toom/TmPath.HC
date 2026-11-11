@@ -25,8 +25,12 @@ Path *PathNew(World *tmpw)
 {//A reusable trace borrows its world; collect before running any actions.
   Path *tmpp=CAlloc(sizeof(Path));
   tmpp->world=tmpw;
-  tmpp->line_seen=CAlloc(tmpw->map->line_cnt*sizeof(I64));
-  tmpp->cap=64; tmpp->hit=MAlloc(tmpp->cap*sizeof(Intercept));
+  try {
+    tmpp->line_seen=CAlloc(tmpw->map->line_cnt*sizeof(I64));
+    tmpp->cap=64; tmpp->hit=MAlloc(tmpp->cap*sizeof(Intercept));
+  } catch {
+    PathDel(tmpp);
+  }
   return tmpp;
 }
 
@@ -48,9 +52,9 @@ U0 PathHitAdd(Path *tmpp,I64 fraction,I64 line,I64 actor=0)
   I64 i,key=line,prev_key;
   Intercept *hits,*prev;
   if (tmpp->cnt==tmpp->cap) {
-    tmpp->cap*=2; hits=MAlloc(tmpp->cap*sizeof(Intercept));
+    hits=MAlloc(2*tmpp->cap*sizeof(Intercept));
     MemCpy(hits,tmpp->hit,tmpp->cnt*sizeof(Intercept));
-    Free(tmpp->hit); tmpp->hit=hits;
+    Free(tmpp->hit); tmpp->hit=hits; tmpp->cap*=2;
   }
   if (key<0) key=tmpp->world->map->line_cnt+actor.u32[0];
   for (i=tmpp->cnt;i;i--) {
@@ -135,7 +139,7 @@ Bool PathRun(Path *tmpp,I64 x,I64 y,I64 x2,I64 y2,
 {//Walk every touched block, including grid edges and corners, without nudging.
   World *tmpw=tmpp->world;
   I64 ox=tmpw->map->blockmap[0]*65536,oy=tmpw->map->blockmap[1]*65536,
-	bx,by,ex,ey,sx,sy,nx,ny,ax,ay,limit;
+	bx,by,ex,ey,sx,sy,nx,ny,ax,ay,limit,*seen;
   U64 tx,ty;
   Bool edge_x,edge_y;
   tmpp->cnt=0;
@@ -149,8 +153,9 @@ Bool PathRun(Path *tmpp,I64 x,I64 y,I64 x2,I64 y2,
   ax=AbsI64(tmpp->dx); ay=AbsI64(tmpp->dy);
   if (!ax && !ay) return TRUE;
   if (tmpp->actor_cap<tmpw->slot_cap) {
-    Free(tmpp->actor_seen); tmpp->actor_cap=tmpw->slot_cap;
-    tmpp->actor_seen=CAlloc(tmpp->actor_cap*sizeof(I64));
+    seen=CAlloc(tmpw->slot_cap*sizeof(I64));
+    Free(tmpp->actor_seen); tmpp->actor_seen=seen;
+    tmpp->actor_cap=tmpw->slot_cap;
   }
   if (!++tmpp->stamp) {
     MemSet(tmpp->line_seen,0,tmpw->map->line_cnt*sizeof(I64));

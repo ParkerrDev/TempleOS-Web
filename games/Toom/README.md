@@ -626,6 +626,13 @@ The 324 shared-thinker scenarios and 2,628 calls remain exact. These are routing
 and composition checks, with behavior evidence supplied by the individual
 component oracles above. See `tools/toom/action-evidence.json`. Full level
 ownership, the playable host and progression remain unfinished.
+Simulation allocation gates inject all 54 counted failure points across 15
+constructor/create-delete paths and four buffer growth paths. The 77 cases
+include eight busy-world guards; native TempleOS and pinned HEMU preserve heap,
+owner bindings and retryable storage. The prior source has a native 160-byte
+leak witness. Normal path, weapon and dispatcher checks still pass. These
+controlled failures do not simulate physical RAM exhaustion or qualify the
+unbuilt level host. See `tools/toom/alloc-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

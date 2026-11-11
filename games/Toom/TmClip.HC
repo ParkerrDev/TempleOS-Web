@@ -56,22 +56,26 @@ Collision *CollisionNew(Map *tmpm)
   Vertex *a,*b;
   Collision *tmpc=CAlloc(sizeof(Collision));
   tmpc->map=tmpm;
-  tmpc->line=MAlloc(tmpm->line_cnt*sizeof(ClipLine));
-  tmpc->seen=CAlloc(tmpm->line_cnt*sizeof(I64));
-  tmpc->special=MAlloc(tmpm->line_cnt*sizeof(I64));
-  for (i=0;i<tmpm->line_cnt;i++) {
-    dst=tmpc->line+i; src=tmpm->line+i;
-    a=tmpm->vertex+src->v1; b=tmpm->vertex+src->v2;
-    dst->ax=a->x*65536; dst->ay=a->y*65536;
-    dst->dx=b->x-a->x; dst->dy=b->y-a->y;
-    dst->left=MinI64(a->x,b->x)*65536;
-    dst->right=MaxI64(a->x,b->x)*65536;
-    dst->bottom=MinI64(a->y,b->y)*65536;
-    dst->top=MaxI64(a->y,b->y)*65536;
-    dst->front=tmpm->side[src->side[0]].sector;
-    dst->back=-1;
-    if (src->side[1]!=0xFFFF && src->flags&4)
-      dst->back=tmpm->side[src->side[1]].sector;
+  try {
+    tmpc->line=MAlloc(tmpm->line_cnt*sizeof(ClipLine));
+    tmpc->seen=CAlloc(tmpm->line_cnt*sizeof(I64));
+    tmpc->special=MAlloc(tmpm->line_cnt*sizeof(I64));
+    for (i=0;i<tmpm->line_cnt;i++) {
+      dst=tmpc->line+i; src=tmpm->line+i;
+      a=tmpm->vertex+src->v1; b=tmpm->vertex+src->v2;
+      dst->ax=a->x*65536; dst->ay=a->y*65536;
+      dst->dx=b->x-a->x; dst->dy=b->y-a->y;
+      dst->left=MinI64(a->x,b->x)*65536;
+      dst->right=MaxI64(a->x,b->x)*65536;
+      dst->bottom=MinI64(a->y,b->y)*65536;
+      dst->top=MaxI64(a->y,b->y)*65536;
+      dst->front=tmpm->side[src->side[0]].sector;
+      dst->back=-1;
+      if (src->side[1]!=0xFFFF && src->flags&4)
+	dst->back=tmpm->side[src->side[1]].sector;
+    }
+  } catch {
+    CollisionDel(tmpc);
   }
   return tmpc;
 }

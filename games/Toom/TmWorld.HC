@@ -130,10 +130,14 @@ World *WorldNew(Map *tmpm,GameData *tmpd,I64 skill=2)
   QueInit(&tmpw->thinkers);
   tmpw->map=tmpm; tmpw->data=tmpd; tmpw->skill=ClampI64(skill,0,4);
   tmpw->free_slot=tmpw->player_start=-1;
-  tmpw->blocks=CAlloc(tmpm->blockmap(U16 *)[2]*
-	tmpm->blockmap(U16 *)[3]*sizeof(I64));
-  tmpw->collision=CollisionNew(tmpm);
-  WorldSlotsGrow(tmpw);
+  try {
+    tmpw->blocks=CAlloc(tmpm->blockmap(U16 *)[2]*
+	  tmpm->blockmap(U16 *)[3]*sizeof(I64));
+    tmpw->collision=CollisionNew(tmpm);
+    WorldSlotsGrow(tmpw);
+  } catch {
+    WorldDel(tmpw);
+  }
   return tmpw;
 }
 
@@ -147,8 +151,8 @@ Actor *WorldSpawn(World *tmpw,I64 type,I64 x,I64 y,I64 z=TM_FLOOR_Z)
   Actor *tmpa,*last;
   if (!(0<=type<TM_ACTOR_NUM)) return NULL;
   if (tmpw->free_slot<0) WorldSlotsGrow(tmpw);
-  n=tmpw->free_slot; slot=tmpw->slot+n; tmpw->free_slot=slot->next;
-  tmpa=CAlloc(sizeof(Actor)); slot->actor=tmpa; tmpa->world=tmpw;
+  n=tmpw->free_slot; slot=tmpw->slot+n; tmpa=CAlloc(sizeof(Actor));
+  tmpw->free_slot=slot->next; slot->actor=tmpa; tmpa->world=tmpw;
   info=tmpw->data->info+type;
   tmpa->id=slot->generation<<32|(n+1);
   tmpa->type=type; tmpa->active=TRUE;

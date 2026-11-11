@@ -365,10 +365,16 @@ U0 WeaponAction(Weapon *tmpw,Psprite *sprite,I64 n)
 Weapon *WeaponNew(Motion *tmpm)
 {//The weapon owns its trace and borrows the level's motion context.
   Weapon *tmpw;
+  WorldIdle(tmpm->world);
   if (!tmpm->player || !WorldActorGet(tmpm->world,tmpm->world->player))
     throw('Player');
   tmpw=CAlloc(sizeof(Weapon));
-  tmpw->motion=tmpm; tmpw->trace=AttackNew(tmpm->world);
+  tmpw->motion=tmpm;
+  try {
+    tmpw->trace=AttackNew(tmpm->world);
+  } catch {
+    WeaponDel(tmpw);
+  }
   tmpw->action=&WeaponAction;
   return tmpw;
 }
