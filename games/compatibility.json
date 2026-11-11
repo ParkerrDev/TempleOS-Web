@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "d3e17c440d015b3f375b1e71641f4bc308a522430038c10f7b42d70cda3af4a6",
+  "runtimeSha256": "10e5538b6fbe6482d598a4aa7b728cc867bd3244a95451e75b2fced24020e8a7",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -8,7 +8,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "a26686a4a85bf5de1e3c93bf1228677d4a9198a14bbb20c10755cfddbf7ad14e"
+      "wasmSha256": "c0a9c59718af85d0cbfcefde978e7b3d95618bf111ac878af0cd795aba71505b"
     },
     "toom": {
       "name": "TOOM",
@@ -24,7 +24,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "044fa3f533653caceffe3e95621ccd7caa177f5d7ffe721089b02cdba4a6a7bc"
+      "wasmSha256": "706115779c52b440cbd7e48d56d0d10e857e342e5f075e5965f3c64dd9335541"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -32,7 +32,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "b9be38b08d0535ad8d489b5983e7599bf4d290202897cf2c6cf9a58c23d62add"
+      "wasmSha256": "47a360da1a53a7d96d799b715f087029239742f5a3143be2ffe1e9cb689267d2"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -40,7 +40,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "cbf16be3f9f919fdd43512a2fff330bdf6aeef3a30199788f1e1b018298b1052"
+      "wasmSha256": "653524c841aa7a723838e48724e95da374964eb173dc20800dc7ee36ece1297c"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -312,7 +312,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/KeepAway/KeepAway.HC:263: Undefined identifier or untyped call: GrEllipse"
+      "error": "C:/Home/Games/TinkerOS/Apps/KeepAway/KeepAway.HC:264: Undefined identifier or untyped call: GrFloodFill"
     },
     "library-Span": {
       "name": "Span",
