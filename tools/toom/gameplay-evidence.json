@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "919334212315fcef7da543e3438ff445513d81474666f113e01794ed8124f4ef",
+  "renderSourceSha256": "94194a46fb06a8edf56af0b4faed6bc0dc054384305c6dcc069cbd3e74d168c4",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-sk5uc90a",
+      "native": "qemu-xxf86uyw",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -158,6 +158,34 @@
       "hemu": true,
       "concurrentMovers": 64,
       "scope": "Five platform and six ceiling presets, sound/timing states, obstruction/crush/slowdown, zero-wait retry, tagged pause/resume and 64-controller ownership; line dispatch pending"
+    },
+    "teleport": {
+      "cases": 544,
+      "native": "qemu-fnkrpaxr",
+      "hemu": true,
+      "scope": "Direct transport API: square occupancy, player/monster stomping, fog/sound/angle/freeze, destination ordering, nested queries, retirement and exception cleanup."
+    },
+    "teleportMaps": {
+      "maps": 36,
+      "lines": 456,
+      "noDestination": 2,
+      "native": "qemu-_dwdn9ic",
+      "hemu": true,
+      "missing": [
+        {
+          "map": "E1M5",
+          "line": 633,
+          "special": 126,
+          "tag": 5
+        },
+        {
+          "map": "E4M7",
+          "line": 5189,
+          "special": 97,
+          "tag": 46
+        }
+      ],
+      "scope": "Medium-skill destinations from independent WAD records; calls transport directly, not map-line activation dispatch."
     }
   },
   "frames": [

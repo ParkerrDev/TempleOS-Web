@@ -27,6 +27,7 @@
 #include "TmFloor"
 #include "TmPlat"
 #include "TmCeil"
+#include "TmTeleport"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

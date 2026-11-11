@@ -37,7 +37,8 @@ export function MapRead(lumps,index)
       children:[b.readUInt16LE(p+24),b.readUInt16LE(p+26)]})),
     sectors:record(8,'SECTORS',26,(b,p)=>({floor:b.readInt16LE(p),ceil:b.readInt16LE(p+2),
       floorName:b.toString('ascii',p+4,p+12).replace(/\0.*$/s,''),
-      ceilName:b.toString('ascii',p+12,p+20).replace(/\0.*$/s,'')})),
+      ceilName:b.toString('ascii',p+12,p+20).replace(/\0.*$/s,''),
+      light:b.readInt16LE(p+20),special:b.readUInt16LE(p+22),tag:b.readUInt16LE(p+24)})),
   };
 }
 

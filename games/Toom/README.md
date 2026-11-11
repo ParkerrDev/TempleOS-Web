@@ -49,6 +49,11 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - Position changes commit actor coordinates, sector bounds and block links
   together. Crossed-line callbacks run afterward in reverse contact order;
   nested queries cannot overwrite the pending line list.
+- Teleports resolve tagged sectors and destination thinker order, apply square
+  shootable-actor occupancy independently of walls/scenery/height, and preserve
+  player telefrags, destination angle/floor, 18-tic freeze and both fog/sound
+  events. Nearby actor handles are captured before damage callbacks. Monster
+  stomping is an explicit map-rule argument, disabled for Phase 1.
 - Texture coordinates, increments and lighting buckets use nearest Q16 values
   with even ties. This defines sampling at texel and light boundaries across
   native x87 and HEMU. Sky row coordinates are computed once per row.
@@ -192,6 +197,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/door.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/floor.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/floor-links.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/movers.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/teleport.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/teleport-map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
@@ -334,9 +341,14 @@ individually checked tics across all eleven presets, exact sound/timing states,
 stop/resume, real crush/slowdown recovery, zero-wait obstruction recovery and
 negative/isolated ceiling heights. A 64-controller fixture verifies simultaneous
 ownership, stop/resume, movement and cleanup beyond the legacy thirty-object
-limits. Line dispatch remains unfinished.
+limits. Teleport fixtures exercise 544 occupancy, effect, ordering, nested-query,
+retirement and exception-cleanup cases. A separate real-map fixture compares
+456 transport lines in all 36 maps against independently decoded WAD records,
+including two medium-skill lines without a destination. These call
+the transport API directly; line activation permissions and dispatch remain
+unfinished.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector, door, floor or mover checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector, door, floor, mover or teleport checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private
