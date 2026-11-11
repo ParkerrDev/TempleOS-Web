@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=TempleOS — HEMU
+Comment=Run a TempleOS snapshot in a native window
+Exec=hemu-native %f
+TryExec=hemu-native
+Icon=hemu-native
+Terminal=false
+Categories=System;Emulator;
+MimeType=application/x-hemu-session;
+StartupNotify=true

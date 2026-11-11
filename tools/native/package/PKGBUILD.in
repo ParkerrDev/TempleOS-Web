@@ -1,0 +1,37 @@
+pkgname=hemu-native
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc='One-core TempleOS snapshot host using Qt and JavaScriptCore'
+arch=('x86_64')
+url='https://github.com/ParkerrDev/TempleOS-Web'
+depends=(@DEPENDS@)
+makedepends=('gcc' 'make' 'pkgconf' 'desktop-file-utils')
+optdepends=('xdg-desktop-portal-impl: desktop file selection backend')
+options=('!debug' '!lto')
+source=("$pkgname-$pkgver.tar.gz")
+sha256sums=('@SHA256@')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver/build/native"
+  qmake6 ../../engine/native/hemu.pro "RESOURCES+=$PWD/Runtime.qrc"
+  make -j2
+}
+
+check() {
+  cd "$srcdir/$pkgname-$pkgver"
+  GIO_USE_VFS=local build/native/hemu-native check TempleOS.hemu
+  desktop-file-validate package/hemu-native.desktop
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+  install -Dm755 build/native/hemu-native "$pkgdir/usr/bin/hemu-native"
+  install -Dm644 TempleOS.hemu "$pkgdir/usr/share/hemu-native/TempleOS.hemu"
+  install -Dm644 Provenance.json "$pkgdir/usr/share/hemu-native/Provenance.json"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/hemu-native/README.md"
+  install -Dm644 engine/native/Screenshot.png "$pkgdir/usr/share/doc/hemu-native/Screenshot.png"
+  install -Dm644 DeferredGc.md "$pkgdir/usr/share/doc/hemu-native/DeferredGc.md"
+  install -Dm644 package/hemu-native.desktop "$pkgdir/usr/share/applications/hemu-native.desktop"
+  install -Dm644 package/hemu-native.xml "$pkgdir/usr/share/mime/packages/hemu-native.xml"
+  install -Dm644 package/hemu-native.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/hemu-native.svg"
+}

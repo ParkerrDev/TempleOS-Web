@@ -8,6 +8,8 @@
 #include <QtWaylandCompositor/QWaylandOutput>
 #include <QtWaylandCompositor/QWaylandSeat>
 #include <QtWaylandCompositor/QWaylandView>
+#include <QtWaylandCompositor/QWaylandSurfaceGrabber>
+#include <QImage>
 #include <QtWaylandCompositor/private/qwaylandkeyboard_p.h>
 #include <wayland-server.h>
 #include "constraints-server.h"
@@ -58,12 +60,27 @@ int main(int argc,char **argv) {
   QWindow window;window.resize(1024,768);QWaylandOutput output(&compositor,&window);
   const QWaylandOutputMode mode(QSize(1024,768),60000);output.addMode(mode,true);output.setCurrentMode(mode);
   Protocol protocol(compositor.display());QPointer<QWaylandView> view;QPointer<QWaylandXdgToplevel> top;
+  QString watchPath;bool grabbing=false;
   QObject::connect(&shell,&QWaylandXdgShell::toplevelCreated,&app,[&](QWaylandXdgToplevel *value,QWaylandXdgSurface *surface){
     top=value;view=new QWaylandView(nullptr,&compositor);view->setSurface(surface->surface());view->setOutput(&output);
     top->sendConfigure(QSize(640,480),QList<QWaylandXdgToplevel::State>{QWaylandXdgToplevel::ActivatedState});
     compositor.defaultSeat()->setKeyboardFocus(surface->surface());
     QObject::connect(surface->surface(),&QWaylandSurface::hasContentChanged,&app,[&]{
       if(view&&view->surface()&&view->surface()->hasContent()){compositor.defaultSeat()->sendMouseMoveEvent(view,{320,240});Reply({{"event","surface"}});}
+    });
+    QObject::connect(surface->surface(),&QWaylandSurface::redraw,&app,[&]{
+      if(watchPath.isEmpty()||grabbing||!view||!view->surface())return;
+      grabbing=true;auto *grab=new QWaylandSurfaceGrabber(view->surface(),&app);
+      QObject::connect(grab,&QWaylandSurfaceGrabber::success,&app,[&,grab](const QImage &image){
+        int white=0,blue=0;
+        for(int y=0;y<image.height();y++)for(int x=0;x<image.width();x++) {
+          const auto rgb=image.pixel(x,y)&0xFFFFFF;if(rgb==0xFFFFFF)white++;else if(rgb==0x0000AA)blue++;
+        }
+        if(white>100000&&blue>3000){const auto saved=image.save(watchPath);watchPath.clear();Reply({{"event","guest-frame"},{"saved",saved},{"width",image.width()},{"height",image.height()},{"white",white},{"blue",blue}});}
+        grabbing=false;grab->deleteLater();
+      });
+      QObject::connect(grab,&QWaylandSurfaceGrabber::failed,&app,[&,grab](QWaylandSurfaceGrabber::Error error){Reply({{"event","grab-error"},{"code",static_cast<int>(error)}});grabbing=false;grab->deleteLater();});
+      grab->grab();
     });
   });
   QTimer frames;frames.setInterval(16);QObject::connect(&frames,&QTimer::timeout,&app,[&]{if(view&&view->surface())view->surface()->sendFrameCallbacks();});frames.start();
@@ -89,6 +106,7 @@ int main(int argc,char **argv) {
     else if(op=="remove"){wl_global_destroy(protocol.constraints);protocol.constraints=nullptr;}
     else if(op=="restore"&&!protocol.constraints)protocol.constraints=wl_global_create(compositor.display(),&zwp_pointer_constraints_v1_interface,1,&protocol,Protocol::BindConstraints);
     else if(op=="quiet")frames.stop();
+    else if(op=="watch-frame")watchPath=message["path"].toString();
     else if(op=="quit")app.quit();
     wl_display_flush_clients(compositor.display());Reply({{"event","command"},{"cmd",op}});
   });

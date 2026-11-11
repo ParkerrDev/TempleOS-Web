@@ -22,12 +22,41 @@ node tools/native/fixture.mjs
 build/native/hemu-native build/native/TempleOS.hemu
 ```
 
+For a local Arch package, build a separate running, uncapped default capture:
+
+```sh
+node tools/native/fixture.mjs build/native/TempleOS-default.hemu --rate 0 --running
+node tools/native/build.mjs
+node tools/native/package.mjs --build
+node tools/native/pointer/build.mjs
+node tools/native/package.test.mjs
+```
+
+The package and its source archive are under `build/native/package`. The package
+pins the locally qualified Qt and JavaScriptCore package versions because of the
+private boundaries described below; rebuild and requalify after upgrading them.
+It includes a desktop launcher, `.hemu` file association and a complete one-core
+snapshot. No Node or Chromium runtime is installed. The source archive contains
+the generated JS bundle, its exact input hashes, generated protocol bindings,
+C++/QML sources and snapshot provenance. `makepkg` compiles the native binary and
+validates the complete saved machine before packaging. This is a local preview;
+it is not a published distribution.
+
+Install the resulting package using the system package manager to add the launcher.
+Without a command-line path, the app finds `hemu-native/TempleOS.hemu` through
+Qt's standard data locations. Supplying a path opens that saved session instead.
+Save always chooses a writable destination through the portal; it never silently
+overwrites the packaged capture. The package test extracts into a temporary root,
+validates its CLI/MIME/desktop metadata, and observes the actual packaged GUI's
+TempleOS frame on a private Wayland compositor. Its startup time is one observation
+under the recorded host load, not a stable performance guarantee.
+
 The bundle can be rebuilt separately with
 `node tools/native/build.mjs --bundle-only`. Its exact input hashes and output
 SHA-256 are written to `build/native/Runtime.json`; `Build.json` records the
 C++/QML source hashes, binary hash and local Qt/JSC versions. Qt's resource compiler
 embeds the bundle in the binary; no generated code is committed. The platform
-build needs Qt 6 Core/Gui/Qml/Quick/Multimedia, qmake6, a C++17 compiler, zlib and
+build needs Qt 6 Core/Gui/Qml/Quick/Multimedia/DBus, qmake6, a C++17 compiler, zlib and
 JavaScriptCoreGTK 4.1 development headers/libraries. Linux pointer capture needs
 Qt 6.12 or later with its matching private GUI headers, wayland-client,
 wayland-protocols and wayland-scanner. Protocol bindings are generated from the
@@ -130,8 +159,7 @@ that protocol, and checks replacement confirmation and the new restart path.
 They do not open a dialog on the user's desktop.
 
 Remaining qualification includes audible PCM timing/lifecycle,
-native packaging and
-installation, performance/resource measurement, and non-Linux platforms. The
+system-wide installation, performance/resource measurement, and non-Linux platforms. The
 browser host's four-core protocol remains separate; this window does not yet
 satisfy that native SMP requirement.
 
