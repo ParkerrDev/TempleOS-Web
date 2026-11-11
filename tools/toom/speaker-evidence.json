@@ -2,7 +2,7 @@
   "scope": "Native DP speaker primitives and Settings-owned song task; not wired into the interactive game.",
   "files": {
     "games/Toom/TmSnd.HC": "38d7d1cafdf87131a6b89953b32b1b836dba6fa7fbd26c0354ed80ad877db197",
-    "games/Toom/TmSpeaker.HC": "708d62a34f66e06dc71854e3a9e9a7bedcba6198993b323d7385d96c40ef3e30",
+    "games/Toom/TmSpeaker.HC": "5ebe9169f145cf5585fa0af96ef54456b520562a3fd375b89fc44746c20e6847",
     "tools/toom/Speaker.HC": "a6d108a41c1f676a7cc34dc618448df4158258cf62134d33fab56d3c25827abd",
     "tools/toom/SpeakerHook.HC": "4314324fd83ac073a8ea63860b84d48a8aff98c9250dc9999dc55c405dbed61f",
     "tools/toom/SpeakerTask.HC": "1d0c535a749118590193aaa4e2e68185b69a755e95c49c37193ec6bf0af87515",
@@ -22,19 +22,19 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-j46by807",
-    "sourceSha256": "df2fddbfcb16b5c0b446ebd6b19a87f87c2271266c77a7f1a51206fad1f76d10"
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-7ki6jv2f",
+    "sourceSha256": "82cb3f9f6db63a149e9713750ef064b6deed8a2f900f499188737250a1da75b3"
   },
   "clockHemu": {
     "backend": "hemu",
-    "sourceSha256": "df2fddbfcb16b5c0b446ebd6b19a87f87c2271266c77a7f1a51206fad1f76d10",
+    "sourceSha256": "82cb3f9f6db63a149e9713750ef064b6deed8a2f900f499188737250a1da75b3",
     "cases": 1000,
     "bad": 0
   },
   "task": {
     "results": [
       {
-        "out": "HARDWARE GATE 0\nSONG 2 RUNS SUSPEND RESUME PAUSE EXIT FAULT BAD 0\nDELIVERY 148 SAMPLES 0 SKIPPED 1 MS LATE\n",
+        "out": "HARDWARE GATE 0\nSONG 2 RUNS SUSPEND RESUME PAUSE EXIT FAULT BAD 0\nDELIVERY 148 SAMPLES 0 SKIPPED 0 MS LATE\n",
         "except": ""
       }
     ],
@@ -43,12 +43,12 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-izuw56zl",
-    "sourceSha256": "ec35e6c47422dc353f5cbab6243e8d1f89a2e37da9a01604f9bbef33e2942e42"
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-5nl0dtri",
+    "sourceSha256": "d75957722579ddd04574760d424f7c18fd4de67e62857d598356dcace35b011e"
   },
   "taskHemu": {
     "backend": "hemu",
-    "sourceSha256": "ec35e6c47422dc353f5cbab6243e8d1f89a2e37da9a01604f9bbef33e2942e42",
+    "sourceSha256": "d75957722579ddd04574760d424f7c18fd4de67e62857d598356dcace35b011e",
     "runs": 2,
     "hardwareGate": 0,
     "bad": 0
@@ -70,8 +70,8 @@
     "Clock test replaces port reads/writes with a deterministic register/trace boundary; original native mute and sound semaphore are retained.",
     "Task test forwards every application port write to the actual guest PIT. The only tick wrapper records delivery and returns the production deadline unchanged.",
     "Native final gate is checked by IN 0x61. Frozen HEMU lacks port 0x61 readback; its final spk_on is inspected through an added read-only engine export instead. No app-specific workaround.",
-    "Measured native idle delivery was 148 observed samples, zero skipped samples and at most one millisecond late. Rendering-load timing and real browser sound output have not been qualified.",
+    "This idle native task run observed 148 samples, zero skipped samples and zero milliseconds late. Rendering-load timing and actual TOOM browser output remain separately unqualified.",
     "SettingsPop kills the new song task, restores/resumes the prior task, and stops the speaker. Decoded buffers remain borrowed from the parent until that teardown.",
-    "No game actor/sector selection, priorities, sound cache or actual focus adapter is installed yet."
+    "Channel selection and lazy caching have separate native component gates. No game actor/sector event binding or actual focus adapter is installed yet."
   ]
 }

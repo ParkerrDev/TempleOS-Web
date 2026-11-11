@@ -1,7 +1,7 @@
 {
   "scope": "Native channel allocation/stop ordering and returned distance audibility, before actor/sector/Play binding.",
   "files": {
-    "games/Toom/TmAudio.HC": "b0fd24a26f8f3e41744b00d12adfc78f7033d99ea634fc5d68f7759334902c97",
+    "games/Toom/TmAudio.HC": "ee93c78b6c173389f25bfa7c4f047c0a52cf427344fcee8b0616c7f68c530fd7",
     "games/Toom/TmSoundData.HH": "71ca3a12ea1acacaadbe9ff97046511422aced00972eb093a4a0e23bab319b7c",
     "tools/toom/Audio.HC": "9d415a7d8ae557369a80bfa0d05702d167d1c6011c24c893a7a8655c3a937d24",
     "tools/toom/AudioRef.mjs": "ed3832055035617a74487c7fc40c0d9ab725c18b2a0de4cdad96dd431980e62c",
@@ -22,8 +22,8 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-sahep6hy",
-    "sourceSha256": "ae2df2441b52d12ac6c545ba4048ecd8e1a5b15cd2f77c24842fadf1d84d73c4",
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-ytq7hyic",
+    "sourceSha256": "8ee26b9d86cf12084b69b83054729b297350857c655d0a9b41ff4d3e46abc0b7",
     "expectedSha256": "bb486b7c5777774bfb0f7c0374b18745de6e0c7a04dd899f860bacf38feb3091",
     "reference": {
       "repository": "https://github.com/id-Software/DOOM",
@@ -38,7 +38,7 @@
   },
   "hemu": {
     "backend": "hemu",
-    "sourceSha256": "ae2df2441b52d12ac6c545ba4048ecd8e1a5b15cd2f77c24842fadf1d84d73c4",
+    "sourceSha256": "8ee26b9d86cf12084b69b83054729b297350857c655d0a9b41ff4d3e46abc0b7",
     "expectedSha256": "bb486b7c5777774bfb0f7c0374b18745de6e0c7a04dd899f860bacf38feb3091",
     "reference": {
       "repository": "https://github.com/id-Software/DOOM",

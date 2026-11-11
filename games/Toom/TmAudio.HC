@@ -8,9 +8,11 @@ class Channel
 class Audio
 {
   SoundBank *bank;
+  CTask *task;
   Speaker speaker;
   Channel channel[TM_CHANNEL_NUM];
   I64 handle;
+  Bool paused;
 };
 
 U0 AudioChannelDel(Audio *tmpa,I64 n)
@@ -73,4 +75,72 @@ Bool AudioAudible(I64 x,I64 y,I64 source_x,I64 source_y,I64 map_num,
     } else volume=volume*(1200*65536-distance)>>16/1040;
   }
   return volume>0;
+}
+
+U0 AudioStop(Audio *tmpa)
+{//Logical owners and the borrowed physical stream end together.
+  I64 i;
+  for (i=0;i<TM_CHANNEL_NUM;i++) AudioChannelDel(tmpa,i);
+  SpeakerStart(&tmpa->speaker,NULL,cnts.jiffies);
+  tmpa->handle=-1;
+}
+
+U0 AudioDel(Audio *tmpa)
+{
+  if (tmpa) {
+    if (tmpa->task) throw('Active');
+    AudioStop(tmpa);
+    while (!SpeakerStop(&tmpa->speaker)) Sleep(1);
+    SoundBankDel(tmpa->bank); Free(tmpa);
+  }
+}
+
+Audio *AudioNew(Wad *wad,GameData *data)
+{
+  Audio *res=CAlloc(sizeof(Audio));
+  res->handle=-1;
+  try {
+    res->bank=SoundBankNew(wad,data);
+  } catch {
+    AudioDel(res);
+  }
+  return res;
+}
+
+I64 AudioStart(Audio *tmpa,I64 kind,I64 origin,I64 sound,
+	Bool audible=TRUE)
+{//A disabled effect still replaces an old sound from the same owner.
+  I64 n;
+  Sound *clip;
+  if (!(0<=kind<=2) || !kind && origin) throw('Origin');
+  if (!(0<sound<TM_SND_NUM)) throw('Sound');
+  if (!audible) return -1;
+  AudioStopOwner(tmpa,kind,origin);
+  n=AudioChannelFind(tmpa,kind,origin,sound);
+  if (n<0) return -1;
+  try {
+    clip=SoundBankGet(tmpa->bank,sound);
+    if (clip) {
+      tmpa->handle=n;
+      SpeakerStart(&tmpa->speaker,clip,cnts.jiffies,tmpa->paused);
+    }
+  } catch {
+    AudioChannelDel(tmpa,n);
+  }
+  if (!clip) return -1;
+  return n;
+}
+
+U0 AudioUpdate(Audio *tmpa)
+{//The single speaker may have displaced any of the eight logical channels.
+  I64 i;
+  for (i=0;i<TM_CHANNEL_NUM;i++)
+    if (tmpa->channel[i].sound &&
+	  (i!=tmpa->handle || !tmpa->speaker.sound)) AudioChannelDel(tmpa,i);
+}
+
+U0 AudioPause(Audio *tmpa,Bool val)
+{
+  tmpa->paused=val;
+  SpeakerPause(&tmpa->speaker,val,cnts.jiffies);
 }

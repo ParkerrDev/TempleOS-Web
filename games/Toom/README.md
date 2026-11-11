@@ -939,3 +939,24 @@ checked with `node tools/toom/SoundData.mjs --check`. `audio.test.mjs` compares
 functions on native TempleOS and HEMU. `audio-evidence.json` records the exact
 scope, including the released source's 160-unit close-distance constant.
 These components are still awaiting actual actor/sector and `Play` binding.
+
+`AudioNew`/`AudioDel` now own the lazy bank, and `AudioStart`/`AudioUpdate`
+connect its immutable clips to logical channels and the single physical
+speaker. Inaudible requests preserve the old sound; disabled or missing
+requests still stop an old sound from the same origin. Starting while paused
+emits no tone, and an empty paused clip is already finished. An active task
+must release ownership before deletion; teardown waits for the native sound
+mutex before freeing a borrowed stream.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/audio-live.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/audio-live.test.mjs
+```
+
+`audio-live-evidence.json` records 108 synthetic effect cases and ten failure
+paths on native TempleOS and frozen HEMU, including malformed lazy loads,
+owner separation, pending silence, pause, completion and exact heap cleanup.
+These isolate orchestration from the separately verified real Freedoom
+payloads. The existing original-C channel/distance and real PIT task gates
+also pass after the optional paused-start argument was added. Actual
+actor/sector callbacks, focus ownership and interactive audio remain unwired.

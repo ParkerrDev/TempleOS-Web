@@ -56,12 +56,12 @@ I64 SpeakerTick(Speaker *tmps,I64 now)
   return now+JIFFY_FREQ/TM_SND_HZ;
 }
 
-U0 SpeakerStart(Speaker *tmps,Sound *sound,I64 now)
+U0 SpeakerStart(Speaker *tmps,Sound *sound,I64 now,Bool paused=FALSE)
 {//The immutable decoded stream stays owned by the caller until stopped.
   tmps->sound=sound;
-  tmps->start=now;
-  tmps->paused=FALSE;
-  if (sound) SpeakerTick(tmps,now);
+  tmps->start=tmps->pause=now;
+  tmps->paused=paused;
+  if (sound && sound->cnt) SpeakerTick(tmps,now);
   else SpeakerStop(tmps);
 }
 
