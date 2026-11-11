@@ -12,7 +12,7 @@ console.log("Compiler:",realpathSync(new URL("../../holyc-wasm",import.meta.url)
 const quick=["host.selftest.mjs","measure.mjs","cpu-native.mjs","boot-test.mjs","diskio-check.mjs",
   "atomic.test.mjs","atomic-flags.test.mjs","atom-split.test.mjs","bit.test.mjs","cmpxchg8b.test.mjs","muldiv.test.mjs","divide.test.mjs","time.test.mjs","mem-native.mjs","dev-native.mjs","keyboard.test.mjs","capture.test.mjs","barrier.test.mjs",
   "bus.test.mjs","bus-hemu.test.mjs","snapshot-format.test.mjs","snapregs.test.mjs","patch.test.mjs","jit-primitives.test.mjs","jit-memory.test.mjs","jit-loop.test.mjs","jit-branch.test.mjs","fpu-check.mjs",
-  "fpu-convert.test.mjs","fpu-compare.test.mjs","fpu-ops.test.mjs","cpu-fault.test.mjs","fpu-native.mjs","jit-x87.test.mjs","shift.test.mjs","jitdiff1.mjs"],
+  "fpu-convert.test.mjs","fpu-compare.test.mjs","fpu-ops.test.mjs","cpu-fault.test.mjs","fpu-native.mjs","jit-x87.test.mjs","jit-x87-memory.test.mjs","shift.test.mjs","jitdiff1.mjs"],
   full=["menu-clip.test.mjs","video.test.mjs","raster.test.mjs","raster-native.mjs","raster-fallback.test.mjs","rate.test.mjs","guestcheck.mjs","large-file.test.mjs",
     "jitrecycle.mjs","worker.test.mjs","worker-fault.test.mjs","worker-legacy-fault.test.mjs","worker-clock.test.mjs","worker-rate.test.mjs","worker-pause.test.mjs",
     "worker-patch-pause.test.mjs","worker-snapshot.test.mjs","worker-bus.test.mjs","welcome.test.mjs","god-tools.test.mjs"];

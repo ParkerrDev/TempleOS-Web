@@ -3,7 +3,7 @@ import {compileHemu} from "../../engine/compile.js";
 import {createHemuHost} from "../../engine/host.js";
 import * as jit from "../../engine/jit.js";
 
-const compiled=compileHemu({exports:["InitMem","MemoryAddr"],extraSource:`
+const size=402653184,compiled=compileHemu({exports:["InitMem","MemoryAddr"],extraSource:`
 U64 MemoryAddr(I64 n)
 {
   switch (n) {
@@ -13,7 +13,7 @@ U64 MemoryAddr(I64 n)
   return 0;
 }`}),host=createHemuHost(),{instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env});
 assert.deepEqual(compiled.warnings,[]);
-host.attach(instance);const ex=instance.exports;ex.__rt_init();ex.InitMem(8192n);
+host.attach(instance);const ex=instance.exports;ex.__rt_init();ex.InitMem(BigInt(size));
 const addr=Array.from({length:6},(_,i)=>Number(ex.MemoryAddr(BigInt(i)))),
   bytes=new Uint8Array(ex.memory.buffer),view=new DataView(bytes.buffer),start=4096,data=6144,
   put=(p,n)=>view.setBigUint64(p,BigInt.asUintN(64,BigInt(n)),true),
@@ -27,6 +27,7 @@ jit.jitState(addr[1],addr[2],addr[3],addr[0],ex.memory,
 jit.jitX87(0,0,0);jit.jitSeg(addr[5],0,0,0,0,0);
 function Reset(code,base,baseReg,segment=0n) {
   bytes.fill(0,addr[0]+start,addr[0]+8192);bytes.set([...code,0xF4],addr[0]+start);
+  bytes.fill(0xA5,addr[0]+size-32,addr[0]+size+16);
   for(let i=0;i<16;i++)put(addr[1]+i*8,0x1234567800000000n+BigInt(i));
   put(addr[1],0xFEDCBA9876543210n);put(addr[1]+baseReg*8,base);
   put(addr[2],0xAD7);put(addr[3],start);put(addr[4],0);put(addr[5],segment);
@@ -34,7 +35,8 @@ function Reset(code,base,baseReg,segment=0n) {
 }
 function State() {
   return {regs:bytes.slice(addr[1],addr[1]+128),flags:get(addr[2]),rip:get(addr[3]),
-    icr:get(addr[4]),ram:bytes.slice(addr[0]+data-16,addr[0]+data+32)};
+    icr:get(addr[4]),ram:bytes.slice(addr[0]+data-16,addr[0]+data+32),
+    tail:bytes.slice(addr[0]+size-32,addr[0]+size+16)};
 }
 let count=0;
 function Compare(code,base,baseReg,{segment=0n,read,write,rax,icr}={}) {
@@ -57,15 +59,16 @@ const operations=[
   [[0x48],[0x03],0],[[0x48],[0x01],0],[[0x48],[0x83],4,[7]],
   [[0x48],[0x0F,0x44],0],[[],[0x0F,0x94],0]
 ];
+const boundary=[size-1,size-2,size-4,size].map(BigInt);
 for(const baseReg of [4,5])for(const displacement of [0,7,-11])
-  for(const target of [BigInt(data),0x10000001800n,0xFEE00030n,0x100FEE00310n,-0x1FFFFD0n])
+  for(const target of [BigInt(data),0x10000001800n,0xFEE00030n,0x100FEE00310n,-0x1FFFFD0n,...boundary])
     for(const [prefix,op,reg,imm=[]] of operations) {
       const operand=baseReg===4?[0x44|reg<<3,0x24,displacement&255]:[0x45|reg<<3,displacement&255];
       Compare([...prefix,...op,...operand,...imm],target-BigInt(displacement),baseReg);
     }
 // RIP-relative displacements may name a device or wrap below zero, despite
 // the instruction itself being ordinary guest RAM.
-for(const target of [BigInt(data),0x18000030n,0x18000310n,-0x1FFFFD0n])
+for(const target of [BigInt(data),0x18000030n,0x18000310n,-0x1FFFFD0n,...boundary])
   for(const [prefix,op,reg,imm=[]] of operations) {
     const length=prefix.length+op.length+1+4+imm.length;
     Compare([...prefix,...op,0x05|reg<<3,...word(target-BigInt(start+length)),...imm],0,3);

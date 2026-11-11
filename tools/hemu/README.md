@@ -91,13 +91,26 @@ Set `HOLYC_QEMU_ORACLE` to the compiler's `tests/oracle/Qemu.mjs` and use
 `--record` to refresh its source-hashed native fixture. The test host supplies
 core IDs and maps atomic exchange to native `LXchgI64`.
 
-`jit-memory.test.mjs` compares 618 explicit memory operands with Step across
+`jit-memory.test.mjs` compares 1,122 explicit memory operands with Step across
 RSP/RBP/RIP addressing, signed displacements, RAM aliases and modeled devices.
 It checks registers, flags, neighboring bytes and exact device callback counts.
 Only an in-range constant RIP-relative address can skip the RAM/device test;
 stack and base registers are ordinary dynamic addresses. MOVZX masks a device
 callback's U64 result to its actual byte/word operand. These checks preserve
 the source-measured memory module contract, not a complete physical MMIO model.
+Both memory gates cover operands starting one, two and four bytes before RAM
+ends. The current memory module reserves 16 padding bytes and checks the start
+address, so these spans continue into that padding. This preserves the existing
+model; it is not a claim about physical memory outside installed RAM.
+
+`jit-x87-memory.test.mjs` compares 5,120 x87/FX memory states with Step, including
+2,752 exact-prefix fallbacks. It checks integer conversions, arithmetic,
+control words and FX save/restore across RAM, aliases and devices, with dirty
+integer and floating-point caches. Non-RAM operands leave the compiled block
+before touching memory or x87 state; the interpreter performs their operation
+once through the memory module. FX save/restore also checks the complete
+512-byte span. The prior JIT traps on a device FLD; the regression requires no
+speculative host callback and compares registers, flags, FP/XMM state and bytes.
 
 `dev-native.mjs` runs the extracted port devices, clock and keyboard source
 through original V5.03 and the current WASM compiler: 519 output records cover

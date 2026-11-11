@@ -462,6 +462,13 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
   // retains its original entry guard: an earlier store can rewrite later code.
   // Prefix exits are emitted now, before later register/FPU writes are known.
   const segments=[{start:rip}];
+  function ramOperand(span=1) {
+    const pending=FLAGPEND;
+    f.local_get(3);i64c(f,MEMSIZE-span);f.op("i64_gt_u");f.if_();
+      materialize(f);i32c(f,RIP);i64c(f,i-GBASE);st64(f);wbDirty(f);
+      i32c(f,n);f.return_();
+    f.end();FLAGPEND=pending;sideExit=true;
+  }
   function forwardBranch(cc,tgt,fall) {
     if(topExit||tgt<=fall||segments.length>=8)return false;
     sideExit=true;
@@ -755,6 +762,8 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
           if (intStore && (!X87CW || !X87SW)) break;
           if (intStore) { sideExit=true;materialize(f); i32c(f,X87CW);ld64(f);i64c(f,0x21);f.op("i64_and");i64c(f,0x21);f.op("i64_ne");f.if_();materialize(f);i32c(f,RIP);i64c(f,i-GBASE);st64(f);wbDirty(f);i32c(f,n);f.op("return");f.end(); }
           const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; emitEA(f, mm, j - GBASE); const STW = { 0xDD: ["i64_store", 3], 0xDB: ["i64_store32", 2], 0xDF: ["i64_store16", 1] };
+          //Device/alias operands resume in Step before any FPU or memory change.
+          if(!mm.knownRam)ramOperand();
           if (op===0xD9 && sub===5) { i32c(f,X87CW);rdRM(f,mm,2,rex);st64(f); }
           else if (op===0xD9 && sub===7) wrRM(f,mm,2,rex,()=>{i32c(f,X87CW);ld64(f);});
           else if (sub === 1 && op !== 0xDC) { memAddr(f); fLd(f, 0); fIntValue(f,op===0xDD?64:op===0xDB?32:16,true); f.store(STW[op][0], 0, STW[op][1]); fPop(f); }
@@ -908,6 +917,7 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
           if(fCacheEnabled && rcX87)return jitCompile(rip,true);
           fHasFx=true;
           j = mm.j; emitEA(f, mm, j - GBASE);
+          ramOperand(512);
           if (ext === 0) {                                                   // FXSAVE: cw@+0 sw@+2 mxcsr@+24; fpr F64-bits @32+i*16; xmm @160+i*16
             memAddr(f); i32c(f, X87CW); ld64(f); f.store("i64_store16", 0, 1);
             memAddr(f); i32c(f, X87SW); ld64(f); f.store("i64_store16", 2, 1);
