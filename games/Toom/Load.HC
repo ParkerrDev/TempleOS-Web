@@ -6,6 +6,7 @@
 #include "TmData.HH"
 #include "TmClip"
 #include "TmState"
+#include "TmMath"
 #include "TmWorld"
 #include "TmPal"
 #include "TmDraw"

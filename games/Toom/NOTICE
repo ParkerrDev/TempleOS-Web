@@ -3,8 +3,8 @@ Native TOOM
 This directory is a new TempleOS implementation, not a claim of authorship
 by Terry A. Davis and not an unmodified release of id Software's engine.
 
-TMDATA.BIN and TmData.HH contain state, actor, sprite, sound and deterministic
-random data derived from id Software's DOOM source:
+TMDATA.BIN and TmData.HH contain state, actor, sprite, sound, integer angle
+tables and deterministic random data derived from id Software's DOOM source:
 
   Copyright (C) 1993-1996 id Software, Inc.
   https://github.com/id-Software/DOOM
@@ -21,6 +21,11 @@ linked into the TempleOS implementation.
 Map collision and fixed-point side behavior were re-expressed in native HolyC
 from p_map.c and p_maputl.c at the same id Software revision on 2026-11-11.
 Reference paths and digests are in tools/toom/source/collision.json.
+
+Integer trigonometry preserves the original tables.c samples, including the
+cosine extension. Native fixed division uses defined saturation at signed
+limits, and angle slope evaluation uses a wide numerator to avoid legacy
+32-bit overflow for distant points.
 
 The native implementation and derived data are distributed under version 2
 of the GNU General Public License. See COPYING for the full license and

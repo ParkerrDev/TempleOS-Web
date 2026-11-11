@@ -80,6 +80,14 @@ U0 TmLinksChk(World *tmpw)
       if (seen[i]!=(tmpa->block>=0)) throw('Missing');
       if (tmpa->flags&TM_MF_NOBLOCKMAP && tmpa->block>=0) throw('Effect');
     }
+  id=tmpw->first; prev=0; count=0;
+  while (id) {
+    tmpa=WorldActorGet(tmpw,id,FALSE);
+    if (!tmpa || tmpa->tick_last!=prev) throw('Thinker');
+    if (++count>tmpw->actor_cnt) throw('Cycle');
+    prev=id; id=tmpa->tick_next;
+  }
+  if (count!=tmpw->actor_cnt || tmpw->last!=prev) throw('Order');
   Free(seen);
 }
 U0 TmWorldTest()
@@ -121,6 +129,7 @@ U0 TmWorldTest()
         if (WorldActorGet(world,id,FALSE)) throw('Stale');
         tmpa=WorldSpawn(world,TM_MT_PLAYER,0,0);
         newid=tmpa->id;
+        if (world->last!=newid) throw('Append');
         if (newid==id || newid.u32[0]!=id.u32[0] || WorldActorGet(world,id,FALSE)) throw('Reuse');
         WorldActorUnlink(world,tmpa);
         tmpa->x=map->blockmap[0]*65536-1000*65536;

@@ -15,6 +15,8 @@ class GameData
   U8 *body,*sprite,*sound,*random;
   State *state;
   ActorInfo *info;
+  I32 *sine;
+  U32 *angle;
 };
 
 extern class World;
@@ -25,7 +27,7 @@ class Actor
   I64 type,state,tics,sprite,frame,health,flags;
   I64 x,y,z,vx,vy,vz,angle,sector,target,reaction,threshold;
   I64 id,radius,height,floor,ceil,block,block_next,block_last,spawn,
-	movedir,move_cnt,lastlook,tracer;
+	movedir,move_cnt,lastlook,tracer,tick_next,tick_last;
   Bool active;
 };
 
@@ -52,7 +54,7 @@ GameData *GameDataNew(U8 *filename="TMDATA.BIN")
   if (!(tmpd->body=FileRead(filename,&size))) goto gd_fail;
   if (size!=TM_DATA_SIZE) goto gd_fail;
   header=tmpd->body;
-  if (header[0]!='TMST' || header[1]!=1 ||
+  if (header[0]!='TMST' || header[1]!=2 ||
 	header[2]!=TM_STATE_NUM || header[3]!=TM_ACTOR_NUM ||
 	header[4]!=TM_SPRITE_NUM || header[5]!=TM_ACTION_NUM ||
 	header[6]!=TM_SND_NUM || header[7]!=256)
@@ -61,7 +63,9 @@ GameData *GameDataNew(U8 *filename="TMDATA.BIN")
   tmpd->info=tmpd->state+TM_STATE_NUM;
   tmpd->sprite=tmpd->info+TM_ACTOR_NUM;
   tmpd->sound=tmpd->sprite+TM_SPRITE_NUM*4;
-  tmpd->random=tmpd->sound+TM_SND_NUM*8;
+  tmpd->sine=tmpd->sound+TM_SND_NUM*8;
+  tmpd->angle=tmpd->sine+TM_SINE_NUM;
+  tmpd->random=tmpd->angle+TM_ANGLE_NUM;
   for (i=0;i<TM_STATE_NUM;i++) {
     tmps=tmpd->state+i;
     if (!(0<=tmps->sprite<TM_SPRITE_NUM) || tmps->tics< -1 ||
@@ -77,6 +81,11 @@ GameData *GameDataNew(U8 *filename="TMDATA.BIN")
 	tmpi->radius<0 || tmpi->height<0)
       goto gd_fail;
   }
+  for (i=0;i<TM_SINE_NUM;i++)
+    if (!(-65536<=tmpd->sine[i]<=65536)) goto gd_fail;
+  for (i=0;i<TM_ANGLE_NUM;i++)
+    if (tmpd->angle[i]>0x20000000 || i && tmpd->angle[i]<tmpd->angle[i-1])
+      goto gd_fail;
   return tmpd;
 gd_fail:
   GameDataDel(tmpd);

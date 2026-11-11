@@ -69,6 +69,16 @@ assert.equal(sounds.length,constants.get('NUMSFX'));
 const random=clean(sources['m_random.c']).match(/rndtable\[256\]\s*=\s*\{([^}]+)\}/)[1]
   .split(',').map(s=>s.trim()).filter(Boolean).map(Number);
 assert.equal(random.length,256);
+const table=clean(sources['tables.c']);
+const integers=(name,count)=>{
+  const body=table.match(new RegExp(`${name}\\[${count}\\]\\s*=\\s*\\{([^}]+)\\}`));
+  assert(body,`Missing ${name}`);
+  const values=body[1].split(',').map(s=>s.trim()).filter(Boolean).map(Number);
+  assert.equal(values.length,count);assert(values.every(Number.isInteger));return values;
+};
+const sine=integers('finesine',10240),angle=integers('tantoangle',2049);
+assert(sine.every(n=>n>=-65536&&n<=65536));
+assert(angle.every((n,i)=>n>=0&&n<=0x20000000&&(!i||n>=angle[i-1])));
 const deh=WadRead(FreedoomRead()).find(l=>l.name==='DEHACKED').bytes.toString('ascii');
 const changes=[];
 const fields=new Map([['Sprite number',0],['Sprite subnumber',1],['Duration',2],
@@ -89,7 +99,7 @@ for (const text of deh.split('\n')) {
 }
 assert.equal(changes.length,version==='0.13.0'?7:5);
 const header=Buffer.alloc(32);
-header.write('TMST');header.writeUInt32LE(1,4);
+header.write('TMST');header.writeUInt32LE(2,4);
 [states.length,actors.length,sprites.length,actions.length,sounds.length,random.length]
   .forEach((n,i)=>header.writeUInt32LE(n,8+i*4));
 const words=values=>{
@@ -101,7 +111,7 @@ const names=(values,width)=>{
   values.forEach((s,i)=>bytes.write(s,i*width,width,'ascii'));return bytes;
 };
 const data=Buffer.concat([header,words(states.flat()),words(actors.flat()),
-  names(sprites,4),names(sounds,8),Buffer.from(random)]);
+  names(sprites,4),names(sounds,8),words(sine),words(angle),Buffer.from(random)]);
 put('TMDATA.BIN',data);
 const upper=s=>s.replace(/^A_/,'').replace(/([a-z0-9])([A-Z])/g,'$1_$2').toUpperCase();
 let defines='//Generated identifiers for TMDATA.BIN; see NOTICE and tools/toom/Data.mjs.\n\n';
@@ -111,13 +121,15 @@ defines+='\n';
 actions.forEach((name,i)=>defines+=`#define TM_A_${upper(name)}\t${i}\n`);
 defines+='\n';
 for (const [name,value] of Object.entries({STATE_NUM:states.length,ACTOR_NUM:actors.length,
-  SPRITE_NUM:sprites.length,ACTION_NUM:actions.length,SND_NUM:sounds.length,DATA_SIZE:data.length}))
+  SPRITE_NUM:sprites.length,ACTION_NUM:actions.length,SND_NUM:sounds.length,
+  SINE_NUM:sine.length,ANGLE_NUM:angle.length,DATA_SIZE:data.length}))
   defines+=`#define TM_${name}\t${value}\n`;
 put('TmData.HH',defines);
-put('data.json',JSON.stringify({format:1,revision:manifest.revision,
+put('data.json',JSON.stringify({format:2,revision:manifest.revision,
   freedoomVersion:version,freedoomSha256:wadHash,
   sha256:createHash('sha256').update(data).digest('hex'),bytes:data.length,
   states:states.length,actors:actors.length,sprites:sprites.length,sounds:sounds.length,
+  sine:sine.length,angles:angle.length,
   actions,freedoomFrameChanges:changes},null,2)+'\n');
 console.log(`${process.argv.includes('--check')?'Verified':'Generated'} `+
   `${states.length} states, ${actors.length} actor types, ${data.length} bytes.`);

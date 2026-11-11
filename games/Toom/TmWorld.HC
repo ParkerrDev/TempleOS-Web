@@ -14,7 +14,7 @@ class World
   Collision *collision;
   ActorSlot *slot;
   I64 slot_cap,free_slot,actor_cnt,*blocks,skill,random,tic,player,
-	player_start,total_kills,total_items,max_radius;
+	player_start,total_kills,total_items,max_radius,first,last;
 };
 
 Actor *WorldActorGet(World *tmpw,I64 id,Bool active=TRUE)
@@ -104,7 +104,7 @@ Actor *WorldSpawn(World *tmpw,I64 type,I64 x,I64 y,I64 z=TM_FLOOR_Z)
   ActorInfo *info;
   State *state;
   Sector *sector;
-  Actor *tmpa;
+  Actor *tmpa,*last;
   if (!(0<=type<TM_ACTOR_NUM)) return NULL;
   if (tmpw->free_slot<0) WorldSlotsGrow(tmpw);
   n=tmpw->free_slot; slot=tmpw->slot+n; tmpw->free_slot=slot->next;
@@ -126,6 +126,10 @@ Actor *WorldSpawn(World *tmpw,I64 type,I64 x,I64 y,I64 z=TM_FLOOR_Z)
   else if (z==TM_CEIL_Z) z=tmpa->ceil-tmpa->height;
   tmpa->z=z; tmpa->spawn=-1; tmpa->movedir=8;
   WorldActorLink(tmpw,tmpa);
+  tmpa->tick_last=tmpw->last;
+  if (last=WorldActorGet(tmpw,tmpw->last,FALSE)) last->tick_next=tmpa->id;
+  else tmpw->first=tmpa->id;
+  tmpw->last=tmpa->id;
   tmpw->max_radius=MaxI64(tmpw->max_radius,tmpa->radius);
   tmpw->actor_cnt++;
   return tmpa;
@@ -135,7 +139,14 @@ U0 WorldRemove(World *tmpw,Actor *tmpa)
 {//Remove at a tic boundary; stale target handles cannot name a new actor.
   I64 n=tmpa->id.u32[0]-1;
   ActorSlot *slot=tmpw->slot+n;
+  Actor *prev,*next;
   WorldActorUnlink(tmpw,tmpa);
+  if (prev=WorldActorGet(tmpw,tmpa->tick_last,FALSE))
+    prev->tick_next=tmpa->tick_next;
+  else tmpw->first=tmpa->tick_next;
+  if (next=WorldActorGet(tmpw,tmpa->tick_next,FALSE))
+    next->tick_last=tmpa->tick_last;
+  else tmpw->last=tmpa->tick_last;
   slot->actor=NULL;
   slot->generation=(slot->generation+1)&0xFFFFFFFF;
   if (!slot->generation) slot->generation=1;
@@ -146,10 +157,13 @@ U0 WorldRemove(World *tmpw,Actor *tmpa)
 
 U0 WorldSweep(World *tmpw)
 {
-  I64 i;
+  I64 id=tmpw->first,next;
   Actor *tmpa;
-  for (i=0;i<tmpw->slot_cap;i++)
-    if ((tmpa=tmpw->slot[i].actor) && !tmpa->active) WorldRemove(tmpw,tmpa);
+  while (tmpa=WorldActorGet(tmpw,id,FALSE)) {
+    next=tmpa->tick_next;
+    if (!tmpa->active) WorldRemove(tmpw,tmpa);
+    id=next;
+  }
 }
 
 U0 WorldLoadThings(World *tmpw)

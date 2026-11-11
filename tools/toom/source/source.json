@@ -29,6 +29,10 @@
     {
       "path": "linuxdoom-1.10/m_random.c",
       "sha256": "8d89f5cfcbbd0170e46b55538c4c272b3cf5b5d7dce91023b8aa8d9b922b21ee"
+    },
+    {
+      "path": "linuxdoom-1.10/tables.c",
+      "sha256": "db8759f4311654c63785dcffb8f73a00a61cfe2713e4284c238dea420b6e5f89"
     }
   ]
 }
