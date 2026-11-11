@@ -77,6 +77,8 @@ function BorderDown(e)
 {//A press on the border, taken as WinMgr.HC takes one: the top row and the
 //left column move the window, the bottom row sizes its height, the right
 //column its width, and the bottom right corner both.
+  if (e.currentTarget.classList.contains("fsmode"))
+    return;
   let w=e.currentTarget,t=e.target,r=w.getBoundingClientRect(),x,y,
     width,height,move=t.closest(".wbar,.wvert") ||
       t==w && (e.clientY<r.top+CELL || e.clientX<r.left+CELL),

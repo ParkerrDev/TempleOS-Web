@@ -236,6 +236,6 @@ python3 tools/redsea.test.py
 python3 tools/check-text.py
 ```
 
-The emulator harnesses (`tools/hemu/`, memory-hungry, need the decompressed snapshot and a raw disk) and the QEMU capture recipes (`tools/snapshot/`) are documented in `engine/README.md`. The headless site checks `tools/tscheck.mjs`, `tools/pwtest-smp.mjs` and `tools/whitecheck.mjs` need Playwright.
+The emulator harnesses (`tools/hemu/`, memory-hungry, need the decompressed snapshot and a raw disk) and the QEMU capture recipes (`tools/snapshot/`) are documented in `engine/README.md`. `npm run test:browser` checks the desktop/mobile shell, including fullscreen keyboard focus. `npm run test:search` checks the native query parser and real search worker, copied/downloaded transcripts, archive links and video windows. These browser checks start their own local server and use Playwright with `CHROMIUM` (default `/usr/bin/chromium`). The search check also needs FFmpeg to generate small MP4/MKV fixtures; network routes supply these known files without depending on archive availability. Live archive/CDN delivery remains a separate deployment check.
 
 ```sh```

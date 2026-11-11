@@ -206,7 +206,9 @@ const overCanvas=e=>{const r=canvas.getBoundingClientRect();return e.clientX>=r.
 const mapAbs=(e,r)=>{msX=Math.max(0,Math.min(639,Math.round((e.clientX-r.left)/r.width*640)));msY=Math.max(0,Math.min(479,Math.round((e.clientY-r.top)/r.height*480)));};
 const keepsFocus=t=>t&&(t.closest('#frame')||t.closest('.keyswin')||t.closest('#keysbar')||(t.tagName==='BUTTON'&&t.closest('.toolbar')));
 const releasesFocus=t=>t&&(t.tagName==='TEXTAREA'||t.tagName==='INPUT'||t.tagName==='SELECT'||t.closest('.overlay'));
-canvas.addEventListener('mousedown',e=>{
+$("frame").addEventListener('mousedown',e=>{
+  if(e.target!==canvas && (e.target!==e.currentTarget ||
+    !e.currentTarget.classList.contains('fsmode')))return;
   if(document.body.classList.contains('touch'))return;
   e.preventDefault();canvas.focus({preventScroll:true});setFocused(true);
   if(captureWanted()&&!locked()){requestCapture();return;} // Capture click must not fire a weapon.

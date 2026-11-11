@@ -221,6 +221,27 @@ try {
       await page.waitForFunction(()=>document.getElementById("status").textContent=="formatted ✓");
       assert.equal(await page.locator("#editor").inputValue(),
         'U0 Example()\n{\n  "é Ç ╬ 🚀";\n}\n');
+      await page.locator("#editorClose").click();
+      await page.locator("#fsBtn").click();
+      await page.waitForFunction(()=>document.fullscreenElement?.id=="frame");
+      const fullscreen=await page.locator("#frame").evaluate(el=>({
+        border:getComputedStyle(el).borderImageSource,background:getComputedStyle(el).backgroundColor}));
+      assert.deepEqual(fullscreen,{border:"none",background:"rgb(0, 0, 0)"});
+      assert.equal(await page.locator("#fsExit").isVisible(),false);
+      await page.waitForFunction(()=>document.getElementById("frame").classList.contains("fsmode"));
+      const point=await page.evaluate(()=>{
+        const frame=document.getElementById("frame"),r=document.getElementById("canvas").getBoundingClientRect(),
+          x=Math.max(4,r.x/2),y=r.y+r.height/2;
+        return {x,y,target:document.elementFromPoint(x,y).id,floating:frame.dataset.floating || ""};
+      });
+      assert.equal(point.target,"frame","The input check clicks the fullscreen margin.");
+      await page.evaluate(()=>dispatchEvent(new Event("blur")));
+      await page.mouse.click(point.x,point.y);
+      assert.match(await page.locator("#tb-key").innerText(),/KEYS → OS/,
+        "Fullscreen letterbox clicks retain OS keyboard focus.");
+      assert.equal(await page.locator("#canvas").evaluate(el=>document.activeElement==el),true);
+      assert.equal(await page.locator("#frame").evaluate(el=>el.dataset.floating || ""),point.floating,
+        "Fullscreen margins cannot start a window drag.");
     }
     assert.deepEqual(errors,[]);
     await context.close();
