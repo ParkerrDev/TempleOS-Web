@@ -2,8 +2,11 @@ import {ArchiveRange,ArchiveFile} from "../Archive.js";
 
 function TimeText(value)
 {
-  let minutes=Math.floor(value/60),seconds=Math.round(value%60*1000)/1000;
-  return minutes+":"+String(seconds).padStart(2,"0");
+  value=Math.round(value*1000);
+  let minutes=Math.floor(value/60000),seconds=value%60000/1000,
+    text=String(seconds);
+  if (seconds<10) text="0"+text;
+  return minutes+":"+text;
 }
 
 function TimeRead(text)
@@ -38,7 +41,10 @@ export function ClipPanel(video,start=0,end=start+20)
   begin.value=TimeText(Math.max(0,start));
   if (video.n && end>video.n) end=video.n;
   finish.value=TimeText(end);
-  if (!["mp4","mov"].includes(ext)) {
+  if (["mkv","webm"].includes(ext))
+    form.querySelector("fieldset p").textContent=
+      "Keeps whole keyframe groups without re-encoding. The actual time range is shown when ready.";
+  if (!["mp4","mov","mkv","webm"].includes(ext)) {
     go.disabled=true;
     status.textContent="This format cannot be clipped here yet. ";
     let link=document.createElement("a");
@@ -83,15 +89,18 @@ export function ClipPanel(video,start=0,end=start+20)
           url=URL.createObjectURL(new Blob([m.buf],{type:m.type}));
           download.href=url;
           name=(video.d || "Terry")+" - "+(video.t || "video")+" - "+
-            TimeText(start)+" to "+TimeText(end);
+            TimeText(m.start)+" to "+TimeText(m.end);
           download.download=name.replace(/[\\/:*?"<>|]/g,"_").slice(0,180)+
             "."+m.extension;
           download.hidden=false;
-          status.textContent="Clip ready. Original audio and video preserved.";
+          status.textContent="Clip ready: "+TimeText(m.start)+" to "+TimeText(m.end)+
+            ". Original audio and video preserved.";
+          if (m.aligned)
+            status.textContent+=" Expanded to whole keyframe groups.";
           Stop();download.click();
         }
       };
-      worker.postMessage({url:ArchiveRange(video.f),start,end});
+      worker.postMessage({url:ArchiveRange(video.f),start,end,format:ext});
     } catch (e) {
       status.textContent="Export failed: "+e.message;Stop();
     }
