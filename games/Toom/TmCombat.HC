@@ -177,3 +177,45 @@ U0 EnemySkull(Enemies *tmpe,Actor *actor)
 	(20*65536),1);
   actor->vz=(target->z+target->height/2-actor->z)/distance;
 }
+
+U0 EnemyPainSpawn(Enemies *tmpe,Actor *actor,I64 angle)
+{//The original check permits a twenty-first skull, including dying skulls.
+  Motion *motion=tmpe->specials->sectors->motion;
+  World *world=motion->world;
+  GameData *data=world->data;
+  Actor *skull;
+  I64 cnt=0,id=world->first,step,x,y;
+  if (actor->world!=world) throw('World');
+  if (!actor->active) return;
+  while (skull=WorldActorGet(world,id,FALSE)) {
+    if (skull->active && skull->type==TM_MT_SKULL) cnt++;
+    id=skull->tick_next;
+  }
+  if (cnt>20) return;
+  step=4*65536+3*(data->info[actor->type].radius+
+	data->info[TM_MT_SKULL].radius)/2;
+  x=actor->x+FixedMul(step,AngleCos(data,angle));
+  y=actor->y+FixedMul(step,AngleSin(data,angle));
+  skull=WorldSpawn(world,TM_MT_SKULL,x,y,actor->z+8*65536);
+  if (!WorldTryMove(world,skull,x,y,motion->touch,motion->cross)) {
+    ActorDamage(motion,skull,actor,actor,10000); return;
+  }
+  skull->target=actor->target; EnemySkull(tmpe,skull);
+}
+
+U0 EnemyPainAttack(Enemies *tmpe,Actor *actor)
+{
+  if (!EnemyTarget(tmpe,actor)) return;
+  EnemyFace(tmpe,actor); EnemyPainSpawn(tmpe,actor,actor->angle);
+}
+
+U0 EnemyPainDie(Enemies *tmpe,Actor *actor)
+{
+  World *world=tmpe->specials->sectors->motion->world;
+  if (actor->world!=world) throw('World');
+  if (!actor->active) return;
+  actor->flags&=~TM_MF_SOLID;
+  EnemyPainSpawn(tmpe,actor,actor->angle+0x40000000);
+  EnemyPainSpawn(tmpe,actor,actor->angle+0x80000000);
+  EnemyPainSpawn(tmpe,actor,actor->angle+0xC0000000);
+}

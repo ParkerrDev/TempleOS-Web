@@ -1,0 +1,52 @@
+{
+  "description": "Pain-elemental skull spawning, attack and death; full actor dispatcher and playable game remain unfinished.",
+  "engine": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "cases": 3468,
+      "native": "qemu-3s0q1x8i",
+      "hemu": true,
+      "sourceSha256": "3ac07f3e370c340721be28aabe0efdb195fc233d58892b3717387748e3d50113",
+      "reference": "Original A_PainShootSkull, A_PainAttack, A_PainDie, FaceTarget and Fall compiled as host C, with controlled placement/damage/charge boundaries; all 66 fields and ordered events match.",
+      "scope": [
+        "Population thresholds 0/19/20/21/22, dying skulls and excluded retired actors",
+        "All three spawn orders, angular wrap and radius-based placement",
+        "Placement success masks, damage arguments and target-copy order",
+        "Missing targets and every shadow RNG start"
+      ]
+    },
+    "integration": {
+      "cases": 16,
+      "native": "qemu-5xf679xz",
+      "hemu": true,
+      "sourceSha256": "c0879ba24da90398ec4a49cf5ca5c06218fbd6705f678b597ea75cf11d9cda38",
+      "scope": [
+        "Actual native placement, blocked-height and actor-overlap deaths",
+        "Dying and inactive skull count behavior with the 21st-skull boundary",
+        "Ordered three-spawn death, targetless and stale-generation behavior",
+        "Shadow charge RNG and first-sound failure ownership",
+        "Fresh-task heap returns to baseline"
+      ]
+    }
+  },
+  "remaining": [
+    "Tracer, arch-vile and boss actions",
+    "Complete actor action dispatcher",
+    "Fast-mode state duration/projectile setup",
+    "Native host input/render pacing and UI/audio",
+    "Save/load and episode/intermission progression"
+  ]
+}

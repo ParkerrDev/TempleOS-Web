@@ -78,6 +78,9 @@ The implemented foundation uses native V5.03 file and memory APIs:
   native actor-targeted launch path. Mancubus volleys preserve the initial
   missile step before spread changes horizontal velocity; lost-soul charge
   preserves sound/flag/facing order and aims at the target center.
+  Pain-elemental spawning counts dying skulls, retains the original 21st-skull
+  boundary, and sends blocked spawns through ordinary damage/death handling.
+  Its three death spawns observe earlier spawns in the same action.
   Refire checks preserve the early random
   return before health and sight tests. Enemy and player shots pass an explicit
   level context to shootable-line actions; captured impact data survives nested
@@ -286,6 +289,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/effect-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/effect.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fat-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fat.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/pain-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/pain.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -521,6 +526,11 @@ all random starts, angle wrap and full event traces. Ninety actual two-missile
 cases verify that initial positions precede spread changes, and twelve more
 cover guards, callback failure, ownership and charge motion. Native and pinned
 HEMU evidence is recorded in `tools/toom/fat-evidence.json`.
+Pain-elemental spawning matches 3,468 original-C cases for population limits,
+dying/retired actors, placement, damage and ordered charge events. Sixteen real
+cases add actual collision/death handling, generation reuse, targetless spawns,
+shadow RNG and callback-failure cleanup. Native and pinned HEMU results are in
+`tools/toom/pain-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation
