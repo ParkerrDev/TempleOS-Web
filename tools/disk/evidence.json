@@ -1,0 +1,89 @@
+{
+  "version": "qemu-img version 11.1.2",
+  "commands": [
+    [
+      "qemu-img",
+      "--version"
+    ],
+    [
+      "qemu-img",
+      "create",
+      "-f",
+      "qcow2",
+      "-o",
+      "cluster_size=4096,lazy_refcounts=off",
+      "zero.qcow2",
+      "128K"
+    ],
+    [
+      "qemu-io",
+      "-f",
+      "qcow2",
+      "-c",
+      "write -P 0x47 0 4096",
+      "-c",
+      "write -P 0x93 8192 4096",
+      "-c",
+      "write -z 8192 4096",
+      "-c",
+      "write -P 0xA6 126976 4096",
+      "zero.qcow2"
+    ],
+    [
+      "qemu-img",
+      "check",
+      "zero.qcow2"
+    ],
+    [
+      "qemu-img",
+      "convert",
+      "-f",
+      "qcow2",
+      "-O",
+      "raw",
+      "zero.qcow2",
+      "expected.raw"
+    ],
+    [
+      "qemu-img",
+      "convert",
+      "-f",
+      "raw",
+      "-O",
+      "qcow2",
+      "-o",
+      "compat=0.10,cluster_size=512",
+      "expected.raw",
+      "v2.qcow2"
+    ],
+    [
+      "qemu-img",
+      "check",
+      "v2.qcow2"
+    ],
+    [
+      "qemu-img",
+      "convert",
+      "-f",
+      "qcow2",
+      "-O",
+      "raw",
+      "v2.qcow2",
+      "v2.raw"
+    ]
+  ],
+  "files": {
+    "zero.qcow2": {
+      "bytes": 32768,
+      "sha256": "5326a6ea68f4a69ca1c4f09b75ca7856a4d8722306ecaf9161d743584669ddbf"
+    },
+    "v2.qcow2": {
+      "bytes": 11264,
+      "sha256": "68e11ee0043f4903ad1d529ace5d48acc44bf82de8598cf658a3c3fc7807bc61"
+    },
+    "expected.raw": {
+      "bytes": 131072,
+      "sha256": "61689d8ca4018010a778032fe1882d9ea72171a4d86f82ea24af247461337172"
+    }
+  }
+}

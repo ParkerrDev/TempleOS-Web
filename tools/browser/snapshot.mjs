@@ -4,6 +4,7 @@ import {once} from "node:events";
 import {readFile,mkdir,unlink} from "node:fs/promises";
 import {chromium} from "playwright-core";
 import {SnapshotInspect} from "../../engine/Snapshot.js";
+import {gunzipSync} from "node:zlib";
 
 const root=new URL("../../",import.meta.url),
   server=spawn(process.execPath,["server.mjs"],{cwd:root,
@@ -89,6 +90,18 @@ try {
         buffer:Buffer.from("not a gzip snapshot")});
       await page.waitForFunction(()=>document.getElementById("diskStatus").textContent.includes("Import failed"));
       assert.equal(await page.locator("#ulSnap").isEnabled(),true);
+      const disk=gunzipSync(await readFile(new URL('tools/disk/zero.qcow2.gz',root)));
+      const unsupported=Buffer.from(disk);unsupported.writeBigUInt64BE(4n,72);
+      await page.evaluate(()=>window.diskImportCheck='same session');
+      for(const [name,buffer]of [['empty.img',Buffer.alloc(0)],['truncated.qcow2',disk.subarray(0,disk.length-1)],['external.qcow2',unsupported]]) {
+        const choosing=page.waitForEvent('filechooser');
+        await page.locator('#ulDisk').click();
+        await(await choosing).setFiles({name,mimeType:'application/octet-stream',buffer});
+        await page.waitForFunction(()=>document.getElementById('diskStatus').textContent.startsWith('Import failed:'));
+        assert.equal(await page.locator('#ulDisk').isEnabled(),true);
+        assert.equal(await page.evaluate(()=>window.diskImportCheck),'same session');
+        assert.equal(await page.evaluate(async()=>(await import('/BootFile.js')).BootFileRead()),null);
+      }
     }
     await page.locator("#diskClose").click();
     await page.locator("#settingsBtn").click();

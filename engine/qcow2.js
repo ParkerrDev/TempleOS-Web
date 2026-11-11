@@ -1,45 +1,72 @@
-// qcow2.js - minimal read-only qcow2 reader for hemu's ATA disk (browser, no deps).
-// hemu's __host_disk(lba,count,buf) calls reader.readInto(lba,count,u8,dst) to stage
-// real C: sectors into guest RAM. Sparse: unallocated clusters read back as zeros.
-// All multi-byte fields are big-endian (qcow2 spec).
-
-export function makeQcow2(buf) {                       // buf: Uint8Array of the decompressed .qcow2
-  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
-  if (dv.getUint32(0) !== 0x514649fb) throw new Error("not a qcow2 image");
-  const clusterBits = dv.getUint32(20), clusterSize = 1 << clusterBits;
-  const l1Size = dv.getUint32(36), l1Off = Number(dv.getBigUint64(40));
-  const l2Entries = clusterSize >> 3, l2Mask = l2Entries - 1, l2Bits = clusterBits - 3;
-  const OFF = 0x00fffffffffffe00n;                     // bits 9..55 = cluster-aligned host offset
-  function clusterAt(gIdx) {                           // host file offset of a guest cluster, or -1 (unallocated)
-    const l1i = gIdx >> l2Bits; if (l1i >= l1Size) return -1;
-    const l1e = dv.getBigUint64(l1Off + l1i * 8) & OFF; if (l1e === 0n) return -1;
-    const l2e = dv.getBigUint64(Number(l1e) + (gIdx & l2Mask) * 8);
-    if (l2e & (1n << 62n)) throw new Error("qcow2 compressed cluster (unsupported)");
-    const off = l2e & OFF; return off === 0n ? -1 : Number(off);
+//Standalone qcow2 v2/v3 images with standard, uncompressed clusters.
+//https://www.qemu.org/docs/master/interop/qcow2.html
+export function makeQcow2(buf) {
+  const fail=reason=>{throw new Error('Invalid or unsupported qcow2 image: '+reason);};
+  const dv=new DataView(buf.buffer,buf.byteOffset,buf.byteLength);
+  if(buf.length<72)fail('truncated header');
+  if(dv.getUint32(0)!==0x514649fb)fail('wrong magic');
+  const version=dv.getUint32(4),clusterBits=dv.getUint32(20),
+    virtualSize=Number(dv.getBigUint64(24)),l1Size=dv.getUint32(36),l1Off=Number(dv.getBigUint64(40));
+  if(![2,3].includes(version))fail('version '+version);
+  if(clusterBits<9||clusterBits>21)fail('cluster size');
+  const clusterSize=2**clusterBits,l2Entries=clusterSize/8;
+  if(dv.getBigUint64(8))fail('backing files require a standalone image');
+  if(dv.getUint32(32))fail('encrypted disk');
+  if(!Number.isSafeInteger(virtualSize)||virtualSize<512||virtualSize%512)fail('disk sector size');
+  if(version===3) {
+    if(buf.length<104)fail('truncated version 3 header');
+    if(dv.getBigUint64(72))fail('incompatible feature flags');
+    const length=dv.getUint32(100);
+    if(length<104||length%8||length>clusterSize||length>buf.length)fail('header length');
   }
-  const overlay = new Map();                          // lba -> Uint8Array(512): in-session writes (the .qcow2 stays pristine)
-  const virtualSize = Number(dv.getBigUint64(24));
+  const offMask=0x00fffffffffffe00n,copyBit=1n<<63n,compressedBit=1n<<62n,
+    clusters=Math.ceil(virtualSize/clusterSize),tables=Math.ceil(clusters/l2Entries);
+  if(tables>l1Size||!Number.isSafeInteger(l1Off)||l1Off<clusterSize||
+    l1Off%clusterSize||l1Size*8>buf.length-l1Off)fail('L1 table bounds');
+  function Offset(entry,zero=false) {
+    if(entry&compressedBit)fail('compressed cluster');
+    if(entry&~(offMask|copyBit|(zero?1n:0n)))fail('reserved cluster bits');
+    const off=Number(entry&offMask);
+    if(!off&&(entry&copyBit)||off&&(off%clusterSize||off>buf.length-clusterSize))fail('cluster bounds');
+    return off;
+  }
+  const checked=new Set();
+  for(let i=0;i<tables;i++) {
+    const table=Offset(dv.getBigUint64(l1Off+i*8));
+    if(table&&!checked.has(table)) {
+      checked.add(table);
+      for(let j=0;j<Math.min(l2Entries,clusters-i*l2Entries);j++)
+        Offset(dv.getBigUint64(table+j*8),version===3);
+    }
+  }
+  function clusterAt(index) {
+    if(index<0||index>=clusters)return -1;
+    const table=Number(dv.getBigUint64(l1Off+Math.floor(index/l2Entries)*8)&offMask);
+    if(!table)return -1;
+    const entry=dv.getBigUint64(table+index%l2Entries*8),off=Number(entry&offMask);
+    return entry&1n||!off?-1:off;
+  }
+  const overlay=new Map();
   return {
-    virtualSize,
-    overlay,
-    readInto(lba, count, dst, dstOff) {               // fill count*512 bytes at dst[dstOff]
-      for (let s = 0; s < count; s++) {
-        const o = dstOff + s * 512, ov = overlay.get(lba + s);
-        if (ov) { dst.set(ov, o); continue; }          // a prior write wins
-        const gOff = (lba + s) * 512, gIdx = Math.floor(gOff / clusterSize), inC = gOff % clusterSize;
-        const c = clusterAt(gIdx);
-        if (c < 0) dst.fill(0, o, o + 512);
-        else dst.set(buf.subarray(c + inC, c + inC + 512), o);
+    virtualSize,overlay,
+    readInto(lba,count,dst,dstOff) {
+      for(let s=0;s<count;s++) {
+        const at=dstOff+s*512,changed=overlay.get(lba+s);
+        if(changed){dst.set(changed,at);continue;}
+        const pos=(lba+s)*512,offset=pos>=virtualSize?-1:clusterAt(Math.floor(pos/clusterSize));
+        if(offset<0)dst.fill(0,at,at+512);
+        else dst.set(buf.subarray(offset+pos%clusterSize,offset+pos%clusterSize+512),at);
       }
     },
-    writeInto(lba, count, src, srcOff) {              // ATA writes land in the overlay (so reads see them back)
-      for (let s = 0; s < count; s++) overlay.set(lba + s, src.slice(srcOff + s * 512, srcOff + s * 512 + 512));
+    writeInto(lba,count,src,srcOff) {
+      for(let s=0;s<count;s++)overlay.set(lba+s,src.slice(srcOff+s*512,srcOff+(s+1)*512));
     }
   };
 }
 
 // A raw-image reader with the same interface (for user-imported saves).
 export function makeRaw(buf) {
+  if(buf.length<512||buf.length%512)throw new Error('A raw disk image must contain complete 512-byte sectors.');
   const overlay = new Map();
   return {
     virtualSize: buf.length,
