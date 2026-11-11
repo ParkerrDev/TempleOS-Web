@@ -19,7 +19,7 @@ if(!isMainThread) {
 } else {
   const compiled=compileHemu({sharedMemory:true,exports:["InitMem","AtomicInit","AtomicHalted","RunCore"],
     extraSource:`
-U0 AtomicInit(I64 n)
+U0 AtomicInit(I64 n,I64 offset,Bool split)
 {
   I64 i;
   g_ncore=NCORES;
@@ -29,7 +29,8 @@ U0 AtomicInit(I64 n)
     g_cpu_st[i].f_reg[1]=n;
     g_cpu_st[i].f_reg[2]=1<<i;
     g_cpu_st[i].f_reg[3]=0x3000;
-    g_cpu_st[i].f_reg[6]=0x3010;
+    g_cpu_st[i].f_reg[6]=0x3010+offset;
+    if (split && i>=2) g_cpu_st[i].f_reg[6]+=4;
   }
 }
 I64 AtomicHalted() {return halted;}
@@ -51,9 +52,9 @@ I64 AtomicHalted() {return halted;}
       worker.on("message",receive);worker.once("error",error);worker.once("exit",exit);
     });
   }
-  async function Run(code,{expected=BigInt(workers.length*count),initial=0n,label="guest updates"}={}) {
+  async function Run(code,{expected=BigInt(workers.length*count),initial=0n,label="guest updates",offset=0,split=false}={}) {
     u8.fill(0,base+4096,base+0x3020);u8.set(code,base+4096);
-    instance.exports.AtomicInit(BigInt(count));
+    instance.exports.AtomicInit(BigInt(count),BigInt(offset),BigInt(split));
     dv.setBigUint64(base+0x3010,initial,true);
     const done=Promise.all(workers.map(w=>Wait(w,"done")));
     workers.forEach(w=>w.postMessage("go"));
@@ -110,6 +111,34 @@ I64 AtomicHalted() {return halted;}
       body.push(0x75,(retry-body.length-2)&255);
       await Run(Loop(body),{expected:total,label:`LOCK CMPXCHG retry, ${bits} bits`});cases++;
     }
-    console.log(`${cases} four-core contention cases pass: implicit XCHG locks, all arithmetic/logic/unary LOCK forms, XADD and CMPXCHG retries at every width.`);
+    for(const size of [2,4,8]) {
+      const prefix=size===2?[0x66]:size===8?[0x48]:[],code=[];
+      code.push(0xF0,...prefix,0x0F,0xBA,0x2B,0);
+      code.push(0x72,(-code.length-2)&255);
+      code.push(0x48,0xFF,0x06,0xF0,...prefix,0x0F,0xBA,0x33,0,0xFF,0xC9);
+      code.push(0x75,(-code.length-2)&255,0xF4);
+      await Run(code);cases++;
+      assert.equal(dv.getBigUint64(base+0x3000,true),0n,"BTS/BTR releases the shared lock");
+    }
+    const code=[0x41,0xB8,...Array.from({length:4},(_,i)=>(count>>>(i*8))&255)],outer=code.length;
+    code.push(0x8B,0x06);
+    const retry=code.length;
+    code.push(0x31,0xD2,0x8D,0x58,1,0x31,0xC9,0xF0,0x0F,0xC7,0x0E);
+    code.push(0x75,(retry-code.length-2)&255,0x41,0xFF,0xC8);
+    code.push(0x75,(outer-code.length-2)&255,0xF4);
+    await Run(code);cases++;
+    const pattern=0x8877665544332211n;
+    for(const size of [2,4])for(const offset of size===2?[1,3,5]:[1,2,3]) {
+      const prefix=size===2?[0x66]:[],shift=BigInt(offset*8),mask=((1n<<BigInt(size*8))-1n)<<shift,
+        initial=pattern&~mask,expected=initial|BigInt(workers.length*count)<<shift;
+      await Run(Loop([0xF0,...prefix,0x83,0x06,1]),{initial,expected,offset,label:"unaligned LOCK ADD"});cases++;
+      await Run(Loop([0xF0,...prefix,0xFF,0x06]),{initial,expected,offset,label:"unaligned LOCK INC"});cases++;
+    }
+    let initial=pattern&~(0xFFFFn<<8n|0xFFFFn<<40n),expected=initial|BigInt(count*2)<<8n|BigInt(count*2)<<40n;
+    await Run(Loop([0xF0,0x66,0xFF,0x06]),{initial,expected,offset:1,split:true,label:"independent unaligned words share one CAS granule"});cases++;
+    initial=pattern&~(0xFFFFn<<8n|0xFFn<<40n);expected=initial|BigInt(count*2)<<8n|BigInt(count*2&255)<<40n;
+    await Run(Loop([0x83,0xFA,4,0x73,6,0xF0,0x66,0xFF,0x06,0xEB,3,0xF0,0xFE,0x06]),
+      {initial,expected,offset:1,split:true,label:"unaligned CAS fields preserve neighboring native byte atomics"});cases++;
+    console.log(`${cases} four-core contention cases pass: implicit XCHG locks, all arithmetic/logic/unary LOCK forms, BTS/BTR locks, XADD and CMPXCHG/8B retries, and unaligned fields sharing a CAS word.`);
   } finally {await Promise.all(workers.map(w=>w.terminate()));}
 }

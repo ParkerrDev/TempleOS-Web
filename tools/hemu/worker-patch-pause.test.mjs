@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {SnapshotInspect} from "../../engine/Snapshot.js";
-import {HemuBoot,Sleep} from "./WorkerHost.mjs";
+import {HemuBoot,Sleep,SITE} from "./WorkerHost.mjs";
 
 async function Request(h,message,predicate,ms=30000) {
   const result=h.Wait(predicate,ms);h.Post(message);return result;
@@ -16,15 +16,20 @@ async function Frozen(h,cores) {
   }
 }
 for(const cores of [0,4]) {
-  const h=await HemuBoot({smp:cores,rate:30});
+  const path="engine/patches/DocClip.HC",url=new URL(path,SITE).href,
+    h=await HemuBoot({smp:cores,rate:30,fetchHold:[path]});
   try {
-    await h.Wait(m=>m.cmd==="guestPatch" && m.state==="loading",30000);
+    await h.Wait(m=>m.cmd==="__fetchHeld" && m.url===url,30000);
     await Request(h,{cmd:"pause",value:true},m=>m.cmd==="paused" && m.value);
+    const released=await Request(h,{cmd:"__fetchRelease",url},m=>m.cmd==="__fetchReleased");
+    assert.equal(released.count,1,"the source request was held until pause completed");
     await Frozen(h,cores);
     assert.ok(!h.msgs.some(m=>m.cmd==="guestPatch" && m.state==="building"),
       "source fetch completion cannot inject a guest call while paused");
     const fetched=await Request(h,{cmd:"exportSnapshot"},m=>m.cmd==="exportResult");
     assert.equal(fetched.ok,false);assert.match(fetched.msg,/Resume TempleOS.*then save again/);
+    assert.ok(!h.msgs.some(m=>m.cmd==="guestPatch" && m.state==="building"),
+      "snapshot export cannot start native compilation while paused");
     const building=h.Wait(m=>m.cmd==="guestPatch" && m.state==="building",30000);
     await Request(h,{cmd:"pause",value:false},m=>m.cmd==="paused" && !m.value);
     await building;

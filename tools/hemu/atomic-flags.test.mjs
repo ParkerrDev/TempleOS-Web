@@ -1,31 +1,9 @@
 import assert from "node:assert/strict";
-import {readFileSync,writeFileSync,mkdtempSync,rmSync} from "node:fs";
-import {createHash} from "node:crypto";
-import {execFileSync} from "node:child_process";
-import {tmpdir,cpus} from "node:os";
-import {join} from "node:path";
-import {fileURLToPath} from "node:url";
+import {OpcodeOracle} from "./OpcodeOracle.mjs";
 import {compileHemu} from "../../engine/compile.js";
 import * as jit from "../../engine/jit.js";
 import {createHemuHost} from "../../engine/host.js";
-const source=new URL("./atomic-oracle.c",import.meta.url),fixture=new URL("./atomic-oracle.txt",import.meta.url),
-  provenance=new URL("./atomic-oracle.json",import.meta.url),
-  Hash=file=>createHash("sha256").update(readFileSync(file)).digest("hex");
-if(process.argv.includes("--record")) {
-  assert.equal(process.arch,"x64","the independent opcode oracle needs x86-64 hardware");
-  const temp=mkdtempSync(join(tmpdir(),"hemu-atomic-")),exe=join(temp,"oracle");
-  try {
-    execFileSync("cc",["-O2","-Wall","-Wextra","-mno-red-zone",fileURLToPath(source),"-o",exe]);
-    writeFileSync(fixture,execFileSync(exe,{maxBuffer:8*1024*1024}));
-    writeFileSync(provenance,JSON.stringify({cpu:cpus()[0].model,arch:process.arch,platform:process.platform,
-      compiler:execFileSync("cc",["--version"],{encoding:"utf8"}).split("\n")[0],
-      reference:"https://cdrdv2-public.intel.com/774492/325383-sdm-vol-2abcd.pdf",
-      sourceHash:Hash(source),fixtureHash:Hash(fixture)},null,2)+"\n");
-  } finally {rmSync(temp,{recursive:true,force:true});}
-}
-const evidence=JSON.parse(readFileSync(provenance,"utf8"));
-assert.equal(Hash(source),evidence.sourceHash,"rerun --record after changing the hardware oracle");
-assert.equal(Hash(fixture),evidence.fixtureHash,"hardware results must retain their recorded hash");
+const cases=OpcodeOracle("atomic");
 const compiled=compileHemu({exports:["InitMem","AtomBegin","AtomProbe"],extraSource:`
 U0 AtomBegin(U64 value,U64 arg,U64 acc,U64 flags,U64 addr=0x3000)
 {
@@ -46,10 +24,9 @@ U64 AtomProbe(I64 n)
 assert.deepEqual(compiled.warnings,[]);
 const host=createHemuHost(),{instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env}),ex=instance.exports;
 host.attach(instance);ex.__rt_init();ex.InitMem(65536n);
-const base=Number(ex.RamBase()),mem=new Uint8Array(ex.memory.buffer),Probe=n=>BigInt.asUintN(64,ex.AtomProbe(BigInt(n))),
-  cases=readFileSync(fixture,"utf8").trim().split("\n");
+const base=Number(ex.RamBase()),mem=new Uint8Array(ex.memory.buffer),Probe=n=>BigInt.asUintN(64,ex.AtomProbe(BigInt(n)));
 jit.jitState(Probe(6),Probe(7),Probe(8),base,ex.memory,ex.RdMem,ex.WrMem);
-let checks=0,compiledCount=0;
+let checks=0,compiledCount=0,unaligned=0;
 for(const row of cases) {
   const [size,op,...words]=row.split(" "),s=Number(size),o=Number(op),
     [value,arg,acc,flags,...expected]=words.map(w=>BigInt("0x"+w)),prefix=s===2?[0x66]:s===8?[0x48]:[],
@@ -62,9 +39,14 @@ for(const row of cases) {
       code=[s===1?0x80:0x81,0x03+o*8,...imm];
     variants.push({locked:true,code},{locked:false,code},{locked:false,code,jit:true});
   }
+  if(s===2 || s===4)for(const offset of s===2?[1,3,5]:[1,2,3])variants.push({locked:true,offset});
   for(const variant of variants) {
     const {locked}=variant;
-    ex.AtomBegin(value,arg,acc,flags,0x3000n);
+    const addr=0x3000+(variant.offset||0);
+    mem.fill(0xA5,base+0x2FF8,base+0x3020);
+    ex.AtomBegin(value,arg,acc,flags,BigInt(addr));
+    new DataView(ex.memory.buffer).setBigUint64(base+addr,value,true);
+    const before=mem.slice(base+0x2FF8,base+0x3020);
     mem.set([...(locked?[0xF0]:[]),...prefix,...(variant.code||body),0xF4],base+4096);
     if(variant.jit) {
       jit.jitReset();
@@ -75,13 +57,18 @@ for(const row of cases) {
     for(let n=0;n<4;n++) {
       //AF is architecturally undefined for OR/AND/XOR. Other flags are defined.
       const mask=n===3?([1,4,6].includes(o)?0xEC5n:0xED5n):0xFFFFFFFFFFFFFFFFn;
-      assert.equal(Probe(n)&mask,expected[n]&mask,`${locked?"LOCK ":""}${row}, result ${n}`);
+      assert.equal((n===0?BigInt.asUintN(64,ex.RdMem(BigInt(addr),8n)):Probe(n))&mask,expected[n]&mask,`${locked?"LOCK ":""}${row}, result ${n}`);
+    }
+    if(variant.offset) {
+      for(let i=0;i<before.length;i++)if(i+0x2FF8<addr || i+0x2FF8>=addr+s)
+        assert.equal(mem[base+0x2FF8+i],before[i],"unaligned RMW preserves adjacent bytes");
+      unaligned++;
     }
     checks++;
   }
 }
 assert.ok(compiledCount>5000,"arithmetic/unary instructions must use the JIT");
-console.log(`${checks} memory RMW comparisons match x86-64 hardware (${compiledCount} compiled), including immediate operands, all defined flags and register writeback.`);
+console.log(`${checks} memory RMW comparisons match x86-64 hardware (${compiledCount} compiled, ${unaligned} contained unaligned), including immediate operands, all defined flags and register writeback.`);
 
 const bad=[
   [0xF0,0x48,0x01,0xD0], //ADD register destination.

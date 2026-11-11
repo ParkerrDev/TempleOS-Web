@@ -91,22 +91,32 @@ with zero badops in both builds; instruction totals exclude HLT time budgets. Us
 to refresh this evidence after interpreter changes. This is a bounded native
 source test, not proof of complete x86 coverage or a native TempleOS host app.
 
-`atomic.test.mjs` runs 53 contending guest programs on four emulator workers:
+`atomic.test.mjs` runs 71 contending guest programs on four emulator workers:
 implicit-lock XCHG protects an ordinary counter, LOCK arithmetic and unary
-operations modify shared operands, and CMPXCHG retries retain each increment.
-Every supported width is exercised. `atomic-flags.test.mjs` compares 32,778
+operations modify shared operands, and CMPXCHG/8B retries retain each increment.
+Unaligned fields sharing a 64-bit CAS word preserve each other and adjacent native byte atomics.
+Every supported width is exercised. `atomic-flags.test.mjs` compares 42,930
 locked, ordinary, immediate and compiled memory-RMW cases with 6,768 actual
 x86-64 instruction results; 8,982 comparisons execute compiled blocks. It
-includes all architecturally defined flags and register writeback. The stored
-source/output hashes and CPU/compiler metadata bind the hardware evidence;
+includes 10,152 contained unaligned placements, all architecturally defined
+flags and register writeback. The stored source/output hashes and CPU/compiler metadata bind the hardware evidence;
 `node tools/hemu/atomic-flags.test.mjs --record` regenerates it on x86-64.
 
-Aligned RAM and its TempleOS alias are supported atomic operands. Invalid
-LOCK forms, unaligned and MMIO atomics retain an explicit fault without
-changing operands. This deliberately rejects unsupported x86 bus-lock cases;
+Aligned RAM, contained unaligned fields and the TempleOS RAM alias are
+supported atomic operands. Invalid LOCK forms, cross-word and MMIO atomics
+retain an explicit fault without changing operands. This deliberately rejects unsupported x86 bus-lock cases;
 it does not emulate their hardware behavior or architectural exception
-delivery. CMPXCHG8B/16B are not implemented. LOCK prefixes always end a JIT
+delivery. CMPXCHG16B is not implemented. LOCK prefixes always end a JIT
 block so that the interpreter owns their atomic operation.
+
+`bit.test.mjs` compares 2,112 bit-string operations (264 compiled) with exact
+x86 opcodes: signed register offsets and width-masked encoded immediates,
+including neighboring bytes and defined CF/ZF. `cmpxchg8b.test.mjs` compares
+384 memory/register/flag cases, covering success/failure, high register halves,
+aligned LOCK and ordinary unaligned operands. Both use `OpcodeOracle.mjs` to
+record source-hashed native fixtures with CPU/compiler metadata; add `--record`
+on x86-64 to regenerate them. Reserved forms and unsupported CMPXCHG16B must
+retain faults without writing operands.
 
 ## Frame protocol
 

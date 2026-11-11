@@ -760,10 +760,10 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
         else { i64c(f, tgt); i64c(f, j - GBASE); emitCond(f, op & 0xF); f.op("select"); }
         term = true; n++; i = j; break;
       } else if (op === 0xBA) {                                              // grp8 bt/bts/btr/btc r/m, imm8
-        const mm = decodeModRM(j, rexR, rexX, rexB); const which = ((U8[j] >> 3) & 7) - 4; j = mm.j; const imm = U8[j]; j += 1;
+        const mm = decodeModRM(j, rexR, rexX, rexB); const which = ((U8[j] >> 3) & 7) - 4; j = mm.j; const imm = U8[j] & (szV * 8 - 1); j += 1;
         if (which >= 0) {
           materialize(f);                                                    // bt reads+sets CF -> deferred flags live first (frees local 0)
-          if (mm.isMem) {                                                   // MEMORY: byte-addressed bit string (cpu.HC DoBit: ea+=bit>>3; bit&=7; asz=1)
+          if (mm.isMem) {                                                   //Encoded imm8 selects within the operand width.
             emitEA(f, mm, j - GBASE); const byteOff = imm >> 3, bit = imm & 7, mb = 1n << BigInt(bit);
             if (byteOff) { f.local_get(3); i64c(f, byteOff); f.op("i64_add"); f.local_set(3); }  // ea += imm>>3 (compile-time const)
             rdRM(f, mm, 1, rex); f.local_set(0); i32c(f, RFL); i32c(f, RFL); ld64(f); i64c(f, -2); f.op("i64_and");
