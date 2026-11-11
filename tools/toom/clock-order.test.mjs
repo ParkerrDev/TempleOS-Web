@@ -9,7 +9,7 @@ const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backen
 const rows=await ClockReference(),values=[rows.length,...rows.flat()],packed=Buffer.alloc(values.length*8);
 values.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
 const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmTick')
+let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmActions').filter(m=>m[1]!=='TmTick')
   .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n');
 const tick=readFileSync(resolve(game,'TmTick.HC'),'latin1'),split=tick.indexOf('I64 LevelTick(');assert(split>0);
 source+='\n'+tick.slice(0,split)+`

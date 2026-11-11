@@ -70,8 +70,9 @@ The implemented foundation uses native V5.03 file and memory APIs:
   direction search, octant turns, reaction/target countdowns, attack priority
   and active-sound timing. Failed movement can adjust a floating actor's height
   or use encountered doors in reverse order. Captured lines survive nested
-  queries, and temporary storage is released if a callback fails. The complete
-  actor action dispatcher is still unfinished.
+  queries, and temporary storage is released if a callback fails. Actor actions resolve through a typed context borrowed by each world.
+  Binding and unbinding require an idle world; the persistent game clock is
+  borrowed explicitly and is independent of the level tic.
 - Ordinary monster shots retain their sound/facing/aim order, shared shotgun
   slope and per-pellet RNG. Imp, demon, cacodemon, bruiser and revenant melee
   retain their distinct sound and damage order; projectile actions use the
@@ -326,6 +327,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/spit-real.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cube.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cube-real.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cube-map.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/action.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/action-real.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -422,7 +425,7 @@ The damage check covers 4,752 player boundaries for health, armor, difficulty,
 invulnerability, god mode and the end-sector survival rule, plus 20 focused
 monster cases for thrust, pain/retaliation, skulls, corpse flags, overkill,
 item drops and callback removal. Invalid zero-mass actor data is rejected.
-Weapon actions are checked separately; actor action dispatch remains unfinished.
+Weapon and actor actions have separate checked dispatchers.
 The inventory check covers 2,304 independent ammo/auto-selection combinations
 and 52 pickup/respawn cases, including all item families, duplicate/full
 inventories, powers, dropped weapons, reach, and pickup during a blocked move.
@@ -440,7 +443,7 @@ supplies 17,920 decision cases across eight projectile types; 137 assembled
 cases check real half-steps, timers, NOBLOCKMAP behavior, sound order, owner/type
 guards and callback-failure cleanup. Native and pinned HEMU evidence is in
 `tools/toom/projectile-evidence.json`. The existing impact gate still passes;
-actor attack actions and their complete dispatcher remain unfinished.
+the playable host still needs the complete level owner.
 The weapon check covers 13,824 independently computed ammo/owned-weapon
 selections and 35 animation/combat cases. Nine 200-tic firing schedules match
 canonical shot intervals and ammunition costs; every weapon action is reached.
@@ -459,7 +462,7 @@ The blast check covers 256 independently calculated portal-height cases and
 self-damage, exception cleanup and forty BFG effects with exact RNG/damage.
 The sight check compares 6,912 rays across all 36 maps with an independent
 full-linedef scan, including REJECT and 927 visible pairs. These are actor
-combat foundations; the actor action dispatcher is still unfinished.
+combat foundations; the playable host is still unfinished.
 The sector fixtures cover 430 movement/contact contracts, including fractional
 steps, strict destination completion, crush cadence, callbacks that spawn or
 retire actors, nested queries and exception recovery. An independent map scan
@@ -517,8 +520,7 @@ cases cover first-tic doors/buttons, the shared player/weapon clock, queued exit
 context and clock bounds, callback reentry/destruction, exception cleanup and
 allocation/read stability. The player gate includes the complete program to
 catch composition problems such as conflicting height constants. These remain
-simulation foundations; actor AI/actions, host scheduling and level progression
-are unfinished.
+simulation foundations; host scheduling and level progression are unfinished.
 Clock evidence is recorded in `tools/toom/clock-evidence.json`. Its HEMU
 exception/heap fixture uses the normal fresh-task launch path, matching the
 native oracle: TempleOS logs exceptions to Adam, whose document allocations
@@ -547,15 +549,14 @@ actions, retaining all ordered angle, sight, sound, aim, shot, damage, missile
 and state observations with their RNG positions. Twenty-four real-map cases
 exercise effects, damage, projectiles, refire, enemy and player shootable-door
 triggers, nested queries and callback-failure cleanup. Their native and pinned
-HEMU results are in `tools/toom/combat-evidence.json`. The full actor action
-dispatcher and playable host remain unfinished.
+HEMU results are in `tools/toom/combat-evidence.json`. The playable host remains unfinished.
 The effect oracle compares 6,266 cases with nine original death, pain, fall,
 footstep and explosion actions. Nineteen assembled cases add real movement,
 death/pain state chains, episode-specific player sounds, owner/active guards
 and callback-failure cleanup. The 279-case blast fixture now exercises explosion
 and BFG action entry points, including blocked sight, boss immunity, missing
 firers, all forty rays and callback failure. Native and pinned HEMU results
-are in `tools/toom/effect-evidence.json`; the full dispatcher remains unfinished.
+are in `tools/toom/effect-evidence.json`.
 Mancubus spread and lost-soul charge match 2,334 original-C cases, including
 all random starts, angle wrap and full event traces. Ninety actual two-missile
 cases verify that initial positions precede spread changes, and twelve more
@@ -592,8 +593,7 @@ Boss/Keen death decisions match 15,340 original-C cases. Thirty-two native and
 pinned HEMU integration cases run the selected controllers to completion,
 check level exits and preserve every linedef. The existing 14,873 door cases
 and 768 floor cases (107,940 tics) also pass both backends. Exact scope and
-source hashes are in `tools/toom/boss-evidence.json`; complete host action
-dispatch remains unfinished.
+source hashes are in `tools/toom/boss-evidence.json`.
 Brain ending effects match 1,024 original-C cases covering all random starts
 and every emitted actor's position, velocity, state/frame and timer. Nine
 native and pinned HEMU lifecycle cases include 80 actual thinker tics and
@@ -617,7 +617,15 @@ state-clock arrival and cube retirement on native TempleOS and pinned HEMU.
 Their expected monster types come from the original-C witness. These single
 trajectories omit other map actors and spitter actions; they do not qualify
 whole-level gameplay. Exact scope is in `tools/toom/cube-evidence.json`.
-The complete action dispatcher and playable host remain unfinished.
+Actor routing covers 871 reachable states and all 53 actor action IDs,
+including the null action. Its 530 boundary checks verify component selection,
+arguments and independent world contexts; 50 real cases check ownership,
+cleanup, unsupported weapon-only actions, nested cross-world callbacks, live
+persistent clocks and a cube flight through the installed dispatcher.
+The 324 shared-thinker scenarios and 2,628 calls remain exact. These are routing
+and composition checks, with behavior evidence supplied by the individual
+component oracles above. See `tools/toom/action-evidence.json`. Full level
+ownership, the playable host and progression remain unfinished.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

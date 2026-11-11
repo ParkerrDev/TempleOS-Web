@@ -41,6 +41,7 @@
 #include "TmBoss"
 #include "TmBrain"
 #include "TmEffect"
+#include "TmActions"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

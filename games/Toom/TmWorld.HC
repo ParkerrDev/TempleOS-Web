@@ -7,9 +7,12 @@ class ActorSlot
   I64 next,generation;
 };
 
+extern class Actions;
+
 class World
 {
   Thinker thinkers;
+  Actions *actions;
   Map *map;
   GameData *data;
   Collision *collision;
@@ -114,6 +117,7 @@ U0 WorldDel(World *tmpw)
   I64 i;
   if (tmpw) {
     WorldIdle(tmpw);
+    if (tmpw->actions) throw('Actions');
     for (i=0;i<tmpw->slot_cap;i++) Free(tmpw->slot[i].actor);
     Free(tmpw->slot); Free(tmpw->blocks);
     CollisionDel(tmpw->collision); Free(tmpw);
