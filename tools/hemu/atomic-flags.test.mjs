@@ -4,7 +4,8 @@ import {compileHemu} from "../../engine/compile.js";
 import * as jit from "../../engine/jit.js";
 import {createHemuHost} from "../../engine/host.js";
 const cases=OpcodeOracle("atomic");
-const compiled=compileHemu({exports:["InitMem","AtomBegin","AtomProbe"],extraSource:`
+const compiled=compileHemu({exports:["InitMem","AtomBegin","AtomProbe","AtomCores"],extraSource:`
+U0 AtomCores(I64 n) {g_ncore=n;}
 U0 AtomBegin(U64 value,U64 arg,U64 acc,U64 flags,U64 addr=0x3000)
 {
   rip=4096;halted=0;g_badop=0;
@@ -91,16 +92,18 @@ for(const code of bad) {
   assert.equal(Probe(4),2n,code.toString());
   assert.deepEqual([0,1,2,3].map(Probe),[0x1234n,0x5678n,0x9ABCn,0xAD7n]);
 }
+ex.AtomCores(4n);
 for(const addr of [0x3001n,65532n,0xFED00000n]) {
   ex.AtomBegin(0x1234n,0x5678n,0x9ABCn,0xAD7n,addr);
   mem.set([0xF0,0x48,0x01,0x13],base+4096);ex.Step();
   assert.equal(Probe(4),2n,"unsupported atomic address "+addr);
   assert.deepEqual([0,1,2,3].map(Probe),[0x1234n,0x5678n,0x9ABCn,0xAD7n]);
 }
+ex.AtomCores(1n);
 ex.AtomBegin(10n,20n,0n,0n,0x10000003000n);
 mem.set([0xF0,0x48,0x01,0x13],base+4096);ex.Step();
 assert.equal(Probe(4),0n);assert.equal(Probe(0),30n,"RAM alias shares atomic storage");
-console.log("Invalid LOCK forms and unsupported atomic addresses retain a fault without writes; the TempleOS RAM alias remains atomic.");
+console.log("Invalid LOCK forms and unsupported SMP/MMIO atomic addresses retain a fault without writes; the TempleOS RAM alias remains atomic.");
 
 for(const initial of [0n,1n,0xAD7n])for(const [op,expected]of [[0xF8,initial&~1n],[0xF9,initial|1n],[0xF5,initial^1n]]) {
   ex.AtomBegin(10n,20n,30n,initial,0x3000n);
