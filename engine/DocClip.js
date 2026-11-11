@@ -1,11 +1,9 @@
 export const DOC_CLIP_PATCH="doc-sprite-clip-v1";
 
-export function DocClipPatch({guest,instance,lock,unlock,onState,canRun=()=>true,restored=null})
-{//Compile the installed HolyC source, then patch its entry between CPU runs.
-  let state="pending",id=null,tries=0,patches=[],source=null;
-  if(restored) {state="restored";patches=restored.slice();}
-  if(restored?.includes(DOC_CLIP_PATCH)) {
-    const gx=guest(),revision=gx.varFind("doc_clip_revision"),
+export function DocClipCheck(gx,patches)
+{
+  if(patches?.includes(DOC_CLIP_PATCH)) {
+    const revision=gx.varFind("doc_clip_revision"),
       old=gx.rd64(gx.varFind("doc_clip_old")),target=gx.rd64(gx.varFind("doc_clip_new")),
       view=new DataView(gx.rdBytes(old,9).buffer);
     if(!revision || !old || !target || gx.rd64(revision)!==1 ||
@@ -14,6 +12,13 @@ export function DocClipPatch({guest,instance,lock,unlock,onState,canRun=()=>true
         old+9+view.getInt32(5,true)!==target+4)
       throw new Error("Saved document patch metadata does not match guest code");
   }
+}
+
+export function DocClipPatch({guest,instance,lock,unlock,onState,canRun=()=>true,restored=null})
+{//Compile the installed HolyC source, then patch its entry between CPU runs.
+  let state="pending",id=null,tries=0,patches=[],source=null;
+  if(restored) {state="restored";patches=restored.slice();}
+  if(restored?.includes(DOC_CLIP_PATCH))DocClipCheck(guest(),restored);
   function Report(next,msg="") {
     state=next;
     onState({cmd:"guestPatch",patch:DOC_CLIP_PATCH,state,ok:!msg,msg});

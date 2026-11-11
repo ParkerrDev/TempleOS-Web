@@ -18,10 +18,13 @@
     "test:chat": "node tools/browser/chat.mjs",
     "test:search": "node search/Query.test.mjs && node search/QueryMemory.test.mjs && node tools/browser/search.mjs",
     "test:sprites": "node sprites/Gr.test.mjs && node sprites/Play.test.mjs && node tools/sprite-codec.test.mjs && node tools/browser/sprites.mjs && node tools/browser/video-frames.mjs",
-    "test:lighthouse": "node tools/lighthouse/check.mjs"
+    "test:lighthouse": "node tools/lighthouse/check.mjs",
+    "build:native": "node tools/native/build.mjs",
+    "test:native": "node tools/native/check.mjs"
   },
   "devDependencies": {
     "chrome-launcher": "1.2.1",
+    "esbuild": "0.28.2",
     "lighthouse": "13.6.0",
     "playwright-core": "1.58.2"
   }

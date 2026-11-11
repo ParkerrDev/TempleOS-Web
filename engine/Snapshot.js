@@ -34,9 +34,8 @@ function HeaderCheck(m)
   return m;
 }
 
-function Reader(gz)
+export function SnapshotReader(reader)
 {//Bounded reads avoid a second full copy of the inflated machine.
-  const reader=new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip")).getReader();
   let chunk=new Uint8Array(0),pos=0;
   async function Take(n,dst=new Uint8Array(n)) {
     let at=0;
@@ -57,9 +56,14 @@ function Reader(gz)
   return {Take,End,Close:()=>reader.cancel().catch(()=>{})};
 }
 
-export async function SnapshotOpen(gz,{busProtocol=0}={})
+function Reader(gz)
+{
+  return SnapshotReader(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip")).getReader());
+}
+
+export async function SnapshotOpen(gz,{busProtocol=0,reader=Reader}={})
 {//null denotes RAM-only data; the stock loader must validate its capture identity.
-  const rd=Reader(gz);
+  const rd=reader(gz);
   try {
     const sig=await rd.Take(8);
     if (!sig.every((v,i)=>v===MAGIC[i])) {await rd.Close();return null;}
@@ -109,8 +113,8 @@ export async function SnapshotInspect(gz,options)
   return {meta:saved.meta,wasm:saved.wasm};
 }
 
-export async function SnapshotSave({meta,wasm,memory,disk})
-{//Call with every guest core stopped until this promise settles.
+export async function SnapshotChunks({meta,wasm,memory,disk})
+{//Keep all guest owners stopped until these validated chunks are consumed.
   const header=HeaderCheck({...meta,version:meta.requiredBusProtocol?2:1,memoryBytes:memory.buffer.byteLength,
     diskBytes:disk.virtualSize,wasmBytes:wasm.byteLength,engineHash:await Hash(wasm)});
   if(header.requiredBusProtocol && BusModuleVersion(new WebAssembly.Module(wasm))!==header.requiredBusProtocol)
@@ -119,18 +123,23 @@ export async function SnapshotSave({meta,wasm,memory,disk})
   if (json.length>65536) Fail("header too long");
   const lead=new Uint8Array(12+json.length);
   lead.set(MAGIC);new DataView(lead.buffer).setUint32(8,json.length,true);lead.set(json,12);
-  let stage=0,off=0;
-  const source=new ReadableStream({pull(c) {
-    if (stage===0) {c.enqueue(lead);stage++;}
-    else if (stage===1) {c.enqueue(wasm);stage++;}
-    else if (stage===2) {
-      const end=Math.min(off+CHUNK,header.memoryBytes);
-      c.enqueue(new Uint8Array(memory.buffer).slice(off,end));off=end;
-      if (off===header.memoryBytes) {stage++;off=0;}
-    } else if (off<header.diskBytes) {
+  function* Chunks() {
+    yield lead;yield wasm;
+    for(let off=0;off<header.memoryBytes;off+=CHUNK)
+      yield new Uint8Array(memory.buffer).slice(off,Math.min(off+CHUNK,header.memoryBytes));
+    for(let off=0;off<header.diskBytes;off+=CHUNK) {
       const bytes=new Uint8Array(Math.min(CHUNK,header.diskBytes-off));
-      disk.readInto(off/512,bytes.length/512,bytes,0);off+=bytes.length;c.enqueue(bytes);
-    } else c.close();
+      disk.readInto(off/512,bytes.length/512,bytes,0);yield bytes;
+    }
+  }
+  return {meta:header,chunks:Chunks()};
+}
+
+export async function SnapshotSave(machine)
+{//Call with every guest core stopped until this promise settles.
+  const {chunks}=await SnapshotChunks(machine),source=new ReadableStream({pull(c) {
+    const next=chunks.next();
+    if(next.done)c.close();else c.enqueue(next.value);
   }});
   return new Response(source.pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
 }
