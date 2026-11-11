@@ -35,10 +35,10 @@ for(const row of OpcodeOracle("cmpxchg8b")) {
     checks++;
   }
 }
-for(const code of [[0x0F,0xC7,0xC8],[0x0F,0xC7,0x17],[0x48,0x0F,0xC7,0x0F]]) {
+for(const code of [[0x0F,0xC7,0xC8],[0x0F,0xC7,0x17],[0x48,0x0F,0xC7,0x17]]) {
   ex.CmpBegin(11n,1n,2n,3n,4n,0xAD7n,0x3000n);
   mem.set(code,base+4096);ex.Step();
   assert.equal(Probe(6),2n,code.toString());
   assert.deepEqual([0,1,2,3,4,5].map(Probe),[11n,1n,2n,3n,4n,0xAD7n]);
 }
-console.log(`${checks} CMPXCHG8B cases match x86-64 memory/register/flag results; reserved, register and unsupported 128-bit forms retain faults.`);
+console.log(`${checks} CMPXCHG8B cases match x86-64 memory/register/flag results; reserved, register and reserved 128-bit forms retain faults.`);

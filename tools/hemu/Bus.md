@@ -68,8 +68,16 @@ memory. `atom-split.test.mjs` also compares 2,064 coordinated SMP executions
 against original V5.03/physical x86 vectors while preserving uncoordinated
 refusal, neighboring bytes, defined flags and interrupt deferral.
 
+The same real-worker gate pauses LOCK CMPXCHG16B after its low-half write.
+Interpreter, compiled and guestexec peer stores all wait until the high half
+and CPU state have retired, then leave 10,20. Each unguarded negative control
+instead leaves 10,6, which no legal ordering of the locked exchange and those
+two peer stores permits. This verifies exclusive ownership for aligned pairs;
+the unaligned-field predicate alone would not protect them.
+
 `worker-bus.test.mjs` runs four real TempleOS tasks with 1,024 split LOCK INC
-operations. `worker-snapshot.test.mjs` with HEMU_BUS_PROTOCOL=1 preserves CPU,
+operations and 1,024 complementary-pair CMPXCHG16B increments.
+`worker-snapshot.test.mjs` with HEMU_BUS_PROTOCOL=1 preserves CPU,
 devices, pixels, palette, disk, active game and settings across full restore.
 The same option on worker-legacy-fault tests the actual historical 7ea5d3e
 embedded module: missing polling capability prevents exclusive ownership,
@@ -106,8 +114,9 @@ must explicitly pass protocol 1; Restore independently requires the same.
 Both BSP and AP initialization independently reject an unmet requirement
 before touching their shared memory/control state. Full saves whose legacy
 module cannot coordinate retain version 1 and never claim wide-operation
-support. CMPXCHG16B and native host implementations of this protocol remain
-outside this checkpoint.
+support. Native host implementations of this protocol remain separate work.
+The aligned CMPXCHG16B path uses the same imports, ownership lifetime and saved
+format; it does not silently introduce a second lock or protocol version.
 
 ## Controller checks
 

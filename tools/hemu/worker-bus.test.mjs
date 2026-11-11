@@ -13,9 +13,11 @@ try {
   assert.deepEqual(ready,{cmd:"busReady",version:1,ready:true});
   if(!h.msgs.some(m=>m.cmd==="smpReady"))await h.Wait(m=>m.cmd==="smpReady",10000);
   if(!h.msgs.some(m=>m.cmd==="diskInfo"&&m.ok))await h.Wait(m=>m.cmd==="diskInfo"&&m.ok,30000);
-  const result=await Request(h,{cmd:"osExec",id:"wide",target:"adam",
-    src:readFileSync(new URL("./BusGuest.HC",import.meta.url),"latin1")},m=>m.cmd==="fileResult"&&m.id==="wide");
-  assert.equal(result.ok,true,result.msg);
+  for(const name of ["BusGuest","Cmp16Guest"]) {
+    const result=await Request(h,{cmd:"osExec",id:name,target:"adam",
+      src:readFileSync(new URL(`./${name}.HC`,import.meta.url),"latin1")},m=>m.cmd==="fileResult"&&m.id===name);
+    assert.equal(result.ok,true,result.msg);
+  }
   assert.ok(!h.apMsgs.some(m=>m.cmd==="error"));
   await Request(h,{cmd:"pause",value:true},m=>m.cmd==="paused"&&m.value);
   const saved=await Request(h,{cmd:"exportSnapshot"},m=>m.cmd==="exportResult",60000);
@@ -23,6 +25,14 @@ try {
   assert.equal((await SnapshotInspect(saved.buf,{busProtocol:1})).meta.requiredBusProtocol,1);
   await h.Stop();h=null;
   await assert.rejects(()=>HemuBoot({snapshot:saved.buf}),/requires shared RAM protocol 1/);
+  h=await HemuBoot({snapshot:saved.buf,busProtocol:1,patches:false});
+  await h.Wait(m=>m.cmd==="restored",30000);
+  await Request(h,{cmd:"pause",value:false},m=>m.cmd==="paused"&&!m.value);
+  const resumed=await Request(h,{cmd:"osExec",id:"restored-cas",target:"adam",src:"Cmp16Guest;"},
+    m=>m.cmd==="fileResult"&&m.id==="restored-cas");
+  assert.equal(resumed.ok,true,resumed.msg);
+  assert.ok(!h.apMsgs.some(m=>m.cmd==="error"));
+  await h.Stop();h=null;
   for(const core of [0,1]) {
     const memory=new WebAssembly.Memory({initial:512,maximum:8192,shared:true}),
       ctrl=new SharedArrayBuffer(64),sentinel=new Uint8Array(memory.buffer),
@@ -43,5 +53,5 @@ try {
       assert.equal(new Int32Array(ctrl).some(v=>v!==0),false);
     } finally {await worker.terminate();}
   }
-  console.log("Four real TempleOS tasks complete 1,024 split LOCK INC operations; the version-2 save refuses an uncoordinated controller, BSP and AP before memory/control mutation.");
+  console.log("Four real TempleOS tasks complete 1,024 split LOCK INC operations and 1,024 128-bit CAS increments, repeated after full restore; the version-2 save refuses an uncoordinated controller, BSP and AP before memory/control mutation.");
 } finally {await h?.Stop();}

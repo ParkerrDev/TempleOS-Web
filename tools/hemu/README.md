@@ -210,7 +210,7 @@ tools/hemu/atom-split.test.mjs --record`.
 Multi-core cross-word fields require [coordinated CPU and host ownership](Bus.md),
 including ordinary interpreter/JIT readers, host writes and capture handoff.
 The page and desktop opt into that protocol; unregistered and legacy embedded
-engines retain safe refusal. MMIO, invalid LOCK forms and CMPXCHG16B remain
+engines retain safe refusal. MMIO and invalid LOCK forms remain
 explicitly unsupported, without architectural exception delivery for those
 cases. The bounded behavior follows Intel's [locked operation
 contract](https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf).
@@ -221,8 +221,22 @@ including neighboring bytes and defined CF/ZF. `cmpxchg8b.test.mjs` compares
 384 memory/register/flag cases, covering success/failure, high register halves,
 aligned LOCK and ordinary unaligned operands. Both use `OpcodeOracle.mjs` to
 record source-hashed native fixtures with CPU/compiler metadata; add `--record`
-on x86-64 to regenerate them. Reserved forms and unsupported CMPXCHG16B must
+on x86-64 to regenerate them. Reserved forms must
 retain faults without writing operands.
+
+`cmpxchg16b.test.mjs` compares 768 original V5.03 results with a separate
+physical oracle, then makes 15,360 interpreter/JIT-fallback comparisons across
+private/shared RAM, aliases and coordinated core configurations. It checks
+both mismatching halves, full registers and defined flags, adjacent bytes,
+the complete aligned RAM-end span, and 3,072 uncoordinated LOCK refusals.
+Test-only write observation verifies both halves' write cycles even after a
+failed comparison. A separate 204-case physical fault record establishes
+misalignment #GP, register-form #UD and read-only-page #PF, including mismatches.
+The emulator retains stopped diagnostics for invalid operands; these are not
+claims of implemented architectural exception delivery or guest page protection.
+No host callback or interrupt occurs inside the single-core RAM instruction.
+Locked SMP pairs use the existing bus protocol; unlocked pairs make no atomic
+promise. CX16 remains unadvertised while these architectural limits remain.
 
 `MulDiv.HC` owns full products, signed/unsigned double-width dividends, byte
 AX/AH:AL results and quotient bounds. `muldiv.test.mjs` compares 102,432 register

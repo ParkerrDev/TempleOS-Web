@@ -7,7 +7,7 @@ import {createHemuHost} from "../../engine/host.js";
 const adapter=readFileSync(new URL("./CpuNativeHost.HC",import.meta.url),"latin1"),
   expand=source=>source.replace(/#include "([^"]+)"/g,(_,name)=>
     name==="host.HC"?adapter:expand(hemuFile(name))),
-  source=expand(hemuFile("test.HC"))+muldivSource()+atomSource()+stackSource()+cpuIdSource(),
+  source=expand(hemuFile("test.HC"))+muldivSource()+atomSource()+stackSource()+cpuIdSource()+cmp16Source(),
   hash=createHash("sha256").update(Buffer.from(source,"latin1")).digest("hex"),
   file=new URL("./cpu-native.json",import.meta.url);
 if(process.argv.includes("--record")) {
@@ -22,14 +22,14 @@ if(process.argv.includes("--record")) {
 }
 const expected=JSON.parse(readFileSync(file,"utf8"));
 assert.equal(hash,expected.sourceHash,"rerun original V5.03 after changing the interpreter or its native fixture");
-const compiled=compileHemu({filename:"test.HC",extraSource:muldivSource()+atomSource()+stackSource()+cpuIdSource()});assert.deepEqual(compiled.warnings,[]);
+const compiled=compileHemu({filename:"test.HC",extraSource:muldivSource()+atomSource()+stackSource()+cpuIdSource()+cmp16Source()});assert.deepEqual(compiled.warnings,[]);
 let output="";
 const host=createHemuHost({onText:text=>output+=text}),
   {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env});
 host.attach(instance);instance.exports.__rt_init();instance.exports.__main();
 assert.equal(output,expected.out);
 const total=Number(expected.out.match(/total guest instr=(\d+)/)[1]);
-console.log(`Full interpreter source compiles natively: 31 battery checks, multiply/divide, stack, split-field atomic and CPUID vectors, and ${total.toLocaleString()} executed battery instructions agree in original V5.03 and WASM; zero badops.`);
+console.log(`Full interpreter source compiles natively: 31 battery checks, multiply/divide, stack, split-field atomic, CPUID and 128-bit CAS vectors, and ${total.toLocaleString()} executed battery instructions agree in original V5.03 and WASM; zero badops.`);
 
 function muldivSource() {
   const rows=readFileSync(new URL("./muldiv-oracle.txt",import.meta.url),"utf8").trim().split("\n"),
@@ -142,5 +142,35 @@ ${lines.join("\n")}
   "cpuid native: %d passed, %d failed\\n",g_pass-before,g_fail;
 }
 CpuIdNativeCheck;
+`;
+}
+
+function cmp16Source() {
+  const rows=readFileSync(new URL("./cmpxchg16b-oracle.txt",import.meta.url),"utf8").trim().split("\n"),lines=[];
+  let count=0;
+  rows.forEach((row,index)=>{
+    if(index%31&&index%384>=6)return;
+    const [locked,...words]=row.split(" "),v=words.map(n=>"0x"+n),code=locked==="1"?"0x0FC70F48F0":"0x0FC70F48";
+    lines.push(`  reg[0]=${v[2]};reg[2]=${v[3]};reg[3]=${v[4]};reg[1]=${v[5]};`,
+      `  reg[7]=0x3000;rfl=${v[6]};rip=4096;halted=0;`,
+      `  WrMem(0x3000,8,${v[0]});WrMem(0x3008,8,${v[1]});`,
+      `  WrMem(4096,8,${code});Step;`,
+      `  Check("cmp16 ${index} low",RdMem(0x3000,8),${v[7]});`,
+      `  Check("cmp16 ${index} high",RdMem(0x3008,8),${v[8]});`);
+    [0,2,3,1].forEach((reg,i)=>lines.push(`  Check("cmp16 ${index} R${reg}",reg[${reg}],${v[9+i]});`));
+    lines.push(`  Check("cmp16 ${index} flags",rfl&0xED5,${v[13]});`,
+      `  Check("cmp16 ${index} fault",halted,0);`);
+    count+=8;
+  });
+  return `
+U0 Cmp16NativeCheck()
+{//Physical aligned pair vectors in the original HolyC interpreter.
+  I64 before=g_pass;
+  g_ncore=1;
+${lines.join("\n")}
+  Check("cmp16 native count",g_pass-before,${count});
+  "cmp16 native: %d passed, %d failed\\n",g_pass-before,g_fail;
+}
+Cmp16NativeCheck;
 `;
 }
