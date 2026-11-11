@@ -1,0 +1,34 @@
+{
+  "repository": "https://github.com/id-Software/DOOM",
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "files": [
+    {
+      "path": "LICENSE.TXT",
+      "sha256": "32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670"
+    },
+    {
+      "path": "linuxdoom-1.10/info.c",
+      "sha256": "e09631527669ee528bdae20a47be79e1cb33972b39964c33ac4814e1701a0949"
+    },
+    {
+      "path": "linuxdoom-1.10/info.h",
+      "sha256": "3e68ee6cc13323e69cbcf208e9a0af7b13867bead49e66d765abefa5d914b0dd"
+    },
+    {
+      "path": "linuxdoom-1.10/p_mobj.h",
+      "sha256": "85be6ea83fc4b5f95df666c68c8999f7fe5745a5f503d3a441afd66b5f7e5db0"
+    },
+    {
+      "path": "linuxdoom-1.10/sounds.h",
+      "sha256": "fa5a6c19c689eeb6e4a2df08b1d4efe5c445b3d0cb4081dc3a7d28fdadfd39f8"
+    },
+    {
+      "path": "linuxdoom-1.10/sounds.c",
+      "sha256": "d489534e93fdb20cad1757f6625913bddf10646ab3b21badbeafdc6cecc027d2"
+    },
+    {
+      "path": "linuxdoom-1.10/m_random.c",
+      "sha256": "8d89f5cfcbbd0170e46b55538c4c272b3cf5b5d7dce91023b8aa8d9b922b21ee"
+    }
+  ]
+}

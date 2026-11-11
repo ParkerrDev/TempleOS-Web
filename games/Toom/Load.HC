@@ -3,3 +3,5 @@
 #include "TmMap"
 #include "TmGr"
 #include "TmTex"
+#include "TmData.HH"
+#include "TmState"

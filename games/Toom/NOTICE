@@ -1,0 +1,28 @@
+Native TOOM
+
+This directory is a new TempleOS implementation, not a claim of authorship
+by Terry A. Davis and not an unmodified release of id Software's engine.
+
+TMDATA.BIN and TmData.HH contain state, actor, sprite, sound and deterministic
+random data derived from id Software's DOOM source:
+
+  Copyright (C) 1993-1996 id Software, Inc.
+  https://github.com/id-Software/DOOM
+  revision a77dfb96cb91780ca334d0d4cfd86957558007e0
+
+The data was converted to a compact native format and patched with the five
+Freedoom full-bright firing-frame changes on 2026-11-11. It is not the
+unmodified original. The conversion source is tools/toom/Data.mjs; pinned
+source paths and SHA-256 digests are in tools/toom/source/source.json.
+That tool retrieves and verifies the corresponding original source, keeping
+its notices intact. No original C runtime, platform shim or network code is
+linked into the TempleOS implementation.
+
+The native implementation and derived data are distributed under version 2
+of the GNU General Public License. See COPYING for the full license and
+disclaimer of warranty. Distribution must include the corresponding source
+and these notices. The implementation is provided without warranty.
+
+Freedoom's graphics, maps, music, sounds, text and DEHACKED data are separate
+content from Freedoom 0.12.1. They retain the BSD-3-Clause license in
+Freedoom-COPYING.txt. No proprietary Doom game content is included.
