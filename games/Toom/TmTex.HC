@@ -82,22 +82,24 @@ I64 TextureFind(Graphics *tmpg,U8 *name)
   return -1;
 }
 
-U0 TextureRoom(Graphics *tmpg,I64 size)
+Bool TextureRoom(Graphics *tmpg,I64 size)
 {//Evict least recently used images until one new texture will fit.
   I64 i,n,old;
   Image *tmpi;
   while (tmpg->cache_size+size>TM_CACHE_SIZE) {
     old=I64_MAX; n=-1;
     for (i=0;i<tmpg->tex_cnt;i++)
-      if (tmpg->texture[i].image && tmpg->texture[i].stamp<old) {
+      if (tmpg->texture[i].image && !tmpg->texture[i].pins &&
+	    tmpg->texture[i].stamp<old) {
 	n=i; old=tmpg->texture[i].stamp;
       }
-    if (n<0) break;
+    if (n<0) return FALSE;
     tmpi=tmpg->texture[n].image;
     tmpg->cache_size-=tmpi->width*tmpi->height*sizeof(U16);
     ImageDel(tmpi);
     tmpg->texture[n].image=NULL;
   }
+  return TRUE;
 }
 
 Image *TextureGet(Graphics *tmpg,I64 n)
@@ -111,6 +113,8 @@ Image *TextureGet(Graphics *tmpg,I64 n)
   tmpt=tmpg->texture+n;
   tmpt->stamp=++tmpg->stamp;
   if (tmpt->image) return tmpt->image;
+  n=tmpt->def->width*tmpt->def->height*sizeof(U16);
+  if (!TextureRoom(tmpg,n)) return NULL;
   tmpi=ImageNew(tmpt->def->width,tmpt->def->height);
   tmpp=tmpt->def+1;
   name[8]=0;
@@ -126,11 +130,23 @@ Image *TextureGet(Graphics *tmpg,I64 n)
     Free(src);
   }
   n=tmpi->width*tmpi->height*sizeof(U16);
-  TextureRoom(tmpg,n);
   tmpg->cache_size+=n;
   tmpt->image=tmpi;
   return tmpi;
 tg_fail:
   ImageDel(tmpi);
   return NULL;
+}
+
+Image *TextureHold(Graphics *tmpg,I64 n)
+{//A draw may need both portal wall textures while the cache fills.
+  Image *tmpi=TextureGet(tmpg,n);
+  if (tmpi) tmpg->texture[n].pins++;
+  return tmpi;
+}
+
+U0 TextureDrop(Graphics *tmpg,I64 n)
+{
+  if (0<=n<tmpg->tex_cnt && tmpg->texture[n].pins)
+    tmpg->texture[n].pins--;
 }

@@ -108,7 +108,7 @@ class Texture
 {
   TexDef *def;
   Image *image;
-  I64 stamp;
+  I64 stamp,pins;
 };
 
 class Graphics

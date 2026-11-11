@@ -5,3 +5,5 @@
 #include "TmTex"
 #include "TmData.HH"
 #include "TmState"
+#include "TmPal"
+#include "TmDraw"

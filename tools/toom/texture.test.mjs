@@ -81,6 +81,14 @@ U0 TmTextureTest()
   for (j=0;j<tmpi->width*tmpi->height;j++)
     hash=(hash^tmpi->pix[j])*16777619&0xFFFFFFFF;
   if (hash!=expected[2]) throw('Evict');
+  tmpi=TextureHold(tmpg,0);
+  for (i=0;i<903;i++) {
+    if (!TextureGet(tmpg,i)) throw('Pinned');
+    if (tmpg->texture[0].image!=tmpi) throw('FreedPin');
+    if (tmpg->cache_size>TM_CACHE_SIZE) throw('Limit');
+  }
+  TextureDrop(tmpg,0);
+  if (tmpg->texture[0].pins) throw('Unpin');
   "TEXTURES 903 PIXELS %d BAD %d START_READ %d CACHE_PEAK %d MS %.1f\\n",
         pixels,bad,read_bytes,peak,(tS-start)*1000;
   GraphicsDel(tmpg);

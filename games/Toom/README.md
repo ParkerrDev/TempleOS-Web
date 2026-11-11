@@ -19,9 +19,13 @@ The implemented foundation uses native V5.03 file and memory APIs:
   actor types, the original deterministic random stream and Freedoom's five
   full-bright firing-frame corrections. A native state clock handles action
   callbacks, zero-tic transitions and permanent states independently of drawing.
+- Native BSP traversal, near-plane clipping, perspective wall columns, portal
+  clipping and horizontal floor/ceiling spans. Original COLORMAP data supplies
+  light and distance shading. Indexed pixels become 2×2 TempleOS palette
+  patterns in a private CDC; window composition uses the OS graphics layer.
 
-The BSP renderer, simulation, weapons, actors, line specials, HUD, audio,
-saves and episode/intermission progression are still being implemented.
+Masked surfaces and sprites, simulation, weapons, actors, line specials, HUD,
+audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
 
 ## Assets
@@ -60,6 +64,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
 The map check covers all 36 maps and 100,171 actor/partition queries, comparing
@@ -71,6 +76,10 @@ all 903 composite textures and exercises cache hits and eviction/reload.
 The state check advances all 967 states through 116,040 total tics with action
 callbacks, checks three full random-stream cycles and rejects invalid next-state
 indices. It checks the clock and data, not yet the effects of actor actions.
+The draw check compares wall/plane depth against independently traced map segs
+at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
+It guards the pixel, depth, plane and clipping buffers and verifies private
+CDC row padding and margins. Omit `ALL=1` to check E1M1, or set `MAP=E2M3`.
 These checks establish loader and decoding behavior; they do not establish
 gameplay, display-frame performance or parity with every hypervisor.
 

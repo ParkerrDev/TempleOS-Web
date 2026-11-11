@@ -35,7 +35,9 @@ export function MapRead(lumps,index)
     subsectors:record(6,'SSECTORS',4,(b,p)=>[b.readUInt16LE(p),b.readUInt16LE(p+2)]),
     nodes:record(7,'NODES',28,(b,p)=>({origin:pair(b,p),delta:pair(b,p+4),
       children:[b.readUInt16LE(p+24),b.readUInt16LE(p+26)]})),
-    sectors:record(8,'SECTORS',26,(b,p)=>({floor:b.readInt16LE(p),ceil:b.readInt16LE(p+2)})),
+    sectors:record(8,'SECTORS',26,(b,p)=>({floor:b.readInt16LE(p),ceil:b.readInt16LE(p+2),
+      floorName:b.toString('ascii',p+4,p+12).replace(/\0.*$/s,''),
+      ceilName:b.toString('ascii',p+12,p+20).replace(/\0.*$/s,'')})),
   };
 }
 
