@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "81ccb923aeb0b26fa63397ff733e908c34bb6dcc68a48f7e1d07860f7b9b263c",
+  "runtimeSha256": "d3e17c440d015b3f375b1e71641f4bc308a522430038c10f7b42d70cda3af4a6",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -8,7 +8,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "d4423ad099e5980325babdc5de64c1cf5103e336686991a3c50b2dac9ffe3edd"
+      "wasmSha256": "a26686a4a85bf5de1e3c93bf1228677d4a9198a14bbb20c10755cfddbf7ad14e"
     },
     "toom": {
       "name": "TOOM",
@@ -24,7 +24,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "ed77ef6ef31f83c4137a6e827b647331401c70734ae1ce55f3f6bdf1a71402dd"
+      "wasmSha256": "044fa3f533653caceffe3e95621ccd7caa177f5d7ffe721089b02cdba4a6a7bc"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -32,7 +32,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "e707a6f8721e94db7e8b9d85b07558183f92fa5b906780c58171034c58e3ffa0"
+      "wasmSha256": "b9be38b08d0535ad8d489b5983e7599bf4d290202897cf2c6cf9a58c23d62add"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -40,7 +40,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "63323390256304db86d27d4674471409dbefad80a57e7b9a70dbcedbd537ef95"
+      "wasmSha256": "cbf16be3f9f919fdd43512a2fff330bdf6aeef3a30199788f1e1b018298b1052"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -64,7 +64,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/BlackDiamond.HC:169: Undefined identifier or untyped call: DCSymmetrySet"
+      "error": "C:/Home/Games/TinkerOS/BlackDiamond.HC:175: Undefined identifier or untyped call: Sprite3ZB"
     },
     "tinker-FlatTops": {
       "name": "FlatTops",
@@ -72,7 +72,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/FlatTops.HC:608:35: parse error: expected ')' (near '.')"
+      "error": "C:/Home/Games/TinkerOS/FlatTops.HC:100: undefined symbol 'F64_MAX'"
     },
     "tinker-Halogen": {
       "name": "Halogen",
@@ -96,7 +96,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/BattleLines.HC:77: Undefined identifier or untyped call: DCSymmetrySet"
+      "error": "C:/Home/Games/TinkerOS/BattleLines.HC:87: Undefined identifier or untyped call: Sprite3"
     },
     "tinker-BigGuns": {
       "name": "BigGuns",
@@ -376,7 +376,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Apps/Cube/Cube.HC:449:16: parse error: expected ')' (near '.')"
+      "error": "C:/Home/Games/TinkerOS/Apps/Cube/Cube.HC:30: Undefined identifier or untyped call: CatPrint"
     },
     "library-GlowUFOs": {
       "name": "GlowUFOs",
