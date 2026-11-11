@@ -43,7 +43,7 @@ U0 LightsDel(Lights *tmpl)
 {
   Light *light,*next;
   if (tmpl) {
-    if (tmpl->sectors->motion->world->thinking) throw('Thinking');
+    WorldIdle(tmpl->sectors->motion->world);
     for (light=tmpl->first;light;light=next) {
       next=light->next; QueRem(&light->thinker); Free(light);
     }

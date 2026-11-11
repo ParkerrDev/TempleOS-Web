@@ -1,4 +1,4 @@
-I64 tm_use_cases=0,tm_use_done=0,tm_use_keys=0,tm_use_sound=0,tm_use_exit=-1;
+I64 tm_use_cases=0,tm_use_done=0,tm_use_keys=0,tm_use_sound=0;
 
 U0 TmUseSound(Actor *,I64 n)
 {
@@ -9,11 +9,6 @@ U0 TmUseKey(Actor *,I64 n)
 {
   if (n!=TM_IT_BLUECARD) throw('Key');
   tm_use_keys++;
-}
-
-U0 TmUseExit(Bool secret)
-{
-  tm_use_exit=secret;
 }
 
 U0 TmUseClear(Sectors *sectors)
@@ -190,10 +185,12 @@ U0 TmCrossTest(Specials *specials,Actor *actor)
 	sectors->first->type!=TM_PLAT_NEAREST_CHANGE || map->line[6].special)
     throw('ShotPlat');
   TmUseClear(sectors); tm_cross_cases+=2;
-  map->line[6].special=52; tm_use_exit=-1; LineCross(specials,actor,6,0);
-  if (tm_use_exit || map->line[6].special!=52) throw('Exit');
+  map->line[6].special=52; world->exit_rqst=0; LineCross(specials,actor,6,0);
+  if (world->exit_rqst!=TM_EXIT_NORMAL || map->line[6].special!=52)
+    throw('Exit');
   map->line[6].special=124; LineCross(specials,actor,6,0);
-  if (tm_use_exit!=1 || map->line[6].special!=124) throw('Secret');
+  if (world->exit_rqst!=TM_EXIT_SECRET || map->line[6].special!=124)
+    throw('Secret');
   tm_cross_cases+=2;
   map->line[6].special=999; LineCross(specials,actor,6,0);
   if (sectors->first || map->line[6].special!=999) throw('Unknown');
@@ -236,7 +233,7 @@ U0 TmUseTest()
   for (i=0;i<2;i++) textures[i].def=defs+i;
   MemCpy(defs[0].name,"SW1BRCOM",8); MemCpy(defs[1].name,"SW2BRCOM",8);
   sectors=SectorsNew(motion,&graphics); sectors->key_rqst=&TmUseKey;
-  specials=SpecialsNew(sectors); specials->exit=&TmUseExit;
+  specials=SpecialsNew(sectors);
   motion->sound=&TmUseSound; world->player=actor->id;
   actor->angle=0x80000000; map->sector[1].ceil=0; map->line[6].special=1;
   PlayerUse(specials,actor); mover=sectors->area[1].mover;
@@ -298,8 +295,9 @@ U0 TmUseTest()
   for (i=0;i<2;i++) {
     map->line[6].special=11;
     if (i) map->line[6].special=51;
-    tm_use_exit=-1; LineUse(specials,actor,6,0);
-    if (tm_use_exit!=i || map->line[6].special) throw('Exit');
+    world->exit_rqst=0; LineUse(specials,actor,6,0);
+    if (world->exit_rqst!=TM_EXIT_NORMAL+i || map->line[6].special)
+      throw('Exit');
     tm_use_cases++;
   }
   world->player=0; map->line[6].special=14;

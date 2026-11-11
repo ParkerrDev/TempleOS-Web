@@ -1,11 +1,13 @@
-I64 tm_player_cnt=0,tm_player_done=0,tm_player_use=0,tm_player_sector=0;
+I64 tm_player_cnt=0,tm_player_done=0,tm_player_use=0,tm_player_sector=0,
+	tm_player_context=0;
 
-U0 TmPlayerUse(Actor *)
+U0 TmPlayerUse(Actor *,U8 *context)
 {
   tm_player_use++;
+  if (context) tm_player_context=*context(I64 *);
 }
 
-U0 TmPlayerSector(Actor *)
+U0 TmPlayerSector(Actor *,U8 *)
 {
   tm_player_sector++;
 }
@@ -70,13 +72,13 @@ U0 TmPlayerTest()
     switch (n) {
       case 0:
 	PlayerView(motion,source,0);
-	if (player.view_height!=TM_VIEW_HEIGHT || player.delta_view_height ||
+	if (player.view_height!=TM_EYE_HEIGHT || player.delta_view_height ||
 	      player.view_z!=41*65536+200) throw('ViewTop');
 	break;
       case 1:
 	player.view_height=10*65536; player.delta_view_height=-65536;
 	PlayerView(motion,source,0);
-	if (player.view_height!=TM_VIEW_HEIGHT/2 ||
+	if (player.view_height!=TM_EYE_HEIGHT/2 ||
 	      player.delta_view_height!=1+65536/4) throw('ViewLow');
 	break;
       case 2:
@@ -110,8 +112,9 @@ U0 TmPlayerTest()
   if (!source->angle || !source->vx || tm_player_use!=1) throw('Unfreeze');
   tm_player_cnt++;
   PlayerCmd(&player,0,0,0,0); PlayerTick(weapon,&TmPlayerUse);
-  PlayerCmd(&player,0,0,0,TM_BTF_USE); PlayerTick(weapon,&TmPlayerUse);
-  if (tm_player_use!=2) throw('UseEdge');
+  PlayerCmd(&player,0,0,0,TM_BTF_USE); old=1234;
+  PlayerTick(weapon,&TmPlayerUse,,&old);
+  if (tm_player_use!=2 || tm_player_context!=1234) throw('UseEdge');
   tm_player_cnt++;
   source->flags|=TM_MF_JUSTATTACKED; source->angle=0;
   source->vx=source->vy=0;
@@ -180,6 +183,7 @@ U0 TmPlayerTest()
   PlayerCmd(&player,50,0,0,0);
   for (i=0;i<100;i++) {
     PlayerTick(weapon); ActorMotion(motion,source); ActorTick(data,source,NULL);
+    world->tic++;
   }
   if (!(105*65536<source->x<112*65536) || source->sector) {
     "WALK %d %d SECTOR %d VX %d VY %d\n",source->x,source->y,
@@ -189,6 +193,7 @@ U0 TmPlayerTest()
   PlayerCmd(&player,0,0,0,0);
   for (i=0;i<40;i++) {
     PlayerTick(weapon); ActorMotion(motion,source); ActorTick(data,source,NULL);
+    world->tic++;
   }
   if (source->vx || source->vy || source->state!=TM_S_PLAY) throw('WalkStop');
   tm_player_cnt++;

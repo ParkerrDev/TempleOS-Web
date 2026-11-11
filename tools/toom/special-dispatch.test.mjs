@@ -101,15 +101,12 @@ U0 TmProbe(I64 action,I64 value,I64 amount,I64 side)
   tm_probe_values[tm_probe_cnt*4+2]=amount;
   tm_probe_values[tm_probe_cnt*4+3]=side; tm_probe_cnt++;
 }
-U0 TmProbeExit(Bool secret)
-{
-  TmProbe(11,secret,0,0);
-}
 `;
 for(const [name,result,args,id,values,actor] of signatures)source+=`
 ${result} TmProbe${name}(${args})
 {
   if (line!=3${actor?' || actor!=tm_probe_actor':''}) throw('Args');
+  ${name==='SwitchChange'?"if (tm_probe_actor->world->exit_rqst) throw('ExitOrd');":''}
   TmProbe(${id},${values});
   ${name==='SwitchChange'?'if (!repeat) tm_probe_map->line[line].special=0;':''}
   ${result==='Bool'?'return tm_probe_success;':''}
@@ -136,18 +133,19 @@ U0 TmEventsTest()
   map.line=lines; map.line_cnt=4; world.map=&map;
   motion.world=&world; motion.player=&player; actor.world=&world; actor.id=1;
   actor.active=TRUE; sectors.motion=&motion; specials.sectors=&sectors;
-  specials.exit=&TmProbeExit; tm_probe_actor=&actor; tm_probe_map=&map;
+  tm_probe_actor=&actor; tm_probe_map=&map;
   body=FileRead("C:/ORACLE/EVENTS.BIN",&size); row=body+1;
   if (!body) throw('Files');
   for (i=0;i<body[0];i++) {
     lines[3].special=row[1]; world.player=row[2]; lines[3].flags=4|row[4]*32;
     tm_probe_success=row[5]; actor.type=row[6]; actor.flags=row[7];
-    tm_probe_cnt=0; result=0;
+    tm_probe_cnt=0; result=0; world.exit_rqst=0;
     switch (row[0]) {
       case 0: result=LineUse(&specials,&actor,3,row[3]); break;
       case 1: LineCross(&specials,&actor,3,row[3]); break;
       case 2: LineShoot(&specials,&actor,3); break;
     }
+    if (world.exit_rqst) TmProbe(11,world.exit_rqst-TM_EXIT_NORMAL,0,0);
     if (result!=row[8] || lines[3].special!=row[9] || tm_probe_cnt!=row[10]) {
       "EVENT %d KIND %d SPECIAL %d PLAYER %d SIDE %d SECRET %d OK %d TYPE %d\\n",
             i,row[0],row[1],row[2],row[3],row[4],row[5],row[6];

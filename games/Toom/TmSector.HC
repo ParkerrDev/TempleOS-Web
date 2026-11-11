@@ -34,7 +34,7 @@ U0 SectorsDel(Sectors *tmps)
 {
   Mover *tmpm,*next;
   if (tmps) {
-    if (tmps->motion->world->thinking) throw('Thinking');
+    WorldIdle(tmps->motion->world);
     for (tmpm=tmps->first;tmpm;tmpm=next) {
       next=tmpm->next; QueRem(&tmpm->thinker); Free(tmpm);
     }

@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "fc2f1043ec8ea135d7ff0fdeac8a6b503034231d6317dd7605842b69e2db578e",
+  "renderSourceSha256": "aef4c6bc81146bb47a2ee7b6ccf14c1e6eb0b8fa3cde89710cf1393f0100b41a",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-u032wpz7",
+      "native": "qemu-cszzh59_",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -67,13 +67,13 @@
     },
     "weapon": {
       "cases": 13859,
-      "native": "qemu-7pnrbfph",
+      "native": "qemu-2onb3coq",
       "hemu": true,
       "weaponActions": 22
     },
     "player": {
       "cases": 1681,
-      "native": "qemu-syw03kj9",
+      "native": "qemu-quhomp0n",
       "hemu": true,
       "commandVectors": 1500
     },
@@ -214,13 +214,13 @@
     "sectorEffects": {
       "cases": 391,
       "tics": 49152,
-      "native": "qemu-to6xydyw",
+      "native": "qemu-4qo3scft",
       "hemu": true,
-      "scope": "Damage/boots/RNG/secrets/exit-sector primitives across384 protection/ground/skill/seed combinations plus7 map-floor/invulnerability/actor-role contracts; explicit exit callback, no actual level transition."
+      "scope": "Damage/boots/RNG/secrets/exit-sector primitives across384 protection/ground/skill/seed combinations plus7 map-floor/invulnerability/actor-role contracts; queued exit request, no actual level transition."
     },
     "lineEvents": {
       "integrationCases": 62,
-      "native": "qemu-cu6x0i6z",
+      "native": "qemu-g9ri5jzf",
       "hemu": true,
       "scope": "Actual use traces/controllers, permissions, busy actions, once/repeat crossings, teleport movement callbacks, shot switches, lights and exit requests; no complete gameplay loop."
     },
@@ -232,9 +232,9 @@
         "cross": 72,
         "shoot": 3
       },
-      "native": "qemu-o_gycwen",
+      "native": "qemu-580wtm6q",
       "hemu": true,
-      "reference": "Pinned original p_switch.c and p_spec.c parsed for action calls, arguments, order, permissions and consumption rules; actions instrumented separately from the real-controller integration fixture."
+      "reference": "Pinned original p_switch.c and p_spec.c parsed for action calls, arguments, order, permissions and consumption rules; actions instrumented separately from the real-controller integration fixture. Exit values are compared as queued requests, with an assertion that switch changes precede exit publication."
     },
     "thinkerOrder": {
       "cases": 324,
@@ -245,7 +245,7 @@
     },
     "thinkers": {
       "cases": 18,
-      "native": "qemu-btge5y3l",
+      "native": "qemu-hacct8f9",
       "hemu": true,
       "scope": "Real interleaved actor/light RNG, floor/actor order, callback-created actors/movers, retirement, reentry/owner destruction rejection, exception cleanup and mixed light/timed-door initialization. No complete-game or demo synchronization claim."
     },
@@ -273,9 +273,17 @@
       "expectedPixelAndDepthComparisons": 432,
       "changedSuccessiveViews": 77,
       "cacheAndOwnershipCases": 6,
-      "native": "qemu-nj3wmus7",
+      "native": "qemu-vvn5b04c",
       "hemuPixelHashesMatch": true,
-      "details": "surface-evidence.json"
+      "details": "clock-evidence.json"
+    },
+    "levelClock": {
+      "orderCases": 256,
+      "integrationCases": 20,
+      "nativeOrder": "qemu-xpl0v70e",
+      "nativeIntegration": "qemu-5stbwkfm",
+      "hemu": true,
+      "details": "clock-evidence.json"
     }
   },
   "frames": [

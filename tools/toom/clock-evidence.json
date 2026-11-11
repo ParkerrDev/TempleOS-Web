@@ -1,0 +1,63 @@
+{
+  "description": "Single-player simulation phases and lifetime checks; no playable-game, host scheduling or complete-game FPS claim.",
+  "engine": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "order": {
+    "cases": 256,
+    "native": "qemu-xpl0v70e",
+    "hemu": true,
+    "reference": "Hash-pinned original P_Ticker compiled as host C. Single-player, menu inactive, 16 four-tic pause sequences at four starting clocks; the deathmatch-only item-respawn stage is inert."
+  },
+  "integration": {
+    "cases": 20,
+    "native": "qemu-5stbwkfm",
+    "hemu": true,
+    "sourceSha256": "6c4c91fe58690d316cafa1f687e4054f11d8fe4fccc2c121a27956f6d94fa41c",
+    "scope": [
+      "Player use/secret effects precede newly created door thinkers.",
+      "Animation/scrolling precedes button expiry; one common level clock advances last.",
+      "Pause and pending exits stop further tics; later same-tic exit requests overwrite earlier ones.",
+      "Player and weapon bob use the same level clock.",
+      "Context/clock bounds, reentry and six world-owner destructor guards.",
+      "Exceptions retain prior effects, release active guards and permit cleanup.",
+      "No eager pixel reads/cache allocation; own-task heap returns to its baseline."
+    ],
+    "taskIsolation": "HEMU uses its ordinary fresh-task launch API, matching the native oracle. Native throw logs to Adam; running heap assertions inside Adam would count those document allocations."
+  },
+  "regressions": {
+    "player": "qemu-quhomp0n",
+    "weapon": "qemu-2onb3coq",
+    "hazard": "qemu-4qo3scft",
+    "special-use": "qemu-g9ri5jzf",
+    "special-dispatch": "qemu-580wtm6q",
+    "think": "qemu-hacct8f9"
+  },
+  "images": {
+    "static": {
+      "views": 288,
+      "native": "qemu-cszzh59_",
+      "sourceSha256": "aef4c6bc81146bb47a2ee7b6ccf14c1e6eb0b8fa3cde89710cf1393f0100b41a",
+      "hemu": true
+    },
+    "animated": {
+      "views": 432,
+      "native": "qemu-vvn5b04c",
+      "sourceSha256": "29971caa95837edbcb0e2c183fe970f9e087fd19e30745e1a489ecaac4583465",
+      "hemu": true,
+      "unchangedHashes": "surface-evidence.json: render.hashes"
+    },
+    "scope": "Static images/cache/read/actor counts and animated pixel hashes remain unchanged. Animated expected-frame depth comparisons pass independently in each backend."
+  },
+  "remaining": [
+    "Actor AI/actions",
+    "Native host input/render pacing and UI/audio",
+    "Save/load and episode/intermission progression"
+  ]
+}

@@ -1,4 +1,4 @@
-U0 PlayerSector(Motion *tmpm,Actor *tmpa,U0 (*exit)(Bool secret)=NULL)
+U0 PlayerSector(Motion *tmpm,Actor *tmpa)
 {//Ground contact precedes damage cadence; protective boots consume their RNG.
   World *world=tmpm->world;
   Player *player=MotionPlayer(tmpm,tmpa);
@@ -28,5 +28,5 @@ U0 PlayerSector(Motion *tmpm,Actor *tmpa,U0 (*exit)(Bool secret)=NULL)
       break;
   }
   if (damage && !(world->tic&31)) ActorDamage(tmpm,tmpa,NULL,NULL,damage);
-  if (special==11 && player->health<=10 && exit) (*exit)(FALSE);
+  if (special==11 && player->health<=10) world->exit_rqst=TM_EXIT_NORMAL;
 }

@@ -16,9 +16,15 @@ class World
   ActorSlot *slot;
   I64 slot_cap,free_slot,actor_cnt,*blocks,skill,random,tic,player,
 	player_start,total_kills,total_items,total_secrets,max_radius,
-	first,last,hit_actor,hit_kind;
-  Bool thinking;
+	first,last,hit_actor,hit_kind,exit_rqst;
+  Bool thinking,ticking;
 };
+
+U0 WorldIdle(World *tmpw)
+{
+  if (tmpw->thinking) throw('Thinking');
+  if (tmpw->ticking) throw('Ticking');
+}
 
 I64 WorldRand(World *tmpw)
 {
@@ -93,7 +99,7 @@ U0 WorldDel(World *tmpw)
 {
   I64 i;
   if (tmpw) {
-    if (tmpw->thinking) throw('Thinking');
+    WorldIdle(tmpw);
     for (i=0;i<tmpw->slot_cap;i++) Free(tmpw->slot[i].actor);
     Free(tmpw->slot); Free(tmpw->blocks);
     CollisionDel(tmpw->collision); Free(tmpw);

@@ -7,7 +7,7 @@ class Weapon
 {
   Motion *motion;
   Attack *trace;
-  I64 tic,state_depth;
+  I64 state_depth;
   U0 (*action)(Weapon *weapon,Psprite *sprite,I64 n);
   U0 (*special)(Actor *source,I64 line);
   U0 (*noise)(Actor *source);
@@ -16,6 +16,7 @@ class Weapon
 U0 WeaponDel(Weapon *tmpw)
 {
   if (tmpw) {
+    WorldIdle(tmpw->motion->world);
     AttackDel(tmpw->trace); Free(tmpw);
   }
 }
@@ -147,7 +148,7 @@ U0 WeaponReady(Weapon *tmpw,Psprite *sprite)
     }
   } else
     tmpp->attack_down=FALSE;
-  angle=128*tmpw->tic&8191;
+  angle=128*tmpw->motion->world->tic&8191;
   sprite->x=65536+FixedMul(tmpp->bob,data->sine[angle+2048]);
   sprite->y=TM_WEAPON_TOP+FixedMul(tmpp->bob,data->sine[angle&4095]);
 }
@@ -391,5 +392,4 @@ U0 WeaponTick(Weapon *tmpw)
       WeaponState(tmpw,i,tmpw->motion->world->data->state[sprite->state].next);
   tmpp->psprite[1].x=tmpp->psprite[0].x;
   tmpp->psprite[1].y=tmpp->psprite[0].y;
-  tmpw->tic++;
 }

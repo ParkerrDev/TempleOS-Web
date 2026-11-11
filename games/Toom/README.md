@@ -54,6 +54,13 @@ The implemented foundation uses native V5.03 file and memory APIs:
   interleaves timed doors and lights by sector order and counts secret sectors.
   The thinker pass advances neither the level clock nor rendering. Reentry and
   destruction of live contexts during that pass fail before changing ownership.
+- A single-player tic runs player logic, shared thinkers, surface updates and
+  buttons before advancing the common level clock. Pause stops that sequence;
+  player and weapon bob use the same clock as hazards and animation. Normal and
+  secret exits become pending requests, so the active tic finishes before the
+  host replaces a level. Reentry and destruction of world-linked owners during
+  an active tic fail before releasing memory. Exceptions release the active
+  guard while retaining effects that already occurred.
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
   contact callbacks defer reclamation until the end of the tic. Nested contact
@@ -77,7 +84,7 @@ The implemented foundation uses native V5.03 file and memory APIs:
   requests preserve their neighbor, RNG and mover-ownership rules.
 - Grounded player sector effects handle the original damage cadence, boot
   protection/leak RNG, secrets and the damaging exit sector. Exit sectors
-  clear god mode, preserve invulnerability and use an explicit exit callback;
+  clear god mode, preserve invulnerability and record a pending normal exit;
   actual level transition remains separate.
 - Use, crossing and shot events dispatch all original line specials. Use traces
   stop at the first special line or closed opening; one-shot/repeat behavior,
@@ -238,6 +245,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/special-dispatch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think-order.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/think-map.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/clock-order.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/clock.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -415,8 +424,18 @@ original routine's read after its free callback. Eighteen real-controller cases
 cover interleaved RNG, floor/actor order, callback spawns, retirement, exception
 cleanup, reentry/destruction guards and timed-door/light initialization order.
 All 36 real maps retain 626 light controllers and 183 secret sectors in their
-expected order. These are simulation foundations; the full game clock, actor
-AI/actions and level progression remain unfinished.
+expected order. The clock-order oracle separately compiles original `P_Ticker`
+and compares 256 pause/resume cases with the native phase sequence. Twenty real
+cases cover first-tic doors/buttons, the shared player/weapon clock, queued exits,
+context and clock bounds, callback reentry/destruction, exception cleanup and
+allocation/read stability. The player gate includes the complete program to
+catch composition problems such as conflicting height constants. These remain
+simulation foundations; actor AI/actions, host scheduling and level progression
+are unfinished.
+Clock evidence is recorded in `tools/toom/clock-evidence.json`. Its HEMU
+exception/heap fixture uses the normal fresh-task launch path, matching the
+native oracle: TempleOS logs exceptions to Adam, whose document allocations
+must not be counted as allocations retained by the tested program.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation
@@ -424,11 +443,11 @@ changes, missing cycle endpoints and more than 64 scrolling lines. A separate
 432-view fixture compares animated pixels and depth with an independent view
 whose map names are replaced by the expected frames. It also checks changed
 floor/ceiling names, sky transitions, invalid names and context ownership.
-These updates still await connection to the complete simulation clock.
+The single-player tic drives these updates independently of rendering.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
 motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector,
 door, floor, mover, teleport, switch, lighting, sector-effect, line-event, thinker
-or surface
+or surface/clock
 checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.

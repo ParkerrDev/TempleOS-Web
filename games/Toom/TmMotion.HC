@@ -2,7 +2,7 @@
 #define TM_STOP_SPEED	0x1000
 #define TM_FRICTION	0xE800
 #define TM_GRAVITY	65536
-#define TM_VIEW_HEIGHT	(41*65536)
+#define TM_EYE_HEIGHT	(41*65536)
 
 class Motion
 {
@@ -18,7 +18,7 @@ class Motion
 U0 MotionDel(Motion *tmpm)
 {
   if (tmpm) {
-    if (tmpm->world->thinking) throw('Thinking');
+    WorldIdle(tmpm->world);
     PathDel(tmpm->path); Free(tmpm);
   }
 }
@@ -124,7 +124,7 @@ U0 ActorZ(Motion *tmpm,Actor *tmpa)
   I64 distance,delta;
   if (tmpp && tmpa->z<tmpa->floor) {
     tmpp->view_height-=tmpa->floor-tmpa->z;
-    tmpp->delta_view_height=(TM_VIEW_HEIGHT-tmpp->view_height)>>3;
+    tmpp->delta_view_height=(TM_EYE_HEIGHT-tmpp->view_height)>>3;
   }
   tmpa->z+=tmpa->vz;
   if (tmpa->flags&TM_MF_FLOAT &&

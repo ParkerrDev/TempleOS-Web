@@ -42,3 +42,37 @@ U0 ThinkersTick(Specials *tmps)
   world->thinking=FALSE;
   WorldSweep(world); MoversSweep(sectors);
 }
+
+U0 TickPlayerUse(Actor *actor,U8 *context)
+{
+  PlayerUse(context,actor);
+}
+
+U0 TickPlayerSector(Actor *actor,U8 *context)
+{
+  Specials *tmps=context;
+  PlayerSector(tmps->sectors->motion,actor);
+}
+
+I64 LevelTick(Weapon *weapon,Specials *specials,Surfaces *surfaces,
+	Bool paused=FALSE)
+{//Single-player 35 Hz order. The caller handles exits after this returns.
+  World *world=weapon->motion->world;
+  WorldIdle(world);
+  if (specials->sectors->motion!=weapon->motion ||
+	surfaces->map!=world->map ||
+	surfaces->graphics!=specials->sectors->graphics) throw('Owner');
+  if (world->tic<0 || world->tic==I64_MAX) throw('Tic');
+  if (world->exit_rqst || paused) return world->exit_rqst;
+  world->ticking=TRUE;
+  try {
+    PlayerTick(weapon,&TickPlayerUse,&TickPlayerSector,specials);
+    ThinkersTick(specials);
+    SurfacesTick(surfaces,world->tic); ButtonsTick(specials->switches);
+    world->tic++;
+  } catch {
+    world->ticking=FALSE;
+  }
+  world->ticking=FALSE;
+  return world->exit_rqst;
+}

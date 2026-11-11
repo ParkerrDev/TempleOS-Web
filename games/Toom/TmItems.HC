@@ -7,7 +7,7 @@ U0 PlayerBorn(Player *tmpp)
   MemSet(tmpp,0,sizeof(Player));
   tmpp->kills=kills; tmpp->items=items; tmpp->secrets=secrets;
   tmpp->weapon_rqst=TM_WP_NOCHANGE;
-  tmpp->health=100; tmpp->view_height=TM_VIEW_HEIGHT;
+  tmpp->health=100; tmpp->view_height=TM_EYE_HEIGHT;
   tmpp->ready_weapon=TM_WP_PISTOL; tmpp->pending_weapon=TM_WP_NOCHANGE;
   tmpp->weapon[TM_WP_FIST]=tmpp->weapon[TM_WP_PISTOL]=TRUE;
   tmpp->ammo[TM_AM_CLIP]=50;

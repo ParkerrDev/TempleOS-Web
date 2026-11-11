@@ -3,14 +3,13 @@ class Specials
   Sectors *sectors;
   Switches *switches;
   Lights *lights;
-  U0 (*exit)(Bool secret);
   Bool monsters_stomp,initialized;
 };
 
 U0 SpecialsDel(Specials *tmps)
 {
   if (tmps) {
-    if (tmps->sectors->motion->world->thinking) throw('Thinking');
+    WorldIdle(tmps->sectors->motion->world);
     SwitchesDel(tmps->switches); LightsDel(tmps->lights); Free(tmps);
   }
 }
@@ -69,7 +68,7 @@ Bool LineUse(Specials *tmps,Actor *actor,I64 line,I64 side)
     case 11:
     case 51:
       SwitchChange(tmps->switches,line,FALSE);
-      if (tmps->exit) (*tmps->exit)(n==51);
+      motion->world->exit_rqst=TM_EXIT_NORMAL+(n==51);
       return TRUE;
     case 7:
       res=FloorStairs(sectors,line);
@@ -275,7 +274,7 @@ U0 LineCross(Specials *tmps,Actor *actor,I64 line,I64 side)
   switch (n) {
     case 52:
     case 124:
-      if (tmps->exit) (*tmps->exit)(n==124);
+      motion->world->exit_rqst=TM_EXIT_NORMAL+(n==124);
       return;
     case 125:
     case 126:

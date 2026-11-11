@@ -25,7 +25,8 @@ control, fixed-tic player movement/view/power/death, actor sight and blast
 damage, moving-plane clipping/crushing, door/floor/lift/ceiling controllers
 and activation, teleport movement/effects, switch texture/button state,
 sector lighting, damaging floors/secrets/exit sectors, line use/crossing/shot
-dispatch, shared thinker scheduling, surface animation/scrolling, hit
+dispatch, shared thinker scheduling, single-player tic order, surface
+animation/scrolling, hit
 cross-sections and axis/vertex conventions were re-expressed in
 native HolyC from p_map.c, p_maputl.c, p_mobj.c, p_inter.c, p_pspr.c,
 p_user.c, p_sight.c, p_floor.c, p_doors.c, p_plats.c, p_ceilng.c, p_telept.c,

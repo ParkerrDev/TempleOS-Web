@@ -6,9 +6,9 @@ import {root} from './Assets.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const bytes=readFileSync(resolve(root,'games/Toom/TMDATA.BIN'));
-const source=['TmGlbls.HH','TmWad.HC','TmMap.HC','TmData.HH','TmClip.HC',
-  'TmState.HC','TmMath.HC','TmWorld.HC','TmContact.HC','TmMove.HC','TmPath.HC','TmSlide.HC','TmPlayer.HH','TmMotion.HC','TmAttack.HC','TmDamage.HC','TmItems.HC','TmImpact.HC','TmWeapon.HC','TmPlayer.HC']
-  .map(n=>readFileSync(resolve(root,'games/Toom',n),'latin1')).join('\n')+'\n'+
+const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
+const source=[...load.matchAll(/#include "([^"]+)"/g)]
+  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
   ['Rooms.HC','Player.HC'].map(n=>readFileSync(resolve(root,'tools/toom',n),'latin1')).join('\n');
 const defs=Object.fromEntries([...readFileSync(resolve(root,'games/Toom/TmData.HH'),'ascii')
   .matchAll(/^#define (TM_\w+)\s+(\d+)$/gm)].map(m=>[m[1],Number(m[2])]));

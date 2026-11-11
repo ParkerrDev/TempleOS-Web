@@ -39,11 +39,11 @@ U0 PlayerView(Motion *tmpm,Actor *tmpa,I64 tic)
     bob=FixedMul(tmpp->bob/2,tmpm->world->data->sine[angle]);
     if (!tmpp->dead) {
       tmpp->view_height+=tmpp->delta_view_height;
-      if (tmpp->view_height>TM_VIEW_HEIGHT) {
-	tmpp->view_height=TM_VIEW_HEIGHT; tmpp->delta_view_height=0;
+      if (tmpp->view_height>TM_EYE_HEIGHT) {
+	tmpp->view_height=TM_EYE_HEIGHT; tmpp->delta_view_height=0;
       }
-      if (tmpp->view_height<TM_VIEW_HEIGHT/2) {
-	tmpp->view_height=TM_VIEW_HEIGHT/2;
+      if (tmpp->view_height<TM_EYE_HEIGHT/2) {
+	tmpp->view_height=TM_EYE_HEIGHT/2;
 	if (tmpp->delta_view_height<=0) tmpp->delta_view_height=1;
       }
       if (tmpp->delta_view_height) {
@@ -107,13 +107,13 @@ U0 PlayerDeath(Motion *tmpm,Actor *tmpa,I64 tic)
   if (tmpp->buttons&TM_BTF_USE) tmpp->reborn=TRUE;
 }
 
-U0 PlayerTick(Weapon *tmpw,U0 (*use)(Actor *actor)=NULL,
-	U0 (*sector)(Actor *actor)=NULL)
+U0 PlayerTick(Weapon *tmpw,U0 (*use)(Actor *actor,U8 *context)=NULL,
+	U0 (*sector)(Actor *actor,U8 *context)=NULL,U8 *context=NULL)
 {//Input, view, sector effects, overlays and powers precede actor thinkers.
   Motion *tmpm=tmpw->motion;
   Player *tmpp=tmpm->player;
   Actor *tmpa=WeaponActor(tmpw);
-  I64 tic=tmpw->tic;
+  I64 tic=tmpm->world->tic;
   if (!tmpa) return;
   if (tmpp->no_clip) tmpa->flags|=TM_MF_NOCLIP;
   else tmpa->flags&=~TM_MF_NOCLIP;
@@ -128,14 +128,14 @@ U0 PlayerTick(Weapon *tmpw,U0 (*use)(Actor *actor)=NULL,
   else PlayerMove(tmpm,tmpa);
   PlayerView(tmpm,tmpa,tic);
   if (sector && tmpm->world->map->sector[tmpa->sector].special)
-    (*sector)(tmpa);
+    (*sector)(tmpa,context);
   if (!tmpa->active) return;
   PlayerWeaponRqst(tmpp,tmpp->weapon_rqst);
   tmpp->weapon_rqst=TM_WP_NOCHANGE;
   if (tmpp->buttons&TM_BTF_USE) {
     if (!tmpp->use_down) {
       tmpp->use_down=TRUE;
-      if (use) (*use)(tmpa);
+      if (use) (*use)(tmpa,context);
     }
   } else
     tmpp->use_down=FALSE;

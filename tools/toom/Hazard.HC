@@ -1,9 +1,12 @@
 I64 tm_hazard_cases=0,tm_hazard_tics=0,tm_hazard_done=0,tm_hazard_exits=0;
 
-U0 TmHazardExit(Bool secret)
+U0 TmHazardApply(Motion *motion,Actor *actor)
 {
-  if (secret) throw('Secret');
-  tm_hazard_exits++;
+  motion->world->exit_rqst=0; PlayerSector(motion,actor);
+  if (motion->world->exit_rqst) {
+    if (motion->world->exit_rqst!=TM_EXIT_NORMAL) throw('Secret');
+    tm_hazard_exits++;
+  }
 }
 
 U0 TmHazardTest()
@@ -26,7 +29,7 @@ U0 TmHazardTest()
     actor->flags=data->info[TM_MT_PLAYER].flags;
     player.secrets=3; tm_hazard_exits=0;
     for (j=0;j<n;j++,row+=7) {
-      world->tic=j; PlayerSector(motion,actor,&TmHazardExit);
+      world->tic=j; TmHazardApply(motion,actor);
       if (player.health!=row[0] || actor->health!=row[0] ||
 	    world->random!=row[1] || map->sector[0].special!=row[2] ||
 	    player.god_mode!=row[3] || player.secrets!=row[4] ||
@@ -53,19 +56,19 @@ U0 TmHazardTest()
   map->sector[0].special=11; player.power[TM_PW_INVULNERABILITY]=1;
   player.god_mode=TRUE; player.health=actor->health=100;
   random=world->random; tm_hazard_exits=0;
-  PlayerSector(motion,actor,&TmHazardExit);
+  TmHazardApply(motion,actor);
   if (player.health!=100 || player.god_mode || world->random!=random ||
 	tm_hazard_exits) throw('Invul');
-  player.health=actor->health=10; PlayerSector(motion,actor,&TmHazardExit);
+  player.health=actor->health=10; TmHazardApply(motion,actor);
   if (player.health!=10 || world->random!=random || tm_hazard_exits!=1)
     throw('Exit');
   world->player=0; map->sector[0].special=5;
   player.power[TM_PW_INVULNERABILITY]=0;
-  PlayerSector(motion,actor,&TmHazardExit);
+  TmHazardApply(motion,actor);
   if (player.health!=10 || world->random!=random || tm_hazard_exits!=1)
     throw('Other');
   world->player=actor->id; actor->active=FALSE;
-  PlayerSector(motion,actor,&TmHazardExit);
+  TmHazardApply(motion,actor);
   if (player.health!=10 || world->random!=random || tm_hazard_exits!=1)
     throw('Retired');
   tm_hazard_cases+=7;

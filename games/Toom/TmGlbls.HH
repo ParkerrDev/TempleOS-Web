@@ -1,3 +1,6 @@
+#define TM_EXIT_NORMAL 1
+#define TM_EXIT_SECRET 2
+
 #define TM_TICK_HZ	35
 #define TM_LUMPS_NUM	8192
 #define TM_LUMP_SIZE	0x1000000
