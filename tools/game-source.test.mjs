@@ -47,6 +47,14 @@ let attempted=0;
 await assert.rejects(installGame(project.id,async()=>({ok:++attempted===1,msg:'simulated disk failure'}),()=>{},await project.overrides()),/simulated disk failure/);
 writes.length=0;await installGame(project.id,write);assert.equal(writes.length,2,'Retry restores partial installs');
 writes.length=0;await installGame(project.id,write,()=>{},new Map(),()=>1);assert.equal(writes.length,2);
+let generation=1,queuedRestart=false;
+writes.length=0;
+await assert.rejects(installGame(project.id,write,()=>{},new Map(),()=>{
+ const current=generation;
+ if(!queuedRestart){queuedRestart=true;queueMicrotask(()=>generation++);}
+ return current;
+}),/OS restarted during installation/);
+assert.equal(writes.length,0,'A cached install must still detect restart before returning a launch path.');
 await assert.rejects(installGame(project.id,write,()=>{},new Map([['C:/Home/foreign.HC',new ArrayBuffer(0)]])),/not a game source/);
 const file=catalog.packages[0].files[0],copy=await gameFile(file);new Uint8Array(copy).fill(0);
 assert.notDeepEqual(new Uint8Array(await gameFile(file)),new Uint8Array(copy),'Cached bytes remain intact');

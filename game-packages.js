@@ -39,6 +39,7 @@ export async function installGame(id,writeFile,onStatus=()=>{},overrides=new Map
     onStatus(`Downloading ${pkg.name}: ${++done} / ${need.length}`);
   }};
   await Promise.all(Array.from({length:Math.min(8,need.length)},fetcher));
+  if (osGen() !== generation) throw new Error("OS restarted during installation.");
   if(files.length)installed.delete(id);
   for(let i=0;i<files.length;i++){
     if (osGen() !== generation) throw new Error("OS restarted during installation.");

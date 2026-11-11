@@ -52,6 +52,7 @@ for (const smp of [0,4]) {
     assert.equal(head.meta.repeat,true);assert.equal(head.meta.launch.name,"Snapshot loop");
     h=await HemuBoot({snapshot:saved.buf,busProtocol,keep_buf:true});
     await h.Wait(m=>m.cmd==="restored",30000);
+    assert.ok(h.msgs.some(m=>m.cmd==="guestReady"&&m.restored&&m.diskReady&&!m.diskPending));
     const resumed=await Request(h,{cmd:"__peek",ranges},m=>m.cmd==="__peek");
     assert.deepEqual(resumed.ranges,before.ranges,"CPU, x87, SSE, clock, keyboard and palette restore exactly");
     assert.deepEqual(h.palette,palette,"restored palette produces the same RGB pixels as the original frame");

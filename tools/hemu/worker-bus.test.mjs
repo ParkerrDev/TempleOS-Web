@@ -27,6 +27,7 @@ try {
   await assert.rejects(()=>HemuBoot({snapshot:saved.buf}),/requires shared RAM protocol 1/);
   h=await HemuBoot({snapshot:saved.buf,busProtocol:1,patches:false});
   await h.Wait(m=>m.cmd==="restored",30000);
+  assert.ok(h.msgs.some(m=>m.cmd==="guestReady"&&m.restored&&m.diskReady&&!m.diskPending));
   await Request(h,{cmd:"pause",value:false},m=>m.cmd==="paused"&&!m.value);
   const resumed=await Request(h,{cmd:"osExec",id:"restored-cas",target:"adam",src:"Cmp16Guest;"},
     m=>m.cmd==="fileResult"&&m.id==="restored-cas");

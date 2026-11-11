@@ -30,7 +30,7 @@ function SettingsApply(rateChanged=true)
 let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0, instRef = null;
 let paused=false,saving=false,machineBarrier=null,engineBytes=null,hostRef=null,showStoppedFrame=null;
-let machineBus=null;
+let machineBus=null,diskPending=false,diskGeneration=0;
 const RamAccess=fn=>machineBus?machineBus.Access(fn):fn();
 const deferred=[];
 let docClip=null;
@@ -65,7 +65,7 @@ function GuestCacheInvalidate(lbas)
       return Number(dvw.getBigUint64(gBase+a,true));
     return 0;
   }
-  if (!instRef || !disk || !gx)
+  if (!instRef || !gx)
     return 0;
   base=gx.varFind("blkdev");
   o_ctrl=gx.memberFind("CBlkDevGlbls","cache_ctrl");
@@ -194,7 +194,7 @@ function gxTick() {                          // once per emulated frame: service
   if (!gx.ready && gxFrames >= 3 && (gxFrames - 3) % 30 === 0 && gxProbeTries < 40) {
     gxProbeTries++;
     try { gxProbe = gx.probe(); } catch (e) { gxProbe = { ok: false, errors: [String(e && e.message || e)], warnings: [] }; }
-    if (gxProbe.ok) { console.log("[hemu] guest execution API ready: " + JSON.stringify({ syms: gxProbe.syms, focusFn: gxProbe.focusFn, warnings: gxProbe.warnings, tasks: gxProbe.tasks.map((t) => t.name + (t.atPrompt ? "(prompt)" : "")) })); postMessage({ cmd: "guestReady", ok: true, probe: gxProbe }); }
+    if (gxProbe.ok) { console.log("[hemu] guest execution API ready: " + JSON.stringify({ syms: gxProbe.syms, focusFn: gxProbe.focusFn, warnings: gxProbe.warnings, tasks: gxProbe.tasks.map((t) => t.name + (t.atPrompt ? "(prompt)" : "")) })); postMessage({ cmd: "guestReady", ok: true, probe: gxProbe, diskReady:!!disk,diskPending }); }
     else { console.warn("[hemu] guest probe " + gxProbeTries + ": " + gxProbe.errors.join("; ")); if (gxProbeTries === 40) postMessage({ cmd: "guestReady", ok: false, probe: gxProbe }); }
   }
   docClip?.Tick(!!disk);
@@ -231,7 +231,17 @@ onmessage = (e) => {
   else if (m.cmd === "pause") {try {PauseSet(m.value);} catch(err) {postMessage({cmd:"error",msg:err.message});}}
   else if (m.cmd === "exportSnapshot") exportImage("snapshot");
   else if (m.cmd === "exportDisk") exportImage("disk");
-  else if (m.cmd === "importDisk") { try { disk = makeDisk(new Uint8Array(m.bytes)); GuestCacheInvalidate(); postMessage({ cmd: "diskInfo", ok: true, msg: "disk imported (" + (m.bytes.byteLength / 1048576).toFixed(0) + " MB)" }); } catch (err) { postMessage({ cmd: "diskInfo", ok: false, msg: String(err.message || err) }); } }
+  else if (m.cmd === "importDisk") {
+    try {
+      const next=makeDisk(new Uint8Array(m.bytes));
+      GuestCacheInvalidate();
+      disk=next;diskGeneration++;diskPending=false;
+      postMessage({cmd:"diskInfo",ok:true,diskReady:true,diskPending,
+        msg:"Disk imported ("+(m.bytes.byteLength/1048576).toFixed(0)+" MB)"});
+    } catch(err) {
+      postMessage({cmd:"diskInfo",ok:false,diskReady:!!disk,diskPending,msg:String(err.message||err)});
+    }
+  }
   else if (m.cmd === "uploadFile") {
     try { if (!disk) throw new Error("disk not loaded yet - wait a moment after boot");
       const before = new Set(disk.overlay.keys());                       // which sectors are already overlaid
@@ -402,7 +412,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
     gx=createGuestExec({inst,gBase,onEvent:gxEvent,access:RamAccess});gxProbe=gx.probe();
     if (!gxProbe.ok) throw new Error("Saved guest API could not be restored: "+gxProbe.errors.join("; "));
     gx.restoreLaunch(m.launch);
-    postMessage({cmd:"guestReady",ok:true,probe:gxProbe,restored:true});
+    postMessage({cmd:"guestReady",ok:true,probe:gxProbe,restored:true,diskReady:!!disk,diskPending:false});
     postMessage({cmd:"settings",ok:true,rate:actualRate,repeat:repeatKeys});
     postMessage({cmd:"paused",value:paused});
     if (smpCfg) {
@@ -468,7 +478,23 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
       // Load the C: disk AFTER boot settles (file I/O works once it lands; the desktop runs from
       // cached RAM). Deferring it keeps the disk decompress out of the boot memory spike - the
       // difference between living and dying on iOS Safari's per-tab memory budget.
-      if (!disk) setTimeout(() => loadDisk("../vendor/images/templeos-hd.qcow2.gz").then(d => {disk=d;postMessage({cmd:"diskInfo",ok:true,msg:"Disk ready"});}).catch(err => {disk=null;postMessage({cmd:"diskInfo",ok:false,msg:err.message});}), 2500);
+      if (!disk) {
+        const generation=++diskGeneration;
+        diskPending=true;
+        setTimeout(async()=>{
+          if(generation!==diskGeneration)return;
+          try {
+            const next=await loadDisk("../vendor/images/templeos-hd.qcow2.gz");
+            if(generation!==diskGeneration)return;
+            disk=next;diskPending=false;
+            postMessage({cmd:"diskInfo",ok:true,diskReady:true,diskPending,msg:"Disk ready"});
+          } catch(err) {
+            if(generation!==diskGeneration)return;
+            diskPending=false;
+            postMessage({cmd:"diskInfo",ok:false,diskReady:!!disk,diskPending,msg:err.message});
+          }
+        },2500);
+      }
       // guest execution API: bound to this instance now that gBase is known (snapLoad ran in the first frame)
       try { gx = createGuestExec({ inst, gBase, onEvent: gxEvent, access:RamAccess, log: (s) => console.log("[hemu gx] " + s) }); }
       catch (e) { console.warn("[hemu] guest execution API unavailable: " + e.message); postMessage({ cmd: "guestReady", ok: false, probe: { ok: false, errors: [String(e.message || e)], warnings: [] } }); }

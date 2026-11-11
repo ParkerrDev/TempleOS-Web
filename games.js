@@ -4,7 +4,7 @@ import {GAMES} from "./GameCatalog.js";
 export {GAMES} from "./GameCatalog.js";
 import {WinAdd,WinRaise,WinTitle} from './WinMgr.js';
 import {HelpGame} from './HelpWin.js';
-import {engine,os_game,OsCaptureSet,OsFileWrite,OsGen,OsHold,OsInputRelease,OsInputReset,OsLaunch} from './Os.js';
+import {os_game,OsCaptureSet,OsFileWrite,OsGen,OsHold,OsInputRelease,OsInputReset,OsLaunch} from './Os.js';
 import {EdLoad,ed_game,ed_view} from './EditorWin.js';
 
 const CSS='    /* ---- Games launcher ---- */\n'+
@@ -301,26 +301,18 @@ async function runInTempleOS(g,suppliedOverrides=null) {                        
   if (packageLaunchBusy) { toast("A game is already being prepared. Please wait."); return; }
   closeGameWin();
   packageLaunchBusy = true;
+  const generation=OsGen(),current=()=>{
+    if(OsGen()!==generation)throw new Error("OS restarted while preparing this game.");
+  };
   try {
   curGame = g;
-  if (!engine.kind) {
-    toast("The TempleOS engine isn't ready yet - open the <b>Disk</b> window and let the OS finish booting, then try again.");
-    setStatus("OS engine not ready"); return;
-  }
-  // The engine dispatches a guest job and reports its startup state by request ID.
   let opts;
   if (g.packageId) {
     try {
       const {installGame} = await import("./game-packages.js");
-      const writeWhenReady = async (path,bytes) => {
-        for(let attempt=0;attempt<20;attempt++) {
-          const result=await OsFileWrite(path,bytes.slice(0));
-          if(result?.ok || !/not ready|not loaded|not up|booting/i.test(result?.msg || "") || attempt===19)return result;
-          await new Promise(resolve=>setTimeout(resolve,1500));
-        }
-      };
+      const writeCurrent=(path,bytes)=>{current();return OsFileWrite(path,bytes.slice(0));};
       const project=await gameProject(g);
-      opts = await installGame(g.packageId,writeWhenReady,setStatus,suppliedOverrides ?? await project.overrides(),OsGen);
+      opts = await installGame(g.packageId,writeCurrent,setStatus,suppliedOverrides ?? await project.overrides(),OsGen);
     } catch(e) {
       setStatus("Install failed: " + e.message);
       toast("Could not install the game. " + e.message.replace(/[<>&]/g,""));
@@ -332,16 +324,10 @@ async function runInTempleOS(g,suppliedOverrides=null) {                        
     const raw = await gameSrc(g);
     opts = { src: "#define TOS_NATIVE 1\n" + raw, name: g.name };
   }
-  // The C: disk mounts a few seconds AFTER boot, so retry while the launcher isn't ready yet.
+  current();
   toast("Loading <b>" + g.name + "</b> in TempleOS…", 60000);
   setStatus("launching " + g.name + " in TempleOS…");
-  let r, tries = 0;
-  do {
-    r = await OsLaunch(opts);
-    if (r && r.ok) break;
-    if (!/not ready|not loaded|not up|booting/i.test((r && r.msg) || "")) break;
-    await new Promise((res) => setTimeout(res, 1500));
-  } while (++tries < 20);
+  const r=await OsLaunch(opts);
   if (r && r.ok) {
     closeGames();ovE.classList.remove("open","free");
     const how = g.how || "Click the screen, then follow the on-screen instructions.";
@@ -352,8 +338,7 @@ async function runInTempleOS(g,suppliedOverrides=null) {                        
     OsCaptureSet(g.name === "HolyCraft" || g.name === "TOOM");
     OsInputReset();   // clear any stuck keys + recentre the look on spawn
   } else {
-    toast("Couldn't launch <b>" + g.name + "</b>: " + ((r && r.msg) || "unknown error")
-      + "<br>The OS may still be booting - give it a few seconds and try again.");
+    toast("Couldn't launch <b>" + g.name + "</b>: " + (r?.msg || "unknown error"));
     setStatus("Launch failed: " + (r?.msg || "unknown error"));
   }
   } catch(e) { setStatus("Launch failed: "+e.message);toast(e.message.replace(/[<>&]/g,"")); }

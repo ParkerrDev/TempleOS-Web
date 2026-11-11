@@ -39,5 +39,8 @@ if(args.has("--desktop")) {
   Run("tools/browser/snapshot.mjs",{HEMU_LEGACY:"1"});
   Run("tools/browser/bus.mjs");
   Run("tools/browser/boot-cancel.mjs");
+  Run("tools/browser/guest-ready.mjs");
+  Run("tools/browser/disk-import.mjs");
+  Run("tools/browser/fault.mjs");
 }
 console.log(`${count} engine checks passed in ${((performance.now()-start)/1000).toFixed(1)}s.`);

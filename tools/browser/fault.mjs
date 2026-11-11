@@ -29,6 +29,8 @@ try {
       window.Worker=class extends Base {
         constructor(...args) {
           super(...args);
+          this.guestWorker=/\/engine\/hemu-(smp-)?worker\.js$/.test(new URL(args[0],location.href).pathname);
+          if(!this.guestWorker)return;
           this.addEventListener("message",({data:m})=>{
             if (m.cmd=="frame") window.guestFrames++;
             else if (!["snd","log","progress"].includes(m.cmd)) window.guestEvents.push(m);
@@ -38,7 +40,7 @@ try {
           if (m.smp) window.guestCtrl=m.smp.ctrl;
           return super.postMessage(m,...args);
         }
-        terminate() {window.terminated++;return super.terminate();}
+        terminate() {if(this.guestWorker)window.terminated++;return super.terminate();}
       };
     });
     page.on("pageerror",error=>errors.push(error.message));
@@ -84,7 +86,8 @@ Spawn(&FaultTask,,,${core});
       const {OsHomeWrite}=await import("/Os.js");
       return OsHomeWrite("Stopped.HC","\"Unreachable\";",true);
     });
-    assert.equal(write.ok,false);assert.match(write.msg,/CPU fault/);
+    assert.equal(write.ok,false);assert.match(write.msg,/CPU [01] stopped/);
+    assert.match(write.msg,/Restart TempleOS/);
     await page.locator("#diskBtn").click();
     const download=page.waitForEvent("download",{timeout:30000});
     await page.locator("#dlDisk").click();

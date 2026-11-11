@@ -7,6 +7,7 @@ import {KEY,KeyInput,KeyBar,KeyRoute} from "./Keyboard.js";
 import {MobileInput} from "./MobileInput.js";
 import {SnapshotInspect} from "./engine/Snapshot.js";
 import {BusStop,BUS_VERSION} from "./engine/CoreBus.js";
+import {GuestRequests} from "./GuestRequests.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
 import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
 
@@ -480,6 +481,7 @@ $("restartBtn").addEventListener("click", restartOS);
 
 // the running engine, for the Disk window and the guest requests
 const engine = { post: () => {}, kind: null };
+const guestRequests=GuestRequests((message,transfer)=>engine.post(message,transfer));
 const os_cfg=CfgRead();
 let cfg_status={ready:false,ok:true,msg:"Settings apply when TempleOS starts."};
 let stockBoot=true;
@@ -526,6 +528,7 @@ export function OsCfgStatus()
 // ---- engine: one worker, or the multi-core one below ----
 let importDisk = null;   // a disk image imported before the reload
 function engineFail(why) {
+  guestRequests.Fail(String(why));
   started=false;
   ld.style.display = ""; setLoad("The emulator could not start (" + why + "). Tap ↻ Restart.", 0);
   dbg("engine failed: " + why, true);
@@ -533,7 +536,7 @@ function engineFail(why) {
 }
 function engineFault(why) {
   osFault=true;
-  cancelOSRequests(String(why));
+  guestRequests.Fail(String(why)+" Restart TempleOS before running programs or writing files.");
   ++pauseRevision;
   setPaused(true);
   pauseBtn.disabled=true;
@@ -719,13 +722,9 @@ const holdOSForGame = () => {
 const resetPause = () => { ++pauseRevision; paused = false; osFault=false; pauseBtn.disabled=false; fpsMeter.setPaused(false); updateFps(); pauseShow(); };
 
 // ---- requests to the guest, matched to their replies by id; the Disk window shows the rest ----
-const uploadWaiters = new Map();
-let nextRequestId = 1;
-const cancelOSRequests = (msg="OS restarted during the request.") => {
-  for (const [id,finish] of uploadWaiters) finish({id,ok:false,msg});
-  uploadWaiters.clear();
-};
+const cancelOSRequests=msg=>guestRequests.Reset(msg);
 const diskMsg = (m) => {
+  guestRequests.Receive(m);
   if (m.cmd=="guestPatch") {
     if(osFault)return;
     if (m.state=="failed") {
@@ -757,22 +756,9 @@ const diskMsg = (m) => {
   }
   if (m.cmd === "inputMode") { guestInputMode(m); return; }
   if (m.cmd === "guestResult" && ["failed","error"].includes(m.state) && m.op === "launch") os_game.launchFail?.(m.msg);
-  if (m.cmd === "fileResult") { const w = uploadWaiters.get(m.id); if (w) { uploadWaiters.delete(m.id); w(m); } }
   os_disk.msg?.(m);
 };
-// Match each OS reply to its request; a late reply cannot satisfy a later operation.
-const osRequest = (msg, transfer = []) => new Promise((resolve) => {
-  if (osFault) { resolve({ok:false,msg:"TempleOS stopped after a CPU fault. Restart it before running programs or writing files."}); return; }
-  if (!engine.kind) { resolve({ok:false,msg:"engine not ready yet"}); return; }
-  const id = nextRequestId++;
-  const timeout = setTimeout(() => {
-    uploadWaiters.delete(id);
-    resolve({id,ok:false,msg:"The OS request timed out. Check the guest before trying again."});
-  }, 120000);
-  uploadWaiters.set(id, (result) => { clearTimeout(timeout); resolve(result); });
-  try { engine.post({...msg,id},transfer); }
-  catch (e) { clearTimeout(timeout); uploadWaiters.delete(id); resolve({id,ok:false,msg:e.message}); }
-});
+const osRequest=(message,transfer=[])=>guestRequests.Request(message,transfer);
 const writeOSFile = (path, bytes) => osRequest({cmd:"osWrite",path,name:path.split("/").pop(),run:false,bytes},[bytes]);
 const uploadToHome = (name, text, run) => {
   const bytes = new TextEncoder().encode(text).buffer;
