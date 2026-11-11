@@ -1,0 +1,9 @@
+{
+  "cpu": "Intel(R) Core(TM) i9-14900HX",
+  "arch": "x64",
+  "platform": "linux",
+  "compiler": "cc (GCC) 16.2.1 20260810",
+  "reference": "https://cdrdv2-public.intel.com/774492/325383-sdm-vol-2abcd.pdf",
+  "sourceHash": "0aeb8f0bd18702648b2d171f166b09c2a82672e679cb3c86acec74cad468f62d",
+  "fixtureHash": "aa6594f762d64bd140bbf2473925657664c564727e912ef9cee04ebf13a3c3c1"
+}

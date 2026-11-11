@@ -147,14 +147,35 @@ chains, 30 RIP-relative operands and the MMIO fallback read count. The old engin
 gate immediately by incorrectly replacing DL during byte multiplication.
 
 Only CF/OF are hardware-defined for these multiply forms; divide flags are
-undefined. HEMU explicitly preserves the other flag bits. Zero divisors and
-oversized quotients retain the existing divide-error stop with unchanged
-destination registers; architectural guest #DE delivery is not implemented by
-this change. Full 128-bit dividends use the HolyC path when they do not fit the
+undefined. HEMU explicitly preserves the other flag bits. Full 128-bit
+dividends use the HolyC path when they do not fit the
 compiled signed/unsigned 64-bit fast path. MMIO divisors enter that path before
 reading the device, avoiding a repeated read on fallback. The contract follows
 Intel's [DIV/IDIV/IMUL reference](https://cdrdv2.intel.com/v1/dl/getContent/671199)
 and [MUL reference](https://cdrdv2.intel.com/v1/dl/getContent/671241).
+
+`Except.HC` delivers divide-by-zero and quotient-overflow faults through a
+validated long-mode ring-zero gate, with IST zero and the current code segment.
+It saves the original instruction-prefix RIP, unchanged operands, RF and the
+five-word aligned stack frame without an error code. Interrupt gates clear IF;
+trap gates retain it. The code-descriptor accessed bit is set as on hardware.
+`DivideEntry.HC` and `DivideNative.HC` record 1,536 actual QEMU/KVM entries across
+four widths, signed/unsigned division, three fault kinds, every stack alignment,
+two gate types and two flag seeds. `divide.test.mjs` compares 3,072 interpreter/
+JIT outcomes, 16 deferred-flag prefix chains and 56 valid quotient-limit cases.
+It also compares 48 physical-host SIGFPE contexts, gate DPL/selector RPL/accessed
+behavior and the original guest's `try`/`catch` of `DivZero`.
+
+Thirty unsupported or malformed delivery cases must retain reason 3 at the
+faulting RIP without changing operands or guest RAM. These include invalid
+descriptors, addresses outside direct guest RAM, IST/privilege changes and a different code
+selector. The same-selector restriction preserves compatibility with the
+existing IRET path. Exception cascades, paging, #GP/#DF delivery, CET and general
+debug/IRET semantics are outside this measured contract. Re-record the two
+independent oracles with `HOLYC_QEMU_ORACLE=.../tests/oracle/Qemu.mjs node
+tools/hemu/divide.test.mjs --record`; ordinary runs verify source/evidence hashes.
+The bounded entry behavior follows Intel's [System Programming Guide,
+sections 6.12–6.15](https://cdrdv2-public.intel.com/812386/253668-sdm-vol-3a.pdf).
 
 `Raster.HC` owns the named native line/polygon acceleration and its shared
 span filler. `raster-native.mjs` compares 200 source-hashed original QEMU/KVM
@@ -244,7 +265,7 @@ those encodings as arithmetic; it now updates status and pops as required.
 `CpuFault(0)` reports the first stopped CPU as `(core<<8)|reason`, or zero;
 `CpuFault(1)` reports its instruction pointer. Hosts do not read CPU structure
 offsets to discover a fault. Reasons 2 and 3 are unsupported instruction and
-integer divide faults. `RunCore` retains the fault on every later call; the
+an integer divide exception that could not be delivered. `RunCore` retains the fault on every later call; the
 old one-time automatic recovery has been removed. HLT remains normal idle.
 
 CPU fault messages have `retained:true`; BSP errors also carry `paused:true`,
