@@ -104,7 +104,7 @@ entire interpreter, its instruction battery and sampled hardware arithmetic
 vectors. The native host
 adapter provides a core ID, serialized atomics and explicit headless callbacks;
 it supplies neither a desktop, disk nor native JIT. The same 31 battery checks
-and 707 multiply/divide assertions execute with zero badops in both builds;
+and 707 multiply/divide plus 861 split-field atomic assertions execute with zero badops in both builds;
 instruction totals cover the battery and exclude HLT time budgets. Use
 `HOLYC_QEMU_ORACLE=/path/to/tests/oracle/Qemu.mjs node tools/hemu/cpu-native.mjs --record`
 to refresh this evidence after interpreter changes. This is a bounded native
@@ -122,11 +122,30 @@ flags and register writeback. The stored source/output hashes and CPU/compiler m
 `node tools/hemu/atomic-flags.test.mjs --record` regenerates it on x86-64.
 
 Aligned RAM, contained unaligned fields and the TempleOS RAM alias are
-supported atomic operands. Invalid LOCK forms, cross-word and MMIO atomics
-retain an explicit fault without changing operands. This deliberately rejects unsupported x86 bus-lock cases;
-it does not emulate their hardware behavior or architectural exception
-delivery. CMPXCHG16B is not implemented. LOCK prefixes always end a JIT
-block so that the interpreter owns their atomic operation.
+supported atomic operands. With exactly one guest core, valid cross-word
+RAM operands execute inside one synchronous interpreter instruction. The
+address gate excludes MMIO and out-of-range bytes before the read; the operation
+cannot deliver an IRQ or call the host between its read and write. Host callers
+must retain the existing one-executing-core ownership contract. LOCK and memory
+XCHG end a JIT block so the interpreter owns their atomic operation.
+
+`AtomSplit.HC` records 516 original TempleOS cases at offsets 7/15/31/63,
+covering arithmetic, logic, unary operations, implicit-lock XCHG, XADD and
+CMPXCHG/8B across eight-byte and cache-line boundaries. The separate physical
+probe matches all 387 within-line cases, including flags, registers and adjacent
+bytes. `atom-split.test.mjs` makes 4,128 single-core comparisons across private/
+shared WASM memory, direct/aliased RAM and interpreted/JIT prefixes. It requires
+no host callback or IRQ delivery during an instruction, checks the valid RAM-end
+boundary, and verifies 4,128 multi-core attempts retain faults without writes.
+Re-record with `HOLYC_QEMU_ORACLE=.../tests/oracle/Qemu.mjs node
+tools/hemu/atom-split.test.mjs --record`.
+
+Multi-core cross-word fields, MMIO and invalid LOCK forms remain explicitly
+unsupported. This does not supply a full SMP bus lock, CMPXCHG16B or architectural
+exception delivery for those cases. A private mutex would not exclude ordinary
+or JIT readers; full support needs coordinated CPU and host RAM ownership plus
+a capture-barrier handoff. The bounded behavior follows Intel's [locked operation
+contract](https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf).
 
 `bit.test.mjs` compares 2,112 bit-string operations (264 compiled) with exact
 x86 opcodes: signed register offsets and width-masked encoded immediates,
