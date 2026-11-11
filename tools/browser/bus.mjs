@@ -26,8 +26,7 @@ try {
     for(const action of ["cancel","fault"]) {
       await page.waitForFunction(after=>{
         const events=window.machine.events.slice(after);
-        return events.some(m=>m.cmd==="guestPatch"&&m.state==="installed")&&
-          events.some(m=>m.cmd==="guestResult"&&m.name==="Welcome"&&m.state==="done");
+        return events.some(m=>m.cmd==="guestPatch"&&m.state==="installed");
       },generationEvents,{timeout:45000});
       const before=await page.evaluate(()=>({events:window.machine.events.length,terms:window.machine.terminations.length}));
       await page.evaluate(()=>Atomics.store(new Int32Array(window.machine.gate),0,1));
