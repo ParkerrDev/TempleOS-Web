@@ -303,6 +303,19 @@ and probability dithering, recorded extents, nearest distance and draw-disabled
 contexts. Pixel/depth storage, changed/collision counts and final RNG state
 must agree. Regenerate with `HOLYC_QEMU_ORACLE=... node tools/hemu/raster-native.mjs --record`.
 
+`raster-alias.mjs` adds 30 source-hashed original QEMU/KVM cases in which
+pixel or depth storage overlaps the task seed, dither probability or each
+other. All three raster operations and both line orientations run with HLE
+on and off. `raster-state.test.mjs` forces a real second Worker to change the
+seed, task flags, probability or clock at selected draws of an eight-pixel
+span in shared memory. Its 16 cases compare pixels, depth, return count and
+final seed with the frozen pre-change fixture. This is a controlled-clock
+HEMU fixture, separate from the original-QEMU alias oracle; it does not claim
+hardware TSC values. A test-only draw boundary permits those interleavings,
+with a bounded wait; no callback or state cache is added to production.
+Caching probability at span entry fails the forced-write test. One configured
+CPU does not prove exclusive access to shared memory.
+
 `raster-fallback.test.mjs` retains two negative witnesses: a valid 5,000-pixel
 line previously consumed one RNG value before fallback, and a wide triangle
 returned -1 without drawing. Rejection now precedes random sampling, and

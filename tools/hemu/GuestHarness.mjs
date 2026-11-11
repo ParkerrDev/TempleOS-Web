@@ -17,8 +17,10 @@ export async function GuestHarness(opt={})
     diskWrite:(...args)=>disk?.writeInto(...args),
     onText(s){if (s.includes("BADOP")) badops.push(s);}
   });
+  if (opt.sharedMemory)
+    host.env.mem=new WebAssembly.Memory({initial:8192,maximum:8192,shared:true});
   Object.assign(host.env,{
-    __host_ns:()=>BigInt(ns),__host_budget:()=>12000000n,
+    __host_ns:()=>BigInt(ns),__host_budget:()=>opt.budgetProbe?.()??12000000n,
     __jit_state(r,f,p){
       jit.jitState(r,f,p,base,inst.exports.memory,inst.exports.RdMem,
             inst.exports.WrMem,inst.exports.RasterHLE);
