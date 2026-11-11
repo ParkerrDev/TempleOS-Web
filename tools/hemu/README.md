@@ -6,26 +6,31 @@ snapshot and disk; no `/tmp` image is needed. `LIVE` and `RAW` can explicitly
 select other images. Disk writes stay in each test's private sector overlay.
 
 ```
-node engine/build.mjs build
-node tools/hemu/time.test.mjs
-node tools/hemu/keyboard.test.mjs
-node tools/hemu/rate.test.mjs
-node tools/hemu/capture.test.mjs
-node --max-old-space-size=3072 tools/hemu/video.test.mjs
-node --max-old-space-size=2048 tools/hemu/worker-pause.test.mjs
-node tools/hemu/barrier.test.mjs
-node tools/hemu/snapshot-format.test.mjs
-node --max-old-space-size=3072 tools/hemu/worker-snapshot.test.mjs
-node --max-old-space-size=2048 tools/hemu/raster.test.mjs
-node --max-old-space-size=3072 tools/hemu/worker.test.mjs
-node --max-old-space-size=3072 tools/hemu/worker-rate.test.mjs
-node --max-old-space-size=3072 tools/hemu/welcome.test.mjs
-node tools/hemu/guestcheck.mjs
-node tools/hemu/jitdiff1.mjs
-node tools/hemu/jit-primitives.test.mjs
-node tools/hemu/fpu-check.mjs
-node tools/hemu/fpu-convert.test.mjs
+node tools/hemu/check.mjs
+node tools/hemu/check.mjs --full
+node tools/hemu/check.mjs --desktop
 ```
+
+The default suite checks CPU/JIT/device primitives, atomic threads, clocks,
+input, completed captures, barriers and snapshot validation. `--full` also
+builds both engines and runs native raster/video, guest API, saved-machine,
+production worker, welcome and God Tools acceptance checks. `--desktop` adds
+real Chromium window tests on one and four cores; flags can be combined. Each
+check runs in a fresh process and any error stops the runner. Timed worker
+checks should run without competing benchmarks. The runner prints the actual
+compiler path: use the same pinned compiler and HEMU source as the site build.
+
+The full suite reads `god/Tools.HC`. A separated engine worktree can supply
+`GOD_TOOLS_SOURCE=/path/to/site/god/Tools.HC` explicitly. The God Tools test
+executes the stock native Doodle algorithm on a deterministic bit record and
+accepts both native Song forms and timer menus. It verifies exact FAT32
+filenames/readback, saved DolDoc sprite/song payloads, live View ownership
+after temporary allocations are freed, and clean Escape exits.
+
+Old one-off probes with fixed RAM addresses, deleted `/tmp` inputs or a second
+worker loop were removed. `GuestHarness.mjs` provides native source/call access;
+`WorkerHost.mjs` exercises the production loop. Instruction-code recycling,
+real x86 conversion fixtures, and QEMU snapshot capture tools remain.
 
 - Clock checks exercise fractional elapsed time, PIT reload/latch/IRQ behavior,
   read-only RDTSC and independent core instruction budgets.
