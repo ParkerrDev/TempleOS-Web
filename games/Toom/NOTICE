@@ -79,6 +79,12 @@ and reads only the declared payload, ignoring any trailing bytes. The sound
 bank resolves each effect's own DP name as that PC-speaker driver does; it
 does not infer sampled-sound aliases from the original sounds.c links.
 
+TmAudio.HC channel ordering and distance audibility follow the original
+linuxdoom-1.10/s_sound.c at the pinned id Software revision. TmSoundData.HH
+priorities are generated from its sounds.c table. The source path/hash is
+recorded in tools/toom/source/audio.json. The native PC speaker retains
+binary amplitude; distance rules decide whether a request is audible.
+
 The native implementation and derived data are distributed under version 2
 of the GNU General Public License. See COPYING for the full license and
 disclaimer of warranty. Distribution must include the corresponding source

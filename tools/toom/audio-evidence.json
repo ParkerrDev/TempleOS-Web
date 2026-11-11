@@ -1,0 +1,75 @@
+{
+  "scope": "Native channel allocation/stop ordering and returned distance audibility, before actor/sector/Play binding.",
+  "files": {
+    "games/Toom/TmAudio.HC": "b0fd24a26f8f3e41744b00d12adfc78f7033d99ea634fc5d68f7759334902c97",
+    "games/Toom/TmSoundData.HH": "71ca3a12ea1acacaadbe9ff97046511422aced00972eb093a4a0e23bab319b7c",
+    "tools/toom/Audio.HC": "9d415a7d8ae557369a80bfa0d05702d167d1c6011c24c893a7a8655c3a937d24",
+    "tools/toom/AudioRef.mjs": "ed3832055035617a74487c7fc40c0d9ab725c18b2a0de4cdad96dd431980e62c",
+    "tools/toom/SoundData.mjs": "2c23f4484536ad8e80597d3a972963b5a7773d19e7e3ffe5cb7e88e5cf655689",
+    "tools/toom/audio.test.mjs": "872358da8a4c0f46cab790cc268443bd978ee053c289f81807d4abec65c85305",
+    "tools/toom/source/audio.json": "86350cfde73dd7b1a76f5c95df13707bfce45a3c2e89a005636ed92691439953",
+    "tools/toom/SoundBankRef.mjs": "293e7c62c2029e29ca71b1716a25720821ac7248e8b2588bf660a5b9210262fb"
+  },
+  "native": {
+    "results": [
+      {
+        "out": "AUDIO 768 CHANNEL CASES 720 DISTANCE CASES BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-sahep6hy",
+    "sourceSha256": "ae2df2441b52d12ac6c545ba4048ecd8e1a5b15cd2f77c24842fadf1d84d73c4",
+    "expectedSha256": "bb486b7c5777774bfb0f7c0374b18745de6e0c7a04dd899f860bacf38feb3091",
+    "reference": {
+      "repository": "https://github.com/id-Software/DOOM",
+      "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+      "path": "linuxdoom-1.10/s_sound.c",
+      "sha256": "4feb68dcba87262903b3c5e1aed3db05fb554c56040c58bac6af97d8920ef2c5",
+      "scope": "Channel selection, same-origin stop and distance audibility. PC-speaker data/driver behavior is separately pinned in pcsound.json.",
+      "channelCases": 768,
+      "distanceCases": 720,
+      "domain": "Defined original32-bit distance inputs, volumes0..127, maps1/8; angle/separation math is stubbed because only returned audibility is compared."
+    }
+  },
+  "hemu": {
+    "backend": "hemu",
+    "sourceSha256": "ae2df2441b52d12ac6c545ba4048ecd8e1a5b15cd2f77c24842fadf1d84d73c4",
+    "expectedSha256": "bb486b7c5777774bfb0f7c0374b18745de6e0c7a04dd899f860bacf38feb3091",
+    "reference": {
+      "repository": "https://github.com/id-Software/DOOM",
+      "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+      "path": "linuxdoom-1.10/s_sound.c",
+      "sha256": "4feb68dcba87262903b3c5e1aed3db05fb554c56040c58bac6af97d8920ef2c5",
+      "scope": "Channel selection, same-origin stop and distance audibility. PC-speaker data/driver behavior is separately pinned in pcsound.json.",
+      "channelCases": 768,
+      "distanceCases": 720,
+      "domain": "Defined original32-bit distance inputs, volumes0..127, maps1/8; angle/separation math is stubbed because only returned audibility is compared."
+    },
+    "bad": 0
+  },
+  "runtime": {
+    "web": "b7e6e0790118aae885886ee0b49a0ef1e90231d8",
+    "compiler": "dbd1946838cfd33dd7c86cda51acb8528c824697",
+    "hemu": "486f8a68bca0ca872cc99c28d1429830d5b53e84",
+    "sha256": {
+      "build/hemu.wasm": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "build/hemu-smp.wasm": "bd16c80c4c8920d29692f4b7f4f6cbd20e7a843348fa9217955fda8ccb09851c",
+      "engine/jit.js": "98ef4631b01bc7a95a46505c3951d6d222ba397865d87e70ce8001f298fd5b32",
+      "engine/hemu-worker.js": "b72a4c771125b0fae7b3867142f4585c33535b7df070377f01b4200077b316f9",
+      "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+      "tools/hemu/GuestHarness.mjs": "9fe6f769b458f6399e5041ca4a7586e49a4a90a1d224239a92d3e95cd4f9e057"
+    }
+  },
+  "limits": [
+    "Reference executes original S_getChannel, S_StopChannel, S_StopSound and S_AdjustSoundParams with controlled channel/speaker stubs. The original priorities/names/enums are compiled independently.",
+    "Distance inputs stay inside defined original32-bit arithmetic. The angle/separation calculation is stubbed because only returned audibility is compared; the native PC speaker has one amplitude.",
+    "The reference is the pinned released id Software source, including its160-unit close-distance rule. This is not a claim to reproduce every DOS DMX implementation detail.",
+    "Channel count is fixed at8. Native origin kinds keep actor/sector/global identifiers separate without storing potentially dangling actor pointers. Actual source ownership validation remains host work.",
+    "No actual game event, cache-to-play transition, rendering or browser audio claim follows from these component cases."
+  ]
+}

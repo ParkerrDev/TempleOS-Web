@@ -931,3 +931,11 @@ BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/sound-ban
 `sound-bank-evidence.json` records exact sources and results. The bank remains
 outside `Load`/`Run`; actor/sector audibility, channel selection and actual
 host ownership still require integration.
+
+`TmAudio.HC` retains the original eight-channel first-free/same-origin/priority
+ordering and distance audibility rule. The generated priority table can be
+checked with `node tools/toom/SoundData.mjs --check`. `audio.test.mjs` compares
+768 channel/stop cases and 720 distance cases with the unchanged released C
+functions on native TempleOS and HEMU. `audio-evidence.json` records the exact
+scope, including the released source's 160-unit close-distance constant.
+These components are still awaiting actual actor/sector and `Play` binding.

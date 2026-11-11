@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/id-Software/DOOM",
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "path": "linuxdoom-1.10/s_sound.c",
+  "sha256": "4feb68dcba87262903b3c5e1aed3db05fb554c56040c58bac6af97d8920ef2c5",
+  "scope": "Channel selection, same-origin stop and distance audibility. PC-speaker data/driver behavior is separately pinned in pcsound.json."
+}

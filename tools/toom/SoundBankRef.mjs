@@ -10,8 +10,8 @@ import {WadRead} from './Wad.mjs';
 import {EnemyFunction} from './EnemyRef.mjs';
 import {PcSoundRead} from './SoundRef.mjs';
 
-export async function SoundBankReference() {
-  const {manifest:pc,bytes:pcBytes}=await PcSoundRead(),hash=b=>createHash('sha256').update(b).digest('hex');
+export async function SoundDefinitions() {
+  const hash=b=>createHash('sha256').update(b).digest('hex');
   const id=JSON.parse(readFileSync(new URL('source/source.json',import.meta.url))),source={};
   for(const name of ['sounds.c','sounds.h']) {
     const path=resolve(root,'tools/toom/source',name),entry=id.files.find(f=>f.path.endsWith('/'+name));assert(entry);
@@ -26,6 +26,12 @@ export async function SoundBankReference() {
   const table=source['sounds.c'].match(/sfxinfo_t S_sfx\[\] =\s*\{[\s\S]*?\n\};/);assert(table);
   const enums=[...source['sounds.h'].matchAll(/typedef enum\s*\{[\s\S]*?\}\s*\w+\s*;/g)].map(m=>m[0]).join('\n');
   assert(enums.includes('NUMSFX'));
+  return {id,table:table[0],enums};
+}
+
+export async function SoundBankReference() {
+  const {manifest:pc,bytes:pcBytes}=await PcSoundRead();
+  const {id,table,enums}=await SoundDefinitions();
   const c=`#include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -43,7 +49,7 @@ typedef int boolean;
 typedef struct sfxinfo_s sfxinfo_t;
 struct sfxinfo_s {char *name;int singularity,priority;sfxinfo_t *link;int pitch,volume;void *data;int usefulness,lumpnum;};
 ${enums}
-${table[0]}
+${table}
 ${EnemyFunction(pcBytes.toString('ascii'),'IsDisabledSound')}
 ${EnemyFunction(pcBytes.toString('ascii'),'I_PCS_GetSfxLumpNum')}
 int main(void){for(int i=0;i<NUMSFX;i++){
