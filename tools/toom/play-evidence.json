@@ -1,0 +1,87 @@
+{
+  "status": "bounded-native-window-host-and-recovery-proof",
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM",
+    "version": "QEMU emulator version 11.1.2"
+  },
+  "hemu": {
+    "web": "b7e6e0790118aae885886ee0b49a0ef1e90231d8",
+    "compiler": "dbd1946838cfd33dd7c86cda51acb8528c824697",
+    "hemu": "486f8a68bca0ca872cc99c28d1429830d5b53e84",
+    "sha256": {
+      "build/hemu.wasm": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "build/hemu-smp.wasm": "bd16c80c4c8920d29692f4b7f4f6cbd20e7a843348fa9217955fda8ccb09851c",
+      "engine/jit.js": "98ef4631b01bc7a95a46505c3951d6d222ba397865d87e70ce8001f298fd5b32",
+      "engine/hemu-worker.js": "b72a4c771125b0fae7b3867142f4585c33535b7df070377f01b4200077b316f9",
+      "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+      "tools/hemu/GuestHarness.mjs": "9fe6f769b458f6399e5041ca4a7586e49a4a90a1d224239a92d3e95cd4f9e057"
+    }
+  },
+  "assetHashes": {
+    "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+    "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+  },
+  "checks": {
+    "play": {
+      "nativeEvidence": "qemu-6gci_0ag",
+      "sourceSha256": "253828f1726f8007bad46136bacffc275eab25e3088794c06850a1fb9c1cfb53",
+      "nativeOutput": "PLAY 18 CASES HASH 3858873714 BAD 0",
+      "hemuCompleted": true
+    },
+    "window": {
+      "nativeEvidence": "qemu-oep8qcxp",
+      "sourceSha256": "36b7c6afe444c9a234a71f2a72ec8585bbb51eb976a71b5e851b296da635e58b",
+      "nativeOutput": "WINDOW 3 RUNS INPUT FOCUS PAUSE EXIT FAULT RESTORE BAD 0",
+      "hemuCompleted": true
+    },
+    "play-create": {
+      "nativeEvidence": "qemu-ub53kyjl",
+      "sourceSha256": "e748d98ae61b4c579c86167967b65d4971a808e0a6e95168dba9464216c6b1c6",
+      "nativeOutput": "PLAY CREATE 1015 CASES 1014 FAULTS BAD 0",
+      "hemuCompleted": true
+    },
+    "play-alloc": {
+      "nativeEvidence": "qemu-u4hcwp25",
+      "sourceSha256": "97e8c93f71c9ec9580714b7a3067033e215ac8cfb68cff2b9e5cebcfb74a5919",
+      "nativeOutput": "PLAY ALLOC 675 CASES 674 FAULTS BAD 0",
+      "nativeCases": 675,
+      "nativeFaults": 674,
+      "hemuCompleted": false,
+      "status": "Full current-host sweep in progress; no completed HEMU claim at this checkpoint."
+    }
+  },
+  "scope": [
+    "18 host-state cases: private buffer publication, exact positioned GrBlot and margins, retained frame after draw failure, focus/held-key suppression, pause, rebirth, guards, bounded clock catch-up and pause-key autorepeat.",
+    "Three PlayRun calls in an actual spawned native task: Escape, Shift-Escape and an injected bad-flat frame exception. Native held bitmap/task messages exercise movement, pause, focus loss and release-before-resume.",
+    "The task fixture verifies prior callback, user_data, window attributes, settings chain and absence of retained animate/song tasks. It calls installed callbacks directly; it does not establish browser compositor behavior.",
+    "Constructor sweeps inject application allocation/read failures and DCNew entry failures; all 1014 native points clean their graph, CDCs and files. The identical HEMU fixture completes its dynamically counted sweep.",
+    "Native TempleOS passes all 674 lazy-frame failure positions; the current HEMU sweep is pending at this checkpoint. Every rejected draw retains the exact 256000 prior front-buffer bytes and frame/pointer publication state, releases guards and texture pins, retries successfully and frees all heap/file ownership.",
+    "The existing 24 live scene hashes and seven guard cases still match both backends and the previously accepted frame traces."
+  ],
+  "beforeWitness": {
+    "nativeEvidence": "qemu-4oxfi6o4",
+    "sourceSha256": "db79c61c910f0f6450f5b39502c98e77443a02aa92da36bf20f4c97a0e72307f",
+    "result": "Load failure 39 left texture 312 pinned after a later portal texture could not load."
+  },
+  "fixtureChange": "The initial frame-failure fixture exhausted 4000 and 20000 old-host slice budgets while running. Its replacement uses exact saved-frame MemCmp, and read-only inspection confirmed 506 fault positions had passed before that old-host run also exhausted its budget. An attempted debugger-side wait-counter extension did not persist. These incomplete runs are not passes. The unchanged exact-byte fixture was then run on the frozen current host, with a persisted 30000-slice bound and native-task progress reporting.",
+  "preview": {
+    "path": "/tmp/toom-E1M1-host.png",
+    "sha256": "e1076762b3602ce1d45d768a58a1a04d27a6f046fa17530963dfe0396503609f",
+    "nativeEvidence": "qemu-8v4b1win",
+    "dimensions": [
+      640,
+      400
+    ],
+    "level": "E1M1",
+    "tics": 16,
+    "actors": 210
+  },
+  "limits": [
+    "Not a completed playable game or catalog qualification.",
+    "Actual production one/four-worker compositor and browser input remain separate acceptance work.",
+    "No steady full-game frame-rate or boot-time guarantee.",
+    "Sound, progression/intermission, saves, nightmare respawn, world power-up lighting and spectre fuzz remain unfinished.",
+    "The failure model does not inject every internal TempleOS allocation failure."
+  ]
+}

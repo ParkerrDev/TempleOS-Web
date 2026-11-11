@@ -336,73 +336,80 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
     back_yfloor=(back_floor-tmpv->z)*tmpv->fy;
     back_yceil=(back_ceil-tmpv->z)*tmpv->fy;
   }
-  if (!sb) {
-    mid_n=TextureFind(tmpv->gr,side->middle);
-    if (tmpv->surfaces) mid_n=TextureFrame(tmpv->surfaces,mid_n);
-    mid=TextureHold(tmpv->gr,mid_n);
-  } else {
-    if (sb->ceil<sf->ceil &&
-	  !(tmpv->ceil[front].lump<0 && tmpv->ceil[back].lump<0)) {
-      upper_n=TextureFind(tmpv->gr,side->upper);
-      if (tmpv->surfaces) upper_n=TextureFrame(tmpv->surfaces,upper_n);
-      upper=TextureHold(tmpv->gr,upper_n);
-    }
-    if (sb->floor>sf->floor) {
-      lower_n=TextureFind(tmpv->gr,side->lower);
-      if (tmpv->surfaces) lower_n=TextureFrame(tmpv->surfaces,lower_n);
-      lower=TextureHold(tmpv->gr,lower_n);
-    }
-  }
-  base_light=sf->light>>4;
-  if (tmpm->vertex[tmps->v1].y==tmpm->vertex[tmps->v2].y) base_light--;
-  else if (tmpm->vertex[tmps->v1].x==tmpm->vertex[tmps->v2].x) base_light++;
-  base_light=4*(15-ClampI64(base_light,0,15));
-  for (x=x1;x<=x2;x++,iz+=dz,iu+=du)
-    if (tmpv->top[x]<=tmpv->bottom[x]) {
-      seen=TRUE;
-      d=1.0/iz; u=iu*d;
-      light=ViewLight(base_light,tmpv->fx*16*iz);
-      top=ViewRow(tmpv,front_yceil,iz);
-      bottom=ViewRow(tmpv,front_yfloor,iz)-1;
-      if (sb) {
-	up=ViewRow(tmpv,back_yceil,iz);
-	down=ViewRow(tmpv,back_yfloor,iz)-1;
-	if (tmpv->ceil[front].lump<0 && tmpv->ceil[back].lump<0) top=up;
+  try {
+    if (!sb) {
+      mid_n=TextureFind(tmpv->gr,side->middle);
+      if (tmpv->surfaces) mid_n=TextureFrame(tmpv->surfaces,mid_n);
+      mid=TextureHold(tmpv->gr,mid_n);
+    } else {
+      if (sb->ceil<sf->ceil &&
+	    !(tmpv->ceil[front].lump<0 && tmpv->ceil[back].lump<0)) {
+	upper_n=TextureFind(tmpv->gr,side->upper);
+	if (tmpv->surfaces) upper_n=TextureFrame(tmpv->surfaces,upper_n);
+	upper=TextureHold(tmpv->gr,upper_n);
       }
-      if (tmpv->ceil[front].lump>=0)
-	PlaneMark(tmpv,x,tmpv->top[x],top-1,front*2+2);
-      else
-	SkyColumn(tmpv,x,tmpv->top[x],top-1,iz);
-      if (tmpv->floor[front].lump>=0)
-	PlaneMark(tmpv,x,bottom+1,tmpv->bottom[x],front*2+1);
-      else
-	SkyColumn(tmpv,x,bottom+1,tmpv->bottom[x],iz);
-      if (!sb) {
-	origin=front_ceil+side->y;
-	if (mid && tmpl->flags&16) origin=front_floor+mid->height+side->y;
-	WallColumn(tmpv,mid,x,top,bottom,u,d,origin,light);
-	tmpv->top[x]=tmpv->height;
-	tmpv->bottom[x]=-1;
-      } else {
-	if (up>top) {
+      if (sb->floor>sf->floor) {
+	lower_n=TextureFind(tmpv->gr,side->lower);
+	if (tmpv->surfaces) lower_n=TextureFrame(tmpv->surfaces,lower_n);
+	lower=TextureHold(tmpv->gr,lower_n);
+      }
+    }
+    base_light=sf->light>>4;
+    if (tmpm->vertex[tmps->v1].y==tmpm->vertex[tmps->v2].y) base_light--;
+    else if (tmpm->vertex[tmps->v1].x==tmpm->vertex[tmps->v2].x) base_light++;
+    base_light=4*(15-ClampI64(base_light,0,15));
+    for (x=x1;x<=x2;x++,iz+=dz,iu+=du)
+      if (tmpv->top[x]<=tmpv->bottom[x]) {
+	seen=TRUE;
+	d=1.0/iz; u=iu*d;
+	light=ViewLight(base_light,tmpv->fx*16*iz);
+	top=ViewRow(tmpv,front_yceil,iz);
+	bottom=ViewRow(tmpv,front_yfloor,iz)-1;
+	if (sb) {
+	  up=ViewRow(tmpv,back_yceil,iz);
+	  down=ViewRow(tmpv,back_yfloor,iz)-1;
+	  if (tmpv->ceil[front].lump<0 && tmpv->ceil[back].lump<0) top=up;
+	}
+	if (tmpv->ceil[front].lump>=0)
+	  PlaneMark(tmpv,x,tmpv->top[x],top-1,front*2+2);
+	else
+	  SkyColumn(tmpv,x,tmpv->top[x],top-1,iz);
+	if (tmpv->floor[front].lump>=0)
+	  PlaneMark(tmpv,x,bottom+1,tmpv->bottom[x],front*2+1);
+	else
+	  SkyColumn(tmpv,x,bottom+1,tmpv->bottom[x],iz);
+	if (!sb) {
 	  origin=front_ceil+side->y;
-	  if (upper && !(tmpl->flags&8)) origin=back_ceil+upper->height+side->y;
-	  WallColumn(tmpv,upper,x,top,up-1,u,d,origin,light);
+	  if (mid && tmpl->flags&16) origin=front_floor+mid->height+side->y;
+	  WallColumn(tmpv,mid,x,top,bottom,u,d,origin,light);
+	  tmpv->top[x]=tmpv->height;
+	  tmpv->bottom[x]=-1;
+	} else {
+	  if (up>top) {
+	    origin=front_ceil+side->y;
+	    if (upper && !(tmpl->flags&8))
+	      origin=back_ceil+upper->height+side->y;
+	    WallColumn(tmpv,upper,x,top,up-1,u,d,origin,light);
+	  }
+	  if (down<bottom) {
+	    origin=back_floor+side->y;
+	    if (tmpl->flags&16) origin=front_ceil+side->y;
+	    WallColumn(tmpv,lower,x,down+1,bottom,u,d,origin,light);
+	  }
+	  tmpv->top[x]=ClampI64(MaxI64(tmpv->top[x],MaxI64(top,up)),
+		0,tmpv->height);
+	  tmpv->bottom[x]=ClampI64(MinI64(tmpv->bottom[x],MinI64(bottom,down)),
+		-1,tmpv->height-1);
 	}
-	if (down<bottom) {
-	  origin=back_floor+side->y;
-	  if (tmpl->flags&16) origin=front_ceil+side->y;
-	  WallColumn(tmpv,lower,x,down+1,bottom,u,d,origin,light);
-	}
-	tmpv->top[x]=ClampI64(MaxI64(tmpv->top[x],MaxI64(top,up)),
-	      0,tmpv->height);
-	tmpv->bottom[x]=ClampI64(MinI64(tmpv->bottom[x],MinI64(bottom,down)),
-	      -1,tmpv->height-1);
       }
+    if (seen && sb && side->middle[0] && side->middle[0]!='-') {
+      if (tmpv->masked_cnt>=tmpm->seg_cnt) throw('Masked');
+      tmpv->masked[tmpv->masked_cnt++]=tmps;
     }
-  if (seen && sb && side->middle[0] && side->middle[0]!='-') {
-    if (tmpv->masked_cnt>=tmpm->seg_cnt) throw('Masked');
-    tmpv->masked[tmpv->masked_cnt++]=tmps;
+  } catch {
+    if (mid) TextureDrop(tmpv->gr,mid_n);
+    if (upper) TextureDrop(tmpv->gr,upper_n);
+    if (lower) TextureDrop(tmpv->gr,lower_n);
   }
   TextureDrop(tmpv->gr,mid_n);
   TextureDrop(tmpv->gr,upper_n);

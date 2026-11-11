@@ -1,7 +1,7 @@
 # Native TOOM work in progress
 
 This directory contains the new TempleOS implementation. It is not yet a
-playable game and does not replace the existing catalog entry. The old port is
+complete playable game and does not replace the existing catalog entry. The old port is
 preserved in `../upstream/TOOM` with its original provenance.
 
 The implemented foundation uses native V5.03 file and memory APIs:
@@ -685,8 +685,8 @@ turning, firing, strafing and pausing in four maps from both phases. Rendering
 leaves every actor, Player/World record and clock unchanged, preserves private
 CDC margins, and releases its session guard after rejection. Seven guard cases
 and final heap cleanup also pass. `TmOverlay.HC` and `TmScreen.HC` compile after
-`Load.HC`; window lifetime, HUD, world power-up lighting and spectre fuzz remain
-separate work. See `tools/toom/screen-evidence.json`.
+`Load.HC`; the native host adds a private double buffer and textual HUD.
+World power-up lighting and spectre fuzz remain separate work. See `tools/toom/screen-evidence.json`.
 Weapon overlays add 1,036 comparisons with the unchanged original software
 renderer. They use all 88 renderable weapon/flash states, real Phase2 patches,
 fractional/clipped/reflected placement, lighting and invisibility boundaries,
@@ -774,3 +774,46 @@ each backend also compares pixels and depth with explicit expected-frame map
 names. Two matched timing pairs on E1M1 and the 983-sector E4M7 show no measured
 cost from refreshing changed flat names. Those static-scene runs use no active
 surface context, and do not establish animation or complete-game performance.
+
+
+## Native window host under development
+
+After preparing the pinned IWAD, copy this directory and its assets into
+TempleOS, enter that directory and `#include "Run"`. The developing host uses
+native held-key state, task messages, `SettingsPush`/`SettingsPop` and a
+`DrawIt` callback. It needs no browser API. This entry remains outside the
+production catalog: sound, level progression/intermission, saves, nightmare
+respawning and remaining world visual effects are unfinished.
+
+Arrows or WASD move/turn; comma/period strafe, Alt modifies turning to strafe,
+Shift runs, Ctrl fires, Space uses, and 1–8 select weapons. P pauses; Esc or
+Shift-Esc exits. Losing focus pauses simulation and requires held keys to be
+released before they act after focus returns. Dead players restart the level
+with Space. A level exit currently displays `LEVEL COMPLETE` without advancing.
+
+Simulation advances in 35 Hz tics, processing at most four before checking
+messages again and drawing. Remaining tics stay pending; this does not claim
+a measured sustained 35 Hz on every machine. The compositor sees only the last
+completed frame while the next 640×400 native CDC is rendered. Paused or
+unfocused windows reuse their last frame until their status changes. The HUD reports
+health, armor, ammo, keys and level counts using TempleOS text drawing.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/play.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/window.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/play-create.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/play-alloc.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm HOST=1 node tools/toom/preview.mjs
+```
+
+Use `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` for the four matching
+HEMU checks. They exercise native code through the guest's real compiler and
+APIs. The development host fixture checks held input, focus, pause, two normal
+exits and an exception exit in an actual spawned task. It invokes the registered
+native draw callbacks directly as well as verifying their restoration; this
+is not a browser end-to-end input or screenshot test. Allocation sweeps cover
+application allocations, native file reads and entry into `DCNew`; they do
+not emulate every internal OS allocation failure. The lazy-frame sweep
+protects the prior displayed frame, verifies every texture pin is released,
+retries drawing and returns the task heap/files to baseline after teardown.
+Exact source, asset and backend scopes are in `tools/toom/play-evidence.json`.
