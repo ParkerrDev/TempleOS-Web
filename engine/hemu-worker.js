@@ -16,12 +16,14 @@ import { createGuestExec } from "./guestexec.js";   // backend guest execution: 
 
 let msX = 320, msY = 240, msB = 0, wheel = 0;   // latest pointer state from the main thread
 const keyq=KeyQueue();
-let repeatKeys=false,welcomePending=false,refreshRate=0;
-function RateApply()
+let repeatKeys=false,welcomePending=false,refreshRate=0,actualRate=null;
+function SettingsApply(rateChanged=true)
 {
-  const ok=!!instRef.exports.WinRateSet(BigInt(refreshRate));
-  postMessage({cmd:"settings",ok,rate:ok?refreshRate:30,repeat:repeatKeys,
-    msg:ok?"":"This guest has an unknown display timing layout; keeping its current rate."});
+  instRef.exports.KbdRptSet(BigInt(repeatKeys));
+  const ok=!rateChanged || !!instRef.exports.WinRateSet(BigInt(refreshRate));
+  if (rateChanged) actualRate=ok?refreshRate:null;
+  postMessage({cmd:"settings",ok,rate:actualRate,repeat:repeatKeys,
+    msg:ok?"":"This guest has an unknown display timing layout; its rate was not changed."});
 }
 let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0, instRef = null;
@@ -188,14 +190,10 @@ onmessage = (e) => {
   else if (m.cmd === "input") { msX = m.x; msY = m.y; msB = m.b; if (m.wheel !== undefined) wheel = m.wheel; if (m.keys) keyq.Push(m.keys); if (m.keysUp) keyq.Release(); guestInput.accept(m); }
   else if (m.cmd==="keysUp") keyq.Release();
   else if (m.cmd==="set") {
-    if ([0,30,60,120].includes(m.rate)) {
-      refreshRate=m.rate;
-      if (loaded) RateApply();
-    }
-    if (typeof m.repeat==="boolean") {
-      repeatKeys=m.repeat;
-      if (loaded) instRef.exports.KbdRptSet(BigInt(repeatKeys));
-    }
+    const rateChanged=[0,30,60,120].includes(m.rate);
+    if (rateChanged) refreshRate=m.rate;
+    if (typeof m.repeat==="boolean") repeatKeys=m.repeat;
+    if (loaded) SettingsApply(rateChanged);
   }
   else if (m.cmd === "osWrite") osWrite(m).catch(err => fileResult(m.id, { ok: false, msg: String(err?.message || err), state: "error" }));
   else if (m.cmd === "osLaunch") osLaunch(m).catch(err => fileResult(m.id, { ok: false, msg: String(err?.message || err), state: "error" }));
@@ -360,7 +358,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
       const c = new Int32Array(smpCfg.ctrl); Atomics.store(c, 0, 1); Atomics.notify(c, 0);          // CTRL.READY = 1
       apsReleased = true; postMessage({ cmd: "smpReady", ncore: smpCfg.ncore });
     }
-    if (!loaded) { loaded = true; inst.exports.KbdRptSet(BigInt(repeatKeys)); RateApply(); snap = null;                     // snapshot now in WASM RAM - free the 384 MB copy
+    if (!loaded) { loaded = true; SettingsApply(); snap = null;                     // snapshot now in WASM RAM - free the 384 MB copy
       // Load the C: disk AFTER boot settles (file I/O works once it lands; the desktop runs from
       // cached RAM). Deferring it keeps the disk decompress out of the boot memory spike - the
       // difference between living and dying on iOS Safari's per-tab memory budget.
