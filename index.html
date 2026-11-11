@@ -253,6 +253,7 @@
     .wmenu:focus-visible, .close:focus-visible { outline:1px solid var(--red); outline-offset:-1px; }
     #touchBtn, #mobileBar, #menuShade { display:none; }
     @media (pointer:coarse) { #touchBtn, #keysbar [data-key^="Arrow"] { display:block; } }
+    @media (pointer:coarse) { #keysbar [data-mobile-first], #keysbar [data-key^="Arrow"] { order:-1; } }
     #guide { display:flex; flex-direction:column; min-height:220px; max-height:70dvh; }
     #helpBody { min-height:0; overflow:auto; flex:1; }
     #helpContext { color:var(--red); margin-bottom:8px; font-size:12px; }
@@ -373,15 +374,15 @@
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico"><svg><use href="#i-touch"/></svg></span> Touch controls</button>
       </div>
       <div class="win keyswin" data-title="Keys"><span class="close">[X]</span><div id="keysbar">
-        <button type="button">Esc</button>
+        <button type="button" data-mobile-first>Esc</button>
         <button type="button" data-key="ArrowLeft" aria-label="Left arrow">←</button><button type="button" data-key="ArrowRight" aria-label="Right arrow">→</button>
         <button type="button" data-key="ArrowUp" aria-label="Up arrow">↑</button><button type="button" data-key="ArrowDown" aria-label="Down arrow">↓</button>
-        <button type="button">Space</button><button type="button">Enter</button>
         <button type="button">F1</button><button type="button">F2</button>
         <button type="button">F3</button><button type="button">F4</button><button type="button">F5</button>
         <button type="button">F6</button><button type="button">F7</button><button type="button">F8</button>
         <button type="button">F9</button><button type="button">F10</button>
         <button type="button">F11</button><button type="button">F12</button>
+        <button type="button" data-mobile-first>Enter</button><button type="button" data-mobile-first>Space</button>
         <button type="button">Tab</button><button type="button" class="mod">Ctrl</button>
         <button type="button" class="mod">Alt</button><button type="button" class="mod">Shift</button>
         <button type="button" class="mod">Win</button><button type="button">Ins</button>
