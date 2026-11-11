@@ -11,7 +11,7 @@ const root=fileURLToPath(new URL("../../",import.meta.url)),start=performance.no
 console.log("Compiler:",realpathSync(new URL("../../holyc-wasm",import.meta.url)));
 const quick=["host.selftest.mjs","measure.mjs","boot-test.mjs","diskio-check.mjs",
   "atomic.test.mjs","time.test.mjs","keyboard.test.mjs","capture.test.mjs","barrier.test.mjs",
-  "snapshot-format.test.mjs","patch.test.mjs","jit-primitives.test.mjs","fpu-check.mjs",
+  "snapshot-format.test.mjs","patch.test.mjs","jit-primitives.test.mjs","jit-loop.test.mjs","fpu-check.mjs",
   "fpu-convert.test.mjs","fpu-compare.test.mjs","fpu-ops.test.mjs","cpu-fault.test.mjs","fpu-native.mjs","jit-x87.test.mjs","shift.test.mjs","jitdiff1.mjs"],
   full=["menu-clip.test.mjs","video.test.mjs","raster.test.mjs","rate.test.mjs","guestcheck.mjs","large-file.test.mjs",
     "jitrecycle.mjs","worker.test.mjs","worker-fault.test.mjs","worker-legacy-fault.test.mjs","worker-rate.test.mjs","worker-pause.test.mjs",
