@@ -56,3 +56,22 @@ export function SubsectorAt(map,x,y)
   }
   return index&0x7FFF;
 }
+
+export function FixedSide(x,y,ax,ay,dx,dy)
+{
+  if(dx===0)return Number(x<=ax?dy>0:dy<0);
+  if(dy===0)return Number(y<=ay?dx<0:dx>0);
+  return Number(Math.floor(dy*(x-ax)/65536)<=Math.floor(dx*(y-ay)/65536));
+}
+
+export function FixedSectorAt(map,x,y)
+{
+  let n=map.nodes.length-1;
+  if(n<0)n=0x8000;
+  while(!(n&0x8000)) {
+    const p=map.nodes[n];
+    n=p.children[FixedSide(x,y,p.origin[0]*65536,p.origin[1]*65536,...p.delta)];
+  }
+  const seg=map.segs[map.subsectors[n&32767][1]];
+  return map.sides[map.lines[seg[3]][5+seg[4]]].sector;
+}

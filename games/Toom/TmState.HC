@@ -17,10 +17,15 @@ class GameData
   ActorInfo *info;
 };
 
+extern class World;
+
 class Actor
 {
+  World *world;
   I64 type,state,tics,sprite,frame,health,flags;
   I64 x,y,z,vx,vy,vz,angle,sector,target,reaction,threshold;
+  I64 id,radius,height,floor,ceil,block,block_next,block_last,spawn,
+	movedir,move_cnt,lastlook,tracer;
   Bool active;
 };
 

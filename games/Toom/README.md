@@ -35,6 +35,10 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - Fixed-point map collision uses the original blockmap, stable side/tie rules,
   line flags, portal headroom, 24-unit steps and dropoffs. Successful position
   queries retain touched special lines for the later movement/action stage.
+- World-owned actors use stable allocations and generation handles. Map
+  spawning honors skill, ambush, ceiling placement, deterministic state timers
+  and the canonical RNG sequence. The block lists respect NOBLOCKMAP, and
+  NOSECTOR objects remain invisible.
 
 Fuzz effects, simulation, weapons, actors, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
@@ -88,6 +92,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sprite.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/mask.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/collision.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/world.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -103,7 +108,7 @@ The state check advances all 967 states through 116,040 total tics with action
 callbacks, checks three full random-stream cycles and rejects invalid next-state
 indices. It checks the clock and data, not yet the effects of actor actions.
 The sprite check compares 7,736 state/rotation lookups, two full passes through
-853 decoded images and 48 pixel/depth views. It covers mirrored images, alpha,
+853 decoded images and 49 pixel/depth views. It covers mirrored images, alpha,
 light/fullbright, sector clipping and nearer occluders. Absent Phase 2 sprite
 frames remain absent; validating gameplay-reachable state assets is a later gate.
 The masked-wall check compares 48 full pixel/depth views, covering oblique and
@@ -114,6 +119,11 @@ with an independent full-linedef scan, including player, monster, missile,
 teleport, floating and noclip flags. It checks passability, sectors, headroom,
 steps/dropoffs and contacted specials. Actor contacts and crossed-line effects
 are still part of the pending simulation stage.
+The world check covers 108 map/skill combinations and 37,779 initial actors,
+including exact spawn state/timers, RNG, flags, positions and totals. It also
+checks linked block lists, stable allocation through table growth, stale
+handles, slot reuse and out-of-map unlinking. Actor actions and movement are
+not yet implemented.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

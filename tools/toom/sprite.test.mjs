@@ -56,9 +56,14 @@ for(const state of chosen)for(let angle=0;angle<8;angle++) {
     const c=im.pixels[u+v*im.w];
     if(c!==256&&iz>Math.abs(depth[at])) {pix[at]=colormap[light*256+c];depth[at]=iz;}
   }
-  tests.push([state,d,r,z,angle,hash(pix),hash(depth)]);
+  tests.push([state,d,r,z,angle,hash(pix),hash(depth),0]);
 }
-const testBytes=Buffer.alloc(tests.length*28);tests.flat().forEach((n,i)=>testBytes.writeUInt32LE(n>>>0,i*4));
+const hidden=tests[0].slice(),emptyPix=new Uint8Array(320*168).fill(77),emptyDepth=new Int32Array(320*168);
+for(let y=0;y<168;y++)for(let x=0;x<320;x++)emptyDepth[x+y*320]=x%13===0?4000000:x%17===0?-4000000:0;
+hidden[5]=hash(emptyPix);hidden[6]=hash(emptyDepth);
+hidden[7]=Number(readFileSync(resolve(root,'games/Toom/TmData.HH'),'ascii').match(/#define TM_MF_NOSECTOR\s+(\d+)/)[1]);
+tests.push(hidden);
+const testBytes=Buffer.alloc(tests.length*32);tests.flat().forEach((n,i)=>testBytes.writeUInt32LE(n>>>0,i*4));
 let source=['TmGlbls.HH','TmWad.HC','TmMap.HC','TmGr.HC','TmTex.HC','TmData.HH','TmState.HC','TmPal.HC','TmDraw.HC','TmSprite.HC']
   .map(name=>readFileSync(resolve(root,'games/Toom',name),'latin1')).join('\n');
 source+=`
@@ -99,10 +104,11 @@ U0 TmSpriteTest()
   tmpm->sector[0].floor=0; tmpm->sector[0].ceil=128; tmpm->sector[0].light=160;
   tmpa->active=TRUE; tmpa->sector=0;
   for (i=0;i<${tests.length};i++) {
-    n=tests[i*7];
+    n=tests[i*8];
     tmpa->sprite=tmpd->state[n].sprite; tmpa->frame=tmpd->state[n].frame;
-    tmpa->x=tests[i*7+1]*65536; tmpa->y=-tests[i*7+2]*65536;
-    tmpa->z=tests[i*7+3]*65536; tmpa->angle=tests[i*7+4]*536870912;
+    tmpa->flags=tests[i*8+7];
+    tmpa->x=tests[i*8+1]*65536; tmpa->y=-tests[i*8+2]*65536;
+    tmpa->z=tests[i*8+3]*65536; tmpa->angle=tests[i*8+4]*536870912;
     MemSet(tmpv->pix,77,320*168);
     for (j=0;j<168;j++)
       for (k=0;k<320;k++) {
@@ -116,8 +122,8 @@ U0 TmSpriteTest()
       ph=(ph^tmpv->pix[j])*16777619&0xFFFFFFFF;
       dh=(dh^tmpv->depth[j])*16777619&0xFFFFFFFF;
     }
-    if (ph!=tests(U32 *)[i*7+5] || dh!=tests(U32 *)[i*7+6]) {
-      "%d PIX %d/%d DEPTH %d/%d\\n",i,ph,tests(U32 *)[i*7+5],dh,tests(U32 *)[i*7+6];
+    if (ph!=tests(U32 *)[i*8+5] || dh!=tests(U32 *)[i*8+6]) {
+      "%d PIX %d/%d DEPTH %d/%d\\n",i,ph,tests(U32 *)[i*8+5],dh,tests(U32 *)[i*8+6];
       bad++;
     }
   }
@@ -134,4 +140,4 @@ const result=await QemuRun([Buffer.from(source,'latin1')],{files:[
   {name:'IMAGES.BIN',bytes:imageBytes},{name:'TESTS.BIN',bytes:testBytes}],timeout:240});
 console.log(JSON.stringify(result,null,2));
 assert.equal(result.results[0].except,'');
-assert.match(result.results[0].out,/FRAMES 7736 IMAGES \d+ VIEWS 48 BAD 0/);
+assert.match(result.results[0].out,new RegExp(`FRAMES 7736 IMAGES \\d+ VIEWS ${tests.length} BAD 0`));

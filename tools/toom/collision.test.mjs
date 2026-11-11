@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {FreedoomRead,root} from './Assets.mjs';
-import {WadRead,MapRead} from './Wad.mjs';
+import {WadRead,MapRead,FixedSide as side,FixedSectorAt as sectorAt} from './Wad.mjs';
 
 assert(process.env.HOLYC_WASM,'Set HOLYC_WASM to the compiler checkout with the native oracle.');
 const {QemuRun}=await import(pathToFileURL(resolve(process.env.HOLYC_WASM,'tests/oracle/Qemu.mjs')));
@@ -13,20 +13,6 @@ const MF=Object.fromEntries(['NOCLIP','DROPOFF','FLOAT','TELEPORT','MISSILE'].ma
 const maps=lumps.flatMap((l,i)=>/^E[1-4]M[1-9]$/.test(l.name)?[MapRead(lumps,i)]:[]);
 const tests=[],offsets=[];
 let rng=0x12345678;const next=()=>rng=(Math.imul(rng,1664525)+1013904223)>>>0;
-function side(x,y,ax,ay,dx,dy) {
-  if(dx===0)return Number(x<=ax?dy>0:dy<0);
-  if(dy===0)return Number(y<=ay?dx<0:dx>0);
-  return Number(Math.floor(dy*(x-ax)/65536)<=Math.floor(dx*(y-ay)/65536));
-}
-function sectorAt(m,x,y) {
-  let n=m.nodes.length-1;
-  if(n<0)n=0x8000;
-  while(!(n&0x8000)) {
-    const p=m.nodes[n];n=p.children[side(x,y,p.origin[0]*65536,p.origin[1]*65536,...p.delta)];
-  }
-  const seg=m.segs[m.subsectors[n&32767][1]];
-  return m.sides[m.lines[seg[3]][5+seg[4]]].sector;
-}
 function scan(m,q) {
   const [x,y,z,r,height,flags,player]=q,sector=sectorAt(m,x,y),base=m.sectors[sector];
   let floor=base.floor*65536,ceil=base.ceil*65536,dropoff=floor,special=0,good=true;

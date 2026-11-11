@@ -119,7 +119,7 @@ U0 SpriteDraw(View *tmpv,Sprites *tmps,Actor *tmpa)
   U8 *color,*dst;
   U16 *src;
   I32 *depth;
-  if (!tmpa->active || d<TM_VIEW_NEAR ||
+  if (!tmpa->active || tmpa->flags&TM_MF_NOSECTOR || d<TM_VIEW_NEAR ||
 	!(0<=tmpa->sector<tmpv->map->sector_cnt)) return;
   a=Arg(-dx,-dy)-tmpa->angle*6.283185307179586/4294967296.0;
   rotation=Floor((a+0.3926990816987241)/0.7853981633974483);
