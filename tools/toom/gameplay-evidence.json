@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "63b2d868d4251167342256242cd0ad82933e4c1e4ae9131bfd91a7d6be72d905",
+  "renderSourceSha256": "70bbfc9ceb077d09738ef9cd4f9f7129bdc3eb17ad667b9f52b5ebfbfba64c41",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-wz1gemg4",
+      "native": "qemu-928z7oco",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -110,10 +110,10 @@
     },
     "sectorMotion": {
       "cases": 430,
-      "native": "qemu-wghd52hd",
+      "native": "qemu-b16hcoye",
       "hemu": true,
-      "allocatesPerTic": false,
-      "scope": "Q16 moving planes, height clipping, crushing, callback isolation and geometry recovery; door/lift controllers pending"
+      "scope": "Q16 moving planes, height clipping, crushing, callback isolation and geometry recovery",
+      "perTicScratchAllocations": 0
     },
     "sectorIndex": {
       "maps": 36,
@@ -128,6 +128,14 @@
       "gridQueries": 1024,
       "native": "qemu-alayzdgr",
       "nestedQueryCoverage": "sectorMotion"
+    },
+    "doors": {
+      "cases": 14873,
+      "timelineTics": 12778,
+      "keyMaskCombinations": 1024,
+      "native": "qemu-o8y_vnfl",
+      "hemu": true,
+      "scope": "Door controllers, manual/tagged/locked activation, timers, obstruction and mover ownership; full line dispatch and UI/audio remain pending"
     }
   },
   "frames": [

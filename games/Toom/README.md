@@ -107,7 +107,17 @@ The implemented foundation uses native V5.03 file and memory APIs:
   wait until the next query. Exceptions restore plane heights and actor bounds
   without repeating callbacks; already-applied game effects are retained.
 
-Fuzz effects, the full simulation loop, actor actions, line specials, HUD,
+- Door controllers support normal and fast raise/open/close cycles, thirty-second
+  close/reopen and five-minute delayed opening, front-side manual use, tagged
+  activation, both key forms for each color, monster/secret restrictions and
+  obstruction reversal. One controller owns each sector; new controllers wait
+  until the next tic and retired nodes free after callbacks. Sound and missing
+  key requests are callbacks for the eventual native UI/audio implementation.
+  Delayed closing doors initialize their reopening height and wait, correcting
+  uninitialized fields in the legacy source. Isolated doors retain their ceiling,
+  and an opening destination cannot go below the floor.
+
+Fuzz effects, the full simulation loop, actor actions, line dispatch, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
 
@@ -155,6 +165,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/io.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sector-index.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sector.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/door.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
@@ -282,9 +293,13 @@ The sector fixtures cover 430 movement/contact contracts, including fractional
 steps, strict destination completion, crush cadence, callbacks that spawn or
 retire actors, nested queries and exception recovery. An independent map scan
 checks all 14,556 sector bounds and 127,943 indexed edges across 36 maps. Moving
-planes allocate no per-tic scratch memory; full door/lift controllers are next.
+planes allocate no per-tic scratch memory. The door fixture adds 14,873 checks:
+12,778 individual tics across eight source-defined cycles, all 1,024 manual and
+remote key-mask combinations, obstruction/delayed reopening, controller ownership,
+spawn/removal and exception cleanup. Full floor/lift/ceiling controllers and
+line dispatch remain unfinished.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage, inventory, impact, weapon, player, blast, sight or sector checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector or door checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

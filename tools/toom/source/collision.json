@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/id-Software/DOOM",
   "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
-  "purpose": "Reference collision, motion, combat, weapon/player, visibility and moving-sector behavior, re-expressed in native HolyC. These C files are not compiled or linked into TOOM.",
+  "purpose": "Reference collision, motion, combat, weapon/player, visibility, moving sectors and doors, re-expressed in native HolyC. These C files are not compiled or linked into TOOM.",
   "files": [
     {
       "path": "linuxdoom-1.10/p_map.c",
@@ -38,6 +38,18 @@
     {
       "path": "linuxdoom-1.10/p_floor.c",
       "sha256": "c22ad7b7112d28c8b8c54a26ff611b98664a6d7a40d8d300680e6ca465468d47"
+    },
+    {
+      "path": "linuxdoom-1.10/p_doors.c",
+      "sha256": "2e44a6051f27206971c7bf9629431db201e1dc3441d974119ec9d88655e5ec12"
+    },
+    {
+      "path": "linuxdoom-1.10/p_spec.c",
+      "sha256": "1eed828498af033bd2322402a727e5b66913f5814e4d3fb002712fbcc8825cb1"
+    },
+    {
+      "path": "linuxdoom-1.10/p_switch.c",
+      "sha256": "ac7effb3c4cfce1ecd8f7d25c93690c9b74cda99c639a47f76c4151a73010358"
     }
   ]
 }

@@ -23,6 +23,7 @@
 #include "TmSight"
 #include "TmBlast"
 #include "TmSector"
+#include "TmDoor"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

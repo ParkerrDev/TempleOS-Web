@@ -1,6 +1,16 @@
+#define TM_MOVER_DOOR 1
+
+class Mover
+{
+  Mover *next,*last;
+  I64 sector,kind,type,direction,speed,high,wait,delay;
+  Bool active;
+};
+
 class SectorArea
 {
   I64 first,cnt,left,right,bottom,top;
+  Mover *mover;
 };
 
 class Sectors
@@ -8,12 +18,18 @@ class Sectors
   Motion *motion;
   SectorArea *area;
   I64 *lines;
+  Mover *first,*last;
   U0 (*sound)(I64 sector,I64 n);
+  U0 (*key_rqst)(Actor *actor,I64 key);
 };
 
 U0 SectorsDel(Sectors *tmps)
 {
+  Mover *tmpm,*next;
   if (tmps) {
+    for (tmpm=tmps->first;tmpm;tmpm=next) {
+      next=tmpm->next; Free(tmpm);
+    }
     Free(tmps->area); Free(tmps->lines); Free(tmps);
   }
 }
@@ -58,6 +74,64 @@ Sectors *SectorsNew(Motion *tmpm)
       }
   }
   return tmps;
+}
+
+Mover *MoverNew(Sectors *tmps,I64 sector,I64 kind)
+{//One floor or ceiling controller owns a sector at a time.
+  Mover *tmpm;
+  if (!(0<=sector<tmps->motion->world->map->sector_cnt)) throw('Sector');
+  if (tmps->area[sector].mover) return NULL;
+  tmpm=CAlloc(sizeof(Mover));
+  tmpm->sector=sector; tmpm->kind=kind; tmpm->active=TRUE;
+  tmpm->last=tmps->last;
+  if (tmps->last) tmps->last->next=tmpm;
+  else tmps->first=tmpm;
+  tmps->last=tmps->area[sector].mover=tmpm;
+  return tmpm;
+}
+
+U0 MoverFinish(Sectors *tmps,Mover *tmpm)
+{//Reclamation waits until no controller callback holds the node.
+  if (tmps->area[tmpm->sector].mover==tmpm)
+    tmps->area[tmpm->sector].mover=NULL;
+  tmpm->active=FALSE;
+}
+
+U0 MoversSweep(Sectors *tmps)
+{
+  Mover *tmpm=tmps->first,*next;
+  while (tmpm) {
+    next=tmpm->next;
+    if (!tmpm->active) {
+      if (tmpm->last) tmpm->last->next=next;
+      else tmps->first=next;
+      if (next) next->last=tmpm->last;
+      else tmps->last=tmpm->last;
+      Free(tmpm);
+    }
+    tmpm=next;
+  }
+}
+
+U0 MoversTick(Sectors *tmps,U0 (*action)(Sectors *sectors,Mover *mover))
+{//New controllers wait until the following 35 Hz tic.
+  Mover *tmpm=tmps->first,*last=tmps->last,*next;
+  try {
+    while (tmpm) {
+      next=tmpm->next;
+      if (tmpm->active) (*action)(tmps,tmpm);
+      if (tmpm==last) break;
+      tmpm=next;
+    }
+  } catch {
+    MoversSweep(tmps);
+  }
+  MoversSweep(tmps);
+}
+
+U0 SectorSnd(Sectors *tmps,I64 sector,I64 n)
+{
+  if (tmps->sound) (*tmps->sound)(sector,n);
 }
 
 I64 SectorOther(Sectors *tmps,I64 sector,I64 line)
