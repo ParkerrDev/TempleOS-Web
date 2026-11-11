@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "5db5c33a85b1854ce404dc8de2b606e7b96571f81285da29968cbd63155049bf",
+  "runtimeSha256": "eb63b3f37f567ef4b86556110f779c812ad21e4c82a2f11985abc7074ccf0475",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
