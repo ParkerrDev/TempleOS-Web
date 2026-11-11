@@ -442,7 +442,7 @@ export function jitCompile(rip) {
       } else if (op === 0xC0 || op === 0xC1 || op === 0xD0 || op === 0xD1) { // grp2 shift by imm8 / by 1
         const sz = (op & 1) ? szV : 1, byOne = op >= 0xD0; const opn = (U8[j] >> 3) & 7; const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j; let cnt = byOne ? 1 : (U8[j] & (sz === 8 ? 63 : 31)); if (!byOne) j += 1; if (mm.isMem) emitEA(f, mm, j - GBASE);
         if ((opn === 4 || opn === 5 || opn === 7) && cnt !== 0) {            // SHL/SHR/SAR (rotates deferred)
-          materialize(f);                                                    // partial-writes CF/ZSP (keeps OF) -> deferred flags live first (also frees locals 0-2)
+          materialize(f); //Only a one-bit shift defines OF.
           const bits = sz * 8, hb = bits - 1, mask = sz === 8 ? null : (1n << BigInt(bits)) - 1n;
           rdRM(f, mm, sz, rex); f.local_set(0);                             // v = operand (zero-ext)
           if (opn === 4) {                                                  // SHL: res=(v<<cnt)&m ; CF=(v>>(bits-cnt))&1
@@ -450,13 +450,21 @@ export function jitCompile(rip) {
           } else if (opn === 5) {                                           // SHR: res=v>>cnt ; CF=(v>>(cnt-1))&1
             f.local_get(0); i64c(f, cnt); f.op("i64_shr_u"); f.local_set(2); f.local_get(0); i64c(f, cnt - 1); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); f.local_set(1);
           } else {                                                         // SAR: res=(sext(v)>>cnt)&m ; CF=(v>>(cnt-1))&1
-            f.local_get(0); if (sz === 4) f.op("i64_extend32_s"); else if (sz === 2) f.op("i64_extend16_s"); else if (sz === 1) f.op("i64_extend8_s"); i64c(f, cnt); f.op("i64_shr_s"); if (mask !== null) { i64c(f, mask); f.op("i64_and"); } f.local_set(2); f.local_get(0); i64c(f, cnt - 1); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); f.local_set(1); }
-          wrRM(f, mm, sz, rex, () => f.local_get(2)); i32c(f, RFL); i32c(f, RFL); ld64(f); i64c(f, -0xC6); f.op("i64_and"); f.local_get(1); f.op("i64_or");
+            f.local_get(0); if (sz === 4) f.op("i64_extend32_s"); else if (sz === 2) f.op("i64_extend16_s"); else if (sz === 1) f.op("i64_extend8_s"); i64c(f, cnt); f.op("i64_shr_s"); if (mask !== null) { i64c(f, mask); f.op("i64_and"); } f.local_set(2); f.local_get(0); i64c(f, Math.min(cnt, bits) - 1); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); f.local_set(1); }
+          wrRM(f, mm, sz, rex, () => f.local_get(2)); i32c(f, RFL); i32c(f, RFL); ld64(f); i64c(f, cnt === 1 ? ~0x8C5 : ~0xC5); f.op("i64_and"); f.local_get(1); f.op("i64_or");
+          if (cnt === 1 && opn !== 7) {
+            f.local_get(opn === 4 ? 2 : 0); i64c(f, hb); f.op("i64_shr_u");
+            if (opn === 4) { f.local_get(1); f.op("i64_xor"); }
+            i64c(f, 1); f.op("i64_and"); i64c(f, 0x800); f.op("i64_mul"); f.op("i64_or");
+          }
           f.local_get(2); if (mask !== null) { i64c(f, mask); f.op("i64_and"); } f.op("i64_eqz"); f.op("i64_extend_i32_u"); i64c(f, 0x40); f.op("i64_mul"); f.op("i64_or"); // ZF
           f.local_get(2); i64c(f, hb); f.op("i64_shr_u"); i64c(f, 1); f.op("i64_and"); i64c(f, 0x80); f.op("i64_mul"); f.op("i64_or");   // SF
           f.local_get(2); i64c(f, 0xFF); f.op("i64_and"); f.op("i64_popcnt"); i64c(f, 1); f.op("i64_and"); f.op("i64_eqz"); f.op("i64_extend_i32_u"); i64c(f, 4); f.op("i64_mul"); f.op("i64_or"); // PF
           st64(f); handled = true;
-        } else if (cnt === 0 && (opn === 4 || opn === 5 || opn === 7)) { handled = true; }  // shift by 0 = no-op
+        } else if (cnt === 0 && (opn === 4 || opn === 5 || opn === 7)) {
+          if (!mm.isMem && sz === 4) wrReg(f, mm.rm, sz, rex, () => rdReg(f, mm.rm, sz, rex));
+          handled = true;
+        }
       } else if (op === 0xF6 || op === 0xF7) {                               // grp3: test/not/neg (mul/div deferred)
         const sz = op === 0xF6 ? 1 : szV, ext = (U8[j] >> 3) & 7; const mm = decodeModRM(j, rexR, rexX, rexB); j = mm.j;
         if (ext <= 1) {                                                      // TEST r/m, imm
