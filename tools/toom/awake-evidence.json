@@ -1,0 +1,95 @@
+{
+  "status": "bounded-native-brain-target-ownership-proof",
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "cases": 864,
+      "native": "qemu-me_4obpj",
+      "hemu": true,
+      "sourceSha256": "c3f9ba11705ca8dc81603986d844a34a50b1c9173b95fb75cd471199886877f4",
+      "reference": "Unmodified original A_BrainAwake compiled as host C; original fixed array is exercised only up to its 32-target capacity. Native uses actual actor handles and the owned target table. All 38 result slots match.",
+      "scope": [
+        "Zero through 32 targets in thinker order",
+        "Different actor types, retired thinkers, dead active targets and non-actor thinkers",
+        "Cursor reset, full-volume awake sound, unchanged random stream and easy phase"
+      ]
+    },
+    "integration": {
+      "cases": 13,
+      "native": "qemu-koilonel",
+      "hemu": true,
+      "sourceSha256": "4ef95ba2eb2b000b81aac0e6597664c7883273db2bdb0a87791b56fb90b9925e",
+      "scope": [
+        "Zero, 33, 129 and 257 targets, including native actor-slot growth",
+        "Eight repeated refreshes per population with stable heap usage",
+        "Dead versus retired targets and generation reuse",
+        "Owner/inactive guards leave prior table and cursor unchanged",
+        "Sound failure after publication leaves the new table owned and valid",
+        "Awake during a thinker action; creation/deletion rejected while thinkers run",
+        "A target removed by the sound callback leaves a safely stale generation handle",
+        "Complete fresh-task cleanup"
+      ]
+    },
+    "isolatedHarnesses": {
+      "baseline": "1f08618",
+      "scope": "Only omit-list changes were made in eight isolated probes. Their included module sequence and complete module-prefix bytes are identical to the baseline; the remaining runner text is identical after removing the new omit token. No duplicate native execution was needed for unchanged inputs.",
+      "checks": {
+        "enemy": {
+          "moduleCount": 41,
+          "modulePrefixSha256": "ad5ac234d870386ffef344abb96826585795d715545a726412317d4a63dc6773"
+        },
+        "chase": {
+          "moduleCount": 43,
+          "modulePrefixSha256": "fa6ddfee0df5b67f220c246b7cbe4d20eefbe326bd228c0b671475f606387053"
+        },
+        "walk": {
+          "moduleCount": 43,
+          "modulePrefixSha256": "fa6ddfee0df5b67f220c246b7cbe4d20eefbe326bd228c0b671475f606387053"
+        },
+        "tracer": {
+          "moduleCount": 43,
+          "modulePrefixSha256": "6b0533f60bcb8d1f481f940d4a520598f9e304d7f8513024ee3232ad8c3e23ef"
+        },
+        "pain": {
+          "moduleCount": 43,
+          "modulePrefixSha256": "6b0533f60bcb8d1f481f940d4a520598f9e304d7f8513024ee3232ad8c3e23ef"
+        },
+        "combat": {
+          "moduleCount": 41,
+          "modulePrefixSha256": "ad5ac234d870386ffef344abb96826585795d715545a726412317d4a63dc6773"
+        },
+        "projectile": {
+          "moduleCount": 43,
+          "modulePrefixSha256": "6b0533f60bcb8d1f481f940d4a520598f9e304d7f8513024ee3232ad8c3e23ef"
+        },
+        "fat": {
+          "moduleCount": 41,
+          "modulePrefixSha256": "ad5ac234d870386ffef344abb96826585795d715545a726412317d4a63dc6773"
+        }
+      }
+    }
+  },
+  "nativeDesign": [
+    "Brain owns a target-handle table sized to the current actor population, replacing the original 32-pointer array. C parity is claimed only inside that array capacity; larger populations have separate native ownership tests.",
+    "The host may supply a retained easy-mode phase when creating a new level context. Target refresh does not reset it.",
+    "Missing/retired handles require bounded handling by the forthcoming spawn-cube action."
+  ],
+  "remaining": [
+    "Brain spit and spawn-cube actions",
+    "Complete actor dispatcher and persistent native game host",
+    "UI/audio, saves and episode/intermission progression"
+  ]
+}

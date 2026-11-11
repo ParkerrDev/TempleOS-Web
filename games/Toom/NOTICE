@@ -38,7 +38,8 @@ p_spec.h, lighting effects in p_lights.c, scheduling in p_tick.c, and the
 perception/chase routines, ordinary monster attacks/refire, mancubus spread,
 lost-soul charge, pain-elemental spawning/death, revenant launch/tracer
 homing, arch-vile corpse selection/resurrection and fire/attack, boss/Keen
-death triggers, brain pain/ending explosions/exit, death/pain/fall
+death triggers, brain target collection/pain/ending explosions/exit,
+death/pain/fall
 and footstep actions, explosion wiring and three
 double-shotgun sound actions in p_enemy.c
 at the same id Software revision. Reference paths and digests are in
@@ -55,6 +56,8 @@ limits, and angle slope evaluation uses a wide numerator to avoid legacy
 Arch-vile fire spawns at the target x/y/z, correcting the original repeated-x
 spawn coordinate. Forced fire/extra-missile placement refreshes spatial
 ownership immediately; stale generation handles cannot name replacement actors.
+Brain target storage grows with the actor population instead of the original
+fixed 32-pointer array. Its normal thinker ordering and awake sound are retained.
 
 The native implementation and derived data are distributed under version 2
 of the GNU General Public License. See COPYING for the full license and

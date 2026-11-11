@@ -103,6 +103,8 @@ The implemented foundation uses native V5.03 file and memory APIs:
   the existing floor/door controllers without fabricating a linedef.
   Brain ending effects retain their full-volume sounds, 65-explosion sweep,
   original fixed-point height offset and random-draw/timer order.
+  Brain target collection owns generation handles in thinker order, with no
+  fixed 32-target capacity; refreshing targets preserves the easy-mode phase.
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
   contact callbacks defer reclamation until the end of the tic. Nested contact
@@ -317,6 +319,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/boss-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/boss.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/ending-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/ending.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/awake.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/awake-real.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -589,8 +593,12 @@ Brain ending effects match 1,024 original-C cases covering all random starts
 and every emitted actor's position, velocity, state/frame and timer. Nine
 native and pinned HEMU lifecycle cases include 80 actual thinker tics and
 exception cleanup. Exact controlled boundaries and hashes are recorded in
-`tools/toom/ending-evidence.json`. Brain target collection and spawn cubes are
-still unfinished.
+`tools/toom/ending-evidence.json`.
+Target collection matches 864 original-C cases within the original 32-target
+limit. Thirteen actual native and pinned HEMU cases add populations through
+257, actor-slot growth, repeated refresh, stale handles and exception cleanup.
+The larger table is an explicit native extension, recorded with exact scopes
+in `tools/toom/awake-evidence.json`. Spawn cubes remain unfinished.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

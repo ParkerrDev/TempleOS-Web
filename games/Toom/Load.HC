@@ -39,6 +39,7 @@
 #include "TmCombat"
 #include "TmVile"
 #include "TmBoss"
+#include "TmBrain"
 #include "TmEffect"
 #include "TmPal"
 #include "TmDraw"
