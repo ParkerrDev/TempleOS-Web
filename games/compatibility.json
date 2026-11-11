@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "ba52ac4e02e614d177432899a7411e23b88379992a325cac1fa1cfa1741fe887",
+  "runtimeSha256": "d9814fc61f2ed28851b1e4fd075ed001a0c8e538ddf99f0d8cefe2a7e605de84",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -9,7 +9,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "db7f4b0fc84f89373125c8dd274c3d666939dd6ee7272f7db3b5a0d05d86b872"
+      "wasmSha256": "08bb044215729f923ee3b4412c418b109573c6fab6942739cdd69e5ab11e7073"
     },
     "toom": {
       "name": "TOOM",
@@ -27,7 +27,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "3b631dd644e7f61874d86d87263de3f683d0565c9c942be9bd86df6288e3ff3e"
+      "wasmSha256": "914ceb04833cb1b7f49d71bb276c2bf6bc011f1a2073c1f1571fc404cc4e0ad1"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -36,7 +36,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "d7aaf39f5163b4ec73db32b906357a788aa12e5c534d3524f2306d05b747fef4"
+      "wasmSha256": "92457f0ed6ca53e73cdfedb825dd3154bbd5a0a2b11710a0135f7e803ddb7089"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -45,7 +45,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "ed0159471f7d2e6a8f9ed89000e73b4cf84a8d9e8fe9103d636c1539a1f07df9"
+      "wasmSha256": "8a6e7b6bf84ebaf90ea7797d7f2d8c9a703f818d9c70536b5a8894184368d4f7"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -162,7 +162,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "e0f12e90d61e597fe2531555df081a1da1f1da187f6eb80dfad53c9269371945"
+      "wasmSha256": "f7a378ced3b01991437b697f2c2443fd4f3bba90cd1613fcc731807d2d446efd"
     },
     "tinker-Whap": {
       "name": "Whap",
@@ -450,7 +450,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "<prelude>:81:13: parse error: expected declarator name (near '(')"
+      "error": "<prelude>:86:13: parse error: expected declarator name (near '(')"
     },
     "library-SpyHunt": {
       "name": "SpyHunt",

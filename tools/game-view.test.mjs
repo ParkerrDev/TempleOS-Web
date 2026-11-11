@@ -14,6 +14,8 @@ document.getElementById=id=>{if(!nodes.has(id))nodes.set(id,new Node(id));return
 document.body={style:{overflow:'auto'}};
 document.exitFullscreen=()=>{document.fullscreenElement=null;document.dispatchEvent(new Event('fullscreenchange'));return Promise.resolve();};
 globalThis.document=document;
+const window=new EventTarget();
+globalThis.dispatchEvent=window.dispatchEvent.bind(window);
 const views=setupGameViews({release(){releases++;},raise(){}}),node=id=>document.getElementById(id),click=id=>node(id).dispatchEvent(new Event('click'));
 for(const [button,target] of [['gameFullscreen','gameWin'],['editorFullscreen','editorWin'],['previewFullscreen','editorPreview']]){
   click(button);assert.equal(document.fullscreenElement,node(target));

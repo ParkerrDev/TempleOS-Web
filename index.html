@@ -190,7 +190,7 @@
     .tbtn:active, .tbtn.on { background:var(--red); color:#fff; }
     #tL { right:96px; bottom:calc(14px + var(--kbinset, 0px) + var(--dock-bottom, 0px)); } #tR { right:18px; bottom:calc(14px + var(--kbinset, 0px) + var(--dock-bottom, 0px)); }
     #tKb { right:18px; bottom:calc(92px + var(--kbinset, 0px) + var(--dock-bottom, 0px)); width:54px; height:42px; font-size:18px; }
-    #mobInput { position:fixed; left:-30px; bottom:0; width:20px; height:20px; opacity:.01; font-size:12px; }
+    #mobInput { position:fixed; left:-30px; bottom:0; width:20px; height:20px; opacity:.01; font-size:16px; }
 
     .col-right #guide { font-size:12px; }
     #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
@@ -444,7 +444,7 @@
   </footer>
   </main>
 
-  <input id="mobInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" aria-hidden="true" tabindex="-1" />
+  <input id="mobInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="Screen keyboard input" tabindex="-1" />
   <script type="module" src="WinMgr.js"></script>
   <script type="module" src="Os.js"></script>
 </body>

@@ -21,13 +21,25 @@ try {
     page.on("download",d=>downloads.push(d));
     await page.goto(app==="page"?`http://127.0.0.1:${site.address().port}/?smp`:desktop.url);
     await MachineReady(page,4);
-    await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==="guestPatch"&&m.state==="installed"),null,{timeout:45000});
+    let generationEvents=0;
     const restart=app==="page"?"#restartBtn":"#restart",pause=app==="page"?"#pauseBtn":"#pause";
     for(const action of ["cancel","fault"]) {
+      await page.waitForFunction(after=>window.machine.events.slice(after).some(m=>
+        m.cmd==="guestPatch"&&m.state==="installed"),generationEvents,{timeout:45000});
       const before=await page.evaluate(()=>({events:window.machine.events.length,terms:window.machine.terminations.length}));
       await page.evaluate(()=>Atomics.store(new Int32Array(window.machine.gate),0,1));
       await MachinePost(page,{cmd:"osExec",id:"held-"+action,target:"adam",src:source});
-      await page.waitForFunction(()=>Atomics.load(new Int32Array(window.machine.gate),0)===2,null,{timeout:20000});
+      try {await page.waitForFunction(()=>Atomics.load(new Int32Array(window.machine.gate),0)===2,null,{timeout:20000});}
+      catch(error) {
+        console.log(app,action,await page.evaluate(n=>({
+          gate:Array.from(new Int32Array(window.machine.gate)),
+          events:window.machine.events.slice(n),
+          controls:window.machine.workers.filter(w=>!w.machineTerminated).map(w=>({
+            core:w.machineCore,ctrl:w.machineControl?Array.from(new Int32Array(w.machineControl)):null})),
+          status:document.querySelector('#status,#ldtext')?.textContent,
+        }),before.events));
+        throw error;
+      }
       assert.equal(await page.evaluate(()=>{
         const w=window.machine.workers.findLast(w=>w.machineCore===1&&!w.machineTerminated);
         return Atomics.load(new Int32Array(w.machineControl),12);
@@ -51,6 +63,7 @@ try {
         await page.locator(restart).click();
       }
       await MachineReady(page,4,{after:before.events});
+      generationEvents=before.events;
       const result=await page.evaluate(({events,terms})=>({
         exports:window.machine.events.slice(events).filter(m=>m.cmd==="exportResult"),
         stopped:window.machine.terminations.slice(terms),

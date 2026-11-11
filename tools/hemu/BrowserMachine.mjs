@@ -79,8 +79,8 @@ export async function MachineReady(page,cores,{after=0,legacy=false}={}) {
       workers:window.machine?.workers.map(w=>({url:w.machineURL,core:w.machineCore}))})));
     throw error;
   }
-  await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==="diskInfo"&&m.ok)||
-    window.machine.events.some(m=>m.cmd==="restored"),null,{timeout:45000});
+  await page.waitForFunction(after=>window.machine.events.slice(after).some(m=>
+    m.cmd==="diskInfo"&&m.ok||m.cmd==="restored"),after,{timeout:45000});
 }
 
 export async function MachineFrames(page) {
