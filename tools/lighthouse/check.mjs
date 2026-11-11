@@ -21,6 +21,7 @@ if (mirror) {
   source.status=execFileSync("git",["status","--short"],{cwd:root,encoding:"utf8"});
   source.hashes={};
   for (const name of ["index.html","Os.js","WinMgr.js","Siblings.txt",
+      "terry-sprite.js","sprites/Gr.js","sprites/GrBuild.js","sprites/GrWorker.js",
       "build/hemu.wasm","build/hemu-smp.wasm"])
     source.hashes[name]=createHash("sha256").update(await readFile(new URL(name,root))).digest("hex");
 }

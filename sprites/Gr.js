@@ -1,10 +1,9 @@
-import {compileHolyC} from "../holyc-wasm/src/compiler.js";
+import {GrBuild} from "./GrBuild.js";
 import {createHost} from "../holyc-wasm/src/runtime/host.js";
 
 export async function GrNew(source)
 {
-  const compiled=compileHolyC(source,{filename:"Gr.HC",lenient:false,resilient:false,
-    exports:["SpriteGrRead","SpriteGrWrite","SpriteGrError","SpriteGrMax","MAlloc","Free","StrLen"]}),
+  const compiled=await GrBuild(source),
     host=createHost({}),
     {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env}),
     fn=instance.exports,decoder=new TextDecoder();

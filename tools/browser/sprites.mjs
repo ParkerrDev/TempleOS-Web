@@ -20,6 +20,7 @@ const origin="http://127.0.0.1:"+server.address().port,
   browser=await chromium.launch({executablePath:process.env.CHROMIUM ||
     "/usr/bin/chromium",headless:true,args:["--no-sandbox"]});
 try {
+  await CompileRecovery();
   for (const mobile of [false,true]) {
     const context=await browser.newContext({viewport:mobile?
       {width:390,height:844}:{width:1280,height:800},isMobile:mobile,hasTouch:mobile}),
@@ -87,9 +88,56 @@ try {
     assert.equal(independent.b_after,independent.b_before,"Each Terry player owns its canvas and sequence.");
     await context.close();
   }
-  console.log("Sprite browser: native GR preview/download/package, malformed input, mobile width and independent Terry players pass.");
+  console.log("Sprite browser: worker compile/retry/cleanup, native GR preview/download/package, malformed input, mobile width and independent Terry players pass.");
 } finally {
   await browser.close();
   server.closeAllConnections();
   await new Promise(resolve=>server.close(resolve));
+}
+
+async function CompileRecovery()
+{
+  const context=await browser.newContext(),page=await context.newPage(),
+    errors=[],closed=[];
+  let started=0;
+  page.on("pageerror",error=>errors.push(error.message));
+  page.on("worker",worker=>{
+    started++;
+    closed.push(new Promise(resolve=>worker.on("close",resolve)));
+  });
+  try {
+    await context.route(origin+"/compile-check",route=>route.fulfill({
+      contentType:"text/html",body:"<!doctype html><title>GR compilation</title>"}));
+    await context.route("**/holyc-wasm/src/compiler.js",route=>route.abort(),{times:1});
+    await page.goto(origin+"/compile-check");
+    const failed=await page.evaluate(async()=>{
+      const {GrLoad}=await import("./sprites/Gr.js");
+      return (await Promise.allSettled([GrLoad(),GrLoad()])).map(result=>result.status);
+    });
+    assert.deepEqual(failed,["rejected","rejected"]);
+    await Promise.all(closed);
+    assert.equal(started,1,"Concurrent codec users share one compilation.");
+    const recovered=await page.evaluate(async()=>{
+      const {GrLoad}=await import("./sprites/Gr.js"),codec=await GrLoad(),
+        bytes=codec.encodeGR(Uint8Array.of(4),1,1);
+      return [...bytes];
+    });
+    assert.deepEqual(recovered,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      1,0,0,0,8,0,0,0,1,0,0,0,0,0,0,0,4,255,255,255,255,255,255,255]);
+    await Promise.all(closed);
+    assert.equal(started,2,"A failed worker can be replaced by a successful retry.");
+    assert.match(await page.evaluate(async()=>{
+      const {GrNew}=await import("./sprites/Gr.js");
+      try {await GrNew("U0 Broken( {");return "unexpected success";}
+      catch (error) {return error.message;}
+    }),/Gr\.HC/);
+    await Promise.all(closed);
+    assert.equal(started,3);
+    assert.equal(await page.evaluate(()=>performance.getEntriesByType("resource").
+      filter(entry=>entry.name.endsWith("/holyc-wasm/src/compiler.js")).length),0,
+      "The sprite compiler is loaded off the page's main thread.");
+    assert.deepEqual(errors,[]);
+  } finally {
+    await context.close();
+  }
 }
