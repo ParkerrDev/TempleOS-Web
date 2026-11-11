@@ -125,6 +125,13 @@ The implemented foundation uses native V5.03 file and memory APIs:
   lower-and-change neighbors preserve the existing flat/special, and destinations
   saturate at the signed Q16 range rather than overflowing.
 
+- Normal and turbo stairs follow directed edges with the same floor flat and
+  preserve the source's step ordering around busy branches. Every tagged root
+  is considered; ownership stops cycles. Donut triggers validate the hole, ring
+  and outer-sector neighbors before starting the paired floor controllers,
+  handle either boundary orientation, and never replace a busy ring controller.
+  Ring flats/specials change only when the movement completes.
+
 Fuzz effects, the full simulation loop, actor actions, line dispatch, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
@@ -175,6 +182,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sector-index.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sector.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/door.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/floor.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/floor-links.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
@@ -308,8 +316,12 @@ remote key-mask combinations, obstruction/delayed reopening, controller ownershi
 spawn/removal and exception cleanup. The floor fixture checks 768 preset/height
 combinations over 107,940 individual tics, flat-change timing, sound cadence,
 negative/isolated neighbors, texture metadata/defaults, busy tagged sectors,
-actual crushing and blocked-floor recovery. Stairs, donuts, lifts, ceiling
-controllers and line dispatch remain unfinished.
+actual crushing and blocked-floor recovery. Another 607 linked-floor checks
+cover both stair speeds, fractional heights, busy branches, flat/direction
+barriers, cycles, tagged-root coverage and donut motion/flat changes in either
+boundary orientation. These are controlled topology fixtures, not a claim that
+complete map progression has been exercised. Lifts, ceiling controllers and
+line dispatch remain unfinished.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
 motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector, door or floor checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs

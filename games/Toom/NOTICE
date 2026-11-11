@@ -25,7 +25,7 @@ control, fixed-tic player movement/view/power/death, actor sight and blast
 damage, moving-plane clipping/crushing, door/floor controllers and activation,
 hit cross-sections and axis/vertex conventions were re-expressed in
 native HolyC from p_map.c, p_maputl.c, p_mobj.c, p_inter.c, p_pspr.c,
-p_user.c, p_sight.c, p_floor.c, p_doors.c, the door/neighbor portions of
+p_user.c, p_sight.c, p_floor.c, p_doors.c, the door/neighbor/donut portions of
 p_spec.c and p_switch.c, and the
 three double-shotgun sound actions in p_enemy.c
 at the same id Software revision. Reference paths and digests are in

@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "580c088bad01fb9c0f466f9d51a8f56dbdded83f1867b6224f69224bdb5debd2",
+  "renderSourceSha256": "18cbe41538570552de67b03f259cc4b2a9e114f616eb46bbd9fa6e8bef606acc",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-stn1oi53",
+      "native": "qemu-aq760yk5",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -143,7 +143,13 @@
       "timelineTics": 107940,
       "native": "qemu-qwd5vvlj",
       "hemu": true,
-      "scope": "Direct floor presets, flat/special timing, texture metadata, actual crush/block recovery and ownership; stairs/donuts and full line dispatch pending"
+      "scope": "Direct floor presets, flat/special timing, texture metadata, actual crush/block recovery and ownership; full line dispatch pending"
+    },
+    "floorLinks": {
+      "cases": 607,
+      "native": "qemu-a62opgr8",
+      "hemu": true,
+      "scope": "Synthetic directed-sector topology fixtures for both stair speeds, fractional heights, busy branches, cycles, tagged roots and donut movement/flat changes; complete map progression not tested"
     }
   },
   "frames": [

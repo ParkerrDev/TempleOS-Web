@@ -189,3 +189,78 @@ Bool FloorTag(Sectors *tmps,I64 line,I64 type)
       if (FloorNew(tmps,i,type,line)) res=TRUE;
   return res;
 }
+
+Bool FloorStairs(Sectors *tmps,I64 line,Bool turbo=FALSE)
+{//Follow front-to-back edges with the same flat; ownership stops cycles.
+  Map *map=tmps->motion->world->map;
+  SectorArea *area;
+  Line *tmpl;
+  I64 i,j,n,back,height,speed=TM_FLOOR_SPEED/4,step=8*65536;
+  U8 texture[8];
+  Bool res=FALSE,found;
+  if (!(0<=line<map->line_cnt)) return FALSE;
+  if (turbo) {speed=TM_FLOOR_SPEED*4; step=16*65536;}
+  for (i=0;i<map->sector_cnt;i++)
+    if (map->sector[i].tag==map->line[line].tag && !tmps->area[i].mover) {
+      n=i; height=map->sector[n].floor+step;
+      MemCpy(texture,map->sector[n].floor_name,8);
+      FloorStart(tmps,n,1,speed,height,TM_FLOOR_RAISE); res=TRUE;
+      do {
+	area=tmps->area+n; found=FALSE;
+	for (j=0;j<area->cnt;j++) {
+	  tmpl=map->line+tmps->lines[area->first+j];
+	  if (tmpl->flags&4 && tmpl->side[1]!=0xFFFF &&
+		map->side[tmpl->side[0]].sector==n) {
+	    back=map->side[tmpl->side[1]].sector;
+	    if (!MemCmp(map->sector[back].floor_name,texture,8)) {
+	      height+=step;
+	      if (!tmps->area[back].mover) {
+		FloorStart(tmps,back,1,speed,height,TM_FLOOR_RAISE);
+		n=back; found=TRUE; break;
+	      }
+	    }
+	  }
+	}
+      } while (found);
+    }
+  return res;
+}
+
+Bool FloorDonut(Sectors *tmps,I64 line)
+{//The hole and ring share the outer floor's height; busy rings stay owned.
+  Map *map=tmps->motion->world->map;
+  SectorArea *area;
+  Mover *tmpm;
+  I64 i,j,n,ring,outer;
+  Bool res=FALSE;
+  if (!(0<=line<map->line_cnt)) return FALSE;
+  for (i=0;i<map->sector_cnt;i++)
+    if (map->sector[i].tag==map->line[line].tag && !tmps->area[i].mover) {
+      ring=-1; area=tmps->area+i;
+      for (j=0;j<area->cnt;j++) {
+	n=SectorOther(tmps,i,tmps->lines[area->first+j]);
+	if (n>=0) {ring=n; break;}
+      }
+      if (ring>=0 && !tmps->area[ring].mover) {
+	outer=-1; area=tmps->area+ring;
+	for (j=0;j<area->cnt;j++) {
+	  n=SectorOther(tmps,ring,tmps->lines[area->first+j]);
+	  if (n>=0 && n!=i) {outer=n; break;}
+	}
+	if (outer>=0) {
+	  tmpm=FloorStart(tmps,ring,1,TM_FLOOR_SPEED/2,
+		map->sector[outer].floor,TM_FLOOR_DONUT);
+	  MemCpy(tmpm->texture,map->sector[outer].floor_name,8);
+	  tmpm->new_special=0;
+	  try {
+	    if (FloorStart(tmps,i,-1,TM_FLOOR_SPEED/2,
+		  map->sector[outer].floor,TM_FLOOR_LOWER)) res=TRUE;
+	    else MoverFinish(tmps,tmpm);
+	  } catch {
+	    MoverFinish(tmps,tmpm);
+	  }
+	}
+      }
+    }
+  return res;
+}
