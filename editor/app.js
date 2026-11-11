@@ -79,12 +79,26 @@ function pushKey(code) {
 
 let nativeResetting=false;
 const nativeInput=KeyInput(sendNative);
+const legacyInput=KeyInput((bytes,key,down)=>{
+  if(ctrl)Atomics.store(ctrl,KEY_STATE_BASE+(key&127),Number(down));
+});
+const screenKeys={
+  down(source,key){
+    if(!legacyInput.down(source,key&127))return false;
+    const shift=legacyInput.held().some(key=>key===KEY.ShiftLeft||key===KEY.ShiftRight);
+    const ch=key===KEY.Escape?(shift?28:27):key===KEY.Space?(shift?31:32):
+      key===KEY.Enter?10:key===KEY.Tab?9:0;
+    if(ch)pushKey(ch);
+    return true;
+  },
+  up:source=>legacyInput.up(source),
+};
 function clearNative(){
   nativeResetting=true;nativeInput.reset();nativeResetting=false;
 }
 function sendNative(bytes) {
   if(!ctrl || !nativeKeys || nativeResetting || !bytes.length)return;
-  if(!keyPacketPush(ctrl,bytes))clearNative();
+  if(!keyPacketPush(ctrl,bytes)){clearNative();dispatchEvent(new Event('preview-input-reset'));}
   worker?.postMessage({type:"input"});
 }
 
@@ -107,7 +121,8 @@ const scanKeys={KeyW:0x11,KeyA:0x1e,KeyS:0x1f,KeyD:0x20,KeyR:0x13,KeyF:0x21,KeyJ
 const hasInputFocus=()=>document.activeElement===curCanvas || document.pointerLockElement===curCanvas;
 function releaseInput(){
   hybridTracking=false;
-  clearNative();
+  clearNative();legacyInput.reset();
+  dispatchEvent(new Event('preview-input-reset'));
   if(!ctrl)return;
   if(nativeKeys){keyPacketReset(ctrl);worker?.postMessage({type:"input"});}
   for(let i=0;i<128;i++)Atomics.store(ctrl,KEY_STATE_BASE+i,0);
@@ -126,10 +141,10 @@ addEventListener('keydown',e=>{
     }
     return;
   }
-  const sc=scanKeys[e.code];if(sc!==undefined){Atomics.store(ctrl,KEY_STATE_BASE+sc,1);e.preventDefault();}
-  const c=keyToChar(e);if(c){if(!e.repeat || sc===undefined)pushKey(c);e.preventDefault();}
+  const sc=KEY[e.code];if(sc!==undefined){legacyInput.down(e.code,sc&127);e.preventDefault();}
+  const c=keyToChar(e);if(c){if(!e.repeat || scanKeys[e.code]===undefined)pushKey(c);e.preventDefault();}
 });
-addEventListener('keyup',e=>{nativeInput.up(e.code);const sc=scanKeys[e.code];if(ctrl&&sc!==undefined)Atomics.store(ctrl,KEY_STATE_BASE+sc,0);});
+addEventListener('keyup',e=>{nativeInput.up(e.code);legacyInput.up(e.code);});
 addEventListener('blur',()=>{releaseInput();if(document.pointerLockElement===curCanvas)document.exitPointerLock();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseInput();if(document.pointerLockElement===curCanvas)document.exitPointerLock();}});
 document.addEventListener('pointerlockchange',()=>{
@@ -139,7 +154,7 @@ document.addEventListener('pointerlockchange',()=>{
   document.body.classList.toggle('mouse-locked',!!document.pointerLockElement);
   mouseStateChanged();
 });
-document.addEventListener('pointerdown',e=>{if(e.target!==curCanvas)releaseInput();},true);
+document.addEventListener('pointerdown',e=>{if(e.target!==curCanvas&&!e.target?.closest?.('#keysbar'))releaseInput();},true);
 document.addEventListener('mousemove',e=>{
   if(!running)return;
   if(document.pointerLockElement!==curCanvas){
@@ -376,4 +391,4 @@ if (!self.crossOriginIsolated) {
 }
 // Expose run/stop so the host page (the overlay opener) can drive the editor:
 // run the default demo when the window opens, stop it when the window closes.
-window.__holycEditor = { run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured };
+window.__holycEditor = { run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null };

@@ -3,7 +3,7 @@
 //Menu opens import what they need from here.
 import {createFrameBlitter,screenFit,PALETTE} from "./framebuffer.js";
 import {createGuestFpsMeter} from "./guest-fps.js";
-import {KEY,KeyInput,KeyBar} from "./Keyboard.js";
+import {KEY,KeyInput,KeyBar,KeyRoute} from "./Keyboard.js";
 import {TouchControls} from "./TouchControls.js";
 import {SnapshotInspect} from "./engine/Snapshot.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
@@ -126,7 +126,9 @@ const keyboard=KeyInput(function (bytes) {
   keyq.push(...bytes);
   notifyInput();
 });
-const resetKeyBar=KeyBar($("keysbar"),keyboard);
+const resetKeyBar=KeyBar($("keysbar"),KeyRoute(()=>os_game.ed?.hasInputFocus() || !focused ? os_game.ed?.keyInput() || keyboard : keyboard));
+
+addEventListener('preview-input-reset',resetKeyBar);
 
 function FrameMenu()
 {//The screen's MENU sends Ctrl+M, as a click on a window's MENU does in

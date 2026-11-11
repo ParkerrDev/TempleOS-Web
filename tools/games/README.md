@@ -52,7 +52,7 @@ Those require program-specific checks such as the native scenarios above.
 
 The browser launcher also requires recorded startup evidence. Run
 `node tools/browser/games.mjs --write`, then
-`node tools/native-games-audit.mjs --write` after a compiler, editor or game
+`node tools/native-games-audit.mjs --write` after a compiler, shell, editor or game
 change. The browser check uses the actual editor worker, observes visible and
 advancing frames, checks worker survival and Stop, and tests the launcher's
 refusal when compilation is the only evidence or the evidence cannot load.

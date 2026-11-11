@@ -277,7 +277,7 @@
       body.menu-open #menuShade { display:block; position:fixed; inset:0; z-index:1999999; background:repeating-conic-gradient(#000 0 25%, transparent 0 50%) 0 0 / 2px 2px; }
       #frame:not(.fsmode):not([data-floating]) { margin:4px 0; max-width:100%; padding:0; }
       canvas#canvas { width:calc(100vw - 24px); max-width:calc((100dvh - 140px)*4/3); height:auto; }
-      .keyswin { position:fixed; bottom:env(safe-area-inset-bottom,0px); left:0; right:0; margin:0; padding:4px; z-index:900; }
+      .keyswin { position:fixed; bottom:env(safe-area-inset-bottom,0px); left:0; right:0; margin:0; padding:4px; z-index:2000001 !important; }
       #keysbar { flex-wrap:nowrap; justify-content:flex-start; overflow-x:auto; padding:2px; touch-action:pan-x; }
       #keysbar button { flex:0 0 auto; min-height:30px; min-width:36px; }
       #guide { display:none; position:fixed; left:12px; top:64px; width:calc(100vw - 24px); max-height:calc(100dvh - 150px); margin:0; }

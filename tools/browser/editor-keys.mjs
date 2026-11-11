@@ -7,7 +7,7 @@ const server=spawn(process.execPath,['server.mjs'],{cwd:site,env:{...process.env
 await once(server.stdout,'data');
 const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
 try{
- const context=await browser.newContext({viewport:{width:1280,height:900},serviceWorkers:'block'});
+ const context=await browser.newContext({viewport:{width:1280,height:900},hasTouch:true,serviceWorkers:'block'});
  await context.route('**/hemu/*.gz',r=>r.abort());
  await context.route('https://templeosweb-*.workers.dev/**',r=>r.abort());
  await context.addInitScript(()=>{
@@ -86,5 +86,42 @@ try{
  assert.match(await page.locator('#console').innerText(),/worker could not start/);
  console.log('A failed worker module load reports an error and restores Run.');
  assert.deepEqual(errors,[]);
+ await page.setViewportSize({width:390,height:844});
+ await run(keys);await ready();
+ const bar=page.locator('#keysbar');
+ await bar.getByRole('button',{name:'Shift',exact:true}).tap();
+ await bar.getByRole('button',{name:'Esc',exact:true}).tap();
+ await bar.getByRole('button',{name:'Space',exact:true}).tap();
+ await bar.getByRole('button',{name:'Esc',exact:true}).tap();
+ await page.waitForFunction(()=>!__holycEditor.isRunning());
+ const mobile=await page.locator('#console').innerText();
+ assert.deepEqual([...mobile.matchAll(/KEY:(\d+):/g)].map(m=>Number(m[1])),[0,28,32,27],mobile);
+ assert.equal(await bar.getByRole('button',{name:'Shift',exact:true}).getAttribute('aria-pressed'),'false');
+ await run('I64 sc=Char2ScanCode(32); "READY\\n"; while(!Bt(kbd.down_bitmap,sc.u8[0])) Sleep(1); "DOWN\\n"; while(Bt(kbd.down_bitmap,sc.u8[0])) Sleep(1); "UP\\n";');await ready();
+ await page.keyboard.down('Space');await page.waitForFunction(()=>document.getElementById('console').textContent.includes('DOWN'));
+ await bar.getByRole('button',{name:'Space',exact:true}).tap();
+ assert(!/UP/.test(await page.locator('#console').innerText()),'A screen-key release cannot release a physical hold.');
+ await page.keyboard.up('Space');await page.waitForFunction(()=>!__holycEditor.isRunning());
+ assert.match(await page.locator('#console').innerText(),/UP/);
+ await run('U8 BrowserKeys[128]; "READY\\n"; while(!BrowserKeys[0x39]) Sleep(1); "DOWN\\n"; while(BrowserKeys[0x39]) Sleep(1); "UP\\n";');
+ await page.waitForFunction(()=>document.getElementById('console').textContent.includes('READY'));
+ await page.locator('#screen').focus();
+ const space=bar.getByRole('button',{name:'Space',exact:true});await space.scrollIntoViewIfNeeded();
+ const box=await space.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
+ await page.waitForFunction(()=>document.getElementById('console').textContent.includes('DOWN'));
+ await page.mouse.up();await page.waitForFunction(()=>!__holycEditor.isRunning());
+ assert.match(await page.locator('#console').innerText(),/UP/);
+ assert.deepEqual(errors,[]);
+ await run('I64 ch; "READY\\n"; while(TRUE) {ch=KeyGet; "CHAR:%d\\n",ch; if(ch==27) break;}');
+ await page.waitForFunction(()=>document.getElementById('console').textContent.includes('READY'));
+ await page.locator('#screen').focus();
+ await bar.getByRole('button',{name:'Shift',exact:true}).tap();
+ await bar.getByRole('button',{name:'Space',exact:true}).tap();
+ await bar.getByRole('button',{name:'Esc',exact:true}).tap();
+ await page.waitForFunction(()=>!__holycEditor.isRunning());
+ const legacy=await page.locator('#console').innerText();
+ assert.deepEqual([...legacy.matchAll(/CHAR:(\d+)/g)].map(m=>Number(m[1])),[31,27],legacy);
+ assert.deepEqual(errors,[]);
+ console.log('On-screen mobile keys reach native and legacy previews, preserve physical holds and clear modifiers.');
  console.log('Unsupported blocking import refuses before source initialization; no page errors.');
 }finally{await browser.close();server.kill();await once(server,'exit');}

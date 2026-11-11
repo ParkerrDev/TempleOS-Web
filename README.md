@@ -241,3 +241,5 @@ The emulator harnesses (`tools/hemu/`, memory-hungry, need the decompressed snap
 ```sh```
 
 The editor uses native TempleOS keyboard decoding and cooperative tasks when a program needs them. `npm run test:editor` checks extended keys, modifiers, held-state release, queue overflow, blocked-input wakeups, child failures and worker-load errors in the actual browser worker. Unsupported blocking APIs fail before program initialization.
+
+The Keys window routes presses to the active HolyC preview or TempleOS. Each release goes back to the program that accepted the press; physical and on-screen holds share ownership. Mobile keys stay above dialogs, and focus loss clears both held keys and latched modifiers. The browser editor check includes actual touch taps and legacy preview input.

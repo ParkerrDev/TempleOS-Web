@@ -19,8 +19,9 @@ export async function CompilerInputs(){
  return Sources([...await Files('holyc-wasm/src/'),'editor/project.js']);
 }
 export async function BrowserInputs(){
+ const shell=(await readdir(root)).filter(path=>path.endsWith(".js")).sort();
  return {
   compilerSha256:await CompilerInputs(),
-  runnerSha256:await Sources([...await Files('editor/'),'Keyboard.js','tools/browser/games.mjs','tools/games/BrowserEvidence.mjs'])
+  runnerSha256:await Sources([...await Files('editor/'),...shell,'index.html','tools/browser/games.mjs','tools/games/BrowserEvidence.mjs'])
  };
 }
