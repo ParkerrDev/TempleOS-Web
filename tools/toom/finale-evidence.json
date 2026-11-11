@@ -1,0 +1,63 @@
+{
+  "scope": "Standalone native finale timeline and authored-ending selection, outside Load/Run until presentation and host continuation are connected.",
+  "sourceHashes": {
+    "games/Toom/TmFinale.HC": "cec0b0a9729b659b90162ef88340bcba339562540b415c7d8f4b50efc01d279a",
+    "tools/toom/Finale.HC": "6d22061fd206bfa9f462ea2063a144fa2d5ed01f70cafa5378425a9d5f415a26",
+    "tools/toom/FinaleRef.mjs": "a400e46db981aafc9353deaf1d504f6b64ef76e72fc5449ce95e09200a99ca9a",
+    "tools/toom/finale.test.mjs": "142ba2632dd69ad38684c037f039a617bc5b1dc1db3346a168afa74c266f13b6",
+    "tools/toom/source/finale.json": "aafdbeb1c83e03e3418bf2f6b82404423b94c9de092bb27395b7603dc59dfcf1"
+  },
+  "reference": {
+    "repository": "https://github.com/id-Software/DOOM",
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "files": [
+      {
+        "path": "linuxdoom-1.10/f_finale.c",
+        "sha256": "c443ab18b6fa27df7033ac1ced0e86ab7c43c6e2cf2f8e428348d67d40a35670"
+      }
+    ]
+  },
+  "native": {
+    "results": [
+      {
+        "out": "FINALE 120 CASES 180000 TICS 64 FAULTS BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-sd8s2ng7",
+    "sourceSha256": "5693efc267adc86680cda5a7e057b8e5f0bf3cb02568c67c5c69a1fe74df444a",
+    "referenceSha256": "944390db7e99d3cc272121e1460718596e0b9f5a0b6783c12d483efd7020df1b"
+  },
+  "hemu": {
+    "backend": "hemu",
+    "sourceSha256": "5693efc267adc86680cda5a7e057b8e5f0bf3cb02568c67c5c69a1fe74df444a",
+    "referenceSha256": "944390db7e99d3cc272121e1460718596e0b9f5a0b6783c12d483efd7020df1b",
+    "cases": 120,
+    "ticks": 180000,
+    "faults": 64,
+    "bad": 0
+  },
+  "runtime": {
+    "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
+    "compiler": "d0e394e",
+    "hemu": "0eff35b",
+    "singleWasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c"
+  },
+  "coverage": [
+    "120 scenarios: four episodic endpoints and six commercial text/cast boundaries, each with text lengths0/1/400 and four input patterns.",
+    "180,000 steps compare stage, tic, done state, art/cast/next transition requests, episode-three music-start request timing and text reveal count with the released C routines.",
+    "The C oracle compiles unchanged F_StartFinale and F_Ticker bodies; cast animation/music callbacks are observation stubs. Character-delay arithmetic is extracted from F_TextWrite and capped at the terminating zero byte.",
+    "Held, boundary and late presses cover the strictly-greater-than50 commercial skip rule. Episode endings ignore skip buttons and wait for three tics per byte plus250 tics.",
+    "64 invalid endpoint selections reject before modifying the previous timeline; missing authored text is an empty string, and temporary fixture memory is released."
+  ],
+  "limits": [
+    "No cast state animation, finale image/font rasterization, music playback or gameplay-host integration is qualified by this fixture.",
+    "Original C cast starts and art/music requests are signals here; this does not claim that the corresponding audio or images have been played.",
+    "No performance or complete-game claim."
+  ]
+}

@@ -1012,3 +1012,18 @@ the native stack samples. One native drive transaction per requested WAD range
 resolved the bounded transition gate without changing the renderer, disk format
 or loading the whole IWAD. Cold-start and sustained performance still require
 separate uncontended measurements.
+
+`TmFinale.HC` is the next standalone component, currently outside `Load`/`Run`.
+It borrows authored story metadata and implements text reveal timing, episode
+art timing, commercial continuation and cast-start requests. Original TempleOS
+and frozen HEMU match 180,000 steps from unchanged released `F_StartFinale`
+and `F_Ticker` routines across 120 scenarios, with 64 invalid endpoints rejected
+before changing the prior state. `finale-evidence.json` records the scope.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/finale.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/finale.test.mjs
+```
+
+This component reports transitions; artwork, cast animation, music and its
+connection to the interactive host are separate work.

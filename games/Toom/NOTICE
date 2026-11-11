@@ -98,6 +98,11 @@ Episode-four par time is supplied explicitly; no undefined original array
 read is reproduced. Intermission graphics and music are separate from the
 verified state and sound-effect ordering.
 
+TmFinale.HC re-expresses the text/art/cast-start/next-level timeline and text
+reveal count from F_StartFinale, F_Ticker and F_TextWrite in the same pinned
+id Software f_finale.c. Source provenance is in tools/toom/source/finale.json.
+Cast animation and artwork rendering are separate from this timeline.
+
 TmStory consumes the authored Freedoom BEX map names, ending text, ending
 flats and par times. Its text/continuation rules follow Chocolate Doom
 DEH_ReadLine and DEH_ParseAssignment, copyright 2005-2014 Simon Howard,

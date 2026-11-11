@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/id-Software/DOOM",
+  "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+  "files": [
+    {
+      "path": "linuxdoom-1.10/f_finale.c",
+      "sha256": "c443ab18b6fa27df7033ac1ced0e86ab7c43c6e2cf2f8e428348d67d40a35670"
+    }
+  ]
+}
