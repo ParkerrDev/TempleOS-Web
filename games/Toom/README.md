@@ -84,6 +84,8 @@ The implemented foundation uses native V5.03 file and memory APIs:
   Revenant launch restores its temporarily raised source height on failure;
   the extra missile step updates spatial ownership. Tracer homing receives the
   persistent game tick explicitly and emits its trail before checking targets.
+  Arch-vile resurrection preserves block-column/row/chain order, raw collision
+  checks, original crushed-body sizes and the heal/sound/raise sequence.
   Refire checks preserve the early random
   return before health and sight tests. Enemy and player shots pass an explicit
   level context to shootable-line actions; captured impact data survives nested
@@ -298,6 +300,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/place.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/tracer-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/tracer.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/position.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/vile-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/vile.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -549,6 +553,11 @@ cases on native TempleOS and pinned HEMU. The optional raw query gathers actor
 and line bounds without adding movement-only height, step and dropoff rules.
 Default collision, contact and movement regressions remain green; exact scopes
 are in `tools/toom/position-evidence.json`.
+Arch-vile resurrection matches 8,160 original-C decision cases across every
+canonical actor definition. Twenty-five actual geometry/lifecycle cases pass
+native TempleOS and pinned HEMU, including competing corpses, blocked queries,
+crushed bodies, shadow RNG and temporary-height restoration on exceptions.
+Exact hashes and controlled oracle boundaries are in `tools/toom/vile-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

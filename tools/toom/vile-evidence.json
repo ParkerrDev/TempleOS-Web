@@ -1,0 +1,93 @@
+{
+  "status": "bounded-native-resurrection-proof",
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "cases": 8160,
+      "native": "qemu-64ekydfe",
+      "hemu": true,
+      "sourceSha256": "d7419fa96379fad9da82d663f954ef8eba7474e3d7bc2adb28663e01d72810b7",
+      "reference": "Unmodified original PIT_VileCheck and A_VileChase compiled as host C with controlled position query, face, state, chase and sound calls. Actual block selection uses original order; all 54 output fields and event slots match.",
+      "scope": [
+        "All 137 canonical actor definitions, corpse/final-tic eligibility and canonical-radius bounds",
+        "Raised-height raw query, original velocity stop on failed queries and height restoration",
+        "Nine movement directions, block columns/rows and linked actor order",
+        "Competing corpses, blocked candidates, zero-height/radius crushed corpses and no-raise types",
+        "Heal, sound, raise-state and field-reset sequence"
+      ]
+    },
+    "integration": {
+      "cases": 25,
+      "native": "qemu-_fwbw1qj",
+      "hemu": true,
+      "sourceSha256": "bec8162a67af71ee884bb67fc7abfc43dc3c36b9130ed2a7a0f613696bd8d935",
+      "scope": [
+        "Actual contact and line queries, including low ceilings and large steps accepted by the original raw check",
+        "One-sided lines, blocking actors, corpse maturity and no-direction fallback to normal chase",
+        "Competing corpses in same chains, separate rows/columns and a blocked first candidate",
+        "Crushed size preservation, stale target generation, shadow-facing RNG and spatial ownership",
+        "Sound and query callback failures, temporary height restoration, owner/inactive guards and complete fresh-task heap cleanup"
+      ]
+    },
+    "isolatedRegressions": {
+      "enemy": {
+        "native": "qemu-6ob_n9tq",
+        "sourceSha256": "e19612749f6006823bc9181e7220278c28ce39d037f680a7e30b478392ecfda2",
+        "out": "ENEMY 30632 DECISIONS BAD 0"
+      },
+      "chase": {
+        "native": "qemu-nygevxb1",
+        "sourceSha256": "2a984e06db013c9be332d54ea017c311b1bc189c664c8ae586e04b9f83a0f196",
+        "out": "CHASE 29182 DECISIONS BAD 0"
+      },
+      "walk": {
+        "native": "qemu-iv7w5tdd",
+        "sourceSha256": "e7ca0a50ff61b5b13eb709843f5a339c6fb132c3af541bd8fde55566d4172fe8",
+        "out": "WALK 13826 DECISIONS BAD 0"
+      },
+      "tracer": {
+        "native": "qemu-ryvuualu",
+        "sourceSha256": "61024619a4f7453e4f000fc8766656bad47348403afab6d51dd00d5251867b59",
+        "out": "TRACER 2828 DECISIONS BAD 0"
+      },
+      "pain": {
+        "native": "qemu-pne1j1ep",
+        "sourceSha256": "1e94c5f6d9363a4650840df1dc547c7b8152cd6ee43887a0aa5999b0050ef5b0",
+        "out": "PAIN 3468 DECISIONS BAD 0"
+      },
+      "combat": {
+        "native": "qemu-nxltodr0",
+        "sourceSha256": "29ddc8fcc0fbdcc36b14750412069bf23188360dfd72dc57c53692c124634400",
+        "out": "COMBAT 18304 DECISIONS BAD 0"
+      },
+      "projectile": {
+        "native": "qemu-lef0v76y",
+        "sourceSha256": "a5dd20d27b5a64d2c3d695d4c2c883eb3c20493a6816886ba2cafc4b8a7ae2f5",
+        "out": "PROJECTILE 17920 DECISIONS BAD 0"
+      },
+      "fat": {
+        "native": "qemu-pj14m0me",
+        "sourceSha256": "acd6ff386418a56f18a927b22af9428020d33e2f863775ec9de11d92196c3f34",
+        "out": "FAT 2334 DECISIONS BAD 0"
+      }
+    }
+  },
+  "remaining": [
+    "Arch-vile fire and attack actions",
+    "Boss actions and complete action dispatcher",
+    "Persistent native game host, UI/audio, saves and progression"
+  ]
+}

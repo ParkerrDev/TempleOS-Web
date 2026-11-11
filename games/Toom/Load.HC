@@ -37,6 +37,7 @@
 #include "TmEnemy"
 #include "TmChase"
 #include "TmCombat"
+#include "TmVile"
 #include "TmEffect"
 #include "TmPal"
 #include "TmDraw"

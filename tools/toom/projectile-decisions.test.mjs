@@ -11,7 +11,7 @@ const rows=await ProjectileReference(),values=[rows.length,...rows.flat()],packe
 values.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
 const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
 const impact=readFileSync(resolve(game,'TmImpact.HC'),'latin1'),split=impact.indexOf('Actor *ActorMissileNew(');assert(split>0);
-let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmCombat','TmEffect'].includes(m[1]))
+let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmCombat','TmEffect','TmVile'].includes(m[1]))
   .map(m=>m[1]==='TmImpact'?impact.slice(0,split):readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n');
 source+='\n'+readFileSync(resolve(root,'tools/toom/ProjectileProbe.HC'),'latin1')+
   '\n#define WorldSpawn TmProjSpawn\n#define AngleFrom TmProjAngle\n#define MissileStart TmProjStart\n'+impact.slice(split)+'\n'+

@@ -10,7 +10,7 @@ const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backen
 const rows=await WalkReference(),values=[rows.length,...rows.flat()],packed=Buffer.alloc(values.length*8);
 values.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
 const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmChase','TmEffect'].includes(m[1]))
+let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmChase','TmEffect','TmVile'].includes(m[1]))
   .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n');
 const chase=readFileSync(resolve(game,'TmChase.HC'),'latin1'),split=chase.indexOf('Bool EnemyWalk(');assert(split>0);
 source+='\n'+readFileSync(resolve(root,'tools/toom/WalkProbe.HC'),'latin1')+
