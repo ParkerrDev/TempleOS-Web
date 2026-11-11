@@ -6,6 +6,7 @@
 // blit cost leaves the critical path. The canvas stays on the main thread (frames are shipped via
 // postMessage), so hemu.html can fall back to its in-line single-thread engine if this ever fails.
 import {FrameTop,FrameFps} from "./FrameText.js";
+import {SnapshotOpen,SnapshotSave} from "./Snapshot.js";
 import {KeyQueue} from "./KeyQueue.js";
 import {CaptureBarrier} from "./CoreBarrier.js";
 import { createHemuHost } from "./host.js";
@@ -14,7 +15,6 @@ import * as jit from "./jit.js";             // x86-64 -> WASM block JIT (the sp
 import {createGuestInput} from "./guestinput.js";
 import { createGuestExec } from "./guestexec.js";   // backend guest execution: jobs queued through the OS's own TaskExe, no keystrokes
 
-let msX = 320, msY = 240, msB = 0, wheel = 0;   // latest pointer state from the main thread
 const keyq=KeyQueue();
 let repeatKeys=false,welcomePending=false,refreshRate=0,actualRate=null;
 function SettingsApply(rateChanged=true)
@@ -27,7 +27,15 @@ function SettingsApply(rateChanged=true)
 }
 let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, loaded = false, disk = null, gBase = 0, instRef = null;
-let paused = false;
+let paused=false,saving=false,machineBarrier=null,engineBytes=null,hostRef=null;
+const deferred=[];
+function PauseSet(value) {
+  if (value && machineBarrier && !machineBarrier.Lock())
+    throw new Error("The application cores did not stop; pause again.");
+  paused=!!value;
+  if (paused) keyq.Release(); else machineBarrier?.Unlock();
+  postMessage({cmd:"paused",value:paused});
+}
 const NOJIT = /[?&]nojit/.test(self.location ? self.location.search : "");   // ?nojit -> pure interpreter (debug/fallback)
 // JIT segment/TSC addresses now flow from the guest at runtime via __jit_seg (per-core CCpuState) - no hardcoded offsets to drift.
 
@@ -186,8 +194,9 @@ const guestInput = createGuestInput({guest:()=>gx,memory:()=>instRef?.exports.me
   onState:state=>postMessage({cmd:"inputMode",...state})});
 onmessage = (e) => {
   const m = e.data;
+  if (saving && m.cmd!=="ack") {deferred.push(m);return;}
   if (m.cmd === "init") boot(m).catch(err => postMessage({ cmd: "error", msg: String(err?.message || err) }));
-  else if (m.cmd === "input") { msX = m.x; msY = m.y; msB = m.b; if (m.wheel !== undefined) wheel = m.wheel; if (m.keys) keyq.Push(m.keys); if (m.keysUp) keyq.Release(); guestInput.accept(m); }
+  else if (m.cmd === "input") { if (m.keys) keyq.Push(m.keys); if (m.keysUp) keyq.Release(); guestInput.accept(m); }
   else if (m.cmd==="keysUp") keyq.Release();
   else if (m.cmd==="set") {
     const rateChanged=[0,30,60,120].includes(m.rate);
@@ -201,7 +210,7 @@ onmessage = (e) => {
   else if (m.cmd === "osInstall") osInstall(m).catch(err => fileResult(m.id, { ok: false, msg: String(err?.message || err), state: "error" }));
   else if (m.cmd === "guest") { try { guestCmd(m); } catch (err) { postMessage({ cmd: "guestResult", id: m.id, op: m.op, state: "error", ok: false, msg: String(err?.message || err) }); } }
   else if (m.cmd === "ack") outstanding--;   // main finished a frame - release a flow-control slot
-  else if (m.cmd === "pause") { paused = m.value; if (paused) keyq.Release(); postMessage({ cmd: "paused", value: paused }); }
+  else if (m.cmd === "pause") {try {PauseSet(m.value);} catch(err) {postMessage({cmd:"error",msg:err.message});}}
   else if (m.cmd === "exportSnapshot") exportSnapshot();
   else if (m.cmd === "exportDisk") exportDisk();
   else if (m.cmd === "importDisk") { try { disk = makeDisk(new Uint8Array(m.bytes)); GuestCacheInvalidate(); postMessage({ cmd: "diskInfo", ok: true, msg: "disk imported (" + (m.bytes.byteLength / 1048576).toFixed(0) + " MB)" }); } catch (err) { postMessage({ cmd: "diskInfo", ok: false, msg: String(err.message || err) }); } }
@@ -217,12 +226,25 @@ onmessage = (e) => {
   else if (m.cmd === "listDir") { try { postMessage({ cmd: "dirList", id: m.id, ok: true, dir: m.dir, files: disk ? fat32List(disk, m.dir || "Home").map(e => ({ name: e.name, size: e.size, dir: !!(e.attr & 0x10) })) : [] }); } catch (err) { postMessage({ cmd: "dirList", id: m.id, ok: false, msg: String(err.message || err) }); } }
 };
 
-// Export the live guest RAM as a gzipped .hemu snapshot (resumes exactly where you are).
 async function exportSnapshot() {
-  if (!instRef) { postMessage({ cmd: "exportResult", kind: "snapshot", ok: false, msg: "not ready" }); return; }
-  const ram = new Uint8Array(instRef.exports.memory.buffer, gBase, 402653184);
-  const gz = await new Response(new Blob([ram]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
-  postMessage({ cmd: "exportResult", kind: "snapshot", ok: true, buf: gz }, [gz]);
+  let locked=false;
+  try {
+    if (!loaded || !disk || !gx?.ready) throw new Error("Wait for the machine and disk to finish loading.");
+    if (machineBarrier && !machineBarrier.Lock()) throw new Error("The application cores did not stop; save again.");
+    locked=true;saving=true;
+    const launch=gx.snapshot();
+    const meta={cores:smpCfg?.ncore||1,base:gBase,heapPtr:hostRef.state.heapPtr,
+      sp:Number(instRef.exports.__sp.value),ipiAddr:smpCfg?.ipiAddr||0,
+      paused,rate:refreshRate,actualRate,repeat:repeatKeys,budget:curBudget,
+      keyboard:keyq.Save(),pointer:guestInput.save(),launch};
+    const buf=await SnapshotSave({meta,wasm:engineBytes,memory:instRef.exports.memory,disk});
+    postMessage({cmd:"exportResult",kind:"snapshot",ok:true,buf},[buf]);
+  } catch(err) {postMessage({cmd:"exportResult",kind:"snapshot",ok:false,msg:err.message});}
+  finally {
+    if (locked && !paused) machineBarrier?.Unlock();
+    saving=false;
+    for (const m of deferred.splice(0)) onmessage({data:m});
+  }
 }
 // Export the whole C: drive (base image + this session's writes) as a gzipped raw image.
 async function exportDisk() {
@@ -246,6 +268,7 @@ async function gunzipInto(gz, size) {
   for (;;) { const { done, value } = await rd.read(); if (done) break;
     if (off + value.length > size) throw new Error("snapshot larger than expected");
     out.set(value, off); off += value.length; }
+  if (off!==size) throw new Error("snapshot shorter than expected");
   return out;
 }
 
@@ -261,17 +284,19 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
   welcomePending=!!welcome;
   smpCfg = smp || null;
   if (fixedB) curBudget = fixedB;
-  postMessage({ cmd: "progress", text: "decompressing snapshot (→ 384 MB)…", pct: 60 });
-  snap = await gunzipInto(gz, 402653184);
-  gz = null;                                   // free the 10 MB clone - boot() never returns
-  if (diskBytes) { try { disk = makeDisk(new Uint8Array(diskBytes)); } catch (e) { console.warn("imported disk failed:", e); } }
-  postMessage({ cmd: "progress", text: "starting hemu core (HolyC → WASM)…", pct: 88 });
-  const mod = await WebAssembly.compile(await (await fetch(wasmUrl, { cache: "no-cache" })).arrayBuffer());
+  postMessage({cmd:"progress",text:"reading saved machine…",pct:60});
+  const saved=await SnapshotOpen(gz);
+  if (saved && saved.meta.cores!==(smpCfg?.ncore||1)) {await saved.Close();throw new Error("Snapshot core count does not match the worker topology");}
+  if (!saved) snap=await gunzipInto(gz,402653184);
+  gz=null;
+  if (!saved && diskBytes) disk=makeDisk(new Uint8Array(diskBytes));
+  engineBytes=saved?saved.wasm:new Uint8Array(await (await fetch(wasmUrl,{cache:"no-cache"})).arrayBuffer());
+  const mod=await WebAssembly.compile(engineBytes);
 
   let sequence=0;
-  const barrier=smpCfg?CaptureBarrier(new Int32Array(smpCfg.ctrl),
+  const barrier=machineBarrier=smpCfg?CaptureBarrier(new Int32Array(smpCfg.ctrl),
         smpCfg.ncore,()=>apsReleased):null;
-  const host = createHemuHost({
+  const host=hostRef=createHemuHost({
     captureLock:()=>barrier?barrier.Lock():true,
     captureUnlock:()=>barrier?.Unlock(),
     palette:(index,rgb)=>postMessage({cmd:"palette",index,rgb}),
@@ -318,8 +343,39 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
   inst = await WebAssembly.instantiate(mod, { env: host.env });
   instRef = inst;
   host.attach(inst);
-  inst.exports.__rt_init();
-  postMessage({ cmd: "progress", text: "starting TempleOS…", pct: 100 });
+  if (smpCfg) {
+    const ctrl=new Int32Array(smpCfg.ctrl),until=performance.now()+10000;
+    for (let core=1;core<smpCfg.ncore;core++)
+      while (!Atomics.load(ctrl,8+core)) {
+        if (performance.now()>until) throw new Error("Application core did not initialize");
+        await new Promise(r=>setTimeout(r,10));
+      }
+  }
+  if (saved) {
+    disk=await saved.Restore(inst.exports.memory);
+    const m=saved.meta;
+    gBase=m.base;host.state.heapPtr=m.heapPtr;inst.exports.__sp.value=BigInt(m.sp);
+    if (Number(inst.exports.RamBase())!==gBase) throw new Error("Snapshot RAM base does not match its engine");
+    paused=m.paused;refreshRate=m.rate;actualRate=m.actualRate;repeatKeys=m.repeat;
+    curBudget=m.budget;keyq.Restore(m.keyboard);guestInput.restore(m.pointer);welcomePending=false;
+    loaded=true;inst.exports.SnapshotResume();
+    gx=createGuestExec({inst,gBase,onEvent:gxEvent});gxProbe=gx.probe();
+    if (!gxProbe.ok) throw new Error("Saved guest API could not be restored: "+gxProbe.errors.join("; "));
+    gx.restoreLaunch(m.launch);
+    postMessage({cmd:"guestReady",ok:true,probe:gxProbe,restored:true});
+    postMessage({cmd:"settings",ok:true,rate:actualRate,repeat:repeatKeys});
+    postMessage({cmd:"paused",value:paused});
+    if (smpCfg) {
+      const c=new Int32Array(smpCfg.ctrl);
+      //Hold a paused restore before any AP can execute its first instruction.
+      if (paused) Atomics.store(c,2,1);
+      apsReleased=true;Atomics.store(c,0,1);Atomics.notify(c,0);
+      if (paused && !barrier.Lock()) throw new Error("Restored application cores did not stop");
+      postMessage({cmd:"smpReady",ncore:smpCfg.ncore});
+    }
+    postMessage({cmd:"restored",cores:m.cores,paused});
+  } else inst.exports.__rt_init();
+  postMessage({cmd:"progress",text:"starting TempleOS…",pct:100});
 
   // Fast yield via MessageChannel: drains input/ack messages between iterations without the
   // setTimeout 4 ms clamp (used when the frame already ran long and there's nothing to sleep).
@@ -344,7 +400,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
     dtNs=Math.min(100000000,Math.floor(dtAcc));
     dtAcc-=Math.floor(dtAcc);
     dtMs=dtNs/1000000;
-    if (paused) {
+    if (paused || saving) {
       await sleep(80);
       lastT=performance.now();
       dtAcc=0;
@@ -362,7 +418,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
       // Load the C: disk AFTER boot settles (file I/O works once it lands; the desktop runs from
       // cached RAM). Deferring it keeps the disk decompress out of the boot memory spike - the
       // difference between living and dying on iOS Safari's per-tab memory budget.
-      if (!disk) setTimeout(() => loadDisk("../vendor/images/templeos-hd.qcow2.gz").then(d => disk = d).catch(() => disk = null), 2500);
+      if (!disk) setTimeout(() => loadDisk("../vendor/images/templeos-hd.qcow2.gz").then(d => {disk=d;postMessage({cmd:"diskInfo",ok:true,msg:"Disk ready"});}).catch(err => {disk=null;postMessage({cmd:"diskInfo",ok:false,msg:err.message});}), 2500);
       // guest execution API: bound to this instance now that gBase is known (snapLoad ran in the first frame)
       try { gx = createGuestExec({ inst, gBase, onEvent: gxEvent, log: (s) => console.log("[hemu gx] " + s) }); }
       catch (e) { console.warn("[hemu] guest execution API unavailable: " + e.message); postMessage({ cmd: "guestReady", ok: false, probe: { ok: false, errors: [String(e.message || e)], warnings: [] } }); }
@@ -371,7 +427,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, welcome, rate
     const work = performance.now() - now;
     if (!fixedB) {                                                 // size budget to fill the frame (games need the MIPS;
       if (work > 15 && curBudget > 900000) curBudget = (curBudget * 0.90) | 0;        // slow machines auto-shrink)
-      else if (work < 11 && curBudget < 24000000) curBudget = (curBudget * 1.07) | 0;
+      else if (work < 11 && curBudget < 24000000) curBudget = Math.min(24000000,(curBudget * 1.07) | 0);
     }
     const wait = FRAME_MS - (performance.now() - now);
     if (wait > 1) await sleep(wait); else await yieldTick();

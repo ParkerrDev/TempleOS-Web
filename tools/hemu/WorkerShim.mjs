@@ -48,6 +48,7 @@ function ProbeInit()
 
 function ProbeRd()
 {//What the guest itself counts, at the moment a frame leaves.
+  if (!g_base) g_base=Number(ex.RamBase());
   let dv=MemDv();
   if (!syms && probe_tries<20 && g_base) {
     probe_tries++;
@@ -70,7 +71,9 @@ function MsgOut(m,transfer)
 function MsgIn(m)
 {
   if (m && m.cmd=="__peek") {
-    parentPort.postMessage({cmd:"__peek",probe:ProbeRd()});
+    parentPort.postMessage({cmd:"__peek",probe:ProbeRd(),
+      cpu:Array.from({length:17},(_,i)=>String(ex.GuestInfo(BigInt(i)))),
+      ranges:(m.ranges||[]).map(([addr,len])=>new Uint8Array(ex.memory.buffer,addr,len).slice())});
     return;
   }
   if (globalThis.onmessage)

@@ -27,5 +27,11 @@ export function KeyQueue()
     held.clear();
     prefix=pause=0;
   }
-  return {Push,Release,Read:()=>queue.length?BigInt(queue.shift()):-1n};
+  function Save() {return {queue:[...queue],held:[...held],prefix,pause};}
+  function Restore(state) {
+    queue.splice(0,queue.length,...state.queue);held.clear();
+    for (const key of state.held) held.add(key);
+    prefix=state.prefix;pause=state.pause;
+  }
+  return {Push,Release,Save,Restore,Read:()=>queue.length?BigInt(queue.shift()):-1n};
 }
