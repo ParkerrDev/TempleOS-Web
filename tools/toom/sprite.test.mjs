@@ -36,6 +36,11 @@ for(let i=0;i<states.length;i++)for(let angle=0;angle<8;angle++) {
   frameBytes.writeInt32LE(code||0,(i*8+angle)*4);
 }
 const hash=pixels=>{let h=2166136261;for(const p of pixels)h=Math.imul(h^p,16777619)>>>0;return h;};
+function texel(value) {
+  const scaled=value*65536,low=Math.floor(scaled),fraction=scaled-low;
+  const fixed=fraction<.5?low:fraction>.5?low+1:low%2===0?low:low+1;
+  return Math.floor(fixed/65536);
+}
 const imageBytes=Buffer.alloc(images.size*8);
 [...images].forEach(([code,image],i)=>{imageBytes.writeInt32LE(code,i*8);imageBytes.writeUInt32LE(hash(image.pixels),i*8+4);});
 const colormap=lumps.find(l=>l.name==='COLORMAP').bytes,tests=[];
@@ -44,13 +49,13 @@ for(const state of chosen)for(let angle=0;angle<8;angle++) {
   const d=[48,96,128][angle%3],r=[-32,0,32][angle%3],z=angle%2?8:0;
   const a=angle*Math.PI/4,rot=((Math.floor((Math.atan2(r,-d)-a+Math.PI/8)/(Math.PI/4))%8)+8)%8;
   const [sprite,frame]=states[state],code=frames.get(`${names[sprite]}:${frame&32767}:${rot}`),im=images.get(Math.abs(code));
-  const light=frame&32768?0:Math.max(0,Math.min(31,4*(15-10)-Math.floor(Math.min(Math.floor(2560/d),47)/2)));
+  const light=frame&32768?0:Math.max(0,Math.min(31,4*(15-10)-Math.floor(Math.min(texel(2560/d),47)/2)));
   const pix=new Uint8Array(320*168).fill(77),depth=new Int32Array(320*168),iz=Math.trunc(1e8/d);
   for(let y=0;y<168;y++)for(let x=0;x<320;x++) {
     const at=x+y*320;depth[at]=x%13===0?4000000:x%17===0?-4000000:0;
     const worldZ=41+(84-y-.5)*d/160;
-    let u=Math.floor((x+.5-160)*d/160-r+(code<0?im.w-im.left:im.left));
-    const v=Math.floor(z+im.top-worldZ);
+    let u=texel((x+.5-160)*d/160-r+(code<0?im.w-im.left:im.left));
+    const v=texel(z+im.top-worldZ);
     if(code<0)u=im.w-1-u;
     if(worldZ>128||worldZ<=0||u<0||u>=im.w||v<0||v>=im.h)continue;
     const c=im.pixels[u+v*im.w];

@@ -35,6 +35,11 @@ for(const table of ['TEXTURE1','TEXTURE2']) {
 assert(textures.length>=3);textures.length=3;
 const tests=[],colormap=find('COLORMAP').bytes;
 const hash=values=>{let h=2166136261;for(const n of values)h=Math.imul(h^n,16777619)>>>0;return h;};
+function fixed(value) {
+  const scaled=value*65536,low=Math.floor(scaled),fraction=scaled-low;
+  return fraction<.5?low:fraction>.5?low+1:low%2===0?low:low+1;
+}
+const texel=value=>Math.floor(fixed(value)/65536);
 for(let texture=0;texture<3;texture++)for(let geometry=0;geometry<4;geometry++)for(let peg=0;peg<2;peg++)for(let scroll=0;scroll<2;scroll++) {
   let [ax,ay,bx,by]=[[80,96,80,-96],[32,96,144,-96],[0,96,128,-96],[80,-96,80,96]][geometry];
   const im=textures[texture],xoff=scroll?-23:0,yoff=scroll?19:0,origin=(peg?8+im.h:112)+yoff;
@@ -45,11 +50,11 @@ for(let texture=0;texture<3;texture++)for(let geometry=0;geometry<4;geometry++)f
     const visible=den<0&&d>=1&&u>=0&&u<1;
     const ya=Math.max(0,Math.ceil(84-(112-41)*160/d-.500000001));
     const iz=Math.min(2147483647,Math.trunc(1e8/d));
-    const light=Math.max(0,Math.min(31,(ax===bx?8:12)-Math.floor(Math.min(Math.floor(2560/d),47)/2)));
+    const light=Math.max(0,Math.min(31,(ax===bx?8:12)-Math.floor(Math.min(texel(2560/d),47)/2)));
     // Horizontal texture lookup uses the ray/segment intersection; the row
     // coordinate is the renderer's documented Q16 stepping contract.
-    const tx=((Math.floor(xoff+u*len)%im.w)+im.w)%im.w;
-    const v0=Math.trunc((origin-41+(ya+.5-84)*d/160)*65536),step=Math.trunc(d/160*65536);
+    const tx=((texel(xoff+u*len)%im.w)+im.w)%im.w;
+    const v0=fixed(origin-41+(ya+.5-84)*d/160),step=fixed(d/160);
     for(let y=0;y<168;y++) {
       const at=x+y*320;depth[at]=x%13===0?4000000:x%17===0?-4000000:0;
       const wz=41+(84-y-.5)*d/160,v=Math.floor((v0+step*(y-ya))/65536);
@@ -76,6 +81,10 @@ U0 TmMaskTest()
   View *tmpv=ViewNew(tmpm,tmpg);
   Seg *tmps=tmpm->seg;
   if (!tmpv || !names || !tests) throw('Files');
+  if (SampleFixed(1.0/131072.0) || SampleFixed(-1.0/131072.0) ||
+        SampleFixed(3.0/131072.0)!=2 || SampleFixed(-3.0/131072.0)!=-2 ||
+        SampleFixed(1.0-1.0e-12)>>16!=1 ||
+        SampleFixed(-1.0-1.0e-12)>>16!=-1) throw('Q16');
   tmpv->x=tmpv->y=0; tmpv->z=41; tmpv->cs=1; tmpv->sn=0;
   tmps->v1=0; tmps->v2=1; tmps->line=0; tmps->side=0; tmps->offset=0;
   tmpm->line[0].side[0]=0; tmpm->line[0].side[1]=1;

@@ -28,13 +28,13 @@ U0 MaskSegDraw(View *tmpv,Seg *tmps)
     d=1.0/iz; u=iu*d;
     ya=MaxI64(ViewY(tmpv,high,iz),0);
     yb=MinI64(ViewY(tmpv,low,iz)-1,tmpv->height-1);
-    tx=Floor(u); tx%=tmpi->width;
+    tx=SampleFixed(u)>>16; tx%=tmpi->width;
     if (tx<0) tx+=tmpi->width;
     z=Min(100000000.0*iz,I32_MAX);
-    light=ClampI64(base_light-MinI64(Floor(tmpv->fx*16*iz),47)/2,0,31);
+    light=ViewLight(base_light,tmpv->fx*16*iz);
     color=tmpv->gr->colormap+light*256;
-    v=(origin-tmpv->z+(ya+0.5-tmpv->cy)*d/tmpv->fy)*65536.0;
-    step=d/tmpv->fy*65536.0;
+    v=SampleFixed(origin-tmpv->z+(ya+0.5-tmpv->cy)*d/tmpv->fy);
+    step=SampleFixed(d/tmpv->fy);
     for (y=ya;y<=yb;y++,v+=step) {
       ty=v>>16;
       if (0<=ty<tmpi->height) {

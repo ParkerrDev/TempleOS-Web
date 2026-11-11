@@ -93,21 +93,34 @@ U8 *ViewFlat(View *tmpv,I64 n)
   return tmpv->flat[n];
 }
 
+I64 SampleFixed(F64 value)
+{//Nearest Q16 sample value, with even ties, before integer selection.
+  return Round(value*65536.0);
+}
+
+I64 ViewLight(I64 base_light,F64 scale)
+{//Lighting buckets use the same fixed precision as texture sampling.
+  return ClampI64(base_light-MinI64(SampleFixed(scale)>>16,47)/2,0,31);
+}
+
 U0 ViewSky(View *tmpv)
 {
-  I64 x,y,u,v,c;
+  I64 x,y,u,v,c,row[TM_VIEW_HEIGHT];
   F64 a;
   Image *tmpi=TextureGet(tmpv->gr,tmpv->sky);
   MemSet(tmpv->pix,0,tmpv->width*tmpv->height);
   if (!tmpi) return;
+  for (y=0;y<tmpv->height;y++) {
+    v=SampleFixed(tmpi->height/2+
+	  (y+0.5-tmpv->cy)*tmpi->height/tmpv->fy)>>16;
+    row[y]=ClampI64(v,0,tmpi->height-1)*tmpi->width;
+  }
   for (x=0;x<tmpv->width;x++) {
     a=tmpv->angle-ATan((x+0.5-tmpv->cx)/tmpv->fx);
-    u=Floor(a*tmpi->width/6.283185307179586);
+    u=SampleFixed(a*tmpi->width/6.283185307179586)>>16;
     u%=tmpi->width; if (u<0) u+=tmpi->width;
     for (y=0;y<tmpv->height;y++) {
-      v=tmpi->height/2+(y+0.5-tmpv->cy)*tmpi->height/tmpv->fy;
-      v=ClampI64(v,0,tmpi->height-1);
-      c=tmpi->pix[u+v*tmpi->width];
+      c=tmpi->pix[u+row[y]];
       if (c!=TM_TRANSPARENT) tmpv->pix[x+y*tmpv->width]=c;
     }
   }
@@ -153,12 +166,13 @@ U0 ViewPlanes(View *tmpv)
 	    t=(x1+0.5-tmpv->cx)/tmpv->fx;
 	    wx=tmpv->x+d*(tmpv->cs+tmpv->sn*t);
 	    wy=tmpv->y+d*(tmpv->sn-tmpv->cs*t);
-	    xx=wx*65536.0; yy=wy*65536.0;
-	    dx=d*tmpv->sn/tmpv->fx*65536.0;
-	    dy=-d*tmpv->cs/tmpv->fx*65536.0;
+	    xx=SampleFixed(wx); yy=SampleFixed(wy);
+	    dx=SampleFixed(d*tmpv->sn/tmpv->fx);
+	    dy=SampleFixed(-d*tmpv->cs/tmpv->fx);
 	    z=Min(100000000.0/d,I32_MAX);
 	    light=4*(15-ClampI64(tmps->light>>4,0,15));
-	    light=ClampI64(light-80/(MinI64(Floor(d/16),127)+1),0,31)*256;
+	    light=ClampI64(light-80/
+		  (MinI64(SampleFixed(d/16)>>16,127)+1),0,31)*256;
 	    for (j=x1;j<x;j++) {
 	      u=xx>>16&63; v=-(yy>>16)&63;
 	      tmpv->pix[j+y*tmpv->width]=color[light+src[u+v*64]];
@@ -181,10 +195,10 @@ U0 WallColumn(View *tmpv,Image *tmpi,I64 x,I64 ya,I64 yb,
   if (ya>yb) return;
   z=Min(100000000.0/d,I32_MAX);
   if (tmpi) {
-    tx=Floor(u); tx%=tmpi->width;
+    tx=SampleFixed(u)>>16; tx%=tmpi->width;
     if (tx<0) tx+=tmpi->width;
-    v=(origin-tmpv->z+(ya+0.5-tmpv->cy)*d/tmpv->fy)*65536.0;
-    step=d/tmpv->fy*65536.0;
+    v=SampleFixed(origin-tmpv->z+(ya+0.5-tmpv->cy)*d/tmpv->fy);
+    step=SampleFixed(d/tmpv->fy);
   }
   for (y=ya;y<=yb;y++) {
     c=0;
@@ -295,7 +309,7 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
     if (tmpv->top[x]<=tmpv->bottom[x]) {
       seen=TRUE;
       d=1.0/iz; u=iu*d;
-      light=ClampI64(base_light-MinI64(Floor(tmpv->fx*16*iz),47)/2,0,31);
+      light=ViewLight(base_light,tmpv->fx*16*iz);
       top=ViewY(tmpv,sf->ceil,iz);
       bottom=ViewY(tmpv,sf->floor,iz)-1;
       if (sb) {

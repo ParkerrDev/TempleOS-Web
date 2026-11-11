@@ -47,6 +47,9 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - Position changes commit actor coordinates, sector bounds and block links
   together. Crossed-line callbacks run afterward in reverse contact order;
   nested queries cannot overwrite the pending line list.
+- Texture coordinates, increments and lighting buckets use nearest Q16 values
+  with even ties. This defines sampling at texel and light boundaries across
+  native x87 and HEMU. Sky row coordinates are computed once per row.
 
 Fuzz effects, simulation, weapons, actors, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
@@ -169,3 +172,35 @@ This compiles the current sources in original TempleOS and writes
 the original player-start view and medium-skill map sprites in their initial
 states. It is a static renderer preview, with no actor actions, weapon/HUD or
 player simulation, and must not be presented as a playable game.
+
+## Native and HEMU renderer comparison
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm ALL=1 N=1 OUT=/tmp/toom-native.json node tools/toom/time.mjs qemu
+TEMPLEOS_WEB=/path/to/TempleOS-Web ALL=1 N=1 REFERENCE=/tmp/toom-native.json node tools/toom/time.mjs hemu
+```
+
+This compares eight player-start viewing angles in each of the 36 maps, using
+actual map actors, wall/plane textures, masked walls, sprites and private EGA
+output. It rejects differences in frame hashes, asset reads, cache sizes or
+actor counts, and requires the same source hash. It uses the ordinary guest
+file-upload path and a private disk overlay. `OUT` preserves the measured
+result even when comparison fails.
+
+Omit `ALL=1` for E1M1, or set `MAP=E2M3`. The default 30 repeats per view is
+intended for timing; `N=1` is sufficient for image comparison. Native times use
+the guest's real clock under QEMU/KVM. HEMU times use elapsed host time, including
+job dispatch amortized over the repeats. Asset preparation and emulator startup
+are excluded; source compilation, first frame and steady rendering are reported
+separately. These are static-scene renderer measurements, not full-game FPS.
+
+`DUMP=/tmp/toom-pixels DUMP_POSE=2` saves raw 640 by 336 EGA bytes for one map.
+`TRACE=1 TRACE_X=122` records raw wall-coordinate bits before Q16 conversion;
+diagnostic traces are excluded from ordinary timing. `GAME_DIR` selects another
+source directory for matched before/after measurements.
+
+The initial comparison exposed native x87 cosine/extended-arithmetic differences
+in HEMU. Examples and Intel's explanation of x87 trigonometric argument
+reduction are retained in `tools/toom/fpu-evidence.json`. The common sampling
+rule resolves the tested renderer differences; it does not establish exact
+x87 semantics or universal cross-platform equivalence.

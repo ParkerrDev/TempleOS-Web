@@ -141,18 +141,18 @@ U0 SpriteDraw(View *tmpv,Sprites *tmps,Actor *tmpa)
   light=0;
   if (!(tmpa->frame&0x8000)) {
     light=4*(15-ClampI64(sector->light>>4,0,15));
-    light=ClampI64(light-MinI64(Floor(tmpv->fx*16/d),47)/2,0,31);
+    light=ViewLight(light,tmpv->fx*16/d);
   }
   color=tmpv->gr->colormap+light*256;
   z=Min(100000000.0/d,I32_MAX);
   step=d/tmpv->fy;
   for (x=x1;x<=x2;x++) {
-    u=ClampI64(Floor((x+0.5-sx)/scale),0,tmpi->width-1);
+    u=ClampI64(SampleFixed((x+0.5-sx)/scale)>>16,0,tmpi->width-1);
     if (code<0) u=tmpi->width-1-u;
     us[x]=u;
   }
   for (y=y1;y<=y2;y++) {
-    v=ClampI64(Floor((y+0.5-sy)*step),0,tmpi->height-1);
+    v=ClampI64(SampleFixed((y+0.5-sy)*step)>>16,0,tmpi->height-1);
     src=tmpi->pix+v*tmpi->width;
     dst=tmpv->pix+y*tmpv->width;
     depth=tmpv->depth+y*tmpv->width;
