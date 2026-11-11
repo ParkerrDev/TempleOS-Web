@@ -22,7 +22,7 @@ U0 TmMotionRst(Motion *tmpm,Actor *tmpa)
   tmpa->vx=tmpa->vy=tmpa->vz=0; tmpa->z=0;
   tmpa->floor=0; tmpa->ceil=128*65536; tmpa->target=0;
   tmpm->player->forward=tmpm->player->side=0;
-  tmpm->player->view_height=TM_VIEW_HEIGHT;
+  tmpm->player->view_height=TM_EYE_HEIGHT;
   tmpm->player->delta_view_height=0; tmpm->player->no_momentum=FALSE;
 }
 

@@ -297,6 +297,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/pain.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/place.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/tracer-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/tracer.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/position.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -543,6 +544,11 @@ and pinned HEMU; exact scopes are in `tools/toom/tracer-evidence.json`. Forced
 placement refreshes spatial metadata immediately. Tracer puffs explicitly use
 the normal animation, avoiding the original shared punch-range artifact. These
 are stated native design choices, not a demo-synchronization claim.
+Raw position queries and ordinary movement acceptance match 5,400 original-C
+cases on native TempleOS and pinned HEMU. The optional raw query gathers actor
+and line bounds without adding movement-only height, step and dropoff rules.
+Default collision, contact and movement regressions remain green; exact scopes
+are in `tools/toom/position-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

@@ -1,0 +1,58 @@
+{
+  "status": "bounded-native-position-query-proof",
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_map.c",
+    "sha256": "752c7873c81fe6b10b77a08b7ef5716fe49c3103f6caa02097ed299e6e04736c"
+  },
+  "checks": {
+    "position": {
+      "cases": 5400,
+      "native": "qemu-jb9auyiz",
+      "hemu": true,
+      "sourceSha256": "6951b442fb5fcd06d86e0144abf636d302e3b55adc3ee709ca6086695fa83195",
+      "reference": "Unmodified original P_CheckPosition and P_TryMove compiled as host C with controlled actor and line iterators. Native integration uses actual synthetic-map actors, linedefs and BSP queries.",
+      "scope": [
+        "Raw contact/line acceptance versus later movement height, step and dropoff restrictions",
+        "Floor, ceiling, dropoff and float permission outputs",
+        "Noclip, floating, teleport, dropoff and missile flags",
+        "Blocking actors, one-sided lines and blocking flags",
+        "No actor movement or per-query allocation"
+      ]
+    },
+    "collision": {
+      "cases": 68035,
+      "native": "qemu-jz9acg2p",
+      "out": "COLLISION 68035 QUERIES BAD 0 PASSABLE 37074 MS 1112.8"
+    },
+    "contact": {
+      "cases": 2780,
+      "native": "qemu-hq0s4gee",
+      "out": "CONTACTS 1756 GRID 1024 BAD 0"
+    },
+    "movement": {
+      "cases": 27,
+      "native": "qemu-t2nr3gla",
+      "out": "MOVEMENT 27 CHECKS BAD 0"
+    },
+    "motion": {
+      "cases": 35,
+      "native": "qemu-wgsxnfbq",
+      "hemu": true,
+      "fixtureCorrection": "Use the renamed TM_EYE_HEIGHT constant; TM_VIEW_HEIGHT is the renderer height, not the player eye height."
+    }
+  },
+  "remaining": [
+    "Arch-vile resurrection and fire actions",
+    "Complete action dispatcher, native game host, saves and progression"
+  ]
+}

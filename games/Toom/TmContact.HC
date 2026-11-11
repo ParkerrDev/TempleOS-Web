@@ -69,8 +69,8 @@ Bool WorldContacts(World *tmpw,Actor *mover,I64 x,I64 y,
 }
 
 Bool WorldPosition(World *tmpw,Actor *tmpa,I64 x,I64 y,
-	U0 (*touch)(Actor *mover,Actor *other,I64 kind)=NULL)
-{//Contacts precede lines, preserving pickup and missile-impact timing.
+	U0 (*touch)(Actor *mover,Actor *other,I64 kind)=NULL,Bool fit=TRUE)
+{//Raw queries collect bounds without the later movement fit/step/dropoff test.
   Collision *tmpc=tmpw->collision;
   I64 stamp;
   Bool res;
@@ -79,5 +79,5 @@ Bool WorldPosition(World *tmpw,Actor *tmpa,I64 x,I64 y,
   if (tmpc->stamp!=stamp)
     CollisionBegin(tmpc,x,y,tmpa->radius,tmpa->flags,tmpa->type==TM_MT_PLAYER);
   if (!res || !tmpa->active) return FALSE;
-  return CollisionLines(tmpc,tmpa->z,tmpa->height);
+  return CollisionLines(tmpc,tmpa->z,tmpa->height,fit);
 }

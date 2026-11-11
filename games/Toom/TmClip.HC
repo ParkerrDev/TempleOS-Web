@@ -139,7 +139,7 @@ U0 CollisionBegin(Collision *tmpc,I64 x,I64 y,I64 radius,I64 flags,
   }
 }
 
-Bool CollisionLines(Collision *tmpc,I64 z,I64 height)
+Bool CollisionLines(Collision *tmpc,I64 z,I64 height,Bool fit=TRUE)
 {
   I64 x1,x2,y1,y2,bx,by,i,n,w,h,ox,oy,flags=tmpc->flags;
   Map *tmpm=tmpc->map;
@@ -160,6 +160,7 @@ Bool CollisionLines(Collision *tmpc,I64 z,I64 height)
 	  if (!CollisionLine(tmpc,n)) return FALSE;
 	}
     }
+  if (!fit) return TRUE;
   if (tmpc->ceil-tmpc->floor<height) return FALSE;
   tmpc->float_ok=TRUE;
   if (!(flags&TM_MF_TELEPORT))
