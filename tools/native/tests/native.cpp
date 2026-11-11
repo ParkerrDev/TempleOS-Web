@@ -14,7 +14,12 @@ class NativeTest:public QObject {
     return QByteArray(reinterpret_cast<const char *>(rgba.constBits()),rgba.sizeInBytes());
   }
 private slots:
-  void initTestCase(){input=qEnvironmentVariable("HEMU_NATIVE_FIXTURE");QVERIFY2(!input.isEmpty(),"Set HEMU_NATIVE_FIXTURE to a complete one-core saved session");}
+  void initTestCase(){
+    const auto rejected=std::async(std::launch::async,[]{try{JsInit();return false;}catch(const std::runtime_error &error){return QString::fromUtf8(error.what()).contains("application thread");}}).get();
+    QVERIFY(rejected);JsInit();
+    QVERIFY(std::async(std::launch::async,[]{JsInit();return true;}).get());
+    input=qEnvironmentVariable("HEMU_NATIVE_FIXTURE");QVERIFY2(!input.isEmpty(),"Set HEMU_NATIVE_FIXTURE to a complete one-core saved session");
+  }
   void cancellation() {
     QTemporaryDir dir;QVERIFY(dir.isValid());const auto output=dir.filePath("keep.hemu");
     QFile old(output);QVERIFY(old.open(QIODevice::WriteOnly));old.write("previous session");old.close();

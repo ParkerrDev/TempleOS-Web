@@ -1,6 +1,6 @@
 #include "App.hpp"
 
-int main(int argc,char **argv) {
+int main(int argc,char **argv) try {
   const bool check=argc>1&&QString::fromLocal8Bit(argv[1])=="check";
   if(check)qputenv("QT_QPA_PLATFORM","offscreen");
   QGuiApplication app(argc,argv);app.setDesktopFileName("hemu-native");
@@ -25,4 +25,6 @@ int main(int argc,char **argv) {
   auto *window=qobject_cast<QQuickWindow *>(qml.rootObjects().first());window->installEventFilter(&backend);
   if(argc>1)backend.open(QString::fromLocal8Bit(argv[1]));
   return app.exec();
+} catch(const std::exception &error) {
+  fprintf(stderr,"%s\n",error.what());return 1;
 }

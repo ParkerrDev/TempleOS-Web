@@ -79,3 +79,20 @@ for games, UI file selection through the desktop portal, native packaging and
 installation, performance/resource measurement, and non-Linux platforms. The
 browser host's four-core protocol remains separate; this window does not yet
 satisfy that native SMP requirement.
+
+JavaScriptCoreGTK initialization is a platform boundary: its C API does not
+initialize the WebKit main run loop used by the deferred full-GC callback in
+the tested 2.54.1 library. `JsInit.hpp` initializes that loop on Qt's application
+thread before any engine workers, through the library's exported **private**
+`WTF::initializeMainThread` function. This is not a stable public JSC ABI. The
+host refuses a header/runtime JSC version mismatch and must be rebuilt and
+qualified when that dependency changes. GC remains enabled. The macOS branch
+does not use this Linux compatibility adapter and remains unqualified.
+
+The pre-fix host reproduced a null-main-loop crash during a real
+open/resume/save/pause/resume lifecycle. The 45-second lifecycle regression now
+also replaces the machine; `node tools/native/lifecycle.mjs --gc-proof` uses GDB
+to require actual deferred full-GC callbacks before it passes. The ordinary
+native check includes the lifecycle without the debugger. This bounds the
+regression evidence; it does not establish indefinite runtime stability.
+See the source-derived [GC failure evidence](../../tools/native/DeferredGc.md).

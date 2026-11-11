@@ -1,5 +1,6 @@
 #pragma once
 #include "Transport.hpp"
+#include "JsInit.hpp"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -50,6 +51,7 @@ class Machine {
   std::unique_ptr<TransportScope> transport;
 public:
   explicit Machine(std::atomic<bool> *cancel,std::function<void(const char *,size_t)> progress={}) {
+    JsInit();
     JSClassDefinition definition=kJSClassDefinitionEmpty;definition.className="HemuNative";
     JSClassRef type=JSClassCreate(&definition);context=JSGlobalContextCreate(type);JSClassRelease(type);
     try {

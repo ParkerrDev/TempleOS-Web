@@ -139,11 +139,12 @@ class Backend:public QObject {
   Q_PROPERTY(bool ready READ ready NOTIFY changed)
   Q_PROPERTY(QString path READ path NOTIFY changed)
   Q_PROPERTY(bool faulted READ faulted NOTIFY changed)
-  QThread thread;std::atomic<bool> cancelFlag{false};FrameMailbox mailbox;Engine *engine;
+  QThread thread;std::atomic<bool> cancelFlag{false};FrameMailbox mailbox;Engine *engine=nullptr;
   QImage value;QString message,filename;bool working=false,stopped=true,loaded=false;
   QJsonObject state;Tone tone;std::unique_ptr<QAudioSink> audio;
 public:
-  Backend():engine(new Engine(&cancelFlag,&mailbox)) {
+  Backend() {
+    JsInit();engine=new Engine(&cancelFlag,&mailbox);
     engine->moveToThread(&thread);connect(&thread,&QThread::finished,engine,&QObject::deleteLater);
     connect(this,&Backend::openRequested,engine,&Engine::Open);connect(this,&Backend::saveRequested,engine,&Engine::Save);
     connect(this,&Backend::pauseRequested,engine,&Engine::Pause);connect(this,&Backend::keyRequested,engine,&Engine::Key);
