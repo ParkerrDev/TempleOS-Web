@@ -11,6 +11,7 @@
 #include "TmContact"
 #include "TmMove"
 #include "TmPath"
+#include "TmSlide"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

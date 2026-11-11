@@ -59,6 +59,12 @@ I64 FixedDiv(I64 a,I64 b)
   return a*65536/b;
 }
 
+I64 DistanceApprox(I64 dx,I64 dy)
+{//The classic inexpensive distance used by movement and targeting.
+  dx=AbsI64(dx); dy=AbsI64(dy);
+  return dx+dy-MinI64(dx,dy)>>1;
+}
+
 I64 AngleSin(GameData *tmpd,I64 angle)
 {
   return tmpd->sine[angle>>19&8191];

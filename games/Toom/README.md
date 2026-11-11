@@ -55,6 +55,11 @@ The implemented foundation uses native V5.03 file and memory APIs:
   with actor cross-sections. A reusable path owns its buffers and borrows its
   world, and must be freed before that world.
 
+- Wall sliding traces three leading corners, projects the remaining move with
+  integer angle tables and bounds corner retries. Actor obstructions use the
+  classic separate-axis fallback, and crossed-line/contact callbacks remain
+  effective during a slide.
+
 Fuzz effects, simulation, weapons, actors, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
@@ -112,6 +117,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/world.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/contact.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/movement.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/path.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/slide.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -157,13 +163,15 @@ effects remain part of the pending simulation stage.
 The movement check covers 22 position-change contracts in a controlled pair
 of rooms: step/dropoff/headroom boundaries, float/teleport/noclip flags, atomic
 rejection, actor links, pickup contacts and crossed-line ordering, including
-callbacks that perform another query. Momentum, sliding and actual line actions
-remain part of the pending simulation stage.
+callbacks that perform another query. Momentum and actual line actions remain part of the pending simulation stage.
 The path check compares all hit records for 5,012 rays across the 36 maps and
 an independent full geometry/actor scan. It includes long rays, exact grid and
 vertex boundaries, large actors in neighboring cells, wall/actor ties, all four
 exact diagonals, allocation growth, stamp reset and reused actor handles.
-Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run the path or math
+The sliding check covers 19 cases for axis and diagonal walls, corners, actor
+obstructions, 25-unit steps, headroom, blocking flags and action callbacks.
+It also compares 1,024 projected moves with an independent integer reference.
+Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math or sliding
 checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
