@@ -1,0 +1,77 @@
+{
+  "scope": "Native DP speaker primitives and Settings-owned song task; not wired into the interactive game.",
+  "files": {
+    "games/Toom/TmSnd.HC": "38d7d1cafdf87131a6b89953b32b1b836dba6fa7fbd26c0354ed80ad877db197",
+    "games/Toom/TmSpeaker.HC": "708d62a34f66e06dc71854e3a9e9a7bedcba6198993b323d7385d96c40ef3e30",
+    "tools/toom/Speaker.HC": "a6d108a41c1f676a7cc34dc618448df4158258cf62134d33fab56d3c25827abd",
+    "tools/toom/SpeakerHook.HC": "4314324fd83ac073a8ea63860b84d48a8aff98c9250dc9999dc55c405dbed61f",
+    "tools/toom/SpeakerTask.HC": "1d0c535a749118590193aaa4e2e68185b69a755e95c49c37193ec6bf0af87515",
+    "tools/toom/SpeakerTaskHook.HC": "a440a8f0ae8c9341bb43c7abb6204e5ab130046c185e374f5b1b6d0d85e424ca",
+    "tools/toom/speaker.test.mjs": "d1f30078339a1c843bc73502af48482ae793f11ed9157c3cb96bdc5f5ca9b1e9",
+    "tools/toom/speaker-task.test.mjs": "4c579abfbd3c3adea20e9d3a83e691dd3239fbc93ebaf5edfbd14fc13a2bb711"
+  },
+  "clock": {
+    "results": [
+      {
+        "out": "SPEAKER 1000 CLOCK POINTS PORTS MUTE BUSY PAUSE STOP BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-j46by807",
+    "sourceSha256": "df2fddbfcb16b5c0b446ebd6b19a87f87c2271266c77a7f1a51206fad1f76d10"
+  },
+  "clockHemu": {
+    "backend": "hemu",
+    "sourceSha256": "df2fddbfcb16b5c0b446ebd6b19a87f87c2271266c77a7f1a51206fad1f76d10",
+    "cases": 1000,
+    "bad": 0
+  },
+  "task": {
+    "results": [
+      {
+        "out": "HARDWARE GATE 0\nSONG 2 RUNS SUSPEND RESUME PAUSE EXIT FAULT BAD 0\nDELIVERY 148 SAMPLES 0 SKIPPED 1 MS LATE\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-izuw56zl",
+    "sourceSha256": "ec35e6c47422dc353f5cbab6243e8d1f89a2e37da9a01604f9bbef33e2942e42"
+  },
+  "taskHemu": {
+    "backend": "hemu",
+    "sourceSha256": "ec35e6c47422dc353f5cbab6243e8d1f89a2e37da9a01604f9bbef33e2942e42",
+    "runs": 2,
+    "hardwareGate": 0,
+    "bad": 0
+  },
+  "runtime": {
+    "web": "b7e6e0790118aae885886ee0b49a0ef1e90231d8",
+    "compiler": "dbd1946838cfd33dd7c86cda51acb8528c824697",
+    "hemu": "486f8a68bca0ca872cc99c28d1429830d5b53e84",
+    "sha256": {
+      "build/hemu.wasm": "e75e670e136a91bb77d5e8aa06f497019c991219e456dae856b472dbfadd1d03",
+      "build/hemu-smp.wasm": "bd16c80c4c8920d29692f4b7f4f6cbd20e7a843348fa9217955fda8ccb09851c",
+      "engine/jit.js": "98ef4631b01bc7a95a46505c3951d6d222ba397865d87e70ce8001f298fd5b32",
+      "engine/hemu-worker.js": "b72a4c771125b0fae7b3867142f4585c33535b7df070377f01b4200077b316f9",
+      "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+      "tools/hemu/GuestHarness.mjs": "9fe6f769b458f6399e5041ca4a7586e49a4a90a1d224239a92d3e95cd4f9e057"
+    }
+  },
+  "limits": [
+    "Clock test replaces port reads/writes with a deterministic register/trace boundary; original native mute and sound semaphore are retained.",
+    "Task test forwards every application port write to the actual guest PIT. The only tick wrapper records delivery and returns the production deadline unchanged.",
+    "Native final gate is checked by IN 0x61. Frozen HEMU lacks port 0x61 readback; its final spk_on is inspected through an added read-only engine export instead. No app-specific workaround.",
+    "Measured native idle delivery was 148 observed samples, zero skipped samples and at most one millisecond late. Rendering-load timing and real browser sound output have not been qualified.",
+    "SettingsPop kills the new song task, restores/resumes the prior task, and stops the speaker. Decoded buffers remain borrowed from the parent until that teardown.",
+    "No game actor/sector selection, priorities, sound cache or actual focus adapter is installed yet."
+  ]
+}

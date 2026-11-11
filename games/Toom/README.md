@@ -873,3 +873,26 @@ BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/sound.tes
 selection, 140 Hz scheduling and pause/focus/exit silence remain separate work.
 The GPL reference notice and source hash are retained in `NOTICE` and
 `tools/toom/source/pcsound.json`; the unreleased DMX library is not used.
+
+
+`TmSpeaker.HC` adds exact PIT channel 2 writes under TempleOS's sound/mute
+semaphores and a Settings-owned `SongTask`. Absolute 140 Hz jiffy deadlines
+avoid accumulating a truncated 7 ms delay. Pause freezes the stream, late
+service skips expired samples, and repeated pitches avoid unnecessary PIT
+restarts. Native speaker gate and piano-key cache changes invalidate the
+cached divisor. The stream is borrowed until playback/task teardown.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/speaker.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/speaker-task.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/speaker.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/speaker-task.test.mjs
+```
+
+`speaker-evidence.json` records 1,000 deterministic clock points and real
+native/HEMU PIT task ownership, pause, normal/exception cleanup and prior
+song restoration. Frozen HEMU has no port 0x61 readback; its final hardware
+gate is observed directly, while original TempleOS also passes native gate
+readback. These modules remain outside `Load`/`Run`. Rendering-load delivery,
+actual host focus cleanup, sound selection and audible browser output remain
+unqualified.
