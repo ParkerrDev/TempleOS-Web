@@ -211,8 +211,8 @@ onmessage = (e) => {
   else if (m.cmd === "guest") { try { guestCmd(m); } catch (err) { postMessage({ cmd: "guestResult", id: m.id, op: m.op, state: "error", ok: false, msg: String(err?.message || err) }); } }
   else if (m.cmd === "ack") outstanding--;   // main finished a frame - release a flow-control slot
   else if (m.cmd === "pause") {try {PauseSet(m.value);} catch(err) {postMessage({cmd:"error",msg:err.message});}}
-  else if (m.cmd === "exportSnapshot") exportSnapshot();
-  else if (m.cmd === "exportDisk") exportDisk();
+  else if (m.cmd === "exportSnapshot") exportImage("snapshot");
+  else if (m.cmd === "exportDisk") exportImage("disk");
   else if (m.cmd === "importDisk") { try { disk = makeDisk(new Uint8Array(m.bytes)); GuestCacheInvalidate(); postMessage({ cmd: "diskInfo", ok: true, msg: "disk imported (" + (m.bytes.byteLength / 1048576).toFixed(0) + " MB)" }); } catch (err) { postMessage({ cmd: "diskInfo", ok: false, msg: String(err.message || err) }); } }
   else if (m.cmd === "uploadFile") {
     try { if (!disk) throw new Error("disk not loaded yet - wait a moment after boot");
@@ -226,7 +226,7 @@ onmessage = (e) => {
   else if (m.cmd === "listDir") { try { postMessage({ cmd: "dirList", id: m.id, ok: true, dir: m.dir, files: disk ? fat32List(disk, m.dir || "Home").map(e => ({ name: e.name, size: e.size, dir: !!(e.attr & 0x10) })) : [] }); } catch (err) { postMessage({ cmd: "dirList", id: m.id, ok: false, msg: String(err.message || err) }); } }
 };
 
-async function exportSnapshot() {
+async function exportImage(kind) {
   let locked=false;
   try {
     if (!loaded || !disk || !gx?.ready) throw new Error("Wait for the machine and disk to finish loading.");
@@ -237,26 +237,23 @@ async function exportSnapshot() {
       sp:Number(instRef.exports.__sp.value),ipiAddr:smpCfg?.ipiAddr||0,
       paused,rate:refreshRate,actualRate,repeat:repeatKeys,budget:curBudget,
       keyboard:keyq.Save(),pointer:guestInput.save(),launch};
-    const buf=await SnapshotSave({meta,wasm:engineBytes,memory:instRef.exports.memory,disk});
-    postMessage({cmd:"exportResult",kind:"snapshot",ok:true,buf},[buf]);
-  } catch(err) {postMessage({cmd:"exportResult",kind:"snapshot",ok:false,msg:err.message});}
+    const buf=kind==="snapshot"?await SnapshotSave({meta,wasm:engineBytes,memory:instRef.exports.memory,disk}):await DiskImage();
+    postMessage({cmd:"exportResult",kind,ok:true,buf},[buf]);
+  } catch(err) {postMessage({cmd:"exportResult",kind,ok:false,msg:err.message});}
   finally {
     if (locked && !paused) machineBarrier?.Unlock();
     saving=false;
     for (const m of deferred.splice(0)) onmessage({data:m});
   }
 }
-// Export the whole C: drive (base image + this session's writes) as a gzipped raw image.
-async function exportDisk() {
-  if (!disk) { postMessage({ cmd: "exportResult", kind: "disk", ok: false, msg: "disk not loaded yet" }); return; }
-  const total = disk.virtualSize || 0x4000000;
-  const stream = new ReadableStream({
-    start(c) { const SEC = 512, CH = 2048; const secs = Math.ceil(total / SEC);
-      for (let lba = 0; lba < secs; lba += CH) { const n = Math.min(CH, secs - lba); const b = new Uint8Array(n * SEC); disk.readInto(lba, n, b, 0); c.enqueue(b); }
-      c.close(); }
-  });
-  const gz = await new Response(stream.pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
-  postMessage({ cmd: "exportResult", kind: "disk", ok: true, buf: gz }, [gz]);
+async function DiskImage() {
+  let off=0;
+  const stream=new ReadableStream({pull(c) {
+    if (off===disk.virtualSize) {c.close();return;}
+    const bytes=new Uint8Array(Math.min(131072,disk.virtualSize-off));
+    disk.readInto(off/512,bytes.length/512,bytes,0);off+=bytes.length;c.enqueue(bytes);
+  }});
+  return new Response(stream.pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
 }
 
 // Stream-decompress into ONE preallocated buffer: Response.arrayBuffer() would hold all the
