@@ -10,6 +10,7 @@ const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backen
 const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
 const source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmScreen')
   .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+  readFileSync(resolve(game,'TmOverlay.HC'),'latin1')+'\n'+
   readFileSync(resolve(game,'TmScreen.HC'),'latin1')+'\n'+readFileSync(resolve(root,'tools/toom/Screen.HC'),'latin1');
 const {bytes:phase2}=await BrainMaps();
 const files=[{name:'PHASE1.WAD',bytes:FreedoomRead()},{name:'PHASE2.WAD',bytes:phase2},{name:'TMDATA.BIN',bytes:readFileSync(resolve(game,'TMDATA.BIN'))}];

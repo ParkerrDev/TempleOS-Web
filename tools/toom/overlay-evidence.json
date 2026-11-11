@@ -1,0 +1,105 @@
+{
+  "status": "bounded-native-weapon-overlay-proof",
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "files": [
+      {
+        "path": "linuxdoom-1.10/r_things.c",
+        "sha256": "b3ff03ba213782ed6488a9e0fb0afa0a0ee1f5cfbff8ce498c7133e93e01e0e3"
+      },
+      {
+        "path": "linuxdoom-1.10/r_draw.c",
+        "sha256": "b19edd950d3d56d2d1d6168677d6345c190f081baa8269bfac3d2f3920a36a96"
+      }
+    ],
+    "functions": [
+      "R_DrawPlayerSprites",
+      "R_DrawPSprite",
+      "R_DrawVisSprite",
+      "R_DrawMaskedColumn",
+      "R_DrawColumn",
+      "R_DrawFuzzColumn"
+    ],
+    "view": [
+      320,
+      168
+    ],
+    "scope": "Original column/overlay renderer at unit horizontal and vertical scale, using official Freedoom patches and COLORMAP; hardware/display, wall geometry and actor sorting are outside this witness."
+  },
+  "sourceSha256": "e0a5273470661cec1a626a42df4c50d10b7e7b447688a35f9be5151b92f6784b",
+  "assetHashes": {
+    "FREEDOOM.WAD": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
+    "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f",
+    "OVERLAY.BIN": "810f7058782873da39f7eb8da5ea6dc6ef34173ff1528e30ce988ccfb4fb53df"
+  },
+  "checks": {
+    "originalRenderer": {
+      "cases": 1036,
+      "native": "qemu-t774_zhe",
+      "hemu": true,
+      "scope": [
+        "All 88 renderable weapon/flash state records with five clipped or fractional positions and horizontal reflection, using official Freedoom Phase2 patches.",
+        "Dark/bright sectors, extra light, fixed maps, full-bright frames and invisibility duration/blink boundaries, including fuzz-phase wrapping.",
+        "Two active weapon/flash layers preserve original draw order; both inactive layers leave the background alone.",
+        "The original six overlay/column functions run unchanged in the host-C witness, using native patch posts, COLORMAP, a patterned framebuffer and the original fuzz sequence.",
+        "Native and HEMU match every expected 32-bit framebuffer hash and final fuzz position; player records, pixel guards and world depth remain unchanged."
+      ]
+    },
+    "liveFrames": {
+      "cases": 31,
+      "frames": 24,
+      "native": "qemu-8u220grr",
+      "hemu": true,
+      "sourceSha256": "cede3ea20b5a009f1d4981e18edaaa64917f3e847ae741078c6c6ebf0853161b",
+      "evidence": "screen-evidence.json"
+    },
+    "levelCarry": {
+      "cases": 20,
+      "native": "qemu-4766knx4",
+      "hemu": true,
+      "sourceSha256": "059c9e448dfe8e97c5d2964ed216795a5f8a7df09636d3b6a880133e2a3fd22a",
+      "scope": "Fuzz phase survives successful level replacement, alongside existing inventory/RNG/brain/session-clock contracts."
+    },
+    "allocation": {
+      "cases": 432,
+      "failures": 429,
+      "native": "qemu-e4cv97gf",
+      "hemu": true,
+      "sourceSha256": "71e1a532cbd8ba312a38f78c2cdb74148974c77ec89c4ae126e09121e94a8f7e"
+    }
+  },
+  "preview": {
+    "native": "qemu-6jdv7482",
+    "map": "E1M1",
+    "tics": 16,
+    "artifact": "/tmp/toom-E1M1.png",
+    "scope": "Inspected live game-state frame with the raised pistol. One cold draw is not a steady-frame-rate measurement."
+  },
+  "inputs": {
+    "games/Toom/TmOverlay.HC": "6f4adb56ed7b326a0e6548be673489713c2e58d047689f79072f2fd677a8feca",
+    "games/Toom/TmDraw.HC": "d0227b25898aba077c2f4dd1eb6ef90b41c55ae63ea6a72dd721cfe0f72ec518",
+    "games/Toom/TmLevel.HC": "be6c6e92e8f3e4ee9eebe5ea25217a903f324ce358e393c24eb406800cbacb43",
+    "games/Toom/TmScreen.HC": "54386654b6eaa3aab7a8f4a8087e59eb989aefdad5d23cd365c2959857e77aa7",
+    "tools/toom/Overlay.HC": "7e29463f21cc3c125280268728515654d67f8c88d60bd4e3043b70ee89db5219",
+    "tools/toom/OverlayRef.mjs": "3938c31a023e470a144b672714d0aa4ed3048de9d9878df0323a571c505e7d4f",
+    "tools/toom/overlay.test.mjs": "517b0487dce9a87f374dbf86773f61b1fb3d5117735348f42a364813591a31e9",
+    "tools/toom/Level.HC": "bc12c68eee9888b8f8b72628963bc65f00ef045cc1a8470cbd2291b65515a91c",
+    "tools/toom/screen.test.mjs": "c637765fcc76d4cb648a98f405902f95de1eded12cbce801a920d2ae880a08dd",
+    "tools/toom/preview.mjs": "84304376fad4728b8fb800c6b753a74a4e20de65a140335e18ec3d690be45528",
+    "tools/toom/source/collision.json": "0daae4b3d9cf073a4b7c666a36d1bd84f729829ed3827efb32edd96b21fcec00"
+  },
+  "limitations": [
+    "The unused zero-tic S_LIGHTDONE callback state never reaches rendering and has no corresponding WAD frame; the fixture tests renderable states 2 through 89 and the inactive state separately.",
+    "Renderer comparisons use the fixed 320x168 unit-scale view and official Freedoom 0.13.0. They do not qualify arbitrary modified patches, resolutions or original full-scene Doom pixels.",
+    "World power-up lighting, spectre fuzz, HUD, sound output, interactive window lifecycle, progression/intermission and saves remain unfinished."
+  ]
+}

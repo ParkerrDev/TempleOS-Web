@@ -16,7 +16,7 @@ class View
   I64 masked_cnt;
   Graphics *gr;
   F64 x,y,z,angle,cs,sn,fx,fy,cx,cy;
-  I64 width,height,*stack,sky;
+  I64 width,height,*stack,sky,fuzz;
   I16 *top,*bottom;
   U16 *plane;
   I32 *depth;

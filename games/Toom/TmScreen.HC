@@ -26,6 +26,7 @@ U0 GameDraw(Game *tmpg,CDC *dc)
       if (actor!=player) SpriteDraw(view,tmpg->sprites,actor);
       id=actor->tick_next;
     }
+    PlayerSprites(level,tmpg->sprites);
     ViewBlot(view,dc);
   } catch {
     GameLeave(tmpg);

@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/id-Software/DOOM",
   "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
-  "purpose": "Reference collision, motion, combat, weapon/player state, visibility, sector controllers, teleports, switches, lighting, player sector effects, line activation, shared thinker scheduling, actor perception and chase, player setup and level transitions, re-expressed in native HolyC. These C files are not compiled or linked into TOOM.",
+  "purpose": "Reference collision, motion, combat, weapon/player state, visibility, sector controllers, teleports, switches, lighting, player sector effects, line activation, shared thinker scheduling, actor perception and chase, player setup and level transitions, keyboard commands and weapon-overlay drawing, re-expressed in native HolyC. These C files are not compiled or linked into TOOM.",
   "files": [
     {
       "path": "linuxdoom-1.10/p_map.c",
@@ -82,6 +82,14 @@
     {
       "path": "linuxdoom-1.10/p_setup.c",
       "sha256": "cc56c3ef5eb73aaec4db8be855fd3c192af19bf8f775478d002e9b2e9225872d"
+    },
+    {
+      "path": "linuxdoom-1.10/r_things.c",
+      "sha256": "b3ff03ba213782ed6488a9e0fb0afa0a0ee1f5cfbff8ce498c7133e93e01e0e3"
+    },
+    {
+      "path": "linuxdoom-1.10/r_draw.c",
+      "sha256": "b19edd950d3d56d2d1d6168677d6345c190f081baa8269bfac3d2f3920a36a96"
     }
   ]
 }

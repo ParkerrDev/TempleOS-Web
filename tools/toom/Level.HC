@@ -52,7 +52,7 @@ U0 TmLevelTest()
   old->player.card[TM_IT_BLUECARD]=TRUE;
   old->player.power[TM_PW_IRONFEET]=90;
   old->player.kills=5; old->player.items=6; old->player.secrets=7;
-  old->brain->easy=TRUE; clock=game->clock;
+  old->brain->easy=TRUE; old->view->fuzz=49; clock=game->clock;
   GameLoad(game,1,2); old=game->level;
   actor=WorldActorGet(old->world,old->world->player);
   if (game->clock!=clock || old->world->tic || old->map_num!=2 ||
@@ -61,7 +61,7 @@ U0 TmLevelTest()
 	!old->player.weapon[TM_WP_SHOTGUN] ||
 	old->player.card[TM_IT_BLUECARD] || old->player.power[TM_PW_IRONFEET] ||
 	old->player.kills || old->player.items || old->player.secrets ||
-	!old->brain->easy) throw('Carry');
+	!old->brain->easy || old->view->fuzz!=49) throw('Carry');
   tm_level_cases++;
   GameLoad(game,1,1,TRUE); old=game->level;
   if (old->player.health!=100 || old->player.ammo[TM_AM_CLIP]!=50 ||

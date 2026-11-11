@@ -32,6 +32,10 @@ The implemented foundation uses native V5.03 file and memory APIs:
   wall/sprite depth tests. Sky boundaries retain invisible depth barriers.
   A separate 4 MiB decoded sprite cache evicts before
   allocation. Sprites are not decoded until requested.
+- Weapon/flash overlays retain original unit-scale fixed-point placement,
+  clipping, full-bright/fixed/local lighting and invisibility column order.
+  Their native indexed pixels use the existing 2x2 TempleOS palette conversion.
+  The original fifty-step fuzz sequence persists across level changes.
 - Masked middle-wall textures use shared wall projection, preserve transparent
   holes and top/bottom pegging, and clip against nearer walls and objects.
 - All 22 original flat and wall animation cycles use compact per-level
@@ -343,6 +347,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level-alloc.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/setup.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/input.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/overlay.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/screen.test.mjs > /tmp/toom-screen.json
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-screen.json node tools/toom/screen.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/level-maps.test.mjs > /tmp/toom-level-maps.json
@@ -679,9 +684,16 @@ Live-scene composition adds 24 matching native/HEMU frames after running,
 turning, firing, strafing and pausing in four maps from both phases. Rendering
 leaves every actor, Player/World record and clock unchanged, preserves private
 CDC margins, and releases its session guard after rejection. Seven guard cases
-and final heap cleanup also pass. `TmScreen.HC` is compiled after `Load.HC`;
-window lifetime, weapon/HUD drawing and power-up/shadow effects remain separate
-work. See `tools/toom/screen-evidence.json`.
+and final heap cleanup also pass. `TmOverlay.HC` and `TmScreen.HC` compile after
+`Load.HC`; window lifetime, HUD, world power-up lighting and spectre fuzz remain
+separate work. See `tools/toom/screen-evidence.json`.
+Weapon overlays add 1,036 comparisons with the unchanged original software
+renderer. They use all 88 renderable weapon/flash states, real Phase2 patches,
+fractional/clipped/reflected placement, lighting and invisibility boundaries,
+and both active overlay layers. Pixel hashes and fuzz position match both
+backends; player bytes, depth and pixel guards remain intact. Level replacement
+retains fuzz phase, and all 429 failure injections still preserve ownership.
+See `tools/toom/overlay-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation
@@ -713,9 +725,10 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/preview.mjs
 
 This compiles the current sources in original TempleOS and writes
 `/tmp/toom-E1M1.png`. Set `MAP=E2M3` or `OUT=/path/view.png` as needed. It renders
-the original player-start view and medium-skill map sprites in their initial
-states. It is a static renderer preview, with no actor actions, weapon/HUD or
-player simulation, and must not be presented as a playable game.
+the medium-skill game after 16 real simulation tics, including the raised weapon
+and live actors. The preview uses the same GameNew/GameTick/GameDraw entry points
+as the developing host. It exports one frame and provides no interactive
+window, HUD or sound; it must not be presented as the completed game.
 
 ## Native and HEMU renderer comparison
 

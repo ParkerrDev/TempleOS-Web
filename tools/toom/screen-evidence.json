@@ -3,14 +3,14 @@
   "native": {
     "templeos": "5.03",
     "backend": "QEMU/KVM",
-    "evidence": "qemu-qb5547e8"
+    "evidence": "qemu-8u220grr"
   },
   "hemu": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
     "compiler": "7f80635"
   },
-  "sourceSha256": "e46d2c51ac217408921ad4d51ea2103cd7ab393ebfc23a4ff3b88d9f0e01916f",
+  "sourceSha256": "cede3ea20b5a009f1d4981e18edaaa64917f3e847ae741078c6c6ebf0853161b",
   "assetHashes": {
     "PHASE1.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "PHASE2.WAD": "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b",
@@ -76,8 +76,8 @@
       3,
       13,
       64,
-      2740121409,
-      1363135338
+      3731925937,
+      1160118836
     ],
     [
       1,
@@ -86,8 +86,8 @@
       4,
       13,
       64,
-      2740121409,
-      1363135338
+      3731925937,
+      1160118836
     ],
     [
       1,
@@ -96,8 +96,8 @@
       5,
       48,
       65,
-      3481014941,
-      2897251137
+      1577278801,
+      2175748109
     ],
     [
       1,
@@ -136,8 +136,8 @@
       3,
       13,
       185,
-      3961295733,
-      2943188256
+      1008517626,
+      3420659551
     ],
     [
       1,
@@ -146,8 +146,8 @@
       4,
       13,
       185,
-      3961295733,
-      2943188256
+      1008517626,
+      3420659551
     ],
     [
       1,
@@ -156,8 +156,8 @@
       5,
       48,
       185,
-      1684516956,
-      2060429265
+      1387940304,
+      1399783942
     ],
     [
       2,
@@ -196,8 +196,8 @@
       3,
       13,
       195,
-      167440567,
-      3166405295
+      4127201099,
+      1390229805
     ],
     [
       2,
@@ -206,8 +206,8 @@
       4,
       13,
       195,
-      167440567,
-      3166405295
+      4127201099,
+      1390229805
     ],
     [
       2,
@@ -216,8 +216,8 @@
       5,
       48,
       214,
-      382232541,
-      2567682584
+      2378709774,
+      1832354424
     ],
     [
       2,
@@ -256,8 +256,8 @@
       3,
       13,
       85,
-      705337890,
-      174899200
+      1176713759,
+      2358037675
     ],
     [
       2,
@@ -266,8 +266,8 @@
       4,
       13,
       85,
-      705337890,
-      174899200
+      1176713759,
+      2358037675
     ],
     [
       2,
@@ -276,20 +276,23 @@
       5,
       48,
       85,
-      356869237,
-      2557748558
+      1351456781,
+      1279616194
     ]
   ],
   "inputs": {
-    "games/Toom/TmScreen.HC": "3ebb5c018611f53750b76f75a2471e7bfb064c582385062ae2e41a2ff95e1b74",
+    "games/Toom/TmScreen.HC": "54386654b6eaa3aab7a8f4a8087e59eb989aefdad5d23cd365c2959857e77aa7",
     "tools/toom/Screen.HC": "75dd8644c7acadcc5b67e12e9237ed2adaff52b2a208e815ae97ca005f38f055",
-    "tools/toom/screen.test.mjs": "b8b00380c6b044973e42ce4fe5b80ac9b79ba686d3a277a5b94e8099944ed7ae",
-    "games/Toom/Load.HC": "5478ccc651e798c0fbde610a1cc54eafabe6ec72163c418a1463e86576c906d8"
+    "tools/toom/screen.test.mjs": "c637765fcc76d4cb648a98f405902f95de1eded12cbce801a920d2ae880a08dd",
+    "games/Toom/Load.HC": "5478ccc651e798c0fbde610a1cc54eafabe6ec72163c418a1463e86576c906d8",
+    "games/Toom/TmOverlay.HC": "6f4adb56ed7b326a0e6548be673489713c2e58d047689f79072f2fd677a8feca"
   },
   "limitations": [
-    "GameDraw composes the existing world renderer; it is not a complete windowed host.",
-    "Weapon overlays, HUD, audio presentation and power-up/shadow effects remain unfinished.",
-    "These are bounded image/state comparisons, not original Doom pixel equivalence, completed maps or full-game frame-rate evidence.",
-    "TmScreen is compiled after Load.HC by this fixture; the forthcoming application host will own its display lifetime."
-  ]
+    "GameDraw composes scene and weapon overlays; it is not a complete windowed host.",
+    "HUD, audio presentation, world power-up lighting and spectre fuzz remain unfinished.",
+    "These are bounded image/state comparisons, not original Doom full-scene pixel equivalence, completed maps or full-game frame-rate evidence.",
+    "TmOverlay.HC and TmScreen.HC are compiled after Load.HC; the forthcoming application host will own display lifetime."
+  ],
+  "overlay": "Weapon and flash overlays now participate; their separate original-C witness is recorded in overlay-evidence.json.",
+  "beforeCheckpoint": "ae6e40e"
 }
