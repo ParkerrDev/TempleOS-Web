@@ -1,0 +1,76 @@
+{
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "status": "bounded-native-brain-cube-launch-proof",
+  "checks": {
+    "decisions": {
+      "cases": 1152,
+      "native": "qemu-0h5bdbp_",
+      "hemu": true,
+      "sourceSha256": "1281c2d07e111ef0262dea8a7c76b0d02b027a44db5db93bca152b8671173c76",
+      "reference": "Unmodified original A_BrainSpit compiled as host C with a controlled missile return. All nine outputs match for positive defined vertical-path countdowns. Static easy phase is retained across the entire sequence.",
+      "scope": [
+        "One through 32 targets and round-robin wrap",
+        "Easy/normal/nightmare gating without RNG consumption",
+        "Both signs of velocity; canonical state periods 1, 3 and 10 despite runtime remaining tics of 1",
+        "Sound occurs after target and reaction publication"
+      ]
+    },
+    "integration": {
+      "cases": 63,
+      "native": "qemu-qw4wggcw",
+      "hemu": true,
+      "sourceSha256": "9a37d96fc2248e91fd51af3973a08fb872bf97af314e02b62d324f712565ae72",
+      "scope": [
+        "23 cases of actual projectile half-step, random consumption, canonical period, sound ordering, finite coincident/horizontal/short paths, empty and generation-stale targets",
+        "Owner/inactive/table guards and easy skip leave state as specified",
+        "Quiet sound exceptions leave spawned actors world-owned; final fresh-task heap equals baseline",
+        "All ten official Freedoom 0.13.0 Phase 2 MAP30 target trajectories, four random seeds each, on the actual loaded map. Phase 1 has no brain spitters/targets. This checks launch geometry, not complete level play."
+      ]
+    },
+    "originalFailureWitnesses": [
+      {
+        "name": "empty",
+        "signal": "SIGFPE",
+        "contract": "Undefined division by zero in the original C; no portable output exists."
+      },
+      {
+        "name": "zeroSpeed",
+        "signal": "SIGFPE",
+        "contract": "Undefined division by zero in the original C; no portable output exists."
+      },
+      {
+        "name": "short",
+        "initialReaction": 0,
+        "after80Calls": -80
+      },
+      {
+        "name": "zeroDistance",
+        "initialReaction": 0,
+        "after80Calls": -80
+      }
+    ]
+  },
+  "corrections": [
+    "An empty or wholly stale target table returns without spawning or sound; no zero-count modulo or stale pointer access. Easy phase still advances on a valid call.",
+    "A zero vertical displacement or velocity uses the horizontal displacement/velocity. A short, coincident or nonpositive result gets one arrival countdown, instead of zero or negative indefinite life. These are explicit corrections, not original-C parity claims.",
+    "Target handles are generation-checked; invalid positive table cursor/capacity and nonpositive canonical duration throw before the dependent operation."
+  ],
+  "limitations": [
+    "Original undefined division is witnessed on this x86 host as SIGFPE; that signal is not a portable C contract.",
+    "Sound/state callbacks must defer actor reclamation during normal thinker actions.",
+    "BrainSpawn arrival, full action dispatcher, persistent host, audio/UI, saves and progression remain unfinished. No catalog or playable-game qualification."
+  ]
+}
