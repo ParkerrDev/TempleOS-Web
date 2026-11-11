@@ -355,8 +355,10 @@ addEventListener("paste",function (e) {
 // ---- touch controls: direct touch = absolute cursor + tap-to-click; joystick = fine relative
 //      moves; L/R = holdable mouse buttons (drags); ⌨ opens the device keyboard. ----
 const touchDevice=matchMedia("(pointer:coarse)");
-function TouchMode()
+function TouchMode(e)
 {
+  if (e)
+    releaseHeld();
   document.body.classList.toggle("touch",touchDevice.matches);
   $("touchBtn").setAttribute("aria-pressed",String(touchDevice.matches));
 }
@@ -628,7 +630,8 @@ async function runSMP() {
       const ap = new Worker("./engine/hemu-smp-worker.js", { type: "module" });
       ap.onmessage = (e) => { const m = e.data; if (m.cmd === "error") dbg("[smp] AP" + k + ": " + m.msg, true); else if (m.cmd === "log") { dbg("[smp] " + m.msg); console.log("[smp]", m.msg); } };
       ap.onerror = (ev) => dbg("[smp] AP" + k + " worker error: " + (ev.message || ""), true);
-      ap.postMessage({ cmd: "init", role: "ap", core: k, mem, ctrl, sc, wasmBytes });
+      ap.postMessage({ cmd: "init", role: "ap", core: k, mem, ctrl, sc, wasmBytes,
+        heapAbi:snapshotInfo?.meta.heapAbi });
       aps.push(ap);
     }
     bsp.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: new URL("./build/hemu-smp.wasm", location.href).href, fixedB: FIXED_B,...os_cfg,welcome:stockBoot,

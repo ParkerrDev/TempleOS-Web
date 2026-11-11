@@ -161,10 +161,11 @@ function Note(text)
   LogAdd(d,true);
 }
 
-function NotifyClick()
+function NotifyClick(e)
 {
+  e?.target?.close();
   window.focus();
-  Open();
+  Open(false);
 }
 
 async function NotifyShow(opts)
@@ -224,6 +225,8 @@ function Hear(e)
       SeenAll();
     CntShow();
   } else if (e.t=="msg") {
+    if (e.n<=last_n)
+      return;
     near=log.scrollHeight-log.scrollTop-log.clientHeight<24;
     LogAdd(LineMake(e),near || e.tag==my_tag);
     last_n=Math.max(last_n,e.n);
@@ -285,13 +288,14 @@ function MuteClick()
     PermAsk();
 }
 
-function Open()
+function Open(ask=true)
 {
   ov.classList.add("open","free");
   WinFocus($("chatWin"));
-  if (!asked && !muted)
+  if (ask && !asked && !muted)
     PermAsk();
-  asked=true;
+  if (ask)
+    asked=true;
   SeenAll();
   chat.wake();
   if (!document.body.classList.contains("touch"))
@@ -340,4 +344,10 @@ Start();
 document.addEventListener("visibilitychange",Back);
 addEventListener("focus",Back);
 addEventListener("online",chat.wake);
+navigator.serviceWorker?.addEventListener("message",function (e) {
+  if (e.data?.cmd=="chat-open")
+    Open(false);
+});
+if (new URLSearchParams(location.search).get("open")=="chat")
+  Open(false);
 export {Open};

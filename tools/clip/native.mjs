@@ -38,4 +38,4 @@ const oracle=await QemuRun([run],{files:[{name:"MOOV.BIN",bytes:moov},
   {name:"SOURCE.MP4",bytes}],timeout:60});
 console.log(JSON.stringify(oracle));
 assert(JSON.stringify(oracle).includes("CLIP:"+result.length+":"+hash.toString(16).toUpperCase().padStart(16,"0")));
-console.log("MP4 native V5.03 output matches the WASM file byte for byte by length and FNV-1a hash.");
+console.log("MP4 native V5.03 and WASM outputs have matching lengths and FNV-1a hashes.");
