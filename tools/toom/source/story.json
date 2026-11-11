@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/chocolate-doom/chocolate-doom",
+  "revision": "35fb1372d10756ca27eca05665bd8a7cebc71c05",
+  "files": [
+    {
+      "path": "src/deh_io.c",
+      "sha256": "c2532f1726ebdee1746971134cdd1e72a558238f046e3d676b28f86301aa0bb5"
+    },
+    {
+      "path": "src/deh_main.c",
+      "sha256": "b3c1d6f27dfc252f3dd552672341507081c2dc3cb98dba50f9767a4241e94e46"
+    }
+  ]
+}

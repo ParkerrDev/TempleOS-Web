@@ -949,3 +949,12 @@ the native component accepts an explicit par value, defaulting to zero. It
 does not reproduce undefined memory access. Official Freedoom Phase 2 uses
 secret exits only on MAP15 and MAP31; other commercial secret routes are
 rejected instead of reusing a stale target.
+
+
+`TmStory.HC` reads the small authored DEHACKED text lump into one owned buffer.
+It retains level names, ending text/background names and par times for both
+Freedoom phases. The native/frozen-HEMU `story.test.mjs` checks 27 cases, 238
+strings, ten malformed inputs and four allocation/read failures against
+unchanged pinned Chocolate Doom text-reader functions. Exact evidence and
+limits are in `story-evidence.json`. This component is also outside Load/Run
+until the next-level host and presentation are connected.

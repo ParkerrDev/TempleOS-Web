@@ -1,0 +1,91 @@
+{
+  "status": "Authored metadata component, outside Load/Run pending host integration.",
+  "source": {
+    "games/Toom/TmStory.HC": "52e2d9d8418dcd7946d7b477633267f100df5f6d25e13aa37ed3a43b3de183f9",
+    "games/Toom/TmWad.HC": "a6eb46daecd0c97c5a25e13dad93e6ac1a6c1516532d05d104da537052732517",
+    "games/Toom/TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+    "tools/toom/Story.HC": "7f2dd12c8f2b8c08b55b26ac759569b6455780baaadaf7db2afb45c304763567",
+    "tools/toom/StoryHook.HC": "3207e5a2c21f6b50b0c46f7e60e60ff96bb2b706c3ee07b38f439d5279f14765",
+    "tools/toom/StoryRef.mjs": "a06c68346987c9627ed56907c662ae77db8d0759fb95daff04d3e4e234e360ab",
+    "tools/toom/story.test.mjs": "0e362f30d9c77c968365a50de09717c30aada89b9b0b1500d87a2e436881262d"
+  },
+  "reference": {
+    "repository": "https://github.com/chocolate-doom/chocolate-doom",
+    "revision": "35fb1372d10756ca27eca05665bd8a7cebc71c05",
+    "files": [
+      {
+        "path": "src/deh_io.c",
+        "sha256": "c2532f1726ebdee1746971134cdd1e72a558238f046e3d676b28f86301aa0bb5"
+      },
+      {
+        "path": "src/deh_main.c",
+        "sha256": "b3c1d6f27dfc252f3dd552672341507081c2dc3cb98dba50f9767a4241e94e46"
+      }
+    ]
+  },
+  "native": {
+    "results": [
+      {
+        "out": "STORY 27 CASES 238 STRINGS 4 FAULTS BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-_potzrhh",
+    "sourceSha256": "53ff204d60a7876fddffbe879b34c35c94b5a652d9754a2725fe0ac9a7773a04",
+    "referenceSha256": "e6a48dac1d7399d2858efd230f27b5c8ee387afad82a44593a5ac0ed4a7ad7aa",
+    "provenance": {
+      "assets": [
+        "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
+      ],
+      "referenceSourceSha256": "b4ac302a268899509a3d136c110464c2ec037fae8ac894940be81dedf24674b7",
+      "cases": 27,
+      "strings": 238,
+      "faults": 4,
+      "malformed": 10
+    }
+  },
+  "hemu": {
+    "runtime": {
+      "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
+      "compiler": "d0e394e",
+      "hemu": "0eff35b",
+      "sha256": {
+        "build/hemu.wasm": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
+        "tools/hemu/GuestHarness.mjs": "ef21e4d8cc8711fd85469906258cae17538c2252caf48841d2fe2201d3de0f45",
+        "hemu/live.bin.gz": "42db6570ffd1610ea2a39a60dd59e63095c60ac39610350a649c5671528a449a",
+        "hemu/stock.json": "fce58673729385cbe119f9307277ab646edb59239c1a77eb1bcae3b2d1c1856b",
+        "hemu/stock.disk": "032751a6b626aea216ab9d675d2b404f27a5e9f61261903cec8b6ea792d964a8",
+        "vendor/images/templeos-hd.qcow2.gz": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+      }
+    },
+    "backend": "hemu",
+    "sourceSha256": "53ff204d60a7876fddffbe879b34c35c94b5a652d9754a2725fe0ac9a7773a04",
+    "referenceSha256": "e6a48dac1d7399d2858efd230f27b5c8ee387afad82a44593a5ac0ed4a7ad7aa",
+    "provenance": {
+      "assets": [
+        "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "a8772e088847032510d97ba2312406a6998f21cbab44d4ff10696faa9c0ecd4b"
+      ],
+      "referenceSourceSha256": "b4ac302a268899509a3d136c110464c2ec037fae8ac894940be81dedf24674b7",
+      "cases": 27,
+      "strings": 238,
+      "faults": 4,
+      "malformed": 10
+    },
+    "bad": 0
+  },
+  "limits": [
+    "The unchanged pinned Chocolate Doom DEH_GetChar/DEH_ReadLine/CleanString/DEH_ParseAssignment functions supply the independent text oracle. Original source notices remain in the downloaded cache; the repository records exact source hashes.",
+    "The two official Freedoom 0.13.0 DEHACKED lumps supply all 68 authored map titles, ten ending texts, ten ending-flat names and their Phase 1/Phase 2 par values. Twelve continuation/CRLF/duplicate-key cases, trailing escape and missing metadata are covered. The complete suite compares 238 retained strings byte for byte.",
+    "Ten malformed text, map, par and flat inputs are rejected. Two allocator faults plus thrown/false read failures restore the native task heap. A missing DEHACKED lump and missing par values return explicit empty/zero metadata, including episode four.",
+    "This is a bounded reader for names, endings, flats and pars, not a general DEHACKED/mod engine. Existing state/weapon patches remain in the independently verified TMDATA preparation path.",
+    "No intermission display, finale rendering, next-level host lifecycle or performance claim is made by this component proof."
+  ]
+}
