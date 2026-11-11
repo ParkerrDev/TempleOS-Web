@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
-import {HemuBoot,ReadyWait,Sleep} from "./WorkerHost.mjs";
+import {HemuBoot,ReadyWait,FramesWait,Sleep} from "./WorkerHost.mjs";
 
 const h=await HemuBoot({smp:0,rate:30,keep_buf:true});
 try {
+  h.ack=false;
   await ReadyWait(h,20000);
-  h.ack=false;await Sleep(150);
+  await FramesWait(h,2-h.nframes,20000);
   const n=h.nframes,hash=h.last.hash;
+  assert.equal(n,2,"the two initial frames fill presentation credit without acknowledgements");
   await Sleep(1200);
   assert.equal(h.nframes,n,"presentation stops at the two-frame flow-control limit");
   const paused=h.Wait(m=>m.cmd==="paused"&&m.value,2000);
