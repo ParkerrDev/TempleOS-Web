@@ -5,9 +5,10 @@ const h=await HemuBoot({rate:30});
 try {
   assert.equal((await ReadyWait(h,20000)).ok,true);
   for (const rate of [60,120,0,30]) {
-    h.Post({cmd:"set",rate});
+    h.Post({cmd:"set",rate,repeat:rate!=30});
     const applied=await h.Wait(m=>m.cmd=="settings" && m.rate==rate,5000);
     assert.equal(applied.ok,true);
+    assert.equal(applied.repeat,rate!=30,"one acknowledgement reflects both applied settings");
     await FramesWait(h,30,5000);
     const m=await Measure(h,3);
     assert.ok(m.compared>20);
