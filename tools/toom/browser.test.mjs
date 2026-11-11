@@ -27,7 +27,9 @@ const runtimeNames=['server.mjs','Keyboard.js','Os.js','WinMgr.js','engine/jit.j
   'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
   'engine/Stock.js','engine/Speaker.js','vendor/images/templeos-hd.qcow2.gz'];
 const runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
-const probe=readFileSync(new URL('Worker.HC',import.meta.url),'latin1')+'\n'+readFileSync(new URL('AudioWorker.HC',import.meta.url),'latin1');
+const progression=!!process.env.PROGRESSION;
+const probe=readFileSync(new URL('Worker.HC',import.meta.url),'latin1')+'\n'+readFileSync(new URL('AudioWorker.HC',import.meta.url),'latin1')+
+  (progression?'\n'+readFileSync(new URL('ProgressWorker.HC',import.meta.url),'latin1'):'');
 const server=createServer(ServeReq).listen(0,'127.0.0.1');await once(server,'listening');
 const url=`http://127.0.0.1:${server.address().port}`;
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
@@ -160,6 +162,30 @@ try {
       const moved=await ScreenWait(/ARROWS\/WASD MOVE/);
       await Done('move-after',"TmWorkerProbe;if (!tm_worker_state || (tm_worker_x==tm_worker_old_x && tm_worker_y==tm_worker_old_y)) throw('Move');");
       assert.notEqual(hash(initial.buf.subarray(640*64,640*320)),hash(moved.buf.subarray(640*64,640*320)));
+      let progressFrames=null;
+      if(progression) {
+        const ownerSource=readFileSync(new URL('ProgressOwner.HC',import.meta.url),'latin1');
+        await MachinePost(page,{cmd:'osExec',id:'finish-level',src:ownerSource,target:Number(running.task),force:true});
+        const finish=await Event('finish-level');assert(finish.ok,finish.msg);
+        const stats=await ScreenWait(/FINISHED/);
+        await page.locator('#canvas').screenshot({path:resolve(out,`stats-${count}.png`)});
+        await Done('stats-state','TmWorkerProgressWait(1,-1,0,1);');
+        await page.keyboard.down('Control');
+        try {await Done('stats-skip','TmWorkerProgressWait(1,10,0,1);');}
+        finally {await page.keyboard.up('Control');}
+        await page.waitForTimeout(80);await page.keyboard.down('Space');
+        try {await Done('next-location','TmWorkerProgressWait(1,10,1,1);');}
+        finally {await page.keyboard.up('Space');}
+        const entering=await ScreenWait(/ENTERING/);
+        await page.locator('#canvas').screenshot({path:resolve(out,`entering-${count}.png`)});
+        await page.waitForTimeout(80);await page.keyboard.down('Space');
+        try {await Done('next-level','TmWorkerProgressWait(0,-1,-1,2);');}
+        finally {await page.keyboard.up('Space');}
+        const next=await ScreenWait(/ARROWS\/WASD MOVE/);
+        await page.locator('#canvas').screenshot({path:resolve(out,`next-${count}.png`)});
+        progressFrames={statsHash:hash(stats.buf),enteringHash:hash(entering.buf),nextHash:hash(next.buf),
+          ownerProbeSha256:hash(Buffer.from(ownerSource,'latin1'))};
+      }
       await Exit('run','Escape');
       await Done('exit-owner',"TmWorkerProbe;if (tm_worker_state) throw('Owner');");
       await Done('audio-stopped',"TmWorkerAudio;if (tm_worker_snd_gate) throw('Sound');");
@@ -170,7 +196,7 @@ try {
       const final=await page.evaluate(()=>({keys:window.toomKeys,errors:window.machine.events.filter(m=>m.cmd==='error'||m.cmd==='guestResult'&&m.state==='failed')}));
       for(const key of [0x1D,0x9D,0x19,0x99,0xE0,0x48,0xC8,0x01,0x81,0x2A,0xAA])assert(final.keys.includes(key),`DOM keyboard produced set1 ${key.toString(16)}`);
       assert.deepEqual(final.errors,[]);assert.deepEqual(errors,[]);
-      const result={cores:count,weaponReadyMs,audibleRms,soundMessages,captureReleases,keys:final.keys,initialHash:hash(initial.buf),movedHash:hash(moved.buf),
+      const result={cores:count,weaponReadyMs,audibleRms,soundMessages,captureReleases,progressFrames,keys:final.keys,initialHash:hash(initial.buf),movedHash:hash(moved.buf),
         screenshot:resolve(out,`frame-${count}.png`),screenshotSha256:hash(readFileSync(resolve(out,`frame-${count}.png`)))};
       results.push(result);writeFileSync(resolve(out,`browser-${count}.json`),JSON.stringify(result,null,2)+'\n');
     } catch(error) {

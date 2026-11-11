@@ -244,7 +244,7 @@ The implemented foundation uses native V5.03 file and memory APIs:
   lower endpoint and can retry after returning to it; they cannot stall forever
   by decrementing an already-zero wait count.
 
-Fuzz effects, saves, nightmare respawning and episode/intermission progression
+Fuzz effects, saves, nightmare respawning and complete finale presentation
 remain unfinished. Sustained rendering/audio performance is not yet qualified,
 and the development entry is not in the production catalog.
 
@@ -786,7 +786,7 @@ TempleOS and include its `Run.HC` entry from any directory. The entry selects
 its own directory before loading modules and default assets. The host uses
 native held-key state, task messages, `SettingsPush`/`SettingsPop` and a
 `DrawIt` callback. It needs no browser API. This entry remains outside the
-production catalog: level progression/intermission, saves, nightmare respawning
+production catalog: complete finale presentation, saves, nightmare respawning
 and remaining world visual effects are unfinished; rendering/audio performance
 also needs further work.
 
@@ -794,7 +794,10 @@ Arrows or WASD move/turn; comma/period strafe, Alt modifies turning to strafe,
 Shift runs, Ctrl fires, Space uses, and 1–8 select weapons. P pauses; Esc or
 Shift-Esc exits. Losing focus pauses simulation and requires held keys to be
 released before they act after focus returns. Dead players restart the level
-with Space. A level exit currently displays `LEVEL COMPLETE` without advancing.
+with Space. Ordinary exits show native statistics, then load the next map.
+Ctrl or Space skips the current results stage. Episode endings and commercial
+story stops currently show authored text; artwork, cast and story continuation
+are still being implemented.
 
 Simulation advances in 35 Hz tics, processing at most four before checking
 messages again and drawing. Remaining tics stay pending; this does not claim
@@ -939,13 +942,15 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/io.test.mjs
 lock covers one requested range, not decoding or a complete level load. The
 native unlock/yield semantics and the on-disk WAD remain unchanged.
 
-## Intermission component under development
+## Level progression under development
 
 `TmIntermission.HC` snapshots completed-level percentages/time, chooses the
 normal or secret next map, and advances the original single-player statistics
 count-up, input-edge skips, next-location delay and ten-tic completion wait.
-It is not yet connected to `Load`/`Run`; the current host still displays
-`LEVEL COMPLETE` without changing maps.
+It is connected to `Load`/`Run`. Native text presents the counters and authored
+map names; normal and secret routes replace the level through the same guarded
+owner used by restart. Health, armor, ammunition and weapons carry forward;
+keys, temporary powers and level-local visual effects are cleared.
 
 ```sh
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/route.test.mjs
@@ -959,8 +964,9 @@ intermission state/input/sound-effect steps with unchanged released C
 functions. They include zero totals, fractional/over-100% counts, time/par
 counting, held attack/use keys, fast skips and natural countdowns. Thirty-six
 invalid map/secret routes are rejected. `intermission-evidence.json` records
-the exact scope; rendering, authored metadata, music and actual next-level
-ownership remain separate integration work.
+the exact component scope. The host proof below adds authored metadata,
+native presentation and next-level ownership. Intermission artwork and music
+remain unfinished.
 
 The original episode-four par lookup reads beyond its array. The routing
 oracle provides a safe dummy row because par time is outside that comparison;
@@ -975,5 +981,34 @@ It retains level names, ending text/background names and par times for both
 Freedoom phases. The native/frozen-HEMU `story.test.mjs` checks 27 cases, 238
 strings, ten malformed inputs and four allocation/read failures against
 unchanged pinned Chocolate Doom text-reader functions. Exact evidence and
-limits are in `story-evidence.json`. This component is also outside Load/Run
-until the next-level host and presentation are connected.
+limits are in `story-evidence.json`. The host uses these titles and pars and
+shows authored ending text at the supported finale boundaries.
+
+`progress.test.mjs` checks actual authored exit actions, inventory carry,
+held-key/focus/pause behavior, E1M2's first native frame, a failed replacement
+with retry, E1M3's secret route through E1M9 and its E1M4 return, and the E1M8
+endpoint. Original TempleOS and frozen HEMU agree on eight cases and the exact
+statistics image hash. The complete constructor sweep also passes all 1,022
+injected failure points.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/progress.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/progress.test.mjs
+PROGRESSION=1 TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/worker.test.mjs
+PROGRESSION=1 TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/browser.test.mjs
+```
+
+The last two commands use the actual package on one and four workers. A native
+owner-task fixture activates an authored exit; physical scan codes or Chromium
+DOM keys then advance statistics and the next-location screen. Both require a
+published E1M2 world/HUD frame before testing exits, sound cleanup and relaunch.
+This verifies the transition boundary, not a player walkthrough of every map.
+The native text screen is intentionally not described as original intermission
+artwork. Exact input, source and runtime evidence is in `progress-evidence.json`.
+
+The initial live gate exposed per-cluster disk unlock/yield overhead while
+loading the map and its first visible textures. `progress-before.json` retains
+the native stack samples. One native drive transaction per requested WAD range
+resolved the bounded transition gate without changing the renderer, disk format
+or loading the whole IWAD. Cold-start and sustained performance still require
+separate uncontended measurements.

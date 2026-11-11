@@ -221,6 +221,30 @@ U0 GameLoad(Game *tmpg,I64 episode=1,I64 map_num=1,Bool reborn=FALSE)
   GameLeave(tmpg);
 }
 
+U0 GameFinish(Game *tmpg)
+{//Cancel level-local effects; weapon, ammunition and health carry forward.
+  Level *level;
+  Player *player;
+  Actor *actor;
+  GameEnter(tmpg);
+  try {
+    level=tmpg->level;
+    if (!level) throw('Level');
+    WorldIdle(level->world);
+    if (!(actor=WorldActorGet(level->world,level->world->player)))
+      throw('Player');
+    player=&level->player;
+    MemSet(player->power,0,TM_POWER_NUM*sizeof(I64));
+    MemSet(player->card,0,TM_CARD_NUM*sizeof(Bool));
+    actor->flags&=~TM_MF_SHADOW;
+    player->extra_light=player->fixed_colormap=0;
+    player->damage_cnt=player->bonus_cnt=0;
+  } catch {
+    GameLeave(tmpg);
+  }
+  GameLeave(tmpg);
+}
+
 I64 GameTick(Game *tmpg,I64 forward=0,I64 side=0,I64 turn=0,I64 buttons=0,
 	I64 weapon=TM_WP_NOCHANGE,Bool paused=FALSE)
 {//The session clock survives levels and advances even while gameplay pauses.

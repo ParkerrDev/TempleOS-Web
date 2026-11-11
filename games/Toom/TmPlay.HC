@@ -1,17 +1,22 @@
 #define TMf_PLAY_BUSY  0
 #define TMf_PLAY_FRAME 1
 #define TM_PLAY_HEIGHT 400
+#define TM_PLAY_LEVEL  0
+#define TM_PLAY_STATS  1
+#define TM_PLAY_FINALE 2
 
 class Play
 {
   Game *game;
   Audio *audio;
+  Story *story;
+  Intermission result;
   SoundScene sound;
   CDC *front,*back;
   CTask *task;
   Controls controls;
-  I64 flags,blocked,frames;
-  Bool focused,paused,pause_down,quit;
+  I64 flags,blocked,frames,stage;
+  Bool focused,paused,pause_down,quit,did_secret;
 };
 
 U8 *tm_weapon_names[TM_WEAPON_NUM]={
@@ -68,12 +73,81 @@ U0 PlayHUD(Play *tmpp,CDC *dc)
 	"ARROWS/WASD MOVE  CTRL FIRE  SPACE USE  P PAUSE  ESC EXIT");
 }
 
+U0 PlayTitle(Play *tmpp,CDC *dc,I64 map_num,I64 y)
+{
+  Intermission *tmpi=&tmpp->result;
+  U8 *st=tmpp->story->name[StoryMap(tmpi->episode,map_num,tmpi->commercial)],
+	name[16];
+  if (!st) {
+    if (tmpi->commercial) StrPrint(name,"MAP%02d",map_num);
+    else StrPrint(name,"E%dM%d",tmpi->episode,map_num);
+    st=name;
+  }
+  GrPrint(dc,MaxI64(8,(640-StrLen(st)*FONT_WIDTH)/2),y,"%s",st);
+}
+
+U0 PlayResultDraw(Play *tmpp,CDC *dc)
+{//Native text presents the verified counters; map artwork is not loaded here.
+  Intermission *tmpi=&tmpp->result;
+  I64 i,n=-1,x=144,y=16;
+  U8 *st;
+  dc->color=BLACK; GrRect(dc,0,0,640,TM_PLAY_HEIGHT);
+  dc->color=YELLOW;
+  if (tmpp->stage==TM_PLAY_FINALE) {
+    if (!tmpi->commercial) n=tmpi->episode-1;
+    else switch (tmpi->map_num) {
+      case 6: n=4; break;
+      case 11: n=5; break;
+      case 20: n=6; break;
+      case 30: n=7; break;
+      case 15: n=8; break;
+      case 31: n=9; break;
+    }
+    st=NULL;
+    if (n>=0) st=tmpp->story->end[n];
+    if (st) {
+      for (i=0;st[i] && y<368;i++) {
+	if (st[i]=='\n') {x=144; y+=16;}
+	else {GrPrint(dc,x,y,"%c",st[i]); x+=FONT_WIDTH;}
+      }
+    } else GrPrint(dc,256,160,"COMPLETE");
+    dc->color=LTGRAY; GrPrint(dc,272,384,"ESC EXIT");
+  } else if (tmpi->phase!=TM_IM_STATS) {
+    GrPrint(dc,288,112,"ENTERING");
+    PlayTitle(tmpp,dc,tmpi->next,144);
+  } else {
+    PlayTitle(tmpp,dc,tmpi->map_num,32); GrPrint(dc,288,56,"FINISHED");
+    dc->color=WHITE;
+    GrPrint(dc,144,112,"KILLS"); GrPrint(dc,144,152,"ITEMS");
+    GrPrint(dc,144,192,"SECRETS"); GrPrint(dc,144,248,"TIME");
+    if (tmpi->shown_kills>=0) GrPrint(dc,456,112,"%3d%%",tmpi->shown_kills);
+    if (tmpi->shown_items>=0) GrPrint(dc,456,152,"%3d%%",tmpi->shown_items);
+    if (tmpi->shown_secrets>=0)
+      GrPrint(dc,456,192,"%3d%%",tmpi->shown_secrets);
+    if (tmpi->shown_time>=0)
+      GrPrint(dc,448,248,"%d:%02d",tmpi->shown_time/60,
+	    tmpi->shown_time%60);
+    if (tmpi->commercial || tmpi->episode<4) {
+      GrPrint(dc,144,288,"PAR");
+      if (tmpi->shown_par>=0)
+	GrPrint(dc,448,288,"%d:%02d",tmpi->shown_par/60,tmpi->shown_par%60);
+    }
+    dc->color=LTGRAY;
+    GrPrint(dc,176,368,"CTRL/SPACE CONTINUE  ESC EXIT");
+  }
+  if (tmpp->paused || !tmpp->focused) {
+    dc->color=YELLOW; GrPrint(dc,8,384,"PAUSED");
+  }
+}
+
 U0 PlayFrame(Play *tmpp)
 {//The compositor keeps the completed front buffer while the next frame draws.
   CDC *dc;
   PlayEnter(tmpp);
   try {
-    GameDraw(tmpp->game,tmpp->back); PlayHUD(tmpp,tmpp->back);
+    if (tmpp->stage==TM_PLAY_LEVEL) {
+      GameDraw(tmpp->game,tmpp->back); PlayHUD(tmpp,tmpp->back);
+    } else PlayResultDraw(tmpp,tmpp->back);
     while (LBts(&tmpp->flags,TMf_PLAY_FRAME)) Yield;
     dc=tmpp->front; tmpp->front=tmpp->back; tmpp->back=dc;
     tmpp->frames++;
@@ -124,6 +198,39 @@ U0 PlaySndBind(Play *tmpp)
   }
 }
 
+U0 PlayResultSnd(I64 n,U8 *context)
+{
+  Play *tmpp=context;
+  AudioStart(tmpp->audio,0,0,n);
+}
+
+U0 PlayFinish(Play *tmpp)
+{
+  Level *level=tmpp->game->level;
+  Intermission result;
+  I64 n=StoryMap(level->episode,level->map_num,tmpp->game->commercial);
+  IntermissionStart(&result,tmpp->game,tmpp->story->par[n],tmpp->did_secret);
+  GameFinish(tmpp->game); AudioStop(tmpp->audio);
+  MemCpy(&tmpp->result,&result,sizeof(Intermission));
+  tmpp->result.sound=&PlayResultSnd; tmpp->result.context=tmpp;
+  tmpp->did_secret=result.did_secret;
+  tmpp->stage=TM_PLAY_STATS;
+  if (!result.next) tmpp->stage=TM_PLAY_FINALE;
+}
+
+U0 PlayNext(Play *tmpp,I64 keys)
+{//A failed candidate leaves the completed old level and result intact.
+  Intermission *tmpi=&tmpp->result;
+  if (tmpi->finale) tmpp->stage=TM_PLAY_FINALE;
+  else {
+    AudioStop(tmpp->audio);
+    GameLoad(tmpp->game,tmpi->episode,tmpi->next);
+    PlaySndBind(tmpp);
+    tmpp->stage=TM_PLAY_LEVEL;
+    ControlsInit(&tmpp->controls); tmpp->blocked=keys;
+  }
+}
+
 U0 PlaySndOff(Play *tmpp)
 {
   Level *level=tmpp->game->level;
@@ -160,15 +267,25 @@ U0 PlayTick(Play *tmpp,I64 keys,Bool focused)
     tmpp->blocked&=keys;
     if (!focused) keys=0;
     ControlsCmd(input,keys&~tmpp->blocked);
-    GameTick(tmpp->game,input->forward,input->side,input->turn,input->buttons,
-	  input->weapon,tmpp->paused || !focused);
-    SoundSceneUpdate(&tmpp->sound);
-    level=tmpp->game->level;
-    if (level->player.reborn) {
-      AudioStop(tmpp->audio);
-      GameLoad(tmpp->game,level->episode,level->map_num,TRUE);
-      PlaySndBind(tmpp);
-      ControlsInit(input); tmpp->blocked=keys;
+    if (tmpp->stage==TM_PLAY_LEVEL) {
+      GameTick(tmpp->game,input->forward,input->side,input->turn,
+	    input->buttons,input->weapon,tmpp->paused || !focused);
+      SoundSceneUpdate(&tmpp->sound);
+      level=tmpp->game->level;
+      if (level->world->exit_rqst) PlayFinish(tmpp);
+      else if (level->player.reborn) {
+	AudioStop(tmpp->audio);
+	GameLoad(tmpp->game,level->episode,level->map_num,TRUE);
+	PlaySndBind(tmpp);
+	ControlsInit(input); tmpp->blocked=keys;
+      }
+    } else {
+      GameTick(tmpp->game,,,,,,TRUE);
+      AudioUpdate(tmpp->audio);
+      if (tmpp->stage==TM_PLAY_STATS && !tmpp->paused && focused) {
+	IntermissionTick(&tmpp->result,input->buttons);
+	if (tmpp->result.phase==TM_IM_DONE) PlayNext(tmpp,keys);
+      }
     }
   } catch {
     PlayLeave(tmpp);
@@ -182,7 +299,7 @@ U0 PlayDel(Play *tmpp)
     PlayEnter(tmpp);
     try {
       if (tmpp->task) throw('Active');
-      AudioDel(tmpp->audio); GameDel(tmpp->game);
+      AudioDel(tmpp->audio); StoryDel(tmpp->story); GameDel(tmpp->game);
       DCDel(tmpp->front); DCDel(tmpp->back);
     } catch {
       PlayLeave(tmpp);
@@ -197,6 +314,7 @@ Play *PlayNew(U8 *wad_name,U8 *data_name="TMDATA.BIN",I64 skill=2,
   Play *tmpp=CAlloc(sizeof(Play));
   try {
     tmpp->game=GameNew(wad_name,data_name,skill,fast);
+    tmpp->story=StoryNew(tmpp->game->wad);
     GameLoad(tmpp->game);
     tmpp->audio=AudioNew(tmpp->game->wad,tmpp->game->data);
     SoundSceneInit(&tmpp->sound,tmpp->audio,tmpp->game);

@@ -12,7 +12,7 @@ cases.flat().forEach((v,i)=>bytes.writeBigInt64LE(BigInt(v),i*8));
 const game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n),'latin1');
 const source=[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
   .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+
-  read('TmIntermission.HC')+'\n'+readFileSync(new URL('Route.HC',import.meta.url),'latin1');
+  readFileSync(new URL('Route.HC',import.meta.url),'latin1');
 const hash=b=>createHash('sha256').update(b).digest('hex'),sourceSha256=hash(Buffer.from(source,'latin1')),
   referenceSha256=hash(bytes),files=[{name:'ROUTES.BIN',bytes}];
 if(backend==='qemu') {
