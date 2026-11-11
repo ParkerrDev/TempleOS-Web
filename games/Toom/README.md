@@ -59,6 +59,10 @@ The implemented foundation uses native V5.03 file and memory APIs:
   priority and repeated-press timing follow the source. Active buttons use an
   owned list without a sixteen-button cap; sound events use the affected
   sector, including a distinct exit-switch event. No texture is eagerly decoded.
+- Sector lights keep the original random flash, synchronized/unsynchronized
+  strobe, glow and fire-flicker cycles. Map initialization retains sector-four
+  damage while clearing light-only specials. Tagged brightness and strobe
+  requests preserve their neighbor, RNG and mover-ownership rules.
 - Texture coordinates, increments and lighting buckets use nearest Q16 values
   with even ties. This defines sampling at texel and light boundaries across
   native x87 and HEMU. Sky row coordinates are computed once per row.
@@ -205,6 +209,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/movers.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/teleport.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/teleport-map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/switch.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/light.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/light-map.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
@@ -356,8 +362,13 @@ unfinished. Switch/button checks add 154 state/ownership cases and 240
 real-asset field changes/resets across all forty pairs. They cover repeat
 presses, pair-before-field priority, forty concurrent buttons, callback append
 and exception cleanup, with no image decoding or additional asset reads.
+Lighting fixtures compare 51,200 individual tics over 200 brightness/neighbor/
+cycle combinations, including external brightness changes during a cycle,
+plus nine tag/ownership/order contracts. A separate WAD planner checks light
+initialization of 626 lights and retained specials in all 14,556 sectors
+across 36 maps.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector, door, floor, mover, teleport or switch checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector, door, floor, mover, teleport, switch or lighting checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

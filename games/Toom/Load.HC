@@ -29,6 +29,7 @@
 #include "TmCeil"
 #include "TmTeleport"
 #include "TmSwitch"
+#include "TmLight"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

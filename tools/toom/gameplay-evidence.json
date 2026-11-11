@@ -7,7 +7,7 @@
     "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
     "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
   },
-  "renderSourceSha256": "839d71c2acf6a7884d5e9b75c3ef87aabaf9a76e744c1c32c1f2d3aaa681f4da",
+  "renderSourceSha256": "8da8b11549e047954381f637ba434a293162602de74fc51f1d59f87e3b4466da",
   "engine": {
     "web": "4a1fe9d",
     "hemu": "ccf04ac",
@@ -54,7 +54,7 @@
     "render": {
       "levels": 36,
       "views": 288,
-      "native": "qemu-tmod2ga7",
+      "native": "qemu-7_cc43pi",
       "hemu": true,
       "matchesPreGameplayImages": true,
       "repeatCount": 1,
@@ -194,6 +194,21 @@
       "native": "qemu-ioux01of",
       "hemu": true,
       "scope": "Texture/state API,35-tic resets, pair/field ordering, repeated presses,40 active buttons, callback append and exception cleanup; no eager image decoding or WAD reads. Line dispatch remains separate."
+    },
+    "lights": {
+      "cases": 209,
+      "tics": 51200,
+      "native": "qemu-qb7h9wh5",
+      "hemu": true,
+      "scope": "Flash/strobe/glow/fire timelines and RNG, external brightness changes, tagged neighbor semantics, mover exclusion, repeated strobe order and ownership."
+    },
+    "lightMaps": {
+      "maps": 36,
+      "lights": 626,
+      "sectors": 14556,
+      "native": "qemu-z26qijfi",
+      "hemu": true,
+      "scope": "Actual WAD neighbor bounds, source-ordered initialization/RNG and retained sector specials, without actor simulation."
     }
   },
   "frames": [
