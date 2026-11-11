@@ -107,6 +107,11 @@ upgrading Qt. This private boundary is confined to `Pointer.cpp`.
 Paused and faulted machines stop the worker tick timer; resume explicitly restarts
 it with a fresh clock origin so paused time is not credited to the guest. Save
 and replacement retain the running/paused choice in the saved session.
+Running clock deltas are retained across the guest's 100 ms step limit; one
+bounded batch runs per Qt tick until a stall's backlog is credited. Pausing,
+saving and faults discard only uncredited host backlog. That ephemeral pacing
+state is not part of the saved CPU clock, and time spent paused or saving is
+not added on resume.
 
 Loading and saving run on the dedicated JSC thread. A replacement uses a fresh
 JSC context, keeping its JIT state separate from the previous machine. Only a

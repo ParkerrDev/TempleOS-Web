@@ -105,6 +105,31 @@ private slots:
     QCOMPARE(state["rate"].toInt(),120);QCOMPARE(state["actualRate"].toInt(),120);QVERIFY(state["repeat"].toBool());QVERIFY(state["paused"].toBool());
     QCOMPARE(pixels(restored.Image()),before);
   }
+  void clockBacklog() {
+    std::atomic<bool> cancel{false};Machine machine(&cancel);machine.Call("Open",{input});machine.Call("Pause",{false});
+    auto settle=[&](const QString &source) {
+      const auto id=machine.Call("Exec",{source});
+      for(int i=0;i<1000;i++) {
+        machine.Call("Tick",{16000000});const auto job=machine.Call("Job",{id}).toObject();
+        if(job["state"].toString()=="done")return true;
+        if(job["state"].toString()=="failed"){qWarning()<<job;return false;}
+      }
+      return false;
+    };
+    QVERIFY(settle("I64 native_clock_start=GetTSC;"));
+    machine.Call("Tick",{900000000});
+    for(int i=0;i<8;i++)machine.Call("Tick",{0});
+    QVERIFY(settle("if(GetTSC-native_clock_start<900000000 || GetTSC-native_clock_start>1100000000)throw('Clock',TRUE);"));
+    machine.Call("Tick",{900000000});machine.Call("Pause",{true});machine.Call("Tick",{900000000});machine.Call("Pause",{false});
+    QVERIFY(settle("native_clock_start=GetTSC;"));
+    for(int i=0;i<8;i++)machine.Call("Tick",{0});
+    QVERIFY(settle("if(GetTSC-native_clock_start>100000000)throw('Pause',TRUE);"));
+    machine.Call("Tick",{900000000});
+    QTemporaryDir dir;QVERIFY(dir.isValid());machine.Call("Save",{dir.filePath("clock.hemu")});
+    QVERIFY(settle("native_clock_start=GetTSC;"));
+    for(int i=0;i<8;i++)machine.Call("Tick",{0});
+    QVERIFY(settle("if(GetTSC-native_clock_start>100000000)throw('Save',TRUE);"));
+  }
   void timerLifecycle() {
     std::atomic<bool> cancel{false};FrameMailbox mailbox;Engine engine(&cancel,&mailbox);
     auto *timer=engine.findChild<QTimer *>();QVERIFY(timer);QVERIFY(!timer->isActive());
