@@ -64,10 +64,9 @@ function emitEA(f, m, endRip) {
   else { i64c(f, m.disp); if (m.base >= 0) { rdReg(f, m.base, 8, true); f.op("i64_add"); } if (m.index >= 0) { rdReg(f, m.index, 8, true); if (m.scale > 1) { i64c(f, m.scale); f.op("i64_mul"); } f.op("i64_add"); } }
   if (SEG && (SEG === 1 ? MSRFS : MSRGS)) { i32c(f, SEG === 1 ? MSRFS : MSRGS); ld64(f); f.op("i64_add"); }  // FS/GS segment base (cpu.HC: ea = addr + g_segbase)
   f.local_set(3);
-  // RSP/RBP-relative (no index) and RIP-relative always address the guest stack/code in RAM (ea < MEMSIZE),
-  // so the per-access MMIO bounds branch is provably dead - mark it for elision in rdRM/wrRM. No segment override
-  // (FS/GS could shift ea anywhere). Only emitEA sets this; every other path keeps the safe bounds check.
-  m.knownRam = !SEG && (m.ripRel || (m.index < 0 && (m.base === 4 || m.base === 5))); }
+  //Only a constant, in-range RIP-relative address proves RAM. Stack/base
+  //registers and segment prefixes can name aliases or memory-mapped devices.
+  m.knownRam = !SEG && m.ripRel && endRip+m.disp>=0 && endRip+m.disp<MEMSIZE; }
 const memAddr = (f) => { i64c(f, GBASE); f.local_get(3); f.op("i64_add"); f.op("i32_wrap_i64"); };  // -> i32 wasm addr
 // ---- x87 FPU: fpr[8] f64 stack, fsp top, ST(0)=fpr[fsp]; ST(i)=fpr[(fsp+i)&7]. Matches cpu.HC OpX87. ----
 let FPR = 0, FSP = 0, X87SW = 0;
@@ -868,7 +867,8 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
         wrRM(f,m,1,rex,()=>{emitCond(f,op&15);f.op("i64_extend_i32_u");});
         handled=true;
       } else if (op === 0xB6 || op === 0xB7) {                              // movzx
-        const ssz = op === 0xB6 ? 1 : 2; const m = decodeModRM(j, rexR, rexX, rexB); j = m.j; if (m.isMem) emitEA(f, m, j - GBASE); wrReg(f, m.reg, szV, rex, () => rdRM(f, m, ssz, rex)); handled = true;
+        //The device callback returns a U64; MOVZX still narrows its operand.
+        const ssz = op === 0xB6 ? 1 : 2; const m = decodeModRM(j, rexR, rexX, rexB); j = m.j; if (m.isMem) emitEA(f, m, j - GBASE); wrReg(f, m.reg, szV, rex, () => {rdRM(f, m, ssz, rex);i64c(f,ssz===1?0xFF:0xFFFF);f.op("i64_and");}); handled = true;
       } else if (op === 0xBE || op === 0xBF) {                               // movsx
         const ssz = op === 0xBE ? 1 : 2; const m = decodeModRM(j, rexR, rexX, rexB); j = m.j; if (m.isMem) emitEA(f, m, j - GBASE); wrReg(f, m.reg, szV, rex, () => { rdRM(f, m, ssz, rex); f.op(ssz === 1 ? "i64_extend8_s" : "i64_extend16_s"); }); handled = true;
       } else if (op >= 0x80 && op <= 0x8F) {                                 // jcc rel32

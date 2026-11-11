@@ -91,6 +91,14 @@ Set `HOLYC_QEMU_ORACLE` to the compiler's `tests/oracle/Qemu.mjs` and use
 `--record` to refresh its source-hashed native fixture. The test host supplies
 core IDs and maps atomic exchange to native `LXchgI64`.
 
+`jit-memory.test.mjs` compares 618 explicit memory operands with Step across
+RSP/RBP/RIP addressing, signed displacements, RAM aliases and modeled devices.
+It checks registers, flags, neighboring bytes and exact device callback counts.
+Only an in-range constant RIP-relative address can skip the RAM/device test;
+stack and base registers are ordinary dynamic addresses. MOVZX masks a device
+callback's U64 result to its actual byte/word operand. These checks preserve
+the source-measured memory module contract, not a complete physical MMIO model.
+
 `dev-native.mjs` runs the extracted port devices, clock and keyboard source
 through original V5.03 and the current WASM compiler: 519 output records cover
 PIC selection/EOI, CMOS, PS/2 replies, speaker/DAC, ATA transfers and reset.
