@@ -16,12 +16,16 @@ Bool WorldTryMove(World *tmpw,Actor *tmpa,I64 x,I64 y,
       //Crossed-line actions may query or move actors themselves.
       special=MAlloc(n*sizeof(I64));
       MemCpy(special,tmpc->special,n*sizeof(I64));
-      while (n && tmpa->active) {
-	i=special[--n]; tmpl=tmpc->line+i;
-	side=FixedSide(tmpa->x,tmpa->y,tmpl->ax,tmpl->ay,tmpl->dx,tmpl->dy);
-	old_side=FixedSide(old_x,old_y,tmpl->ax,tmpl->ay,tmpl->dx,tmpl->dy);
-	if (side!=old_side && tmpw->map->line[i].special)
-	  (*cross)(tmpa,i,old_side);
+      try {
+	while (n && tmpa->active) {
+	  i=special[--n]; tmpl=tmpc->line+i;
+	  side=FixedSide(tmpa->x,tmpa->y,tmpl->ax,tmpl->ay,tmpl->dx,tmpl->dy);
+	  old_side=FixedSide(old_x,old_y,tmpl->ax,tmpl->ay,tmpl->dx,tmpl->dy);
+	  if (side!=old_side && tmpw->map->line[i].special)
+	    (*cross)(tmpa,i,old_side);
+	}
+      } catch {
+	Free(special);
       }
       Free(special);
     }

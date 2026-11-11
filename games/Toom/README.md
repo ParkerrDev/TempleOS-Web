@@ -78,6 +78,12 @@ The implemented foundation uses native V5.03 file and memory APIs:
   weapon auto-selection and one-time backpack expansion. Accepted items retire
   at the tic boundary; a new life retains level counters.
 
+- Hit effects use deterministic blood/puff states and jitter. Applying a shot
+  snapshots its target and trigger list before callbacks, so nested attacks
+  cannot overwrite it. Trigger buffers are freed on both return and exception.
+  Native projectiles use source handles, portal-aware auto-aim and an atomic
+  initial half-step through the ordinary contact/movement code.
+
 Fuzz effects, the full simulation loop, weapon control, actor actions, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
@@ -140,6 +146,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/motion.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/attack.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/damage.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/items.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/impact.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -180,11 +187,12 @@ The contact check covers 1,756 interaction cases and 1,024 spatial queries
 against a full actor scan. It checks large actors across block cells, vertical
 missile separation, source/species immunity, skull impacts, deferred pickup
 callbacks, stale handles and contact ordering. Actual damage and inventory
-effects remain part of the pending simulation stage.
-The movement check covers 22 position-change contracts in a controlled pair
+effects are checked by the damage and inventory fixtures.
+The movement check covers 23 position-change contracts in a controlled pair
 of rooms: step/dropoff/headroom boundaries, float/teleport/noclip flags, atomic
 rejection, actor links, pickup contacts and crossed-line ordering, including
-callbacks that perform another query. Actual line actions remain part of the pending simulation stage.
+callbacks that perform another query or throw after the position commits.
+Actual line actions remain part of the pending simulation stage.
 The path check compares all hit records for 5,012 rays across the 36 maps and
 an independent full geometry/actor scan. It includes long rays, exact grid and
 vertex boundaries, large actors in neighboring cells, wall/actor ties, all four
@@ -202,7 +210,7 @@ synchronization. The state clock remains separate from motion.
 The attack check covers 35 cases for all eight aiming octants, range,
 shootable/nearer actors, floor/ceiling portal limits, exact closed-door
 boundaries, sky impacts and 41 ordered line triggers through buffer growth.
-Shot results do not yet apply damage, weapon states or line effects.
+The separate impact stage applies shot damage and line callbacks.
 The damage check covers 4,752 player boundaries for health, armor, difficulty,
 invulnerability, god mode and the end-sector survival rule, plus 20 focused
 monster cases for thrust, pain/retaliation, skulls, corpse flags, overkill,
@@ -214,8 +222,12 @@ inventories, powers, dropped weapons, reach, and pickup during a blocked move.
 The data loader rejects the unused ammo enum marker, invalid weapon states and
 older pack formats. Powers are granted here; their countdown and visible/audio
 effects remain part of the unfinished game loop.
+The impact check covers 18 effect/projectile cases, including all three player
+missiles, source immunity, auto-aim, close-wall explosions, nested line actions,
+stale targets and repeated exception cleanup. Intentional test exceptions skip
+Adam logging so the heap assertion measures the owned trigger buffer.
 Set `BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web` to run path, math, sliding,
-motion, attack, damage or inventory checks using the original TempleOS compiler and file I/O under HEMU.
+motion, attack, damage, inventory or impact checks using the original TempleOS compiler and file I/O under HEMU.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

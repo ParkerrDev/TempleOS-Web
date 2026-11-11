@@ -23,6 +23,10 @@ U0 TmMoveCross(Actor *actor,I64 line,I64 side)
     WorldPosition(actor->world,actor,-64*65536,0);
   }
 }
+U0 TmMoveThrow(Actor *,I64,I64)
+{
+  throw('CrossErr',TRUE);
+}
 U0 TmMoveTouch(Actor *,Actor *other,I64 kind)
 {
   if (kind!=TM_CONTACT_PICKUP) throw('Touch');
@@ -48,7 +52,8 @@ U0 TmMoveExpect(World *world,Actor *actor,I64 x,I64 y,Bool pass)
 }
 U0 TmMovementTest()
 {
-  I64 flags;
+  I64 flags,before;
+  Bool caught=FALSE;
   Map *map=RoomsNew;
   GameData *data=GameDataNew("C:/ORACLE/TMDATA.BIN");
   World *world=WorldNew(map,data);
@@ -113,6 +118,17 @@ U0 TmMovementTest()
   actor->flags=flags|TM_MF_NOCLIP;
   TmMoveExpect(world,actor,400,0,TRUE);
   if (actor->block!=-1 || tm_cross_cnt!=2) throw('NoClip');
+  actor->flags=flags|TM_MF_TELEPORT;
+  WorldTryMove(world,actor,-64*65536,0); actor->flags=flags;
+  map->line[6].special=97; before=Fs->data_heap->used_u8s;
+  try {
+    WorldTryMove(world,actor,8*65536,0,NULL,&TmMoveThrow);
+  } catch {
+    if (Fs->except_ch=='CrossErr') {caught=TRUE; Fs->catch_except=TRUE;}
+  }
+  if (!caught || Fs->data_heap->used_u8s!=before || actor->x!=8*65536)
+    throw('Cleanup');
+  tm_move_cnt++;
   "MOVEMENT %d CHECKS BAD 0\\n",tm_move_cnt;
   WorldDel(world); MapDel(map); GameDataDel(data);
 }

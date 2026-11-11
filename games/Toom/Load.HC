@@ -17,6 +17,7 @@
 #include "TmAttack"
 #include "TmDamage"
 #include "TmItems"
+#include "TmImpact"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

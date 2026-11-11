@@ -18,6 +18,17 @@ class World
 	hit_actor,hit_kind;
 };
 
+I64 WorldRand(World *tmpw)
+{
+  return GameRand(tmpw->data,&tmpw->random);
+}
+
+I64 WorldRandDiff(World *tmpw)
+{//Explicit order keeps random spreads independent of expression evaluation.
+  I64 first=WorldRand(tmpw);
+  return first-WorldRand(tmpw);
+}
+
 Actor *WorldActorGet(World *tmpw,I64 id,Bool active=TRUE)
 {//Generation handles survive slot reuse and serialize without pointers.
   I64 n=id.u32[0]-1;
