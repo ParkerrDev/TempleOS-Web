@@ -11,6 +11,8 @@ node tools/hemu/time.test.mjs
 node tools/hemu/keyboard.test.mjs
 node tools/hemu/rate.test.mjs
 node tools/hemu/capture.test.mjs
+node --max-old-space-size=3072 tools/hemu/video.test.mjs
+node --max-old-space-size=2048 tools/hemu/worker-pause.test.mjs
 node tools/hemu/barrier.test.mjs
 node tools/hemu/snapshot-format.test.mjs
 node --max-old-space-size=3072 tools/hemu/worker-snapshot.test.mjs
@@ -45,7 +47,7 @@ These are bounded checks, not proof that every program or CPU instruction is
 correct on bare metal. Raster expectations run the original TempleOS code in
 HEMU; an independent hardware or QEMU oracle is needed for CPU semantics.
 Random dither depends on TSC and is not claimed to have identical pixels.
-Legacy screenshot/VGA skips and the standalone SMP BSP host still need work.
+VGA hardware read-plane behavior and non-VGA text modes are not fully covered.
 
 ## Frame protocol
 
@@ -159,3 +161,15 @@ point-in-time block image; full-machine saves also retain the CPU state needed
 to resume an interrupted filesystem operation. The legacy SMP demo's BSP now
 adapts to the same production worker; APs no longer import a second BSP or the
 site's game catalog.
+
+Video checks run the original V5.03 assembly with acceleration disabled, then
+compare the generic planar/line implementations and their actual named HLE
+entry points. They cover cache hits/misses, flush writes, destination guards,
+pointer increments, registers and flags. The full framebuffer matches the
+native planar decoder; native 2x zoom is checked pixel by pixel; DCScrnCapture
+returns a populated desktop image. Completed presentation now follows the
+actual GrUpdateVGAGraphics call, preserving the native image and zoom updates.
+Pause force-sends that completed frame before its acknowledgement even when
+older frames are waiting for the page, so a paused restore shows identical
+pixels. worker-pause.test deliberately fills the presentation queue to cover
+this case.

@@ -84,7 +84,7 @@ export function FpsFromTop(top)
 export async function HemuBoot(opt)
 {//opt: smp (cores, 0 for one), nojit, welcome, rate, repeat, fixed_b.
   let h={frames:[],nframes:0,last:null,msgs:[],waiters:[],workers:[],
-	keep:opt.keep||20000},
+	keep:opt.keep||20000,ack:true},
 	live,gz,wasm,init,mem,ctrl,sc,k,ap,wasm_bytes;
   function FrameIn(m)
   {
@@ -98,7 +98,7 @@ export async function HemuBoot(opt)
     h.frames.push(f);
     if (h.frames.length>h.keep)
       h.frames.shift();
-    h.workers[0].postMessage({cmd:"ack"});
+    if (h.ack) h.workers[0].postMessage({cmd:"ack"});
   }
   function MsgIn(m)
   {
