@@ -80,3 +80,10 @@ The compiler pin includes cross-function exception handling. Malformed metadata
 returns the native diagnostic through the parser catch. Chromium validation and
 execution of the resulting WASM exception-handling module are part of the browser
 clip check; other browser/CPU targets still require their own runs.
+
+Native malformed-input checks repeat 256 MP4 and 640 Matroska failures, verify
+the TempleOS exception chain is restored after every call, then handle a fresh
+exception and produce the same valid clip hashes. Parser catches mark the
+exception handled and return only after leaving the catch. Allocation checks
+cover all three MP4 and fourteen Matroska failure positions, repeated metadata
+replacement and finishing, full cleanup and successful retries.

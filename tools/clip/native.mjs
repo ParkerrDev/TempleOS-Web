@@ -16,6 +16,28 @@ for (let pos=0;pos<bytes.length;pos+=bytes.readUInt32BE(pos))
 let hash=0xcbf29ce484222325n;
 for (const byte of result) hash=BigInt.asUintN(64,(hash^BigInt(byte))*0x100000001b3n);
 const run=source+String.raw`
+U0 ClipErrorCheck()
+{
+  I64 i;
+  U8 buf[8];
+  CExcept *saved=Fs->next_except;
+  MemSet(buf,0,8);buf[3]=8;MemCpy(buf+4,"free",4);
+  for (i=0;i<128;i++) {
+    if (ClipScan(buf,0,0,0)!=-2 || !ClipError) throw('ScanErr');
+    if (Fs->next_except!=saved) throw('ScanCtx');
+    if (ClipPlan(buf,8,8,0,1) || !ClipError) throw('PlanErr');
+    if (Fs->next_except!=saved) throw('PlanCtx');
+    if (ClipScan(buf,8,8,0)!=8 || ClipError) throw('Retry');
+  }
+  try
+    throw('After');
+  catch {
+    if (Fs->except_ch!='After') throw('Except');
+    Fs->catch_except=TRUE;
+  }
+  if (Fs->next_except!=saved) throw('AfterCtx');
+  "MP4:256-errors-recovered\n";
+}
 U0 ClipNativeCheck()
 {
   I64 size,n,pos,i,hash=0xCBF29CE484222325;
@@ -32,10 +54,12 @@ U0 ClipNativeCheck()
   ClipDel;
   Free(moov);Free(src);
 }
+ClipErrorCheck;
 ClipNativeCheck;
 `;
 const oracle=await QemuRun([run],{files:[{name:"MOOV.BIN",bytes:moov},
   {name:"SOURCE.MP4",bytes}],timeout:60});
 console.log(JSON.stringify(oracle));
-assert(JSON.stringify(oracle).includes("CLIP:"+result.length+":"+hash.toString(16).toUpperCase().padStart(16,"0")));
+assert.equal(oracle.results[0].except,"");
+assert.equal(oracle.results[0].out,"MP4:256-errors-recovered\nCLIP:"+result.length+":"+hash.toString(16).toUpperCase().padStart(16,"0")+"\n");
 console.log("MP4 native V5.03 and WASM outputs have matching lengths and FNV-1a hashes.");

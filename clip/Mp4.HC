@@ -523,9 +523,16 @@ Bool ClipPlan(U8 *moov,I64 size,I64 file_size,F64 start,F64 end)
     ClipWrite;
     return TRUE;
   } catch {
-    if (!clip_error) clip_error="Could not read this MP4.";
-    return FALSE;
+    if (!clip_error) {
+      if (Fs->except_ch=='OutMem')
+	clip_error="Not enough memory for this clip.";
+      else
+	clip_error="Could not read this MP4.";
+    }
+    Fs->catch_except=TRUE;
+    ClipDel;
   }
+  return FALSE;
 }
 
 I64 ClipReadPos()
@@ -616,7 +623,8 @@ I64 ClipScan(U8 *buf,I64 size,I64 total,I64 pos)
     }
     return pos+n;
   } catch
-    return -2;
+    Fs->catch_except=TRUE;
+  return -2;
 }
 
 I64 ClipMetaSize()

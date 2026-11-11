@@ -37,6 +37,17 @@ U0 MkFail(U8 *st)
   throw('Mkv');
 }
 
+U0 MkExcept()
+{
+  if (!mk_error) {
+    if (Fs->except_ch=='OutMem')
+      mk_error="Not enough memory for this clip.";
+    else
+      mk_error="Could not read this Matroska clip.";
+  }
+  Fs->catch_except=TRUE;
+}
+
 I64 MkVar(U8 **_p,U8 *end,Bool id=FALSE,Bool unknown=FALSE)
 {
   U8 *p=*_p;
@@ -127,7 +138,9 @@ I64 MkScan(U8 *buf,I64 size,I64 pos,I64 total)
     mk_scan_head=e.head;mk_scan_size=e.head+e.size;
     if (e.id==0x18538067) {mk_base=pos+e.head;mk_total=total;}
     return e.id;
-  } catch return -1;
+  } catch
+    MkExcept;
+  return -1;
 }
 
 I64 MkScanSize()
@@ -151,7 +164,7 @@ Bool MkMeta(U8 *buf,I64 size)
 {
   CMkElem root,e,a;
   CMkTrack *t;
-  U8 *p;
+  U8 *p,*copy;
   I64 id,pos,i;
   try {
     if (size>MK_META_NUM) MkFail("Matroska metadata exceeds 16 MiB.");
@@ -164,7 +177,8 @@ Bool MkMeta(U8 *buf,I64 size)
 	MkFail("This is not a Matroska or WebM file.");
       if (MkField(&root,0x42F7,1)>1 || MkField(&root,0x4285,1)>4)
 	MkFail("This Matroska version is not supported.");
-      Free(mk_header);mk_header=MkCopy(buf,size);mk_header_size=size;
+      copy=MkCopy(buf,size);
+      Free(mk_header);mk_header=copy;mk_header_size=size;
     } else if (root.id==0x114D9B74) {
       p=root.data;
       while (p<root.end) {
@@ -215,12 +229,17 @@ Bool MkMeta(U8 *buf,I64 size)
 track_end:
       }
       if (!mk_video) MkFail("No indexed Matroska video track.");
-      Free(mk_tracks);mk_tracks=MkCopy(buf,size);mk_tracks_size=size;
+      copy=MkCopy(buf,size);
+      Free(mk_tracks);mk_tracks=copy;mk_tracks_size=size;
     } else if (root.id==0x1C53BB6B) {
-      Free(mk_cues);mk_cues=MkCopy(buf,size);mk_cues_size=size;
+      copy=MkCopy(buf,size);
+      Free(mk_cues);mk_cues=copy;mk_cues_size=size;
     } else MkFail("Unexpected Matroska metadata element.");
     return TRUE;
-  } catch return FALSE;
+  } catch {
+    MkExcept;
+  }
+  return FALSE;
 }
 
 I64 MkSeekPos(I64 kind)
@@ -271,7 +290,10 @@ cue_end:
       MkFail("No usable Matroska keyframe index.");
     mk_begin=I64_MAX;mk_end=0;
     return TRUE;
-  } catch return FALSE;
+  } catch {
+    MkExcept;
+  }
+  return FALSE;
 }
 
 I64 MkReadStart()
@@ -392,7 +414,7 @@ I64 MkFirstKey(CMkElem *root,I64 time,I64 *_key_time)
 Bool MkClusterPut(U8 *buf,I64 size)
 {
   CMkElem root,e,b,ref;
-  CMkCluster *c,check;
+  CMkCluster *c=NULL,check;
   U8 *p;
   I64 time;
   try {
@@ -419,13 +441,19 @@ Bool MkClusterPut(U8 *buf,I64 size)
       } else if (e.id==0xAF)
 	MkFail("Encrypted Matroska blocks cannot be clipped here.");
     }
-    c=CAlloc(sizeof(CMkCluster));c->data=MkCopy(buf,size);
+    c=CAlloc(sizeof(CMkCluster));
+    if (!c) MkFail("Not enough memory for this clip.");
+    c->data=MkCopy(buf,size);
     c->size=size;c->time=time;c->skip=check.skip;c->key_time=check.key_time;
     if (mk_last) mk_last->next=c;
     else mk_first=c;
     mk_last=c;mk_input_size+=size;
     return TRUE;
-  } catch return FALSE;
+  } catch {
+    MkExcept;
+    if (c) {Free(c->data);Free(c);}
+  }
+  return FALSE;
 }
 
 U0 MkBytes(U8 *p,I64 size)
@@ -531,6 +559,7 @@ block_end:
 
 Bool MkFinish()
 {
+  Free(mk_out);mk_out=NULL;mk_out_size=0;
   try {
     if (!mk_first || !mk_video_seen)
       MkFail("No video was found in the selected clusters.");
@@ -538,9 +567,14 @@ Bool MkFinish()
     if (mk_duration && mk_read_end==mk_total) mk_end=mk_duration;
     if (mk_end<=mk_begin) MkFail("The Matroska clip has no duration.");
     MkWrite;mk_out_size=mk_write_pos;
-    mk_out=CAlloc(mk_out_size);MkWrite;
+    mk_out=CAlloc(mk_out_size);
+    if (!mk_out) MkFail("Not enough memory for this clip.");
+    MkWrite;
     return TRUE;
-  } catch return FALSE;
+  } catch {
+    MkExcept;
+  }
+  return FALSE;
 }
 
 U8 *MkError()
