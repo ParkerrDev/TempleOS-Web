@@ -184,6 +184,111 @@ U0 VolleyChk(CGameChk *tmpg)
   "INPUT:Volley:both-players,serve,pause\n";
 }
 
+U0 TetrisRowsChk(CGameChk *tmpg)
+{
+  I64 n,row,col,i,expected,*score=GameChkVar(tmpg,"score"),
+	*lines=GameChkVar(tmpg,"lines_total");
+  U8 *board=GameChkVar(tmpg,"board");
+  for (n=1;n<=5;n++) {
+    MemSet(board,0,200);
+    *score=0;*lines=0;
+    *GameChkVar(tmpg,"hi_score")=0;
+    *GameChkVar(tmpg,"lvl")=1;
+    *GameChkVar(tmpg,"next_piece")=0;
+    *GameChkVar(tmpg,"cur_x")=3;
+    *GameChkVar(tmpg,"cur_y")=0;
+    if (n<5) {
+      *GameChkVar(tmpg,"cur_piece")=0;
+      *GameChkVar(tmpg,"cur_rot")=1;
+      for (row=20-n;row<20;row++)
+	for (col=0;col<10;col++)
+	  if (col!=4)
+	    board[row*10+col]=8;
+      expected=200*n-100+32;
+      if (n==4) expected=832;
+    } else {
+      *GameChkVar(tmpg,"cur_piece")=7;
+      *GameChkVar(tmpg,"cur_rot")=0;
+      board[179]=2;board[190]=2;
+      expected=832;
+    }
+    *GameChkVar(tmpg,"drop_time")(F64 *)=tS;
+    GameChkTap(tmpg,' ',0x39);
+    GameChkWait(tmpg,score,expected);
+    for (i=0;i<200;i++) {
+      expected=0;
+      if (n<5) {
+	if (i/10>=16+n && i%10==4)
+	  expected=1;
+      } else if (i==190)
+	expected=2;
+      if (board[i]!=expected)
+	throw('Rows');
+    }
+    expected=n;
+    if (n==5) expected=4;
+    if (*lines!=expected || *GameChkVar(tmpg,"hi_score")!=*score ||
+	  *GameChkVar(tmpg,"lvl")!=1)
+      throw('Score');
+    if (n==5 && *GameChkVar(tmpg,"cross_flash_t")<=0)
+      throw('Cross');
+  }
+  "LOGIC:Tetris:1-4-rows,collapse,score,cross-clear\n";
+}
+
+U0 TetrisChk(CGameChk *tmpg)
+{
+  I64 i,expected,*paused=GameChkVar(tmpg,"paused"),*x=GameChkVar(tmpg,"cur_x"),
+	*y=GameChkVar(tmpg,"cur_y"),*rot=GameChkVar(tmpg,"cur_rot"),
+	*score=GameChkVar(tmpg,"score");
+  U8 *board=GameChkVar(tmpg,"board");
+  GameChkTap(tmpg,'p',0x19);
+  GameChkWait(tmpg,paused,TRUE,1);
+  i=*y;
+  Sleep(120);
+  if (*y!=i)
+    throw('Pause');
+  MemSet(board,0,200);
+  *GameChkVar(tmpg,"cur_piece")=7;
+  *GameChkVar(tmpg,"next_piece")=7;
+  *GameChkVar(tmpg,"cross_flash_t")=0;
+  *GameChkVar(tmpg,"lvl")=1;
+  *GameChkVar(tmpg,"lines_total")=0;
+  *GameChkVar(tmpg,"hi_score")=0;
+  *score=0;*x=3;*y=0;*rot=0;
+  game_chk_frame=GameChkFrame(tmpg);
+  "FRAME:Tetris:%016X\n",game_chk_frame;
+  GameChkTap(tmpg,'p',0x19);
+  GameChkWait(tmpg,paused,FALSE,1);
+  GameChkTap(tmpg,0,SC_CURSOR_UP);
+  GameChkWait(tmpg,rot,1);
+  GameChkTap(tmpg,0,SC_CURSOR_LEFT);
+  GameChkWait(tmpg,x,2);
+  GameChkTap(tmpg,0,SC_CURSOR_RIGHT);
+  GameChkWait(tmpg,x,3);
+  *GameChkVar(tmpg,"cur_piece")=0;
+  *GameChkVar(tmpg,"next_piece")=0;
+  *y=0;*rot=0;
+  *GameChkVar(tmpg,"drop_time")(F64 *)=tS;
+  GameChkTap(tmpg,' ',0x39);
+  GameChkWait(tmpg,score,38);
+  for (i=0;i<200;i++) {
+    expected=193<=i<=196;
+    if (board[i]!=expected)
+      throw('HardDrop');
+  }
+  GameChkTap(tmpg,'\n',SC_ENTER);
+  GameChkWait(tmpg,score,0);
+  for (i=0;i<200;i++)
+    if (board[i])
+      throw('Restart');
+  if (*GameChkVar(tmpg,"lvl")!=1 || *GameChkVar(tmpg,"lines_total") ||
+	*GameChkVar(tmpg,"game_over")(U8 *))
+    throw('Restart');
+  TetrisRowsChk(tmpg);
+  "INPUT:Tetris:pause,rotate,left,right,drop,score,restart\n";
+}
+
 U0 SnakePhysicsChk(CGameChk *tmpg)
 {
   CHashFun *tmps=HashFind("SnakeStep",tmpg->task->hash_table,HTT_FUN),
@@ -307,6 +412,7 @@ U0 GameChk(U8 *filename,U8 *name,I64 runs)
   CGameChk *tmpg=CAlloc(sizeof(CGameChk));
   I64 i,except=0;
   F64 end;
+  Bool intro;
   U8 saved_keys[sizeof(kbd.down_bitmap)];
   MemCpy(saved_keys,kbd.down_bitmap,sizeof(saved_keys));
   tmpg->filename=filename;
@@ -314,10 +420,17 @@ U0 GameChk(U8 *filename,U8 *name,I64 runs)
   tmpg->task=Spawn(&GameChkRun,tmpg,name,,Fs);
   try {
     for (i=0;i<runs;i++) {
+      intro=FALSE;
       end=tS+5;
       while (tmpg->state<2 && (!tmpg->state ||
-	    tmpg->task->draw_it==&GameChkDraw) && tS<end)
+	    tmpg->task->draw_it==&GameChkDraw) && tS<end) {
+	if (!intro && !StrCmp(name,"Tetris") &&
+	      Bt(&tmpg->task->task_flags,TASKf_AWAITING_MSG)) {
+	  GameChkTap(tmpg,'\n',SC_ENTER);
+	  intro=TRUE;
+	}
 	Sleep(1);
+      }
       if (tmpg->state!=1 || tmpg->task->draw_it==&GameChkDraw) {
 	"LOAD:%s:%C:%d\n",name,tmpg->except,tmpg->state;
 	throw('GameLoad');
@@ -328,6 +441,8 @@ U0 GameChk(U8 *filename,U8 *name,I64 runs)
 	VolleyChk(tmpg);
       else if (!StrCmp(name,"Snake"))
 	SnakeChk(tmpg);
+      else if (!StrCmp(name,"Tetris"))
+	TetrisChk(tmpg);
       if (i&1)
 	GameChkTap(tmpg,CH_SHIFT_ESC,SC_ESC|SCF_SHIFT);
       else

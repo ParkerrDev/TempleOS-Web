@@ -20,6 +20,12 @@ candidate scenario adds restart, turning, reverse rejection, growth, vacated-tai
 and self collision, all four boundaries, circular-buffer wrap, each possible
 last free apple cell and a full board.
 
+The Tetris candidate also needs `Help.DD` in its source directory. Its scenario
+checks pause, rotation, movement, hard-drop points and restart; one through four
+row clears, row collapse, score/high-score updates and the special cross clear.
+The intro is dismissed through the task's normal key-message queue. Both the
+original TinkerOS game and the Game1 candidate produce the same controlled frame.
+
 These checks do not certify full gameplay, all frames, physical keyboard hardware,
 WebAssembly game execution, VirtualBox, VMware, macOS or bare-metal behavior.
 Input enters at TempleOS's task-message/held-state boundary. The frame comparison

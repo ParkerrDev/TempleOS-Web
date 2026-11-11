@@ -1,8 +1,8 @@
 {
   "format": 1,
   "launchesPerTask": 2,
-  "harnessSha256": "a59fdcd05d2a840686ab29e54469ad691b3ca741f52cec0ded314aeca3ee64b1",
-  "runnerSha256": "c675abc0ebe5f9ac444920690faa25d02fa80e1b33519ea488c843f8cf7c1c2b",
+  "harnessSha256": "26ce5ebfc9c39f6783763c7140b1ad036e181276ab1b0fc0f487ed2a30ec31d6",
+  "runnerSha256": "455a1dc9a9aec57b64fbb8098a99d0095430bd9eff73ae9b5c9cd72b85ebb637",
   "fixtures": {
     "snapshot": {
       "gzip": true,
@@ -26,7 +26,7 @@
     "accelerator": "kvm",
     "version": "QEMU emulator version 11.1.2"
   },
-  "oracle": "qemu-zhbqi3hn",
+  "oracle": "qemu-5nodh71j",
   "programs": {
     "Babel": {
       "sourceSha256": "8f9fa354dda68f563b96a15d4b1219d79bc0fbeb39f285b102022a4b75279300",

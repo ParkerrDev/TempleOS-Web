@@ -20,11 +20,13 @@ if (args.includes("--write"))
   assert.deepEqual(names,GAME_CHECKS,"Refresh all qualified scenarios together.");
 const source=await readFile(new URL("tools/games/Native.HC",root),"latin1"),files=[],runs=[];
 for (const name of names) {
-  assert(["Babel","Volley","Snake"].includes(name));
+  assert(["Babel","Volley","Snake","Tetris"].includes(name));
   const file=name.toUpperCase()+".HC";
   files.push({name:file,bytes:await readFile(new URL(name+".HC",source_dir))});
   runs.push(source+'\nGameChk("C:/ORACLE/'+file+'","'+name+'",'+count+');\n');
 }
+if (names.includes("Tetris"))
+  files.push({name:"HELP.DD",bytes:await readFile(new URL("Help.DD",source_dir))});
 const result=await QemuRun(runs,{files,timeout:60});
 await mkdir(new URL("tmp/games/",root),{recursive:true});
 await writeFile(new URL("tmp/games/native-"+names.join("-")+".json",root),JSON.stringify(result,null,2)+"\n");
@@ -39,14 +41,16 @@ if (!args.includes("--native-only")) {
     engineSha256:Hash(h.compiled.bytes),
     backend:result.backend,oracle:result.evidence.split("/").at(-1),programs:{}};
   await h.Exec(source);
-  for (const [i,name] of names.entries()) {
-    const file=files[i],path="C:/ORACLE/"+file.name,
-      id=h.gx.writeFile({path,bytes:file.bytes});
+  for (const file of files) {
+    const id=h.gx.writeFile({path:"C:/ORACLE/"+file.name,bytes:file.bytes});
     for (let frame=0;frame<1000;frame++) {
       await h.Run();
       if (["done","failed","error"].includes(h.gx.status(id)?.state)) break;
     }
     assert.equal(h.gx.status(id)?.state,"done",JSON.stringify(h.gx.status(id)));
+  }
+  for (const [i,name] of names.entries()) {
+    const file=files[i],path="C:/ORACLE/"+file.name;
     const ptr=h.gx.scratch.base+0x1400;
     await h.Exec('GameChk("'+path+'","'+name+'",'+count+');*(0x'+ptr.toString(16)+')(I64*)=game_chk_frame;');
     const frame=new DataView(h.ex.memory.buffer).getBigUint64(h.base+ptr,true).
