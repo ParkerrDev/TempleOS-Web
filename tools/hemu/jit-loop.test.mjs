@@ -87,10 +87,16 @@ assert.equal(jit.jitInspect(start).cached,false,"self-modification invalidates t
 Start(Loop(body),20);jit.jitReset();jit.jitCompile(start);
 u8[a[0]+start+6]^=1;const before=State();
 assert.equal(jit.jitRun(start),0);assert.deepEqual(State(),before);count++;
-// Unsupported bodies keep the original compare/branch basic block. They must
-// never hide a divide fault or a floating-point stack/IRQ transition in a loop.
-for(const unsafe of [[0x48,0xF7,0xF3],[0xD9,0xE8],[0xFB],[0xF0,0x48,0xFF,0x03]])
-  Compare(Loop([...unsafe,...body]),1,0,{expected:2,compiled:2});
+// Faults and IRQ windows must still expose the exact executed prefix, even
+// when the forward header and its fall-through body share a compiled block.
+for(const unsafe of [[0x48,0xF7,0xF3],[0xD9,0xE8],[0xFB],[0xF0,0x48,0xFF,0x03]]) {
+  const code=Loop([...unsafe,...body]);
+  Start(code,1);jit.jitReset();assert.ok(jit.jitCompile(start));
+  const ran=jit.jitRun(start),got=State();
+  assert.ok(ran>=2&&ran<=6,"unsafe loop body must return after its first iteration");
+  Start(code,1);for(let i=0;i<ran;i++)ex.Step();
+  assert.deepEqual(got,State(),"unsafe body prefix state");count++;
+}
 for(const chain of [false,true]) {
   if(chain)jit.jitChain(a[5],a[6]);
   for(const code of [Loop(body),[0x48,0xFF,0xC9,0x75,0xFB],

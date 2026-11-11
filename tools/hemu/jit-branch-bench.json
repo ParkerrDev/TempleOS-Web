@@ -1,0 +1,88 @@
+{
+  "scope": "Same-host native HolyCraft RenderFaces timing in HEMU; not browser FPS or a hardware throughput claim",
+  "engine": {
+    "hemu": "f2bc498",
+    "web_base": "705bef3",
+    "jit_sha256": "6c9778c407c765aef43c0085512391e83d32a792b83d0b36d767776d7c24fec0",
+    "compiler": "52f06fb",
+    "node": "v26.12.0",
+    "cpu": "Intel(R) Core(TM) i9-14900HX"
+  },
+  "sources": {
+    "inherited_sha256": "bdf5d588fa1a1c3d3165bd3ba8ab50585909866e51c40d0d4ee02490a27617ac",
+    "corrected_commit": "a3860e4",
+    "corrected_sha256": "88d591cd24a52e76484ea7f0b661ac42545eacd67cd7cde6da3c32682780b834",
+    "harness_sha256": "ebed9433b6879493a0f901a6e3f06b9aea5acec7e9a86a635707503dcbd74c25"
+  },
+  "method": {
+    "views": 11,
+    "renders_per_view": 30,
+    "order": "inherited, corrected, repeated three times; parent and game agents held CPU-heavy work",
+    "command": "TEMPLEOS_WEB=TempleOS-Web-B1 [SRC=inherited/HolyCraft.HC] N=30 node --max-old-space-size=3072 HolyCraft-C1/tools/render/tos.mjs time"
+  },
+  "before": {
+    "baseline": [
+      [
+        "spawn:10.02ms/37031spans open-0:6.09ms/24660spans open-1:8.15ms/35516spans open-2:7.66ms/30368spans open-3:13.15ms/56351spans open-4:0.96ms/183spans open-5:1.13ms/0spans open-6:12.34ms/46453spans open-7:2.61ms/0spans open-8:11.16ms/53294spans open-9:7.71ms/29985spans",
+        "MEAN 7.36 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ],
+      [
+        "spawn:9.94ms/37031spans open-0:6.17ms/24660spans open-1:8.23ms/35516spans open-2:7.72ms/30368spans open-3:13.58ms/56351spans open-4:1.00ms/183spans open-5:1.18ms/0spans open-6:13.46ms/46453spans open-7:2.85ms/0spans open-8:11.08ms/53294spans open-9:7.65ms/29985spans",
+        "MEAN 7.53 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ],
+      [
+        "spawn:10.19ms/37031spans open-0:6.27ms/24660spans open-1:8.37ms/35516spans open-2:7.87ms/30368spans open-3:13.52ms/56351spans open-4:0.98ms/183spans open-5:1.15ms/0spans open-6:12.59ms/46453spans open-7:2.66ms/0spans open-8:11.20ms/53294spans open-9:7.75ms/29985spans",
+        "MEAN 7.51 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ]
+    ],
+    "current": [
+      [
+        "spawn:13.51ms/24237spans open-0:8.01ms/12748spans open-1:10.47ms/15726spans open-2:9.69ms/14758spans open-3:18.19ms/31676spans open-4:0.94ms/98spans open-5:1.10ms/0spans open-6:19.08ms/27815spans open-7:2.38ms/0spans open-8:16.31ms/26585spans open-9:9.87ms/18072spans",
+        "MEAN 9.96 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ],
+      [
+        "spawn:13.83ms/24237spans open-0:7.94ms/12748spans open-1:9.89ms/15726spans open-2:9.66ms/14758spans open-3:18.62ms/31676spans open-4:0.99ms/98spans open-5:1.13ms/0spans open-6:17.11ms/27815spans open-7:2.70ms/0spans open-8:16.55ms/26585spans open-9:9.90ms/18072spans",
+        "MEAN 9.85 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ],
+      [
+        "spawn:13.54ms/24237spans open-0:7.87ms/12748spans open-1:9.69ms/15726spans open-2:9.59ms/14758spans open-3:19.03ms/31676spans open-4:0.96ms/98spans open-5:1.16ms/0spans open-6:17.34ms/27815spans open-7:2.68ms/0spans open-8:15.74ms/26585spans open-9:9.53ms/18072spans",
+        "MEAN 9.74 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ]
+    ]
+  },
+  "after": {
+    "baseline": [
+      [
+        "spawn:8.62ms/37031spans open-0:5.31ms/24660spans open-1:7.83ms/35516spans open-2:6.97ms/30368spans open-3:11.99ms/56351spans open-4:0.78ms/183spans open-5:0.91ms/0spans open-6:10.87ms/46453spans open-7:1.87ms/0spans open-8:9.56ms/53294spans open-9:6.88ms/29985spans",
+        "MEAN 6.51 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ],
+      [
+        "spawn:8.26ms/37031spans open-0:5.23ms/24660spans open-1:7.30ms/35516spans open-2:6.83ms/30368spans open-3:11.35ms/56351spans open-4:0.78ms/183spans open-5:0.89ms/0spans open-6:10.77ms/46453spans open-7:1.74ms/0spans open-8:9.44ms/53294spans open-9:6.69ms/29985spans",
+        "MEAN 6.30 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ],
+      [
+        "spawn:8.53ms/37031spans open-0:5.44ms/24660spans open-1:7.52ms/35516spans open-2:7.12ms/30368spans open-3:12.01ms/56351spans open-4:0.85ms/183spans open-5:0.97ms/0spans open-6:11.27ms/46453spans open-7:1.93ms/0spans open-8:9.92ms/53294spans open-9:7.06ms/29985spans",
+        "MEAN 6.60 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ]
+    ],
+    "current": [
+      [
+        "spawn:10.69ms/24237spans open-0:6.19ms/12748spans open-1:8.21ms/15726spans open-2:8.37ms/14758spans open-3:15.02ms/31676spans open-4:0.73ms/98spans open-5:0.86ms/0spans open-6:13.26ms/27815spans open-7:1.76ms/0spans open-8:12.02ms/26585spans open-9:7.85ms/18072spans",
+        "MEAN 7.73 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ],
+      [
+        "spawn:10.55ms/24237spans open-0:6.12ms/12748spans open-1:13.99ms/15726spans open-2:8.42ms/14758spans open-3:15.38ms/31676spans open-4:0.76ms/98spans open-5:0.89ms/0spans open-6:13.77ms/27815spans open-7:1.85ms/0spans open-8:12.35ms/26585spans open-9:7.61ms/18072spans",
+        "MEAN 8.33 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ],
+      [
+        "spawn:11.26ms/24237spans open-0:6.26ms/12748spans open-1:8.10ms/15726spans open-2:8.04ms/14758spans open-3:15.25ms/31676spans open-4:0.79ms/98spans open-5:0.93ms/0spans open-6:14.04ms/27815spans open-7:1.90ms/0spans open-8:12.56ms/26585spans open-9:8.18ms/18072spans",
+        "MEAN 7.94 ms host time per RenderFaces over 11 views x 30 (budget 12M/frame)"
+      ]
+    ]
+  },
+  "limits": [
+    "Results are specific to this Linux x86-64 host and pinned compiler.",
+    "Corrected renderer remains slower than inherited at the same engine head.",
+    "Inherited renderer has known visibility defects and is not a correct replacement."
+  ]
+}
