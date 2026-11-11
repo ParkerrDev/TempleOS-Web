@@ -13,6 +13,7 @@ const root=new URL("../../",import.meta.url),tmp=new URL("tmp/sprites/",root),
   pixels=Uint8Array.from({length:17*3},(_,i)=>i%17==16?255:i%16),
   gr=codec.encodeGR(pixels,17,3),rgba=toRGBA(pixels,17,3),
   animation=await readFile(new URL("assets/terry-sprites.gr.gz",root)),
+  player=await readFile(new URL("sprites/Play.HC",root),"utf8"),
   server=createServer(ServeReq).listen(0,"127.0.0.1");
 await once(server,"listening");await mkdir(tmp,{recursive:true});
 const origin="http://127.0.0.1:"+server.address().port,
@@ -42,12 +43,19 @@ try {
     await frame.locator("#gr").click();
     let download=await pending,file=new URL(mobile?"mobile.GR":"desktop.GR",tmp).pathname;
     await download.saveAs(file);assert.deepEqual(new Uint8Array(await readFile(file)),gr);
+    await context.route("**/sprites/Play.HC",route=>route.fulfill({status:503,body:"Unavailable"}),{times:1});
+    await frame.locator("#package").click();
+    await frame.locator("#status").filter({hasText:"Could not load the native sprite player"}).waitFor();
     pending=page.waitForEvent("download");await frame.locator("#package").click();
     download=await pending;file=new URL(mobile?"mobile.zip":"desktop.zip",tmp).pathname;
     await download.saveAs(file);
     const packed=execFileSync("python3",["-c",
       'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); assert "Play.HC" in z.namelist(); sys.stdout.buffer.write(z.read("Frame000.GR"))',file]);
     assert.deepEqual(new Uint8Array(packed),gr,"The package includes the same native GR bytes.");
+    const program=execFileSync("python3",["-c",
+      'import sys,zipfile; sys.stdout.buffer.write(zipfile.ZipFile(sys.argv[1]).read("Play.HC"))',file],{encoding:"utf8"});
+    assert.equal(program.split("\n").slice(2).join("\n"),player,
+      "Export uses the tested native player and retries a failed source fetch.");
     await frame.locator("#file").setInputFiles({name:"Broken.GR",mimeType:"application/octet-stream",buffer:Buffer.from(gr.subarray(0,35))});
     await frame.locator("#convert").click();
     await frame.locator("#cancel[hidden]").waitFor({state:"attached"});

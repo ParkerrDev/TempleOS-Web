@@ -98,10 +98,13 @@ export function zipFiles(files) {
   v.setUint32(12,central.reduce((n,c)=>n+c.length,0),true); v.setUint32(16,offset,true);
   return concat([...local,...central,tail]);
 }
-export function spritePackage(frames, width, height, delayMs) {
+export const SPRITE_PLAYER=new URL("./sprites/Play.HC",import.meta.url);
+export function spritePackage(frames, width, height, delayMs,playerSource) {
+  if (typeof playerSource!="string") throw new Error("The native sprite player is missing.");
   const enc = new TextEncoder();
   const files = frames.map((f,i)=>({name:`Frame${String(i).padStart(3,'0')}.GR`,bytes:f}));
-  files.push({name:'Play.HC',bytes:enc.encode(`#exe {Cd(__DIR__);}\nU0 PlaySprites()\n{\n  I64 i, frame, previous=-1;\n  F64 started;\n  CDC *images[${frames.length}];\n  U8 name[32];\n  for (i=0;i<${frames.length};i++) { StrPrint(name,"Frame%03d.GR",i); images[i]=GRRead(name); if(!images[i]) throw('Sprite'); }\n  AutoComplete(OFF);\n  WinBorder(OFF);\n  WinMax;\n  DocCursor(OFF);\n  DocClear;\n  started=tS;\n  while (!ScanChar) {\n    frame=ToI64((tS-started)*1000/${delayMs})%${frames.length};\n    if (frame!=previous) {\n    previous=frame;\n    DCFill;\n    GrBlot(,(GR_WIDTH-images[frame]->width)/2,(GR_HEIGHT-images[frame]->height)/2,images[frame]);\n    Refresh;\n    }\n    Sleep(1);\n  }\n  for (i=0;i<${frames.length};i++) DCDel(images[i]);\n}\nPlaySprites;\n`)});
+  files.push({name:'Play.HC',bytes:enc.encode(
+    `#define SPRITE_COUNT ${frames.length}\n#define SPRITE_DELAY ${delayMs}\n`+playerSource)});
   files.push({name:'README.TXT',bytes:enc.encode('Copy this folder to TempleOS, then include Play.HC. Press a key to stop.\nFor a reusable sprite: CDC *dc=GRRead("Frame000.GR"); U8 *sprite=DC2Sprite(dc); Sprite(,x,y,sprite);\nFree(sprite); DCDel(dc);\n')});
   files.push({name:'animation.json',bytes:enc.encode(JSON.stringify({width,height,frames:frames.length,delayMs,palette:'TempleOS standard',transparent:255},null,2))});
   return zipFiles(files);

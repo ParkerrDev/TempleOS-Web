@@ -1,4 +1,4 @@
-import { PALETTE, MAX_PIXELS, MAX_FRAMES, toRGBA, encodeGIF, spritePackage } from './sprite-codec.js';
+import { PALETTE, MAX_PIXELS, MAX_FRAMES, toRGBA, encodeGIF, spritePackage, SPRITE_PLAYER } from './sprite-codec.js';
 import {createSpritePlayer} from './sprite-player.js';
 import {GrLoad} from './sprites/Gr.js';
 const $ = id => document.getElementById(id);
@@ -143,7 +143,20 @@ $('controls').onsubmit=async e=>{
 function download(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 $('gr').onclick=()=>download(gr_codec.encodeGR(frames[Number($('frame').value)],size.width,size.height),'Sprite.GR','application/octet-stream');
 $('gif').onclick=()=>download(encodeGIF(frames,size.width,size.height,delayMs),'Sprite.gif','image/gif');
-$('package').onclick=()=>download(spritePackage(frames.map(f=>gr_codec.encodeGR(f,size.width,size.height)),size.width,size.height,delayMs),'TempleOS-Sprite.zip','application/zip');
+let player_source;
+$('package').onclick=async()=>{
+  const selected=frames,{width,height}=size,delay=delayMs;
+  try {
+    if (!player_source) player_source=(async()=>{
+      const response=await fetch(SPRITE_PLAYER);
+      if (!response.ok) throw new Error("Could not load the native sprite player.");
+      return response.text();
+    })().catch(error=>{player_source=null;throw error;});
+    const program=await player_source,
+      files=selected.map(frame=>gr_codec.encodeGR(frame,width,height));
+    download(spritePackage(files,width,height,delay,program),'TempleOS-Sprite.zip','application/zip');
+  } catch (error) {status(error.message);}
+};
 $('png').onclick=()=>{
   const cols=Math.min(frames.length,Math.max(1,Math.floor(2048/size.width))),rows=Math.ceil(frames.length/cols);
   const canvas=document.createElement('canvas');canvas.width=cols*size.width;canvas.height=rows*size.height;const ctx=canvas.getContext('2d');
