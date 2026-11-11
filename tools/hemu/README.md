@@ -209,3 +209,40 @@ architecturally defined flags. Regenerate the fixture on x86-64 with
 `/tmp/shift-oracle > tools/hemu/shift-oracle.txt`. Undefined flag bits are not
 used as an oracle. `jitdiff1.mjs` is deterministic parity coverage and fails
 its process when a comparison fails; it is not an independent CPU oracle.
+
+`menu-clip.test.mjs` checks 288 completed frames against independent QEMU/KVM
+pixels: the stock Ctrl+M Titanium sprite at six native scrollbar positions,
+with raster/video acceleration enabled and disabled. The reference generator
+`menu-clip-oracle.mjs` first records 48 unmodified V5.03 frames, which alternate
+between blank and visible tails, then verifies 24 corrected native refreshes
+at every position. Set `HOLYC_QEMU_ORACLE` to the compiler checkout's
+`tests/oracle/Qemu.mjs` to regenerate it. Fixture hashes bind both HolyC probe
+and correction source; the fast test also verifies that incremental frames
+reuse cached bounds rather than doing a full document pass every frame.
+
+This is an intentional correction of an original TempleOS bug. DocRecalc's
+incremental stopping condition used the text anchor row and ignored sprite
+artwork extending above it. `engine/patches/DocClip.HC` caches the largest
+upward extent during existing full passes and extends only the required
+incremental range. The bounded cache handles reused document addresses and
+uses a native atomic lock; it does not attach private data to application
+CDoc fields. The correction covers static 2D sprites. Rotating 3D mesh bounds
+are unchanged and are not claimed as fixed by this check.
+
+Stock boots compile the corrected routine from the installed native source
+once the disk is ready. Its complete source fingerprint and entry instructions
+must match the supported V5.03 routine. Installation holds the all-core
+barrier and leaves the original frame-setup instructions intact; tasks already
+suspended before or after stack allocation still have a valid continuation.
+`patch.test.mjs` checks those entry states, invalid addresses/signatures and
+all four CPU slots. A failed application is reported as `guestPatch` with an
+error message; the original routine remains active.
+
+Full session metadata records `guestPatches: ["doc-sprite-clip-v1"]`, checks it
+against restored guest code, and preserves the patch and its cache in RAM.
+Old saves default to an empty patch list and resume without being silently
+modified. Disk-only export retains the original disk source: this live RAM
+correction is not an on-disk TempleOS installation. The same HolyC file has a
+native single-core installer, verified in original QEMU/KVM; native SMP entry
+replacement is not claimed. The production HEMU path uses its four-core
+barrier and passes full snapshot roundtrips in both supported topologies.

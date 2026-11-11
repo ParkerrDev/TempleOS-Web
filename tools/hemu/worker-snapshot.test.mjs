@@ -20,6 +20,9 @@ for (const smp of [0,4]) {
     assert.equal((await ReadyWait(h,20000)).ok,true);
     if (!h.msgs.some(m=>m.cmd==="diskInfo"&&m.ok)) await h.Wait(m=>m.cmd==="diskInfo"&&m.ok,30000);
     if (smp && !h.msgs.some(m=>m.cmd==="smpReady")) await h.Wait(m=>m.cmd==="smpReady",10000);
+    const patch=m=>m.cmd==="guestPatch" && ["installed","failed"].includes(m.state);
+    const patched=h.msgs.find(patch)||await h.Wait(patch,30000);
+    assert.equal(patched.state,"installed",patched.msg);
     const write=await Result(h,{cmd:"osWrite",id:"write",path:"C:/Home/SnapshotCheck.TXT",bytes:new TextEncoder().encode("complete machine disk\n")});
     assert.equal(write.ok,true,write.msg);
     const launch=await Result(h,{cmd:"osLaunch",id:"game",name:"Snapshot loop",src:'while (TRUE) {Refresh;Sleep(10);}'});
@@ -41,6 +44,7 @@ for (const smp of [0,4]) {
     await h.Stop();h=null;
     const head=await SnapshotInspect(saved.buf);
     assert.equal(head.meta.heapAbi,runtime.HOST_HEAP_ABI??0);
+    assert.deepEqual(head.meta.guestPatches,["doc-sprite-clip-v1"]);
     assert.equal(head.meta.cores,smp||1);assert.equal(head.meta.rate,120);
     assert.equal(head.meta.repeat,true);assert.equal(head.meta.launch.name,"Snapshot loop");
     h=await HemuBoot({snapshot:saved.buf,keep_buf:true});
@@ -52,6 +56,8 @@ for (const smp of [0,4]) {
     assert.deepEqual(resumed.cpu,before.cpu,"CPU counters, RIP, flags and injected-call status resume");
     const n=h.nframes;await Sleep(150);assert.equal(h.nframes,n,"restored pause freezes all cores");
     await Request(h,{cmd:"pause",value:false},m=>m.cmd==="paused"&&!m.value);
+    const patchRead=await Result(h,{cmd:"osExec",id:"patch-read",target:"adam",src:"if (doc_clip_revision!=1) throw('DocPatch');"});
+    assert.equal(patchRead.ok,true,patchRead.msg);
     const busy=await Result(h,{cmd:"osLaunch",id:"busy",name:"Second game",src:"1;"});
     assert.equal(busy.ok,false);assert.match(busy.msg,/busy/);
     const read=await Result(h,{cmd:"osExec",id:"read",target:"adam",src:'I64 n;U8 *p=FileRead("C:/Home/SnapshotCheck.TXT",&n);if (!p || n!=22 || StrCmp(p,"complete machine disk\\n")) throw(\'Snapshot\');Free(p);'});

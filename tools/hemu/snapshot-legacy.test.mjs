@@ -12,7 +12,7 @@ const mark="legacy allocator session\n";
 let h;
 try {
   if(mode==="save") {
-    h=await HemuBoot({rate:120,repeat:true,keep_buf:true});
+    h=await HemuBoot({rate:120,repeat:true,keep_buf:true,patches:false});
     assert.equal((await ReadyWait(h,20000)).ok,true);
     if(!h.msgs.some(m=>m.cmd==="diskInfo"&&m.ok))await h.Wait(m=>m.cmd==="diskInfo"&&m.ok,30000);
     const result=await Request(h,{cmd:"osWrite",id:"legacy",path:"C:/Home/LegacyCheck.TXT",bytes:new TextEncoder().encode(mark)},m=>m.cmd==="fileResult"&&m.id==="legacy");
@@ -27,6 +27,7 @@ try {
   } else {
     const bytes=readFileSync(path),expected=JSON.parse(readFileSync(path+".json","utf8"));
     assert.equal((await SnapshotInspect(bytes)).meta.heapAbi,0);
+    assert.deepEqual((await SnapshotInspect(bytes)).meta.guestPatches,[]);
     h=await HemuBoot({snapshot:bytes,keep_buf:true});
     await h.Wait(m=>m.cmd==="restored",30000);
     assert.equal(h.last.hash,expected.hash);
@@ -38,6 +39,8 @@ try {
     const resaved=await Request(h,{cmd:"exportSnapshot"},m=>m.cmd==="exportResult",60000);
     assert.equal(resaved.ok,true,resaved.msg);
     assert.equal((await SnapshotInspect(resaved.buf)).meta.heapAbi,0,"legacy sessions retain their allocator ABI when saved again");
+    assert.deepEqual((await SnapshotInspect(resaved.buf)).meta.guestPatches,[],"old sessions are not silently patched on restore");
+    assert.ok(!h.msgs.some(m=>m.cmd==="guestPatch" && m.state==="installed"));
     console.log("Legacy full save: exact paused frame/palette, native disk read, resume and resave preserve ABI0 under the current host.");
   }
 } finally {await h?.Stop();}
