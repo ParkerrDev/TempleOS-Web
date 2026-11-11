@@ -276,7 +276,7 @@ I64 BbKeyHeld(I64 sc)
 
 U0 BbKey(I64 ch, I64 sc)
 {
-  if (ch==0x1B) bb_quit=TRUE;
+  if (ch==CH_ESC || ch==CH_SHIFT_ESC) bb_quit=TRUE;
   else if (ch==' ') bb_tap[BB_DROP]=TRUE;
   else if (ch=='p' || ch=='P') bb_tap[BB_PAUSE]=TRUE;
   else if (ch=='w' || ch=='W' || sc==BB_K_UP) bb_tap[BB_TURN]=TRUE;
@@ -430,6 +430,10 @@ U0 Babel()
 {
   I64 steps;
   F64 last, now, acc=0.0;
+  bb_quit=FALSE;bb_snd_t=0;
+  MemSet(bb_held,0,sizeof(bb_held));
+  MemSet(bb_prev,0,sizeof(bb_prev));
+  MemSet(bb_tap,0,sizeof(bb_tap));
   BbMakeTurns;
   Seed(0);
   BbNew;

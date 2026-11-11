@@ -1,7 +1,9 @@
-The native game check executes the complete source in a TempleOS child task.
+The native game check executes the complete source in a TempleOS child task,
+then calls the already-compiled main again in that same task. Reusing the task
+checks that a fresh launch resets transient state without recompiling globals.
 It checks observable game state after task messages and held-key changes, renders
 a deterministic paused scene through the game's own draw callback, and verifies
-that Escape restores the task's prior settings and releases animation tasks.
+that Escape and Shift+Escape restore prior settings and release animation tasks.
 The identical HolyC fixture runs in original V5.03 under QEMU/KVM and in HEMU.
 
 Run `node tools/games/native.mjs --write` to refresh both current scenarios,

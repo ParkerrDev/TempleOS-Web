@@ -168,7 +168,7 @@ I64 VlKeyHeld(I64 sc)
 
 U0 VlKey(I64 ch)
 {
-  if (ch==0x1B) vl_quit=TRUE;
+  if (ch==CH_ESC || ch==CH_SHIFT_ESC) vl_quit=TRUE;
   else if (ch==' ') vl_serve_tap=TRUE;
   else if (ch=='p' || ch=='P') vl_pause_tap=TRUE;
 }
@@ -262,6 +262,10 @@ U0 Volley()
 {
   I64 steps;
   F64 last, now, acc=0.0;
+  vl_quit=FALSE;vl_snd_t=0;vl_flash=0;vl_serve_to=1;
+  vl_up1=0;vl_dn1=0;vl_up2=0;vl_dn2=0;
+  vl_serve_held=0;vl_serve_prev=0;vl_serve_tap=0;
+  vl_pause_held=0;vl_pause_prev=0;vl_pause_tap=0;
   Seed(0);
 #ifdef TOS_NATIVE
   SettingsPush;

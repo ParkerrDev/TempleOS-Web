@@ -1,9 +1,9 @@
 class CGameChk
 {
   CTask *task;
-  U8 *filename;
+  U8 *filename,*name;
   I64 state,except;
-  Bool stop,stopped;
+  Bool stop,stopped,again;
   CTaskSettings *settings;
 };
 
@@ -15,6 +15,8 @@ U0 GameChkDraw(CTask *,CDC *)
 
 U0 GameChkRun(CGameChk *tmpg)
 {
+  Bool compiled=FALSE;
+  CHashFun *tmpf;
   SettingsPush;
   WinHorz(3,73);
   WinVert(4,52);
@@ -22,17 +24,28 @@ U0 GameChkRun(CGameChk *tmpg)
   Fs->win_inhibit=WIG_USER_TASK_DFT|WIF_SELF_MS_L;
   Fs->draw_it=&GameChkDraw;
   tmpg->settings=Fs->next_settings;
-  tmpg->state=1;
-  try {
-    ExeFile2(tmpg->filename);
-    tmpg->state=2;
-  } catch {
-    tmpg->except=Fs->except_ch;
-    Fs->catch_except=TRUE;
-    tmpg->state=3;
+  while (!tmpg->stop) {
+    tmpg->state=1;
+    try {
+      if (compiled) {
+	tmpf=HashFind(tmpg->name,Fs->hash_table,HTT_FUN);
+	if (!tmpf)
+	  throw('GameMain');
+	Call(tmpf->exe_addr);
+      } else {
+	ExeFile2(tmpg->filename);
+	compiled=TRUE;
+      }
+      tmpg->state=2;
+    } catch {
+      tmpg->except=Fs->except_ch;
+      Fs->catch_except=TRUE;
+      tmpg->state=3;
+    }
+    while (!tmpg->stop && !tmpg->again)
+      Sleep(1);
+    tmpg->again=FALSE;
   }
-  while (!tmpg->stop)
-    Sleep(1);
   SettingsPop;
   tmpg->stopped=TRUE;
   while (TRUE)
@@ -64,7 +77,7 @@ U0 GameChkWait(CGameChk *tmpg,I64 *value,I64 expected,I64 size=8)
 
 U0 GameChkKey(CGameChk *tmpg,I64 ch,I64 sc,Bool down)
 {//Tests the native task-message and keyboard held-state boundary.
-  LBEqu(kbd.down_bitmap,sc,down);
+  LBEqu(kbd.down_bitmap,sc.u8[0],down);
   if (down)
     PostMsg(tmpg->task,MSG_KEY_DOWN,ch,sc);
   else
@@ -95,8 +108,8 @@ I64 GameChkFrame(CGameChk *tmpg)
 U0 BabelChk(CGameChk *tmpg)
 {
   I64 i,*paused=GameChkVar(tmpg,"bb_paused"),
-    *x=GameChkVar(tmpg,"bb_x"),*y=GameChkVar(tmpg,"bb_y"),
-    *rot=GameChkVar(tmpg,"bb_rot"),*board=GameChkVar(tmpg,"bb_board");
+	*x=GameChkVar(tmpg,"bb_x"),*y=GameChkVar(tmpg,"bb_y"),
+	*rot=GameChkVar(tmpg,"bb_rot"),*board=GameChkVar(tmpg,"bb_board");
   GameChkTap(tmpg,'p',0x19);
   GameChkWait(tmpg,paused,TRUE);
   i=*y;
@@ -139,7 +152,7 @@ U0 BabelChk(CGameChk *tmpg)
 U0 VolleyChk(CGameChk *tmpg)
 {
   I64 before,*p1=GameChkVar(tmpg,"vl_p1"),*p2=GameChkVar(tmpg,"vl_p2"),
-    *paused=GameChkVar(tmpg,"vl_paused"),*live=GameChkVar(tmpg,"vl_live");
+	*paused=GameChkVar(tmpg,"vl_paused"),*live=GameChkVar(tmpg,"vl_live");
   before=*p1;
   GameChkKey(tmpg,'w',0x11,TRUE);
   Sleep(120);
@@ -174,12 +187,12 @@ U0 VolleyChk(CGameChk *tmpg)
 U0 SnakePhysicsChk(CGameChk *tmpg)
 {
   CHashFun *tmps=HashFind("SnakeStep",tmpg->task->hash_table,HTT_FUN),
-    *tmpa=HashFind("ApplePick",tmpg->task->hash_table,HTT_FUN);
+	*tmpa=HashFind("ApplePick",tmpg->task->hash_table,HTT_FUN);
   I64 i,*len=GameChkVar(tmpg,"len"),*head=GameChkVar(tmpg,"head"),
-    *body=GameChkVar(tmpg,"body"),*apple=GameChkVar(tmpg,"apple"),
-    *dx=GameChkVar(tmpg,"dir_x"),*dy=GameChkVar(tmpg,"dir_y");
+	*body=GameChkVar(tmpg,"body"),*apple=GameChkVar(tmpg,"apple"),
+	*dx=GameChkVar(tmpg,"dir_x"),*dy=GameChkVar(tmpg,"dir_y");
   U8 *board=GameChkVar(tmpg,"board"),*alive=GameChkVar(tmpg,"alive"),
-    *pending=GameChkVar(tmpg,"turn_pending");
+	*pending=GameChkVar(tmpg,"turn_pending");
   *pending=FALSE;
   MemSet(board,0,884);
   *len=4;*head=3;*apple=883;*alive=TRUE;*dx=0;*dy=-1;
@@ -234,7 +247,7 @@ U0 SnakePhysicsChk(CGameChk *tmpg)
   board[883]=FALSE;
   Call(tmps->exe_addr);
   if (*alive || *len!=884 || *head!=883 || body[883]!=883 ||
-    *apple!=-1 || !board[883] || Call(tmpa->exe_addr)!=-1)
+	*apple!=-1 || !board[883] || Call(tmpa->exe_addr)!=-1)
     throw('Full');
   "LOGIC:Snake:tail,self,4-walls,ring,884-free-cells,full-board\n";
 }
@@ -242,8 +255,8 @@ U0 SnakePhysicsChk(CGameChk *tmpg)
 U0 SnakeChk(CGameChk *tmpg)
 {
   I64 i,before,*len=GameChkVar(tmpg,"len"),*head=GameChkVar(tmpg,"head"),
-    *body=GameChkVar(tmpg,"body"),*apple=GameChkVar(tmpg,"apple"),
-    *dy=GameChkVar(tmpg,"dir_y"),*pending=GameChkVar(tmpg,"turn_pending");
+	*body=GameChkVar(tmpg,"body"),*apple=GameChkVar(tmpg,"apple"),
+	*dy=GameChkVar(tmpg,"dir_y"),*pending=GameChkVar(tmpg,"turn_pending");
   U8 *board=GameChkVar(tmpg,"board");
   F64 end=tS+5;
   while (!tmpg->task->animate_task && tS<end)
@@ -281,7 +294,7 @@ U0 SnakeChk(CGameChk *tmpg)
     if (board[i] && !(34*13+13<=i<=34*13+17))
       throw('Restart');
   if (*head!=4 || *dy || *GameChkVar(tmpg,"dir_x")!=1 ||
-    *pending(U8 *) || !*GameChkVar(tmpg,"alive")(U8 *))
+	*pending(U8 *) || !*GameChkVar(tmpg,"alive")(U8 *))
     throw('Restart');
   *apple=0;
   game_chk_frame=GameChkFrame(tmpg);
@@ -289,41 +302,51 @@ U0 SnakeChk(CGameChk *tmpg)
   "INPUT:Snake:restart,turn,reverse,grow,free-apple\n";
 }
 
-U0 GameChk(U8 *filename,U8 *name)
+U0 GameChk(U8 *filename,U8 *name,I64 runs)
 {
   CGameChk *tmpg=CAlloc(sizeof(CGameChk));
-  I64 except=0;
+  I64 i,except=0;
   F64 end;
   U8 saved_keys[sizeof(kbd.down_bitmap)];
   MemCpy(saved_keys,kbd.down_bitmap,sizeof(saved_keys));
   tmpg->filename=filename;
+  tmpg->name=name;
   tmpg->task=Spawn(&GameChkRun,tmpg,name,,Fs);
   try {
-    end=tS+5;
-    while (tmpg->state<2 && (!tmpg->state ||
-      tmpg->task->draw_it==&GameChkDraw) && tS<end)
-      Sleep(1);
-    if (tmpg->state!=1 || tmpg->task->draw_it==&GameChkDraw) {
-      "LOAD:%s:%C:%d\n",name,tmpg->except,tmpg->state;
-      throw('GameLoad');
+    for (i=0;i<runs;i++) {
+      end=tS+5;
+      while (tmpg->state<2 && (!tmpg->state ||
+	    tmpg->task->draw_it==&GameChkDraw) && tS<end)
+	Sleep(1);
+      if (tmpg->state!=1 || tmpg->task->draw_it==&GameChkDraw) {
+	"LOAD:%s:%C:%d\n",name,tmpg->except,tmpg->state;
+	throw('GameLoad');
+      }
+      if (!StrCmp(name,"Babel"))
+	BabelChk(tmpg);
+      else if (!StrCmp(name,"Volley"))
+	VolleyChk(tmpg);
+      else if (!StrCmp(name,"Snake"))
+	SnakeChk(tmpg);
+      if (i&1)
+	GameChkTap(tmpg,CH_SHIFT_ESC,SC_ESC|SCF_SHIFT);
+      else
+	GameChkTap(tmpg,CH_ESC,SC_ESC);
+      GameChkWait(tmpg,&tmpg->state,2);
+      if (tmpg->except || tmpg->task->draw_it!=&GameChkDraw ||
+	    tmpg->task->next_settings!=tmpg->settings ||
+	    tmpg->task->animate_task || tmpg->task->song_task ||
+	    tmpg->task->win_left!=3 || tmpg->task->win_right!=73 ||
+	    tmpg->task->win_top!=4 || tmpg->task->win_bottom!=52 ||
+	    tmpg->task->text_attr!=GREEN<<4+BLUE ||
+	    tmpg->task->win_inhibit!=(WIG_USER_TASK_DFT|WIF_SELF_MS_L))
+	throw('Cleanup');
+      "EXIT:%s:settings,draw,window,tasks\n",name;
+      if (i+1<runs) {
+	tmpg->state=0;
+	tmpg->again=TRUE;
+      }
     }
-    if (!StrCmp(name,"Babel"))
-      BabelChk(tmpg);
-    else if (!StrCmp(name,"Volley"))
-      VolleyChk(tmpg);
-    else if (!StrCmp(name,"Snake"))
-      SnakeChk(tmpg);
-    GameChkTap(tmpg,CH_ESC,SC_ESC);
-    GameChkWait(tmpg,&tmpg->state,2);
-    if (tmpg->except || tmpg->task->draw_it!=&GameChkDraw ||
-      tmpg->task->next_settings!=tmpg->settings ||
-      tmpg->task->animate_task || tmpg->task->song_task ||
-      tmpg->task->win_left!=3 || tmpg->task->win_right!=73 ||
-      tmpg->task->win_top!=4 || tmpg->task->win_bottom!=52 ||
-      tmpg->task->text_attr!=GREEN<<4+BLUE ||
-      tmpg->task->win_inhibit!=(WIG_USER_TASK_DFT|WIF_SELF_MS_L))
-      throw('Cleanup');
-    "EXIT:%s:settings,draw,window,tasks\n",name;
   } catch {
     except=Fs->except_ch;
     Fs->catch_except=TRUE;

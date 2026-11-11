@@ -4,12 +4,15 @@ import {resolve} from "node:path";
 import {pathToFileURL} from "node:url";
 import {QemuRun} from "../../holyc-wasm/tests/oracle/Qemu.mjs";
 import {GuestHarness} from "../hemu/GuestHarness.mjs";
-import {GameInputs,Hash,root,GAME_CHECKS} from "./Evidence.mjs";
+import {GameInputs,Hash,root,GAME_CHECKS,GAME_RUNS} from "./Evidence.mjs";
 
 const args=process.argv.slice(2),
   names=args.filter(arg=>!arg.startsWith("--")),
+  count=GAME_RUNS,
   source_dir=process.env.GAME_SOURCE_DIR?pathToFileURL(resolve(process.env.GAME_SOURCE_DIR)+"/"):
     new URL("games/",root);
+assert(args.every(arg=>!arg.startsWith("--") ||
+  ["--write","--native-only"].includes(arg)),"Unknown native game check option.");
 assert(!(process.env.GAME_SOURCE_DIR && args.includes("--write")),
   "Candidate sources cannot replace production evidence.");
 if (!names.length) names.push(...GAME_CHECKS);
@@ -20,7 +23,7 @@ for (const name of names) {
   assert(["Babel","Volley","Snake"].includes(name));
   const file=name.toUpperCase()+".HC";
   files.push({name:file,bytes:await readFile(new URL(name+".HC",source_dir))});
-  runs.push(source+'\nGameChk("C:/ORACLE/'+file+'","'+name+'");\n');
+  runs.push(source+'\nGameChk("C:/ORACLE/'+file+'","'+name+'",'+count+');\n');
 }
 const result=await QemuRun(runs,{files,timeout:60});
 await mkdir(new URL("tmp/games/",root),{recursive:true});
@@ -28,7 +31,8 @@ await writeFile(new URL("tmp/games/native-"+names.join("-")+".json",root),JSON.s
 console.log(JSON.stringify(result));
 for (const [i,name] of names.entries()) {
   assert.equal(result.results[i].except,"",name);
-  assert.match(result.results[i].out,new RegExp("EXIT:"+name+":settings,draw,window,tasks"));
+  assert.equal([...result.results[i].out.matchAll(
+    new RegExp("EXIT:"+name+":settings,draw,window,tasks","g"))].length,count,name);
 }
 if (!args.includes("--native-only")) {
   const h=await GuestHarness({disk:true}),evidence={format:1,...await GameInputs(),
@@ -44,7 +48,7 @@ if (!args.includes("--native-only")) {
     }
     assert.equal(h.gx.status(id)?.state,"done",JSON.stringify(h.gx.status(id)));
     const ptr=h.gx.scratch.base+0x1400;
-    await h.Exec('GameChk("'+path+'","'+name+'");*(0x'+ptr.toString(16)+')(I64*)=game_chk_frame;');
+    await h.Exec('GameChk("'+path+'","'+name+'",'+count+');*(0x'+ptr.toString(16)+')(I64*)=game_chk_frame;');
     const frame=new DataView(h.ex.memory.buffer).getBigUint64(h.base+ptr,true).
         toString(16).toUpperCase().padStart(16,"0"),
       native=result.results[i].out.match(new RegExp("FRAME:"+name+":([0-9A-F]+)"))[1];

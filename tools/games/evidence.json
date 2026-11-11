@@ -1,23 +1,27 @@
 {
   "format": 1,
-  "harnessSha256": "253529768151a90a795227edd46fdf836f921a5bcd2198a86084e17b66fa9a88",
+  "launchesPerTask": 2,
+  "harnessSha256": "a59fdcd05d2a840686ab29e54469ad691b3ca741f52cec0ded314aeca3ee64b1",
   "webRuntimeSha256": "31da6f69ef2e59735040ad1d84942cddfebc54dc0f039b7d770081af957fc297",
   "siblings": [
-    "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm bd688d5713ca8e320fb7d9439323db3841bc3319",
-    "hemu https://github.com/ParkerrDev/HEMU 39c384643922ecd3d3b272d7e3c9e238db07cd0e"
+    "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm cbb91c4c84df9cf22d8bc12c86c4b04abe91e239",
+    "hemu https://github.com/ParkerrDev/HEMU b54bc4f7f0ffb6322e66473f230b46457380983c"
   ],
-  "engineSha256": "300471b2546d7451997ca635aa10c29d1aa6014ab10f362908a19527966c2a12",
+  "engineSha256": "820596bbbbee7a813d8f003dc858414632955765c53f8c7c30297fd8aaab9db4",
   "backend": {
     "engine": "qemu",
     "accelerator": "kvm",
     "version": "QEMU emulator version 11.1.2"
   },
-  "oracle": "qemu-enabzia8",
+  "oracle": "qemu-02dcwwy3",
   "programs": {
     "Babel": {
-      "sourceSha256": "769bff7f92ab92f1fb93294b47bc518858f40338bca34ba64bfb58545c8328b3",
+      "sourceSha256": "8f9fa354dda68f563b96a15d4b1219d79bc0fbeb39f285b102022a4b75279300",
       "frameFnv64": "1BEB230827ABCDD3",
       "native": [
+        "FRAME:Babel:1BEB230827ABCDD3",
+        "INPUT:Babel:pause,cross,left,right,drop",
+        "EXIT:Babel:settings,draw,window,tasks",
         "FRAME:Babel:1BEB230827ABCDD3",
         "INPUT:Babel:pause,cross,left,right,drop",
         "EXIT:Babel:settings,draw,window,tasks"
@@ -25,9 +29,12 @@
       "hemu": "same input, frame and exit checks passed"
     },
     "Volley": {
-      "sourceSha256": "d4c7e329e898c8cb33359282327de8e2d6292c94c603461494f5fd380b0f98de",
+      "sourceSha256": "76a4c978a8d850b7ac294f56381d8e563694c33b0ec9892f67b951f2793ba30d",
       "frameFnv64": "070264F24E97EB62",
       "native": [
+        "FRAME:Volley:070264F24E97EB62",
+        "INPUT:Volley:both-players,serve,pause",
+        "EXIT:Volley:settings,draw,window,tasks",
         "FRAME:Volley:070264F24E97EB62",
         "INPUT:Volley:both-players,serve,pause",
         "EXIT:Volley:settings,draw,window,tasks"

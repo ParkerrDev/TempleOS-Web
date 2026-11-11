@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "ab1dd7c067cfb60fb99ec58f81d0bb21985fc5d4e56ef9a61e7ac2a5245a1267",
+  "runtimeSha256": "2287d76766e07fa334ad7281eb951cc9e0bce6f5301d9132a24bc9371e351efd",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -8,7 +8,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "b15a72d3d8aa12162e014c822990d7dc2769ef923e5003ce26ffa9c381423d4f"
+      "wasmSha256": "2d45d8f831af44caa3c05e821ebab5c1039bb2432afcb07113b25b8777b1e341"
     },
     "toom": {
       "name": "TOOM",
@@ -20,19 +20,19 @@
     },
     "Babel.HC": {
       "name": "Babel",
-      "sourceSha256": "dec221132dd3952d9f1c42c5c239f5d71c9206c6d05bcf2880685c9eb2d20838",
+      "sourceSha256": "e111c3b64263cf2f3a258e2638487404f79fb68b7d23a25790ddcdd0cb6de28a",
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "d0e43a9d6288f6d3b2af4f984d4a16452715a2d7d979a081950c6266139df4a3"
+      "wasmSha256": "45f08a7cf8bd17158fb09e709451b0939685ee55f5803dfef131130a3ab5686e"
     },
     "Volley.HC": {
       "name": "Volley",
-      "sourceSha256": "7fcceac0380a5d70ba3caa039802ae43f4a4839f2840712b7c8af9aecf93b76a",
+      "sourceSha256": "8daca89b20ba428f94607a47503728f3b2a2ab304ef4c348b476b48b5073c809",
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "28fab59d8efa7c582ccecf09cc55cb0058a7b5473c4eff344cbbd0fa5a434b44"
+      "wasmSha256": "c6ac2fb15f3cfc91feef0aee0d332c8d91a15d834d1070b80621059bbb0b108e"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -40,7 +40,7 @@
       "compile": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "c3508c01a3f7ea5b862405ab0bd4b7dc12afa80cf731554b69132d85ba8b42d1"
+      "wasmSha256": "e31871d8f9859cfcea70034692b6fdb1f39d8f6e9b70f257ad54f3ef2fade619"
     },
     "tinker-Varoom": {
       "name": "Varoom",
@@ -104,7 +104,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "class CTask has no field 'horz_scroll'"
+      "error": "C:/Home/Games/TinkerOS/BigGuns.HC:54: undefined symbol 'ode'"
     },
     "tinker-BomberGolf": {
       "name": "BomberGolf",
@@ -192,7 +192,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "class CTask has no field 'parent_task'"
+      "error": "C:/Home/Games/TinkerOS/Zing.HC:97: Undefined identifier or untyped call: MsSet"
     },
     "tinker-ZoneOut": {
       "name": "ZoneOut",
@@ -240,7 +240,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "class CTask has no field 'parent_task'"
+      "error": "C:/Home/Games/TinkerOS/Collision.HC:144: undefined symbol 'SettingsPush'"
     },
     "tinker-RainDrops": {
       "name": "RainDrops",
@@ -400,7 +400,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "<prelude>:80:13: parse error: expected declarator name (near '(')"
+      "error": "<prelude>:81:13: parse error: expected declarator name (near '(')"
     },
     "library-SpyHunt": {
       "name": "SpyHunt",
@@ -472,7 +472,7 @@
       "compile": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "class CTask has no field 'text_attr'"
+      "error": "C:/Home/Games/TerrySupplement/Rocks/Rocks.HC:545: Undefined identifier or untyped call: In"
     },
     "library-Pilgrims": {
       "name": "Pilgrims",
