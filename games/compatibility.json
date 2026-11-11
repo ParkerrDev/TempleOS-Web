@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "bc5f63a5aedb3a33ff800b4715081a1b9438d9431b509b2ff9d0e876925309f2",
+  "runtimeSha256": "e11dac53942d3d426892c5bce9edb9c4c6f9b1e7987765a2ce54400cb4722fd5",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -549,7 +549,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "class CHashClass has no field 'member_lst_and_root'"
+      "error": "C:/Home/Games/MarioClone/Wad.HC:487: Undefined identifier or untyped call: StrNCmp"
     },
     "library-MaliciousTestimonies": {
       "name": "Malicious Testimonies",
