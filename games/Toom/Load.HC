@@ -9,6 +9,7 @@
 #include "TmMath"
 #include "TmWorld"
 #include "TmContact"
+#include "TmMove"
 #include "TmPal"
 #include "TmDraw"
 #include "TmMask"

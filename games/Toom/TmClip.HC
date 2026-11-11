@@ -9,7 +9,7 @@ class Collision
   ClipLine *line;
   I64 *seen,*special,stamp,special_cnt;
   I64 left,right,bottom,top,flags,sector,floor,ceil,dropoff,blocking;
-  Bool player;
+  Bool player,float_ok;
 };
 
 I64 FixedSide(I64 x,I64 y,I64 ax,I64 ay,I64 dx,I64 dy)
@@ -125,6 +125,7 @@ U0 CollisionBegin(Collision *tmpc,I64 x,I64 y,I64 radius,I64 flags,
   tmpc->floor=tmpc->dropoff=tmps->floor*65536;
   tmpc->ceil=tmps->ceil*65536;
   tmpc->flags=flags; tmpc->player=player;
+  tmpc->float_ok=FALSE;
   tmpc->special_cnt=0; tmpc->blocking=-1;
   tmpc->left=x-radius; tmpc->right=x+radius;
   tmpc->bottom=y-radius; tmpc->top=y+radius;
@@ -156,6 +157,7 @@ Bool CollisionLines(Collision *tmpc,I64 z,I64 height)
 	}
     }
   if (tmpc->ceil-tmpc->floor<height) return FALSE;
+  tmpc->float_ok=TRUE;
   if (!(flags&TM_MF_TELEPORT))
     if (tmpc->ceil-z<height || tmpc->floor-z>24*65536) return FALSE;
   if (!(flags&(TM_MF_DROPOFF|TM_MF_FLOAT)) &&

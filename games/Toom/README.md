@@ -44,6 +44,9 @@ The implemented foundation uses native V5.03 file and memory APIs:
 - Actor contact queries preserve missile source/species rules, skull impacts
   and pickup-before-wall ordering. The spatial query accommodates large actors;
   contact callbacks defer reclamation until the end of the tic.
+- Position changes commit actor coordinates, sector bounds and block links
+  together. Crossed-line callbacks run afterward in reverse contact order;
+  nested queries cannot overwrite the pending line list.
 
 Fuzz effects, simulation, weapons, actors, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
@@ -100,6 +103,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/mask.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/collision.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/world.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/contact.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/movement.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -132,13 +136,18 @@ pending simulation stage.
 The world check covers 108 map/skill combinations and 37,779 initial actors,
 including exact spawn state/timers, RNG, flags, positions and totals. It also
 checks linked block lists, stable allocation through table growth, stale
-handles, slot reuse and out-of-map unlinking. Actor actions and movement are
+handles, slot reuse and out-of-map unlinking. Actor actions and momentum are
 not yet implemented.
 The contact check covers 1,756 interaction cases and 1,024 spatial queries
 against a full actor scan. It checks large actors across block cells, vertical
 missile separation, source/species immunity, skull impacts, deferred pickup
-callbacks, stale handles and contact ordering. Actual damage, inventory and
-movement effects remain part of the pending simulation stage.
+callbacks, stale handles and contact ordering. Actual damage and inventory
+effects remain part of the pending simulation stage.
+The movement check covers 22 position-change contracts in a controlled pair
+of rooms: step/dropoff/headroom boundaries, float/teleport/noclip flags, atomic
+rejection, actor links, pickup contacts and crossed-line ordering, including
+callbacks that perform another query. Momentum, sliding and actual line actions
+remain part of the pending simulation stage.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private
