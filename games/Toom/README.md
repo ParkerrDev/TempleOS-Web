@@ -1049,3 +1049,19 @@ The preview command exports an actual native frame. `EPISODE=1 STAGE=0
 TIC=3000` shows the completed first-episode text. These components remain
 outside `Load`/`Run` while cast animation and host continuation are connected;
 the development host still has the earlier static finale screen.
+
+`TmCast.HC` supplies the separate ending cast state machine. It borrows the
+verified data records and advances animation without spawning actors or running
+world actions. Original TempleOS and frozen HEMU match 102 scenarios, 153,000
+tics and 4,307 sound events from the unchanged released cast routines. Key-up,
+repeat death presses, attack selection, actor wrap and callback-visible ordering
+are covered; an absent sound callback produces the same animation. Exact
+evidence is in `cast-evidence.json`.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cast.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/cast.test.mjs
+```
+
+Cast artwork, authored names and actual host input routing remain separate
+integration work. These standalone components still do not change `Run`.

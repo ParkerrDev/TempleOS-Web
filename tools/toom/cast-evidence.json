@@ -1,0 +1,160 @@
+{
+  "scope": "Standalone native cast animation and key-event response, outside Load/Run pending presentation and host integration.",
+  "sourceHashes": {
+    "games/Toom/TmCast.HC": "d414747eacaca31d2689a8f072f1517519e21af74d6b52a0d5ba1fcb9a3bf132",
+    "games/Toom/TmState.HC": "0a7e57036b0d51d5a153e5cf0a8ffa76ac9f2d70061c48e429a0865899b12fdb",
+    "games/Toom/TmData.HH": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+    "games/Toom/TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f",
+    "tools/toom/Cast.HC": "f176d9b023fa53d843af6bc1dd61413c1a6b0872a01ad60521675f2bdd8eaab6",
+    "tools/toom/CastRef.mjs": "1a9f895903d3aa53e49f0140c1c0e0a532b60c3b1dd907b41103026cd9a38187",
+    "tools/toom/cast.test.mjs": "304398aa884e947f52971ccf84afe9e31ef5cf1062f4ba84428ecdf67947b755",
+    "tools/toom/FinaleRef.mjs": "77e5aa7c09b74c49ed3eddd02f2b5cb5c58383b6e3262a9453a9fa15b88b3da5",
+    "tools/toom/source/finale.json": "4f3ac8258145282f69b22d900557989e0caff5f3121e51f9bc76be678cb0143e"
+  },
+  "reference": {
+    "repository": "https://github.com/id-Software/DOOM",
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "files": [
+      {
+        "path": "linuxdoom-1.10/f_finale.c",
+        "sha256": "c443ab18b6fa27df7033ac1ced0e86ab7c43c6e2cf2f8e428348d67d40a35670"
+      },
+      {
+        "path": "linuxdoom-1.10/v_video.c",
+        "sha256": "52fb89efb1e6de3842c197b32009d620dcd1578f7111a7502abe6110a925e5eb"
+      }
+    ]
+  },
+  "native": {
+    "results": [
+      {
+        "out": "CAST 102 CASES 153000 TICS 4307 SOUNDS BAD 0\n",
+        "except": ""
+      }
+    ],
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    },
+    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-s44bc7ry",
+    "sourceSha256": "29d14c294903bd2b6848725074cd788c21c3455119df74f11b398d79b2c69508",
+    "referenceSha256": "6867b40ed979a8c3d5faed7927392f18ecb4579762979c8990c9d97d46616a5e",
+    "referenceCsha256": "3874e52c590bf963ea841b80456cf1a65cbf816be33d195883867e8ffbc23817",
+    "sounds": {
+      "1": 66,
+      "2": 1319,
+      "8": 194,
+      "14": 127,
+      "16": 414,
+      "17": 52,
+      "36": 47,
+      "37": 97,
+      "39": 49,
+      "41": 50,
+      "42": 51,
+      "43": 50,
+      "44": 47,
+      "45": 48,
+      "46": 51,
+      "47": 52,
+      "48": 49,
+      "49": 51,
+      "50": 50,
+      "51": 142,
+      "52": 116,
+      "53": 53,
+      "54": 48,
+      "55": 90,
+      "56": 57,
+      "57": 49,
+      "59": 50,
+      "60": 101,
+      "62": 51,
+      "64": 52,
+      "65": 52,
+      "67": 53,
+      "68": 50,
+      "69": 51,
+      "70": 54,
+      "71": 52,
+      "72": 53,
+      "73": 53,
+      "74": 53,
+      "100": 52,
+      "106": 52,
+      "107": 59
+    }
+  },
+  "hemu": {
+    "backend": "hemu",
+    "sourceSha256": "29d14c294903bd2b6848725074cd788c21c3455119df74f11b398d79b2c69508",
+    "referenceSha256": "6867b40ed979a8c3d5faed7927392f18ecb4579762979c8990c9d97d46616a5e",
+    "referenceCsha256": "3874e52c590bf963ea841b80456cf1a65cbf816be33d195883867e8ffbc23817",
+    "cases": 102,
+    "ticks": 153000,
+    "sounds": {
+      "1": 66,
+      "2": 1319,
+      "8": 194,
+      "14": 127,
+      "16": 414,
+      "17": 52,
+      "36": 47,
+      "37": 97,
+      "39": 49,
+      "41": 50,
+      "42": 51,
+      "43": 50,
+      "44": 47,
+      "45": 48,
+      "46": 51,
+      "47": 52,
+      "48": 49,
+      "49": 51,
+      "50": 50,
+      "51": 142,
+      "52": 116,
+      "53": 53,
+      "54": 48,
+      "55": 90,
+      "56": 57,
+      "57": 49,
+      "59": 50,
+      "60": 101,
+      "62": 51,
+      "64": 52,
+      "65": 52,
+      "67": 53,
+      "68": 50,
+      "69": 51,
+      "70": 54,
+      "71": 52,
+      "72": 53,
+      "73": 53,
+      "74": 53,
+      "100": 52,
+      "106": 52,
+      "107": 59
+    },
+    "bad": 0
+  },
+  "runtime": {
+    "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
+    "compiler": "d0e394e",
+    "hemu": "0eff35b",
+    "singleWasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c"
+  },
+  "coverage": [
+    "102 scenarios begin from each of the 17 original cast actors with six key-event patterns; 153,000 tics compare all animation fields and response values.",
+    "The reference compiles unchanged F_StartCast, F_CastTicker and F_CastResponder with the original cast-order table and the independently verified TMDATA records. C runs with undefined-behavior checks.",
+    "Key-up, sustained key-down, consecutive key-down, periodic death and attack-boundary input cover death debounce, next-actor wrapping, alternating melee/missile selection and the original player attack special case.",
+    "4,307 sound events compare event count and ordered callback-visible state; the optional absent sound callback leaves every animation field identical.",
+    "Each scenario restarts the component, with no initial sight sound. Native heap ownership returns to its prior total."
+  ],
+  "limits": [
+    "Cast artwork, authored cast names, live keyboard routing and music playback are not qualified by this component fixture.",
+    "The live host still has a static endpoint screen; no catalog promotion or complete-game claim.",
+    "No performance claim."
+  ]
+}
