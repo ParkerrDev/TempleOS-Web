@@ -5,6 +5,8 @@
 class View
 {
   Map *map;
+  Seg **masked;
+  I64 masked_cnt;
   Graphics *gr;
   F64 x,y,z,angle,cs,sn,fx,fy,cx,cy;
   I64 width,height,*floor,*ceil,*stack,sky;
@@ -21,6 +23,7 @@ U0 ViewDel(View *tmpv)
     if (tmpv->flat)
       for (i=0;i<tmpv->gr->wad->cnt;i++) Free(tmpv->flat[i]);
     Free(tmpv->flat);
+    Free(tmpv->masked);
     Free(tmpv->floor);
     Free(tmpv->ceil);
     Free(tmpv->stack);
@@ -39,6 +42,7 @@ View *ViewNew(Map *tmpm,Graphics *tmpg)
   U8 name[9];
   View *tmpv=CAlloc(sizeof(View));
   tmpv->map=tmpm; tmpv->gr=tmpg;
+  tmpv->masked=MAlloc(tmpm->seg_cnt*sizeof(Seg *));
   if (tmpm->sector_cnt>32767) goto vn_fail;
   tmpv->width=w; tmpv->height=h;
   tmpv->fx=w/2.0; tmpv->fy=w/2.0;
@@ -114,6 +118,13 @@ U0 PlaneMark(View *tmpv,I64 x,I64 ya,I64 yb,I64 n)
   I64 y;
   ya=MaxI64(ya,tmpv->top[x]); yb=MinI64(yb,tmpv->bottom[x]);
   for (y=ya;y<=yb;y++) tmpv->plane[x+y*tmpv->width]=n;
+}
+
+U0 SkyColumn(View *tmpv,I64 x,I64 ya,I64 yb,F64 iz)
+{//A negative depth hides distant objects while keeping the sky color.
+  I64 y,z=-Min(100000000.0*iz,I32_MAX);
+  ya=MaxI64(ya,tmpv->top[x]); yb=MinI64(yb,tmpv->bottom[x]);
+  for (y=ya;y<=yb;y++) tmpv->depth[x+y*tmpv->width]=z;
 }
 
 U0 ViewPlanes(View *tmpv)
@@ -194,24 +205,26 @@ I64 ViewY(View *tmpv,I64 height,F64 iz)
   return Ceil(tmpv->cy-(height-tmpv->z)*tmpv->fy*iz-0.500000001);
 }
 
-U0 ViewSeg(View *tmpv,Seg *tmps)
-{//Near clipping and perspective interpolation precede per-column portals.
-  I64 i,x,x1,x2,front,back,top,bottom,up,down,light,base_light,
-	mid_n=-1,upper_n=-1,lower_n=-1;
-  F64 ax,ay,bx,by,az,bz,ar,br,u1,u2,t,len,sx1,sx2,iz,iu,dz,du,
-	d,u,origin;
+class WallView
+{
+  F64 iz,iu,dz,du;
+  I64 x1,x2;
+};
+
+Bool WallProject(View *tmpv,Seg *tmps,WallView *_out)
+{//Near-clipped wall endpoints share one perspective setup for both passes.
+  I64 x1,x2;
+  F64 ax,ay,bx,by,az,bz,ar,br,u1,u2,t,len,sx1,sx2,dz,du;
   Map *tmpm=tmpv->map;
   Line *tmpl=tmpm->line+tmps->line;
   Side *side=tmpm->side+tmpl->side[tmps->side];
-  Sector *sf,*sb=NULL;
-  Image *mid=NULL,*upper=NULL,*lower=NULL;
   ax=tmpm->vertex[tmps->v1].x-tmpv->x;
   ay=tmpm->vertex[tmps->v1].y-tmpv->y;
   bx=tmpm->vertex[tmps->v2].x-tmpv->x;
   by=tmpm->vertex[tmps->v2].y-tmpv->y;
   az=ax*tmpv->cs+ay*tmpv->sn;
   bz=bx*tmpv->cs+by*tmpv->sn;
-  if (az<TM_VIEW_NEAR && bz<TM_VIEW_NEAR) return;
+  if (az<TM_VIEW_NEAR && bz<TM_VIEW_NEAR) return FALSE;
   ar=ax*tmpv->sn-ay*tmpv->cs;
   br=bx*tmpv->sn-by*tmpv->cs;
   len=Sqrt((bx-ax)*(bx-ax)+(by-ay)*(by-ay));
@@ -225,14 +238,34 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
   }
   sx1=tmpv->cx+ar*tmpv->fx/az;
   sx2=tmpv->cx+br*tmpv->fx/bz;
-  if (sx1>=sx2) return;
+  if (sx1>=sx2) return FALSE;
   x1=MaxI64(Ceil(sx1-0.5),0);
   x2=MinI64(Ceil(sx2-0.5)-1,tmpv->width-1);
-  if (x1>x2) return;
+  if (x1>x2) return FALSE;
   dz=(1.0/bz-1.0/az)/(sx2-sx1);
   du=(u2/bz-u1/az)/(sx2-sx1);
   t=x1+0.5-sx1;
-  iz=1.0/az+dz*t; iu=u1/az+du*t;
+  _out->iz=1.0/az+dz*t; _out->iu=u1/az+du*t;
+  _out->dz=dz; _out->du=du;
+  _out->x1=x1; _out->x2=x2;
+  return TRUE;
+}
+
+U0 ViewSeg(View *tmpv,Seg *tmps)
+{//Front-to-back opaque walls clip portals and mark visible plane spans.
+  I64 i,x,x1,x2,front,back,top,bottom,up,down,light,base_light,
+	mid_n=-1,upper_n=-1,lower_n=-1;
+  F64 iz,iu,dz,du,d,u,origin;
+  Bool seen=FALSE;
+  WallView wall;
+  Map *tmpm=tmpv->map;
+  Line *tmpl=tmpm->line+tmps->line;
+  Side *side=tmpm->side+tmpl->side[tmps->side];
+  Sector *sf,*sb=NULL;
+  Image *mid=NULL,*upper=NULL,*lower=NULL;
+  if (!WallProject(tmpv,tmps,&wall)) return;
+  iz=wall.iz; iu=wall.iu; dz=wall.dz; du=wall.du;
+  x1=wall.x1; x2=wall.x2;
   front=side->sector;
   sf=tmpm->sector+front;
   back=-1;
@@ -255,18 +288,29 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
     }
   }
   base_light=sf->light>>4;
-  if (ay==by) base_light--;
-  else if (ax==bx) base_light++;
+  if (tmpm->vertex[tmps->v1].y==tmpm->vertex[tmps->v2].y) base_light--;
+  else if (tmpm->vertex[tmps->v1].x==tmpm->vertex[tmps->v2].x) base_light++;
   base_light=4*(15-ClampI64(base_light,0,15));
   for (x=x1;x<=x2;x++,iz+=dz,iu+=du)
     if (tmpv->top[x]<=tmpv->bottom[x]) {
+      seen=TRUE;
       d=1.0/iz; u=iu*d;
       light=ClampI64(base_light-MinI64(Floor(tmpv->fx*16*iz),47)/2,0,31);
       top=ViewY(tmpv,sf->ceil,iz);
       bottom=ViewY(tmpv,sf->floor,iz)-1;
-      if (tmpv->ceil[front]>=0) PlaneMark(tmpv,x,tmpv->top[x],top-1,front*2+2);
+      if (sb) {
+	up=ViewY(tmpv,sb->ceil,iz);
+	down=ViewY(tmpv,sb->floor,iz)-1;
+	if (tmpv->ceil[front]<0 && tmpv->ceil[back]<0) top=up;
+      }
+      if (tmpv->ceil[front]>=0)
+	PlaneMark(tmpv,x,tmpv->top[x],top-1,front*2+2);
+      else
+	SkyColumn(tmpv,x,tmpv->top[x],top-1,iz);
       if (tmpv->floor[front]>=0)
 	PlaneMark(tmpv,x,bottom+1,tmpv->bottom[x],front*2+1);
+      else
+	SkyColumn(tmpv,x,bottom+1,tmpv->bottom[x],iz);
       if (!sb) {
 	origin=sf->ceil+side->y;
 	if (mid && tmpl->flags&16) origin=sf->floor+mid->height+side->y;
@@ -274,9 +318,6 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
 	tmpv->top[x]=tmpv->height;
 	tmpv->bottom[x]=-1;
       } else {
-	up=ViewY(tmpv,sb->ceil,iz);
-	down=ViewY(tmpv,sb->floor,iz)-1;
-	if (tmpv->ceil[front]<0 && tmpv->ceil[back]<0) top=up;
 	if (up>top) {
 	  origin=sf->ceil+side->y;
 	  if (upper && !(tmpl->flags&8)) origin=sb->ceil+upper->height+side->y;
@@ -293,6 +334,10 @@ U0 ViewSeg(View *tmpv,Seg *tmps)
 	      -1,tmpv->height-1);
       }
     }
+  if (seen && sb && side->middle[0] && side->middle[0]!='-') {
+    if (tmpv->masked_cnt>=tmpm->seg_cnt) throw('Masked');
+    tmpv->masked[tmpv->masked_cnt++]=tmps;
+  }
   TextureDrop(tmpv->gr,mid_n);
   TextureDrop(tmpv->gr,upper_n);
   TextureDrop(tmpv->gr,lower_n);
@@ -326,6 +371,7 @@ U0 ViewDraw(View *tmpv)
   Node *tmpn;
   Subsector *tmps;
   tmpv->cs=Cos(tmpv->angle); tmpv->sn=Sin(tmpv->angle);
+  tmpv->masked_cnt=0;
   MemSet(tmpv->top,0,tmpv->width*sizeof(I16));
   MemSetU16(tmpv->bottom,tmpv->height-1,tmpv->width);
   MemSet(tmpv->plane,0,tmpv->width*tmpv->height*sizeof(U16));

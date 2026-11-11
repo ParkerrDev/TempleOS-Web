@@ -51,11 +51,11 @@ for (let pos=0;pos<2;pos++)for(let turn=0;turn<4;turn++) {
       const back=line[6-side]===65535||!(line[2]&4)?-1:map.sides[line[6-side]].sector;
       if(front!==current&&back!==current)continue;
       const p=plane(t);
-      if(p!==null) {answer=p;break;}
+      if(p!==null) {answer=p===0?-t:p;break;}
       const other=front===current?back:front,at=z+dz*t;
       const s=map.sectors[current],b=other<0?null:map.sectors[other];
       const bothSky=b&&s.ceilName==='F_SKY1'&&b.ceilName==='F_SKY1';
-      if(s.ceilName==='F_SKY1'&&at>(bothSky?b.ceil:s.ceil)+1e-9) {answer=0;break;}
+      if(s.ceilName==='F_SKY1'&&at>(bothSky?b.ceil:s.ceil)+1e-9) {answer=-t;break;}
       if(other<0||at<=Math.max(s.floor,b.floor)+1e-9||
           !bothSky&&at>Math.min(s.ceil,b.ceil)+1e-9) {
         answer=t;break;
@@ -63,7 +63,7 @@ for (let pos=0;pos<2;pos++)for(let turn=0;turn<4;turn++) {
       current=other;previous=t;
     }
     if(answer===null)answer=plane(Infinity)||0;
-    expected.push(answer>0?Math.min(2147483647,Math.round(100000000/answer)):0);
+    expected.push(answer?Math.sign(answer)*Math.min(2147483647,Math.trunc(100000000/Math.abs(answer))):0);
   }
 }
 const poseBytes=Buffer.alloc(poses.length*32),expectedBytes=Buffer.alloc(expected.length*4);

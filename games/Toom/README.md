@@ -27,10 +27,13 @@ The implemented foundation uses native V5.03 file and memory APIs:
   patterns in a private CDC; window composition uses the OS graphics layer.
 - Lazy sprite frame/rotation indexing, mirrored patch origins, transparent
   pixels, full-bright and distance lighting, sector clipping and per-pixel
-  wall/sprite depth tests. A separate 4 MiB decoded sprite cache evicts before
+  wall/sprite depth tests. Sky boundaries retain invisible depth barriers.
+  A separate 4 MiB decoded sprite cache evicts before
   allocation. Sprites are not decoded until requested.
+- Masked middle-wall textures use shared wall projection, preserve transparent
+  holes and top/bottom pegging, and clip against nearer walls and objects.
 
-Masked surfaces, fuzz effects, simulation, weapons, actors, line specials, HUD,
+Fuzz effects, simulation, weapons, actors, line specials, HUD,
 audio, saves and episode/intermission progression are still being implemented.
 There is deliberately no game launcher or advertised compatibility result yet.
 
@@ -80,6 +83,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/patch.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/texture.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/state.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/sprite.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/mask.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm ALL=1 node tools/toom/draw.test.mjs
 ```
 
@@ -98,6 +102,9 @@ The sprite check compares 7,736 state/rotation lookups, two full passes through
 853 decoded images and 48 pixel/depth views. It covers mirrored images, alpha,
 light/fullbright, sector clipping and nearer occluders. Absent Phase 2 sprite
 frames remain absent; validating gameplay-reachable state assets is a later gate.
+The masked-wall check compares 48 full pixel/depth views, covering oblique and
+near-clipped segs, top/bottom pegging, scroll offsets, holes, reverse faces and
+opaque/sky occluders.
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

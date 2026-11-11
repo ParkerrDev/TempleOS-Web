@@ -7,4 +7,5 @@
 #include "TmState"
 #include "TmPal"
 #include "TmDraw"
+#include "TmMask"
 #include "TmSprite"

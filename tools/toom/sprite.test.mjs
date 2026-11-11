@@ -41,20 +41,20 @@ const imageBytes=Buffer.alloc(images.size*8);
 const colormap=lumps.find(l=>l.name==='COLORMAP').bytes,tests=[];
 const chosen=['PLAY','POSS','TROO','PISF','BFGF','BON1'].map(name=>states.findIndex(s=>names[s[0]]===name));
 for(const state of chosen)for(let angle=0;angle<8;angle++) {
-  const d=[48,80,128][angle%3],r=[-32,0,32][angle%3],z=angle%2?8:0;
+  const d=[48,96,128][angle%3],r=[-32,0,32][angle%3],z=angle%2?8:0;
   const a=angle*Math.PI/4,rot=((Math.floor((Math.atan2(r,-d)-a+Math.PI/8)/(Math.PI/4))%8)+8)%8;
   const [sprite,frame]=states[state],code=frames.get(`${names[sprite]}:${frame&32767}:${rot}`),im=images.get(Math.abs(code));
   const light=frame&32768?0:Math.max(0,Math.min(31,4*(15-10)-Math.floor(Math.min(Math.floor(2560/d),47)/2)));
-  const pix=new Uint8Array(320*168).fill(77),depth=new Int32Array(320*168),iz=Math.round(1e8/d);
+  const pix=new Uint8Array(320*168).fill(77),depth=new Int32Array(320*168),iz=Math.trunc(1e8/d);
   for(let y=0;y<168;y++)for(let x=0;x<320;x++) {
-    const at=x+y*320;depth[at]=x%13===0?4000000:0;
+    const at=x+y*320;depth[at]=x%13===0?4000000:x%17===0?-4000000:0;
     const worldZ=41+(84-y-.5)*d/160;
     let u=Math.floor((x+.5-160)*d/160-r+(code<0?im.w-im.left:im.left));
     const v=Math.floor(z+im.top-worldZ);
     if(code<0)u=im.w-1-u;
     if(worldZ>128||worldZ<=0||u<0||u>=im.w||v<0||v>=im.h)continue;
     const c=im.pixels[u+v*im.w];
-    if(c!==256&&iz>depth[at]) {pix[at]=colormap[light*256+c];depth[at]=iz;}
+    if(c!==256&&iz>Math.abs(depth[at])) {pix[at]=colormap[light*256+c];depth[at]=iz;}
   }
   tests.push([state,d,r,z,angle,hash(pix),hash(depth)]);
 }
@@ -106,7 +106,8 @@ U0 TmSpriteTest()
     MemSet(tmpv->pix,77,320*168);
     for (j=0;j<168;j++)
       for (k=0;k<320;k++) {
-        n=0; if (!(k%13)) n=4000000;
+        n=0; if (!(k%17)) n=-4000000;
+        if (!(k%13)) n=4000000;
         tmpv->depth[k+j*320]=n;
       }
     SpriteDraw(tmpv,tmps,tmpa);

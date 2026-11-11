@@ -157,7 +157,7 @@ U0 SpriteDraw(View *tmpv,Sprites *tmps,Actor *tmpa)
     dst=tmpv->pix+y*tmpv->width;
     depth=tmpv->depth+y*tmpv->width;
     for (x=x1;x<=x2;x++)
-      if (z>depth[x]) {
+      if (z>AbsI64(depth[x])) {
 	c=src[us[x]];
 	if (c!=TM_TRANSPARENT) {
 	  dst[x]=color[c];
