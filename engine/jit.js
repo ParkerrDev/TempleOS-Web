@@ -309,6 +309,31 @@ function emitCond(f, cc) {
   else { bit(6); bit(7); bit(11); f.op("i32_xor"); f.op("i32_or"); }  // LE (ZF|(SF^OF))
   if (cc & 1) { i32c(f, 1); f.op("i32_xor"); }                        // odd cc = negation
 }
+// A fall-through can discard these flags at its next full writer. Evaluate
+// comparisons directly, but materialize every flag on an observable exit.
+function pendingCond(f,cc) {
+  const p=FLAGPEND;
+  if(p?.kind && !p.parts.length) {
+    const operand=(local,signed=false)=>{
+      f.local_get(local);
+      if(p.sz!==8) {
+        if(signed)f.op(p.sz===4?"i64_extend32_s":p.sz===2?"i64_extend16_s":"i64_extend8_s");
+        else {i64c(f,(1n<<BigInt(p.sz*8))-1n);f.op("i64_and");}
+      }
+    };
+    if(p.kind==="sub" && [2,3,4,5,6,7,12,13,14,15].includes(cc)) {
+      operand(16,cc>=12);operand(17,cc>=12);
+      const compare={2:"lt_u",3:"ge_u",4:"eq",5:"ne",6:"le_u",7:"gt_u",
+        12:"lt_s",13:"ge_s",14:"le_s",15:"gt_s"};
+      f.op("i64_"+compare[cc]);return;
+    }
+    if(cc===4||cc===5) {
+      operand(18);f.op("i64_eqz");
+      if(cc===5)f.op("i32_eqz");return;
+    }
+  }
+  materialize(f);emitCond(f,cc);
+}
 const imm8s = (j) => (U8[j] << 24) >> 24; const imm16s = (j) => ((U8[j] | (U8[j + 1] << 8)) << 16) >> 16; const imm32s = (j) => (U8[j] | (U8[j + 1] << 8) | (U8[j + 2] << 16) | (U8[j + 3] << 24)) | 0;
 const immSz = (j, sz) => sz === 1 ? imm8s(j) : sz === 2 ? imm16s(j) : imm32s(j);   // sign-extended imm of operand size (sz=8 -> imm32)
 const immLen = (sz) => sz === 1 ? 1 : sz === 2 ? 2 : 4;                            // 0x66 -> 2-byte imm! (the bug that froze games)
@@ -386,9 +411,26 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
   let i = GBASE + rip, n = 0, term = false, loopT = null;   // loopT set if the block is a self-loop (jcc back to entry); REP string ops emit their own native loop + end the block via the normal terminator path
   let ifbrk = false;   // block ends on an instruction that can OPEN an IF=1 window (STI/POPF/IRET): its return count carries bit30 so the dispatcher's break-on-IF mode can hand back for an IRQ delivery
   let compareHead=false,topExit=null,topLoop=false,sideExit=false;
+  // Keep cached registers across bounded forward fall-throughs. Each segment
+  // retains its original entry guard: an earlier store can rewrite later code.
+  // Prefix exits are emitted now, before later register/FPU writes are known.
+  const segments=[{start:rip}];
+  function forwardBranch(cc,tgt,fall) {
+    if(topExit||tgt<=fall||segments.length>=8)return false;
+    sideExit=true;
+    pendingCond(f,cc);const pending=FLAGPEND;f.if_();
+      materialize(f);i32c(f,RIP);i64c(f,tgt);st64(f);wbDirty(f);i32c(f,n+1);f.return_();
+    f.end();
+    FLAGPEND=pending;
+    const exit=new Func();materialize(exit);FLAGPEND=pending;
+    i32c(exit,RIP);i64c(exit,fall);st64(exit);wbDirty(exit);
+    i64c(exit,rip);exit.call(changedIndex);i32c(exit,n+1);exit.return_();
+    segments.push({start:fall,at:f.bytes.length,exit});
+    return true;
+  }
   function topBranch(cc,tgt,fall) {
     if(noTopLoop||globalThis.__NOLOOP||topExit||n!==1||!compareHead||tgt<=fall)return false;
-    emitCond(f,cc);f.if_();
+    materialize(f);emitCond(f,cc);f.if_();
     topExit={at:f.bytes.length,tgt,count:n+1};f.end();
     return true;
   }
@@ -474,8 +516,8 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
         const m = decodeModRM(j, rexR, rexX, rexB); j = m.j; if (m.isMem) emitEA(f, m, j - GBASE); wrReg(f, m.reg, 8, rex, () => { rdRM(f, m, 4, rex); f.op("i64_extend32_s"); }); handled = true;
       } else if (op >= 0x70 && op <= 0x7F) {                                 // jcc rel8
         const tgt = (j + 1 - GBASE) + imm8s(j); j += 1;
+        if(topBranch(op&15,tgt,j-GBASE)||forwardBranch(op&15,tgt,j-GBASE)){i=j;n++;continue;}
         materialize(f);
-        if(topBranch(op&15,tgt,j-GBASE)){i=j;n++;continue;}
         if (tgt === rip && !globalThis.__NOLOOP) loopT = { cc: op & 0xF, fall: j - GBASE };         // backward jcc to entry -> trace as a native loop
         else { i64c(f, tgt); i64c(f, j - GBASE); emitCond(f, op & 0xF); f.op("select"); }
         term = true; n++; i = j; break;
@@ -754,8 +796,8 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
         const ssz = op === 0xBE ? 1 : 2; const m = decodeModRM(j, rexR, rexX, rexB); j = m.j; if (m.isMem) emitEA(f, m, j - GBASE); wrReg(f, m.reg, szV, rex, () => { rdRM(f, m, ssz, rex); f.op(ssz === 1 ? "i64_extend8_s" : "i64_extend16_s"); }); handled = true;
       } else if (op >= 0x80 && op <= 0x8F) {                                 // jcc rel32
         const tgt = (j + 4 - GBASE) + imm32s(j); j += 4;
+        if(topBranch(op&15,tgt,j-GBASE)||forwardBranch(op&15,tgt,j-GBASE)){i=j;n++;continue;}
         materialize(f);
-        if(topBranch(op&15,tgt,j-GBASE)){i=j;n++;continue;}
         if (tgt === rip && !globalThis.__NOLOOP) loopT = { cc: op & 0xF, fall: j - GBASE };         // backward jcc to entry -> trace as a native loop
         else { i64c(f, tgt); i64c(f, j - GBASE); emitCond(f, op & 0xF); f.op("select"); }
         term = true; n++; i = j; break;
@@ -834,6 +876,12 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
   }
   if(loopT && fCacheEnabled && fStackOffset)return jitCompile(rip,true);
   const codeBytes=U8.slice(GBASE+rip,i);
+  for(let k=segments.length-1;k>0;k--) {
+    const seg=segments[k],end=k+1<segments.length?segments[k+1].start:i-GBASE;
+    const guard=new Func();
+    codeGuard(guard,seg.start,U8.slice(GBASE+seg.start,GBASE+end),g=>g.bytes.push(...seg.exit.bytes));
+    f.bytes.splice(seg.at,0,...guard.bytes);
+  }
   const anotherIteration=g=>{
     g.local_get(4);i64c(g,1024);g.op("i64_lt_u");
     g.local_get(4);i64c(g,1);g.op("i64_add");i64c(g,n);g.op("i64_mul");
@@ -878,11 +926,11 @@ export function jitCompile(rip,noFprCache=false,noTopLoop=false) {
   if (rcUsed || rcX87) { const g = new Func(); for (let k = 0; k < 16; k++) if (rcUsed & (1 << k)) { i32c(g, REG + k * 8); g.load("i64_load", 0, 3); g.local_set(RC + k); } if (rcX87) { i32c(g, FSP); g.load("i64_load", 0, 3); g.local_set(FSPLOC);
     if(fCacheEnabled)for(let k=0;k<8;k++)if(fValueUsed&(1<<k)) {fStAddr(g,k);g.load("f64_load",0,3);g.local_set(FPC+k);}
   } f.bytes.unshift(...g.bytes); }
-  // TempleOS frees and recompiles statement code at the same addresses. Guard
-  // every decoded byte before entering cached native code, including through the
-  // native dispatch table. A miss re-arms compilation and leaves CPU state intact.
+  // TempleOS recycles statement addresses. Guard the first segment before any
+  // CPU changes; each later guard exposes only the already-executed prefix.
   const wrapper=new Func();
-  codeGuard(wrapper,rip,codeBytes,g=>{i64c(g,rip);g.call(changedIndex);i32c(g,0);g.return_();});
+  const entryBytes=segments.length>1?codeBytes.slice(0,segments[1].start-rip):codeBytes;
+  codeGuard(wrapper,rip,entryBytes,g=>{i64c(g,rip);g.call(changedIndex);i32c(g,0);g.return_();});
   f.bytes.unshift(...wrapper.bytes);
   blk.setBody([{ count: 5, vt: VT.i64 }, { count: 1, vt: VT.f64 }, { count: 13, vt: VT.i64 }, { count: 17, vt: VT.i64 }, { count: 9, vt: VT.f64 }, { count: flagLocalNext-45, vt: VT.i64 }], f); m.exportFunc("run", blk.index); let inst;   // local 36 = 2nd f64 scratch (FCOMI operands)
   try { inst = new WebAssembly.Instance(new WebAssembly.Module(Uint8Array.from(m.emit())), { env: { mem: MEM, RdMem: RDMEM, WrMem: WRMEM, CodeChanged:codeChanged,budget:runBudget } }); }

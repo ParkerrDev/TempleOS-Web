@@ -57,12 +57,29 @@ real x86 conversion fixtures, and QEMU snapshot capture tools remain.
   instruction count, including zero iterations, exact device dispatch budgets,
   the iteration cap, writes to the loop's own instructions, and second-iteration
   faults that must retain interpreter exits.
+- Forward-branch checks compare each executed prefix with the interpreter for
+  all conditions and operand widths, partial/deferred flags, wrapped x87 stacks,
+  unmasked conversion fallback, modified later code segments, and dispatch
+  budgets. A fused fall-through retains a byte guard at every original boundary.
 
 These are bounded checks, not proof that every program or CPU instruction is
 correct on bare metal. Raster expectations run the original TempleOS code in
 HEMU; an independent hardware or QEMU oracle is needed for CPU semantics.
 Random dither depends on TSC and is not claimed to have identical pixels.
 VGA hardware read-plane behavior and non-VGA text modes are not fully covered.
+
+For readable Node CPU profiles, preload `tools/hemu/Profile.mjs` before a
+headless fixture:
+
+```sh
+node --import ./tools/hemu/Profile.mjs --cpu-prof --cpu-prof-dir=/tmp tools/hemu/guestcheck.mjs
+```
+
+The preload appends only WASM name metadata; it does not instrument function
+bodies or enter the production worker. Guest block names contain the absolute
+WASM-memory address of their first byte guard (`guest-host-...`), so subtract
+the fixture's guest base before matching a native symbol. Sampled profiles
+include initialization and are diagnostic evidence, not a renderer benchmark.
 
 `mem-native.mjs` compiles the actual HEMU memory module under original V5.03
 and compares its 324 outputs with the WASM build. The fixture exercises byte
