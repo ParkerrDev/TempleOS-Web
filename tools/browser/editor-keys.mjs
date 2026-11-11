@@ -86,6 +86,12 @@ try{
  assert.match(await page.locator('#console').innerText(),/worker could not start/);
  console.log('A failed worker module load reports an error and restores Run.');
  assert.deepEqual(errors,[]);
+ await run(String.raw`"READY\n"; try {while(TRUE) GetKey;} catch {"BROKEN:%d\n",Fs->except_ch=='Break'; Fs->catch_except=TRUE;}`);await ready();
+ await page.keyboard.press('Control+Alt+c');
+ await page.waitForFunction(()=>!__holycEditor.isRunning());
+ assert.match(await page.locator('#console').innerText(),/BROKEN:1/);
+ assert(!/\[error\]/.test(await page.locator('#console').innerText()));
+ console.log('Physical Ctrl-Alt-C enters the waiting program’s native Break catch and returns cleanly.');
  await page.setViewportSize({width:390,height:844});
  await run(keys);await ready();
  const bar=page.locator('#keysbar');
