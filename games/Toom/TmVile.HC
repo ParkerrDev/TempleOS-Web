@@ -66,3 +66,61 @@ U0 EnemyVileChase(Enemies *tmpe,Actor *actor)
   }
   EnemyChase(tmpe,actor);
 }
+
+U0 EnemyFire(Enemies *tmpe,Actor *fire,I64 action=TM_A_FIRE)
+{//Fire follows the target's facing only while its owner can see the target.
+  World *world=tmpe->specials->sectors->motion->world;
+  Actor *owner,*target;
+  I64 x,y;
+  if (fire->world!=world) throw('World');
+  if (!fire->active) return;
+  if (action==TM_A_START_FIRE) EnemySnd(tmpe,fire,TM_SFX_FLAMST);
+  else if (action==TM_A_FIRE_CRACKLE) EnemySnd(tmpe,fire,TM_SFX_FLAME);
+  else if (action!=TM_A_FIRE) throw('Action');
+  if (!fire->active || !(target=WorldActorGet(world,fire->tracer)) ||
+	!(owner=WorldActorGet(world,fire->target)) ||
+	!ActorSight(tmpe->sight,owner,target)) return;
+  x=target->x+FixedMul(24*65536,AngleCos(world->data,target->angle));
+  y=target->y+FixedMul(24*65536,AngleSin(world->data,target->angle));
+  WorldActorPlace(world,fire,x,y,target->z);
+}
+
+U0 EnemyVileStart(Enemies *tmpe,Actor *actor)
+{
+  World *world=tmpe->specials->sectors->motion->world;
+  if (actor->world!=world) throw('World');
+  if (actor->active) EnemySnd(tmpe,actor,TM_SFX_VILATK);
+}
+
+U0 EnemyVileTarget(Enemies *tmpe,Actor *actor)
+{//Use the target's x/y; the original C spawn accidentally repeated x.
+  World *world=tmpe->specials->sectors->motion->world;
+  Actor *target=EnemyTarget(tmpe,actor),*fire;
+  if (!target) return;
+  EnemyFace(tmpe,actor);
+  if (!(fire=WorldSpawn(world,TM_MT_FIRE,target->x,target->y,target->z)))
+    return;
+  actor->tracer=fire->id; fire->target=actor->id; fire->tracer=target->id;
+  EnemyFire(tmpe,fire);
+}
+
+U0 EnemyVileAttack(Enemies *tmpe,Actor *actor)
+{
+  Motion *motion=tmpe->specials->sectors->motion;
+  World *world=motion->world;
+  Actor *target=EnemyTarget(tmpe,actor),*fire;
+  I64 x,y;
+  if (!target) return;
+  EnemyFace(tmpe,actor);
+  if (!ActorSight(tmpe->sight,actor,target)) return;
+  EnemySnd(tmpe,actor,TM_SFX_BAREXP);
+  if (!(target=EnemyTarget(tmpe,actor))) return;
+  ActorDamage(motion,target,actor,actor,20);
+  if (!(target=EnemyTarget(tmpe,actor))) return;
+  target->vz=1000*65536/world->data->info[target->type].mass;
+  if (!(fire=WorldActorGet(world,actor->tracer))) return;
+  x=target->x-FixedMul(24*65536,AngleCos(world->data,actor->angle));
+  y=target->y-FixedMul(24*65536,AngleSin(world->data,actor->angle));
+  WorldActorPlace(world,fire,x,y,fire->z);
+  ActorRadius(motion,tmpe->sight,fire,actor,70);
+}

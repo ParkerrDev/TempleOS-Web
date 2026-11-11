@@ -86,6 +86,9 @@ The implemented foundation uses native V5.03 file and memory APIs:
   persistent game tick explicitly and emits its trail before checking targets.
   Arch-vile resurrection preserves block-column/row/chain order, raw collision
   checks, original crushed-body sizes and the heal/sound/raise sequence.
+  Its fire tracks the target facing while visible; the attack retains direct
+  damage, vertical launch and radius-blast order. Fire placement refreshes
+  spatial ownership, and missing generation handles stop dependent actions.
   Refire checks preserve the early random
   return before health and sight tests. Enemy and player shots pass an explicit
   level context to shootable-line actions; captured impact data survives nested
@@ -302,6 +305,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/tracer.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/position.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/vile-decisions.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/vile.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fire-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/fire.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/anim.test.mjs
 HOLYC_WASM=/path/to/HolyC-wasm OUT=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/TempleOS-Web REFERENCE=/tmp/toom-surfaces.json node tools/toom/surface-draw.test.mjs
@@ -558,6 +563,12 @@ canonical actor definition. Twenty-five actual geometry/lifecycle cases pass
 native TempleOS and pinned HEMU, including competing corpses, blocked queries,
 crushed bodies, shadow RNG and temporary-height restoration on exceptions.
 Exact hashes and controlled oracle boundaries are in `tools/toom/vile-evidence.json`.
+Arch-vile fire and attack match 6,144 original-C cases with controlled sight,
+damage and spawn boundaries. Thirty-six actual geometry/damage/lifecycle cases
+pass native TempleOS and pinned HEMU. The spawn boundary explicitly corrects
+the original repeated-x coordinate typo; an occluded real-spawn case verifies
+target x/y. Follow and blast moves refresh spatial ownership. Exact hashes,
+callback failure setup and limitations are in `tools/toom/fire-evidence.json`.
 Surface fixtures compare 163,215 frame mappings against the original C cycle
 definitions, then check all 327 scrolling lines and 128,180 sidedefs across
 36 maps. Synthetic cases cover shared sidedefs, signed offset wrap, activation

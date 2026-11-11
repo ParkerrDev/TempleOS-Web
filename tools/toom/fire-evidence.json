@@ -1,0 +1,69 @@
+{
+  "status": "bounded-native-arch-vile-fire-proof",
+  "hemu": {
+    "web": "4a1fe9d",
+    "hemu": "ccf04ac",
+    "compiler": "7f80635"
+  },
+  "native": {
+    "templeos": "5.03",
+    "backend": "QEMU/KVM"
+  },
+  "reference": {
+    "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+    "path": "linuxdoom-1.10/p_enemy.c",
+    "sha256": "bfe1e3c039443d787e4a0dcb485720c9707f3381b69b00ad35f3e52796bfeec0"
+  },
+  "checks": {
+    "decisions": {
+      "cases": 6144,
+      "native": "qemu-nl0zqx55",
+      "hemu": true,
+      "sourceSha256": "b66f95cb848be0035fa9c571791d30b0c76b97019cc1a37520f9bc1c1369eb95",
+      "reference": "Unmodified original A_FaceTarget, A_VileStart, A_StartFire, A_FireCrackle, A_Fire, A_VileTarget and A_VileAttack compiled as host C. Sight, damage, radius and angle boundaries are controlled. The spawn boundary explicitly normalizes the original repeated-x typo to target y. Fifty result/event fields match.",
+      "scope": [
+        "Owner/target/fire presence and sight branches",
+        "All random starts, shadow-facing draws, spawn draws and ordered sound/damage events",
+        "Target-facing follow, unsigned angle wrap, target mass and vertical boost",
+        "Target/source/tracer identity and final fire placement"
+      ]
+    },
+    "integration": {
+      "cases": 36,
+      "native": "qemu-49cji527",
+      "hemu": true,
+      "sourceSha256": "3358da1c67a7210fba6daeb05f20c2b4ad4e53cf43c715614e96315b3020a4ce",
+      "scope": [
+        "Actual open/closed portal sight and corrected x/y spawn while occluded",
+        "Cardinal target-facing follow, block relinking and sector/bounds refresh",
+        "Actual 20-point direct hit, 70-radius blast, vertical boost and boss blast immunity",
+        "Lost targets, missing or retired fire, inactive actors and stale generation handles",
+        "Sound/action callback failure before damage and during radius damage, including cleanup",
+        "Retargeting from sound and damage callbacks is observed before subsequent target use",
+        "Shadow-facing/spawn RNG and complete fresh-task heap cleanup"
+      ],
+      "controlledFailureSetup": "Three exception/retarget fixtures assign the valid pain action to the player pain-entry state so an actual damage callback can be observed. The state action is restored after each fixture."
+    },
+    "resurrectionRegression": {
+      "vile-decisions": {
+        "native": "qemu-q17etwpy",
+        "sourceSha256": "919f63701ed097cc1f3cc15b3a310730e05f01b5724d328b932ed2cb903947a2",
+        "out": "VILE 8160 DECISIONS BAD 0"
+      },
+      "vile": {
+        "native": "qemu-qisvcf_m",
+        "sourceSha256": "d9b2f9bc0fa0036b79282ffa8960079e6b73bc9f4232d06c1735099af1fcb290",
+        "out": "VILE 25 REAL CASES BAD 0"
+      }
+    }
+  },
+  "nativeDesign": [
+    "Fire spawns at target x/y/z, correcting the original A_VileTarget x/x typo. The decision reference controls this spawn boundary; the real occluded-spawn case proves the correction.",
+    "Forced follow and blast placement refresh coordinates, sector bounds and block ownership through WorldActorPlace, as with revenant extra steps.",
+    "Attack targets are re-resolved by generation after sound and damage callbacks; missing or retired handles stop dependent work. Actor callbacks retain the existing deferred-reclamation requirement."
+  ],
+  "remaining": [
+    "Boss actions and complete actor dispatcher",
+    "Persistent native game host, UI/audio, saves and progression"
+  ]
+}
