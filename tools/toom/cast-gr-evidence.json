@@ -162,5 +162,7 @@
     "The C image oracle receives independent front-rotation lump selection from official WAD names; sprite indexing is checked against that selection, not claimed as an unchanged R_InitSprites oracle.",
     "Undefined original font lookup inputs are excluded; authored names contain none. Native unsupported glyphs advance four pixels safely.",
     "Live host finale routing, music, complete-game acceptance and performance remain unqualified. No catalog promotion."
-  ]
+  ],
+  "evidenceCheckpoint": "4952218",
+  "subsequentHostQualification": "finale-play-evidence.json records the later Load/Run connection; this file retains its original component proof inputs."
 }

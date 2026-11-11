@@ -13,7 +13,7 @@ assert(Number.isInteger(tic)&&tic>=0&&tic<=100000);
 const game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n),'latin1');
 const source=[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
   .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+
-  ['TmFinale.HC','TmFinaleGr.HC'].map(read).join('\n')+`
+  `
 U0 TmFinalePreview()
 {
   Wad *wad=WadNew("C:/ORACLE/FREEDOOM.WAD");

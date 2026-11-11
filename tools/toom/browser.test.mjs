@@ -15,11 +15,14 @@ const {BrowserMachine,MachinePost,MachineReady}=await import(pathToFileURL(resol
 const {TextRow}=await import(pathToFileURL(resolve(web,'tools/hemu/WorkerHost.mjs')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom')),load=readFileSync(resolve(game,'Load.HC'),'latin1');
+const finale=!!process.env.FINALE,progression=!!process.env.PROGRESSION;
+assert(!(finale&&progression));
 const names=['Run.HC','Load.HC',...load.matchAll(/#include "([^"]+)"/g)]
   .map(n=>typeof n==='string'?n:n[1].includes('.')?n[1]:n[1]+'.HC')
   .concat(['TmOverlay.HC','TmScreen.HC','TmPlay.HC']);
 const files=new Map(names.map(n=>[n,readFileSync(resolve(game,n))]));
-files.set('FREEDOOM.WAD',FreedoomRead());files.set('TMDATA.BIN',readFileSync(resolve(game,'TMDATA.BIN')));
+files.set('FREEDOOM.WAD',finale?readFileSync(resolve(root,'tools/toom/.assets/freedoom-0.13.0-phase2.wad')):FreedoomRead());
+files.set('TMDATA.BIN',readFileSync(resolve(game,'TMDATA.BIN')));
 const fileHashes=Object.fromEntries([...files].map(([n,bytes])=>[n,hash(bytes)]));
 const runtimeNames=['server.mjs','Keyboard.js','Os.js','WinMgr.js','engine/jit.js',
   'engine/hemu-worker.js','engine/hemu-smp-worker.js','engine/guestexec.js',
@@ -27,9 +30,9 @@ const runtimeNames=['server.mjs','Keyboard.js','Os.js','WinMgr.js','engine/jit.j
   'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
   'engine/Stock.js','engine/Speaker.js','vendor/images/templeos-hd.qcow2.gz'];
 const runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
-const progression=!!process.env.PROGRESSION;
 const probe=readFileSync(new URL('Worker.HC',import.meta.url),'latin1')+'\n'+readFileSync(new URL('AudioWorker.HC',import.meta.url),'latin1')+
-  (progression?'\n'+readFileSync(new URL('ProgressWorker.HC',import.meta.url),'latin1'):'');
+  (progression||finale?'\n'+readFileSync(new URL('ProgressWorker.HC',import.meta.url),'latin1'):'')+
+  (finale?'\n'+readFileSync(new URL('FinaleWorker.HC',import.meta.url),'latin1'):'');
 const server=createServer(ServeReq).listen(0,'127.0.0.1');await once(server,'listening');
 const url=`http://127.0.0.1:${server.address().port}`;
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
@@ -186,6 +189,43 @@ try {
         progressFrames={statsHash:hash(stats.buf),enteringHash:hash(entering.buf),nextHash:hash(next.buf),
           ownerProbeSha256:hash(Buffer.from(ownerSource,'latin1'))};
       }
+      let finaleFrames=null;
+      if(finale) {
+        const ownerSource=readFileSync(new URL('FinaleOwner.HC',import.meta.url),'latin1');
+        await MachinePost(page,{cmd:'osExec',id:'story-owner',src:ownerSource,target:Number(running.task),force:true});
+        assert((await Event('story-owner')).ok);
+        await Done('story-state','TmWorkerFinaleWait(0,6);TmWorkerFinaleFrame;');
+        await page.waitForTimeout(150);const story=await Frame();
+        await page.locator('#canvas').screenshot({path:resolve(out,`story-${count}.png`)});
+        await page.keyboard.down('Control');
+        try {await Done('story-next','TmWorkerProgressWait(0,-1,-1,7);');}
+        finally {await page.keyboard.up('Control');}
+        const next=await ScreenWait(/ARROWS\/WASD MOVE/);
+        await page.locator('#canvas').screenshot({path:resolve(out,`story-next-${count}.png`)});
+        await MachinePost(page,{cmd:'osExec',id:'cast-owner',src:'TmFinaleOwner(30);',target:Number(running.task),force:true});
+        assert((await Event('cast-owner')).ok);
+        await Done('cast-text','TmWorkerFinaleWait(0,30);');
+        await page.keyboard.down('Space');
+        try {await Done('cast-start','TmWorkerFinaleWait(2,30,0,0);');}
+        finally {await page.keyboard.up('Space');}
+        await Done('cast-frame','TmWorkerFinaleFrame;');
+        await page.waitForTimeout(150);const cast=await Frame();
+        await page.locator('#canvas').screenshot({path:resolve(out,`cast-${count}.png`)});
+        assert.notEqual(hash(story.buf),hash(cast.buf));
+        await page.keyboard.press('p');
+        await Done('cast-paused','TmWorkerFinalePause;tm_worker_old_final=tm_worker_final_tic;');
+        await page.waitForTimeout(150);
+        await Done('cast-still','TmWorkerFinale;if (tm_worker_final_tic!=tm_worker_old_final) throw(\'Pause\');');
+        await page.keyboard.press('p');
+        await page.keyboard.down('x');
+        try {await Done('cast-death','TmWorkerFinaleWait(2,30,0,1);');}
+        finally {await page.keyboard.up('x');}
+        await Done('cast-next','TmWorkerFinaleWait(2,30,1,0);TmWorkerFinaleFrame;');
+        await page.waitForTimeout(150);const castNext=await Frame();
+        await page.locator('#canvas').screenshot({path:resolve(out,`cast-next-${count}.png`)});
+        finaleFrames={storyHash:hash(story.buf),nextHash:hash(next.buf),castHash:hash(cast.buf),castNextHash:hash(castNext.buf),
+          ownerProbeSha256:hash(Buffer.from(ownerSource,'latin1'))};
+      }
       await Exit('run','Escape');
       await Done('exit-owner',"TmWorkerProbe;if (tm_worker_state) throw('Owner');");
       await Done('audio-stopped',"TmWorkerAudio;if (tm_worker_snd_gate) throw('Sound');");
@@ -196,7 +236,7 @@ try {
       const final=await page.evaluate(()=>({keys:window.toomKeys,errors:window.machine.events.filter(m=>m.cmd==='error'||m.cmd==='guestResult'&&m.state==='failed')}));
       for(const key of [0x1D,0x9D,0x19,0x99,0xE0,0x48,0xC8,0x01,0x81,0x2A,0xAA])assert(final.keys.includes(key),`DOM keyboard produced set1 ${key.toString(16)}`);
       assert.deepEqual(final.errors,[]);assert.deepEqual(errors,[]);
-      const result={cores:count,weaponReadyMs,audibleRms,soundMessages,captureReleases,progressFrames,keys:final.keys,initialHash:hash(initial.buf),movedHash:hash(moved.buf),
+      const result={cores:count,weaponReadyMs,audibleRms,soundMessages,captureReleases,progressFrames,finaleFrames,keys:final.keys,initialHash:hash(initial.buf),movedHash:hash(moved.buf),
         screenshot:resolve(out,`frame-${count}.png`),screenshotSha256:hash(readFileSync(resolve(out,`frame-${count}.png`)))};
       results.push(result);writeFileSync(resolve(out,`browser-${count}.json`),JSON.stringify(result,null,2)+'\n');
     } catch(error) {

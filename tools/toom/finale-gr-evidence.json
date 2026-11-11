@@ -136,5 +136,7 @@
     "The original font index for a backtick is out of bounds; official authored strings contain none. Unsupported glyphs are treated as four-pixel spacing in the native renderer.",
     "The native image helper clips to its320x200 private buffer. Source parity is established for the154 defined official-asset scenes, not original undefined out-of-screen writes.",
     "The two previews are native renderer outputs encoded as PNG, not observations of an interactive browser finale."
-  ]
+  ],
+  "evidenceCheckpoint": "c487c12",
+  "subsequentHostQualification": "finale-play-evidence.json records the later Load/Run connection; this file retains its original component proof inputs."
 }

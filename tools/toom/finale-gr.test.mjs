@@ -15,7 +15,7 @@ const bytes=Buffer.concat([header,...reference.scenes.flatMap(s=>{
 const game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n),'latin1');
 const source=[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
   .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+
-  ['TmFinale.HC','TmFinaleGr.HC'].map(read).join('\n')+'\n'+readFileSync(new URL('FinaleGr.HC',import.meta.url),'latin1');
+  readFileSync(new URL('FinaleGr.HC',import.meta.url),'latin1');
 const hash=b=>createHash('sha256').update(b).digest('hex'),sourceSha256=hash(Buffer.from(source,'latin1')),
   referenceSha256=hash(bytes),assetHashes=reference.wads.map(hash),referenceSourceSha256=reference.sourceSha256,
   files=[{name:'PHASE1.WAD',bytes:reference.wads[0]},{name:'PHASE2.WAD',bytes:reference.wads[1]},{name:'ENDGR.BIN',bytes}];

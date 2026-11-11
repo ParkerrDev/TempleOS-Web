@@ -11,7 +11,7 @@ assert(Number.isInteger(actor)&&actor>=0&&actor<17);assert(Number.isInteger(tic)
 const game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n),'latin1'),
   source=[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
     .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+
-    ['TmFinale.HC','TmFinaleGr.HC','TmCast.HC','TmCastGr.HC'].map(read).join('\n')+`
+    `
 U0 TmCastPreview()
 {
   Wad *wad=WadNew("C:/ORACLE/FREEDOOM.WAD");

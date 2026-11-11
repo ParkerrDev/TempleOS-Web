@@ -11,7 +11,7 @@ const game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n),'lati
     '\n#define MAlloc TmLoadAlloc\n#define CAlloc TmLoadCAlloc\n#define FOpen TmLoadOpen\n#define FClose TmLoadClose\n#define FileRead TmLoadRead\n#define FBlkRead TmLoadBlocks\n'+
     [...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
       .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+
-    ['TmFinale.HC','TmFinaleGr.HC','TmCast.HC','TmCastGr.HC'].map(read).join('\n')+'\n'+readFileSync(new URL('CastAlloc.HC',import.meta.url),'latin1'),
+    readFileSync(new URL('CastAlloc.HC',import.meta.url),'latin1'),
   hash=b=>createHash('sha256').update(b).digest('hex'),sourceSha256=hash(Buffer.from(source,'latin1')),
   files=[{name:'FREEDOOM.WAD',bytes:readFileSync(resolve(root,'tools/toom/.assets/freedoom-0.13.0-phase2.wad'))},
     {name:'TMDATA.BIN',bytes:readFileSync(resolve(game,'TMDATA.BIN'))}],assetSha256=hash(files[0].bytes);

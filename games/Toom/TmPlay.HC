@@ -11,11 +11,14 @@ class Play
   Audio *audio;
   Story *story;
   Intermission result;
+  Finale finale;
+  Cast cast;
+  FinaleGr *final_gr;
   SoundScene sound;
   CDC *front,*back;
   CTask *task;
   Controls controls;
-  I64 flags,blocked,frames,stage;
+  I64 flags,blocked,frames,stage,cast_buttons;
   Bool focused,paused,pause_down,quit,did_secret;
 };
 
@@ -89,30 +92,9 @@ U0 PlayTitle(Play *tmpp,CDC *dc,I64 map_num,I64 y)
 U0 PlayResultDraw(Play *tmpp,CDC *dc)
 {//Native text presents the verified counters; map artwork is not loaded here.
   Intermission *tmpi=&tmpp->result;
-  I64 i,n=-1,x=144,y=16;
-  U8 *st;
   dc->color=BLACK; GrRect(dc,0,0,640,TM_PLAY_HEIGHT);
   dc->color=YELLOW;
-  if (tmpp->stage==TM_PLAY_FINALE) {
-    if (!tmpi->commercial) n=tmpi->episode-1;
-    else switch (tmpi->map_num) {
-      case 6: n=4; break;
-      case 11: n=5; break;
-      case 20: n=6; break;
-      case 30: n=7; break;
-      case 15: n=8; break;
-      case 31: n=9; break;
-    }
-    st=NULL;
-    if (n>=0) st=tmpp->story->end[n];
-    if (st) {
-      for (i=0;st[i] && y<368;i++) {
-	if (st[i]=='\n') {x=144; y+=16;}
-	else {GrPrint(dc,x,y,"%c",st[i]); x+=FONT_WIDTH;}
-      }
-    } else GrPrint(dc,256,160,"COMPLETE");
-    dc->color=LTGRAY; GrPrint(dc,272,384,"ESC EXIT");
-  } else if (tmpi->phase!=TM_IM_STATS) {
+  if (tmpi->phase!=TM_IM_STATS) {
     GrPrint(dc,288,112,"ENTERING");
     PlayTitle(tmpp,dc,tmpi->next,144);
   } else {
@@ -140,6 +122,23 @@ U0 PlayResultDraw(Play *tmpp,CDC *dc)
   }
 }
 
+U0 PlayFinaleDraw(Play *tmpp,CDC *dc)
+{
+  FinaleGr *tmpg=tmpp->final_gr;
+  if (!tmpg) {
+    tmpg=FinaleGrNew(tmpp->game->wad,&tmpp->finale);
+    tmpg->sound=tmpp->result.sound; tmpg->context=tmpp;
+    tmpp->final_gr=tmpg;
+  }
+  if (tmpp->finale.stage==TM_FINAL_CAST)
+    CastGrDraw(tmpg,&tmpp->cast,tmpp->game->sprites,tmpp->story);
+  else FinaleGrDraw(tmpg,&tmpp->finale);
+  FinaleGrBlot(tmpg,dc);
+  if (tmpp->paused || !tmpp->focused) {
+    dc->color=YELLOW; GrPrint(dc,8,384,"PAUSED");
+  }
+}
+
 U0 PlayFrame(Play *tmpp)
 {//The compositor keeps the completed front buffer while the next frame draws.
   CDC *dc;
@@ -147,7 +146,9 @@ U0 PlayFrame(Play *tmpp)
   try {
     if (tmpp->stage==TM_PLAY_LEVEL) {
       GameDraw(tmpp->game,tmpp->back); PlayHUD(tmpp,tmpp->back);
-    } else PlayResultDraw(tmpp,tmpp->back);
+    } else if (tmpp->stage==TM_PLAY_FINALE)
+      PlayFinaleDraw(tmpp,tmpp->back);
+    else PlayResultDraw(tmpp,tmpp->back);
     while (LBts(&tmpp->flags,TMf_PLAY_FRAME)) Yield;
     dc=tmpp->front; tmpp->front=tmpp->back; tmpp->back=dc;
     tmpp->frames++;
@@ -204,6 +205,15 @@ U0 PlayResultSnd(I64 n,U8 *context)
   AudioStart(tmpp->audio,0,0,n);
 }
 
+U0 PlayFinaleStart(Play *tmpp)
+{
+  FinaleStart(&tmpp->finale,tmpp->story,&tmpp->result);
+  FinaleGrDel(tmpp->final_gr); tmpp->final_gr=NULL;
+  MemSet(&tmpp->cast,0,sizeof(Cast)); tmpp->cast_buttons=0;
+  AudioStop(tmpp->audio);
+  tmpp->stage=TM_PLAY_FINALE;
+}
+
 U0 PlayFinish(Play *tmpp)
 {
   Level *level=tmpp->game->level;
@@ -215,20 +225,36 @@ U0 PlayFinish(Play *tmpp)
   tmpp->result.sound=&PlayResultSnd; tmpp->result.context=tmpp;
   tmpp->did_secret=result.did_secret;
   tmpp->stage=TM_PLAY_STATS;
-  if (!result.next) tmpp->stage=TM_PLAY_FINALE;
+  if (!result.next) PlayFinaleStart(tmpp);
 }
 
 U0 PlayNext(Play *tmpp,I64 keys)
 {//A failed candidate leaves the completed old level and result intact.
   Intermission *tmpi=&tmpp->result;
-  if (tmpi->finale) tmpp->stage=TM_PLAY_FINALE;
+  if (tmpi->finale && tmpp->stage!=TM_PLAY_FINALE) PlayFinaleStart(tmpp);
   else {
     AudioStop(tmpp->audio);
     GameLoad(tmpp->game,tmpi->episode,tmpi->next);
     PlaySndBind(tmpp);
+    FinaleGrDel(tmpp->final_gr); tmpp->final_gr=NULL;
     tmpp->stage=TM_PLAY_LEVEL;
     ControlsInit(&tmpp->controls); tmpp->blocked=keys;
   }
+}
+
+U0 PlayFinaleTick(Play *tmpp,I64 keys)
+{//Only buttons held at cast entry survive the cast key-event consumer.
+  I64 buttons=tmpp->controls.buttons,events;
+  if (tmpp->finale.stage==TM_FINAL_CAST) {
+    tmpp->cast_buttons&=buttons; buttons=tmpp->cast_buttons;
+  }
+  events=FinaleTick(&tmpp->finale,buttons);
+  if (events&TM_FINALF_CAST) {
+    CastStart(&tmpp->cast,tmpp->game->data,&PlayResultSnd,tmpp);
+    tmpp->cast_buttons=buttons;
+  }
+  if (tmpp->finale.stage==TM_FINAL_CAST) CastTick(&tmpp->cast);
+  if (tmpp->finale.done) PlayNext(tmpp,keys);
 }
 
 U0 PlaySndOff(Play *tmpp)
@@ -285,7 +311,8 @@ U0 PlayTick(Play *tmpp,I64 keys,Bool focused)
       if (tmpp->stage==TM_PLAY_STATS && !tmpp->paused && focused) {
 	IntermissionTick(&tmpp->result,input->buttons);
 	if (tmpp->result.phase==TM_IM_DONE) PlayNext(tmpp,keys);
-      }
+      } else if (tmpp->stage==TM_PLAY_FINALE && !tmpp->paused && focused)
+	PlayFinaleTick(tmpp,keys);
     }
   } catch {
     PlayLeave(tmpp);
@@ -299,7 +326,8 @@ U0 PlayDel(Play *tmpp)
     PlayEnter(tmpp);
     try {
       if (tmpp->task) throw('Active');
-      AudioDel(tmpp->audio); StoryDel(tmpp->story); GameDel(tmpp->game);
+      AudioDel(tmpp->audio); FinaleGrDel(tmpp->final_gr);
+      StoryDel(tmpp->story); GameDel(tmpp->game);
       DCDel(tmpp->front); DCDel(tmpp->back);
     } catch {
       PlayLeave(tmpp);
@@ -354,6 +382,10 @@ Bool PlayKey(Play *tmpp,I64 ch,I64 sc)
     AudioPause(tmpp->audio,tmpp->paused || !tmpp->focused);
     return TRUE;
   }
+  if (tmpp->stage==TM_PLAY_FINALE && tmpp->finale.stage==TM_FINAL_CAST &&
+	tmpp->focused && (!tmpp->task || sys_focus_task==tmpp->task) &&
+	!tmpp->paused && ch!='p' && ch!='P')
+    return CastKey(&tmpp->cast,TRUE);
   return FALSE;
 }
 

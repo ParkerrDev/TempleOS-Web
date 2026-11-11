@@ -9,15 +9,17 @@ const web=resolve(process.env.TEMPLEOS_WEB||root);
 const {HemuBoot,ReadyWait,FramesWait,Sleep,TextRow}=await import(pathToFileURL(resolve(web,'tools/hemu/WorkerHost.mjs')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom')),load=readFileSync(resolve(game,'Load.HC'),'latin1');
+const finale=!!process.env.FINALE,progression=!!process.env.PROGRESSION;
+assert(!(finale&&progression));
 const names=['Run.HC','Load.HC',...load.matchAll(/#include "([^"]+)"/g)]
   .map(n=>typeof n==='string'?n:n[1].includes('.')?n[1]:n[1]+'.HC')
   .concat(['TmOverlay.HC','TmScreen.HC','TmPlay.HC']);
 const files=names.map(n=>({path:`C:/TOOM/${n}`,bytes:readFileSync(resolve(game,n))})).concat([
-  {path:'C:/TOOM/FREEDOOM.WAD',bytes:FreedoomRead()},
+  {path:'C:/TOOM/FREEDOOM.WAD',bytes:finale?readFileSync(resolve(root,'tools/toom/.assets/freedoom-0.13.0-phase2.wad')):FreedoomRead()},
   {path:'C:/TOOM/TMDATA.BIN',bytes:readFileSync(resolve(game,'TMDATA.BIN'))}]);
-const progression=!!process.env.PROGRESSION;
 const probe=readFileSync(resolve(root,'tools/toom/Worker.HC'),'latin1')+'\n'+readFileSync(new URL('AudioWorker.HC',import.meta.url),'latin1')+
-  (progression?'\n'+readFileSync(new URL('ProgressWorker.HC',import.meta.url),'latin1'):'');
+  (progression||finale?'\n'+readFileSync(new URL('ProgressWorker.HC',import.meta.url),'latin1'):'')+
+  (finale?'\n'+readFileSync(new URL('FinaleWorker.HC',import.meta.url),'latin1'):'');
 const out=resolve(process.env.OUT||'/tmp/toom-workers');mkdirSync(out,{recursive:true});
 const fileHashes=Object.fromEntries(files.map(f=>[f.path,hash(f.bytes)]));
 const runtimeNames=['engine/jit.js','engine/hemu-worker.js','engine/hemu-smp-worker.js',
@@ -135,6 +137,39 @@ for(const count of cores) {
       progressFrames={statsHash:hash(stats.buf),enteringHash:hash(entering.buf),nextHash:hash(next.buf),
         ownerProbeSha256:hash(Buffer.from(src,'latin1'))};
     }
+    let finaleFrames=null;
+    if(finale) {
+      const src=readFileSync(new URL('FinaleOwner.HC',import.meta.url),'latin1');
+      h.Post({cmd:'osExec',id:'story-owner',src,target:Number(running.task),force:true});
+      assert((await Result('story-owner')).ok);
+      await Done('story-state','TmWorkerFinaleWait(0,6);TmWorkerFinaleFrame;');
+      await FramesWait(h,3,10000);const story=h.last;SaveFrame(story,'story');
+      SendKeys([0x1D]);
+      try {await Done('story-next','TmWorkerProgressWait(0,-1,-1,7);');}
+      finally {SendKeys([0x9D]);}
+      const next=await ScreenWait(/ARROWS\/WASD MOVE/);assert.match(Text(next),/MAP07/);SaveFrame(next,'story-next');
+      h.Post({cmd:'osExec',id:'cast-owner',src:'TmFinaleOwner(30);',target:Number(running.task),force:true});
+      assert((await Result('cast-owner')).ok);
+      await Done('cast-text','TmWorkerFinaleWait(0,30);');
+      SendKeys([0x39]);
+      try {await Done('cast-start','TmWorkerFinaleWait(2,30,0,0);');}
+      finally {SendKeys([0xB9]);}
+      await Done('cast-frame','TmWorkerFinaleFrame;');
+      await FramesWait(h,3,10000);const cast=h.last;SaveFrame(cast,'cast');
+      assert.notEqual(hash(story.buf),hash(cast.buf));
+      await Tap(0x19);
+      await Done('cast-paused','TmWorkerFinalePause;tm_worker_old_final=tm_worker_final_tic;');
+      await Sleep(150);
+      await Done('cast-still','TmWorkerFinale;if (tm_worker_final_tic!=tm_worker_old_final) throw(\'Pause\');');
+      await Tap(0x19);
+      SendKeys([0x2D]);
+      try {await Done('cast-death','TmWorkerFinaleWait(2,30,0,1);');}
+      finally {SendKeys([0xAD]);}
+      await Done('cast-next','TmWorkerFinaleWait(2,30,1,0);TmWorkerFinaleFrame;');
+      await FramesWait(h,3,10000);const castNext=h.last;SaveFrame(castNext,'cast-next');
+      finaleFrames={storyHash:hash(story.buf),nextHash:hash(next.buf),castHash:hash(cast.buf),castNextHash:hash(castNext.buf),
+        ownerProbeSha256:hash(Buffer.from(src,'latin1'))};
+    }
     await Tap(0x01);
     await Wait(m=>m.cmd==='guestResult'&&m.id==='run'&&m.state==='done');
     await FramesWait(h,3,10000);
@@ -151,7 +186,7 @@ for(const count of cores) {
     assert(!h.msgs.some(m=>m.cmd==='error'));
     assert(!h.apMsgs.some(m=>m.cmd==='error'));
     assert.equal(hash(readFileSync(wasm)),wasmSha256,'Worker binary remained fixed during the check.');
-    results.push({cores:count,wasmSha256,runtimeHashes,fileHashes,progressFrames,probeSha256:hash(Buffer.from(probe,'latin1')),
+    results.push({cores:count,wasmSha256,runtimeHashes,fileHashes,progressFrames,finaleFrames,probeSha256:hash(Buffer.from(probe,'latin1')),
       firstFrameMs,weaponReadyMs,soundMessages,frames:h.nframes,initialHash:hash(initial.buf),pausedHash:hash(paused.buf),movedHash:hash(moved.buf),
       screen:initialText});
     writeFileSync(resolve(out,`worker-${count}.json`),JSON.stringify(results.at(-1),null,2)+'\n');

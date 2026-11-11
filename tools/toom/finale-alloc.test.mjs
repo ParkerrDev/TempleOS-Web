@@ -11,7 +11,7 @@ const source=readFileSync(new URL('LoadProbe.HC',import.meta.url),'latin1')+
   '\n#define MAlloc TmLoadAlloc\n#define CAlloc TmLoadCAlloc\n#define FOpen TmLoadOpen\n#define FClose TmLoadClose\n#define FileRead TmLoadRead\n#define FBlkRead TmLoadBlocks\n'+
   [...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
     .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+
-  ['TmFinale.HC','TmFinaleGr.HC'].map(read).join('\n')+'\n'+readFileSync(new URL('FinaleAlloc.HC',import.meta.url),'latin1');
+  readFileSync(new URL('FinaleAlloc.HC',import.meta.url),'latin1');
 const hash=b=>createHash('sha256').update(b).digest('hex'),sourceSha256=hash(Buffer.from(source,'latin1')),
   files=[{name:'FREEDOOM.WAD',bytes:FreedoomRead()}],assetSha256=hash(files[0].bytes);
 if(backend==='qemu') {

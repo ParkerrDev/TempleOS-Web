@@ -786,7 +786,7 @@ TempleOS and include its `Run.HC` entry from any directory. The entry selects
 its own directory before loading modules and default assets. The host uses
 native held-key state, task messages, `SettingsPush`/`SettingsPop` and a
 `DrawIt` callback. It needs no browser API. This entry remains outside the
-production catalog: complete finale presentation, saves, nightmare respawning
+production catalog: intermission artwork/music, saves, nightmare respawning
 and remaining world visual effects are unfinished; rendering/audio performance
 also needs further work.
 
@@ -795,9 +795,10 @@ Shift runs, Ctrl fires, Space uses, and 1–8 select weapons. P pauses; Esc or
 Shift-Esc exits. Losing focus pauses simulation and requires held keys to be
 released before they act after focus returns. Dead players restart the level
 with Space. Ordinary exits show native statistics, then load the next map.
-Ctrl or Space skips the current results stage. Episode endings and commercial
-story stops currently show authored text; artwork, cast and story continuation
-are still being implemented.
+Ctrl or Space skips the current results stage. Episode endings reveal authored
+text and show their artwork. Commercial story stops continue to the next map
+after Ctrl/Space; MAP30 enters the cast instead. A new key press during the cast
+starts the displayed actor's death animation. P and Esc retain their host roles.
 
 Simulation advances in 35 Hz tics, processing at most four before checking
 messages again and drawing. Remaining tics stay pending; this does not claim
@@ -977,7 +978,7 @@ rejected instead of reusing a stale target.
 
 
 `TmStory.HC` reads the small authored DEHACKED text lump into one owned buffer.
-It retains level names, ending text/background names and par times for both
+It retains level/cast names, ending text/background names and par times for both
 Freedoom phases. The native/frozen-HEMU `story.test.mjs` checks 27 cases, 296
 strings, ten malformed inputs and four allocation/read failures against
 unchanged pinned Chocolate Doom text-reader functions. Exact evidence and
@@ -1013,7 +1014,7 @@ resolved the bounded transition gate without changing the renderer, disk format
 or loading the whole IWAD. Cold-start and sustained performance still require
 separate uncontended measurements.
 
-`TmFinale.HC` is the next standalone component, currently outside `Load`/`Run`.
+`TmFinale.HC` supplies the finale timeline used by the native host.
 It borrows authored story metadata and implements text reveal timing, episode
 art timing, commercial continuation and cast-start requests. Original TempleOS
 and frozen HEMU match 180,000 steps from unchanged released `F_StartFinale`
@@ -1025,11 +1026,11 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/finale.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/finale.test.mjs
 ```
 
-This component reports transitions; artwork, cast animation, music and its
-connection to the interactive host are separate work.
+This component reports transitions; the host connects artwork and cast
+animation separately. Music playback remains unfinished.
 
 `TmFinaleGr.HC` adds the authored finale font/backgrounds, episode artwork and
-the episode-three scroll/END sequence as a second standalone component. It
+the episode-three scroll/END sequence as a second component. It
 loads one flat and a private indexed frame, then decodes glyphs and artwork
 on demand. Original TempleOS and frozen HEMU match every pixel in 154 scenes
 (9,856,000 pixels) from the original C renderer, using both official Freedoom
@@ -1046,9 +1047,9 @@ HOLYC_WASM=/path/to/HolyC-wasm EPISODE=3 STAGE=1 TIC=1210 node tools/toom/finale
 ```
 
 The preview command exports an actual native frame. `EPISODE=1 STAGE=0
-TIC=3000` shows the completed first-episode text. These components remain
-outside `Load`/`Run` while the live finale connection is completed;
-the development host still has the earlier static finale screen.
+TIC=3000` shows the completed first-episode text. `Load` includes the finale
+components and `Play` publishes their completed frames through its existing
+front/back CDC ownership boundary.
 
 `TmCast.HC` supplies the separate ending cast state machine. It borrows the
 verified data records and advances animation without spawning actors or running
@@ -1063,8 +1064,8 @@ HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/cast.test.mjs
 BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/cast.test.mjs
 ```
 
-Cast artwork and authored names now have their own proof below. Actual host
-input routing remains separate; these standalone components do not change `Run`.
+Cast artwork and authored names have their own proof below. The component
+evidence remains distinct from the live host input/lifecycle checks.
 
 `TmCastGr.HC` draws the commercial ending's authored BOSSBACK, cast names and
 front-facing sprites. The native and frozen-HEMU image gate directly compares
@@ -1084,5 +1085,35 @@ HOLYC_WASM=/path/to/HolyC-wasm ACTOR=14 node tools/toom/cast-preview.mjs
 ```
 
 This is the commercial Phase 2 cast. Phase 1 has no cast endpoint and omits
-several Doom 2 actor sprite sets. The prepared host integration must still
-cover actual key routing, pause/focus ownership, continuation and cleanup.
+several Doom 2 actor sprite sets. Live host verification covers input and
+lifecycle separately from these image comparisons.
+
+The connected finale host passes 21 native/frozen-HEMU cases: four episode
+endpoints, five commercial next-map routes, MAP30 cast input, pause/focus, lazy
+frame failure/retry and failed next-level replacement. A failed frame preserves
+the published front CDC; a failed map replacement retains the ending and old
+world for retry. Entry buttons may restart the cast until released, matching
+the original event consumer; later cast keydowns trigger death without becoming
+new continuation commands. This controlled owner-boundary fixture is not a
+player walkthrough of every map.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/finale-play.test.mjs
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/finale-play.test.mjs
+FINALE=1 TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/worker.test.mjs
+FINALE=1 TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/browser.test.mjs
+```
+
+The actual-worker and browser checks use official Phase 2 assets, file-based
+`Run` launch from another directory, and an explicit native owner fixture to
+reach MAP06/MAP30 completion. Physical or DOM keys then drive story continuation
+and cast response. The native component checks establish geometry/timing
+semantics; these live checks establish input, publication and lifecycle.
+
+The finale worker and actual Chromium DOM gates pass on one and four cores,
+including the displayed MAP07 world, cast death/next actor, paused finale clock,
+speaker cleanup and both exit/relaunch paths. Exact source/runtime hashes,
+reviewed screenshots and bounded claims are in `finale-play-evidence.json`.
+A cast pause OCR failure was corrected by observing native pause/tic state;
+transparent text over artwork is not a reliable input for the plain-screen
+text decoder. The product pixels were kept unchanged.
