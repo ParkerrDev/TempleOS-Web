@@ -1,8 +1,5 @@
 import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
-// Instruction-level differential test: run each instruction through hemu's interpreter (Step()) AND the
-// JIT block on IDENTICAL inputs, compare reg[0..15]+rfl+written memory. Ground truth = the interpreter,
-// so this PROVES the JIT's values (adc/sbb/mul/div/imul/string/bt) match exactly, free of any IRQ/timing
-// confound. The new ops are the focus (complex flags).
+//JIT/interpreter parity only; independent hardware fixtures cover CPU semantics.
 import { compileHemu } from "../../engine/compile.js";
 import { createHemuHost } from "../../engine/host.js";
 import * as jit from "../../engine/jit.js";
@@ -36,7 +33,9 @@ const setRfl = (v) => dv().setBigUint64(RFL, BigInt(v), true);
 const getRfl = () => dv().getBigUint64(RFL, true);
 const setMem = (a, v) => dv().setBigUint64(gBase + a, BigInt.asUintN(64, BigInt(v)), true);
 const getMem = (a) => dv().getBigUint64(gBase + a, true);
-const rnd = () => { let x = 0n; for (let k = 0; k < 8; k++) x = (x << 8n) | BigInt((Math.random() * 256) | 0); return x; };
+let seed=0x71B39E25;
+const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/0x100000000;};
+const rnd = () => { let x = 0n; for (let k = 0; k < 8; k++) x = (x << 8n) | BigInt((random() * 256) | 0); return x; };
 
 let pass = 0, fail = 0; const fails = []; const failByName = {}, passByName = {};
 function run1(bytes, inReg, inRfl, inMem) {
@@ -106,7 +105,7 @@ for (let t = 0; t < 100; t++) {
 }
 // ---- BT/BTS/BTR/BTC [mem], imm8 (byte-addressed bit string) ----
 for (let t = 0; t < 100; t++) {
-  const v = rnd(), bit = (Math.random() * 64) | 0;
+  const v = rnd(), bit = (random() * 64) | 0;
   test("bt [rax],imm", [0x48, 0x0F, 0xBA, 0x20, bit], R({ 0: BigInt(MOPND) }), CF0, [[MOPND, v]]);
   test("bts [rax],imm", [0x48, 0x0F, 0xBA, 0x28, bit], R({ 0: BigInt(MOPND) }), CF0, [[MOPND, v], [MOPND + 8, 0n]]);
   test("btr [rax],imm", [0x48, 0x0F, 0xBA, 0x30, bit], R({ 0: BigInt(MOPND) }), CF0, [[MOPND, v], [MOPND + 8, 0n]]);
@@ -123,4 +122,4 @@ console.log(`jitdiff1: ${pass} pass, ${fail} fail`);
 console.log("failing ops:", Object.keys(failByName).length ? "" : "(none)");
 for (const n of Object.keys(failByName).sort((a, b) => failByName[b] - failByName[a])) console.log(`   ${n}: ${failByName[n]} fail / ${(passByName[n] || 0) + failByName[n]} total`);
 for (const f of fails) console.log("  e.g. " + f);
-console.log(fail === 0 ? "ALL VALUES MATCH THE INTERPRETER - JIT new ops are bit-correct" : "VALUE MISMATCH - JIT op bug");
+if (fail) process.exitCode=1;

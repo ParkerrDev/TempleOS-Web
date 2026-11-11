@@ -200,3 +200,12 @@ Pause force-sends that completed frame before its acknowledgement even when
 older frames are waiting for the page, so a paused restore shows identical
 pixels. worker-pause.test deliberately fills the presentation queue to cover
 this case.
+
+`shift.test.mjs` compares the interpreter and supported compiled shifts with
+3,808 real x86-64 cases recorded by `shift-oracle.c`. It covers ROL/ROR/RCL/RCR,
+SHL/SHR/SAR, all operand widths, both carry inputs, zero/masked counts and the
+architecturally defined flags. Regenerate the fixture on x86-64 with
+`cc -O2 -mno-red-zone tools/hemu/shift-oracle.c -o /tmp/shift-oracle`, then
+`/tmp/shift-oracle > tools/hemu/shift-oracle.txt`. Undefined flag bits are not
+used as an oracle. `jitdiff1.mjs` is deterministic parity coverage and fails
+its process when a comparison fails; it is not an independent CPU oracle.
