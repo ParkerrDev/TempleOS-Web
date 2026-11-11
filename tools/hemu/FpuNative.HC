@@ -50,7 +50,7 @@ U64 fpu_bits[8]={0,0x8000000000000000,0x3FF4000000000000,
 
 U0 FpuNative()
 {
-  I64 i,j,mode;
+  I64 i,j,mode,size;
   U64 mem_value;
   F64 value,arg;
   for (i=0;i<8;i++) {
@@ -59,6 +59,24 @@ U0 FpuNative()
     fsp=i;FStset(0,value);rg=4;rm=1;isMem=FALSE;
     OpX87(0xD9);
     "ABS %016X\n",F64ToBits(FStv(0));
+  }
+  for (i=0;i<8;i++) {
+    value=BitsToF64(fpu_bits[i]);
+    "CLASS %d %016X\n",F64NaN(value),F64ToInt(value);
+    for (j=0;j<8;j++) {
+      arg=BitsToF64(fpu_bits[j]);x87_sw=0;
+      FCmpSW(value,arg);
+      "EQ %d %016X\n",F64Eq(value,arg),x87_sw;
+    }
+    for (mode=0;mode<4;mode++) {
+      "SPECIAL %016X\n",F64ToBits(FIntRound(value,mode));
+      for (size=2;size<=8;size*=2) {
+	fsp=3;FStset(0,value);x87_cw=0x37F|mode<<10;x87_sw=0;
+	mem_value=0xA5A5A5A5A5A5A5A5;ea=&mem_value;
+	FIntStore(size,FALSE,TRUE);
+	"RANGE %016X %016X %d\n",mem_value,x87_sw,fsp;
+      }
+    }
   }
   for (i=0;i<16;i++)
     for (j=0;j<6;j++) {

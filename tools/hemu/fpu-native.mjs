@@ -17,7 +17,7 @@ if(native) {
     code=Buffer.from('Option(OPTf_WARN_PAREN,ON);\n'+probe.toString("latin1").replace('#include "Fpu"',source),"latin1"),
     result=await QemuRun([code],{timeout:120}),row=result.results[0];
   assert.equal(row.except,"");
-  assert.equal(row.out.trim().split("\n").length,284,row.out);
+  assert.equal(row.out.trim().split("\n").length,484,row.out);
   writeFileSync(file,JSON.stringify({backend:result.backend,probeHash:hash(probe),
     sourceHash:hash(Buffer.from(source,"latin1")),out:row.out},null,2)+"\n");
   console.log("Native FPU module:",result.evidence);
@@ -33,4 +33,4 @@ const host=createHost({onText:text=>output+=text}),
   {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env});
 host.attach(instance);instance.exports.__rt_init();instance.exports.__main();
 assert.equal(output,expected.out);
-console.log("284 FPU module outputs match original V5.03 compilation: bit casts, sign operations, arithmetic, rounding, stores, constants and polar angle.");
+console.log("484 FPU module outputs match original V5.03 compilation: bit casts, sign operations, arithmetic, rounding, stores, constants and polar angle.");
