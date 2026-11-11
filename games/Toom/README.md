@@ -836,3 +836,20 @@ frames, palette metadata and result JSON go to `OUT` (default
 bytes and native companion checks. Real keyboard testing caught a previous
 pause bug: native task messages have already cleared `SCF_NEW_KEY`. Pause now
 tracks key-down/release explicitly, including keys held across focus changes.
+
+
+The full-page gate uses Chromium DOM keyboard events through the site's actual
+keyboard adapter and inspects its displayed canvas. It covers the same native
+package on one/four workers, pause/repeat/resume and held movement, then browser
+capture release, native Escape, relaunch and native Shift-Escape. The first
+Escape while captured releases the browser pointer; refocus before sending an
+Escape to TempleOS. The frozen site must include its built dependencies.
+
+```sh
+TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/browser.test.mjs
+```
+
+`CORES` selects one mode as above; screenshots/results go to `OUT` (default
+`/tmp/toom-browser`). `browser-evidence.json` records the exact site/game
+bytes and observed bounds. These keyboard checks do not qualify mobile
+controls, sound, full-map completion or sustained performance.
