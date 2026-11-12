@@ -79,6 +79,8 @@ export function HelpGame(g)
 export function Open()
 {
   win.style.display="";
+  if (win._reopen)
+    win._reopen.style.display="none";
   win.classList.add("help-open");
   WinFocus(win);
   Show();

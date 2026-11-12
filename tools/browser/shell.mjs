@@ -98,10 +98,11 @@ try {
     await page.locator("#godClose").focus();
     await page.keyboard.press("Enter");
     assert.equal(await page.locator("#godWin").isVisible(),false);
+    assert.equal(await page.locator("#helpBtn").count(),0,"Help has no Menu button");
     if (mobile)
       await page.locator("#mobileHelp").click();
-    else
-      await page.locator("#helpBtn").click();
+    await page.locator("#guide").waitFor({timeout:5000}).catch(()=>{});
+    assert.equal(await page.locator("#guide").isVisible(),true,"Help shows ("+(mobile?"mobile":"desktop")+")");
     assert.equal(await page.locator("#helpContext").innerText(),"God Tools");
     const tip=await page.locator("#helpText").innerText();
     await page.locator("#helpNext").click();
@@ -112,6 +113,17 @@ try {
     assert.equal(await page.locator("#helpNext").isVisible(),true);
     await page.locator("#guide .close").click();
     if(!mobile) {
+      const reopen=page.locator('.toolbar [data-win="guide"]');
+      assert.equal(await reopen.isVisible(),true,"a closed Help can be opened again");
+      assert.equal(await reopen.locator("use").getAttribute("href"),"#i-help");
+      assert.equal(await page.locator("#settingsBtn use").getAttribute("href"),"#i-settings");
+      const icons=await page.locator(".toolbar > button use").evaluateAll(u=>u.map(e=>e.getAttribute("href")));
+      assert.equal(icons.includes("#i-window"),false,"every Menu entry has its own icon");
+      assert.equal(new Set(icons).size,icons.length,"no two Menu entries share an icon");
+      await reopen.click();
+      assert.equal(await page.locator("#guide").isVisible(),true);
+      assert.equal(await reopen.isVisible(),false);
+      await page.locator("#guide .close").click();
       assert.equal(await page.locator("#terryWin").isVisible(),true,"closing Help leaves Terry visible");
       await page.emulateMedia({reducedMotion:"reduce"});
       for(let n=0;n<5;n++)await page.locator("#terrySprite").click();

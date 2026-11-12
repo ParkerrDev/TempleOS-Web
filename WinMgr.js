@@ -234,8 +234,10 @@ export function WinDress(w,opts={})
     else if (opts.menuReopen) {
       rb=document.createElement("button");
       rb.style.display="none";
-      rb.innerHTML='<span class="ico"><svg><use href="#i-window"/></svg>'+
-	    '</span> '+title;
+      rb.dataset.win=w.id || title;
+      rb.innerHTML='<span class="ico"><svg><use href="#i-'+
+	    (w.dataset.icon || "window")+'"/></svg></span> '+title;
+      w._reopen=rb;
       document.querySelector(".toolbar").append(rb);
       x.addEventListener("click",Close);
       rb.addEventListener("click",Reopen);
@@ -268,7 +270,7 @@ function ButtonKey(e)
 }
 
 for (const w of document.querySelectorAll("[data-title]"))
-  WinDress(w,{menuReopen:w.id!="frame" && w.id!="guide" &&
+  WinDress(w,{menuReopen:w.id!="frame" &&
     !w.classList.contains("toolbar")});
 WinFocus($("frame"));
 
@@ -304,8 +306,8 @@ export function WinAdd(css,html)
 
 const WINS={editorBtn:"./EditorWin.js",gamesBtn:"./games.js",
   spritesBtn:"./SpritesWin.js",godBtn:"./GodWin.js",diskBtn:"./DiskWin.js",
-  tsBtn:"./SearchWin.js",chatBtn:"./ChatWin.js",helpBtn:"./HelpWin.js",
-  settingsBtn:"./SettingsWin.js"};
+  tsBtn:"./SearchWin.js",chatBtn:"./ChatWin.js",
+  settingsBtn:"./SettingsWin.js",mobileHelp:"./HelpWin.js"};
 
 async function WinOpen(id)
 {//Opens the window a Menu button names, loading its module the first time.
@@ -356,7 +358,6 @@ document.querySelector(".toolbar .close").addEventListener("click",
       document.querySelector(".toolbar").style.display="none";
   });
 $("mobileFull").addEventListener("click",function () {$("fsBtn").click();});
-$("mobileHelp").addEventListener("click",function () {WinOpen("helpBtn");});
 
 import("./HelpWin.js").catch(console.error);
 import("./TerryWin.js").catch(console.error);
