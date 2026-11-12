@@ -7,6 +7,7 @@ import {KeyQueue} from "../KeyQueue.js";
 import {KeyInput} from "../../Keyboard.js";
 import {FrameTop,FrameFps} from "../FrameText.js";
 import {DocClipCheck} from "../DocClip.js";
+import {SoundQueue} from "./Sound.js";
 import * as jit from "../jit.js";
 
 let machine=null,attempted=false;
@@ -34,12 +35,12 @@ export async function Open(path) {
     if(saved.meta.cores!==1||saved.meta.requiredBusProtocol)
       throw Error("This native host supports one CPU only");
     let capture=false;
-    let inst,disk,gx,frame=null,frameSerial=0,fps=null,ns=0,pendingNs=0n,fault="",tone=0;
-    const meta=saved.meta,base=meta.base,keys=KeyQueue(),palette=[],
+    let inst,disk,gx,frame=null,frameSerial=0,fps=null,ns=0,pendingNs=0n,fault="";
+    const meta=saved.meta,base=meta.base,keys=KeyQueue(),palette=[],sound=SoundQueue(),
       pointer=createGuestInput({guest:()=>gx,onState:hint=>{capture=hint.capture;}}),input=KeyInput(bytes=>keys.Push(bytes)),
       host=createHemuHost({heapAbi:meta.heapAbi,onText:NativeLog,
         palette:(index,rgb)=>palette[index]=rgb,
-        snd:{tone:frequency=>{tone=Number(frequency);}},
+        snd:{tone:(frequency,stamp)=>sound.push(Number(frequency),stamp)},
         present:(address,w,h,bytes)=>{
           if(w!==640||h!==480)throw Error("Unsupported native display dimensions");
           frame=bytes.slice(address,address+w*h);frameSerial++;
@@ -72,15 +73,16 @@ export async function Open(path) {
     fault=CpuFaultText(inst.exports);
     let paused=meta.paused||!!fault,rate=meta.rate,actualRate=meta.actualRate,repeat=meta.repeat;
     machine={
-      status:()=>({paused,fault,fps,frameSerial,rate,actualRate,repeat,capture:!paused&&!fault&&capture,tone:paused||fault?0:tone,cores:1,memoryBytes:inst.exports.memory.buffer.byteLength}),
+      status:()=>({paused,fault,fps,frameSerial,rate,actualRate,repeat,capture:!paused&&!fault&&capture,tone:paused||fault?0:sound.frequency,cores:1,memoryBytes:inst.exports.memory.buffer.byteLength}),
       frame:()=>NativeFrame(frame,palette),
+      audio:()=>sound.take(inst.exports.TscRead?BigInt.asUintN(64,inst.exports.TscRead()):null),
       tick(delta){
         if(paused||fault)return;
         pendingNs+=BigInt(delta);ns=pendingNs>100000000n?100000000n:pendingNs;pendingNs-=ns;
         pointer.beforeFrame();inst.exports.__main();gx.tick();fault=CpuFaultText(inst.exports);
-        if(fault){paused=true;pendingNs=0n;keys.Release();}
+        if(fault){paused=true;pendingNs=0n;sound.clear();keys.Release();}
       },
-      pause(value){if(!value&&fault)throw Error(fault);paused=value;if(paused){pendingNs=0n;input.reset();keys.Release();pointer.accept({b:0,reset:true});}},
+      pause(value){if(!value&&fault)throw Error(fault);paused=value;if(paused){pendingNs=0n;sound.clear();input.reset();keys.Release();pointer.accept({b:0,reset:true});}},
       key(id,down){if(paused||fault)return;if(down)input.down(id,id);else input.up(id);},
       mouse:p=>{if(!paused&&!fault)pointer.accept(p);},
       release(){input.reset();keys.Release();pointer.accept({b:0,reset:true});},
@@ -96,7 +98,7 @@ export async function Open(path) {
         return ok;
       },
       async save(path){
-        pendingNs=0n;
+        pendingNs=0n;sound.clear();
         const launch=gx.snapshot(),current={...meta,paused,rate,actualRate,repeat,heapPtr:host.state.heapPtr,sp:Number(inst.exports.__sp.value),keyboard:keys.Save(),pointer:pointer.save(),launch};
         await Write(path,{meta:current,wasm:saved.wasm,memory:inst.exports.memory,disk});
       },
@@ -108,6 +110,7 @@ export async function Open(path) {
 function Require(){if(!machine)throw Error("No complete machine is loaded");return machine;}
 export function Status(){return Require().status();}
 export function Frame(){Require().frame();}
+export function Audio(){return Require().audio();}
 export function Tick(ns){if(!Number.isSafeInteger(ns)||ns<0)throw Error("Invalid clock delta");Require().tick(ns);return Status();}
 export function Pause(value){Require().pause(!!value);return Status();}
 export function Key(id,down){Require().key(id,down);}

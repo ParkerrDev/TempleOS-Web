@@ -130,6 +130,46 @@ private slots:
     for(int i=0;i<8;i++)machine.Call("Tick",{0});
     QVERIFY(settle("if(GetTSC-native_clock_start>100000000)throw('Save',TRUE);"));
   }
+  void audioPackets() {
+    std::atomic<bool> cancel{false};Machine machine(&cancel);machine.Call("Open",{input});
+    const bool timed=machine.Call("Audio").toObject()["timed"].toBool();
+    Tone speaker;speaker.Start();machine.Call("Pause",{false});
+    const auto id=machine.Call("Exec",{QString(
+      "I64 native_audio_i,native_audio_at=cnts.jiffies,native_audio_div;"
+      "OutU8(0x43,0xB6);OutU8(0x42,3000&255);OutU8(0x42,3000>>8);OutU8(0x61,3);"
+      "for(native_audio_i=0;native_audio_i<140;native_audio_i++){"
+      "SleepUntil(native_audio_at+native_audio_i*JIFFY_FREQ/140);native_audio_div=3000;if(native_audio_i&1)native_audio_div=1500;"
+      "OutU8(0x42,native_audio_div&255);OutU8(0x42,native_audio_div>>8);}Snd(0);")});
+    QJsonArray events;bool done=false;int audible=0;quint64 first=0,last=0;
+    for(int i=0;i<1000;i++) {
+      machine.Call("Tick",{16000000});const auto packet=machine.Call("Audio").toObject();
+      QCOMPARE(packet["timed"].toBool(),timed);QVERIFY(packet["error"].toString().isEmpty());
+      for(const auto &event:packet["events"].toArray())if(event.toArray()[0].toDouble()>0)events.append(event);
+      speaker.Submit(packet);std::array<float,768> pcm{};
+      speaker.readData(reinterpret_cast<char *>(pcm.data()),sizeof(pcm));
+      for(float value:pcm)if(value)audible++;
+      const auto job=machine.Call("Job",{id}).toObject();
+      if(job["state"].toString()=="done"){done=true;break;}
+      QVERIFY2(job["state"].toString()!="failed",QJsonDocument(job).toJson().constData());
+    }
+    QVERIFY(done);QVERIFY(audible>30000);QVERIFY(speaker.Status()["error"].toString().isEmpty());
+    if(timed) {
+      QVERIFY(events.size()>=140);
+      const int start=events.size()-140;
+      for(int i=0;i<140;i++) {
+        const auto event=events[start+i].toArray();
+        QCOMPARE(event[0].toDouble(),1193182.0/(i&1?1500:3000));
+        const auto ns=event[1].toString().toULongLong();if(!i)first=ns;
+        QVERIFY(ns>=last);last=ns;
+      }
+      QVERIFY(last-first>980000000&&last-first<1010000000);
+      qInfo()<<"Timed native speaker:"<<events.size()<<"transitions,"<<last-first<<"ns,"<<audible<<"nonzero PCM samples";
+    } else {QVERIFY(events.isEmpty());qInfo()<<"Legacy saved engine remains explicitly untimed";}
+    machine.Call("Pause",{true});speaker.Stop();std::array<float,4800> pcm{};
+    speaker.readData(reinterpret_cast<char *>(pcm.data()),sizeof(pcm));
+    QVERIFY(std::all_of(pcm.begin(),pcm.end(),[](float value){return value==0;}));
+    QVERIFY(machine.Call("Audio").toObject()["events"].toArray().isEmpty());
+  }
   void timerLifecycle() {
     std::atomic<bool> cancel{false};FrameMailbox mailbox;Engine engine(&cancel,&mailbox);
     auto *timer=engine.findChild<QTimer *>();QVERIFY(timer);QVERIFY(!timer->isActive());

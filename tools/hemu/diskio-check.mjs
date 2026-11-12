@@ -5,7 +5,7 @@ import {compileHemu} from '../../engine/compile.js';
 import {createHemuHost} from '../../engine/host.js';
 const compiled=compileHemu({exports:['InitMem','IoOutWidth','IoInWidth','VgaPaletteInit','Reset','InjectKey','TimeAdd']});
 const sectors=new Map(),colors=[];const host=createHemuHost({palette:(index,rgb)=>colors.push({index,rgb}),diskWrite:(lba,count,mem,addr)=>{for(let i=0;i<count;i++)sectors.set(lba+i,mem.slice(addr+i*512,addr+(i+1)*512));},diskRead:(lba,count,mem,addr)=>{for(let i=0;i<count;i++)mem.set(sectors.get(lba+i),addr+i*512);}});
-const tones=[];host.env.__snd=hz=>tones.push(hz);
+const tones=[];host.state.snd={tone:hz=>tones.push(hz)};
 const instance=await WebAssembly.instantiate(compiled.bytes,{env:host.env}),ex=instance.instance.exports;
 host.attach(instance.instance);ex.__rt_init();ex.InitMem(4096n);
 for(const port of [0x1f0,0x170])for(const width of [2,4]){

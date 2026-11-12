@@ -20,7 +20,7 @@ export const JIT_EXPORTS = ["RdMem", "WrMem", "Step", "RasterHLE"];
 //What engine/guestexec.js and the workers call: injected guest calls, the
 //guest's names (sym.HC), and an application core's attach and run.
 export const GUEST_EXPORTS = ["CpuFault", "GuestCallPost", "GuestCallTry", "GuestCallState", "GuestCallRes", "GuestCallAck", "GuestInfo",
-  "GuestPatchJump", "GuestFun", "GuestArgCnt", "GuestVar", "GuestMember", "RamBase", "CoreAttach", "KbdRptSet", "WinRateSet", "SnapshotResume"];
+  "GuestPatchJump", "GuestFun", "GuestArgCnt", "GuestVar", "GuestMember", "RamBase", "CoreAttach", "KbdRptSet", "WinRateSet", "SnapshotResume", "TscRead"];
 export const HEMU_EXPORTS = [...JIT_EXPORTS, ...GUEST_EXPORTS];
 
 export function hemuFile(name) { return readFileSync(resolve(HEMU_SRC,extname(name)?name:name+".HC"), "latin1"); }

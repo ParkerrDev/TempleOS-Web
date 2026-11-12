@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import {SoundQueue} from "../../engine/native/Sound.js";
+const sound=SoundQueue(),base=0x8000000000000001n;
+sound.push(440);
+assert.deepEqual(sound.take(null),{timed:false,frequency:440});
+sound.push(440,base);sound.push(0,base+7n);sound.push(880,base+7n);
+assert.deepEqual(sound.take(base+14n),{timed:true,frequency:880,end:(base+14n).toString(),events:[[440,base.toString()],[0,(base+7n).toString()],[880,(base+7n).toString()]],error:""});
+assert.deepEqual(sound.take(base+21n).events,[]);
+sound.push(0,base+22n);sound.clear();
+assert.deepEqual(sound.take(base+23n).events,[],"pause/replacement drains cannot replay old transitions");
+for(let i=0;i<4097;i++)sound.push(i&1?440:0,base+24n);
+assert.match(sound.take(base+24n).error,/overflow/);
+sound.push(440,base+25n);assert.equal(sound.take(base+25n).error,"");
+sound.push(0,base+24n);assert.match(sound.take(base+26n).error,/backwards/);
+sound.clear();sound.push(440,base+27n);assert.match(sound.take(base+26n).error,/watermark/);
+console.log("Native sound packets: ordered transitions, silent spans, exact uint64 timestamps, legacy absence, lifecycle flush and bounded overflow/refusal.");

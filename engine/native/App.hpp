@@ -3,6 +3,7 @@
 #include "Input.hpp"
 #include "Pointer.hpp"
 #include "Files.hpp"
+#include "Speaker.hpp"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -34,23 +35,6 @@ public:
 signals:void imageChanged();
 };
 
-class Tone:public QIODevice {
-  double phase=0;int rate=48000;
-  std::atomic<double> frequency{0};
-public:
-  Tone(){open(QIODevice::ReadOnly);}
-  void Set(double value){frequency.store(value>0&&std::isfinite(value)?value:0);}
-  void Rate(int value){rate=value;}
-  qint64 bytesAvailable()const override{return 4096+QIODevice::bytesAvailable();}
-  bool isSequential()const override{return true;}
-  qint64 readData(char *data,qint64 size)override {
-    qint64 count=size/sizeof(float);double f=frequency.load();
-    for(qint64 i=0;i<count;i++){const float value=f?(phase<0.5?0.04f:-0.04f):0;memcpy(data+i*sizeof(float),&value,sizeof(value));phase+=f/rate;phase-=std::floor(phase);}
-    return count*sizeof(float);
-  }
-  qint64 writeData(const char *,qint64)override{return -1;}
-};
-
 struct FrameMailbox {
   QMutex mutex;
   QImage image;
@@ -62,12 +46,19 @@ class Engine:public QObject {
   std::unique_ptr<Machine> machine;
   std::atomic<bool> *cancel;
   FrameMailbox *mailbox;
+  Tone *tone;
   QTimer timer;QElapsedTimer clock;
   int frameSerial=-1;
   QString fatalMessage;
   QJsonObject lastState;
   void State(const QJsonObject &state){if(state!=lastState){lastState=state;emit stateChanged(state);}}
   void Wake(){if(machine&&fatalMessage.isEmpty()&&!lastState["paused"].toBool())timer.start();else timer.stop();}
+  void AudioStart() {
+    if(!tone)return;
+    const auto state=machine->Call("Status").toObject();
+    if(state["paused"].toBool()||!fatalMessage.isEmpty())tone->Stop();
+    else tone->Start();
+  }
   void Frame(const QImage &image) {
     bool notify=false;
     {QMutexLocker lock(&mailbox->mutex);mailbox->image=image;notify=!mailbox->pending;mailbox->pending=true;}
@@ -80,16 +71,22 @@ class Engine:public QObject {
       frameSerial=state["frameSerial"].toInt();Frame(machine->Image());
     }
     if(state["paused"].toBool())timer.stop();
+    const auto packet=machine->Call("Audio").toObject();
+    if(tone) {
+      if(state["paused"].toBool())tone->Stop();else tone->Submit(packet);
+      state["audio"]=tone->Status();
+    }
     State(state);
   }
   void Failed(const std::exception &error){emit errorOccurred(QString::fromUtf8(error.what()));}
 public:
-  Engine(std::atomic<bool> *flag,FrameMailbox *frames):cancel(flag),mailbox(frames) {
+  Engine(std::atomic<bool> *flag,FrameMailbox *frames,Tone *speaker=nullptr):cancel(flag),mailbox(frames),tone(speaker) {
     timer.setParent(this);timer.setInterval(1);
     connect(&timer,&QTimer::timeout,this,&Engine::Tick);
   }
 public slots:
   void Open(QString path) {
+    if(tone)tone->Stop();
     timer.stop();emit busyChanged(true);
     try {
       if(machine)machine->Call("Pause",{true});
@@ -100,24 +97,26 @@ public slots:
       const auto state=next->Call("Status").toObject();const auto image=next->Image();
       if(cancel->load())throw std::runtime_error("Operation cancelled");
       machine=std::move(next);fatalMessage.clear();frameSerial=state["frameSerial"].toInt();
-      Frame(image);State(state);emit opened(path);
+      Frame(image);AudioStart();Present();emit opened(path);
     } catch(const std::exception &error){cancel->store(false);Failed(error);if(machine)Present();}
     cancel->store(false);emit busyChanged(false);clock.restart();Wake();
   }
   void Save(QString path) {
+    if(tone)tone->Stop();
     timer.stop();emit busyChanged(true);
     try {
       if(!machine)throw std::runtime_error("No complete machine is loaded");
       if(!fatalMessage.isEmpty())throw std::runtime_error("Reopen a working session before saving after a host execution failure");
       machine->Call("Save",{path});emit saved(path);
     } catch(const std::exception &error){Failed(error);}
-    cancel->store(false);emit busyChanged(false);clock.restart();Wake();
+    cancel->store(false);if(machine){AudioStart();Present();}emit busyChanged(false);clock.restart();Wake();
   }
   void Pause(bool paused) {
     if(!machine)return;
-    try{if(!paused&&!fatalMessage.isEmpty())throw std::runtime_error(fatalMessage.toStdString());machine->Call("Pause",{paused});Present();clock.restart();Wake();}catch(const std::exception &error){Failed(error);}
+    try{if(!paused&&!fatalMessage.isEmpty())throw std::runtime_error(fatalMessage.toStdString());machine->Call("Pause",{paused});AudioStart();Present();clock.restart();Wake();}catch(const std::exception &error){Failed(error);}
   }
   void Settings(QJsonObject options) {
+    if(tone)tone->Stop();
     emit busyChanged(true);
     try {
       if(!machine)throw std::runtime_error("No complete machine is loaded");
@@ -125,7 +124,7 @@ public slots:
       const auto result=machine->Call("Settings",{options}).toObject();Present();
       if(!result["ok"].toBool())throw std::runtime_error(result["msg"].toString().toStdString());
     }catch(const std::exception &error){Failed(error);}
-    emit busyChanged(false);
+    if(machine){AudioStart();Present();}emit busyChanged(false);
   }
   void Key(int key,bool down){if(machine)try{machine->Call("Key",{key,down});}catch(const std::exception &error){Failed(error);}}
   void Mouse(QJsonObject point){if(machine)try{machine->Call("Mouse",{point});}catch(const std::exception &error){Failed(error);}}
@@ -134,6 +133,7 @@ public slots:
     const qint64 ns=clock.nsecsElapsed();clock.restart();
     try{machine->Call("Tick",{static_cast<double>(ns)});Present();}
     catch(const std::exception &error){
+      if(tone)tone->Stop();
       timer.stop();fatalMessage=tr("Host execution failed: %1. Reopen a working session.").arg(QString::fromUtf8(error.what()));
       auto state=lastState;state["fault"]=fatalMessage;state["paused"]=true;state["tone"]=0;State(state);
       emit errorOccurred(fatalMessage);emit fatal();
@@ -163,7 +163,7 @@ class Backend:public QObject {
   QJsonObject state;PointerCapture pointerLock;Files files;QPointer<QQuickWindow> window;int buttons=0,wheel=0;Tone tone;std::unique_ptr<QAudioSink> audio;
 public:
   Backend() {
-    JsInit();engine=new Engine(&cancelFlag,&mailbox);
+    JsInit();engine=new Engine(&cancelFlag,&mailbox,&tone);
     connect(&files,&Files::changed,this,&Backend::changed);
     connect(&files,&Files::selected,this,&Backend::fileChosen);
     connect(&files,&Files::cancelled,this,[this]{message=tr("File selection cancelled");emit changed();});
@@ -187,31 +187,32 @@ public:
       {QMutexLocker lock(&mailbox.mutex);value=mailbox.image;mailbox.pending=false;}
       emit imageChanged();
     });
-    connect(engine,&Engine::busyChanged,this,[this](bool next){working=next;if(next)pointerLock.Release();tone.Set(next?0:state["tone"].toDouble());emit changed();});
-    connect(engine,&Engine::stateChanged,this,[this](QJsonObject next){state=next;stopped=state["paused"].toBool();if(!state["fault"].toString().isEmpty())message=state["fault"].toString();if(stopped||!captureWanted())pointerLock.Release();tone.Set(working?0:state["tone"].toDouble());emit changed();});
-    connect(engine,&Engine::errorOccurred,this,[this](QString error){message=error;tone.Set(0);emit changed();});
-    connect(engine,&Engine::fatal,this,[this]{pointerLock.Release();stopped=true;tone.Set(0);emit changed();});
+    connect(engine,&Engine::busyChanged,this,[this](bool next){working=next;if(next)pointerLock.Release();emit changed();});
+    connect(engine,&Engine::stateChanged,this,[this](QJsonObject next){state=next;stopped=state["paused"].toBool();if(!state["fault"].toString().isEmpty())message=state["fault"].toString();else if(!state["audio"].toObject()["error"].toString().isEmpty())message=tr("Audio: %1").arg(state["audio"].toObject()["error"].toString());if(stopped||!captureWanted())pointerLock.Release();if(stopped)AudioReset();emit changed();});
+    connect(engine,&Engine::errorOccurred,this,[this](QString error){message=error;emit changed();});
+    connect(engine,&Engine::fatal,this,[this]{pointerLock.Release();stopped=true;AudioReset();emit changed();});
     connect(engine,&Engine::opened,this,[this](QString file){filename=file;loaded=true;message=faulted()?state["fault"].toString():tr("Session restored");emit changed();});
     connect(engine,&Engine::saved,this,[this](QString file){filename=file;message=tr("Saved %1").arg(file);emit changed();});
     const auto device=QMediaDevices::defaultAudioOutput();QAudioFormat format;format.setSampleRate(48000);format.setChannelCount(1);format.setSampleFormat(QAudioFormat::Float);
-    if(!device.isNull()&&device.isFormatSupported(format)){tone.Rate(48000);audio=std::make_unique<QAudioSink>(device,format);audio->start(&tone);}
+    if(!device.isNull()&&device.isFormatSupported(format)){audio=std::make_unique<QAudioSink>(device,format);audio->setBufferSize(7680);audio->start(&tone);}
     else message=tr("No supported audio output is available");
     thread.start();
   }
-  ~Backend(){pointerLock.Release();tone.Set(0);if(audio)audio->stop();cancelFlag.store(true);thread.quit();thread.wait();}
+  ~Backend(){pointerLock.Release();tone.Stop();if(audio)audio->stop();cancelFlag.store(true);thread.quit();thread.wait();}
+  void AudioReset(){if(audio){audio->reset();audio->start(&tone);}}
   QImage image()const{return value;}QString status()const{return message;}bool busy()const{return working||files.Pending();}
   bool paused()const{return stopped;}bool ready()const{return loaded;}QString path()const{return filename;}bool faulted()const{return !state["fault"].toString().isEmpty();}
   int rate()const{return state["rate"].toInt();}bool rateKnown()const{return !state["actualRate"].isNull()&&!state["actualRate"].isUndefined();}bool repeat()const{return state["repeat"].toBool();}
   bool captured()const{return pointerLock.Active();}bool captureWanted()const{return state["capture"].toBool();}
   void Attach(QQuickWindow *next){if(window)window->removeEventFilter(this);pointerLock.Release();window=next;if(window)window->installEventFilter(this);}
-  Q_INVOKABLE void open(const QString &path){if(busy()||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Set(0);message=tr("Loading session…");emit changed();emit openRequested(path);}
-  Q_INVOKABLE void save(const QString &path){if(busy()||!loaded||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Set(0);message=tr("Saving session…");emit changed();emit saveRequested(path);}
+  Q_INVOKABLE void open(const QString &path){if(busy()||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Stop();AudioReset();message=tr("Loading session…");emit changed();emit openRequested(path);}
+  Q_INVOKABLE void save(const QString &path){if(busy()||!loaded||path.isEmpty())return;release();cancelFlag.store(false);working=true;tone.Stop();AudioReset();message=tr("Saving session…");emit changed();emit saveRequested(path);}
   Q_INVOKABLE void choose(bool save){if(busy()||(save&&!loaded))return;release();message=save?tr("Choose where to save the session"):tr("Choose a complete .hemu session");files.Choose(save,filename);}
   Q_INVOKABLE void cancel(){if(files.Pending())files.Cancel();else if(working)cancelFlag.store(true);}
-  Q_INVOKABLE void pause(){if(!busy()&&loaded){release();tone.Set(0);emit pauseRequested(!stopped);}}
+  Q_INVOKABLE void pause(){if(!busy()&&loaded){release();tone.Stop();AudioReset();emit pauseRequested(!stopped);}}
   Q_INVOKABLE void settings(int rate,bool repeat){
     if(busy()||!loaded||faulted())return;
-    release();working=true;emit changed();emit settingsRequested({{"rate",rate},{"repeat",repeat}});
+    release();working=true;tone.Stop();AudioReset();emit changed();emit settingsRequested({{"rate",rate},{"repeat",repeat}});
   }
   Q_INVOKABLE void release(){pointerLock.Release();buttons=0;emit releaseRequested();}
   Q_INVOKABLE void capture(){if(!busy()&&!stopped&&captureWanted())pointerLock.Start(window);}

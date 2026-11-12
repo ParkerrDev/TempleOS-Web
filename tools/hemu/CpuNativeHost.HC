@@ -79,7 +79,7 @@ I64 __host_time(I64)
   return 0;
 }
 
-U0 __snd(F64)
+U0 __host_snd(F64,U64)
 {
 }
 

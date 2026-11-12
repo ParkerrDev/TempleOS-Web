@@ -113,6 +113,25 @@ saving and faults discard only uncredited host backlog. That ephemeral pacing
 state is not part of the saved CPU clock, and time spent paused or saving is
 not added on resume.
 
+New HEMU modules emit speaker frequency and unsigned TSC nanoseconds through
+`__host_snd(F64,U64)`. The native host keeps ordered transitions, including
+silence, until the guest's end-of-batch clock watermark. A bounded 48 kHz mono
+PCM queue renders those intervals on the machine thread; Qt consumes it on
+its audio thread. The queue holds at most 500 ms and starts after 40 ms of
+prefill. Underruns output silence and refill; overflow or invalid time order
+clears stale samples and reports an audio diagnostic. Pause, save, replacement
+and faults flush both the PCM queue and Qt's device buffer. Audio buffering is
+ephemeral and is not serialized as guest state.
+
+Older embedded engines retain their one-argument `__snd` import. They still
+play tones, but provide no timestamps; the host does not invent timing for
+them. New modules need the matching host import and fail during instantiation
+on an older host. This is a host-import change, not a CPU/RAM or snapshot-file
+layout change. Timestamped playback is qualified for one guest CPU only. The
+shared clock and speaker state still lack a total cross-core event order, and
+the frequency-only PIT model does not reproduce hardware counter phase or
+odd-divisor duty cycles.
+
 Loading and saving run on the dedicated JSC thread. A replacement uses a fresh
 JSC context, keeping its JIT state separate from the previous machine. Only a
 fully validated candidate publishes its frame. Failed or cancelled loads leave
@@ -163,8 +182,19 @@ cases. The production QML/Backend test opens and saves a complete machine throug
 that protocol, and checks replacement confirmation and the new restart path.
 They do not open a dialog on the user's desktop.
 
-Remaining qualification includes audible PCM timing/lifecycle,
-system-wide installation, performance/resource measurement, and non-Linux platforms. The
+The Linux audio check additionally needs PipeWire, its PulseAudio protocol
+module, WirePlumber, `pactl` and `parec`. It creates a private server, policy
+session and virtual sink; it never routes audio to the user's hardware. The
+actual Qt output must preserve 420 ordered 140 Hz tone/silence transitions
+across 144,000 exact PCM samples. A separate native guest task verifies both
+PIT pitches in 140 tone/silence groups, and the production Backend is recorded
+through pause, save/restore, replacement failure and retained CPU faults.
+These are bounded idle-host tests, not an assertion that a loaded game always
+meets its speaker task deadline. Evidence is saved under
+`build/native/evidence/audio` (override with `HEMU_NATIVE_AUDIO_EVIDENCE`).
+
+Remaining qualification includes system-wide installation, loaded-game audio
+cadence, performance/resource measurement, and non-Linux platforms. The
 browser host's four-core protocol remains separate; this window does not yet
 satisfy that native SMP requirement.
 

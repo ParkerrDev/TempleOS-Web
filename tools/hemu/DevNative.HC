@@ -1,4 +1,4 @@
-U64 dev_colors[16],dev_lba,dev_count,dev_sum,dev_writes,dev_tone;
+U64 dev_colors[16],dev_lba,dev_count,dev_sum,dev_writes,dev_tone,dev_ns;
 
 U0 __host_palette(I64 i,I64 rgb)
 {
@@ -10,9 +10,10 @@ I64 __host_time(I64 idx)
   return 1000+idx;
 }
 
-U0 __snd(F64 hz)
+U0 __host_snd(F64 hz,U64 ns)
 {
   dev_tone=hz(U64);
+  dev_ns=ns;
 }
 
 U0 __host_disk(I64 lba,I64 cnt,U8 *buf)
@@ -107,8 +108,9 @@ U0 DevProbe()
     IoOut(0x43,0xB6);
     IoOut(0x42,i);IoOut(0x42,i>>8);
     for (k=0;k<4;k++) {
+      TimeAdd(7142857);
       IoOut(0x61,k);
-      "%016X\n",dev_tone;
+      "%016X %016X\n",dev_tone,dev_ns;
     }
   }
   for (port=0x170;port<=0x1F0;port+=0x80)
