@@ -241,6 +241,14 @@ complete hardware APIC implementation. Guest page protection and architectural
 #PF delivery remain open. Set `HOLYC_QEMU_ORACLE` and pass `--record` to refresh
 the native and physical source-bound references.
 
+`mmio-alias.test.mjs` stores VGA pixels at page offsets 0x300 and 0x310 through
+the low, uncached and 2^40 aliases, as TempleOS draws through its uncached
+alias, and checks that none of them latches an ICR destination or sends an
+IPI. The LAPIC ICR, LAPIC version and HPET counter still decode on their own
+pages. The old decode, which matched only the page offset, sent IPIs whose
+vector was pixel data; an exception vector crashed an AP and left the BSP in
+single-user mode, so a game froze while the window manager kept drawing.
+
 `cmpxchg16b.test.mjs` compares 768 original V5.03 results with a separate
 physical oracle, then makes 15,360 interpreter/JIT-fallback comparisons across
 private/shared RAM, aliases and coordinated core configurations. It checks
