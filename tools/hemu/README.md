@@ -70,6 +70,13 @@ this correction changes newly built engines without changing saved state.
 - Worker checks run the production worker and AP workers with one and four
   cores. They independently read every sampled top row, compare its displayed
   FPS to the frame message, check clock/refresh pacing, and verify pause.
+  `WorkerShim.mjs` gives the worker a browser `Worker` and cross-origin
+  isolation, so it inflates the stock RAM in parts on threads of its own as
+  Chromium does; `webWorker:false` runs it as Safari, inflating whole.
+  `worker-inflate.test.mjs` boots both ways on both topologies to the desktop
+  with the corrections in. `stock-segments.mjs` (in `tools/Test.sh`) inflates
+  each snapshot's parts alone, 26 or 27 at once and then 4 and 3, and checks
+  each result against the manifest's RAM SHA-256.
 - Guest execution checks cover source errors, exceptions, file readback,
   disk include, launch completion/refusal and an animating native game.
   The real worker also holds a command at a native Sleep gate, verifies busy
@@ -609,9 +616,28 @@ uses a native atomic lock; it does not attach private data to application
 CDoc fields. The correction covers static 2D sprites. Rotating 3D mesh bounds
 are unchanged and are not claimed as fixed by this check.
 
-Stock boots compile the corrected routine from the installed native source
-once the disk is ready. Its complete source fingerprint and entry instructions
-must match the supported V5.03 routine. Installation holds the all-core
+Stock boots compile the corrected routine from `engine/patches/V5.03/DocRecalc.HC`,
+a byte copy of the installed `DocRecalc.HC.Z`, which the host passes as a
+HolyC string. The guest checks the copy's size and complete source fingerprint
+exactly as it checks its own file (the no-argument call still reads the disk),
+so the job needs no disk. Core 0 does not preempt, and a compile there stops
+the desktop for most of a second. With four cores the job runs on CPU 1's Seth
+task as soon as the application cores run: it swaps in Adam's hash table, so
+every name lands where core 0 and the host look for it, and the Seth task's
+heap lasts as long as Adam's. Core 0 then runs a short Adam job that checks
+and sets the AutoComplete entry jumps. With one core the job runs at the first
+frames on core 0 while the page still shows its loader, and those frames do
+not wait for the clock. The jobs start before the page's first request and
+are background requests: each queues behind whatever the page already asked
+of its task, and a page request that comes while one runs queues behind it
+instead of being refused as busy (`guest-ready.mjs` writes a file to Adam
+while the one-core build holds it). `worker-patch-core.test.mjs` boots both topologies on
+the page's bus and checks that four cores build on CPU 1 with no frame gap
+over 250 ms. `patch-copy.test.mjs` builds and installs both
+corrections from the copies on a guest with no disk, shows that a copy one
+byte off is refused before anything compiles, and that AutoComplete built
+apart installs without a second build. The entry instructions must
+match the supported V5.03 routine. Installation holds the all-core
 barrier and leaves the original frame-setup instructions intact; tasks already
 suspended before or after stack allocation still have a valid continuation.
 `patch.test.mjs` checks those entry states, invalid addresses/signatures and
@@ -633,13 +659,17 @@ flickered as it updated. ACDocRst cleared the window's show flag, then the list
 was rebuilt by prints and dictionary reads that each yield, so the window
 manager drew frames with the window missing. `engine/patches/ACDblBuf.HC`
 recompiles ACDocRst and the three ACTask routines from the installed
-`ACTask.HC.Z` (size and FNV-1a hash bound), changed only so the list is filled
+`ACTask.HC.Z` or its byte copy `engine/patches/V5.03/ACTask.HC` (size and
+FNV-1a hash bound either way), changed only so the list is filled
 in the task's back document and swapped in whole by DocDblBufSwap; the window
-moves and swaps under the display document's lock and is never hidden. It runs
-in the guest on core 0, where every window task runs and nothing is preempted,
-and sets each entry jump with interrupts off, keeping the frame-setup
+moves and swaps under the display document's lock and is never hidden. Its
+entry jumps are set in the guest on core 0, where every window task runs and
+nothing is preempted, each with interrupts off, keeping the frame-setup
 instructions. A wrong source or an entry that is not stock (including a second
-install) throws and leaves the original routines active.
+install) throws and leaves the original routines active. The scroll bars are
+controls drawn from each update, while the screen still shows the text of the
+one before, so they are drawn where that text had them; a bar that leaves the
+shrunken window is drawn over once from the layer on top.
 
 `ACFlicker.HC` focuses a window holding a word, changes the scan code every
 20 ms so AutoComplete refills its list, and counts frames drawn and task

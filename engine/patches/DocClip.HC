@@ -79,14 +79,25 @@ U64 DocClipHash(U8 *src,I64 size)
   return res;
 }
 
-U0 DocClipBuild()
+U8 *DocClipRead(U8 *src,I64 size,I64 *_size)
+{//The installed DocRecalc.HC.Z, or the host's copy of its text, checked alike.
+  U8 *res;
+  if (!src)
+    return FileRead("::/Adam/DolDoc/DocRecalc.HC.Z",_size);
+  res=MAlloc(size+1);
+  MemCpy(res,src,size);
+  res[size]=0;
+  *_size=size;
+  return res;
+}
+
+U0 DocClipBuild(U8 *src=NULL,I64 size=0)
 {//Compile the installed native routine with only the visibility correction.
   U8 *file,*st,*start;
-  I64 size;
   CHashFun *tmpf;
   if (doc_clip_new) return;
   MemSet(doc_clip_cache,0,sizeof(doc_clip_cache));
-  file=FileRead("::/Adam/DolDoc/DocRecalc.HC.Z",&size);
+  file=DocClipRead(src,size,&size);
   if (!file) throw('DocFile');
   if (size!=36007 || DocClipHash(file,size)!=0xBE5BF08F6899BF7B) {
     Free(file);

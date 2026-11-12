@@ -34,11 +34,14 @@ try {
         buffer:await readFile(new URL("hemu/live.bin.gz",root))});
       const cores=app==="page"?4:1;
       await MachineReady(page,cores);
-      const before=await page.evaluate(()=>({workers:window.machine.workers.length,frames:window.machine.frames}));
+      //The spares started at page load end with the boot they were for, before any init.
+      const before=await page.evaluate(()=>({workers:window.machine.workers.filter(w=>!w.machineTerminated).length,
+        frames:window.machine.frames}));
       assert.equal(before.workers,cores,"the cancelled fetch created no workers");
       release();
       await page.waitForFunction(n=>window.machine.frames>n+10,before.frames);
-      const after=await page.evaluate(()=>({workers:window.machine.workers.length,terminated:window.machine.terminations.length,
+      const after=await page.evaluate(()=>({workers:window.machine.workers.filter(w=>!w.machineTerminated).length,
+        terminated:window.machine.terminations.length,
         errors:window.machine.events.filter(m=>m.cmd==="error")}));
       assert.deepEqual(after,{workers:cores,terminated:0,errors:[]},"a late boot result cannot replace or stop the new machine");
       if(app==="desktop")assert.doesNotMatch(await page.locator("#status").innerText(),/fetch|failed|error/i);

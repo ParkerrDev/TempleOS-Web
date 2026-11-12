@@ -51,12 +51,13 @@ export async function BrowserMachine(context,{gate=false}={}) {
         return super.postMessage(m,...args);
       }
       terminate() {
+        //A spare the page started while the snapshot downloaded ends before its init.
         if(this.machineCore!==undefined) {
           const ctrl=this.machineControl&&new Int32Array(this.machineControl);
           machine.terminations.push({worker:this.machineId,core:this.machineCore,
             stopped:ctrl?Atomics.load(ctrl,1):null,owner:ctrl?Atomics.load(ctrl,12):null});
-          this.machineTerminated=true;
         }
+        this.machineTerminated=true;
         return super.terminate();
       }
     };

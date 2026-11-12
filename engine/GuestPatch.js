@@ -1,10 +1,49 @@
-//Corrections of TempleOS V5.03 bugs, compiled in a stock boot from its own
-//installed sources and applied to RAM only. DocClip.HC clips document
-//sprites; the host sets its entry jump between CPU runs. ACDblBuf.HC double
-//buffers the AutoComplete window; the guest sets its jumps itself on core 0.
+//Corrections of TempleOS V5.03 bugs, compiled in a stock boot from the stock
+//sources and applied to RAM only. DocClip.HC clips document sprites; the host
+//sets its entry jump between CPU runs. ACDblBuf.HC double buffers the
+//AutoComplete window; the guest sets its jumps itself on core 0.
+//patches/V5.03 holds byte copies of the two stock files they rebuild. The
+//guest checks a copy's size and hash as it checks its own installed file, so
+//the job needs no disk. Core 0 does not preempt, and the compile would stop
+//the desktop for most of a second: with four cores CPU 1 compiles, and with
+//one the page still shows its loader.
 export const DOC_CLIP_PATCH="doc-sprite-clip-v1",AC_DBL_BUF_PATCH="ac-dbl-buf-v1",
   GUEST_PATCHES=[DOC_CLIP_PATCH,AC_DBL_BUF_PATCH];
-const AC_DBL_BUF_NUM=4,JOB="TempleOS corrections";
+const AC_DBL_BUF_NUM=4,JOB="TempleOS corrections",JOB_SETH=JOB+": CPU 1",JOB_AC=JOB+": AutoComplete",
+  FILES=["DocClip.HC","ACDblBuf.HC","V5.03/DocRecalc.HC","V5.03/ACTask.HC"];
+let pendingFiles=null;
+
+export function GuestPatchLoad()
+{//Fetches the patches and the stock copies once, as early as a boot likes.
+  pendingFiles??=Promise.allSettled(FILES.map(async name=>{
+    const response=await fetch(new URL("./patches/"+name,import.meta.url));
+    if(!response.ok)throw new Error(name+": HTTP "+response.status);
+    return new Uint8Array(await response.arrayBuffer());
+  }));
+  return pendingFiles;
+}
+
+function Latin1(bytes)
+{//One char a byte, as gx.exec writes them back.
+  let res="";
+  for(let i=0;i<bytes.length;i+=8192)
+    res+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  return res;
+}
+
+export function HolyCStr(bytes)
+{//A HolyC string of exactly these bytes. $ and controls go as two hex digits.
+  let res='"';
+  for(const b of bytes) {
+    if(b===0x5C)res+="\\\\";
+    else if(b===0x22)res+='\\"';
+    else if(b===0x0A)res+="\\n";
+    else if(b===0x09)res+="\\t";
+    else if(b<0x20 || b>=0x7F || b===0x24)res+="\\x"+b.toString(16).toUpperCase().padStart(2,"0");
+    else res+=String.fromCharCode(b);
+  }
+  return res+'"';
+}
 
 function JumpCheck(gx,old,target)
 {//PUSH RBP; MOV RBP,RSP stay, then a JMP past the new routine's copy of them.
@@ -45,14 +84,36 @@ export function GuestPatchCheck(gx,patches)
   }
 }
 
-export function GuestPatchRun({guest,instance,lock,unlock,onState,canRun=()=>true,restored=null})
-{//One guest job compiles both, then DocClip's entry is set between CPU runs.
-  let state="pending",id=null,tries=0,patches=[],sources=null;
+function Flag(gx,name)
+{//A HolyC Bool, one byte.
+  const addr=gx.varFind(name);
+  return addr?gx.rdBytes(addr,1)[0]:0;
+}
+
+function Bytes(text)
+{//The bytes of a one char a byte string.
+  return Uint8Array.from(text,ch=>ch.charCodeAt(0));
+}
+
+function AsideText(src)
+{//CPU 1's Seth task compiles src into Adam's table, so the names are where
+//core 0 and the host look for them, and its heap outlives any job.
+  return "U0 GuestPatchAside(U8 *src)\n{\n  CHashTable *old=Fs->hash_table;\n"+
+    "  Fs->hash_table=adam_task->hash_table;\n  try\n    ExePutS(src);\n"+
+    "  catch {\n    guest_patch_except=Fs->except_ch;\n    Fs->catch_except=TRUE;\n  }\n"+
+    "  Fs->hash_table=old;\n}\nGuestPatchAside("+HolyCStr(Bytes(src))+");\n";
+}
+
+export function GuestPatchRun({guest,instance,lock,unlock,onState,canRun=()=>true,restored=null,aside=()=>0})
+{//One guest job compiles both, on CPU 1 if it runs, else on core 0. Core 0
+//sets AutoComplete's jumps; DocClip's entry is set between CPU runs.
+//aside() is 1 if other cores run, -1 if they will, 0 if there are none.
+  let state="pending",id=null,tries=0,patches=[],sources=null,core=0,docOk=false,docWhy="";
   const result={};
   if(restored) {state="restored";patches=restored.slice();GuestPatchCheck(guest(),restored);}
   function Progress(next) {
     state=next;
-    onState({cmd:"guestPatch",patches:GUEST_PATCHES.slice(),state,ok:true,msg:""});
+    onState({cmd:"guestPatch",patches:GUEST_PATCHES.slice(),state,ok:true,msg:"",core});
   }
   function Fail(patch,msg) {if(!result[patch])result[patch]=msg;}
   function Finish() {
@@ -60,46 +121,79 @@ export function GuestPatchRun({guest,instance,lock,unlock,onState,canRun=()=>tru
     patches=GUEST_PATCHES.filter(p=>result[p]===true);
     for(const patch of [AC_DBL_BUF_PATCH,DOC_CLIP_PATCH]) {
       const msg=result[patch]===true?"":result[patch]||"not attempted";
-      onState({cmd:"guestPatch",patch,state:msg?"failed":"installed",ok:!msg,msg});
+      onState({cmd:"guestPatch",patch,state:msg?"failed":"installed",ok:!msg,msg,core});
     }
   }
   async function Load() {
-    const got=await Promise.allSettled(["DocClip.HC","ACDblBuf.HC"].map(async name=>{
-      const response=await fetch(new URL("./patches/"+name,import.meta.url));
-      if(!response.ok)throw new Error(name+": HTTP "+response.status);
-      return response.text();
-    }));
-    const [doc,ac]=got;
+    const [doc,ac,docStock,acStock]=await GuestPatchLoad(),
+      Value=got=>got.status==="fulfilled"?got.value:null;
     if(doc.status==="rejected")Fail(DOC_CLIP_PATCH,"Document patch source: "+doc.reason.message);
     if(ac.status==="rejected")Fail(AC_DBL_BUF_PATCH,"AutoComplete patch source: "+ac.reason.message);
-    sources={doc:doc.value??null,ac:ac.value??null};
+    sources={doc:Value(doc),ac:Value(ac),docStock:Value(docStock),acStock:Value(acStock)};
   }
-  function Build(gx) {
+  function Stock(bytes) {return bytes?HolyCStr(bytes)+","+bytes.length:"";}
+  function DiskNeed() {//A stock copy that did not load is read from the disk.
+    return sources.ac && !sources.acStock || sources.doc && !sources.docStock;
+  }
+  function Text(ac_build) {//AutoComplete first, under its own catch, so either can go in alone.
     let src="";
-    //AutoComplete first, under its own catch, so either can go in alone.
-    if(sources.ac!==null)src+=sources.ac+"\nACDblBufTry;\n";
-    if(sources.doc!==null)src+=sources.doc+"\nDocClipBuild;\n";
-    if(!src)return Finish();
+    if(sources.ac)src+=Latin1(sources.ac)+"\n"+ac_build+"("+Stock(sources.acStock)+");\n";
+    if(sources.doc)src+=Latin1(sources.doc)+"\nDocClipBuild("+Stock(sources.docStock)+");\n";
+    return src;
+  }
+  function Exec(gx,src,target,name,next) {//Queued behind whatever the page asked
+//for first, and never in the way of what it asks for next.
     try {
-      id=gx.exec({src,target:"adam",name:JOB});
-      Progress("building");
+      id=gx.exec({src,target,name,force:true,background:true});
+      Progress(next);
     } catch(err) {
       Fail(AC_DBL_BUF_PATCH,err.message);Fail(DOC_CLIP_PATCH,err.message);Finish();
     }
   }
-  function Built(gx,job) {
-    if(sources.ac!==null) {
-      if(Revision(gx,"ac_dbl_buf_revision")===1)result[AC_DBL_BUF_PATCH]=true;
-      else {
-        const code=ExceptText(gx,"ac_dbl_buf_except");
-        Fail(AC_DBL_BUF_PATCH,"AutoComplete flicker correction was not applied: "+
-          (code?"exception '"+code+"'":job.msg||job.state));
-      }
+  function Build(gx) {//Core 0 compiles and stops drawing until it is done.
+    const src=Text("ACDblBufTry");
+    core=0;
+    if(!src)return Finish();
+    Exec(gx,src,"adam",JOB,"building");
+  }
+  function Seek(gx) {//Where CPU 1's Seth task is. One line on core 0.
+    Exec(gx,"I64 guest_patch_seth=0,guest_patch_except=0;\n"+
+      "if (mp_cnt>1) guest_patch_seth=cpu_structs[1].seth_task;\n","adam",JOB_SETH,"seeking");
+  }
+  function Sought(gx,job) {
+    const seth=job.state==="done"?Ptr(gx,"guest_patch_seth"):0,src=Text("ACDblBufBuildTry");
+    if(!seth || !src)return Build(gx);
+    core=1;
+    Exec(gx,AsideText(src),seth,JOB,"building");
+  }
+  function AcResult(gx,job) {
+    if(!sources.ac)return;
+    if(Revision(gx,"ac_dbl_buf_revision")===1)result[AC_DBL_BUF_PATCH]=true;
+    else {
+      const code=ExceptText(gx,"ac_dbl_buf_except");
+      Fail(AC_DBL_BUF_PATCH,"AutoComplete flicker correction was not applied: "+
+        (code?"exception '"+code+"'":job.msg||job.state));
     }
-    if(sources.doc===null)return Finish();
-    if(job.state==="done")return Progress("installing");
-    Fail(DOC_CLIP_PATCH,"Document sprite correction was not applied: "+(job.msg||job.state));
+  }
+  function DocNext() {
+    if(!sources.doc)return Finish();
+    if(docOk)return Progress("installing");
+    Fail(DOC_CLIP_PATCH,"Document sprite correction was not applied: "+docWhy);
     Finish();
+  }
+  function Built(gx,job) {
+    if(!core) {
+      docOk=job.state==="done";docWhy=job.msg||job.state;
+      AcResult(gx,job);
+      return DocNext();
+    }
+    if(job.state==="error")return Build(gx);   //CPU 1 did not take it.
+    const code=ExceptText(gx,"guest_patch_except");
+    docOk=job.state==="done" && !code && !!Ptr(gx,"doc_clip_new");
+    docWhy=code?"exception '"+code+"'":job.state==="done"?"no routine was compiled":job.msg||job.state;
+    if(sources.ac && Flag(gx,"ac_dbl_buf_built"))return Progress("fit");
+    AcResult(gx,job);
+    DocNext();
   }
   function Install(gx,inst) {
     try {
@@ -119,19 +213,32 @@ export function GuestPatchRun({guest,instance,lock,unlock,onState,canRun=()=>tru
     } catch(err) {Fail(DOC_CLIP_PATCH,err.message);}
     Finish();
   }
+  function Done(gx) {
+    const job=gx.status(id);
+    return ["done","failed","error"].includes(job?.state)?job:null;
+  }
   function Tick(diskReady) {
     const gx=guest(),inst=instance();
-    if(state==="pending" && diskReady && gx?.ready) {
+    let job;
+    if(state==="pending" && gx?.ready) {
       Progress("loading");Load();
     }
-    if(state==="loading" && sources && canRun())Build(gx);
-    if(state==="building") {
-      const job=gx.status(id);
-      if(["done","failed","error"].includes(job?.state))Built(gx,job);
+    if(state==="loading" && sources && canRun() && (diskReady || !DiskNeed())) {
+      const cores=aside();
+      if(cores>0)Seek(gx);
+      else if(!cores)Build(gx);
+    }
+    if(state==="seeking" && canRun() && (job=Done(gx)))Sought(gx,job);
+    if(state==="building" && (job=Done(gx)))Built(gx,job);
+    if(state==="fit" && canRun())Exec(gx,"ACDblBufTry;\n","adam",JOB_AC,"fitting");
+    if(state==="fitting" && (job=Done(gx))) {
+      AcResult(gx,job);
+      DocNext();
     }
     if(state==="installing")Install(gx,inst);
   }
   function Meta() {return patches.slice();}
-  function Pending() {return ["loading","building","installing"].includes(state);}
-  return {Tick,Meta,Pending};
+  function Pending() {return ["loading","seeking","building","fit","fitting","installing"].includes(state);}
+  function Busy() {return state==="building" && !core;}   //the job holds core 0
+  return {Tick,Meta,Pending,Busy};
 }

@@ -26,8 +26,9 @@ export function StockManifestCheck(meta)
 }
 
 async function FetchBytes(url)
-{
-  const r=await fetch(url,{cache:"no-cache"});
+{//The server's cache headers decide: the site revalidates its own files, and
+//the CDN paths it redirects to are named by commit and never change.
+  const r=await fetch(url);
   if(!r.ok)Fail("fetch "+r.status+": "+url);
   return new Uint8Array(await r.arrayBuffer());
 }
@@ -115,14 +116,46 @@ export function StockOverlayApply(disk,bytes,capture)
   return disk;
 }
 
-export async function StockDiskLoad(capture,manifest)
-{
+export async function StockDiskFiles(capture,manifest)
+{//The checked base image, inflated, and the capture's checked overlay.
   manifest??=await StockManifest();
   const [base,patch]=await Promise.all([FetchBytes(new URL("../vendor/images/templeos-hd.qcow2.gz",import.meta.url)),
     FetchBytes(new URL(capture.overlay,ROOT))]);
   if(await StockHash(base)!==manifest.base.gzipSha256)Fail("base disk checksum");
   if(await StockHash(patch)!==capture.overlaySha256)Fail("disk overlay checksum");
-  const disk=makeDisk(await StockInflate(base,manifest.base.decodedBytes));
+  return {raw:await StockInflate(base,manifest.base.decodedBytes),patch};
+}
+
+export function StockDiskMake({raw,patch},capture,manifest)
+{
+  const disk=makeDisk(raw);
   if(disk.virtualSize!==manifest.base.virtualBytes)Fail("base disk dimensions");
   return StockOverlayApply(disk,patch,capture);
+}
+
+export async function StockDiskLoad(capture,manifest)
+{
+  manifest??=await StockManifest();
+  return StockDiskMake(await StockDiskFiles(capture,manifest),capture,manifest);
+}
+
+export async function StockDiskAside(capture,manifest)
+{//StockDiskLoad, with the fetch, hashes and inflate in a worker of their own,
+//so the emulator's thread keeps drawing frames. Where a worker cannot start
+//one, it is done here.
+  manifest??=await StockManifest();
+  if(typeof Worker==="undefined")return StockDiskLoad(capture,manifest);
+  const files=await new Promise((resolve,reject)=>{
+    let worker;
+    try {worker=new Worker(new URL("./StockDiskWorker.js",import.meta.url),{type:"module"});}
+    catch {resolve(null);return;}
+    worker.onmessage=e=>{
+      worker.terminate();
+      if(e.data?.ok)resolve(e.data);
+      else reject(new Error(e.data?.msg||"Stock TempleOS capture: disk worker failed"));
+    };
+    worker.onerror=e=>{e.preventDefault?.();worker.terminate();resolve(null);};
+    worker.postMessage({capture,manifest});
+  });
+  return files?StockDiskMake(files,capture,manifest):StockDiskLoad(capture,manifest);
 }

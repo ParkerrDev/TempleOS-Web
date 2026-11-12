@@ -135,7 +135,7 @@ export async function HemuBoot(opt)
       found=await StockIdentify(gz,opt.smp||1,manifest),module=new WebAssembly.Module(readFileSync(new URL(wasm,SITE)));
     StockModuleCheck(module,found.capture,manifest);
   }
-  const features={waitAsync:opt.waitAsync,idleProbe:opt.idleProbe};
+  const features={waitAsync:opt.waitAsync,idleProbe:opt.idleProbe,webWorker:opt.webWorker};
   h.workers.push(WorkerNew("engine/hemu-worker.js"+(opt.nojit?"?nojit":""),opt.fetchHold,features));
   h.workers[0].on("message",MsgIn);
   h.workers[0].on("error",function WorkerErr(e) {console.log("worker threw: "+e.stack);});

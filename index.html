@@ -10,6 +10,22 @@
   <!-- the snapshot, disk, games and Terry Search are redirected to this CDN (tools/offload-redirects.mjs):
        open the connection while the page is still parsing -->
   <link rel="preconnect" href="https://templeosweb-files.parkerrhunt.workers.dev" crossorigin />
+  <!-- modules the page's scripts import: tools/preload.test.mjs -->
+  <link rel="modulepreload" href="BootFile.js" />
+  <link rel="modulepreload" href="GuestRequests.js" />
+  <link rel="modulepreload" href="Keyboard.js" />
+  <link rel="modulepreload" href="MobileInput.js" />
+  <link rel="modulepreload" href="WinPointer.js" />
+  <link rel="modulepreload" href="engine/CoreBus.js" />
+  <link rel="modulepreload" href="engine/GuestPatch.js" />
+  <link rel="modulepreload" href="engine/Snapshot.js" />
+  <link rel="modulepreload" href="engine/Speaker.js" />
+  <link rel="modulepreload" href="engine/Stock.js" />
+  <link rel="modulepreload" href="framebuffer.js" />
+  <link rel="modulepreload" href="guest-fps.js" />
+  <link rel="modulepreload" href="xsel.js" />
+  <link rel="modulepreload" href="TouchControls.js" />
+  <link rel="modulepreload" href="engine/qcow2.js" />
   <style>
     /* afterdavis theme: the TempleOS desktop look. */
     /* TempleOS system font: the real 322-glyph font the site has always used, laundered CLEAN via

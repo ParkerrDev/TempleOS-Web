@@ -306,8 +306,9 @@ export function createGuestExec(opts) {
     if (!t) throw new Error(`target task "${target}" is invalid`);
     const info = taskInfo(t);
     if (info.popup) throw new Error(`target task "${info.name}" has a popup task open (${info.popup.name}); TaskExe would refuse it`);
-    const b = busyFirst(t);
-    if (b && b !== r && !r.p.force) throw new Error(`task "${info.name}" is still running request ${b.id} (${b.name}); wait for it to finish or pass force:true to queue behind it`);
+    // a background request (the boot corrections) refuses nothing: later ones queue behind it
+    const b = [...(busy.get(t) || [])].find(x => x !== r && !x.p.background);
+    if (b && !r.p.force) throw new Error(`task "${info.name}" is still running request ${b.id} (${b.name}); wait for it to finish or pass force:true to queue behind it`);
     r.target = info; r.task = t;
     const slot = mboxFree.pop(); if (slot === undefined) throw new Error("too many requests in flight (64 mailboxes)");
     const mb = mboxAddr(slot); wr64(mb, 0); wr64(mb + 8, 0); wr64(mb + 16, 0);

@@ -6,7 +6,8 @@ import {createGuestFpsMeter} from "./guest-fps.js";
 import {KEY,KeyInput,KeyBar,KeyRoute} from "./Keyboard.js";
 import {MobileInput} from "./MobileInput.js";
 import {SnapshotInspect} from "./engine/Snapshot.js";
-import {StockIdentify,StockInspect,StockModuleCheck} from "./engine/Stock.js";
+import {StockIdentify,StockInspect,StockManifest,StockModuleCheck} from "./engine/Stock.js";
+import {GUEST_PATCHES} from "./engine/GuestPatch.js";
 import {BusStop,BUS_VERSION} from "./engine/CoreBus.js";
 import {GuestRequests} from "./GuestRequests.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
@@ -89,14 +90,33 @@ function blit(idx, w, h, immutable = false, stats = null) {
     updateFps();
   }
 }
-let started = false;
+let started=false,framed=false,patchHold=null;
+const patchLeft=new Set();   //corrections the loader waits for
 export function OsReady()
 {
   return started;
 }
 function firstFrame()
+{//On one core the corrections compile on core 0, which does not preempt, so
+//the desktop would stop for most of a second. The loader covers that, up to 8 s.
+  if (framed) return;
+  framed=true;
+  if (patchLeft.size && !paused) {
+    setLoad("applying TempleOS corrections…",100);
+    patchHold=setTimeout(OsShow,8000);
+    return;
+  }
+  OsShow();
+}
+function PatchHoldEnd()
 {
-  if (started) return;
+  clearTimeout(patchHold);
+  patchHold=null;
+}
+function OsShow()
+{
+  PatchHoldEnd();
+  if (started || !framed) return;
   started=true;
   ld.style.display="none";
   dbg("TempleOS desktop up");
@@ -423,7 +443,7 @@ addEventListener("keydown",SoundStart);
 const isMobileDev = (navigator.maxTouchPoints > 1) || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || "");
 let useSMP = self.crossOriginIsolated && !/[?&](single|nosmp)\b/.test(location.search)
              && (/[?&]smp\b/.test(location.search) || !isMobileDev);
-const SMP_N=4;
+const SMP_N=4,DISK_DELAY=isMobileDev?2500:0;   //phones keep the disk out of the boot's memory peak
 let snapshotInfo=null,bootFile=null;
 
 // ---- load the compressed RAM snapshot (imported, or the default; the SMP snapshot when ?smp) ----
@@ -431,7 +451,9 @@ let gzBytes;
 async function downloadSnapshot(smp=useSMP,generation=osGen) {
   const progress=(text,pct)=>{if(generation===osGen)setLoad(text,pct);};
   progress("downloading the TempleOS RAM snapshot…", 5);
-  const gz = await fetch(smp ? "./hemu/live-smp.bin.gz" : "./hemu/live.bin.gz", { cache: "no-cache" });
+  //The site redirects to a CDN path named by the engine's commit, which never
+  //changes, so a cached copy needs no round trip.
+  const gz = await fetch(smp ? "./hemu/live-smp.bin.gz" : "./hemu/live.bin.gz");
   if (!gz.ok) { progress("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
   const total = +gz.headers.get("content-length") || 10300000;   // hemu/live.bin.gz
   const reader = gz.body.getReader(); const chunks = []; let got = 0;
@@ -460,7 +482,7 @@ async function restartOS() {
     engine.stop?.();
     resetPause();
     fpsMeter.reset();updateFps();
-    started = false; ld.style.display = "";            // let firstFrame() hide the loader again
+    started = false; framed = false; PatchHoldEnd(); ld.style.display = "";   // let firstFrame() hide the loader again
     setLoad("restarting TempleOS…", 0);
     if (!gzBytes) gzBytes = await downloadSnapshot();  // phones free the snapshot after boot - re-fetch
     bootEngine();
@@ -520,7 +542,7 @@ let importDisk = null;   // a disk image imported before the reload
 function engineFail(why) {
   speaker.Stop();
   guestRequests.Fail(String(why));
-  started=false;
+  started=false;framed=false;PatchHoldEnd();SpareTake(null);
   ld.style.display = ""; setLoad("The emulator could not start (" + why + "). Tap ↻ Restart.", 0);
   dbg("engine failed: " + why, true);
   dispatchEvent(new CustomEvent("osstate",{detail:{ready:false,msg:String(why)}}));
@@ -548,10 +570,52 @@ function singleCore(why,generation=osGen) {   // multi-core failed before its fi
     gzBytes=b;bootEngine();
   }).catch(e=>{if(generation===osGen)engineFail(e.message);});
 }
+// ---- what a stock boot needs besides the snapshot, started while it downloads ----
+let spare=null;
+function Bytes(url)
+{
+  return fetch(url).then(function (r) {
+    if (!r.ok) throw new Error(url+": HTTP "+r.status);
+    return r.arrayBuffer();
+  });
+}
+function EngineSpare(smp)
+{//The workers load their modules, and the engine and the stock manifest
+//come, while the snapshot downloads. bootEngine takes them.
+  let k;
+  SpareTake(null);
+  spare={smp,aps:[],bsp:null,
+    wasm:Bytes(smp?"./build/hemu-smp.wasm":"./build/hemu.wasm"),
+    sc:smp?fetch("./build/hemu-smp.json").then(r=>r.json()):null,
+    manifest:StockManifest()};
+  for (const p of [spare.wasm,spare.sc,spare.manifest])
+    p?.catch(()=>{});   //A boot that needs one again asks for it again.
+  try {
+    spare.bsp=new Worker("./engine/hemu-worker.js",{type:"module"});
+    if (smp)
+      for (k=1;k<SMP_N;k++)
+	spare.aps.push(new Worker("./engine/hemu-smp-worker.js",{type:"module"}));
+  } catch (e) {
+    spare.bsp?.terminate();
+    for (const ap of spare.aps) ap.terminate();
+    spare.bsp=null;spare.aps=[];
+  }
+}
+function SpareTake(smp)
+{//The spare for this kind of engine, or null. Any other is dropped.
+  const s=spare;
+  spare=null;
+  if (s && s.smp===smp) return s;
+  s?.bsp?.terminate();
+  for (const ap of s?.aps||[]) ap.terminate();
+  return null;
+}
+const Settled=p=>p?p.catch(()=>undefined):Promise.resolve(undefined);
+
 function runWorker() {
-  const generation=osGen;
+  const generation=osGen,s=SpareTake(false);
   let worker, watchdog, alive = false;
-  try { worker = new Worker("./engine/hemu-worker.js", { type: "module" }); } catch (e) { return false; }
+  try { worker = s?.bsp || new Worker("./engine/hemu-worker.js", { type: "module" }); } catch (e) { return false; }
   engine.kind = "worker"; engine.post = (m, t) => worker?.postMessage(m, t || []);
   const stop=()=>{clearTimeout(watchdog);worker?.terminate();worker=null;
     if(engine.stop===stop){speaker.Stop();engine.kind=null;notifyInput=()=>{};}};
@@ -586,9 +650,12 @@ function runWorker() {
     else if(m.cmd === "palette")updatePalette(m.index,m.rgb);
     else diskMsg(m);   // paused/exportResult/fileResult/dirList/diskInfo
   };
-  worker.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: new URL("./build/hemu.wasm", location.href).href, fixedB: FIXED_B, diskBytes: importDisk,
-    ...os_cfg }, importDisk ? [importDisk] : []);
+  const gz=gzBytes,diskBytes=importDisk;
   importDisk = null;
+  Promise.all([Settled(s?.wasm),Settled(s?.manifest)]).then(function ([wasmBytes,manifest]) {
+    worker?.postMessage({ cmd: "init", gz, wasmUrl: new URL("./build/hemu.wasm", location.href).href, fixedB: FIXED_B, diskBytes,
+      wasmBytes, manifest, diskDelay: DISK_DELAY, ...os_cfg }, [diskBytes,wasmBytes].filter(Boolean));
+  });
   watchdog = setTimeout(() => { if (!alive) fallback("no frame in 10s"); }, 10000);
   return true;
 }
@@ -596,13 +663,14 @@ function runWorker() {
 // ---- SMP engine (?smp): the BSP is hemu-worker.js over a SHARED memory + N-1 AP workers running
 //      RunCore in parallel. Same BSP message protocol as runWorker, so the whole UI works unchanged. ----
 async function runSMP() {
-  const generation=osGen;
-  let bsp=null,aps=[],ctrl=null,watchdog,alive=false,stopped=false,busFailed=false;
+  const generation=osGen,s=snapshotInfo?SpareTake(null):SpareTake(true);
+  let bsp=null,aps=[],ctrl=null,watchdog,alive=false,stopped=false,busFailed=false,manifest;
   const current=()=>!stopped&&generation===osGen;
   function stop() {
     stopped=true;clearTimeout(watchdog);
     if(ctrl)BusStop(new Int32Array(ctrl));
     bsp?.terminate();for(const ap of aps)ap.terminate();
+    s?.bsp?.terminate();for(const ap of s?.aps||[])ap.terminate();   //spares not yet taken in
     bsp=null;aps=[];
     if(engine.stop===stop){speaker.Stop();engine.kind=null;notifyInput=()=>{};}
   }
@@ -626,18 +694,19 @@ async function runSMP() {
       sc={globals:{g_ipi_pending:snapshotInfo.meta.ipiAddr},
         ncore:snapshotInfo.meta.cores};
     } else {
-      [wasmBytes,sc]=await Promise.all([
-        fetch("./build/hemu-smp.wasm",{cache:"no-cache"}).then(r=>r.arrayBuffer()),
-        fetch("./build/hemu-smp.json",{cache:"no-cache"}).then(r=>r.json()),
+      [wasmBytes,sc,manifest]=await Promise.all([
+        s?.wasm||Bytes("./build/hemu-smp.wasm"),
+        s?.sc||fetch("./build/hemu-smp.json").then(r=>r.json()),
+        StockManifest(),
       ]);
       sc.ncore=SMP_N;
-      const found=await StockIdentify(gzBytes,SMP_N);
+      const found=await StockIdentify(gzBytes,SMP_N,manifest);
       StockModuleCheck(await WebAssembly.compile(wasmBytes),found.capture,found.manifest);
     }
     if(!current())return false;
     const mem = new WebAssembly.Memory({ initial: 512, maximum: 8192, shared: true });
     ctrl=new SharedArrayBuffer(64);
-    bsp = new Worker("./engine/hemu-worker.js", { type: "module" });
+    bsp = s?.bsp || new Worker("./engine/hemu-worker.js", { type: "module" });
     engine.kind="smp";
     engine.post=(m,t)=>{
       if(!current())return;
@@ -668,7 +737,7 @@ async function runSMP() {
     else diskMsg(m);
     };
     for (let k=1;k<sc.ncore;k++) {
-      const ap = new Worker("./engine/hemu-smp-worker.js", { type: "module" });
+      const ap = s?.aps[k-1] || new Worker("./engine/hemu-smp-worker.js", { type: "module" });
       ap.onmessage = (e) => {
         if(!current())return;
         const m=e.data;
@@ -689,6 +758,7 @@ async function runSMP() {
         requiredBusProtocol:snapshotInfo?.meta.requiredBusProtocol });
     }
     bsp.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: new URL("./build/hemu-smp.wasm", location.href).href, fixedB: FIXED_B,...os_cfg,
+      wasmBytes:snapshotInfo?undefined:wasmBytes,manifest,diskDelay:DISK_DELAY,
       diskBytes: importDisk, smp: { mem, ctrl, ipiAddr: sc.globals.g_ipi_pending, ncore: sc.ncore,busProtocol:BUS_VERSION } },
       importDisk ? [importDisk] : []);
     importDisk = null;
@@ -699,6 +769,11 @@ async function runSMP() {
 
 function bootEngine() {
   speaker.Pause(snapshotInfo?.meta.paused??paused);
+  framed=false;PatchHoldEnd();patchLeft.clear();
+  //A saved session keeps the corrections it was saved with, and four cores
+  //compile them on CPU 1 while core 0 draws.
+  if (!snapshotInfo && !useSMP)
+    for (const p of GUEST_PATCHES) patchLeft.add(p);
   if (useSMP) runSMP();   // BSP + AP workers; falls back to one core itself
   else if (!runWorker()) engineFail("this browser cannot start a module Worker");
 }
@@ -726,6 +801,8 @@ const patchFailed=new Map();
 const diskMsg = (m) => {
   guestRequests.Receive(m);
   if (m.cmd=="guestPatch") {
+    if (m.patch && patchLeft.delete(m.patch) && !patchLeft.size && framed)
+      OsShow();
     if(osFault)return;
     if (m.state=="failed") {
       patchFailed.set(m.patch,PATCH_NOTICE[m.patch]||PATCH_NOTICE[""]);
@@ -810,9 +887,14 @@ async function OsBoot()
     if(smp&&!self.crossOriginIsolated)throw new Error("This captured RAM needs shared memory for its four CPUs.");
     bytes=snap;
     setLoad("loading imported snapshot…",50);
-  } else
+  } else {
+    EngineSpare(smp);
     bytes=await downloadSnapshot(smp);
-  if(generation!==osGen)return;
+  }
+  if(generation!==osGen) {
+    SpareTake(null);
+    return;
+  }
   bootFile=file;importDisk=disk;snapshotInfo=info;stockBoot=!snap;useSMP=smp;gzBytes=bytes;
   bootEngine();
   if (boot_query.get("run"))

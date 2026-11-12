@@ -7,33 +7,49 @@
     "version": "QEMU emulator version 11.1.2"
   },
   "ms": 8000,
-  "probeHash": "940f79ad3eb05f09ac625f78e767ae56dbb8507c3efa09e3545616b36e70b007",
-  "patchHash": "8a6c6bc60f7767803e2796fa304fab91b6771431ec672c25500a7c97d4981ab6",
+  "probeHash": "30820e4e6b612290579403d1ecff7e6d64e217989285b59c777813829f2c7b00",
+  "patchHash": "9d6f450a97b4f6cca9a70f61e0291739849332f8c493d9ae024bfca705ba343a",
   "original": [
     {
-      "frames": 290,
-      "hidden": 10,
-      "refills": 24,
-      "switches": 21336,
-      "spans": 24,
+      "frames": 287,
+      "hidden": 9,
+      "refills": 25,
+      "switches": 22225,
+      "spans": 25,
+      "changes": 27,
+      "shorts": 18,
       "text": "Word:Dir"
     },
     {
-      "frames": 284,
-      "hidden": 1,
+      "frames": 285,
+      "hidden": 0,
       "refills": 25,
       "switches": 750,
       "spans": 25,
+      "changes": 2,
+      "shorts": 1,
+      "text": "AutoComplete is in StandBy"
+    },
+    {
+      "frames": 285,
+      "hidden": 3,
+      "refills": 24,
+      "switches": 11887,
+      "spans": 24,
+      "changes": 53,
+      "shorts": 37,
       "text": "AutoComplete is in StandBy"
     }
   ],
   "patched": [
     {
-      "frames": 289,
+      "frames": 288,
       "hidden": 0,
-      "refills": 25,
+      "refills": 24,
       "switches": 0,
       "spans": 0,
+      "changes": 0,
+      "shorts": 0,
       "text": "Word:Dir"
     },
     {
@@ -42,6 +58,18 @@
       "refills": 25,
       "switches": 0,
       "spans": 0,
+      "changes": 1,
+      "shorts": 0,
+      "text": "AutoComplete is in StandBy"
+    },
+    {
+      "frames": 286,
+      "hidden": 0,
+      "refills": 25,
+      "switches": 0,
+      "spans": 0,
+      "changes": 14,
+      "shorts": 0,
       "text": "AutoComplete is in StandBy"
     }
   ]

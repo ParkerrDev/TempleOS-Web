@@ -15,6 +15,8 @@ using the [HolyC-wasm](https://github.com/ParkerrDev/HolyC-wasm) compiler (clone
 | `guestinput.js` | mouse state resolved through `guestexec.js` metadata: relative deltas and capture hints; raw keyboard bytes use `KeyQueue.js` and HEMU IRQ1 |
 | `qcow2.js` | qcow2/raw sector I/O and host FAT32 listing, upload and read |
 | `Stock.js` | capture manifest, RAM/engine identity checks, bounded inflation and paired disk overlays shared by page, desktop and worker |
+| `StockDiskWorker.js` | fetches, checks and inflates the stock disk for `StockDiskAside`, off the emulator's thread |
+| `GuestPatch.js` | the TempleOS corrections a stock boot compiles in the guest (`patches/`), with byte copies of the stock sources they rebuild in `patches/V5.03` |
 | `hemu-worker.js` | the engine as the site runs it: one Worker, single core (the shipping path); also the BSP of the SMP engine |
 | `hemu-smp-worker.js` | application cores over shared `WebAssembly.Memory`; the BSP always uses the production worker |
 
@@ -77,6 +79,38 @@ strict FPU/XMM parser and disk-overlay packaging commands are documented in
 these inputs; the compiled engine carries matching `hemu.stock` metadata.
 Page, desktop and worker loaders reject unknown RAM-only imports before
 execution. Full saved-machine images use their embedded engine and state.
+
+A stock boot in the browser asks for everything at once. `index.html` preloads
+every module its scripts import (`tools/preload.test.mjs` keeps the list), and
+while the snapshot downloads `Os.js` starts the workers, so their modules load,
+and fetches the engine and `stock.json`, which it hands to the worker with the
+snapshot. The worker compiles the engine while it inflates the RAM and fetches
+the correction sources. The RAM is 384 MB inflated, 84% of it zero pages, and a
+gzip stream inflates in one pass, since a block may copy from the 32 KB before
+it. A block that starts after 32 KB of zeros needs only zeros from before, so
+`StockPart.js` makes the stretch from one such block to the next a whole raw
+deflate stream: a block of 32 KB of zeros goes in front, for the copies that
+reach back, and an empty final block after it. `StockSegments.js` lists those
+cuts for each stock snapshot by its gzip SHA-256, and
+`tools/hemu/stock-segments.mjs` finds them with a block reader of its own,
+since zlib does not say where blocks start (`--write` after a HEMU update;
+`tools/Test.sh` fails the build until it is run). The engine worker starts up
+to five threads (`StockPool.js`) when it loads, so their modules come while
+the snapshot downloads, and inflates six parts of about equal cost at once
+into shared memory, about 0.5 s down to 0.15 s. Only chunks that are not zero
+are written, and only those ranges are copied into guest RAM, which starts as
+zeros: the boot's resident memory peak falls from about 880 MB to 280 MB.
+Without shared memory (Safari is not cross-origin isolated) the worker
+inflates the whole stream itself, still skipping the zeros. The snapshot and disk are fetched with the browser's
+normal caching: the site's own files revalidate, and the CDN paths they redirect
+to are named by commit and never change. The disk is fetched, checked and
+inflated in a worker of its own, at the first frame on a desktop and 2.5 s
+later on a phone, so the emulator never stops for it. Core 0 does not preempt,
+so compiling the guest corrections there would stop the desktop for most of a
+second. With four cores CPU 1's Seth task compiles them into Adam's table while
+core 0 draws, and core 0 then only sets the entry jumps. With one core the page
+keeps its loader up until they are in (at most 8 s), and that compile's frames
+run without waiting for the clock.
 
 The browser and standalone desktop window both resume that already booted
 64-bit guest. They do not execute TempleOS's 16-bit DVD/BIOS loader or perform

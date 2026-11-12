@@ -40,11 +40,11 @@ try {
           }
         };
       });
-      let source=Replace(worker,'StockModuleCheck,StockDiskLoad}', 'StockModuleCheck,StockDiskLoad as diskLoad}');
-      source+='\nasync function StockDiskLoad(...args) {try{return await diskLoad(...args);}finally{setTimeout(()=>postMessage({cmd:"testDiskSettled"}),0);}}\n';
+      let source=Replace(worker,'StockModuleCheck,StockDiskAside}', 'StockModuleCheck,StockDiskAside as diskLoad}');
+      source+='\nasync function StockDiskAside(...args) {try{return await diskLoad(...args);}finally{setTimeout(()=>postMessage({cmd:"testDiskSettled"}),0);}}\n';
       if(outcome==='scheduled') {
         source=Replace(source,'setTimeout(async()=>{','globalThis.testDiskStart=async()=>{');
-        source=Replace(source,'},2500);','};');
+        source=Replace(source,'},diskDelay);','};');
         source+='\naddEventListener("message",e=>{if(e.data.cmd==="testDiskStart")testDiskStart().then(()=>postMessage({cmd:"testDiskSettled"}));});\n';
       }
       await context.route('**/engine/hemu-worker.js',route=>route.fulfill({body:source,contentType:'text/javascript',headers}));

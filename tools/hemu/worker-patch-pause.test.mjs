@@ -20,6 +20,9 @@ for(const cores of [0,4]) {
     h=await HemuBoot({smp:cores,rate:30,fetchHold:[path]});
   try {
     await h.Wait(m=>m.cmd==="__fetchHeld" && m.url===url,30000);
+    //The sources are asked for at boot; a save also needs the disk.
+    if(!h.msgs.some(m=>m.cmd==="diskInfo" && m.ok))
+      await h.Wait(m=>m.cmd==="diskInfo" && m.ok,60000);
     await Request(h,{cmd:"pause",value:true},m=>m.cmd==="paused" && m.value);
     const released=await Request(h,{cmd:"__fetchRelease",url},m=>m.cmd==="__fetchReleased");
     assert.equal(released.count,1,"the source request was held until pause completed");
@@ -39,7 +42,9 @@ for(const cores of [0,4]) {
     assert.match(early.msg,/Resume TempleOS.*then save again/);
     await Frozen(h,cores);
 
-    const done=h.Wait(m=>m.cmd==="guestResult" && m.name==="TempleOS corrections" && m.state==="done",30000);
+    //Four cores build on CPU 1, then core 0 sets the AutoComplete jumps.
+    const last=cores?"TempleOS corrections: AutoComplete":"TempleOS corrections",
+      done=h.Wait(m=>m.cmd==="guestResult" && m.name===last && m.state==="done",30000);
     await Request(h,{cmd:"pause",value:false},m=>m.cmd==="paused" && !m.value);
     await done;
     //The job's Promise resolves after the frame's GuestPatch Tick. Pause before
