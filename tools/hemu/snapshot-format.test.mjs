@@ -24,8 +24,10 @@ function Pack(m=meta,engine=wasm) {
 assert.equal(await SnapshotInspect(gzipSync(Buffer.alloc(32))),null,"legacy RAM uses its original loader");
 const head=await SnapshotInspect(Pack());
 assert.equal((await SnapshotInspect(Pack({...meta,heapAbi:1}))).meta.heapAbi,1);
-assert.deepEqual(head.meta,{...meta,heapAbi:0,guestPatches:[]});assert.deepEqual(Buffer.from(head.wasm),wasm);
-for (const change of [{guestPatches:["unknown"]},{guestPatches:["doc-sprite-clip-v1","doc-sprite-clip-v1"]},{guestPatches:null},{version:2},{heapAbi:2},{heapAbi:null},{cores:2},{memoryBytes:2**40},{memoryBytes:436666369},
+assert.deepEqual(head.meta,{...meta,heapAbi:0,guestPatches:[]});
+assert.deepEqual((await SnapshotInspect(Pack({...meta,guestPatches:["doc-sprite-clip-v1","ac-dbl-buf-v1"]}))).meta.guestPatches,
+  ["doc-sprite-clip-v1","ac-dbl-buf-v1"],"both TempleOS corrections are known");assert.deepEqual(Buffer.from(head.wasm),wasm);
+for (const change of [{guestPatches:["unknown"]},{guestPatches:["doc-sprite-clip-v1","doc-sprite-clip-v1"]},{guestPatches:["ac-dbl-buf-v1","ac-dbl-buf-v1"]},{guestPatches:null},{version:2},{heapAbi:2},{heapAbi:null},{cores:2},{memoryBytes:2**40},{memoryBytes:436666369},
   {wasmBytes:3e6},{diskBytes:-1},{heapPtr:2**40},{base:436666368},{sp:-1},
   {engineHash:"f".repeat(64)},{launch:{name:"bad",slot:80,task:10}},
   {keyboard:{...meta.keyboard,queue:[256]}},{pointer:{...meta.pointer,x:null}},

@@ -49,7 +49,7 @@ for (const smp of [0,4]) {
     await h.Stop();h=null;
     const head=await SnapshotInspect(saved.buf,{busProtocol});
     assert.equal(head.meta.heapAbi,runtime.HOST_HEAP_ABI??0);
-    assert.deepEqual(head.meta.guestPatches,["doc-sprite-clip-v1"]);
+    assert.deepEqual(head.meta.guestPatches,["doc-sprite-clip-v1","ac-dbl-buf-v1"]);
     assert.equal(head.meta.cores,smp||1);assert.equal(head.meta.rate,120);
     assert.equal(head.meta.requiredBusProtocol,smp?busProtocol:undefined);
     assert.equal(head.meta.version,smp&&busProtocol?2:1);

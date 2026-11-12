@@ -1,4 +1,5 @@
 import {BusModuleVersion} from "./CoreBus.js";
+import {GUEST_PATCHES} from "./GuestPatch.js";
 
 const MAGIC=new TextEncoder().encode("HEMUSNP1"),PAGE=65536,CHUNK=131072;
 const Fail=msg=>{throw new Error("Invalid HEMU snapshot: "+msg);};
@@ -11,7 +12,7 @@ function HeaderCheck(m)
   if (m.version===1 && m.requiredBusProtocol!==undefined && m.requiredBusProtocol!==0 ||
       m.version===2 && (m.requiredBusProtocol!==1 || m.cores!==4)) Fail("unsupported RAM ownership requirement");
   if (m.guestPatches===undefined) m.guestPatches=[];
-  if (!Array.isArray(m.guestPatches) || m.guestPatches.some(p=>p!=="doc-sprite-clip-v1") ||
+  if (!Array.isArray(m.guestPatches) || m.guestPatches.some(p=>!GUEST_PATCHES.includes(p)) ||
       new Set(m.guestPatches).size!==m.guestPatches.length) Fail("unsupported guest patches");
   if (m.heapAbi===undefined) m.heapAbi=0;
   if (![0,1].includes(m.heapAbi)) Fail("unsupported allocator ABI");

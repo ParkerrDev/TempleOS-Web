@@ -1,0 +1,48 @@
+{
+  "patch": "ac-dbl-buf-v1",
+  "source": "TempleOS V5.03 ::/Adam/AutoComplete/ACTask.HC.Z",
+  "backend": {
+    "engine": "qemu",
+    "accelerator": "kvm",
+    "version": "QEMU emulator version 11.1.2"
+  },
+  "ms": 8000,
+  "probeHash": "940f79ad3eb05f09ac625f78e767ae56dbb8507c3efa09e3545616b36e70b007",
+  "patchHash": "8a6c6bc60f7767803e2796fa304fab91b6771431ec672c25500a7c97d4981ab6",
+  "original": [
+    {
+      "frames": 290,
+      "hidden": 10,
+      "refills": 24,
+      "switches": 21336,
+      "spans": 24,
+      "text": "Word:Dir"
+    },
+    {
+      "frames": 284,
+      "hidden": 1,
+      "refills": 25,
+      "switches": 750,
+      "spans": 25,
+      "text": "AutoComplete is in StandBy"
+    }
+  ],
+  "patched": [
+    {
+      "frames": 289,
+      "hidden": 0,
+      "refills": 25,
+      "switches": 0,
+      "spans": 0,
+      "text": "Word:Dir"
+    },
+    {
+      "frames": 284,
+      "hidden": 0,
+      "refills": 25,
+      "switches": 0,
+      "spans": 0,
+      "text": "AutoComplete is in StandBy"
+    }
+  ]
+}

@@ -610,14 +610,37 @@ suspended before or after stack allocation still have a valid continuation.
 all four CPU slots. A failed application is reported as `guestPatch` with an
 error message; the original routine remains active.
 
-Full session metadata records `guestPatches: ["doc-sprite-clip-v1"]`, checks it
-against restored guest code, and preserves the patch and its cache in RAM.
+Full session metadata records `guestPatches: ["doc-sprite-clip-v1",
+"ac-dbl-buf-v1"]` (the corrections that went in), checks each against restored
+guest code, and preserves the patch and its cache in RAM.
 Old saves default to an empty patch list and resume without being silently
 modified. Disk-only export retains the original disk source: this live RAM
 correction is not an on-disk TempleOS installation. The same HolyC file has a
 native single-core installer, verified in original QEMU/KVM; native SMP entry
 replacement is not claimed. The production HEMU path uses its four-core
 barrier and passes full snapshot roundtrips in both supported topologies.
+
+A second correction fixes another original bug: the AutoComplete window
+flickered as it updated. ACDocRst cleared the window's show flag, then the list
+was rebuilt by prints and dictionary reads that each yield, so the window
+manager drew frames with the window missing. `engine/patches/ACDblBuf.HC`
+recompiles ACDocRst and the three ACTask routines from the installed
+`ACTask.HC.Z` (size and FNV-1a hash bound), changed only so the list is filled
+in the task's back document and swapped in whole by DocDblBufSwap; the window
+moves and swaps under the display document's lock and is never hidden. It runs
+in the guest on core 0, where every window task runs and nothing is preempted,
+and sets each entry jump with interrupts off, keeping the frame-setup
+instructions. A wrong source or an entry that is not stock (including a second
+install) throws and leaves the original routines active.
+
+`ACFlicker.HC` focuses a window holding a word, changes the scan code every
+20 ms so AutoComplete refills its list, and counts frames drawn and task
+switches taken while the window is hidden, in a listing phase and a StandBy
+phase. `ac-flicker-oracle.mjs` runs it in QEMU/KVM on stock V5.03: the window
+manager drew 10 and 1 frames without the window and every one of 49 refills
+let tasks run with it hidden; corrected, none of 50 refills did.
+`ac-flicker.test.mjs` repeats both cases on HEMU and checks the corrected list
+text and the second install refusal. Set `HOLYC_QEMU_ORACLE` as above to regenerate the reference.
 
 `stock.test.mjs` validates the hash-bound stock RAM/module identities and
 reconstructs every byte of both captured disks from the original base and

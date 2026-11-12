@@ -5,7 +5,7 @@
 // while the main thread is drawing frame N, this worker is already emulating frame N+1 - so the
 // blit cost leaves the critical path. The canvas stays on the main thread (frames are shipped via
 // postMessage), so hemu.html can fall back to its in-line single-thread engine if this ever fails.
-import {DocClipPatch} from "./DocClip.js";
+import {GuestPatchRun} from "./GuestPatch.js";
 import {FrameTop,FrameFps} from "./FrameText.js";
 import {SnapshotOpen,SnapshotSave} from "./Snapshot.js";
 import {StockIdentify,StockInflate,StockModuleCheck,StockDiskLoad} from "./Stock.js";
@@ -34,7 +34,7 @@ let paused=false,saving=false,machineBarrier=null,engineBytes=null,hostRef=null,
 let machineBus=null,diskPending=false,diskGeneration=0,stockCapture=null,stockManifest=null;
 const RamAccess=fn=>machineBus?machineBus.Access(fn):fn();
 const deferred=[];
-let docClip=null;
+let guestPatch=null;
 function PauseSet(value) {
   if(machineBus?.Stopped()) {
     paused=true;
@@ -45,7 +45,7 @@ function PauseSet(value) {
   if (value && machineBarrier && !machineBarrier.Lock())
     throw new Error("The application cores did not stop; pause again.");
   paused=!!value;
-  if (paused) {keyq.Release();docClip?.Tick(false);showStoppedFrame?.();}
+  if (paused) {keyq.Release();guestPatch?.Tick(false);showStoppedFrame?.();}
   else machineBarrier?.Unlock();
   postMessage({cmd:"paused",value:paused});
 }
@@ -198,7 +198,7 @@ function gxTick() {                          // once per emulated frame: service
     if (gxProbe.ok) { console.log("[hemu] guest execution API ready: " + JSON.stringify({ syms: gxProbe.syms, focusFn: gxProbe.focusFn, warnings: gxProbe.warnings, tasks: gxProbe.tasks.map((t) => t.name + (t.atPrompt ? "(prompt)" : "")) })); postMessage({ cmd: "guestReady", ok: true, probe: gxProbe, diskReady:!!disk,diskPending }); }
     else { console.warn("[hemu] guest probe " + gxProbeTries + ": " + gxProbe.errors.join("; ")); if (gxProbeTries === 40) postMessage({ cmd: "guestReady", ok: false, probe: gxProbe }); }
   }
-  docClip?.Tick(!!disk);
+  guestPatch?.Tick(!!disk);
   try { gx.tick(); } catch (e) { console.warn("[hemu] guest tick threw", e); }
 }
 
@@ -265,16 +265,16 @@ async function exportImage(kind) {
     if (!loaded || !disk || !gx?.ready) throw new Error("Wait for the machine and disk to finish loading.");
     if (machineBarrier && !machineBarrier.Lock()) throw new Error("The application cores did not stop; save again.");
     locked=true;saving=true;
-    docClip?.Tick(false);
-    if (docClip?.Pending()) throw new Error(paused?
-      "Resume TempleOS to finish the document sprite correction, then save again.":
-      "Wait for the document sprite correction to finish, then save again.");
+    guestPatch?.Tick(false);
+    if (guestPatch?.Pending()) throw new Error(paused?
+      "Resume TempleOS to finish the TempleOS corrections, then save again.":
+      "Wait for the TempleOS corrections to finish, then save again.");
     const launch=gx.snapshot();
     const meta={cores:smpCfg?.ncore||1,base:gBase,heapPtr:hostRef.state.heapPtr,heapAbi:hostRef.state.heapAbi??0,
       sp:Number(instRef.exports.__sp.value),ipiAddr:smpCfg?.ipiAddr||0,
       requiredBusProtocol:machineBus?.Ready()?BUS_VERSION:undefined,
       paused,rate:refreshRate,actualRate,repeat:repeatKeys,budget:curBudget,
-      keyboard:keyq.Save(),pointer:guestInput.save(),launch,guestPatches:docClip?.Meta()||[]};
+      keyboard:keyq.Save(),pointer:guestInput.save(),launch,guestPatches:guestPatch?.Meta()||[]};
     if(machineBus){machineBus.Freeze();frozen=true;}
     const buf=kind==="snapshot"?await SnapshotSave({meta,wasm:engineBytes,memory:instRef.exports.memory,disk}):await DiskImage();
     if(machineBus?.Stopped())throw new Error("Shared RAM coordination stopped during capture");
@@ -421,7 +421,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, rate, patches
     }
 
   } else inst.exports.__rt_init();
-  docClip=DocClipPatch({guest:()=>gx,instance:()=>instRef,
+  guestPatch=GuestPatchRun({guest:()=>gx,instance:()=>instRef,
     lock:()=>machineBarrier?machineBarrier.Lock():true,
     unlock:()=>{if(!paused && !saving)machineBarrier?.Unlock();},
     onState:msg=>postMessage(msg),canRun:()=>!paused && !saving,restored:saved?saved.meta.guestPatches:patches===false?[]:null});

@@ -452,7 +452,7 @@ async function restartOS() {
   try {
     dbg("↻ restarting TempleOS (reloading the OS, keeping your windows)…");
     cancelOSRequests();
-    OsNotice();
+    patchFailed.clear();OsNotice();
     dispatchEvent(new CustomEvent("osstate",{detail:{ready:false,
       msg:"TempleOS is restarting."}}));
     osGen++;
@@ -717,15 +717,24 @@ const resetPause = () => { ++pauseRevision; paused = false; osFault=false; pause
 
 // ---- requests to the guest, matched to their replies by id; the Disk window shows the rest ----
 const cancelOSRequests=msg=>guestRequests.Reset(msg);
+// the TempleOS bug fixes the engine applies at boot, and the ones that failed this boot
+const PATCH_NOTICE={
+  "doc-sprite-clip-v1":"The game-menu graphics fix could not load. Some icons may flicker. Restart TempleOS to retry.",
+  "ac-dbl-buf-v1":"The AutoComplete display fix could not load. Its window may flicker as it updates. Restart TempleOS to retry.",
+  "":"A TempleOS display fix could not load. Restart TempleOS to retry."};
+const patchFailed=new Map();
 const diskMsg = (m) => {
   guestRequests.Receive(m);
   if (m.cmd=="guestPatch") {
     if(osFault)return;
     if (m.state=="failed") {
-      OsNotice("The game-menu graphics fix could not load. Some icons may "+
-        "flicker. Restart TempleOS to retry.");
+      patchFailed.set(m.patch,PATCH_NOTICE[m.patch]||PATCH_NOTICE[""]);
+      OsNotice(patchFailed.get(m.patch));
       dbg(m.msg,true);
-    } else if (m.state=="installed") OsNotice();
+    } else if (m.state=="installed") {   // one fix going in must not hide another's failure
+      patchFailed.delete(m.patch);
+      OsNotice([...patchFailed.values()].at(-1)||"");
+    }
     return;
   }
   if (m.cmd==="paused") {

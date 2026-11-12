@@ -65,8 +65,9 @@ test build also needs Qt Test and Qt WaylandCompositor. Tested locally with
 Qt 6.12.0, JavaScriptCoreGTK 2.54.1, Wayland 1.26.0 and protocols 1.49.
 
 The fixture command uses the real one-core worker, validates its stock
-RAM/register/disk pairing, waits for the document sprite correction, and
-exports a complete paused session. It adds no Welcome popup. You can also open
+RAM/register/disk pairing, waits for the TempleOS corrections (document
+sprite clipping and the AutoComplete double buffer), and exports a complete
+paused session. It adds no Welcome popup. You can also open
 a complete one-core `.hemu` file exported by the web version. Raw RAM files
 lack sufficient CPU and disk state and are refused. This host resumes captured
 TempleOS; it does not implement a cold BIOS/DVD boot.

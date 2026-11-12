@@ -39,17 +39,17 @@ for(const cores of [0,4]) {
     assert.match(early.msg,/Resume TempleOS.*then save again/);
     await Frozen(h,cores);
 
-    const done=h.Wait(m=>m.cmd==="guestResult" && m.name==="Document sprite clipping" && m.state==="done",30000);
+    const done=h.Wait(m=>m.cmd==="guestResult" && m.name==="TempleOS corrections" && m.state==="done",30000);
     await Request(h,{cmd:"pause",value:false},m=>m.cmd==="paused" && !m.value);
     await done;
-    //The job's Promise resolves after the frame's DocClip.Tick. Pause before
+    //The job's Promise resolves after the frame's GuestPatch Tick. Pause before
     //the next CPU frame: finishing its host controller must not run the guest.
     await Request(h,{cmd:"pause",value:true},m=>m.cmd==="paused" && m.value);
     assert.ok(h.msgs.some(m=>m.cmd==="guestPatch" && m.state==="installed"));
     await Frozen(h,cores);
     const saved=await Request(h,{cmd:"exportSnapshot"},m=>m.cmd==="exportResult",60000);
     assert.equal(saved.ok,true,saved.msg);
-    assert.deepEqual((await SnapshotInspect(saved.buf)).meta.guestPatches,["doc-sprite-clip-v1"]);
+    assert.deepEqual((await SnapshotInspect(saved.buf)).meta.guestPatches,["doc-sprite-clip-v1","ac-dbl-buf-v1"]);
     await Frozen(h,cores);
     assert.ok(!h.msgs.some(m=>m.cmd==="error"));
     console.log(`${cores||1} core patch pause: unfinished build gives a resume instruction; completed build installs and saves without releasing stopped CPUs.`);

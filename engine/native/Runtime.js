@@ -6,7 +6,7 @@ import {createGuestInput} from "../guestinput.js";
 import {KeyQueue} from "../KeyQueue.js";
 import {KeyInput} from "../../Keyboard.js";
 import {FrameTop,FrameFps} from "../FrameText.js";
-import {DocClipCheck} from "../DocClip.js";
+import {GuestPatchCheck} from "../GuestPatch.js";
 import {SoundQueue} from "./Sound.js";
 import * as jit from "../jit.js";
 
@@ -70,7 +70,7 @@ export async function Open(path) {
     if(!probe.ok)throw Error("Saved guest API: "+probe.errors.join("; "));
     gx.restoreLaunch(meta.launch);
     //A restored session retains its documented patch policy. Never fetch or modify guest code here.
-    DocClipCheck(gx,meta.guestPatches);
+    GuestPatchCheck(gx,meta.guestPatches);
     fault=CpuFaultText(inst.exports);
     let paused=meta.paused||!!fault,rate=meta.rate,actualRate=meta.actualRate,repeat=meta.repeat;
     machine={

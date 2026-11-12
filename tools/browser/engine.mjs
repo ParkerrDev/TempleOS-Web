@@ -136,15 +136,33 @@ try {
   await page.locator("#osNoticeClose").click();
   assert.equal(await page.locator("#osNotice").isVisible(),false);
   await context.unroute("**/engine/patches/DocClip.HC");
-  await page.locator("#mobileMenu").click();
-  await page.locator("#restartBtn").click();
-  await page.waitForFunction(()=>window.guestEvents.some(m=>
-    m.cmd=="guestPatch" && m.state=="installed"),null,{timeout:30000});
+  async function Restart(patch,state) {//Wait for this boot's message, not an earlier one.
+    const n=await page.evaluate(()=>window.guestEvents.length);
+    await page.locator("#mobileMenu").click();
+    await page.locator("#restartBtn").click();
+    //The open menu covers its own button at phone width; toggle it as a tap does.
+    await page.evaluate(()=>document.getElementById("mobileMenu").click());
+    await page.waitForFunction(([n,patch,state])=>window.guestEvents.slice(n).some(m=>
+      m.cmd=="guestPatch" && m.patch==patch && m.state==state),[n,patch,state],{timeout:30000});
+  }
+  await Restart("doc-sprite-clip-v1","installed");
+  assert.equal(await page.locator("#osNotice").isVisible(),false);
+  await context.route("**/engine/patches/ACDblBuf.HC",function (route) {
+    return route.fulfill({status:503,body:"unavailable"});
+  });
+  await Restart("doc-sprite-clip-v1","installed");
+  assert.ok(await page.evaluate(()=>window.guestEvents.some(m=>
+    m.patch=="ac-dbl-buf-v1" && m.state=="failed")));
+  assert.match(await page.locator("#osNotice").innerText(),/AutoComplete display fix/,
+    "the menu fix going in leaves the AutoComplete failure shown");
+  await page.locator("#osNoticeClose").click();
+  await context.unroute("**/engine/patches/ACDblBuf.HC");
+  await Restart("ac-dbl-buf-v1","installed");
   assert.equal(await page.locator("#osNotice").isVisible(),false);
   assert.deepEqual(errors,[]);
   assert.equal(await page.evaluate(()=>window.guestEvents.some(m=>m.name==="Welcome")),false);
   console.log("Browser engine: no automatic Welcome, visible FPS, settings acknowledgement, "+
-    "God Doodle launch/input/exit, document correction and visible failure/retry passed. Screen: "+screen);
+    "God Doodle launch/input/exit, both TempleOS corrections and their visible failure/retry passed. Screen: "+screen);
 } catch (e) {
   if (page) {
     await page.screenshot({path:new URL("../../tmp/engine-failure.png",import.meta.url).pathname});
