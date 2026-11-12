@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const bytes=readFileSync(resolve(root,'games/Toom/TMDATA.BIN'));
@@ -19,10 +20,8 @@ cases.flat().forEach((n,i)=>records.writeBigInt64LE(BigInt(n),8+i*8));
 let index=0,damage=0;const rng=bytes.subarray(bytes.length-256),rand=()=>rng[index=(index+1)&255];
 for(let i=0;i<40;i++){rand();for(let j=0;j<15;j++)damage+=(rand()&7)+1;rand();}
 const total=cases.length+23;
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
 const source=`#define TM_BFG_DAMAGE ${damage}\n#define TM_BFG_RANDOM ${index}\n`+
-  [...load.matchAll(/#include "([^"]+)"/g)]
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+  ToomText()+'\n'+
   ['Rooms.HC','Blast.HC'].map(n=>readFileSync(resolve(root,'tools/toom',n),'latin1')).join('\n');
 const sourceSha256=createHash('sha256').update(Buffer.from(source,'latin1')).digest('hex');
 const files=[{name:'TMDATA.BIN',bytes},{name:'SIGHT.BIN',bytes:records}];

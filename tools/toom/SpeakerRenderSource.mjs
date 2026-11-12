@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomFile,ToomIncludes} from './Package.mjs';
 
 export function SpeakerRenderSource(render=true,opt={}) {
   const game=resolve(opt.gameDir||process.env.GAME_DIR||resolve(root,'games/Toom')),read=n=>readFileSync(resolve(game,n),'latin1');
-  const names=[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
-    .map(m=>m[1].includes('.')?m[1]:m[1]+'.HC');
+  const names=ToomIncludes(read).map(ToomFile);
   const speaker=src=>src.replace('U0 SongTask(', 'extern I64 TmAudioTick(Speaker *tmps,I64 now);\n\nU0 SongTask(')
     .replace('SleepUntil(SpeakerTick(tmps,cnts.jiffies))','SleepUntil(TmAudioTick(tmps,cnts.jiffies))');
   let source=names.map(n=>n==='TmSpeaker.HC'?speaker(read(n)):read(n)).join('\n')+'\n'+

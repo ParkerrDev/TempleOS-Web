@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {WadRead,MapRead} from './Wad.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
@@ -15,8 +16,8 @@ for(let episode=1;episode<=4;episode++)for(let n=1;n<=9;n++) {
   expected.push(map.things.filter(t=>t[4]&4&&!(t[4]&16)&&types.some(info=>info.number===t[3]&&info.flags&0x400000)).length);
 }
 const packed=Buffer.alloc(36*8);expected.forEach((n,i)=>packed.writeBigInt64LE(BigInt(n),i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1'),
-  source=[...load.matchAll(/#include "([^"]+)"/g)].map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+const 
+  source=ToomText()+'\n'+
     readFileSync(new URL('RespawnMaps.HC',import.meta.url),'latin1'),
   hash=b=>createHash('sha256').update(b).digest('hex'),sourceSha256=hash(Buffer.from(source,'latin1')),
   files=[{name:'FREEDOOM.WAD',bytes:wad},{name:'TMDATA.BIN',bytes:data},{name:'MAPS.BIN',bytes:packed}],

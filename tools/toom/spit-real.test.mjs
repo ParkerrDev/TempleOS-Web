@@ -4,12 +4,12 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {BrainMaps} from './BrainMaps.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-const source=[...load.matchAll(/#include "([^"]+)"/g)]
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+const game=resolve(root,'games/Toom');
+const source=ToomText()+'\n'+
   ['Rooms.HC','SpitReal.HC'].map(n=>readFileSync(resolve(root,'tools/toom',n),'latin1')).join('\n');
 const {bytes,manifest}=await BrainMaps(),rows=manifest.maps.flatMap(m=>m.spitters.flatMap(s=>m.targets.map(t=>[...s.slice(0,2),...t.slice(0,2)])));
 const values=[rows.length,...rows.flat()],packed=Buffer.alloc(values.length*8);

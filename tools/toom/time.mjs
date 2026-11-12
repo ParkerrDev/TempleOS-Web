@@ -5,6 +5,7 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {cpus} from 'node:os';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomText,ToomReader} from './Package.mjs';
 
 const backend=process.argv[2]||'hemu',map=process.env.MAP||'E1M1',n=Number(process.env.N||30);
 const dump=process.env.DUMP,dumpPose=Number(process.env.DUMP_POSE||2);
@@ -17,9 +18,7 @@ if(dump)mkdirSync(dump,{recursive:true});
 assert(['hemu','qemu'].includes(backend),'Usage: time.mjs [hemu|qemu]');
 assert(/^E[1-4]M[1-9]$/.test(map));assert(Number.isInteger(n)&&n>0&&n<=1000);
 const gameDir=process.env.GAME_DIR||resolve(root,'games/Toom');
-const load=readFileSync(resolve(gameDir,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)]
-  .map(m=>readFileSync(resolve(gameDir,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+
+let source=ToomText(()=>true,ToomReader(gameDir))+
   '\n'+readFileSync(new URL('./Bench.HC',import.meta.url),'latin1');
 if(process.env.TRACE) {
   const columns=(process.env.TRACE_X||'117,122,282,287,292').split(',').map(Number);

@@ -5,13 +5,12 @@ import {execFileSync} from 'node:child_process';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const game=resolve(root,'games/Toom');
 const read=name=>process.env.GAME_REF?execFileSync('git',['show',`${process.env.GAME_REF}:games/Toom/${name}`],{cwd:root,encoding:'latin1'}):readFileSync(resolve(game,name),'latin1');
-const load=read('Load.HC');
-const source=readFileSync(resolve(root,'tools/toom/LoadProbe.HC'),'latin1')+'\n#define MAlloc TmLoadAlloc\n#define CAlloc TmLoadCAlloc\n#define FOpen TmLoadOpen\n#define FClose TmLoadClose\n#define FileRead TmLoadRead\n#define FBlkRead TmLoadBlocks\n'+[...load.matchAll(/#include "([^"]+)"/g)]
-  .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+
+const source=readFileSync(resolve(root,'tools/toom/LoadProbe.HC'),'latin1')+'\n#define MAlloc TmLoadAlloc\n#define CAlloc TmLoadCAlloc\n#define FOpen TmLoadOpen\n#define FClose TmLoadClose\n#define FileRead TmLoadRead\n#define FBlkRead TmLoadBlocks\n'+ToomText(()=>true,read)+'\n'+
   ['LoadAlloc.HC'].map(n=>readFileSync(resolve(root,'tools/toom',n),'latin1')).join('\n');
 const files=[{name:'BAD.WAD',bytes:Buffer.alloc(12)},{name:'FREEDOOM.WAD',bytes:FreedoomRead()},{name:'TMDATA.BIN',bytes:readFileSync(resolve(game,'TMDATA.BIN'))}];
 const sourceSha256=createHash('sha256').update(Buffer.from(source,'latin1')).digest('hex');

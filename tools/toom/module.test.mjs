@@ -4,13 +4,13 @@ import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomFile,ToomIncludes} from './Package.mjs';
 
 assert(process.env.HOLYC_WASM,'Set HOLYC_WASM to the original TempleOS oracle checkout.');
 const live=!!process.env.LIVE;
 const game=resolve(root,'games/Toom'),out=resolve(process.env.OUT||'/tmp/toom-module'),
   read=n=>readFileSync(resolve(game,n),'latin1'),hash=b=>createHash('sha256').update(b).digest('hex'),
-  names=[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
-    .map(m=>m[1].includes('.')?m[1]:m[1]+'.HC').concat(['TmOverlay.HC','TmScreen.HC','TmPlay.HC']),
+  names=ToomIncludes(read).map(ToomFile).concat(['TmOverlay.HC','TmScreen.HC','TmPlay.HC']),
   header=read('Native.HH'),
   fixture=live?'Toom;\n':readFileSync(new URL('Play.HC',import.meta.url),'latin1'),
   source=header+'\n'+names.map(read).join('\n')+'\n'+fixture+(live?'':"\nif (tm_play_cases!=18 || tm_play_hash!=3858873714 || tm_play_done!=1) throw('Count');\n"),

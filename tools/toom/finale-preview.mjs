@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root,FreedoomRead} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {FrameWrite} from './Frame.mjs';
 
 assert(process.env.HOLYC_WASM,'Set HOLYC_WASM to the original TempleOS oracle checkout.');
@@ -11,8 +12,7 @@ assert(Number.isInteger(episode)&&episode>=1&&episode<=4);
 assert(Number.isInteger(stage)&&stage>=0&&stage<=1);
 assert(Number.isInteger(tic)&&tic>=0&&tic<=100000);
 const game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n),'latin1');
-const source=[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
-  .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+
+const source=ToomText(()=>true,read)+'\n'+
   `
 U0 TmFinalePreview()
 {

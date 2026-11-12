@@ -4,14 +4,14 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {EffectReference} from './EffectRef.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const rows=await EffectReference(),values=[rows.length,...rows.flat()],packed=Buffer.alloc(values.length*8);
 values.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmActions','TmLevel'].includes(m[1])).filter(m=>m[1]!=='TmEffect')
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n');
+const game=resolve(root,'games/Toom');
+let source=ToomText(name=>!['TmActions','TmLevel'].includes(name) && name!=='TmEffect');
 source+='\n'+readFileSync(resolve(root,'tools/toom/EffectProbe.HC'),'latin1')+
   '\n#define EnemyChase TmEffectChase\n#define ActorRadius TmEffectRadius\n'+
   readFileSync(resolve(game,'TmEffect.HC'),'latin1')+'\n'+

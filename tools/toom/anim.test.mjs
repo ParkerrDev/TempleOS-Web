@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {MapRead} from './Wad.mjs';
 import {AnimReference} from './AnimRef.mjs';
 
@@ -25,9 +26,7 @@ for(const name of maps) {
   scrollLines+=lines.length;sides+=map.sides.length;
 }
 function pack(values){const b=Buffer.alloc(values.length*8);values.forEach((n,i)=>b.writeBigInt64LE(BigInt(n),i*8));return b;}
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)]
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n');
+let source=ToomText();
 source+='\n'+readFileSync(resolve(root,'tools/toom/Anim.HC'),'latin1');
 const files=[{name:'FRAMES.BIN',bytes:pack(records)},{name:'SCROLL.BIN',bytes:pack(scroll)},
   {name:'FREEDOOM.WAD',bytes}];

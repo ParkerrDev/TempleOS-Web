@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {WadRead,MapRead} from './Wad.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
@@ -22,9 +23,8 @@ for(const name of names) {
   controllers+=order.length/2;secrets+=count;sectors+=map.sectors.length;
 }
 const packed=Buffer.alloc(records.length*8);records.forEach((n,i)=>packed.writeBigInt64LE(BigInt(n),i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)]
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n');
+const game=resolve(root,'games/Toom');
+let source=ToomText();
 source+=`
 U8 *tm_thinkmap_names="${names.join('')}";
 I64 tm_thinkmap_cnt=0,tm_thinkmap_secrets=0,tm_thinkmap_done=0;

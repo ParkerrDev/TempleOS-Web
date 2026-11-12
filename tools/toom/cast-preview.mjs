@@ -3,14 +3,14 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {FrameWrite} from './Frame.mjs';
 
 assert(process.env.HOLYC_WASM,'Set HOLYC_WASM to the original TempleOS oracle checkout.');
 const actor=Number(process.env.ACTOR||0),tic=Number(process.env.TIC||0);
 assert(Number.isInteger(actor)&&actor>=0&&actor<17);assert(Number.isInteger(tic)&&tic>=0&&tic<=10000);
 const game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n),'latin1'),
-  source=[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
-    .map(m=>read(m[1].includes('.')?m[1]:m[1]+'.HC')).join('\n')+'\n'+
+  source=ToomText(()=>true,read)+'\n'+
     `
 U0 TmCastPreview()
 {

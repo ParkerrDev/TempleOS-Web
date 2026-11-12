@@ -4,14 +4,14 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {ChaseReference} from './ChaseRef.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const rows=await ChaseReference(),values=[rows.length,...rows.flat()],packed=Buffer.alloc(values.length*8);
 values.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmActions','TmLevel'].includes(m[1])).filter(m=>!['TmChase','TmEffect','TmVile','TmBrain'].includes(m[1]))
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n');
+const game=resolve(root,'games/Toom');
+let source=ToomText(name=>!['TmActions','TmLevel'].includes(name) && !['TmChase','TmEffect','TmVile','TmBrain'].includes(name));
 const chase=readFileSync(resolve(game,'TmChase.HC'),'latin1'),split=chase.indexOf('Bool EnemyWalk(');assert(split>0);
 source+='\n'+readFileSync(resolve(root,'tools/toom/ChaseProbe.HC'),'latin1')+
   '\n#define EnemyMove TmChaseMove\n#define EnemyMelee TmChaseMelee\n#define EnemyMissile TmChaseMissile\n'+

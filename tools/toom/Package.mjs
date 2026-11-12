@@ -12,11 +12,30 @@ import {gameCredits} from '../../game-credits.js';
 const GAME='games/Toom/',DIR='C:/Home/TOOM/';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 
-export function ToomSources()
+export function ToomReader(dir=resolve(root,GAME))
+{//Reads one game file from dir as text.
+  return name=>readFileSync(resolve(dir,name),'latin1');
+}
+
+export function ToomFile(name)
+{//An include as Load.HC writes it, as a file name.
+  return name.includes('.')?name:name+'.HC';
+}
+
+export function ToomIncludes(read=ToomReader())
+{//What Load.HC includes, as it writes the names, in order.
+  return [...read('Load.HC').matchAll(/#include "([^"]+)"/g)].map(m=>m[1]);
+}
+
+export function ToomText(keep=()=>true,read=ToomReader())
+{//The text of the includes keep takes, in Load.HC's order, a newline between.
+  return ToomIncludes(read).filter(keep).map(name=>read(ToomFile(name))).join('\n');
+}
+
+export function ToomSources(read=ToomReader())
 {//Run.HC, Load.HC, what Load.HC includes and the window host, in order.
-  const load=readFileSync(resolve(root,GAME,'Load.HC'),'latin1');
-  return ['Run.HC','Load.HC',...[...load.matchAll(/#include "([^"]+)"/g)]
-    .map(m=>m[1].includes('.')?m[1]:m[1]+'.HC'),'TmOverlay.HC','TmScreen.HC','TmPlay.HC'];
+  return ['Run.HC','Load.HC',...ToomIncludes(read).map(ToomFile),
+    'TmOverlay.HC','TmScreen.HC','TmPlay.HC'];
 }
 
 function PackageFile(url,name)

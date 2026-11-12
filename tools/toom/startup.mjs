@@ -5,14 +5,13 @@ import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {spawn,execFileSync} from 'node:child_process';
 import {root,FreedoomRead} from './Assets.mjs';
+import {ToomSources} from './Package.mjs';
 
 const backend=process.env.BACKEND||'worker';assert(['worker','qemu'].includes(backend));
 assert(process.env[backend==='worker'?'TEMPLEOS_WEB':'HOLYC_WASM'],'Set the frozen runtime or native oracle path.');
 const game=resolve(root,'games/Toom'),out=resolve(process.env.OUT||`/tmp/toom-startup-${Date.now()}`),
   copy=resolve(out,'source'),load=readFileSync(resolve(game,'Load.HC'),'latin1'),
-  names=['Run.HC','Load.HC',...load.matchAll(/#include "([^"]+)"/g)]
-    .map(n=>typeof n==='string'?n:n[1].includes('.')?n[1]:n[1]+'.HC')
-    .concat(['TmOverlay.HC','TmScreen.HC','TmPlay.HC']),
+  names=ToomSources(),
   sources=new Map(names.map(n=>[n,readFileSync(resolve(game,n),'latin1')])),
   hash=s=>createHash('sha256').update(s).digest('hex'),
   sourceHashes=Object.fromEntries([...sources].map(([n,s])=>[n,hash(Buffer.from(s,'latin1'))])),labels=['entry'];

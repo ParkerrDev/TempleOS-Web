@@ -5,17 +5,16 @@ import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {gunzipSync} from 'node:zlib';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomReader,ToomSources} from './Package.mjs';
 
 const web=resolve(process.env.TEMPLEOS_WEB||root);
 const {HemuBoot,ReadyWait,FramesWait,Sleep,TextRow}=await import(pathToFileURL(resolve(web,'tools/hemu/WorkerHost.mjs')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom')),load=readFileSync(resolve(game,'Load.HC'),'latin1');
+const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom'));
 const finale=!!process.env.FINALE,progression=!!process.env.PROGRESSION;
 const startup=process.env.STARTUP?JSON.parse(readFileSync(process.env.STARTUP)):null;
 assert(!(finale&&progression));
-const names=['Run.HC','Load.HC',...load.matchAll(/#include "([^"]+)"/g)]
-  .map(n=>typeof n==='string'?n:n[1].includes('.')?n[1]:n[1]+'.HC')
-  .concat(['TmOverlay.HC','TmScreen.HC','TmPlay.HC']);
+const names=ToomSources(ToomReader(game));
 const files=names.map(n=>({path:`C:/TOOM/${n}`,bytes:readFileSync(resolve(game,n))})).concat([
   {path:'C:/TOOM/FREEDOOM.WAD',bytes:finale?readFileSync(resolve(root,'tools/toom/.assets/freedoom-0.13.0-phase2.wad')):FreedoomRead()},
   {path:'C:/TOOM/TMDATA.BIN',bytes:readFileSync(resolve(game,'TMDATA.BIN'))}]);

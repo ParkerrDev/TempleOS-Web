@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const bytes=readFileSync(resolve(root,'games/Toom/TMDATA.BIN')),randomTable=bytes.subarray(-256);
@@ -32,9 +33,7 @@ for(const airborne of [0,1])for(const seed of [0,1,64,255])for(const skill of [0
   }
 }
 const packed=Buffer.alloc(records.length*8);records.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-const source=[...load.matchAll(/#include "([^"]+)"/g)]
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+const source=ToomText()+'\n'+
   ['Rooms.HC','Hazard.HC'].map(n=>readFileSync(resolve(root,'tools/toom',n),'latin1')).join('\n');
 const files=[{name:'TMDATA.BIN',bytes},{name:'HAZARD.BIN',bytes:packed}];
 if(backend==='qemu') {

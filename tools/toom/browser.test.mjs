@@ -7,6 +7,7 @@ import {resolve,basename} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {chromium} from 'playwright-core';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomReader,ToomSources} from './Package.mjs';
 
 assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the frozen site checkout.');
 const web=resolve(process.env.TEMPLEOS_WEB),out=resolve(process.env.OUT||'/tmp/toom-browser');
@@ -14,12 +15,10 @@ const {ServeReq}=await import(pathToFileURL(resolve(web,'server.mjs')));
 const {BrowserMachine,MachinePost,MachineReady}=await import(pathToFileURL(resolve(web,'tools/hemu/BrowserMachine.mjs')));
 const {TextRow}=await import(pathToFileURL(resolve(web,'tools/hemu/WorkerHost.mjs')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom')),load=readFileSync(resolve(game,'Load.HC'),'latin1');
+const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom'));
 const finale=!!process.env.FINALE,progression=!!process.env.PROGRESSION;
 assert(!(finale&&progression));
-const names=['Run.HC','Load.HC',...load.matchAll(/#include "([^"]+)"/g)]
-  .map(n=>typeof n==='string'?n:n[1].includes('.')?n[1]:n[1]+'.HC')
-  .concat(['TmOverlay.HC','TmScreen.HC','TmPlay.HC']);
+const names=ToomSources(ToomReader(game));
 const files=new Map(names.map(n=>[n,readFileSync(resolve(game,n))]));
 files.set('FREEDOOM.WAD',finale?readFileSync(resolve(root,'tools/toom/.assets/freedoom-0.13.0-phase2.wad')):FreedoomRead());
 files.set('TMDATA.BIN',readFileSync(resolve(game,'TMDATA.BIN')));

@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomFile,ToomIncludes} from './Package.mjs';
 import {ThinkReference} from './ThinkRef.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
@@ -10,10 +11,10 @@ const {rows}=await ThinkReference(),records=[rows.length,...rows.flat()],packed=
 records.forEach((n,i)=>packed.writeBigInt64LE(BigInt(n),i*8));
 let calls=0;
 for(const row of rows) {let at=7;for(let pass=0;pass<2;pass++){const n=row[at++];calls+=n;at+=n;}assert.equal(at,row.length);}
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-const names=[...load.matchAll(/#include "([^"]+)"/g)].map(m=>m[1]),end=names.indexOf('TmTick');assert(end>0);
+const game=resolve(root,'games/Toom');
+const names=ToomIncludes(),end=names.indexOf('TmTick');assert(end>0);
 let source=names.slice(0,end)
-  .map(n=>readFileSync(resolve(game,n.includes('.')?n:n+'.HC'),'latin1')).join('\n')+'\n'+
+  .map(n=>readFileSync(resolve(game,ToomFile(n)),'latin1')).join('\n')+'\n'+
   readFileSync(resolve(root,'tools/toom/Rooms.HC'),'latin1');
 const fixture=readFileSync(resolve(root,'tools/toom/ThinkOrder.HC'),'latin1'),marker='//ThinkersTick.';
 assert.equal(fixture.split(marker).length,2);

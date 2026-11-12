@@ -4,14 +4,14 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {CubeReference} from './CubeRef.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const rows=await CubeReference(),values=[rows.length,...rows.flat()],packed=Buffer.alloc(values.length*8);
 values.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-const source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmActions','TmLevel'].includes(m[1])).filter(m=>m[1]!=='TmBrain')
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+const game=resolve(root,'games/Toom');
+const source=ToomText(name=>!['TmActions','TmLevel'].includes(name) && name!=='TmBrain')+'\n'+
   readFileSync(resolve(root,'tools/toom/CubeProbe.HC'),'latin1')+
   '\n#define WorldSpawn TmCubeSpawn\n#define EnemyPlayer TmCubePlayer\n'+
   '#define ActorState TmCubeState\n#define ActorTeleportMove TmCubeTeleport\n'+readFileSync(resolve(game,'TmBrain.HC'),'latin1')+'\n'+

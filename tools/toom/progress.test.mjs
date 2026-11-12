@@ -4,12 +4,13 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomFile,ToomIncludes} from './Package.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n),'latin1');
 const hook="Bool tm_progress_fail=FALSE;\nU8 *TmProgressAlloc(I64 size)\n{\n  if (tm_progress_fail) throw('NextFail');\n  return CAlloc(size);\n}\n";
-const source=hook+[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
-  .map(m=>{const n=m[1].includes('.')?m[1]:m[1]+'.HC',s=read(n);
+const source=hook+ToomIncludes(read).map(ToomFile)
+  .map(n=>{const s=read(n);
     return n==='TmLevel.HC'?s.replace('tmpl=CAlloc(sizeof(Level))','tmpl=TmProgressAlloc(sizeof(Level))'):s;}).join('\n')+'\n'+
   ['TmOverlay.HC','TmScreen.HC','TmPlay.HC'].map(read).join('\n')+'\n'+
   readFileSync(new URL('Progress.HC',import.meta.url),'latin1');

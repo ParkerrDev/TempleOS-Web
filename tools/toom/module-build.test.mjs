@@ -4,12 +4,13 @@ import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomSources} from './Package.mjs';
 
 assert(process.env.HOLYC_WASM,'Set HOLYC_WASM to the original TempleOS oracle checkout.');
 const game=resolve(root,'games/Toom'),out=resolve(process.env.OUT||'/tmp/toom-native-build'),
   read=n=>readFileSync(resolve(game,n)),hash=b=>createHash('sha256').update(b).digest('hex'),
-  names=['Build.HC','RunBin.HC','Toom.PRJ','Native.HH','Load.HC',...[...read('Load.HC').toString('latin1').matchAll(/#include "([^"]+)"/g)]
-    .map(m=>m[1].includes('.')?m[1]:m[1]+'.HC'),'TmOverlay.HC','TmScreen.HC','TmPlay.HC'],
+  names=['Build.HC','RunBin.HC','Toom.PRJ','Native.HH',
+    ...ToomSources().filter(name=>name!='Run.HC')],
   files=names.map(name=>({name,bytes:read(name)})),bundle=Buffer.concat(files.map(f=>f.bytes));
 let offset=0;
 const install=files.map(f=>{const line=`if (FileWrite("C:/TOOM/${f.name}",buf+${offset},${f.bytes.length})<0) throw('Write');`;offset+=f.bytes.length;return line;}).join('\n');

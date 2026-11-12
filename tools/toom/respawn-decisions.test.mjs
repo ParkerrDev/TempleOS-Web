@@ -4,13 +4,14 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomIncludes} from './Package.mjs';
 import {RespawnReference} from './RespawnRef.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const {rows,reference}=RespawnReference(),values=[rows.length,...rows.flat()],packed=Buffer.alloc(values.length*8);
 values.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1'),
-  names=[...load.matchAll(/#include "([^"]+)"/g)].map(m=>m[1]),
+const game=resolve(root,'games/Toom'),
+  names=ToomIncludes(),
   probe=readFileSync(new URL('RespawnProbe.HC',import.meta.url),'latin1')+'\n'+
     readFileSync(resolve(game,'TmRespawn.HC'),'latin1')
       .replace(/\bWorldPosition\b/g,'TmRespawnPosition').replace(/\bWorldSpawn\b/g,'TmRespawnSpawn')

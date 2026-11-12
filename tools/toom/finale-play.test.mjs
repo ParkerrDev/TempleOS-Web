@@ -4,14 +4,15 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root,FreedoomRead} from './Assets.mjs';
+import {ToomFile,ToomIncludes} from './Package.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n),'latin1'),
   hook="Bool tm_final_next_fail=FALSE;\nU8 *TmFinaleNextAlloc(I64 size)\n{\n  if (tm_final_next_fail) throw('NextFail');\n  return CAlloc(size);\n}\n",
   source=readFileSync(new URL('LoadProbe.HC',import.meta.url),'latin1')+'\n'+hook+
     '\n#define MAlloc TmLoadAlloc\n#define CAlloc TmLoadCAlloc\n#define FOpen TmLoadOpen\n#define FClose TmLoadClose\n#define FileRead TmLoadRead\n#define FBlkRead TmLoadBlocks\n'+
-    [...read('Load.HC').matchAll(/#include "([^"]+)"/g)].map(m=>{
-      const n=m[1].includes('.')?m[1]:m[1]+'.HC',s=read(n);
+    ToomIncludes(read).map(ToomFile).map(n=>{
+      const s=read(n);
       return n==='TmLevel.HC'?s.replace('tmpl=CAlloc(sizeof(Level))','tmpl=TmFinaleNextAlloc(sizeof(Level))'):s;
     }).join('\n')+'\n'+['TmOverlay.HC','TmScreen.HC','TmPlay.HC'].map(read).join('\n')+'\n'+
     readFileSync(new URL('FinalePlay.HC',import.meta.url),'latin1'),

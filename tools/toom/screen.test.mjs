@@ -4,12 +4,12 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomText,ToomReader} from './Package.mjs';
 import {BrainMaps} from './BrainMaps.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
-const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom')),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmScreen')
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+const game=resolve(process.env.GAME_DIR||resolve(root,'games/Toom'));
+let source=ToomText(name=>name!=='TmScreen',ToomReader(game))+'\n'+
   readFileSync(resolve(game,'TmOverlay.HC'),'latin1')+'\n'+
   readFileSync(resolve(game,'TmScreen.HC'),'latin1')+'\n'+readFileSync(resolve(root,'tools/toom/Screen.HC'),'latin1');
 if(process.env.YIELD_MS) {

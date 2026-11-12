@@ -4,15 +4,15 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {BrainMaps} from './BrainMaps.mjs';
 import {OverlayReference} from './OverlayRef.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
 const {rows,reference}=await OverlayReference(),values=[rows.length,...rows.flat()],packed=Buffer.alloc(values.length*8);
 values.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-const source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmOverlay')
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+const game=resolve(root,'games/Toom');
+const source=ToomText(name=>name!=='TmOverlay')+'\n'+
   readFileSync(resolve(game,'TmOverlay.HC'),'latin1')+'\n'+readFileSync(resolve(root,'tools/toom/Overlay.HC'),'latin1');
 const {bytes:wad}=await BrainMaps(),files=[{name:'FREEDOOM.WAD',bytes:wad},{name:'TMDATA.BIN',bytes:readFileSync(resolve(game,'TMDATA.BIN'))},{name:'OVERLAY.BIN',bytes:packed}];
 const sourceSha256=createHash('sha256').update(Buffer.from(source,'latin1')).digest('hex'),

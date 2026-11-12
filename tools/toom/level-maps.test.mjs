@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {BrainMaps} from './BrainMaps.mjs';
 import {WadRead,MapRead} from './Wad.mjs';
 
@@ -31,9 +32,8 @@ for(const [phase,bytes]of [[1,phase1],[2,phase2]]) {
 assert.equal(rows.length,68);
 const packed=Buffer.alloc(8+rows.length*64);packed.writeBigInt64LE(BigInt(rows.length));
 rows.flat().forEach((n,i)=>packed.writeBigInt64LE(BigInt(n),8+i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-const source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>m[1]!=='TmLevel')
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+const game=resolve(root,'games/Toom');
+const source=ToomText(name=>name!=='TmLevel')+'\n'+
   readFileSync(resolve(game,'TmLevel.HC'),'latin1')+'\n'+readFileSync(resolve(root,'tools/toom/LevelMaps.HC'),'latin1');
 const files=[{name:'PHASE1.WAD',bytes:phase1},{name:'PHASE2.WAD',bytes:phase2},{name:'TMDATA.BIN',bytes:data},{name:'LVLMAPS.BIN',bytes:packed}];
 const sourceSha256=createHash('sha256').update(Buffer.from(source,'latin1')).digest('hex'),assetHashes=Object.fromEntries(files.map(f=>[f.name,createHash('sha256').update(f.bytes).digest('hex')]));

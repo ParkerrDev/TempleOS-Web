@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {SpecialReference} from './SpecialRef.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
@@ -85,9 +86,7 @@ const signatures=[
   ['PlatStop','Bool','Sectors *,I64 line',15,'0,0,0'],
   ['CeilStop','Bool','Sectors *,I64 line',16,'0,0,0'],
 ];
-const load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmActions','TmLevel'].includes(m[1])).filter(m=>!['TmSpecial','TmTick'].includes(m[1]))
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n');
+let source=ToomText(name=>!['TmActions','TmLevel'].includes(name) && !['TmSpecial','TmTick'].includes(name));
 source+=`
 I64 tm_event_cases=0,tm_event_done=0,tm_event_calls=0,tm_probe_cnt=0,tm_probe_values[16];
 Bool tm_probe_success;

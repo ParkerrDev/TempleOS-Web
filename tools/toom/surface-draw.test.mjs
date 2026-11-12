@@ -4,6 +4,7 @@ import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {AnimReference} from './AnimRef.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
@@ -11,9 +12,7 @@ const {bytes,names,first,last,frames}=await AnimReference(),ticks=Array.from({le
   records=[ticks.length,names.length,first,last-first];
 for(const tic of ticks){const {tex,flat}=frames(tic);records.push(tic,...tex,...flat);}
 const packed=Buffer.alloc(records.length*8);records.forEach((n,i)=>packed.writeBigInt64LE(BigInt(n),i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-const source=[...load.matchAll(/#include "([^"]+)"/g)]
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+const source=ToomText()+'\n'+
   readFileSync(resolve(root,'tools/toom/SurfaceDraw.HC'),'latin1');
 const result={backend,sourceHash:createHash('sha256').update(source,'latin1').digest('hex'),
   wadHash:createHash('sha256').update(bytes).digest('hex'),hashes:[]};

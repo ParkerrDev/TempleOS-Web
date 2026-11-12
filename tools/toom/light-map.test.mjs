@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 import {WadRead,MapRead} from './Wad.mjs';
 
 const backend=process.env.BACKEND||'qemu';assert(['qemu','hemu'].includes(backend));
@@ -31,9 +32,7 @@ for(const [index,name] of names.entries()) {
   lights+=rows.length/7;sectors+=map.sectors.length;
 }
 const packed=Buffer.alloc(records.length*8);records.forEach((v,i)=>packed.writeBigInt64LE(BigInt(v),i*8));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)]
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n');
+let source=ToomText();
 source+=`
 U8 *tm_lightmap_names="${names.join('')}";
 I64 tm_lightmap_cnt=0,tm_lightmap_sectors=0,tm_lightmap_done=0;

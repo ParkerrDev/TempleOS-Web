@@ -4,14 +4,14 @@ import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {FrameWrite} from './Frame.mjs';
 import {FreedoomRead,root} from './Assets.mjs';
+import {ToomText} from './Package.mjs';
 
 assert(process.env.HOLYC_WASM,'Set HOLYC_WASM to the compiler checkout with the native oracle.');
 const {QemuRun}=await import(pathToFileURL(resolve(process.env.HOLYC_WASM,'tests/oracle/Qemu.mjs')));
 const host=process.env.HOST==='1',height=host?400:336;
 const map=process.env.MAP||'E1M1';assert(/^E[1-4]M[1-9]$/.test(map));
-const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)]
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+const game=resolve(root,'games/Toom');
+let source=ToomText()+'\n'+
   ['TmOverlay.HC','TmScreen.HC',...(host?['TmPlay.HC']:[])].map(n=>readFileSync(resolve(game,n),'latin1')).join('\n');
 source+=`
 U0 TmPreview()
