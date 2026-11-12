@@ -122,7 +122,8 @@ def Main(default_cores=1):
                     path=work/"screen.ppm";qmp.command("screendump",{"filename":str(path)})
                     text=screen_text(path,font);(work/"screen.txt").write_text(text)
                     return "Take Tour(y or n)?" in text
-                Wait(Desktop,"native shell");qmp.type("n")
+                # The question stays open: a visitor answers it, as on a fresh install.
+                Wait(Desktop,"native shell")
                 def Quiescent():
                     qmp.command("stop")
                     raw=qmp.monitor("info registers -a")

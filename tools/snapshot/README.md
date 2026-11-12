@@ -23,7 +23,8 @@ python3 tools/snapshot/Pack.py \
 ```
 
 The output directories must not exist. Capture uses a private writable disk,
-waits for the native boot prompt and desktop, dismisses the tour, and samples
+waits for the native boot prompt and desktop, leaves TempleOS's own "Take
+Tour(y or n)?" question for the visitor to answer, and samples
 stopped state until every CPU is halted with an empty x87 stack. The strict
 parser also requires ring-zero flat long mode, no interrupt shadow, matching
 shared system registers and default MXCSR. It rejects missing fields, pending

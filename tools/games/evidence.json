@@ -6,17 +6,17 @@
   "fixtures": {
     "snapshot": {
       "gzip": true,
-      "sha256": "42db6570ffd1610ea2a39a60dd59e63095c60ac39610350a649c5671528a449a"
+      "sha256": "95011614748141aa2c23d8f2110ff7e898773448a0d893a2243c16583e18b9e8"
     },
     "disk": {
       "gzip": true,
       "sha256": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
     },
     "capture": {
-      "ramSha256": "a30ba131c7fdf4893f3bc8fe3e33f4dda3eb4c00248d478f3d18d2ae194f0cf6",
-      "registerSha256": "a086057293d75a16257aa6d3dd90538a895abddf6e714adbbf0549dd455aeddf",
-      "diskSha256": "647d7c74665dd35ec0c211ea55c214785dc88a01fed258b4602b600c3c5c853d",
-      "overlaySha256": "032751a6b626aea216ab9d675d2b404f27a5e9f61261903cec8b6ea792d964a8"
+      "ramSha256": "e111895458da2d0bb4f26f58d8e4d020ff8fbd229d907a2c4a0703b0a16b4f69",
+      "registerSha256": "1e5ac6efc7be37fc3e4c34a9b59ace04176fd2cf877313dd469a40d58932e253",
+      "diskSha256": "c3ffa2b67733d6615e10f46c304c30f2ed98f3bd5a3b1e7bc6c8c4f69d441b63",
+      "overlaySha256": "894ceacb281d444e58508622008fbbe34c93db435233053976065a1d1bef86e3"
     }
   },
   "fixtureLoaderSha256": "b0dce4977f1a8d5c4da6eff5af2d9896538448d390f2edaaa412e9d3e8a3eca0",
@@ -24,15 +24,15 @@
   "webRuntimeSha256": "9b4eb4db82306805ccd8cfe89f5fbaec15cd58f175300226715dda0b1cef3408",
   "siblings": [
     "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm fc20452bc7711bde44decc0e47ab2f1552361cac",
-    "hemu https://github.com/ParkerrDev/HEMU 34532b93d15cf9cb5c9f84d29e274b7be9d1ced1"
+    "hemu https://github.com/ParkerrDev/HEMU 2577b4e85648550d22a4efd26c9f0762670d9f2e"
   ],
-  "engineSha256": "056dc4c6bb1658c5b12e16fee73d78b1474d92b67495a181207a055bd3a8599c",
+  "engineSha256": "504294ebe840aaab18fcaee983efabbf64362eec93f63beba68a0957c36e1b63",
   "backend": {
     "engine": "qemu",
     "accelerator": "kvm",
     "version": "QEMU emulator version 11.1.2"
   },
-  "oracle": "qemu-ubm3pfr5",
+  "oracle": "qemu-f6ljbqnu",
   "programs": {
     "Babel": {
       "sourceSha256": "8f9fa354dda68f563b96a15d4b1219d79bc0fbeb39f285b102022a4b75279300",
