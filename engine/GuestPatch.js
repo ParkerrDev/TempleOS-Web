@@ -6,11 +6,24 @@
 //guest checks a copy's size and hash as it checks its own installed file, so
 //the job needs no disk. Core 0 does not preempt, and the compile would stop
 //the desktop for most of a second: with four cores CPU 1 compiles, and with
-//one the page still shows its loader.
+//one the page still shows its loader. AutoComplete sleeps until they are in.
 export const DOC_CLIP_PATCH="doc-sprite-clip-v1",AC_DBL_BUF_PATCH="ac-dbl-buf-v1",
-  GUEST_PATCHES=[DOC_CLIP_PATCH,AC_DBL_BUF_PATCH];
-const AC_DBL_BUF_NUM=4,JOB="TempleOS corrections",JOB_SETH=JOB+": CPU 1",JOB_AC=JOB+": AutoComplete",
+  GUEST_PATCHES=[DOC_CLIP_PATCH,AC_DBL_BUF_PATCH],JOB="TempleOS corrections",
+  JOB_HOLD=JOB+": AutoComplete waits",JOB_WAKE=JOB+": AutoComplete wakes";
+const AC_DBL_BUF_NUM=4,JOB_SETH=JOB+": CPU 1",JOB_AC=JOB+": AutoComplete",
   FILES=["DocClip.HC","ACDblBuf.HC","V5.03/DocRecalc.HC","V5.03/ACTask.HC"];
+//The stock routines hide the window to refill it, and each print yields, so
+//the WinMgr draws frames with it missing or half full. Core 0 does not
+//preempt, so AutoComplete is suspended only while it sleeps in its loop's
+//Sleep, holding no lock, with its window shown. For a second at most.
+export const AC_HOLD="CTask *guest_patch_ac=NULL;\n"+
+  "U0 GuestPatchHold()\n{\n  I64 timeout_jiffy=cnts.jiffies+JIFFY_FREQ;\n"+
+  "  while (cnts.jiffies<timeout_jiffy && TaskValidate(ac.task)) {\n"+
+  "    if (Bt(&ac.task->display_flags,DISPLAYf_SHOW) &&\n"+
+  "\t  Bt(&ac.task->task_flags,TASKf_IDLE) && ac.task->wake_jiffy>cnts.jiffies) {\n"+
+  "      guest_patch_ac=ac.task;\n      Suspend(guest_patch_ac);\n      return;\n    }\n"+
+  "    Yield;\n  }\n}\nGuestPatchHold;\n",
+  AC_WAKE="if (guest_patch_ac) Suspend(guest_patch_ac,FALSE);\n";
 let pendingFiles=null;
 
 export function GuestPatchLoad()
@@ -108,7 +121,8 @@ export function GuestPatchRun({guest,instance,lock,unlock,onState,canRun=()=>tru
 {//One guest job compiles both, on CPU 1 if it runs, else on core 0. Core 0
 //sets AutoComplete's jumps; DocClip's entry is set between CPU runs.
 //aside() is 1 if other cores run, -1 if they will, 0 if there are none.
-  let state="pending",id=null,tries=0,patches=[],sources=null,core=0,docOk=false,docWhy="";
+  let state="pending",id=null,tries=0,patches=[],sources=null,core=0,docOk=false,docWhy="",
+    held=undefined;   //the AC_HOLD job's id, null once it needs no AC_WAKE
   const result={};
   if(restored) {state="restored";patches=restored.slice();GuestPatchCheck(guest(),restored);}
   function Progress(next) {
@@ -116,13 +130,25 @@ export function GuestPatchRun({guest,instance,lock,unlock,onState,canRun=()=>tru
     onState({cmd:"guestPatch",patches:GUEST_PATCHES.slice(),state,ok:true,msg:"",core});
   }
   function Fail(patch,msg) {if(!result[patch])result[patch]=msg;}
-  function Finish() {
+  function Report() {
     state="done";
     patches=GUEST_PATCHES.filter(p=>result[p]===true);
     for(const patch of [AC_DBL_BUF_PATCH,DOC_CLIP_PATCH]) {
       const msg=result[patch]===true?"":result[patch]||"not attempted";
       onState({cmd:"guestPatch",patch,state:msg?"failed":"installed",ok:!msg,msg,core});
     }
+  }
+  function Hold(gx) {//AC_HOLD, queued first, so it runs before any correction job.
+    try {held=gx.exec({src:AC_HOLD,target:"adam",name:JOB_HOLD,force:true,background:true});}
+    catch(err) {held=null;}
+  }
+  function Finish() {//AC_WAKE: AutoComplete wakes, installed or not, before the results go out.
+    if(held==null)return Report();
+    held=null;
+    try {
+      id=guest().exec({src:AC_WAKE,target:"adam",name:JOB_WAKE,force:true,background:true});
+      Progress("waking");
+    } catch(err) {Report();}
   }
   async function Load() {
     const [doc,ac,docStock,acStock]=await GuestPatchLoad(),
@@ -223,6 +249,7 @@ export function GuestPatchRun({guest,instance,lock,unlock,onState,canRun=()=>tru
     if(state==="pending" && gx?.ready) {
       Progress("loading");Load();
     }
+    if(state==="loading" && held===undefined && canRun())Hold(gx);
     if(state==="loading" && sources && canRun() && (diskReady || !DiskNeed())) {
       const cores=aside();
       if(cores>0)Seek(gx);
@@ -236,9 +263,12 @@ export function GuestPatchRun({guest,instance,lock,unlock,onState,canRun=()=>tru
       DocNext();
     }
     if(state==="installing")Install(gx,inst);
+    if(state==="waking" && Done(gx))Report();
   }
   function Meta() {return patches.slice();}
-  function Pending() {return ["loading","seeking","building","fit","fitting","installing"].includes(state);}
+  function Pending() {//A save would keep AutoComplete asleep until "waking" ends.
+    return ["loading","seeking","building","fit","fitting","installing","waking"].includes(state);
+  }
   function Busy() {return state==="building" && !core;}   //the job holds core 0
   return {Tick,Meta,Pending,Busy};
 }

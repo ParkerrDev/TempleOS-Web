@@ -114,7 +114,8 @@ so compiling the guest corrections there would stop the desktop for most of a
 second. With four cores CPU 1's Seth task compiles them into Adam's table while
 core 0 draws, and core 0 then only sets the entry jumps. With one core the page
 keeps its loader up until they are in (at most 8 s), and that compile's frames
-run without waiting for the clock.
+run without waiting for the clock. Until they are in, AutoComplete sleeps with
+its window shown, so the stock routines never refill it on the screen.
 
 The browser and standalone desktop window both resume that already booted
 64-bit guest. They do not execute TempleOS's 16-bit DVD/BIOS loader or perform

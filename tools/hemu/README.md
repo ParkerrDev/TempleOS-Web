@@ -671,6 +671,18 @@ controls drawn from each update, while the screen still shows the text of the
 one before, so they are drawn where that text had them; a bar that leaves the
 shrunken window is drawn over once from the layer on top.
 
+The correction goes in seconds after the desktop shows (with four cores CPU 1
+compiles it once the application cores run), and until then the stock
+routines would refill the window on the screen as a visitor types. So the first
+correction job, before any compile, suspends the AutoComplete task, only while
+it sleeps in its loop with its window shown, so it holds no lock (and gives up
+after a second if it never does). The window keeps the look it had, and
+AutoComplete wakes in a last job, whether the corrections went in or not,
+before their results are reported. A save is refused until then, so no saved
+machine keeps it asleep. The scheduler ends a killed task before it looks at
+the suspended flag, so a program that turns AutoComplete off meanwhile does
+not wait.
+
 `ACFlicker.HC` focuses a window holding a word, changes the scan code every
 20 ms so AutoComplete refills its list, and counts frames drawn and task
 switches taken while the window is hidden, in a listing phase and a StandBy
@@ -678,7 +690,8 @@ phase. `ac-flicker-oracle.mjs` runs it in QEMU/KVM on stock V5.03: the window
 manager drew 10 and 1 frames without the window and every one of 49 refills
 let tasks run with it hidden; corrected, none of 50 refills did.
 `ac-flicker.test.mjs` repeats both cases on HEMU and checks the corrected list
-text and the second install refusal. Set `HOLYC_QEMU_ORACLE` as above to regenerate the reference.
+text and the second install refusal, and that while held asleep AutoComplete
+refills nothing as the probe types, then wakes. Set `HOLYC_QEMU_ORACLE` as above to regenerate the reference.
 
 `stock.test.mjs` validates the hash-bound stock RAM/module identities and
 reconstructs every byte of both captured disks from the original base and

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {SnapshotInspect} from "../../engine/Snapshot.js";
 import {HemuBoot,Sleep,SITE} from "./WorkerHost.mjs";
+import {JOB_WAKE} from "../../engine/GuestPatch.js";
 
 async function Request(h,message,predicate,ms=30000) {
   const result=h.Wait(predicate,ms);h.Post(message);return result;
@@ -42,9 +43,9 @@ for(const cores of [0,4]) {
     assert.match(early.msg,/Resume TempleOS.*then save again/);
     await Frozen(h,cores);
 
-    //Four cores build on CPU 1, then core 0 sets the AutoComplete jumps.
-    const last=cores?"TempleOS corrections: AutoComplete":"TempleOS corrections",
-      done=h.Wait(m=>m.cmd==="guestResult" && m.name===last && m.state==="done",30000);
+    //Four cores build on CPU 1, then core 0 sets the AutoComplete jumps; last,
+    //AutoComplete wakes.
+    const done=h.Wait(m=>m.cmd==="guestResult" && m.name===JOB_WAKE && m.state==="done",30000);
     await Request(h,{cmd:"pause",value:false},m=>m.cmd==="paused" && !m.value);
     await done;
     //The job's Promise resolves after the frame's GuestPatch Tick. Pause before
