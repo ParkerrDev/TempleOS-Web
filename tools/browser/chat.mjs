@@ -99,9 +99,41 @@ try {
   await page.locator("#chatWin").waitFor({state:"visible"});
   socket.send(JSON.stringify({t:"clear"}));
   await page.locator("#chatLog .cnone").waitFor();
+  for (let n=10;n<70;n++)
+    history.push({t:"msg",n,at:Date.now(),nick:"Guest",tag:"other",text:"older line "+n});
+  await page.goto("http://localhost:8185/",{waitUntil:"load"});
+  await page.locator('#chatLog [data-n="69"]').waitFor({state:"attached"});
+  const gap=()=>page.locator("#chatLog").evaluate(l=>l.scrollHeight-l.scrollTop-l.clientHeight);
+  const open=async()=>{
+    await page.locator("#chatBtn").click();
+    await page.locator("#chatWin").waitFor({state:"visible"});
+    await page.evaluate(()=>new Promise(requestAnimationFrame));
+  };
+  await open();
+  assert(await page.locator("#chatLog").evaluate(l=>l.scrollHeight>2*l.clientHeight),
+    "the history is longer than the window");
+  assert(await gap()<2,"the log opens at the newest message");
+  await page.locator("#chatLog").evaluate(l=>{l.scrollTop=0;});
+  await page.waitForTimeout(50);
+  Send(70);
+  await page.locator('#chatLog [data-n="70"]').waitFor({state:"attached"});
+  assert(await gap()>100,"a new line does not pull a reader away from older ones");
+  Send(71,"beef");
+  await page.locator('#chatLog [data-n="71"]').waitFor({state:"attached"});
+  assert(await gap()<2,"the visitor's own line goes to the bottom");
+  await page.locator("#chatLog").evaluate(l=>{l.scrollTop=0;});
+  await page.locator("#chatClose").click();
+  Send(72);
+  await page.locator('#chatLog [data-n="72"]').waitFor({state:"attached"});
+  await open();
+  assert(await gap()<2,"opening the window again goes to the newest message");
+  await page.setViewportSize({width:900,height:500});
+  await page.waitForTimeout(100);
+  assert(await gap()<2,"a smaller window stays at the newest message");
   assert.deepEqual(errors,[]);
   console.log("Browser chat: unread counts/title, own messages, replay/delete, safe text, "+
-    "mute persistence, background alert, notification reopen and cleared room passed.");
+    "mute persistence, background alert, notification reopen, cleared room and the log kept at "+
+    "its newest line passed.");
 } finally {
   await browser.close();server.kill();
 }

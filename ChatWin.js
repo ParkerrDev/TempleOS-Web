@@ -55,7 +55,7 @@ let ov=$("chatOverlay"),log=$("chatLog"),status=$("chatStatus"),
   send_btn=$("chatSend"),nick_in=$("chatNick"),text_in=$("chatText"),
   mute_btn=$("chatMute"),cnt_el=$("chatUnread"),chat=null,my_tag="",
   pending="",seen=Number(Load(SEEN_KEY)) || 0,last_n=0,unread=new Set,
-  muted=Load(MUTE_KEY)=="1",asked=false;
+  muted=Load(MUTE_KEY)=="1",asked=false,stuck=true;
 
 function Load(key)
 {//localStorage can be missing or throw (private windows, blocked storage).
@@ -135,6 +135,18 @@ function LineMake(m)
   return d;
 }
 
+function LogEnd()
+{//The newest line. A closed window has no height, so Open calls it again.
+  log.scrollTop=log.scrollHeight;
+  stuck=true;
+}
+
+function LogScroll()
+{//Reading back unsticks the log; scrolling to the end sticks it again.
+  if (log.clientHeight)
+    stuck=log.scrollHeight-log.scrollTop-log.clientHeight<24;
+}
+
 function LogAdd(el,stick)
 {
   log.querySelector(".cnone")?.remove();
@@ -142,7 +154,7 @@ function LogAdd(el,stick)
   while (log.childElementCount>KEEP)
     log.firstElementChild.remove();
   if (stick)
-    log.scrollTop=log.scrollHeight;
+    LogEnd();
 }
 
 function Nobody()
@@ -202,7 +214,7 @@ function PermAsk()
 
 function Hear(e)
 {//One event from the chat Worker (checked by chat.js).
-  let m,near;
+  let m;
   if (e.t=="hello") {
     my_tag=e.tag;
     log.textContent="";
@@ -213,7 +225,7 @@ function Hear(e)
     }
     if (!e.log.length)
       Nobody();
-    log.scrollTop=log.scrollHeight;
+    LogEnd();
     status.textContent="In chat: "+e.people;
     send_btn.disabled=false;
     if (Load(SEEN_KEY)==null || seen>last_n)
@@ -227,8 +239,7 @@ function Hear(e)
   } else if (e.t=="msg") {
     if (e.n<=last_n)
       return;
-    near=log.scrollHeight-log.scrollTop-log.clientHeight<24;
-    LogAdd(LineMake(e),near || e.tag==my_tag);
+    LogAdd(LineMake(e),stuck || e.tag==my_tag);
     last_n=Math.max(last_n,e.n);
     if (Looking())
       SeenAll();
@@ -292,6 +303,7 @@ function Open(ask=true)
 {
   ov.classList.add("open","free");
   WinFocus($("chatWin"));
+  LogEnd();
   if (ask && !asked && !muted)
     PermAsk();
   if (ask)
@@ -339,6 +351,11 @@ MuteShow();
 $("chatClose").addEventListener("click",Close);
 $("chatBar").addEventListener("submit",Send);
 mute_btn.addEventListener("click",MuteClick);
+log.addEventListener("scroll",LogScroll);
+new ResizeObserver(function () {
+  if (stuck)
+    log.scrollTop=log.scrollHeight;
+}).observe(log);
 nick_in.addEventListener("change",NickSave);
 Start();
 document.addEventListener("visibilitychange",Back);

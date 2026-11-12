@@ -17,6 +17,10 @@
     "glowie.mp3": {
       "source": "sounds/glowie.mp3",
       "sha256": "0ff1283db6cb04884b8de7fa2bc5f7446c2e4829726ba6cb13395503e63535f0"
+    },
+    "risen.mp3": {
+      "source": "sounds/risen.mp3",
+      "sha256": "53f2751178feaca20dcc1f5468715045610fc4b4c0aa89a1a47ae3744f24515f"
     }
   }
 }

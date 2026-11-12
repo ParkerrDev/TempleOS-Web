@@ -125,17 +125,34 @@ try {
       assert.equal(await reopen.isVisible(),false);
       await page.locator("#guide .close").click();
       assert.equal(await page.locator("#terryWin").isVisible(),true,"closing Help leaves Terry visible");
-      await page.evaluate(function () {
-        const play=HTMLMediaElement.prototype.play;
+      await page.evaluate(async function () {
+        const play=HTMLMediaElement.prototype.play,egg=await import("/TerryEggs.js");
+        egg.CHANCE.theme=1;
+        egg.CHANCE.late=1;
         window.eggSays=[];
+        window.eggAudio=[];
         HTMLMediaElement.prototype.play=function () {
-          if (!this.src.endsWith(".mp3"))
-            return play.call(this);
-          window.eggSays.push(this.src.split("/").pop());
-          return Promise.resolve();
+          if (this.src.endsWith(".mp3")) {
+            window.eggSays.push(this.src.split("/").pop());
+            window.eggAudio.push(this);
+            if (this.src.endsWith("risen.mp3"))
+              window.eggTheme=this;
+          }
+          return play.call(this);
         };
       });
-      const says=()=>page.evaluate(()=>window.eggSays.join());
+      const says=()=>page.evaluate(()=>window.eggSays.join()),
+        theme=()=>page.evaluate(function () {
+          const a=window.eggTheme;
+          return a && {paused:a.paused,volume:a.volume,loop:a.loop};
+        }),
+        shown=()=>page.evaluate(function () {
+          const g=document.querySelector("#terryEgg .egg-glowie");
+          if (!g)
+            return "";
+          return g.querySelector("video")?"clip":
+            g.querySelector("img")?.src.split("/").pop().replace(".webp","") || "";
+        });
       for(let n=0;n<5;n++)await page.locator("#terrySprite").click();
       const egg=page.locator("#terryEgg"),parrots=egg.locator(".egg-parrot");
       await egg.waitFor();
@@ -146,33 +163,55 @@ try {
       }),[true,"fixed",0,0,true,true],"the egg covers the whole page");
       assert.equal(await egg.locator(".egg-sound").count(),0,"the voice has no switch");
       assert.equal(await says(),"bird.mp3","the voice plays from the start");
-      assert.equal(await parrots.count(),6,"a flock of parrots");
+      const flock=await parrots.count();
+      assert(4<=flock && flock<=8,"a flock of 4 to 8 parrots, not "+flock);
       const flight=()=>parrots.first().evaluate(e=>new DOMMatrix(getComputedStyle(e).transform).e);
       const x0=await flight();
       await page.waitForTimeout(250);
       assert.notEqual(await flight(),x0,"the parrots fly across the page");
       await parrots.first().evaluate(e=>e.click());
-      const glowie=egg.locator(".egg-glowie");
+      const caught=Date.now(),glowie=egg.locator(".egg-glowie");
+      assert.equal(await says(),"bird.mp3,shut-up-bird.mp3,risen.mp3",
+        "shut-up-bird cuts the bird off, and this time the theme waits for the glowies");
       await glowie.waitFor();
-      await page.waitForFunction(()=>!document.querySelector("#terryEgg .egg-parrot"),null,{timeout:8000});
-      for (const [n,file] of [[1,"sniper"],[2,"trio-seal"],[3,""]]) {
+      await page.waitForFunction(()=>!document.querySelector("#terryEgg .egg-parrot"),null,{timeout:10000});
+      await page.waitForTimeout(Math.max(0,3200-(Date.now()-caught)));
+      const theme_on=await theme();
+      assert(theme_on && !theme_on.paused && !theme_on.loop,"the theme plays once through");
+      assert(0<theme_on.volume && theme_on.volume<=0.25,"the theme stays under the voice");
+      const seen=[];
+      for (let n=1;n<=4;n++) {
+        seen.push(await shown());
+        if (seen.at(-1)=="clip") {
+          assert.equal(await glowie.locator("video source").first().getAttribute("src"),
+            "./assets/glowies/cia.webm");
+          assert.equal(await glowie.locator("video").evaluate(v=>v.muted),true);
+        }
         await glowie.evaluate(e=>e.click());
-        await page.waitForFunction(function (file) {
-          const g=document.querySelector("#terryEgg .egg-glowie");
-          return file?g.querySelector("img")?.src.endsWith(file+".webp"):!!g.querySelector("video");
-        },file);
-        assert.match(await egg.locator(".egg-label").innerText(),new RegExp(n+" of 4"));
+        if (n<4)
+          await page.waitForFunction(function (seen) {
+            const g=document.querySelector("#terryEgg .egg-glowie"),
+              k=g && (g.querySelector("video")?"clip":
+                g.querySelector("img")?.src.split("/").pop().replace(".webp",""));
+            return k && !seen.includes(k);
+          },seen);
       }
-      assert.equal(await glowie.locator("video source").first().getAttribute("src"),
-        "./assets/glowies/cia.webm","the Tenor clip is the last glowie");
-      assert.equal(await glowie.locator("video").evaluate(v=>v.muted),true);
-      await glowie.evaluate(e=>e.click());
+      assert.deepEqual(seen.slice().sort(),["clip","glowie","sniper","trio-seal"],
+        "each glowie comes once: "+seen);
       await egg.locator(".egg-finale").waitFor();
       assert.match(await egg.locator(".egg-label").innerText(),/complete/);
-      assert.equal(await says(),"bird.mp3,shut-up-bird.mp3,glowie.mp3,glowie.mp3,"+
-        "glowie.mp3,glowie.mp3");
+      assert.equal(await says(),"bird.mp3,shut-up-bird.mp3,risen.mp3,glowie.mp3",
+        "one glowie line: the quick catches after it wait while it plays");
       await egg.locator(".egg-close").click();
       assert.equal(await egg.count(),0,"Close takes the egg off the page");
+      assert.equal((await theme()).paused,false,"the theme fades out, not cut off");
+      await page.waitForFunction(()=>window.eggTheme.paused,null,{timeout:4000});
+      assert.equal(await page.evaluate(()=>window.eggAudio.every(a=>a.paused)),true,
+        "nothing plays on after the egg");
+      await page.evaluate(async function () {
+        (await import("/TerryEggs.js")).CHANCE.theme=0;
+        window.eggSays=[];
+      });
       await page.emulateMedia({reducedMotion:"reduce"});
       for(let n=0;n<5;n++)await page.locator("#terrySprite").click();
       const actor=page.locator("#terryEgg .egg-actor");
@@ -184,11 +223,15 @@ try {
       assert.equal(await still.getAttribute("aria-label"),"Catch the glowie");
       assert.equal(await still.evaluate(e=>e==document.activeElement),true,
         "the keyboard stays in the game");
-      for(let n=0;n<3;n++)await page.keyboard.press("Enter");
-      assert.equal(await still.locator("video").count(),0,"no clip without motion");
-      assert.equal(await still.locator("img").getAttribute("src"),"./assets/glowies/cia.webp");
-      await page.keyboard.press("Enter");
+      const stills=[];
+      for(let n=0;n<4;n++) {
+        assert.equal(await still.locator("video").count(),0,"no clip without motion");
+        stills.push(await shown());
+        await page.keyboard.press("Enter");
+      }
+      assert.deepEqual(stills.slice().sort(),["cia","glowie","sniper","trio-seal"]);
       assert.match(await page.locator("#terryEgg .egg-label").innerText(),/complete/);
+      assert.equal((await says()).includes("risen"),false,"the theme only plays sometimes");
       await page.locator("#terryWin .close").click();
       assert.equal(await page.locator("#terryEgg").count(),0);
       await page.locator("#desktopMenu").getByRole("button",{name:"Terry",exact:true}).click();
