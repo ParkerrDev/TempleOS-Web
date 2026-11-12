@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "c2795bf5331a3e9e668051675c46d1ac2d534d5a0189ee1d3e79b55e16afda48",
+  "runtimeSha256": "c97ae1078ab469756c6ecf024e460bc94eb1e56264b2f161bb455afa4764dcce",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -49,12 +49,12 @@
     },
     "FNAF.HC": {
       "name": "FNAF",
-      "sourceSha256": "eca59d1b4a692ede934c434041825a5ae972579c906a8190fe8e2d18e9f06765",
+      "sourceSha256": "2c5afadbdc94d8229d05f8666cf6adfa73ce8d2272fef9926478d7b2aef84949",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "FNAF.HC:281: undefined symbol 'CArcCompress'"
+      "error": "FNAF.HC:363: undefined symbol 'CArcCompress'"
     },
     "tinker-Varoom": {
       "name": "Varoom",

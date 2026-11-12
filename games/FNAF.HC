@@ -8,15 +8,25 @@ RegExe("TempleOS/FNAF");
 #define VIEW_H		360
 #define PAN_MAX		160 //Office and camera pictures are 800 wide.
 
+#define NIGHT_WEEK	5 //The week's end. Continue goes no further.
 #define NIGHT_LAST	6 //The last of the six nights. The custom one follows.
 #define NIGHT_CUSTOM	7
 #define CALLS_NUM	5 //Phone calls, for nights 1-5, from SND_CALL on.
 
-#define MODE_MENU	0
+//stars, the save's "beatgame", "beat6" and "beat7", each its star's bit.
+//The first opens the 6th night, the second the custom one.
+#define STARF_5		1
+#define STARF_6		2
+#define STARF_20	4 //The custom night at 20/20/20/20.
+#define STARG_ALL	(STARF_5|STARF_6|STARF_20)
+#define STARS_NUM	3
+
+#define MODE_MENU	0 //The title.
 #define MODE_NIGHT	1
 #define MODE_WON	2
 #define MODE_SCARE	3
 #define MODE_LOST	4
+#define MODE_CUSTOM	5 //The custom night's levels, before it starts.
 
 //Animatronics, as pos[], ai[] and killer count them.
 #define FREDDY		0
@@ -62,6 +72,7 @@ I64 golden=0;
 F64 gold_time=0,rare_tick=0,box_time=0;
 F64 pan=PAN_MAX/2,cam_clock=0,event_tick=0;
 I64 event_sec=0,sure_ch=0;
+I64 keys_held[4]; //A bit by scan code for each key seen down and not up.
 F64 sure_time=0;
 Bool pend[MOVERS_NUM],screamed=FALSE;
 Bool doors[2],lights[2],tablet=FALSE,window_seen[2];
@@ -71,6 +82,7 @@ F64 extra_tick=0,intervals[MOVERS_NUM]={3.02,4.97,4.98,5.01};
 I64 levels[NIGHT_LAST][MOVERS_NUM]={0,0,0,0,0,3,1,1,1,0,5,2,
       1,2,4,6,3,5,7,5,4,10,12,6};
 U8 *ai_keys="FBHX"; //Raise each one's custom level.
+#define AI_MAX		20
 
 //Rooms. 0-10 are the cameras too. The rest are the map's hidden boxes the
 //original moves the animatronics onto.
@@ -118,7 +130,6 @@ I64 bttn_pics[2]={166,BTTN_PIC},map_pics[2]={164,145},dot_pics[2]={7,5};
 #define PIC_CAM_BORDER	11
 #define PIC_AUDIO_ONLY	42
 
-#define PIC_TITLE	431
 #define PIC_OFFICE	39
 #define PIC_DARK	304 //The office in the blackout.
 #define PIC_DARK_FACE	305 //Freddy at the door in it.
@@ -142,10 +153,80 @@ I64 door_hit_xy[2][2]={27,153,774,161};
 I64 light_hit_xy[2][2]={27,224,774,227};
 #define HIT_PIC		129
 
-#define MENU_NIGHT_Y	130
-#define MENU_START_Y	160
-#define MENU_CONT_Y	260
-#define MENU_QUIT_Y	280
+//The title, Frame 1, where its objects put their hot spots, halved.
+//Freddy "Active 2" twitches and fades under the static and "blip flash 2".
+#define FACES_NUM	4
+#define FADES_NUM	4 //Quarters of his lit pixels, 1-4. At 0 none show.
+I64 face_pics[FACES_NUM]={431,440,441,442};
+CDC *faces[FACES_NUM][FADES_NUM];
+//The order a 2x2 cell's pixels come in. Freddy fades in on 0 and 1 first.
+//The layers over him take 2 and 3, so they lie between his pixels.
+U8 bayer[2][2]={0,2,3,1};
+//The layers at half alpha: the static, "blip flash 2" and the scan bar
+//"Active 5", each picture's lit pixels on every other pixel, in one color.
+#define STATIC_NUM	8
+#define FLASH_NUM	8
+#define LAYER_STATIC	0
+#define LAYER_FLASH	STATIC_NUM
+#define LAYER_BAR	(STATIC_NUM+FLASH_NUM)
+#define LAYERS_NUM	(LAYER_BAR+1)
+I64 layer_pics[LAYERS_NUM]={18,20,12,13,14,15,16,17,
+      430,435,436,434,438,439,437,22,452};
+U8 *layers[LAYERS_NUM];
+#define STATIC_SPEED	99 //Their Clickteam animation speeds.
+#define FLASH_SPEED	10
+#define FACE_TICK	0.08
+#define FADE_TICK	0.3 //His fade and whether the flash shows.
+#define BAR_PPS		18.75 //The scan bar's path: speed 5, 5/8 px a frame.
+#define BAR_LOOP	384
+
+#define OPT_NEW		0
+#define OPT_CONT	1
+#define OPT_6TH		2
+#define OPT_CUSTOM	3
+#define OPTS_NUM	4
+I64 opt_pics[OPTS_NUM]={448,449,443,526};
+I64 opt_xy[OPTS_NUM][2]={137,210,137,246,142,285,162,319};
+I64 sel_dx[OPTS_NUM]={75,75,82,96}; //The ">>" sits this far to the left.
+I64 star_x[STARS_NUM]={100,138,176};
+I64 night_digits[10]={187,191,192,193,194,195,196,197,198,199};
+#define START_DELAY	0.35 //21 frames at 60 fps from Enter to the night.
+
+#define PIC_LOGO	444
+#define PIC_SEL		450
+#define PIC_STAR	432
+#define PIC_NIGHT_WORD	475
+#define PIC_RIGHTS	433
+#define PIC_VERSION	588
+
+//The custom night's levels, Frame 12 "customize", halved. Freddy, Bonnie,
+//Chica and Foxy from the left.
+#define PIC_CUSTOM	524
+#define PIC_READY	530
+#define PIC_AI_LEVEL	537
+#define PIC_LEFT	542
+#define PIC_RIGHT	541
+#define PIC_LEVELS	593 //The six nights' levels in a line.
+#define ARROW_Y		235
+#define READY_X		522
+#define READY_Y		301
+I64 name_pics[MOVERS_NUM]={531,535,533,534},name_x[MOVERS_NUM]={70,212,357,502};
+I64 portrait_pics[MOVERS_NUM]={527,528,529,536},
+      portrait_x[MOVERS_NUM]={59,201,341,478};
+I64 ai_label_x[MOVERS_NUM]={59,201,342,480};
+I64 left_x[MOVERS_NUM]={61,203,345,484},right_x[MOVERS_NUM]={155,296,438,577};
+I64 level_x[MOVERS_NUM]={133,275,416,556}; //Where each counter ends.
+I64 ai_digits[10]={556,557,558,559,560,561,562,563,564,565};
+
+//What MenuDraw and CustomDraw draw one of. Init loads them.
+#define MENU_PICS_NUM	12
+I64 menu_pics[MENU_PICS_NUM]={PIC_LOGO,PIC_SEL,PIC_STAR,PIC_NIGHT_WORD,
+      PIC_RIGHTS,PIC_VERSION,PIC_CUSTOM,PIC_READY,PIC_AI_LEVEL,PIC_LEFT,
+      PIC_RIGHT,PIC_LEVELS};
+
+I64 option=OPT_NEW,hover=-1,face=0,fade=FADES_NUM,unlocks=0;
+F64 menu_time=0,go_time=0,face_tick=0,fade_tick=0,del_tick=0;
+Bool going=FALSE,flash_on=FALSE,wiped=FALSE;
 
 #define SOUNDS_NUM	52
 #define SND_HUM		0
@@ -177,6 +258,7 @@ I64 light_hit_xy[2][2]={27,224,774,227};
 #define SND_RUN		41
 #define SND_RUN_FAST	42
 #define SND_STATIC	43
+#define SND_STATIC2	44
 #define SND_CALL	45
 #define SND_WHISPER	50
 #define SND_WINDOW	51
@@ -228,7 +310,7 @@ I64 fox_run[FOX_RUN_NUM]={241,241,241,340,244,245,246,247,248,250,280,282,
 #define VOICE_NEAR	4 //Freddy running, and the songs from the dark.
 #define VOICE_OVEN	5 //Chica's pots in the kitchen.
 #define VOICE_BOX	6 //Freddy's music box in the kitchen.
-#define VOICE_AMBI	7 //The ambience that grows as they come near.
+#define VOICE_AMBI	7 //The ambience as they come near; the title's static.
 #define VOICE_HUM	8 //A light's hum.
 #define VOICES_NUM	9
 
@@ -507,19 +589,40 @@ U16 *CrashMake(I64 ms,I64 ona0,I64 ona1,I64 *_size)
   return res;
 }
 
+CDC *PicDCLoad(I64 id)
+{//Picture id decoded, or NULL.
+  U8 name[128],*src;
+  CDC *res=NULL;
+  StrPrint(name,"Assets/Images/%d.GR",id);
+  if (src=AssetRead(name)) {
+    res=DCLoad(src);
+    Free(src);
+  }
+  return res;
+}
+
+U0 DCDither(CDC *dc,I64 lo,I64 hi,I64 dark,I64 color=-1)
+{//Keeps the lit pixels lo to hi-1 in their 2x2 cell's order and makes the
+//rest dark. A color>=0 paints the ones it keeps. It stands in for the
+//original's alpha on 16 colors.
+  I64 x,y;
+  U8 *ptr;
+  for (y=0;y<dc->height;y++) {
+    ptr=dc->body+y*dc->width_internal;
+    for (x=0;x<dc->width;x++,ptr++)
+      if (*ptr==BLACK || *ptr==TRANSPARENT || !(lo<=bayer[y&1][x&1]<hi))
+	*ptr=dark;
+      else if (color>=0)
+	*ptr=color;
+  }
+}
+
 U0 PicLoad(I64 id)
 {
-  U8 name[128],*src;
   CDC *dc;
-  if (0<=id<PIC_NUM && !pics[id]) {
-    StrPrint(name,"Assets/Images/%d.GR",id);
-    if (src=AssetRead(name)) {
-      if (dc=DCLoad(src)) {
-	pics[id]=DC2Sprite(dc);
-	DCDel(dc);
-      }
-      Free(src);
-    }
+  if (0<=id<PIC_NUM && !pics[id] && (dc=PicDCLoad(id))) {
+    pics[id]=DC2Sprite(dc);
+    DCDel(dc);
   }
 }
 
@@ -530,17 +633,58 @@ U0 PicsLoad(I64 *ids,I64 size)
     PicLoad(ids[i]);
 }
 
-U0 PicDraw(CDC *dc,I64 id,I64 x=0,I64 y=0)
-{//x,y is where the image's hot spot goes. An id<0 is no picture.
-  if (!(0<=id<PIC_NUM)) return;
-  if (!pics[id]) {
+U0 LayersLoad(I64 first,I64 n,I64 color)
+{//Layers first to first+n-1, their kept pixels in color.
+  I64 i;
+  CDC *dc;
+  for (i=first;i<first+n;i++)
+    if (dc=PicDCLoad(layer_pics[i])) {
+      DCDither(dc,2,4,TRANSPARENT,color);
+      layers[i]=DC2Sprite(dc);
+      DCDel(dc);
+    }
+}
+
+U0 FacesLoad()
+{//Freddy's title faces at each fade, opaque, so GrBlot copies them 8
+//pixels at a time.
+  I64 i,j;
+  CDC *dc;
+  for (i=0;i<FACES_NUM;i++)
+    if (dc=PicDCLoad(face_pics[i])) {
+      for (j=0;j<FADES_NUM;j++) {
+	faces[i][j]=DCCopy(dc);
+	DCDither(faces[i][j],0,j+1,BLACK);
+	faces[i][j]->flags|=DCF_NO_TRANSPARENTS;
+      }
+      DCDel(dc);
+    }
+}
+
+U0 ImgDraw(CDC *dc,U8 *img,I64 x,I64 y)
+{//img's top left at x,y. A NULL img is a picture that was never loaded.
+  if (img)
+    Sprite3(dc,x,y,0,img);
+  else
     pic_misses++;
-    return;
-  }
-  if (id<geoms_num) {
+}
+
+U0 HotDraw(CDC *dc,U8 *img,I64 id,I64 x,I64 y)
+{//img, picture id or a layer of it, with id's hot spot at x,y.
+  if (0<=id<geoms_num) {
     x-=geoms[id].x;y-=geoms[id].y;
   }
-  Sprite3(dc,x,y,0,pics[id]);
+  ImgDraw(dc,img,x,y);
+}
+
+U0 PicDraw(CDC *dc,I64 id,I64 x=0,I64 y=0)
+{//x,y is where the image's hot spot goes. An id<0 is no picture.
+  if (0<=id<PIC_NUM) HotDraw(dc,pics[id],id,x,y);
+}
+
+U0 LayerDraw(CDC *dc,I64 i,I64 x=0,I64 y=0)
+{
+  HotDraw(dc,layers[i],layer_pics[i],x,y);
 }
 
 U0 ViewDraw(CDC *dc,I64 id,I64 scroll)
@@ -1061,10 +1205,12 @@ U0 NightWon()
   mode=MODE_WON;tablet=FALSE;LightsOff;
   SndHush;SndPlay(VOICE_CALL,SND_CHIMES);SndPlay(VOICE_FX,SND_CROWD);
   if (night<NIGHT_LAST && saved_night<night+1) saved_night=night+1;
-  if (night==5) stars|=1;
-  if (night==NIGHT_LAST) stars|=2;
-  if (night==NIGHT_CUSTOM && custom_ai[FREDDY]==20 && custom_ai[BONNIE]==20 &&
-	custom_ai[CHICA]==20 && custom_ai[FOXY]==20) stars|=4;
+  if (night>=NIGHT_WEEK) stars|=STARF_5;
+  if (night==NIGHT_LAST) stars|=STARF_6;
+  if (night==NIGHT_CUSTOM && custom_ai[FREDDY]==AI_MAX &&
+	custom_ai[BONNIE]==AI_MAX && custom_ai[CHICA]==AI_MAX &&
+	custom_ai[FOXY]==AI_MAX)
+    stars|=STARF_20;
   Save;
 }
 
@@ -1085,9 +1231,117 @@ U0 PowerStep(F64 dt)
   }
 }
 
+Bool KeyHeld(I64 sc)
+{//sc went down in this window and is down still. kbd.down_bitmap alone
+//is every window's keys.
+  return Bt(keys_held,sc) && Bt(kbd.down_bitmap,sc);
+}
+
+U0 MenuInit()
+{//Frame 1 starts, groups 3 and 29: static2 on channel 1, the darkness
+//music, New Game and its blip on channel 3. What the cheats open lasts
+//until the title is left.
+  mode=MODE_MENU;menu_time=0;going=FALSE;wiped=FALSE;hover=-1;
+  face=0;fade=FADES_NUM;flash_on=FALSE;face_tick=0;fade_tick=0;del_tick=0;
+  unlocks=stars;option=OPT_NEW;
+  SndHush;SndPlay(VOICE_AMBI,SND_STATIC2);
+  SndPlay(VOICE_CALL,SND_TITLE,100,0,TRUE);
+  SndPlay(VOICE_FX,SND_BLIP);
+}
+
+I64 OptsNum()
+{//How many options show: New Game and Continue, the 6th night after the
+//week, the custom night after that. Groups 14-19 wrap the choice in them.
+  if (!(unlocks&STARF_5)) return OPT_6TH;
+  if (!(unlocks&STARF_6)) return OPT_CUSTOM;
+  return OPTS_NUM;
+}
+
+U0 OptSet(I64 i)
+{//Groups 29-32 blip as the choice moves. It stays once a night is going.
+  if (i!=option && !going) {
+    option=i;SndPlay(VOICE_FX,SND_BLIP);
+  }
+}
+
+U0 OptGo()
+{//Groups 24-27 and 33-36: a click or Enter. The night starts START_DELAY
+//later. New Game starts the save over at once.
+  if (going) return;
+  going=TRUE;go_time=0;
+  if (option==OPT_NEW) {
+    saved_night=1;Save;
+  }
+}
+
+I64 ContNight()
+{//Continue's night, no further than the week's end: group 58.
+  return Min(saved_night,NIGHT_WEEK);
+}
+
+U0 OptStart()
+{//Groups 37-41: where the chosen option goes.
+  going=FALSE;
+  switch (option) {
+    case OPT_NEW:
+      night=1;
+      break;
+    case OPT_CONT:
+      night=ContNight;
+      break;
+    case OPT_6TH:
+      night=NIGHT_LAST;
+      break;
+    case OPT_CUSTOM:
+      mode=MODE_CUSTOM;
+      return;
+  }
+  NightInit;
+}
+
+U0 MenuWipe()
+{//Group 49, once a visit: the save starts over, with a blip on channel 1.
+//Groups 14-15 move the choice to New Game if it was a night now hidden.
+  if (wiped) return;
+  wiped=TRUE;
+  saved_night=1;stars=0;unlocks=0;Save;
+  SndPlay(VOICE_AMBI,SND_BLIP);
+  if (option>=OptsNum) OptSet(OPT_NEW);
+}
+
+U0 MenuStep(F64 dt)
+{//Frame 1's timers: Freddy twitches every 0.08 s, fades and lets the flash
+//show every 0.3 s, Delete held at a whole second wipes the save.
+  I64 i;
+  menu_time+=dt;
+  face_tick+=dt;
+  while (face_tick>=FACE_TICK) {
+    face_tick-=FACE_TICK;
+    i=RandU16%100;
+    face=0;
+    if (i>=97) face=i-96;
+  }
+  fade_tick+=dt;
+  while (fade_tick>=FADE_TICK) {
+    fade_tick-=FADE_TICK;
+    fade=((255-RandU16%250)*2*FADES_NUM/255+1)/2;
+    flash_on=RandU16%3==1;
+  }
+  del_tick+=dt;
+  while (del_tick>=1) {
+    del_tick-=1;
+    if (KeyHeld(SC_DELETE) && !going) MenuWipe;
+  }
+  if (going) {
+    go_time+=dt;
+    if (go_time>=START_DELAY) OptStart;
+  }
+}
+
 U0 GameStep(F64 dt)
 {
   I64 i,new_hour=0;
+  if (mode==MODE_MENU) MenuStep(dt);
   if (mode==MODE_SCARE) ScareStep(dt);
   if (mode!=MODE_NIGHT) return;
   elapsed+=dt;
@@ -1254,21 +1508,74 @@ I64 CamAt(I64 x,I64 y)
   return -1;
 }
 
-U0 MenuDraw(CDC *dc)
+I64 OptAt(I64 x,I64 y)
+{//The title option shown at x,y, or -1.
+  I64 i;
+  for (i=0;i<OptsNum;i++)
+    if (PicHit(opt_pics[i],opt_xy[i][0],opt_xy[i][1],x,y)) return i;
+  return -1;
+}
+
+U0 CounterDraw(CDC *dc,I64 *digits,I64 n,I64 x,I64 y)
+{//A Clickteam counter of n>=0: its digits end at x and stand on y.
+  I64 id;
+  do {
+    id=digits[n%10];
+    if (0<=id<geoms_num) {
+      x-=geoms[id].w;
+      ImgDraw(dc,pics[id],x,y-geoms[id].h);
+    }
+    n/=10;
+  } while (n);
+}
+
+U0 OptDraw(CDC *dc,I64 i)
 {
-  PicDraw(dc,PIC_TITLE);
-  dc->color=BLACK;GrRect(dc,20,30,310,300);
-  dc->color=WHITE;
-  GrPrint(dc,40,50,"FIVE NIGHTS AT FREDDY'S");
-  GrPrint(dc,40,90,"TempleOS / HolyC");
-  GrPrint(dc,40,MENU_NIGHT_Y,"1-6: Choose night     C: Custom");
-  GrPrint(dc,40,MENU_START_Y,"ENTER: Start night %d",night);
-  GrPrint(dc,40,200,"Custom: F / B / H / X increase AI");
-  GrPrint(dc,40,220,"Freddy %d Bonnie %d Chica %d Foxy %d",
-	custom_ai[FREDDY],custom_ai[BONNIE],custom_ai[CHICA],custom_ai[FOXY]);
-  GrPrint(dc,40,MENU_CONT_Y,"R: Continue night %d   Stars %d",
-	saved_night,stars);
-  GrPrint(dc,40,MENU_QUIT_Y,"ESC twice: Quit");
+  PicDraw(dc,opt_pics[i],opt_xy[i][0],opt_xy[i][1]);
+}
+
+U0 MenuDraw(CDC *dc)
+{//Frame 1 in its objects' order. The option ">>" points at, and Continue's
+//night, show by groups 20-23 and 51-52.
+  I64 i,n=OptsNum;
+  if (fade) {
+    if (faces[face][fade-1]) {
+      dc->color=BLACK;GrBlot(dc,0,0,faces[face][fade-1]);
+    } else
+      pic_misses++;
+  }
+  LayerDraw(dc,LAYER_STATIC+AnimFrame(menu_time,STATIC_SPEED)%STATIC_NUM);
+  if (flash_on)
+    LayerDraw(dc,LAYER_FLASH+AnimFrame(menu_time,FLASH_SPEED)%FLASH_NUM);
+  PicDraw(dc,PIC_LOGO,86,34);
+  OptDraw(dc,OPT_NEW);OptDraw(dc,OPT_CONT);
+  PicDraw(dc,PIC_SEL,opt_xy[option][0]-sel_dx[option],opt_xy[option][1]);
+  if (option==OPT_CONT)
+    CounterDraw(dc,night_digits,ContNight,131,267);
+  LayerDraw(dc,LAYER_BAR,-9,-19+ToI64(menu_time*BAR_PPS)%BAR_LOOP);
+  PicDraw(dc,PIC_RIGHTS,522,343);
+  if (n>OPT_6TH) OptDraw(dc,OPT_6TH);
+  for (i=0;i<STARS_NUM;i++)
+    if (unlocks&1<<i) PicDraw(dc,PIC_STAR,star_x[i],169);
+  if (option==OPT_CONT) PicDraw(dc,PIC_NIGHT_WORD,87,256);
+  if (n>OPT_CUSTOM) OptDraw(dc,OPT_CUSTOM);
+  PicDraw(dc,PIC_VERSION,13,341);
+}
+
+U0 CustomDraw(CDC *dc)
+{//Frame 12 "customize".
+  I64 i;
+  PicDraw(dc,PIC_CUSTOM,224,14);
+  for (i=0;i<MOVERS_NUM;i++) {
+    PicDraw(dc,name_pics[i],name_x[i],54);
+    PicDraw(dc,portrait_pics[i],portrait_x[i],93);
+    PicDraw(dc,PIC_AI_LEVEL,ai_label_x[i],212);
+    PicDraw(dc,PIC_LEFT,left_x[i],ARROW_Y);
+    PicDraw(dc,PIC_RIGHT,right_x[i],ARROW_Y);
+    CounterDraw(dc,ai_digits,custom_ai[i],level_x[i],266);
+  }
+  PicDraw(dc,PIC_READY,READY_X,READY_Y);
+  PicDraw(dc,PIC_LEVELS,58,327);
 }
 
 U0 EndDraw(CDC *dc)
@@ -1354,6 +1661,9 @@ U0 DrawIt(CTask *,CDC *dc)
     case MODE_MENU:
       MenuDraw(dc);
       break;
+    case MODE_CUSTOM:
+      CustomDraw(dc);
+      break;
     case MODE_NIGHT:
       if (tablet)
 	CamDraw(dc);
@@ -1398,15 +1708,40 @@ Bool Sure(I64 ch)
   return FALSE;
 }
 
-U0 MenuKey(I64 ch)
-{
+U0 MenuKey(I64 ch,I64 sc)
+{//Up and Down choose, Enter goes. C and D held with 1 or 2 open the 6th
+//and the custom nights: groups 60-61.
+  I64 n=OptsNum;
+  if (sc.u8[0]==SC_CURSOR_UP) OptSet((option+n-1)%n);
+  if (sc.u8[0]==SC_CURSOR_DOWN) OptSet((option+1)%n);
+  if (ch=='\n') OptGo;
+  if (KeyHeld(Char2ScanCode('c')) && KeyHeld(Char2ScanCode('d'))) {
+    if (ch=='1') unlocks|=STARF_5;
+    if (ch=='2') unlocks|=STARF_5|STARF_6;
+  }
+}
+
+U0 CustomKey(I64 ch)
+{//The port's keys: F, B, H and X raise a level and wrap to 0. READY takes
+//a click only: Frame 12 has no key for it.
   I64 i;
-  if ('1'<=ch<='0'+NIGHT_LAST) night=ch-'0';
-  if (ch=='C') night=NIGHT_CUSTOM;
   for (i=0;i<MOVERS_NUM;i++)
-    if (ch==ai_keys[i]) custom_ai[i]=(custom_ai[i]+1)%21;
-  if (ch=='R') night=saved_night;
-  if (ch=='R' || ch=='\n') NightInit;
+    if (ch==ai_keys[i]) custom_ai[i]=(custom_ai[i]+1)%(AI_MAX+1);
+}
+
+U0 CustomClick(I64 x,I64 y)
+{//Groups 5-12 step a level within 0-20. "Active 2", READY, starts the
+//night: groups 2-3.
+  I64 i;
+  for (i=0;i<MOVERS_NUM;i++) {
+    if (PicHit(PIC_LEFT,left_x[i],ARROW_Y,x,y))
+      custom_ai[i]=Max(custom_ai[i]-1,0);
+    if (PicHit(PIC_RIGHT,right_x[i],ARROW_Y,x,y))
+      custom_ai[i]=Min(custom_ai[i]+1,AI_MAX);
+  }
+  if (PicHit(PIC_READY,READY_X,READY_Y,x,y)) {
+    night=NIGHT_CUSTOM;NightInit;
+  }
 }
 
 U0 NightKey(I64 ch)
@@ -1426,16 +1761,17 @@ U0 NightKey(I64 ch)
       if (ch==cam_keys[i]) CamSet(i);
 }
 
-U0 KeyDo(I64 ch)
+U0 KeyDo(I64 ch,I64 sc=0)
 {
   ch=ToUpper(ch);
   if (ch!=sure_ch) sure_ch=0;
-  if (ch=='M') {
+  if (ch=='M' && mode!=MODE_MENU) {
     if (mode==MODE_NIGHT && !Sure(ch)) return;
-    mode=MODE_MENU;
-    SndHush;SndPlay(VOICE_CALL,SND_TITLE,100,0,TRUE);
+    MenuInit;
   } else if (mode==MODE_MENU)
-    MenuKey(ch);
+    MenuKey(ch,sc);
+  else if (mode==MODE_CUSTOM)
+    CustomKey(ch);
   else if (mode==MODE_WON || mode==MODE_LOST) {
     if (ch=='\n') {
       if (mode==MODE_WON && night<NIGHT_LAST) night++;
@@ -1445,22 +1781,16 @@ U0 KeyDo(I64 ch)
     NightKey(ch);
 }
 
-Bool LineHit(I64 y,I64 line_y)
-{//Is y on the line of text printed at line_y, or a line above or below it?
-  return line_y-FONT_HEIGHT<=y<line_y+2*FONT_HEIGHT;
-}
-
 U0 Click(I64 x,I64 y)
 {
   I64 i;
   if (mode==MODE_MENU) {
-    if (LineHit(y,MENU_NIGHT_Y))
-      night=night%NIGHT_CUSTOM+1;
-    else if (LineHit(y,MENU_START_Y))
-      NightInit;
-    else if (LineHit(y,MENU_CONT_Y))
-      MenuKey('R');
-  } else if (mode==MODE_NIGHT && power>0) {
+    if ((i=OptAt(x,y))>=0) {
+      OptSet(i);OptGo;
+    }
+  } else if (mode==MODE_CUSTOM)
+    CustomClick(x,y);
+  else if (mode==MODE_NIGHT && power>0) {
     if (y>=VIEW_H)
       KeyDo(' ');
     else if (tablet) {
@@ -1478,19 +1808,32 @@ U0 Click(I64 x,I64 y)
     KeyDo('\n');
 }
 
+U0 MenuHover(I64 x,I64 y)
+{//Moving onto a title option chooses it: groups 53-56.
+  I64 i=OptAt(x,y);
+  if (i>=0 && i!=hover) OptSet(i);
+  hover=i;
+}
+
 U0 MouseStep(F64 dt)
 {//Clicks come to the main loop as messages, so none is missed.
   I64 x,y;
   CTask *task=Fs->parent_task;
   x=ms.pos.x-task->pix_left-task->scroll_x;
   y=ms.pos.y-task->pix_top-task->scroll_y;
-  if (mode==MODE_NIGHT && !tablet && power>0) PanStep(x,y,dt);
+  if (mode==MODE_MENU)
+    MenuHover(x,y);
+  else if (mode==MODE_NIGHT && !tablet && power>0)
+    PanStep(x,y,dt);
 }
 
 U0 AnimateTask(I64)
-{
+{//Forgets the held keys while another window has the focus: their releases
+//go to it, and a stale key would act from there.
   F64 prev=tS,now;
+  CTask *task=Fs->parent_task;
   while (TRUE) {
+    if (sys_focus_task!=task) MemSet(keys_held,0,sizeof(keys_held));
     now=tS;
     GameStep(now-prev);MouseStep(now-prev);
     prev=now;
@@ -1500,11 +1843,18 @@ U0 AnimateTask(I64)
 
 U0 CleanUp()
 {
-  I64 i;
+  I64 i,j;
   for (i=0;i<PIC_NUM;i++) {
     Free(pics[i]);pics[i]=NULL;
   }
   Free(geoms);geoms=NULL;geoms_num=0;
+  for (i=0;i<FACES_NUM;i++)
+    for (j=0;j<FADES_NUM;j++) {
+      DCDel(faces[i][j]);faces[i][j]=NULL;
+    }
+  for (i=0;i<LAYERS_NUM;i++) {
+    Free(layers[i]);layers[i]=NULL;
+  }
   for (i=0;i<SOUNDS_NUM;i++) {
     Free(sounds[i]);sounds[i]=NULL;
   }
@@ -1516,7 +1866,8 @@ U0 Init()
   I64 i,size;
   U8 name[128];
   if (!(1<=saved_night<=NIGHT_LAST)) saved_night=1;
-  stars&=7;
+  stars&=STARG_ALL;
+  MemSet(keys_held,0,sizeof(keys_held));
   MemSet(sounds,0,sizeof(sounds));
   MemSet(sound_sizes,0,sizeof(sound_sizes));
   MixInit;
@@ -1528,12 +1879,13 @@ U0 Init()
   Free(sounds[SND_CRASH]);Free(sounds[SND_CRASH2]);
   sounds[SND_CRASH]=CrashMake(1500,100,70,&sound_sizes[SND_CRASH]);
   sounds[SND_CRASH2]=CrashMake(2000,64,40,&sound_sizes[SND_CRASH2]);
-  SndPlay(VOICE_CALL,SND_TITLE,100,0,TRUE);
   MemSet(pics,0,sizeof(pics));
+  MemSet(faces,0,sizeof(faces));
+  MemSet(layers,0,sizeof(layers));
   pic_misses=0;
   geoms=AssetRead("Assets/Images/HOTSPOT.BIN",&size);
   geoms_num=0;
-  if (geoms) geoms_num=size/sizeof(Geom);
+  if (geoms) geoms_num=Min(size/sizeof(Geom),PIC_NUM); //Ids of pictures.
   PicsLoad(room_pics,sizeof(room_pics));
   PicsLoad(fox_run,sizeof(fox_run));
   PicsLoad(scare_pics,sizeof(scare_pics));
@@ -1548,23 +1900,61 @@ U0 Init()
   PicsLoad(map_pics,sizeof(map_pics));
   PicsLoad(dot_pics,sizeof(dot_pics));
   PicLoad(PIC_CAM_BORDER);PicLoad(PIC_AUDIO_ONLY);
-  PicLoad(PIC_TITLE);PicLoad(PIC_OFFICE);PicLoad(PIC_DARK);
-  PicLoad(PIC_DARK_FACE);PicLoad(PIC_GOLD_IN);
+  PicLoad(PIC_OFFICE);PicLoad(PIC_DARK);PicLoad(PIC_DARK_FACE);
+  PicLoad(PIC_GOLD_IN);
+  FacesLoad;
+  LayersLoad(LAYER_STATIC,STATIC_NUM,DKGRAY);
+  LayersLoad(LAYER_FLASH,FLASH_NUM,LTGRAY);
+  LayersLoad(LAYER_BAR,1,WHITE);
+  PicsLoad(opt_pics,sizeof(opt_pics));
+  PicsLoad(night_digits,sizeof(night_digits));
+  PicsLoad(menu_pics,sizeof(menu_pics));
+  PicsLoad(name_pics,sizeof(name_pics));
+  PicsLoad(portrait_pics,sizeof(portrait_pics));
+  PicsLoad(ai_digits,sizeof(ai_digits));
   PackFree;
-  mode=MODE_MENU;hour=0;night=1;
+  MenuInit;
 }
 
-Bool KeyMsg(I64 ch)
-{//A key from the queue. TRUE when it quits: ESC twice.
+Bool KeyMsg(I64 ch,I64 sc)
+{//A key from the queue. TRUE when it quits: ESC twice. Shift, Ctrl and Alt
+//alone do nothing, so the Shift of a second SHIFT-ESC keeps the first.
+  switch (sc.u8[0]) {
+    case SC_SHIFT:
+    case SC_CTRL:
+    case SC_ALT:
+      return FALSE;
+  }
   if (ch==CH_SHIFT_ESC) ch=CH_ESC;
   if (ch==CH_ESC && Sure(ch)) return TRUE;
-  KeyDo(ch);
+  KeyDo(ch,sc);
+  return FALSE;
+}
+
+Bool MsgDo(I64 msg_code,I64 arg1,I64 arg2,Bool loading=FALSE)
+{//A message from the queue. TRUE when it quits. A held key's repeats do
+//nothing: the original's keys act once a press. While Init loads, input
+//only marks the keys held. The Enter that ran the file repeats if held and
+//would start a New Game over the save, and clicks were not aimed at the
+//title.
+  switch (msg_code) {
+    case MSG_KEY_DOWN:
+      if (!Bts(keys_held,arg2.u8[0]) && !loading)
+	return KeyMsg(arg1,arg2);
+      break;
+    case MSG_KEY_UP:
+      Btr(keys_held,arg2.u8[0]);
+      break;
+    case MSG_MS_L_DOWN:
+      if (!loading) Click(arg1,arg2);
+      break;
+  }
   return FALSE;
 }
 
 U0 FNAF()
 {
-  I64 arg1,arg2,msg_code;
+  I64 arg1,arg2,msg_code,mask=1<<MSG_KEY_DOWN|1<<MSG_KEY_UP|1<<MSG_MS_L_DOWN;
   SettingsPush;
   AutoComplete;WinBorder;WinMax;DocCursor;DocClear;
   Init;
@@ -1577,19 +1967,13 @@ U0 FNAF()
   MixOn;
   try {
 //The window manager queues a press for every one it sees, where a task
-//that looked at ms.lb now and then would miss a quick click. Clicks made
-//while Init loaded were not aimed at the menu. Keys typed then still count.
-    while (msg_code=ScanMsg(&arg1,&arg2,1<<MSG_KEY_DOWN|1<<MSG_MS_L_DOWN))
-      if (msg_code==MSG_KEY_DOWN && KeyMsg(arg1)) goto fn_done;
-    while (TRUE)
-      switch (GetMsg(&arg1,&arg2,1<<MSG_KEY_DOWN|1<<MSG_MS_L_DOWN)) {
-	case MSG_KEY_DOWN:
-	  if (KeyMsg(arg1)) goto fn_done;
-	  break;
-	case MSG_MS_L_DOWN:
-	  Click(arg1,arg2);
-	  break;
-      }
+//that looked at ms.lb now and then would miss a quick click.
+    while (msg_code=ScanMsg(&arg1,&arg2,mask))
+      MsgDo(msg_code,arg1,arg2,TRUE);
+    while (TRUE) {
+      msg_code=GetMsg(&arg1,&arg2,mask);
+      if (MsgDo(msg_code,arg1,arg2)) goto fn_done;
+    }
 fn_done:
   } catch
     PutExcept;
