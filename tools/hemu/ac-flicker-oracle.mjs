@@ -2,18 +2,22 @@ import assert from "node:assert/strict";
 import {readFileSync,writeFileSync} from "node:fs";
 import {createHash} from "node:crypto";
 import {pathToFileURL} from "node:url";
+import {AcMoveAssert} from "./ACMove.mjs";
 
 //Native QEMU/KVM reference for the AutoComplete double buffer. The original
 //V5.03 routines hide the window while they refill it; the corrected ones never
 //do, and no look of the window lasts only a few frames, even when it changes size.
+//The original routines also put a dragged window back at its spot with each
+//list; the corrected ones keep it where it was dragged, for each spot.
 const module=process.env.HOLYC_QEMU_ORACLE;
 if(!module)throw new Error("Set HOLYC_QEMU_ORACLE to HolyC-wasm/tests/oracle/Qemu.mjs.");
 const {QemuRun}=await import(pathToFileURL(module)),
   probe=readFileSync(new URL("./ACFlicker.HC",import.meta.url)),
+  move=readFileSync(new URL("./ACMove.HC",import.meta.url)),
   patch=readFileSync(new URL("../../engine/patches/ACDblBuf.HC",import.meta.url)),
-  run=Buffer.from("\nACFlickerCheck(8000);\n"),
-  result=await QemuRun([Buffer.concat([probe,run]),
-    Buffer.concat([patch,Buffer.from("\nACDblBufInstall;\n"),probe,run])],{timeout:240});
+  run=Buffer.from("\nACFlickerCheck(8000);\nACMoveCheck;\n"),
+  result=await QemuRun([Buffer.concat([probe,move,run]),
+    Buffer.concat([patch,Buffer.from("\nACDblBufInstall;\n"),probe,move,run])],{timeout:240});
 for(const r of result.results)assert.equal(r.except,"");
 function Phases(out) {
   const rows=out.trim().split("\n").filter(row=>row.startsWith("AC "));
@@ -26,8 +30,15 @@ function Phases(out) {
     return {frames,hidden,refills,switches,spans,changes,shorts,text:m[9]};
   });
 }
-const original=Phases(result.results[0].out),patched=Phases(result.results[1].out);
-console.log(JSON.stringify({original,patched}));
+function Moves(out) {//Col and row of the window after each ACMoveCheck step.
+  const rows=out.trim().split("\n").filter(row=>row.startsWith("ACM "));
+  assert.equal(rows.length,1,out);
+  return rows[0].slice(4).split(" ").map(pair=>pair.split(",").map(Number));
+}
+const original=Phases(result.results[0].out),patched=Phases(result.results[1].out),
+  moveOriginal=Moves(result.results[0].out),movePatched=Moves(result.results[1].out);
+console.log(JSON.stringify({original,patched,moveOriginal,movePatched}));
+AcMoveAssert(moveOriginal,movePatched);
 const texts=["Word:Dir","AutoComplete is in StandBy","AutoComplete is in StandBy"];
 for(const p of original) {
   assert.ok(p.spans>0 && p.switches>0,"the original routines let tasks run with the window hidden");
@@ -45,6 +56,7 @@ assert.ok(patched[2].changes>=6,"the window went between the list and StandBy");
 original.forEach((p,i)=>assert.equal(p.text,texts[i]));
 const Hash=b=>createHash("sha256").update(b).digest("hex"),
   fixture={patch:"ac-dbl-buf-v1",source:"TempleOS V5.03 ::/Adam/AutoComplete/ACTask.HC.Z",
-    backend:result.backend,ms:8000,probeHash:Hash(probe),patchHash:Hash(patch),original,patched};
+    backend:result.backend,ms:8000,probeHash:Hash(probe),patchHash:Hash(patch),original,patched,
+    moveProbeHash:Hash(move),moveOriginal,movePatched};
 writeFileSync(new URL("./ac-flicker-oracle.json",import.meta.url),JSON.stringify(fixture,null,2)+"\n");
 console.log(result.evidence);

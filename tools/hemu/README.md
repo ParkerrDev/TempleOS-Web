@@ -683,15 +683,31 @@ machine keeps it asleep. The scheduler ends a killed task before it looks at
 the suspended flag, so a program that turns AutoComplete off meanwhile does
 not wait.
 
+The stock routines also put the window back at its spot every time they list
+again: column 51, row 13 for the list and 27, 3 for the Ctrl and Alt key maps.
+So a drag of its title bar lasted only until the next word. The corrected
+routine keeps, for each of the two spots, where the visitor last moved the
+window from it. Only a drag moves the window (tiling skips a task that cannot
+take focus), so a window that is not where the routine last put it was
+dragged. The install reads the window's place too, so a drag made while
+AutoComplete waited for the correction is kept, and an AutoComplete turned off
+and on again opens where the last one was left.
+
 `ACFlicker.HC` focuses a window holding a word, changes the scan code every
 20 ms so AutoComplete refills its list, and counts frames drawn and task
-switches taken while the window is hidden, in a listing phase and a StandBy
-phase. `ac-flicker-oracle.mjs` runs it in QEMU/KVM on stock V5.03: the window
-manager drew 10 and 1 frames without the window and every one of 49 refills
-let tasks run with it hidden; corrected, none of 50 refills did.
-`ac-flicker.test.mjs` repeats both cases on HEMU and checks the corrected list
-text and the second install refusal, and that while held asleep AutoComplete
-refills nothing as the probe types, then wakes. Set `HOLYC_QEMU_ORACLE` as above to regenerate the reference.
+switches taken while the window is hidden, in a listing phase, a StandBy
+phase and a phase that goes between them. `ACMove.HC` then drags the window
+as the window manager does, lists again, shows StandBy and the Ctrl-Alt key
+map, lists again, and turns AutoComplete off and on. `ac-flicker-oracle.mjs`
+runs both in QEMU/KVM on stock V5.03: the window manager drew 8, 1 and 3
+frames without the window and every one of 75 refills let tasks run with it
+hidden, and the dragged window went back to 51, 13 with each list; corrected,
+none of 74 refills did, and it stayed where it was dragged, with the key map at
+27, 3 either way. `ac-flicker.test.mjs` repeats all of it on HEMU, with the same
+window places, and checks the corrected list text, the second install refusal,
+that a drag before the install is kept, and that while held asleep
+AutoComplete refills nothing as the probe types, then wakes. Set
+`HOLYC_QEMU_ORACLE` as above to regenerate the reference.
 
 `stock.test.mjs` validates the hash-bound stock RAM/module identities and
 reconstructs every byte of both captured disks from the original base and

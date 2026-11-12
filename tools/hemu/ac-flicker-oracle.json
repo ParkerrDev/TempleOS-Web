@@ -8,42 +8,42 @@
   },
   "ms": 8000,
   "probeHash": "30820e4e6b612290579403d1ecff7e6d64e217989285b59c777813829f2c7b00",
-  "patchHash": "9d6f450a97b4f6cca9a70f61e0291739849332f8c493d9ae024bfca705ba343a",
+  "patchHash": "e4bd6240cc8857f5d015a4220e641d4b3954158fdd7fee2728d64f7e45cc65fc",
   "original": [
     {
       "frames": 287,
-      "hidden": 9,
+      "hidden": 8,
       "refills": 25,
       "switches": 22225,
       "spans": 25,
-      "changes": 27,
-      "shorts": 18,
+      "changes": 23,
+      "shorts": 15,
       "text": "Word:Dir"
     },
     {
-      "frames": 285,
-      "hidden": 0,
+      "frames": 284,
+      "hidden": 1,
       "refills": 25,
       "switches": 750,
       "spans": 25,
-      "changes": 2,
-      "shorts": 1,
+      "changes": 4,
+      "shorts": 2,
       "text": "AutoComplete is in StandBy"
     },
     {
       "frames": 285,
       "hidden": 3,
-      "refills": 24,
-      "switches": 11887,
-      "spans": 24,
-      "changes": 53,
-      "shorts": 37,
+      "refills": 25,
+      "switches": 11058,
+      "spans": 25,
+      "changes": 60,
+      "shorts": 43,
       "text": "AutoComplete is in StandBy"
     }
   ],
   "patched": [
     {
-      "frames": 288,
+      "frames": 286,
       "hidden": 0,
       "refills": 24,
       "switches": 0,
@@ -53,7 +53,7 @@
       "text": "Word:Dir"
     },
     {
-      "frames": 284,
+      "frames": 285,
       "hidden": 0,
       "refills": 25,
       "switches": 0,
@@ -72,5 +72,66 @@
       "shorts": 0,
       "text": "AutoComplete is in StandBy"
     }
+  ],
+  "moveProbeHash": "f2dad2c00c941fa2d43c907660d64c1f0ad0cc61a6fcd6613b48340cf60ad7e7",
+  "moveOriginal": [
+    [
+      51,
+      13
+    ],
+    [
+      20,
+      30
+    ],
+    [
+      51,
+      13
+    ],
+    [
+      51,
+      13
+    ],
+    [
+      27,
+      3
+    ],
+    [
+      51,
+      13
+    ],
+    [
+      51,
+      13
+    ]
+  ],
+  "movePatched": [
+    [
+      51,
+      13
+    ],
+    [
+      20,
+      30
+    ],
+    [
+      20,
+      30
+    ],
+    [
+      20,
+      30
+    ],
+    [
+      27,
+      3
+    ],
+    [
+      20,
+      30
+    ],
+    [
+      20,
+      30
+    ]
   ]
 }

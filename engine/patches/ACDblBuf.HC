@@ -5,12 +5,17 @@
 //shows the text of the one before, so they are drawn where that text was.
 //The host may give the text of ACTask.HC.Z, checked as the file would be,
 //and may build on another core, so core 0 only checks and jumps.
+//Each list put the win back at its spot, so a drag of its title bar lasted
+//only until the next word. The win now stays where the visitor put it.
 
-#define AC_DBL_BUF_NUM	4
+#define AC_DBL_BUF_NUM		4
+#define AC_DBL_BUF_SPOTS_NUM	2
 
 CDoc *ac_dbl_buf_doc=NULL;
 I64 ac_dbl_buf_task_num=-1,ac_dbl_buf_left=0,ac_dbl_buf_top=0,
-      ac_dbl_buf_revision=0,ac_dbl_buf_except=0;
+      ac_dbl_buf_revision=0,ac_dbl_buf_except=0,
+      ac_dbl_buf_put=-1,ac_dbl_buf_put_task_num=-1,
+      ac_dbl_buf_put_left=0,ac_dbl_buf_put_top=0;
 Bool ac_dbl_buf_built=FALSE;
 U8 *ac_dbl_buf_old[AC_DBL_BUF_NUM],*ac_dbl_buf_new[AC_DBL_BUF_NUM];
 
@@ -19,6 +24,66 @@ class CACDblBufScroll
   Bool drawn; //FALSE if not since the win was shown.
   I64 left,right,top,bottom;
 } ac_dbl_buf_scroll[2];
+
+class CACDblBufSpot
+{//Where ACDocRst puts the win, and where the visitor last moved it from.
+  I64 left,top,moved_left,moved_top;
+  Bool moved;
+} ac_dbl_buf_spots[AC_DBL_BUF_SPOTS_NUM];
+
+I64 ACDblBufSpotFind(I64 left,I64 top)
+{//Which spot ACDocRst was given, or -1.
+  I64 i;
+  for (i=0;i<AC_DBL_BUF_SPOTS_NUM;i++)
+    if (ac_dbl_buf_spots[i].left==left && ac_dbl_buf_spots[i].top==top)
+      return i;
+  return -1;
+}
+
+U0 ACDblBufSpotsInit()
+{//ACPutChoices puts the list at 51,13 and the key maps go at 27,3. A boot
+//shows the list, which the visitor may have moved already.
+  MemSet(ac_dbl_buf_spots,0,sizeof(ac_dbl_buf_spots));
+  ac_dbl_buf_spots[0].left=51;
+  ac_dbl_buf_spots[0].top=13;
+  ac_dbl_buf_spots[1].left=27;
+  ac_dbl_buf_spots[1].top=3;
+  ac_dbl_buf_put=-1;
+  if (TaskValidate(ac.task)) {
+    ac_dbl_buf_put=ACDblBufSpotFind(ac.task->win_left,ac.task->win_top);
+    if (ac_dbl_buf_put<0)
+      ac_dbl_buf_put=0;
+    ac_dbl_buf_put_task_num=ac.task->task_num;
+    ac_dbl_buf_put_left=ac_dbl_buf_spots[ac_dbl_buf_put].left;
+    ac_dbl_buf_put_top=ac_dbl_buf_spots[ac_dbl_buf_put].top;
+  }
+}
+
+U0 ACDblBufSpotPut()
+{//The win goes to the spot ACDocRst was given, or where the visitor moved
+//it from there. Only a drag moves it, so a win not where it was put was
+//dragged, from the spot it was put at.
+  I64 left=ac_dbl_buf_left,top=ac_dbl_buf_top;
+  CACDblBufSpot *tmps;
+  if (ac_dbl_buf_put>=0 && ac_dbl_buf_put_task_num==Fs->task_num &&
+	(Fs->win_left!=ac_dbl_buf_put_left ||
+	Fs->win_top!=ac_dbl_buf_put_top)) {
+    tmps=&ac_dbl_buf_spots[ac_dbl_buf_put];
+    tmps->moved_left=Fs->win_left;
+    tmps->moved_top=Fs->win_top;
+    tmps->moved=TRUE;
+  }
+  ac_dbl_buf_put=ACDblBufSpotFind(left,top);
+  if (ac_dbl_buf_put>=0) {
+    tmps=&ac_dbl_buf_spots[ac_dbl_buf_put];
+    if (tmps->moved) {
+      left=tmps->moved_left;
+      top=tmps->moved_top;
+    }
+  }
+  WinHorz(left,Fs->win_right);
+  WinVert(top,Fs->win_bottom);
+}
 
 U0 ACDblBufScrollOut(CCtrl *c,CACDblBufScroll *s)
 {//Out of the win, which shrank or moved. The z buf gives the place to the
@@ -111,10 +176,12 @@ Bool ACDblBufShow()
   Bool res=TRUE;
   if (DocPut!=DocDisplay) {
     DocLock(DocDisplay); //Any wait comes before the move and swap.
-    WinHorz(ac_dbl_buf_left,Fs->win_right);
-    WinVert(ac_dbl_buf_top,Fs->win_bottom);
+    ACDblBufSpotPut;
     DocRecalc(DocPut,RECALCt_NORMAL|RECALCF_HAS_CURSOR); //Fits the win to it
     DocRecalc(DocPut,RECALCt_NORMAL|RECALCF_HAS_CURSOR); //and scrolls in it.
+    ac_dbl_buf_put_task_num=Fs->task_num;
+    ac_dbl_buf_put_left=Fs->win_left; //As the fit left it.
+    ac_dbl_buf_put_top=Fs->win_top;
     DocDblBufSwap;
     ac_dbl_buf_doc=DocPut;
     Fs->put_doc=Fs->display_doc; //Clicked links act on the shown doc.
@@ -247,6 +314,7 @@ U0 ACDblBufInstall(U8 *src=NULL,I64 size=0)
   if (!ac_dbl_buf_built)
     ACDblBufBuild(src,size);
   MemSet(ac_dbl_buf_scroll,0,sizeof(ac_dbl_buf_scroll));
+  ACDblBufSpotsInit;
   for (i=0;i<AC_DBL_BUF_NUM;i++)
     if (ac_dbl_buf_new[i](U32 *)[0]!=0xEC8B4855)
       throw('ACEntry');
