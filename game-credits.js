@@ -28,5 +28,10 @@ export function gameCredits(game) {
     source:'https://github.com/ParkerrDev/TempleOS-Web/blob/master/games/Snake.HC',
     note:'HolyC game created for TempleOS-Web.',
   };
+  if(game.file==='FNAF.HC')return {
+    author:'ParkerrDev',authorUrl:'https://github.com/ParkerrDev',
+    source:'https://github.com/ParkerrDev/TempleOS-Web/blob/master/games/FNAF.HC',
+    note:'HolyC port of Five Nights at Freddy\'s by Scott Cawthon, with its images and sounds converted from the original.',
+  };
   throw new Error('Missing verified game attribution: '+game.name);
 }

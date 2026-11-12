@@ -79,6 +79,13 @@ if (arg=="--all") {
         report.files.push({path,size:bytes.length,sha256:Hash(bytes)});
         return {ok:true};
       });
+    } else if (game.install) {
+      const project=await gameProject(game),doc=await project.open(project.entry),
+        bytes=new Uint8Array(doc.encode(doc.text)),
+        state=await Wait(h.gx.writeFile({path:game.install,bytes}),["done","failed","error"]);
+      assert.equal(state.state,"done",JSON.stringify(state));
+      launch={path:game.install,name:game.name};
+      report.files.push({path:game.install,size:bytes.length,sha256:Hash(bytes)});
     } else {
       const project=await gameProject(game),doc=await project.open(project.entry),
         src="#define TOS_NATIVE 1\n"+doc.text;

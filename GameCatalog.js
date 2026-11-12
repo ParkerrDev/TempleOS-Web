@@ -10,6 +10,11 @@ export const GAMES = [
     how: "A/D or Left/Right move · W or Up turns (cross stays upright) · S or Down falls faster · Space drops · P pauses · Esc quits" },
   { file: "Volley.HC", name: "Volley", blurb: "Two players, one ball, first to 7. Player 1 plays W/S, player 2 plays the Up and Down arrows.",
     how: "Player 1: W/S · Player 2: Up/Down · Space serves · P pauses · Esc quits" },
+  // install: the file is written to that path as bytes and run from there, for
+  // a game whose images and sounds follow its text in one file.
+  { file: "FNAF.HC", name: "FNAF", install: "C:/Home/Games/FNAF.HC",
+    blurb: "Five Nights at Freddy's, ported to HolyC. Watch the cameras, mind the power and survive the night until 6 AM.",
+    how: "Enter starts · A/D doors · Q/E lights · Space monitor · 1-9, 0, - cameras · N mutes the call · or click the buttons · Esc twice quits" },
   // Both source collections use HolyC-WASM for browser play; TempleOS is explicit.
   { name: "Varoom",        disk: "C:/Home/Games/TinkerOS/Varoom.HC", packageId: "tinker-Varoom",        blurb: "Top-down racing - keep your foot down and hold the track." },
   { name: "Talons",        disk: "C:/Home/Games/TinkerOS/Talons.HC", packageId: "tinker-Talons",        blurb: "Joust-style aerial combat: flap above your foe and skewer them." },

@@ -47,6 +47,15 @@
       "templeos": "unverified",
       "wasmSha256": "ce8573399633d496d821f81f9258d6d15473ea040365e94a71cdcf3b131d872b"
     },
+    "FNAF.HC": {
+      "name": "FNAF",
+      "sourceSha256": "eca59d1b4a692ede934c434041825a5ae972579c906a8190fe8e2d18e9f06765",
+      "compile": false,
+      "browserStartup": false,
+      "gameplay": "unverified",
+      "templeos": "unverified",
+      "error": "FNAF.HC:281: undefined symbol 'CArcCompress'"
+    },
     "tinker-Varoom": {
       "name": "Varoom",
       "sourceSha256": "6859626d516ac82665bf07bc50e15c51cad36698d34ea60640afdc892339a370",

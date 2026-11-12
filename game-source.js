@@ -3,7 +3,7 @@ import {gameCatalog,gameFile} from './game-packages.js';
 const projects=new Map();
 const editable=path=>/\.(HC|HH)$/i.test(path);
 // HolyCraft is its own repo (ParkerrDev/HolyCraft), cloned into ./holycraft at build time.
-const SITE_GAMES={'HolyCraft.HC':'holycraft/HolyCraft.HC','Snake.HC':'games/Snake.HC','Babel.HC':'games/Babel.HC','Volley.HC':'games/Volley.HC'};
+const SITE_GAMES={'HolyCraft.HC':'holycraft/HolyCraft.HC','Snake.HC':'games/Snake.HC','Babel.HC':'games/Babel.HC','Volley.HC':'games/Volley.HC','FNAF.HC':'games/FNAF.HC'};
 
 export function sourceString(buffer,utf8=false) {
   const bytes=new Uint8Array(buffer);
@@ -72,7 +72,7 @@ async function loadProject(game,id) {
         if(!response.ok)throw new Error('Could not load '+file.url);
         bytes=await response.arrayBuffer();
       }
-      documents.set(path,sourceDocument(bytes,!game.packageId));
+      documents.set(path,sourceDocument(bytes,!game.packageId && !game.install));
       texts.set(path,saved(path) ?? documents.get(path).original);
     })().catch(e=>{loads.delete(path);throw e;}));
     await loads.get(path);
