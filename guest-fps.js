@@ -20,7 +20,7 @@ export function createGuestFpsMeter()
     setPaused(value) {paused=!!value;},
     text() {
       if (fps===null)
-        return "FPS: \u2014";
+        return "FPS: ?";
       return "FPS: "+fps;
     },
     get paused() {return paused;}

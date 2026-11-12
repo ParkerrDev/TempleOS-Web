@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {createGuestFpsMeter} from "../guest-fps.js";
 
 const meter=createGuestFpsMeter();
-assert.equal(meter.text(),"FPS: \u2014");
+assert.equal(meter.text(),"FPS: ?");
 meter.sample(29,10);
 assert.equal(meter.text(),"FPS: 29");
 for (let n=0;n<120;n++)
@@ -21,7 +21,7 @@ assert.equal(meter.paused,true);
 assert.equal(meter.text(),"FPS: 24","pausing retains the frozen screen's label");
 meter.setPaused(false);
 meter.sample(null,14);
-assert.equal(meter.text(),"FPS: \u2014","a covered guest label has no invented FPS");
+assert.equal(meter.text(),"FPS: ?","a covered guest label has no invented FPS");
 meter.sample(120,15);
 assert.equal(meter.text(),"FPS: 120");
 meter.reset();
