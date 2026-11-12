@@ -1139,7 +1139,15 @@ instrumented, uncontrolled-load observations, not performance acceptance or a
 controlled comparison of host speed. `startup-evidence.json` retains all stage
 stamps, source/runtime/asset hashes and the narrower native fixture scope.
 
-The native AOT prototype uses the original TempleOS compiler and named imports.
+For optional native compilation, include `Build.HC` once in TempleOS, then
+include `RunBin.HC` to launch the resulting `Toom.BIN`. Keep the source package,
+`FREEDOOM.WAD` and `TMDATA.BIN` together. Rebuild after changing source files.
+The ordinary `Run.HC` still compiles and runs directly. `Build.HC` compiles to a
+temporary binary, validates its native relocatable header, then replaces the
+previous build; a compiler error leaves the previous binary intact. Native
+`Move` is a copy/delete operation, so this is not an atomic filesystem update.
+
+The optional module uses the original TempleOS compiler and named imports.
 It is relocatable, with no fixed load address or saved task pointers. The
 18-case host fixture runs from the same binary at two native addresses and in
 HEMU. Two additional native child-task loads restore the caller's data and code
@@ -1147,9 +1155,9 @@ heap usage exactly. The live module contains no test symbols.
 
 ```sh
 HOLYC_WASM=/path/to/HolyC-wasm TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/module.test.mjs
-LIVE=1 HOLYC_WASM=/path/to/HolyC-wasm OUT=/path/to/private/module node tools/toom/module.test.mjs
-MODULE=/path/to/private/module/TOOM.BIN TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/module-worker.test.mjs
-MODULE=/path/to/private/module/TOOM.BIN TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/module-browser.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm OUT=/path/to/private/module node tools/toom/module-build.test.mjs
+MODULE=/path/to/private/module/Toom.BIN TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/module-worker.test.mjs
+MODULE=/path/to/private/module/Toom.BIN TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web node tools/toom/module-browser.test.mjs
 ```
 
 Actual workers and Chromium pages pass on one and four cores: displayed firing,
@@ -1158,13 +1166,19 @@ module loads in a separate native task; its entry passes the quoted package
 directory explicitly because a new native task starts in Home. The browser's
 own temporary launch task and the module task both disappear on exit.
 
+The historical prototype measurement in `module-evidence.json` predates the
+shared `SpeakerTaskEnd` callback. Its timings apply only to its recorded source
+and binary. The final native `Build.HC` path uses unmodified included game files;
+`native-module-evidence.json` records its separate correctness checks. A final
+matched startup comparison remains pending.
+
 `module-speed.mjs` compares uninstrumented source and module launches in fresh
 machines, with the same installed files and task ownership. Three alternating
 pairs per core mode gave median first-frame times of 6.58/3.43 seconds on one
 core and 7.86/3.07 seconds on four cores (source/module). Median time from launch
 to a displayed shot was 11.08/6.81 and 11.66/6.93 seconds respectively. Peer CPU
 work was held; independent host-load samples are retained. This establishes a
-cold-start improvement on the measured host, not sustained gameplay speed or a
+cold-start improvement for that prototype on the measured host, not sustained gameplay speed or a
 universal hardware guarantee. `module-evidence.json` binds every included game
 source, AOT header, loader, binary, asset, compiler/engine revision, runtime file
 and measurement driver. Ordinary `Run.HC` remains unchanged; no catalog entry

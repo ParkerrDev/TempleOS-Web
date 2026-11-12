@@ -75,8 +75,13 @@ U0 SpeakerPause(Speaker *tmps,Bool val,I64 now)
   SpeakerTick(tmps,now);
 }
 
+U0 SpeakerTaskEnd()
+{//Local callbacks can be relocated by the native module loader.
+  SndTaskEndCB;
+}
+
 U0 SongTask(Speaker *tmps)
 {//SettingsPop ends this task before the parent's decoded sounds are freed.
-  Fs->task_end_cb=&SndTaskEndCB;
+  Fs->task_end_cb=&SpeakerTaskEnd;
   while (TRUE) SleepUntil(SpeakerTick(tmps,cnts.jiffies));
 }

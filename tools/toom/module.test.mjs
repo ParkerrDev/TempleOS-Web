@@ -11,9 +11,9 @@ const game=resolve(root,'games/Toom'),out=resolve(process.env.OUT||'/tmp/toom-mo
   read=n=>readFileSync(resolve(game,n),'latin1'),hash=b=>createHash('sha256').update(b).digest('hex'),
   names=[...read('Load.HC').matchAll(/#include "([^"]+)"/g)]
     .map(m=>m[1].includes('.')?m[1]:m[1]+'.HC').concat(['TmOverlay.HC','TmScreen.HC','TmPlay.HC']),
-  header=readFileSync(new URL('Module.HH',import.meta.url),'latin1'),
+  header=read('Native.HH'),
   fixture=live?'Toom;\n':readFileSync(new URL('Play.HC',import.meta.url),'latin1'),
-  source=header+'\n'+names.map(n=>read(n).replaceAll('&SndTaskEndCB','&TmModuleSoundEnd')).join('\n')+'\n'+fixture+(live?'':"\nif (tm_play_cases!=18 || tm_play_hash!=3858873714 || tm_play_done!=1) throw('Count');\n"),
+  source=header+'\n'+names.map(read).join('\n')+'\n'+fixture+(live?'':"\nif (tm_play_cases!=18 || tm_play_hash!=3858873714 || tm_play_done!=1) throw('Count');\n"),
   sourceSha256=hash(Buffer.from(source,'latin1')),
   assets=[{name:'FREEDOOM.WAD',bytes:FreedoomRead()},{name:'TMDATA.BIN',bytes:readFileSync(resolve(game,'TMDATA.BIN'))}];
 mkdirSync(out,{recursive:true});writeFileSync(resolve(out,'TOOM.PRJ'),Buffer.from(source,'latin1'));
@@ -50,10 +50,10 @@ if(live) {
   const report={sourceSha256,headerSha256:hash(Buffer.from(header,'latin1')),fixtureSha256:hash(Buffer.from(fixture,'latin1')),
     sourceFiles:Object.fromEntries(names.map(n=>[n,hash(Buffer.from(read(n),'latin1'))])),
     includeOrder:names,loadSha256:hash(Buffer.from(read('Load.HC'),'latin1')),
-    loaderSha256:hash(readFileSync(new URL('ModuleRun.HC',import.meta.url))),
-    sourceRewrite:'Only &SndTaskEndCB becomes &TmModuleSoundEnd; the local wrapper calls the named native import.',
+    loaderSha256:hash(Buffer.from(read('RunBin.HC'),'latin1')),
+    sourceRewrite:'None; native source and module builds use the same game sources.',
     fileHashes,bytes:binary.length,build:{backend:built.backend,evidence:built.evidence},
-    scope:'Private native AOT package; original game plus local sound-end callback adapter, no test symbols.'};
+    scope:'Native AOT package compiled from unchanged game files, no test symbols.'};
   writeFileSync(resolve(out,'result.json'),JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify(report,null,2));
 } else {
@@ -77,7 +77,7 @@ const report={sourceSha256,headerSha256:hash(Buffer.from(header,'latin1')),fixtu
   sourceFiles:Object.fromEntries(names.map(n=>[n,hash(Buffer.from(read(n),'latin1'))])),fileHashes,
   bytes:binary.length,origin:binary.readBigInt64LE(8).toString(),patchTable:binary.readBigUInt64LE(16).toString(),
   build:{backend:built.backend,evidence:built.evidence},native:loaded,addresses,
-  scope:'Private AOT prototype with a local native sound-end callback adapter. Built by original TempleOS, transferred to a fresh original TempleOS session, loaded at two addresses into separate tasks. Not a distributed module or interactive host gate.'};
+  scope:'Native AOT module built from unchanged game files by original TempleOS, transferred to a fresh original TempleOS session and loaded at two addresses into separate tasks. Separate fixtures establish interactive host behavior.'};
 if(process.env.TEMPLEOS_WEB) {
   const web=resolve(process.env.TEMPLEOS_WEB),{GuestHarness}=await import(pathToFileURL(resolve(web,'tools/hemu/GuestHarness.mjs'))),
     h=await GuestHarness({disk:true});

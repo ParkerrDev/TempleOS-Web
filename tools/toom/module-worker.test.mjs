@@ -103,7 +103,7 @@ if (!TaskValidate(tm_mod_parent) || !TaskValidate(tm_mod_child) ||
     assert.equal(hash(readFileSync(wasm)),wasmSha256);
     const result={cores:count,source,web,wasmSha256,fileHashes,driverSha256,firstFrameMs,firstShotMs,firstShotFromLaunchMs,runtimeHashes,commonFileSet:!!process.env.COMPARE,sound,
       initialHash:hash(frame.buf),pausedHash:hash(paused.buf),screen:Text(frame),
-      scope:'Exact native prototype module, no test symbols. Real worker window, native popup owner, physical key codes and guest speaker events. Timings are uncontrolled-load observations, not accepted performance.'};
+      scope:'Uninstrumented source or native module package. Real worker window, native popup owner, physical key codes and guest speaker events. Timings are uncontrolled-load observations, not accepted performance.'};
     results.push(result);writeFileSync(resolve(out,`worker-${count}.json`),JSON.stringify(result,null,2)+'\n');
   } catch(error) {Save(h.last,'failed');console.error(Text().split('\n').slice(0,60).join('\n'));console.error(h.msgs.filter(m=>['fileResult','guestResult','error'].includes(m.cmd)).slice(-15));throw error;}
   finally {await h.Stop();}

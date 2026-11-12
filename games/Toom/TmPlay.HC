@@ -272,7 +272,7 @@ U0 PlaySongTask(Play *tmpp)
 {//Focus is checked by the song owner even during a long private frame.
   Audio *audio=tmpp->audio;
   Bool paused;
-  Fs->task_end_cb=&SndTaskEndCB;
+  Fs->task_end_cb=&SpeakerTaskEnd;
   while (TRUE) {
     paused=tmpp->paused || !tmpp->task || sys_focus_task!=tmpp->task;
     if (audio->paused!=paused || audio->speaker.paused!=paused)

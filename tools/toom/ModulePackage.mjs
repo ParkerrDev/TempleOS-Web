@@ -5,7 +5,7 @@ import {FreedoomRead,root} from './Assets.mjs';
 
 export function ModulePackage(modulePath,source=false) {
   const game=resolve(root,'games/Toom'),read=n=>readFileSync(resolve(game,n)),files=new Map(),
-    run=readFileSync(new URL('ModuleRun.HC',import.meta.url),'latin1');
+    run=read('RunBin.HC').toString('latin1');
   if(source) {
     files.set('Source.HC',read('Run.HC'));
     const names=['Load.HC',...[...read('Load.HC').toString('latin1').matchAll(/#include "([^"]+)"/g)]
