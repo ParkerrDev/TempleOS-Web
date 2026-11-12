@@ -1,6 +1,7 @@
 //Fetches, checks and inflates the stock disk for StockDiskAside, off the
 //emulator's thread, and hands the bytes back without a copy.
 import {StockDiskFiles} from "./Stock.js";
+import "./qcow2.js";   //asked for with Stock.js, not a round trip after it
 
 onmessage=async e=>{
   try {

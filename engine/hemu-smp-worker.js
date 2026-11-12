@@ -2,6 +2,14 @@ import {CaptureWait} from "./CoreBarrier.js";
 import {CoreBus,BusStop,BUS_VERSION} from "./CoreBus.js";
 import {createHemuHost,CpuFaultText} from "./host.js";
 import * as jit from "./jit.js";
+//The modules the ones above import, asked for at once (see hemu-worker.js).
+import "../holyc-wasm/src/runtime/host.js";
+import "../holyc-wasm/src/runtime/lex.js";
+import "../holyc-wasm/src/runtime/console.js";
+import "../holyc-wasm/src/runtime/files.js";
+import "../holyc-wasm/src/runtime/heap.js";
+import "../holyc-wasm/src/abi.js";
+import "../holyc-wasm/src/wasm/emitter.js";
 
 onmessage=e=>{
   if(e.data.cmd!=="init")return;

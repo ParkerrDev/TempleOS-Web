@@ -10,6 +10,11 @@
   <!-- the snapshot, disk, games and Terry Search are redirected to this CDN (tools/offload-redirects.mjs):
        open the connection while the page is still parsing -->
   <link rel="preconnect" href="https://templeosweb-files.parkerrhunt.workers.dev" crossorigin />
+  <!-- the engine worker loads its modules while the page loads its own; the
+       first stock boot takes it (Os.js EarlyEngine) -->
+  <script>
+    try {self.hemuEarly=new Worker("./engine/hemu-worker.js",{type:"module"});} catch (e) {}
+  </script>
   <!-- modules the page's scripts import: tools/preload.test.mjs -->
   <link rel="modulepreload" href="BootFile.js" />
   <link rel="modulepreload" href="GuestRequests.js" />

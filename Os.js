@@ -542,7 +542,7 @@ let importDisk = null;   // a disk image imported before the reload
 function engineFail(why) {
   speaker.Stop();
   guestRequests.Fail(String(why));
-  started=false;framed=false;PatchHoldEnd();SpareTake(null);
+  started=false;framed=false;PatchHoldEnd();SpareTake(null);EarlyEngine()?.terminate();
   ld.style.display = ""; setLoad("The emulator could not start (" + why + "). Tap ↻ Restart.", 0);
   dbg("engine failed: " + why, true);
   dispatchEvent(new CustomEvent("osstate",{detail:{ready:false,msg:String(why)}}));
@@ -579,6 +579,13 @@ function Bytes(url)
     return r.arrayBuffer();
   });
 }
+function EarlyEngine()
+{//The engine worker index.html started before the page's modules came. The
+//first stock boot takes it, and any other boot ends it.
+  const w=self.hemuEarly||null;
+  self.hemuEarly=null;
+  return w;
+}
 function EngineSpare(smp)
 {//The workers load their modules, and the engine and the stock manifest
 //come, while the snapshot downloads. bootEngine takes them.
@@ -591,7 +598,7 @@ function EngineSpare(smp)
   for (const p of [spare.wasm,spare.sc,spare.manifest])
     p?.catch(()=>{});   //A boot that needs one again asks for it again.
   try {
-    spare.bsp=new Worker("./engine/hemu-worker.js",{type:"module"});
+    spare.bsp=EarlyEngine()||new Worker("./engine/hemu-worker.js",{type:"module"});
     if (smp)
       for (k=1;k<SMP_N;k++)
 	spare.aps.push(new Worker("./engine/hemu-smp-worker.js",{type:"module"}));
@@ -866,13 +873,17 @@ async function OsBoot()
     dbg("Browser storage unavailable; loading the stock machine: "+
       e.message,true);
   }
-  if(generation!==osGen)return;
+  if(generation!==osGen) {
+    EarlyEngine()?.terminate();
+    return;
+  }
   snap=file?.snapshot;disk=file?.disk;
   if (file?.kind=="snapshot")snap=file.bytes;
   else if (file?.kind=="disk")disk=file.bytes;
   if (!snap && !disk && boot_query.get("disk"))
     disk=await UrlDiskRead(boot_query.get("disk"));
   if (snap) {
+    EarlyEngine()?.terminate();
     setLoad("Checking imported snapshot…",40);
     info=await SnapshotInspect(snap,{busProtocol:BUS_VERSION});
     if(generation!==osGen)return;

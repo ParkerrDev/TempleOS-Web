@@ -19,6 +19,18 @@ import { makeDisk, fat32Upload, fat32List } from "./qcow2.js";
 import * as jit from "./jit.js";             // x86-64 -> WASM block JIT (the speed: interp ~6fps -> JIT 30-65fps games)
 import {createGuestInput} from "./guestinput.js";
 import { createGuestExec } from "./guestexec.js";   // backend guest execution: jobs queued through the OS's own TaskExe, no keystrokes
+//The modules the ones above import, so the browser asks for all of them at
+//once. Each level it finds by itself costs a round trip to the site, and the
+//site revalidates every file (tools/preload.test.mjs keeps this list whole).
+import "./StockSegments.js";
+import "../holyc-wasm/src/runtime/host.js";
+import "../holyc-wasm/src/runtime/font.js";
+import "../holyc-wasm/src/runtime/lex.js";
+import "../holyc-wasm/src/runtime/console.js";
+import "../holyc-wasm/src/runtime/files.js";
+import "../holyc-wasm/src/runtime/heap.js";
+import "../holyc-wasm/src/abi.js";
+import "../holyc-wasm/src/wasm/emitter.js";
 
 const keyq=KeyQueue();
 let repeatKeys=false,refreshRate=0,actualRate=null;

@@ -3,11 +3,14 @@ import {readFileSync,writeFileSync} from "node:fs";
 
 //index.html names every module its scripts import, so the browser asks for
 //them all while it parses the page, not one level of imports a round trip
-//later. node tools/preload.test.mjs --write writes the list.
+//later. node tools/preload.test.mjs --write writes the list. Workers list
+//theirs as imports of their own.
 const root=new URL("../",import.meta.url),page=new URL("index.html",root),
   html=readFileSync(page,"utf8"),
   START="  <!-- modules the page's scripts import: tools/preload.test.mjs -->\n",
-  IMPORT=/^\s*(?:import|export)\s+(?:[^'"]*?\sfrom\s*)?["'](\.[^"']+)["']/gm;
+  IMPORT=/^\s*(?:import|export)\s+(?:[^'"]*?\sfrom\s*)?["'](\.[^"']+)["']/gm,
+  WORKERS=["engine/hemu-worker.js","engine/hemu-smp-worker.js","engine/StockDiskWorker.js",
+    "engine/StockInflateWorker.js"];
 
 function Graph(entries)
 {//Each static import, by depth then name. Dynamic import() waits for its caller.
@@ -23,6 +26,25 @@ function Graph(entries)
     .sort((a,b)=>a[1]-b[1] || (a[0]<b[0]?-1:1)).map(([path])=>path);
 }
 
+function Depth(entry)
+{//Each module the worker entry loads, at its import depth.
+  const depth=new Map([[entry,0]]),todo=[entry];
+  for(let i=0;i<todo.length && i<10000;i++)
+    for(const m of readFileSync(new URL(todo[i],root),"utf8").matchAll(IMPORT)) {
+      const path=new URL(m[1],new URL(todo[i],root)).href.slice(root.href.length);
+      if(depth.has(path))continue;
+      depth.set(path,depth.get(todo[i])+1);
+      todo.push(path);
+    }
+  return depth;
+}
+
+//A worker has no modulepreload, so each worker imports its whole graph itself.
+for(const worker of WORKERS) {
+  const deep=[...Depth(worker)].filter(([,d])=>d>1).map(([path])=>path);
+  assert.deepEqual(deep,[],worker+" must import these itself: "+deep.join(", "));
+}
+
 const entries=[...html.matchAll(/<script type="module" src="([^"]+)"><\/script>/g)].map(m=>m[1]),
   want=Graph(entries),
   have=[...html.matchAll(/<link rel="modulepreload" href="([^"]+)" \/>/g)].map(m=>m[1]);
@@ -35,4 +57,5 @@ if(process.argv.includes("--write")) {
   while(html.startsWith('  <link rel="modulepreload"',stop))stop=html.indexOf("\n",stop)+1;
   writeFileSync(page,html.slice(0,at)+block+html.slice(stop));
 } else assert.deepEqual(have,want,"index.html's modulepreload links are stale: node tools/preload.test.mjs --write");
-console.log(`index.html preloads the ${want.length} modules its ${entries.length} scripts import.`);
+console.log(`index.html preloads the ${want.length} modules its ${entries.length} scripts import; `+
+  `the ${WORKERS.length} workers import their whole graphs.`);

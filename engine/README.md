@@ -81,10 +81,14 @@ Page, desktop and worker loaders reject unknown RAM-only imports before
 execution. Full saved-machine images use their embedded engine and state.
 
 A stock boot in the browser asks for everything at once. `index.html` preloads
-every module its scripts import (`tools/preload.test.mjs` keeps the list), and
-while the snapshot downloads `Os.js` starts the workers, so their modules load,
-and fetches the engine and `stock.json`, which it hands to the worker with the
-snapshot. The worker compiles the engine while it inflates the RAM and fetches
+every module its scripts import (`tools/preload.test.mjs` keeps the list) and
+starts the engine worker before the page's own modules come; the first stock
+boot takes it, and any other boot ends it. A worker has no modulepreload, so
+each worker imports every module of its graph itself (the same test checks
+that), and the site, which revalidates every file, answers them in one round
+trip instead of four. While the snapshot downloads `Os.js` starts the other
+workers and fetches the engine and `stock.json`, which it hands to the worker
+with the snapshot. The worker compiles the engine while it inflates the RAM and fetches
 the correction sources. The RAM is 384 MB inflated, 84% of it zero pages, and a
 gzip stream inflates in one pass, since a block may copy from the 32 KB before
 it. A block that starts after 32 KB of zeros needs only zeros from before, so
