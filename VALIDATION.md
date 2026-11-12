@@ -184,3 +184,21 @@ Validated locally on 2026-11-12. Snake, Babel and Volley are rewritten on Terry'
 | `tools/native-games-audit.mjs` | 9 of 66 programs compile to WebAssembly, up from 5: Collision, ElephantWalk, Digits and B17 needed only SettingsPush and AutoComplete |
 
 The four programs that newly compile stay on Run in TempleOS until their browser runs are checked.
+
+HolyCraft keeps its two builds, picked by `#ifdef TOS_NATIVE`, the way Terry's own `#if` lines pick a build or a machine. Its TempleOS renderer (about 380 lines: spans over a depth buffer, input from ScanMsg and the key bitmap) does not compile in HolyC-WASM: the first identifier it lacks is `MsSet` (HolyCraft.HC:434). Behind that come `ScanMsg`, `Char2ScanCode`, `kbd.down_bitmap`, `DCNew` and `GrFillPoly3`. So its browser frame rate cannot be compared yet.
+
+## Every Games entry against TempleOS V5.03
+
+Validated locally on 2026-11-12. `node tools/games/start.mjs --write` installs each of the 66 entries with the site's own installer and launch, once in original TempleOS V5.03 under QEMU/KVM (a freshly booted guest per entry) and once in the site's HEMU, waits 15 seconds of guest time, then sends Esc and, if the game is still running five seconds later, Shift-Esc. `games/startup.json` holds both results, bound to every entry's files and launch, the check's own sources and the HEMU runtime. `tools/games/startup.test.mjs`, now in `tools/Test.sh`, fails when any of them change.
+
+| Result in both machines | Entries |
+|---|---|
+| Running at 15 s, Esc ends it | 32 |
+| Running at 15 s, Esc ends it, then the compiler throws (MarioClone: its `Main.HC` ends `MarioMain;` with a stray `$SY,3$` and a 0x05 byte) | 1 |
+| Running at 15 s, Shift-Esc ends it | 20 |
+| Running at 15 s, neither key ends it (menus and dialogs: FNAF, BigGuns, TreeCheckers, TicTacToe, Wenceslas, Chess, ToTheFront, X-Caliber, GlowUFOs, Oregon Trail 1975, MissileDefense, Malicious Testimonies, Lord of Hosts) | 13 |
+| Different in HEMU | 0 |
+
+Titanium was the one difference at first: it froze in HEMU and took no keys. The last sprite in Titanium.HC (the CIA man's fourth frame) has no 0 at its end, in Terry's V5.03 file (0x38) and in TinkerOS's (0x6E), so `SpriteSize` keeps reading past the file. In V5.03's fresh heap the walk ends soon. In HEMU's booted snapshot it summed to 0x11C638AA bytes, `MAlloc` threw OutMem inside the draw job, `mp_not_done_flags` never cleared and the window manager stopped passing keys. The site now installs a copy with that one byte set to 0, as in frames 7 and 8, which hold the same mesh. With it both machines run Titanium and quit it with Shift-Esc.
+
+The Games window reads the record: Run in TempleOS is enabled only for an entry whose two runs match, the card says how it started, and the launch toast names the key that ended it in V5.03.

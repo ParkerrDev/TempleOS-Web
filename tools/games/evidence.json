@@ -20,7 +20,7 @@
     }
   },
   "fixtureLoaderSha256": "b0dce4977f1a8d5c4da6eff5af2d9896538448d390f2edaaa412e9d3e8a3eca0",
-  "guestHarnessSha256": "ef21e4d8cc8711fd85469906258cae17538c2252caf48841d2fe2201d3de0f45",
+  "guestHarnessSha256": "6237b135f175eeecf35c13bbeb811aa67aa4cbc112651e6373ada604aa47354b",
   "webRuntimeSha256": "64f4286370b807f87d02a0a3578075451cd57f2d148bfa8b21a69677100e6522",
   "siblings": [
     "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm fc20452bc7711bde44decc0e47ab2f1552361cac",
@@ -32,7 +32,7 @@
     "accelerator": "kvm",
     "version": "QEMU emulator version 11.1.2"
   },
-  "oracle": "qemu-dudmidty",
+  "oracle": "qemu-7yxsdu0m",
   "programs": {
     "Babel": {
       "sourceSha256": "605df9a7f7c5cf48213f77727734778830039185daa0ccb60f44ca64e3ae0953",

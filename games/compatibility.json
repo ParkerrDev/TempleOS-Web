@@ -382,7 +382,7 @@
     },
     "library-Titanium": {
       "name": "Titanium",
-      "sourceSha256": "b03fe207974acf3f141f7dd28a5af5c07db33fac977975f939194a3674d45114",
+      "sourceSha256": "004c1a78ff08b9acff41d4b649877ec7d109fb7461bfb48295b94a25e3f2b6ca",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",

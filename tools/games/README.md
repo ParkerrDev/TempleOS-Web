@@ -39,17 +39,29 @@ Snake animation task for controlled physics states, then invokes the
 game's compiled functions using TempleOS's `Call` API. No game source is rewritten
 or given replacement drawing/input functions by this check.
 
-`node tools/games/catalog.mjs NAME` checks byte-preserving installation and
-observes the selected TempleOS task in HEMU. `--all` gives each of the 65 catalog
-entries a fresh emulator process and writes reports under `tmp/games/catalog/`.
-The old `tools/hemu/game-suite.mjs` command forwards here. `OUT` changes the report
-directory; `CATALOG_FRAMES` changes the observation budget (default 300 frames).
-A child has a separate 180-second wall-time limit. Reports retain actual observed
-frames, artifact hashes, exceptions and stage timings. A `running` result means
-the task remains active: it may still be compiling or waiting at a menu. A
-`returned` result only means its entry finished without a reported exception.
-Neither result qualifies gameplay, input, performance or original-QEMU parity.
-Those require program-specific checks such as the native scenarios above.
+`node tools/games/catalog.mjs NAME` installs one entry in HEMU with the site's
+own installer and launch (`Install.mjs` follows `runInTempleOS` in `games.js`),
+checks every written file byte for byte and lets the game run for 15 seconds of
+guest time. A game still running then gets Esc and, if it is still running five
+seconds later, Shift-Esc, as the Keys window sends them. The report says how it
+ran (`running`, `returned`, `closed`, `never` or `except:CODE`), which key ended
+it (`esc`, `shift-esc` or `ignored`) and how it ended. `--all` gives every entry a
+fresh emulator process and writes reports under `tmp/games/catalog/`; `OUT`
+changes the directory and `CATALOG_FRAMES` the run (938 frames of 16 ms). The old
+`tools/hemu/game-suite.mjs` command forwards here.
+
+`node tools/games/start.mjs` runs each entry in original TempleOS V5.03 under
+QEMU as well. `Start.HC` copies the entry's files, staged under 8.3 names, to the
+paths the site writes with `CopySingle`, launches the game with the site's own
+`PopUp` script and puts its keys in `kbd.fifo2`, where the keyboard interrupt
+puts the bytes it reads. Every entry gets a freshly booted V5.03 and the same 15
+and 5 seconds. `--write` records all of them in `games/startup.json`, bound to
+each entry's files and launch, the check's own sources and the site runtime, and
+`startup.test.mjs` fails the build when any of those change. The Games window
+enables Run in TempleOS only for an entry that starts and quits as it does in
+V5.03. `running` means the task was alive after 15 seconds: it may be at a menu
+or an intro dialog (BigGuns' two PopUpOk dialogs take both keys, in V5.03 too).
+`ignored` entries are killed after the check. Gameplay is not compared.
 
 The browser launcher also requires recorded startup evidence. Run
 `node tools/browser/games.mjs --write`, then

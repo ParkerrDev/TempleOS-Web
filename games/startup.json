@@ -1,0 +1,1038 @@
+{
+  "scope": "Each Games entry installed and launched as the site does, in original TempleOS V5.03 under QEMU and in the site's HEMU: still running after 15 s of guest time, then whether Esc or Shift-Esc ends it and how it ends. Gameplay is not compared.",
+  "real": {
+    "templeos": "V5.03",
+    "diskSha256": "f8673e751d7e313b6552ac5688c31a4ea19148326a7d560b103217f004e1322a",
+    "backend": {
+      "engine": "qemu",
+      "accelerator": "kvm",
+      "version": "QEMU emulator version 11.1.2"
+    }
+  },
+  "site": {
+    "fixtures": {
+      "snapshot": {
+        "gzip": true,
+        "sha256": "95011614748141aa2c23d8f2110ff7e898773448a0d893a2243c16583e18b9e8"
+      },
+      "disk": {
+        "gzip": true,
+        "sha256": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+      },
+      "capture": {
+        "ramSha256": "e111895458da2d0bb4f26f58d8e4d020ff8fbd229d907a2c4a0703b0a16b4f69",
+        "registerSha256": "1e5ac6efc7be37fc3e4c34a9b59ace04176fd2cf877313dd469a40d58932e253",
+        "diskSha256": "c3ffa2b67733d6615e10f46c304c30f2ed98f3bd5a3b1e7bc6c8c4f69d441b63",
+        "overlaySha256": "894ceacb281d444e58508622008fbbe34c93db435233053976065a1d1bef86e3"
+      }
+    },
+    "fixtureLoaderSha256": "b0dce4977f1a8d5c4da6eff5af2d9896538448d390f2edaaa412e9d3e8a3eca0",
+    "guestHarnessSha256": "6237b135f175eeecf35c13bbeb811aa67aa4cbc112651e6373ada604aa47354b",
+    "webRuntimeSha256": "64f4286370b807f87d02a0a3578075451cd57f2d148bfa8b21a69677100e6522",
+    "siblings": [
+      "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm fc20452bc7711bde44decc0e47ab2f1552361cac",
+      "hemu https://github.com/ParkerrDev/HEMU 1e6470e628b5792c85d71c37e76c219710ade9e1"
+    ],
+    "engineSha256": "00e1957a7d7041f0e34644d40f5b31440c53436ff65c44d7d51ffa75cd939ee0"
+  },
+  "inputs": {
+    "tools/games/Start.HC": "db72c2295abcda671fccab75dd71a9074cfc29687750fccab2e24e5e3f91f2a4",
+    "tools/games/start.mjs": "2165be3c9a6367578c149522e49d394b0ff00b99aab19d4e669ef22f57ed3fdb",
+    "tools/games/catalog.mjs": "047d232740e58b42aa69f8a3111b97d83c5628e184a73ddf3648d26dc6a33886",
+    "tools/games/Install.mjs": "e80ce698492636e90d37549a7ec49b1a357ddece2a040ee9b3e1ca64a5ce8e25",
+    "game-packages.js": "48d8114d2a7320ac8a162ed7dc860fd5443f4d8b388d5d086d1c36bad8f966ef",
+    "game-source.js": "f58584042284fd3d3ad5627b9d033c44c1363abca4e7ecb92a68222924ec63e6"
+  },
+  "games": [
+    {
+      "name": "HolyCraft",
+      "filesSha256": "f19f4ffff862c106716146a5222cdd2ddd439426cd6082585459f005ce594487",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "TOOM",
+      "filesSha256": "944ab663c57beb673dab9729d3f6425d09d6bcfb9b8e09ac451577dfbfa736fb",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Babel",
+      "filesSha256": "c64c34a2a45ccb1bd8bbf31f036ab458ab1fbbc503c7ec2d8c96ceacf399e7cd",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Volley",
+      "filesSha256": "882f9dafe8d5ec15da9f5a5ed4e47e475da24b46c1b6275814f7e219ed330378",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Snake",
+      "filesSha256": "b0da0e547fce3266e143d2b59e75443d3c3639222ff3e80d74ec71189198e833",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "FNAF",
+      "filesSha256": "f29cbdc97ce041df90eef6c2c38e0ad34987a323880b8d054ce14e6cdfa54ea6",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "Varoom",
+      "filesSha256": "87719568c7dee2fd42db369a5be749b6074e1a490548ca26febf134bce2718b0",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Talons",
+      "filesSha256": "2da82768e97dbd92bee1cac5e023c2c6aeb75bf1fe8fbf36ed020a17de6244fc",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "BlackDiamond",
+      "filesSha256": "ae353f9e8cb7045fadac7512dc01c0ac8fbff71b0f7f47beaa0ad14690505e2d",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "FlatTops",
+      "filesSha256": "3989fced248fca6f58fc498f0dafef4f5023e66f95e68b270287a001137d9ae8",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Halogen",
+      "filesSha256": "fe31a20a80e1a295403ff519b5a26a1e29112c6ccbed88a5737602643c7b537c",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "CastleFrankenstein",
+      "filesSha256": "426d6217c76814daadcf662305df5a36430efc6acc78eb3b17e914cccee58421",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "BattleLines",
+      "filesSha256": "d80d74e1afb916ccfbae73d394847b19a30f66d19649fdcb4fc423fde36f1d72",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "BigGuns",
+      "filesSha256": "14e41725c3cac554444e1bdb9edf089413106143d3ad48a2ef218dbf78f9b2cb",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "BomberGolf",
+      "filesSha256": "f3a4b07f9f2d0f6295ecc8b03f131e0ee44cb7493288caa94016f786dfb1e77c",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "FlapBat",
+      "filesSha256": "d0c2b54d326bacda360c14823d0ce015719d4e8ae079caf5936a48dd3fd5ffa7",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Maze",
+      "filesSha256": "9e7233ecb0b06694b858b4683beffb735d873c8165b0ee67d7fd26c02f44714c",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "TreeCheckers",
+      "filesSha256": "1b83842eb81a631d89aafe4ac0f884c710b362ad32f8943c1e3b60280d8c3376",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "TicTacToe",
+      "filesSha256": "67d740ae22c600691f9aea37a25417bbe20c14c9630b4d84bcc8a631e0f8a4d3",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "Whap",
+      "filesSha256": "c163b538d0c910ad0f4dd4d0e4d06e1c20e7df84f72eb0bfd5d483d4220cb0b2",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Wenceslas",
+      "filesSha256": "dbfd43f5d92344074e9dbfa8e9c31fe000c65ed717b6bfa16c4f7ad9b10ed31b",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "RawHide",
+      "filesSha256": "bf768361aa76478211fbcfd1963d9dad2f8b0c9df37d681f35b9cd8b808e725c",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "TheDead",
+      "filesSha256": "0fb7fe75270249e0b7dc2229f5aee261a79d24138ad933c29f9f4f06da4fc38c",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Squirt",
+      "filesSha256": "54017b110c9f2d2de00770feb27d8652ba666cd4b1fa19ae1b411064ace67687",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Zing",
+      "filesSha256": "2f3182531b4e012bf6faacfa335e08e5f5f7e13f6c16b05502c21e98b9c404ee",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "ZoneOut",
+      "filesSha256": "06025a257344e349dfc470b38418a9eb47fc40baf6208b9fca9080e5937366c5",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "RocketScience",
+      "filesSha256": "08359eb17e11c78ca1dfcee85332dab228b9912e6871f044120eac1fa0e08e07",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Rocket",
+      "filesSha256": "50d9f417936dc04cb11465a029fc8a6276ff7f7d18b9e4f93de2f9250e7edb34",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "DunGen",
+      "filesSha256": "5ec7f90fd0d3329b214792c6241f9a401d14b730ff53c557ae4352cb2223bb00",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "MassSpring",
+      "filesSha256": "b68ee8e7d8892639c50611bed8786208d938efe98cc72802aff6c88fd5c363d1",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Collision",
+      "filesSha256": "4be2dd9d953d8b01913daa0ff02d025941ae3581cfd105d80c77b1349b089333",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "RainDrops",
+      "filesSha256": "b029f6ec23bc6f52bc679fb5574bfaa7760bcbfb2618a9db2f84801a39bb486a",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "CircleTrace",
+      "filesSha256": "bf8457963fa714a2c6aa87cbb912297abe0aaddcdb859c405637119cf7e48aac",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "ElephantWalk",
+      "filesSha256": "712e51f2871aacf440005d1eb5b41309b9631df033c73a3f9d10fb491dde0ea6",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "CharDemo",
+      "filesSha256": "21bcf6d11c404169d3a90724ac34d81466ab11db2ec4e45da2a6c75d70441652",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Digits",
+      "filesSha256": "98da264ae530dc9c8fd2072edc74446978cf865f8ef7661765c73013edd70f6f",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Stadium",
+      "filesSha256": "64e715141126b9cc14fa4b1aa03aca40f433d850c1eaf3373ca7a3b33ca60d95",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "AfterEgypt",
+      "filesSha256": "d1ab56e11e7988927fabbcc26d41e58032a0727b4f2395239db4b7bc3a7cf6d7",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Chess",
+      "filesSha256": "311ce7367f7e5f650639c5dc50583eb779d7963c7d51df8d419b5366f05057c7",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "KeepAway",
+      "filesSha256": "6f6ecc434c67b54377dfe6f93adc306ba90fae9a359d2ac19b0471b3bf4d9785",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Span",
+      "filesSha256": "aca843e01819879d631793c3f9442f0972abed366ae1178e960c7c32ae6f6c83",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Strut",
+      "filesSha256": "39cd533480e4a3e7f0f3c8aa10b1d8fc3de59158aac5c13d72c0c71bb6af4f7d",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Titanium",
+      "filesSha256": "dd7b0475164c550cc57dad6192e767a1b9e591e6ee249648afb54f4bf77112c2",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "ToTheFront",
+      "filesSha256": "0662fdae6bc41493fc97b140f6d9a47619f88fe67696a61caa8c3c5c67323de5",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "Vocabulary",
+      "filesSha256": "88922f44a5c30065d2adc21879f46ba951670856f331174050c3851727ee8d19",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "X-Caliber",
+      "filesSha256": "f1207ce2b12e768fc82625239311097a54b69f04f70c056c715c500127148c46",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "Castle Frankenstein 2",
+      "filesSha256": "60bdfd97e3aae9d289fc31b362759e06dca9ffcf7e9bd46cfb0cf23f8d1d9e87",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Cube",
+      "filesSha256": "fe8cf7b59e5b59f41938460cae7f129bcd6c94405fe866cc807117245d81985e",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "GlowUFOs",
+      "filesSha256": "80e5ebc50c82b4a9c2ab9a21fc71edfb6b4937e34f79859061cb7736993a3c07",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "Oregon Trail 1975",
+      "filesSha256": "8db05eca7ac83ed2200eb9d1f7624b9b5d11d9f7dc5d911e988596a50d15ba51",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "Scorch",
+      "filesSha256": "6971875b4d8167feece8248a03333fbab72cd86992ccb2007ce86a00f314c3f9",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "SpyHunt",
+      "filesSha256": "7f92150cc4d896c22377254e851e30b8b98b04a555a0090eb08418b4fdcd104f",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Sudoku",
+      "filesSha256": "0ae6c6b031c5f9a23c6d8ee462dc8a4ac2880782e7f06eac0e98bf026a90b814",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Tetris",
+      "filesSha256": "3a850c9a32323365b8811ceab1d3980395d070cbea70bf646fd68a6b93dfd714",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "B17",
+      "filesSha256": "b3a894b3198ed235dd096a45237ce8ffc8cf70b4e28eae81c562d3fdc8da4dab",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Coach",
+      "filesSha256": "79c7351362b770cfe94afa023b0abca0c6bcd701be828a33e41d861cc5ffd536",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "DiningStars",
+      "filesSha256": "6f64716611f309288c6fe6bf6e2cd037c6b477eef031ec8632a526ce45a4a36b",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Flappy",
+      "filesSha256": "3334436a85ceb1511f229814b44446534049cd4d824fcf9f7af6bb4cc7783426",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "MissileDefense",
+      "filesSha256": "e829860cd7316d0ddbce466d64636f2ece58cb291c457164c4bf2eb2822b0b6e",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "Rocks",
+      "filesSha256": "f6d17a6b165480c86875469062461587f16792dadce9ffa4dd52154cf86e9ccb",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Pilgrims",
+      "filesSha256": "df897a6652a71251d8bb5dab0ebe4c4e1001762c7ee7be2e045cde7457dae02f",
+      "real": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "shift-esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "MarioClone",
+      "filesSha256": "1ee3494dea95a3cf89126001a186b7c9d9f0595a75fd433cb958c214f30499eb",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "except:Compiler"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "except:Compiler"
+      },
+      "same": true
+    },
+    {
+      "name": "Malicious Testimonies",
+      "filesSha256": "fd841b4a073ed4ced19a5fee0ebe80f7be8e6fdb55534eb757fb0ee03863cfda",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "Ezekiel",
+      "filesSha256": "11b7017c510429efc097dbec80d2e3d12663e3cb93068ff9faa1e0a890b86920",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    },
+    {
+      "name": "Lord of Hosts",
+      "filesSha256": "1084871c89d78e5786dd76cc305fb9065c2d854a04458d44b30460d93c1b2958",
+      "real": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "site": {
+        "run": "running",
+        "quit": "ignored",
+        "end": "-"
+      },
+      "same": true
+    },
+    {
+      "name": "Solomon's Temple",
+      "filesSha256": "600492ac18a4e6cad1929792f05bd5e03608cb8a56a2c166e376c48430ab794f",
+      "real": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "site": {
+        "run": "running",
+        "quit": "esc",
+        "end": "returned"
+      },
+      "same": true
+    }
+  ]
+}

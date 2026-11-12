@@ -20,3 +20,4 @@ node search/Query.test.mjs
 node search/QueryMemory.test.mjs
 node sprites/Gr.test.mjs
 node tools/games/evidence.test.mjs
+node tools/games/startup.test.mjs

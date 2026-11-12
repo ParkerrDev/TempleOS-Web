@@ -27,6 +27,14 @@ export async function syncLibrary({tinker,save,packages}) {
     header='// TempleOS V5.03 raw mouse compatibility.\nI64 browser_mouse_x=ms_hard.pos.x;\nI64 BrowserMouseDX(){return ms_hard.pos.x-browser_mouse_x;}\nU0 MsRawRst(){browser_mouse_x=ms_hard.pos.x;}\nBool MsRaw(Bool enable=TRUE){MsRawRst;return enable;}\n';
     text=text.replace('ms_hard.raw_bttns','ms_hard.bttns').replace('ms_hard.raw_data.x','BrowserMouseDX');
    }
+   if(game.name==='Titanium'&&rel==='Titanium.HC'){
+    // Bin 9, the file's last bin and CIA_neeger_imgs[3], lost the 0 that ends a
+    // sprite in V5.03 (0x38) and TinkerOS (0x6E). SpriteSize then walks into the
+    // memory after it, so the game freezes or not depending on what lies there.
+    // Frames 7 and 8 hold the same mesh and end in 0.
+    if(!text.endsWith('\0\0\0k\0\0\0n'))throw new Error('Review the Titanium sprite end repair');
+    text=text.slice(0,-1)+'\0';
+   }
    if(game.name==='Lord of Hosts'&&rel==='Grid.HC')text=text.replaceAll('.HC.Z"','.HC"');
    if(game.name==="Solomon's Temple"&&rel==='cellar.HC')text=text.replace('C:/Home/Temple/Vocab.DD',guest+'Vocab.DD');
    if(game.name==='MarioClone'){

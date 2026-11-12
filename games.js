@@ -76,12 +76,37 @@ async function gameSrc(g) {
   return (await project.open(project.entry)).text;
 }
 const cards = [];
-const evidence=await fetch(new URL("./games/compatibility.json",import.meta.url)).
-  then(function (res) {
-    if (!res.ok)
-      throw new Error("Game verification data could not be loaded.");
-    return res.json();
-  }).catch(function (e) {console.warn(e.message);return null;});
+function Record(name)
+{//A verification record beside this module, or null when it cannot load.
+  return fetch(new URL("./games/"+name+".json",import.meta.url)).
+    then(function (res) {
+      if (!res.ok)
+        throw new Error("Game verification data could not be loaded.");
+      return res.json();
+    }).catch(function (e) {console.warn(e.message);return null;});
+}
+const [evidence,startup]=await Promise.all([Record("compatibility"),Record("startup")]);
+function StartNote(s)
+{//What games/startup.json proves about one entry.
+  if (!s)
+    return "TempleOS startup check pending";
+  if (!s.same)
+    return "Starts differently here than in TempleOS V5.03";
+  if (s.real.quit=="ignored")
+    return "Starts as in TempleOS V5.03, where Esc does not end it either. Gameplay not yet compared.";
+  if (s.real.run=="running")
+    return "Starts and quits as in TempleOS V5.03. Gameplay not yet compared.";
+  return "Ends as in TempleOS V5.03 ("+s.real.run+"). Gameplay not yet compared.";
+}
+function QuitNote(g)
+{//The key that ended this entry in TempleOS V5.03.
+  const s=startup?.games.find(s=>s.name==g.name);
+  if (s?.real.quit=="shift-esc")
+    return "Press <b>Shift+Esc</b> to quit.";
+  if (s?.real.quit=="ignored")
+    return "Esc does not end it in TempleOS either: use its own controls.";
+  return "Press <b>Esc</b> to quit.";
+}
 for (const g of GAMES) {
   const c = document.createElement("div"); c.className = "gm-card";
   c.innerHTML = `<h3>${g.name}</h3><p>${g.blurb}</p>`;
@@ -101,13 +126,19 @@ for (const g of GAMES) {
   }
   bB.addEventListener("click",()=>runInBrowser(g));row.append(bB);
   const bT=document.createElement("button");bT.className="gm-play";bT.textContent="Run in TempleOS";
-  bT.title="Launch in the real OS. Full gameplay has not yet been qualified.";
+  const started=startup?.games.find(s=>s.name==g.name);
+  bT.title="Install and launch in TempleOS V5.03, running in HEMU.";
+  if (!started?.same || started.real.run!="running" && started.real.run!="returned") {
+    bT.disabled=true;
+    bT.textContent="TempleOS support pending";
+    bT.title=StartNote(started);
+  }
   bT.addEventListener("click",()=>runInTempleOS(g));row.append(bT);
   const edit=document.createElement("button");edit.textContent="Edit source";
   edit.addEventListener("click",()=>editGame(g));row.append(edit);
   c.appendChild(row);grid.appendChild(c);
   const note=document.createElement("small");
-  note.textContent="Gameplay verification pending";
+  note.textContent=StartNote(started);
   c.append(note);
   cards.push({ el: c, hay: (g.name + " " + g.blurb+' '+credit.author).toLowerCase() });
 }
@@ -339,7 +370,7 @@ async function runInTempleOS(g,suppliedOverrides=null) {                        
   if (r && r.ok) {
     closeGames();ovE.classList.remove("open","free");
     const how = g.how || "Click the screen, then follow the on-screen instructions.";
-    toast("Opening <b>" + g.name + "</b> in a TempleOS task.<br>" + how + "<br>Press <b>Esc</b> to quit.");
+    toast("Opening <b>" + g.name + "</b> in a TempleOS task.<br>" + how + "<br>" + QuitNote(g));
     setStatus(g.name + ": TempleOS is compiling or running the game.");
     os_game.active = true;
     HelpGame(g);

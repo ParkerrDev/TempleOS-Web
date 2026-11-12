@@ -3,12 +3,13 @@ import {compileHemu} from "../../engine/compile.js";
 import {createHemuHost} from "../../engine/host.js";
 import {createGuestExec} from "../../engine/guestexec.js";
 import * as jit from "../../engine/jit.js";
+import {KeyQueue} from "../../engine/KeyQueue.js";
 import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
 
 export async function GuestHarness(opt={})
 {//A deterministic guest for native API checks, sharing the production engine.
   const compiled=compileHemu(opt),live=SnapshotRead(),
-        disk=opt.disk?DiskRead():null,badops=[];
+        disk=opt.disk?DiskRead():null,badops=[],keys=KeyQueue();
   assert.deepEqual(compiled.warnings,[]);
   let base=0,inst,gx,ns=16000000;
   const host=createHemuHost({
@@ -20,7 +21,7 @@ export async function GuestHarness(opt={})
   if (opt.sharedMemory)
     host.env.mem=new WebAssembly.Memory({initial:8192,maximum:8192,shared:true});
   Object.assign(host.env,{
-    __host_ns:()=>BigInt(ns),__host_budget:()=>opt.budgetProbe?.()??12000000n,
+    __host_ns:()=>BigInt(ns),__host_key:keys.Read,__host_budget:()=>opt.budgetProbe?.()??12000000n,
     __jit_state(r,f,p){
       jit.jitState(r,f,p,base,inst.exports.memory,inst.exports.RdMem,
             inst.exports.WrMem,inst.exports.RasterHLE);
@@ -82,7 +83,7 @@ export async function GuestHarness(opt={})
     bytes[a+st.length]=0;
     return BigInt(a);
   }
-  return {ex,gx,base,disk,compiled,Run,Exec,Name,
+  return {ex,gx,base,disk,compiled,Run,Exec,Name,Key:keys.Push,
     Call:(fn,args,budget)=>Settle(gx.call(fn,args,budget)),
     TimeSet(value){ns=value;}
   };

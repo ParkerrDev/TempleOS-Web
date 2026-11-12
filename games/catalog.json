@@ -1549,9 +1549,9 @@
           "path": "C:/Home/Games/TinkerOS/Apps/Titanium/Run.HC"
         },
         {
-          "url": "games/upstream/TinkerOS/Apps/Titanium/Titanium.HC",
+          "url": "games/upstream/TinkerOS/Apps/Titanium/Browser/Titanium.HC",
           "bytes": 107555,
-          "sha256": "8e7a29b6c5bccc621ea94e13165b4b982c8dc55b33c0ef8bb631eb0e857787ce",
+          "sha256": "69167edf01339f0f32b087bc5a4f4f1c4b20ab4eb9d04cb2e820c201f824c264",
           "path": "C:/Home/Games/TinkerOS/Apps/Titanium/Titanium.HC"
         },
         {
