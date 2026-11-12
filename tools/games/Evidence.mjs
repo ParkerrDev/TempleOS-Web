@@ -3,7 +3,7 @@ import {createHash} from "node:crypto";
 import {FixtureInputs} from "../hemu/Fixtures.mjs";
 
 export const root=new URL("../../",import.meta.url);
-export const GAME_CHECKS=["Babel","Volley"];
+export const GAME_CHECKS=["Babel","Volley","Snake"];
 export const GAME_RUNS=2;
 export const Hash=bytes=>createHash("sha256").update(bytes).digest("hex");
 

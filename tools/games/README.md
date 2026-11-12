@@ -6,19 +6,20 @@ a deterministic paused scene through the game's own draw callback, and verifies
 that Escape and Shift+Escape restore prior settings and release animation tasks.
 The identical HolyC fixture runs in original V5.03 under QEMU/KVM and in HEMU.
 
-Run `node tools/games/native.mjs --write` to refresh both current scenarios,
-Babel and Volley. The fast test checks the exact program source, fixture,
+Run `node tools/games/native.mjs --write` to refresh all three scenarios,
+Babel, Volley and Snake. The fast test checks the exact program source, fixture,
 compiler/HEMU pins, compiled engine and host source against this evidence; stale
 evidence fails the build. Keep the pins fixed while a check runs.
 The snapshot and disk input hashes include explicit LIVE/RAW overrides; fixture
 loaders and runner sources are recorded too.
 
-For a candidate source, set `GAME_SOURCE_DIR` and name the game, for example
-`GAME_SOURCE_DIR=/path/to/drafts node tools/games/native.mjs Snake`. Candidate
-results go to `tmp/games/`; they cannot replace production evidence. Snake's
-candidate scenario adds restart, turning, reverse rejection, growth, vacated-tail
+Snake's scenario adds restart, turning, reverse rejection, growth, vacated-tail
 and self collision, all four boundaries, circular-buffer wrap, each possible
 last free apple cell and a full board.
+
+For a candidate source, set `GAME_SOURCE_DIR` and name the game, for example
+`GAME_SOURCE_DIR=/path/to/drafts node tools/games/native.mjs Tetris`. Candidate
+results go to `tmp/games/`; they cannot replace production evidence.
 
 The Tetris candidate also needs `Help.DD` in its source directory. Its scenario
 checks pause, rotation, movement, hard-drop points and restart; one through four
@@ -34,7 +35,7 @@ The browser compiler audit remains separate in `tools/native-games-audit.mjs`.
 
 The fixture deliberately installs prior settings before running each game and
 checks restoration before its own outer settings are popped. It suspends the
-candidate Snake animation task for controlled physics states, then invokes the
+Snake animation task for controlled physics states, then invokes the
 game's compiled functions using TempleOS's `Call` API. No game source is rewritten
 or given replacement drawing/input functions by this check.
 

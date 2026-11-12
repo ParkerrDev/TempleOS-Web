@@ -32,10 +32,10 @@
     "accelerator": "kvm",
     "version": "QEMU emulator version 11.1.2"
   },
-  "oracle": "qemu-urk0bd_d",
+  "oracle": "qemu-rjbn8_kj",
   "programs": {
     "Babel": {
-      "sourceSha256": "8f9fa354dda68f563b96a15d4b1219d79bc0fbeb39f285b102022a4b75279300",
+      "sourceSha256": "605df9a7f7c5cf48213f77727734778830039185daa0ccb60f44ca64e3ae0953",
       "frameFnv64": "1BEB230827ABCDD3",
       "native": [
         "FRAME:Babel:1BEB230827ABCDD3",
@@ -48,7 +48,7 @@
       "hemu": "same input, frame and exit checks passed"
     },
     "Volley": {
-      "sourceSha256": "76a4c978a8d850b7ac294f56381d8e563694c33b0ec9892f67b951f2793ba30d",
+      "sourceSha256": "d1bc0612c35b2db4eeacff575a38a379c973d036de9d4e1e565f5f64b0690d3c",
       "frameFnv64": "070264F24E97EB62",
       "native": [
         "FRAME:Volley:070264F24E97EB62",
@@ -57,6 +57,21 @@
         "FRAME:Volley:070264F24E97EB62",
         "INPUT:Volley:both-players,serve,pause",
         "EXIT:Volley:settings,draw,window,tasks"
+      ],
+      "hemu": "same input, frame and exit checks passed"
+    },
+    "Snake": {
+      "sourceSha256": "de824900309668e8e1235623eb992203ee3539f160962c6f895cd438e04feb12",
+      "frameFnv64": "3716A3A5AF0D0095",
+      "native": [
+        "LOGIC:Snake:tail,self,4-walls,ring,884-free-cells,full-board",
+        "FRAME:Snake:3716A3A5AF0D0095",
+        "INPUT:Snake:restart,turn,reverse,grow,free-apple",
+        "EXIT:Snake:settings,draw,window,tasks",
+        "LOGIC:Snake:tail,self,4-walls,ring,884-free-cells,full-board",
+        "FRAME:Snake:3716A3A5AF0D0095",
+        "INPUT:Snake:restart,turn,reverse,grow,free-apple",
+        "EXIT:Snake:settings,draw,window,tasks"
       ],
       "hemu": "same input, frame and exit checks passed"
     }

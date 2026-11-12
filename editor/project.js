@@ -20,12 +20,12 @@ export function compileNativeProject({source,filename='program.HC',files=[]}){
   const result=compileHolyC(source,{
     filename:entry,lenient:false,resilient:false,projectIncludes:true,
     includeResolver:(path,from=entry)=>{
-      const absolute=/^(?:[A-Za-z]:|\/)/.test(path),bases=[''];
+      const absolute=/^(?:[A-Za-z]:|\/)/.test(path),bases=[];
       if(!absolute){
         let base=from.slice(0,from.lastIndexOf('/')+1);
         while(base){bases.push(base);base=base.slice(0,base.slice(0,-1).lastIndexOf('/')+1);}
-        bases.shift();
       }
+      bases.push('');
       // TempleOS permits extensionless and case-insensitive source names. Nested
       // loaders also include paths relative to an enclosing project directory.
       for(const base of bases)for(const suffix of ['', '.HC', '.HH']){

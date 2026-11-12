@@ -111,7 +111,10 @@ async function loadProject(game,id) {
         const raw=drafts.get(file.path) ?? (game.packageId?await gameFile(file):(await open(file.path)).encode((await open(file.path)).original));
         files.push({path:file.path,source:sourceString(raw,!game.packageId)});
       }
-      return {source:files.find(file=>file.path===pkg.entry).source,filename:pkg.entry,files,nativeGame:true};
+      // The browser compiler lacks parts of Adam that games use (SettingsPush,
+      // the window manager that calls draw_it). editor/Adam.HC runs first.
+      const adam=sourceString(await (await fetch(new URL('editor/Adam.HC',import.meta.url))).arrayBuffer());
+      return {source:adam+'#include "'+pkg.entry+'"\n',filename:'Adam.HC',files,nativeGame:true};
     },
   };
 }

@@ -170,3 +170,16 @@ Validated locally on 2026-11-12. The Games window's TOOM is now this site's own 
 | Play, finale play and play-time allocation (QEMU) | 18, 21 and 675 cases, none bad |
 
 TOOM has no save games, fuzz or light effects, intermission music or title menu yet, and runs at about 20 frames a second in the browser.
+
+## One source for Snake, Babel and Volley
+
+Validated locally on 2026-11-12. Snake, Babel and Volley are rewritten on Terry's Game1 template (SettingsPush, an AnimateTask, a DrawIt, a GetKey loop inside try and SettingsPop) with no `#ifdef` and no browser-only calls. The old Snake used `KeyGet`, so Run in TempleOS failed to compile it. A browser run now compiles `editor/Adam.HC` first: SettingsPush, SettingsPop and AutoComplete as V5.03's Adam has them, and a window manager task, started by the first SettingsPush, that calls the window's draw_it 30 times a second. A program that never calls SettingsPush, such as HolyCraft, keeps its own drawing.
+
+| Check | Result |
+|---|---|
+| `tools/games/native.mjs`, original V5.03 under QEMU/KVM and HEMU, two launches each | Babel frame 1BEB230827ABCDD3 and Volley frame 070264F24E97EB62, both the same as before the rewrite; Snake frame 3716A3A5AF0D0095 with logic, input and exit checks |
+| `tools/games/catalog.mjs` in HEMU | Snake, Babel and Volley install and keep running |
+| `tools/browser/games.mjs`, the editor worker in Chromium | HolyCraft, Babel, Volley and Snake start, draw advancing frames and stop |
+| `tools/native-games-audit.mjs` | 9 of 66 programs compile to WebAssembly, up from 5: Collision, ElephantWalk, Digits and B17 needed only SettingsPush and AutoComplete |
+
+The four programs that newly compile stay on Run in TempleOS until their browser runs are checked.
