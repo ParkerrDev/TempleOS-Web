@@ -4,12 +4,12 @@
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
-      "sourceSha256": "4f44168549cd15a677139dcbb273d1c77144d2a6f54b356e7c1dccb31ef600ca",
+      "sourceSha256": "019734ed0220d9ad548c1a6f24560d8a7f8e513ec861f54f4c93ec1544a59136",
       "compile": true,
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "1d0bd553e1449b4ddf3a8425be6c40806cad805c141e7fddeccb217dea90d54c"
+      "wasmSha256": "acf5464e0106356b031e7cdc1f76a6b1ff900a25358fc1dd6846b275595705b8"
     },
     "toom": {
       "name": "TOOM",

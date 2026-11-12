@@ -4,7 +4,7 @@
   "runnerSha256": "427ecf3252eb5347954ccf2d3f3638cb70e257bd0706ea3c49fe2cbe8f92bf7f",
   "programs": {
     "HolyCraft.HC": {
-      "sourceSha256": "4f44168549cd15a677139dcbb273d1c77144d2a6f54b356e7c1dccb31ef600ca",
+      "sourceSha256": "019734ed0220d9ad548c1a6f24560d8a7f8e513ec861f54f4c93ec1544a59136",
       "startup": true
     },
     "Babel.HC": {
