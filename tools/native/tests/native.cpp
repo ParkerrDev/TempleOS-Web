@@ -6,6 +6,7 @@
 #include <condition_variable>
 #include <future>
 #include <mutex>
+#include <type_traits>
 
 class NativeTest:public QObject {
   Q_OBJECT
@@ -20,6 +21,39 @@ private slots:
     QVERIFY(rejected);JsInit();
     QVERIFY(std::async(std::launch::async,[]{JsInit();return true;}).get());
     input=qEnvironmentVariable("HEMU_NATIVE_FIXTURE");QVERIFY2(!input.isEmpty(),"Set HEMU_NATIVE_FIXTURE to a complete one-core saved session");
+  }
+  void transportBuffer() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());const auto path=dir.filePath("bytes.gz");
+    QByteArray data(400000,0);for(int i=0;i<data.size();i++)data[i]=char(i*37+11);
+    {DeflateFile output(path);for(int at=0;at<data.size();at+=131072)output.Write(reinterpret_cast<const unsigned char *>(data.constData()+at),std::min(131072,int(data.size())-at));output.Commit();}
+    JSClassDefinition definition=kJSClassDefinitionEmpty;definition.className="TransportTest";
+    auto type=JSClassCreate(&definition);
+    std::unique_ptr<std::remove_pointer_t<JSGlobalContextRef>,decltype(&JSGlobalContextRelease)> context(JSGlobalContextCreate(type),JSGlobalContextRelease);
+    JSClassRelease(type);std::atomic<bool> cancel{false};TransportScope transport(context.get(),&cancel);
+    const auto name=QJsonDocument(QJsonArray{path}).toJson(QJsonDocument::Compact);
+    Eval(context.get(),"var path="+name.toStdString()+";var id=NativeStreamOpen(path[0],0),backing=new Uint8Array(131074).fill(91),dst=backing.subarray(1,131073),total=0;");
+    QCOMPARE(Eval(context.get(),R"JS(
+      while(true){const n=NativeStreamReadInto(id,dst);if(!n)break;
+        if(backing[0]!==91||backing[131073]!==91)throw Error("destination boundary");
+        for(let i=0;i<n;i++)if(dst[i]!==((total+i)*37+11&255))throw Error("stream byte "+(total+i));
+        total+=n;
+      }NativeStreamClose(id,0);String(total)
+    )JS"),std::string("400000"));
+    Eval(context.get(),"id=NativeStreamOpen(path[0],0);");
+    for(const auto *bad:{"new Uint16Array(4)","new Uint8Array(131073)","null"}) {
+      const auto result=Eval(context.get(),"(()=>{try{NativeStreamReadInto(id,"+std::string(bad)+");return 'accepted';}catch(e){return String(e);}})()");
+      QVERIFY(result!="accepted");
+    }
+    QCOMPARE(Eval(context.get(),"String(NativeStreamReadInto(id,new Uint8Array(0)))"),std::string("0"));
+    QCOMPARE(Eval(context.get(),"NativeStreamReadInto(id,dst.subarray(0,1));String(dst[0])"),std::string("11"));
+    cancel.store(true);
+    QCOMPARE(Eval(context.get(),"(()=>{try{NativeStreamReadInto(id,dst);return 'accepted';}catch(e){return String(e);}})()"),std::string("Operation cancelled"));
+    cancel.store(false);
+    QCOMPARE(Eval(context.get(),"NativeStreamReadInto(id,dst.subarray(0,1));String(dst[0])"),std::string("48"));
+    transport.state.progress=[&](const char *,size_t){cancel.store(true);};
+    QCOMPARE(Eval(context.get(),"(()=>{try{NativeStreamReadInto(id,dst);return 'accepted';}catch(e){return String(e);}})()"),std::string("Operation cancelled"));
+    Eval(context.get(),"NativeStreamClose(id,0);");QVERIFY(transport.state.readers.empty());cancel.store(false);
+    QVERIFY(Eval(context.get(),"(()=>{try{NativeStreamReadInto(id,dst);return 'accepted';}catch(e){return String(e);}})()")!="accepted");
   }
   void cancellation() {
     QTemporaryDir dir;QVERIFY(dir.isValid());const auto output=dir.filePath("keep.hemu");

@@ -12,9 +12,10 @@ import * as jit from "../jit.js";
 
 let machine=null,attempted=false;
 function Reader(path) {
-  const id=NativeStreamOpen(path,0);let closed=false;
+  //SnapshotReader copies a chunk before requesting its successor.
+  const id=NativeStreamOpen(path,0),bytes=new Uint8Array(131072);let closed=false;
   return SnapshotReader({
-    async read(){if(closed)throw Error("Closed snapshot stream");const value=NativeStreamRead(id,131072);return {done:!value.length,value};},
+    async read(){if(closed)throw Error("Closed snapshot stream");const count=NativeStreamReadInto(id,bytes);return {done:!count,value:bytes.subarray(0,count)};},
     async cancel(){if(!closed){closed=true;NativeStreamClose(id,0);}}
   });
 }

@@ -140,6 +140,17 @@ and QSaveFile atomic replacement; failure or cancellation preserves the old
 file. During replacement, both old and candidate memory can coexist. This is
 not a low-memory peak claim.
 
+Snapshot input reuses one 128 KiB transport buffer. The shared reader copies
+each chunk before requesting the next, so inflating a large save does not
+leave a separate native-backed JS allocation for every chunk. Offset views,
+bounds and cancellation are checked by the transport tests. The internal
+`NativeStreamReadInto` callback and bundled Runtime are built together;
+embedded guest modules do not call this platform interface. The Linux resource
+gate measures a fresh CLI load and limits peak RSS to the saved WASM memory,
+full logical disk size and 256 MiB of overhead. It records the exact input and
+binary hashes. This does not reduce the fixed 384 MiB guest RAM mapping or
+bound the peak when two complete machines coexist during replacement.
+
 Open and Save use the desktop's [FileChooser portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.FileChooser.html)
 over session D-Bus. Save chooses a destination and makes a successful save the
 current restart path. Cancel closes only that request; late responses cannot

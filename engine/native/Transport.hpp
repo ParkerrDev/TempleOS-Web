@@ -64,15 +64,23 @@ static JSValueRef StreamOpen(JSContextRef ctx,JSObjectRef,JSObjectRef,size_t n,c
     return JSValueMakeNumber(ctx,id);
   });
 }
-static JSValueRef StreamRead(JSContextRef ctx,JSObjectRef,JSObjectRef,size_t n,const JSValueRef *args,JSValueRef *error) {
+static JSValueRef StreamReadInto(JSContextRef ctx,JSObjectRef,JSObjectRef,size_t n,const JSValueRef *args,JSValueRef *error) {
   return TransportCall(ctx,error,[&](){
-    if(n!=2)throw std::runtime_error("StreamRead expects handle and byte count");
-    int id=Integer(ctx,args[0],INT_MAX,error),count=Integer(ctx,args[1],131072,error);
-    std::array<unsigned char,131072> bytes;
-    auto &state=Transport(ctx);size_t got=state.readers.at(id)->Read(bytes.data(),count);
+    if(n!=2)throw std::runtime_error("StreamReadInto expects handle and destination");
+    int id=Integer(ctx,args[0],INT_MAX,error);
+    if(JSValueGetTypedArrayType(ctx,args[1],error)!=kJSTypedArrayTypeUint8Array||*error)throw std::runtime_error("Transport expects a Uint8Array");
+    auto object=JSValueToObject(ctx,args[1],error);
+    auto count=JSObjectGetTypedArrayByteLength(ctx,object,error),offset=JSObjectGetTypedArrayByteOffset(ctx,object,error);
+    auto buffer=JSObjectGetTypedArrayBuffer(ctx,object,error);auto length=JSObjectGetArrayBufferByteLength(ctx,buffer,error);
+    if(*error||count>131072||offset>length||count>length-offset)throw std::runtime_error("Transport byte range");
+    auto &state=Transport(ctx);auto &reader=state.readers.at(id);
+    if(!count)return JSValueMakeNumber(ctx,0);
+    auto bytes=static_cast<unsigned char *>(JSObjectGetArrayBufferBytesPtr(ctx,buffer,error));
+    if(*error)throw std::runtime_error("Transport requires an ordinary buffer");
+    size_t got=reader->Read(bytes+offset,count);
     state.readBytes+=got;if(state.progress)state.progress("read",state.readBytes);
     if(state.cancel&&state.cancel->load())throw std::runtime_error("Operation cancelled");
-    return ByteValue(ctx,bytes.data(),got,error);
+    return JSValueMakeNumber(ctx,got);
   });
 }
 static JSValueRef StreamWrite(JSContextRef ctx,JSObjectRef,JSObjectRef,size_t n,const JSValueRef *args,JSValueRef *error) {
@@ -117,7 +125,7 @@ struct TransportScope {
     state.cancel=cancel;
     JSObjectRef global=JSContextGetGlobalObject(ctx);
     if(JSObjectGetPrivate(global)||!JSObjectSetPrivate(global,&state))throw std::runtime_error("Cannot attach native transport");
-    Bind(ctx,"NativeStreamOpen",StreamOpen);Bind(ctx,"NativeStreamRead",StreamRead);
+    Bind(ctx,"NativeStreamOpen",StreamOpen);Bind(ctx,"NativeStreamReadInto",StreamReadInto);
     Bind(ctx,"NativeStreamWrite",StreamWrite);Bind(ctx,"NativeStreamClose",StreamClose);
     Bind(ctx,"NativeHash",ByteHash);Bind(ctx,"NativeDecode",DecodeUtf8);
   }
