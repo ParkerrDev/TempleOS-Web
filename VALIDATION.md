@@ -210,3 +210,19 @@ Validated locally on 2026-11-12, Linux x86-64, Qt 6.12.0, JavaScriptCoreGTK 2.54
 Opening the 53 MB session took 4.1 to 5.8 s. Nearly all of it was the disk: `engine/Snapshot.js` tested each 128 KiB chunk for zeros with a callback per byte, in a new buffer each time, over 256 MiB of disk. It now tests 4 bytes a step in one reused buffer and copies only the chunks it keeps; the session opens in 1.6 to 2.0 s with the same frame (RGBA SHA-256 6d930fea...). The same code opens a saved machine in the browser. In V8 the old test alone took 4.2 s on 2048 empty chunks, the new one 0.11 s. Times were taken with the machine's load average between 30 and 40 from other work. After the change, the native game evidence and all 66 startup checks were run again and are unchanged.
 
 Not done: four cores (the native host refuses those sessions), macOS (the JavaScriptCore framework branch is untested, and this session could not run commands on a Mac) and CPUs other than x86-64. HEMU itself is HolyC; the window host is C++, QML and JavaScript.
+
+## PageSpeed
+
+Measured on 2026-11-12 with Lighthouse 13.6.0 through `node tools/lighthouse/check.mjs https://templeosweb.netlify.app/`, which runs the mobile and desktop defaults. The PageSpeed Insights service itself refused with its daily quota spent, so these are local runs, not its numbers.
+
+Before 104e332, with the machine's load average near 35, three mobile runs gave Performance 90, 100 and 87; the two low ones came from total blocking time of 410 and 500 ms. The longest page task was the chat Worker's first message: it made the 100 kept lines at once while the page was loading (523 of the page's 811 elements), and the first `toLocaleString` started ICU. The Chat window now makes its lines the first time it opens. On the local mirror of the site, three mobile runs each gave total blocking time 37, 126 and 158 ms before and 25, 28 and 52 ms after.
+
+Three live runs after 54282e5:
+
+| Run | Mobile | Desktop | Agentic browsing | Mobile TBT | Mobile Speed Index |
+|---|---|---|---|---:|---:|
+| 1 | 100/100/100/100/100 | 100/100/100/100/100 | 2/2, 2/2 | 10 ms | 1.98 s |
+| 2 | 100/100/100/100/100 | 100/100/100/100/100 | 2/2, 2/2 | 74 ms | 1.72 s |
+| 3 | 99/100/100/100/100 | 99/100/100/100/100 | 2/2, 2/2 | 7 ms | 2.97 s |
+
+The 99s are Speed Index alone. After the first second the only thing that changes on screen is TempleOS's own window: the 9.6 MB RAM snapshot's progress bar, then the desktop. In run 3 the snapshot came at 2.2 MB/s (requested at 0.69 s, done at 4.99 s), so the desktop showed late. Asking for it before the first paint was not tried, since Lighthouse's simulated mobile link of 1.6 Mbps could then charge it to the first paint. The local mirror run (`node tools/lighthouse/check.mjs` with no URL) sometimes fails robots.txt and llms.txt with "Fetch failed": the mirror compresses large files synchronously while those requests wait. The live site answers both with 404 at once, and every live run passed them.
