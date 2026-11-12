@@ -1,0 +1,4673 @@
+{
+  "claim": "Relocatable native module prototype and paired cold-start improvement; no catalog promotion or sustained-FPS claim.",
+  "source": {
+    "sourceSha256": "2e19688a1034944aaa00e1ce167e16fac4368ff56ae3341be6b8a4ceee1c5221",
+    "binarySha256": "8728bff5045ce1aa85c1c64a8263f7bb02e367d47c737afc936fd4f274742613",
+    "bytes": 143856,
+    "originalDebugLog": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-onq64cj7/debug.log",
+    "debugLogSha256": "b080efb6fb4d0cf2a6c3ccb19c5672d8025bda5fecd3b49951c26470b74af26d",
+    "scope": "Exact original live prototype module recovered from persistent native oracle output after /tmp cleanup. Current source reconstruction matches the original source hash.",
+    "sourceFiles": {
+      "TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+      "TmWad.HC": "85463df0ecb634f6a74cc1a1cdeef9ff62c35c4e02a34b368326ba53ac1887d0",
+      "TmStory.HC": "f5cdd86de9d8048a96989bb537e0352c94c7b92ba451531b72a86be6d5ef3b9a",
+      "TmMap.HC": "7b096f40305398fa6114c76788b158dc7c912348469cabe56393258f4abc5069",
+      "TmGr.HC": "dcf3bfd9e476ba620d1479658410ee72c75e0599e96a8bf171df1b9dbdf7bc8e",
+      "TmTex.HC": "1058c3d88663bfd5d511ceef1ca99ccbfa356465405fb58adf7b77e8e5968807",
+      "TmAnim.HC": "88bacb84b0802181b51c5efe643415c5690b0c9babad2064f44c79608085c504",
+      "TmData.HH": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+      "TmClip.HC": "22fbb94fca32b0f1b19bde07c591c088cf2324fd129ace1df060ca90cc09f55b",
+      "TmState.HC": "0a7e57036b0d51d5a153e5cf0a8ffa76ac9f2d70061c48e429a0865899b12fdb",
+      "TmMath.HC": "5da8d9243d01fcae7afc35858f1d17586d5addcadef1dad7052c4a86e5f684cf",
+      "TmWorld.HC": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+      "TmContact.HC": "b8e15824529b0dafb7abf11164a53795c06759e07b1265f6abecce8602c8ed08",
+      "TmMove.HC": "d7235b8aa67b4eb72ca08c1b21d64ff56257c51314374a3523962b9bcffc18dd",
+      "TmPath.HC": "1897a4cc6c617a93f1556344111dabd4cb2247e3d3550c1102c841debe31eef4",
+      "TmSlide.HC": "e7ea0760e058b1d12c474bc135d4466c71ecfe5d5482ba5a6f23c6a7dd5e3da1",
+      "TmPlayer.HH": "ee536c8b0ceb057e3dda7e7320eb33520741d5d54487bb312f803ad7513cc8cf",
+      "TmMotion.HC": "d478a24beda3de1bb61756869d95df4d3952f97a89168b9a08c4831544a9f4ee",
+      "TmAttack.HC": "146737ee26c29ca330eb1b583f4e7131c1cd3580c4ca355610cd02f58d68802d",
+      "TmDamage.HC": "56e1d56ea69609cdcd34c7b5c22694367643cf51f8cd9cb0d72272522a1ab5bd",
+      "TmItems.HC": "4f265fd533b2e7820e6fb939517ad9ab5a5e3a7a8f7f8abd548494649ec448d3",
+      "TmTouch.HC": "b589423b0ea307643655babf3e8861ded6f2c837d5c99c17273d2a768dc3a53c",
+      "TmImpact.HC": "bfe59592e58dff4e799cd93f3db7937bf02d2fa9cf1fc1046d4b860f4f42acb9",
+      "TmWeapon.HC": "2904054222cc7f8bbf19307da47dac9c16e8a8bb5768bd56b17ce1e95733189c",
+      "TmPlayer.HC": "8260fa3085ce6ec002872269c244456eeda5315cc35ece10708f9830ef9eb449",
+      "TmSight.HC": "dba548702f1a63870416251da4473277a82de0a8e3670309a394e37b53569461",
+      "TmBlast.HC": "197e0c23bb1612d510e0c7094f33bf1162fea98aa1471dd83eca3bb424e1fb4f",
+      "TmSector.HC": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+      "TmDoor.HC": "ce49864f381d55361788f5efdc070fc377e2b4178f629856f7db74118c612a6a",
+      "TmFloor.HC": "b86eaee35d5a448c722f063c651f61c2ba3f4160637dda2af13c6084968fa00a",
+      "TmPlat.HC": "e9541607e935b3f43a3cc0b36d5d79a7ed51849efdb78e5e75d5bf973802bff3",
+      "TmCeil.HC": "13ce4bc669f4deec87c82d09bb08bb4ef75f623c8da7131f4eb66014ecb15379",
+      "TmTeleport.HC": "04efd4b10193f52d767883a0decf0e9176e0ff0213af184153b081b6bd7c8f36",
+      "TmSwitch.HC": "a158dd8d290558945063ec3d0a6678817335d0d59cbab323f9f303499285aee9",
+      "TmLight.HC": "18751745beb55e970363df09f8e03a0979e1eb66fe8e8efe835f10cbad754850",
+      "TmHazard.HC": "b69bdffac3c4a9394fcf757339ee6a7c915f27946b881e2b25a5673f04a8603e",
+      "TmSpecial.HC": "44a5ef52acf0022dc580e5cb90e9cb3747def44e890a5aa985db90d2fbfe615b",
+      "TmTick.HC": "cdeb5c411d52244bdc66643719ad7d05e4463896b010c925632f854dbed30a88",
+      "TmEnemy.HC": "332464bcf40c7c8f07dd9fb3776f744659cd3906662848067064b0ab069957b8",
+      "TmChase.HC": "c3a53ed3ddae5f1c05a5df3851c194ada85027d81f32acff6df6e1230bdcbc7b",
+      "TmCombat.HC": "069bf282d4ba8ca9faf69c10acbba6f8cf3e578a67fdd118142de7742f89a963",
+      "TmVile.HC": "bde6455466b79fcbc10369df53b60ad5eb96a20ff72bbbe769e5705fc85c64de",
+      "TmBoss.HC": "0892a31e7c65ee6f31f3b497e940721b800b5d126a518d97ad360383113c62f7",
+      "TmBrain.HC": "605e90147315d888f9d6493cdc8f65092e24f79fd24d96c3306d3d05fa105554",
+      "TmEffect.HC": "cdfd0f26beff5f99eeb609ee2d0820472cda0d91f6121a345529dd87071ab80b",
+      "TmActions.HC": "ae3bff931d7431a5c8cc9a993275114dc99cbb931670356846f4a940eabc57bb",
+      "TmPal.HC": "657c0c69082fad07cffe9b8800abf1d12df8eaa7603efa04dd62144b6142651f",
+      "TmDraw.HC": "89ff3d412fe95123e136228916792b84b0bf6d841f5d6b0c628a3f77569f174e",
+      "TmMask.HC": "49be08c8e34a92fad7989e3a28672f26fac33877ac2fe212cba2174f1252a33a",
+      "TmSprite.HC": "d3f27d4b403a7c554cb0608665b1606e302b686087290441d0be131e2a8905c6",
+      "TmLevel.HC": "2468d9920c55a7af7ffd69abcadd5774391ccd35ed9b6d95eb48c4ff06a89846",
+      "TmIntermission.HC": "eb6720e9d3422ec27a7f57f60a2c184a0c986ff65c162410c1cc3053dc26fe0e",
+      "TmFinale.HC": "cec0b0a9729b659b90162ef88340bcba339562540b415c7d8f4b50efc01d279a",
+      "TmFinaleGr.HC": "39dd13058ff0e60cfdc3209a97494e5563f885a06ef1fdc60ede1d1d6eacb52e",
+      "TmCast.HC": "d414747eacaca31d2689a8f072f1517519e21af74d6b52a0d5ba1fcb9a3bf132",
+      "TmCastGr.HC": "c1a5cec798eb95342da11d6595a8d154e422c246d6f5d81b4a1c219ade9dac74",
+      "TmInput.HC": "5589178e7cd8c3a1884c5e5250adc73812691fa8d32cba4e0a380707f55a2ee9",
+      "TmSnd.HC": "38d7d1cafdf87131a6b89953b32b1b836dba6fa7fbd26c0354ed80ad877db197",
+      "TmSpeaker.HC": "5ebe9169f145cf5585fa0af96ef54456b520562a3fd375b89fc44746c20e6847",
+      "TmSoundBank.HC": "7b0bc8790f30bd00579a7f53e305d62f8a9d1e65785365c263862f4894260d01",
+      "TmSoundData.HH": "71ca3a12ea1acacaadbe9ff97046511422aced00972eb093a4a0e23bab319b7c",
+      "TmAudio.HC": "ee93c78b6c173389f25bfa7c4f047c0a52cf427344fcee8b0616c7f68c530fd7",
+      "TmSoundScene.HC": "94f3aff023f520f08577652d703f0ffde75171be5ebee790bd0194ec6df7af9a",
+      "TmOverlay.HC": "6f4adb56ed7b326a0e6548be673489713c2e58d047689f79072f2fd677a8feca",
+      "TmScreen.HC": "54386654b6eaa3aab7a8f4a8087e59eb989aefdad5d23cd365c2959857e77aa7",
+      "TmPlay.HC": "b403b449669ba37756e358d9c84c24c651bd75dad316d6d7ed02a5f96ba25f41"
+    },
+    "includeOrder": [
+      "TmGlbls.HH",
+      "TmWad.HC",
+      "TmStory.HC",
+      "TmMap.HC",
+      "TmGr.HC",
+      "TmTex.HC",
+      "TmAnim.HC",
+      "TmData.HH",
+      "TmClip.HC",
+      "TmState.HC",
+      "TmMath.HC",
+      "TmWorld.HC",
+      "TmContact.HC",
+      "TmMove.HC",
+      "TmPath.HC",
+      "TmSlide.HC",
+      "TmPlayer.HH",
+      "TmMotion.HC",
+      "TmAttack.HC",
+      "TmDamage.HC",
+      "TmItems.HC",
+      "TmTouch.HC",
+      "TmImpact.HC",
+      "TmWeapon.HC",
+      "TmPlayer.HC",
+      "TmSight.HC",
+      "TmBlast.HC",
+      "TmSector.HC",
+      "TmDoor.HC",
+      "TmFloor.HC",
+      "TmPlat.HC",
+      "TmCeil.HC",
+      "TmTeleport.HC",
+      "TmSwitch.HC",
+      "TmLight.HC",
+      "TmHazard.HC",
+      "TmSpecial.HC",
+      "TmTick.HC",
+      "TmEnemy.HC",
+      "TmChase.HC",
+      "TmCombat.HC",
+      "TmVile.HC",
+      "TmBoss.HC",
+      "TmBrain.HC",
+      "TmEffect.HC",
+      "TmActions.HC",
+      "TmPal.HC",
+      "TmDraw.HC",
+      "TmMask.HC",
+      "TmSprite.HC",
+      "TmLevel.HC",
+      "TmIntermission.HC",
+      "TmFinale.HC",
+      "TmFinaleGr.HC",
+      "TmCast.HC",
+      "TmCastGr.HC",
+      "TmInput.HC",
+      "TmSnd.HC",
+      "TmSpeaker.HC",
+      "TmSoundBank.HC",
+      "TmSoundData.HH",
+      "TmAudio.HC",
+      "TmSoundScene.HC",
+      "TmOverlay.HC",
+      "TmScreen.HC",
+      "TmPlay.HC"
+    ],
+    "header": "tools/toom/Module.HH",
+    "headerSha256": "d1d506266daefebbbf583b8fd07895e22d4e705e7f3e9e859ca13d0b5f1d7070",
+    "loadSha256": "65de0246228019b307a209574fb733ad80e73dffd118666a45946490c4b5c9b4",
+    "jitRunSha256": "c96139a8dfd45044dd932a7863d2d331a25eb2cc62f503f3e1e6a58c297c9598",
+    "loader": "tools/toom/ModuleRun.HC",
+    "loaderSha256": "4565414f117be4c2d5b681bca497d044bd081d2afc3ecdd9afa13435ba162fd5",
+    "rewrite": "Only the address expressions &SndTaskEndCB become &TmModuleSoundEnd. The local AOT wrapper calls the named original native import. No snapshot addresses or live task symbols are embedded."
+  },
+  "native": {
+    "sourceSha256": "1614dfd4c704c5ce9b8c97d7e4abab12d82ec4f23792271e21d944ad1e29bf12",
+    "headerSha256": "d1d506266daefebbbf583b8fd07895e22d4e705e7f3e9e859ca13d0b5f1d7070",
+    "fixtureSha256": "d228044e1973056068c0bc22f9657a09eee58887d41f48a7ea5865b83a0475c5",
+    "sourceFiles": {
+      "TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+      "TmWad.HC": "85463df0ecb634f6a74cc1a1cdeef9ff62c35c4e02a34b368326ba53ac1887d0",
+      "TmStory.HC": "f5cdd86de9d8048a96989bb537e0352c94c7b92ba451531b72a86be6d5ef3b9a",
+      "TmMap.HC": "7b096f40305398fa6114c76788b158dc7c912348469cabe56393258f4abc5069",
+      "TmGr.HC": "dcf3bfd9e476ba620d1479658410ee72c75e0599e96a8bf171df1b9dbdf7bc8e",
+      "TmTex.HC": "1058c3d88663bfd5d511ceef1ca99ccbfa356465405fb58adf7b77e8e5968807",
+      "TmAnim.HC": "88bacb84b0802181b51c5efe643415c5690b0c9babad2064f44c79608085c504",
+      "TmData.HH": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+      "TmClip.HC": "22fbb94fca32b0f1b19bde07c591c088cf2324fd129ace1df060ca90cc09f55b",
+      "TmState.HC": "0a7e57036b0d51d5a153e5cf0a8ffa76ac9f2d70061c48e429a0865899b12fdb",
+      "TmMath.HC": "5da8d9243d01fcae7afc35858f1d17586d5addcadef1dad7052c4a86e5f684cf",
+      "TmWorld.HC": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+      "TmContact.HC": "b8e15824529b0dafb7abf11164a53795c06759e07b1265f6abecce8602c8ed08",
+      "TmMove.HC": "d7235b8aa67b4eb72ca08c1b21d64ff56257c51314374a3523962b9bcffc18dd",
+      "TmPath.HC": "1897a4cc6c617a93f1556344111dabd4cb2247e3d3550c1102c841debe31eef4",
+      "TmSlide.HC": "e7ea0760e058b1d12c474bc135d4466c71ecfe5d5482ba5a6f23c6a7dd5e3da1",
+      "TmPlayer.HH": "ee536c8b0ceb057e3dda7e7320eb33520741d5d54487bb312f803ad7513cc8cf",
+      "TmMotion.HC": "d478a24beda3de1bb61756869d95df4d3952f97a89168b9a08c4831544a9f4ee",
+      "TmAttack.HC": "146737ee26c29ca330eb1b583f4e7131c1cd3580c4ca355610cd02f58d68802d",
+      "TmDamage.HC": "56e1d56ea69609cdcd34c7b5c22694367643cf51f8cd9cb0d72272522a1ab5bd",
+      "TmItems.HC": "4f265fd533b2e7820e6fb939517ad9ab5a5e3a7a8f7f8abd548494649ec448d3",
+      "TmTouch.HC": "b589423b0ea307643655babf3e8861ded6f2c837d5c99c17273d2a768dc3a53c",
+      "TmImpact.HC": "bfe59592e58dff4e799cd93f3db7937bf02d2fa9cf1fc1046d4b860f4f42acb9",
+      "TmWeapon.HC": "2904054222cc7f8bbf19307da47dac9c16e8a8bb5768bd56b17ce1e95733189c",
+      "TmPlayer.HC": "8260fa3085ce6ec002872269c244456eeda5315cc35ece10708f9830ef9eb449",
+      "TmSight.HC": "dba548702f1a63870416251da4473277a82de0a8e3670309a394e37b53569461",
+      "TmBlast.HC": "197e0c23bb1612d510e0c7094f33bf1162fea98aa1471dd83eca3bb424e1fb4f",
+      "TmSector.HC": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+      "TmDoor.HC": "ce49864f381d55361788f5efdc070fc377e2b4178f629856f7db74118c612a6a",
+      "TmFloor.HC": "b86eaee35d5a448c722f063c651f61c2ba3f4160637dda2af13c6084968fa00a",
+      "TmPlat.HC": "e9541607e935b3f43a3cc0b36d5d79a7ed51849efdb78e5e75d5bf973802bff3",
+      "TmCeil.HC": "13ce4bc669f4deec87c82d09bb08bb4ef75f623c8da7131f4eb66014ecb15379",
+      "TmTeleport.HC": "04efd4b10193f52d767883a0decf0e9176e0ff0213af184153b081b6bd7c8f36",
+      "TmSwitch.HC": "a158dd8d290558945063ec3d0a6678817335d0d59cbab323f9f303499285aee9",
+      "TmLight.HC": "18751745beb55e970363df09f8e03a0979e1eb66fe8e8efe835f10cbad754850",
+      "TmHazard.HC": "b69bdffac3c4a9394fcf757339ee6a7c915f27946b881e2b25a5673f04a8603e",
+      "TmSpecial.HC": "44a5ef52acf0022dc580e5cb90e9cb3747def44e890a5aa985db90d2fbfe615b",
+      "TmTick.HC": "cdeb5c411d52244bdc66643719ad7d05e4463896b010c925632f854dbed30a88",
+      "TmEnemy.HC": "332464bcf40c7c8f07dd9fb3776f744659cd3906662848067064b0ab069957b8",
+      "TmChase.HC": "c3a53ed3ddae5f1c05a5df3851c194ada85027d81f32acff6df6e1230bdcbc7b",
+      "TmCombat.HC": "069bf282d4ba8ca9faf69c10acbba6f8cf3e578a67fdd118142de7742f89a963",
+      "TmVile.HC": "bde6455466b79fcbc10369df53b60ad5eb96a20ff72bbbe769e5705fc85c64de",
+      "TmBoss.HC": "0892a31e7c65ee6f31f3b497e940721b800b5d126a518d97ad360383113c62f7",
+      "TmBrain.HC": "605e90147315d888f9d6493cdc8f65092e24f79fd24d96c3306d3d05fa105554",
+      "TmEffect.HC": "cdfd0f26beff5f99eeb609ee2d0820472cda0d91f6121a345529dd87071ab80b",
+      "TmActions.HC": "ae3bff931d7431a5c8cc9a993275114dc99cbb931670356846f4a940eabc57bb",
+      "TmPal.HC": "657c0c69082fad07cffe9b8800abf1d12df8eaa7603efa04dd62144b6142651f",
+      "TmDraw.HC": "89ff3d412fe95123e136228916792b84b0bf6d841f5d6b0c628a3f77569f174e",
+      "TmMask.HC": "49be08c8e34a92fad7989e3a28672f26fac33877ac2fe212cba2174f1252a33a",
+      "TmSprite.HC": "d3f27d4b403a7c554cb0608665b1606e302b686087290441d0be131e2a8905c6",
+      "TmLevel.HC": "2468d9920c55a7af7ffd69abcadd5774391ccd35ed9b6d95eb48c4ff06a89846",
+      "TmIntermission.HC": "eb6720e9d3422ec27a7f57f60a2c184a0c986ff65c162410c1cc3053dc26fe0e",
+      "TmFinale.HC": "cec0b0a9729b659b90162ef88340bcba339562540b415c7d8f4b50efc01d279a",
+      "TmFinaleGr.HC": "39dd13058ff0e60cfdc3209a97494e5563f885a06ef1fdc60ede1d1d6eacb52e",
+      "TmCast.HC": "d414747eacaca31d2689a8f072f1517519e21af74d6b52a0d5ba1fcb9a3bf132",
+      "TmCastGr.HC": "c1a5cec798eb95342da11d6595a8d154e422c246d6f5d81b4a1c219ade9dac74",
+      "TmInput.HC": "5589178e7cd8c3a1884c5e5250adc73812691fa8d32cba4e0a380707f55a2ee9",
+      "TmSnd.HC": "38d7d1cafdf87131a6b89953b32b1b836dba6fa7fbd26c0354ed80ad877db197",
+      "TmSpeaker.HC": "5ebe9169f145cf5585fa0af96ef54456b520562a3fd375b89fc44746c20e6847",
+      "TmSoundBank.HC": "7b0bc8790f30bd00579a7f53e305d62f8a9d1e65785365c263862f4894260d01",
+      "TmSoundData.HH": "71ca3a12ea1acacaadbe9ff97046511422aced00972eb093a4a0e23bab319b7c",
+      "TmAudio.HC": "ee93c78b6c173389f25bfa7c4f047c0a52cf427344fcee8b0616c7f68c530fd7",
+      "TmSoundScene.HC": "94f3aff023f520f08577652d703f0ffde75171be5ebee790bd0194ec6df7af9a",
+      "TmOverlay.HC": "6f4adb56ed7b326a0e6548be673489713c2e58d047689f79072f2fd677a8feca",
+      "TmScreen.HC": "54386654b6eaa3aab7a8f4a8087e59eb989aefdad5d23cd365c2959857e77aa7",
+      "TmPlay.HC": "b403b449669ba37756e358d9c84c24c651bd75dad316d6d7ed02a5f96ba25f41"
+    },
+    "fileHashes": {
+      "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+      "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f",
+      "TOOM.BIN": "3818660e8ebf31e4f21b947ab9cb7fef1ce88b4bbb62ebfeadaa90eaae9a1f65"
+    },
+    "bytes": 147456,
+    "origin": "9223372036854775807",
+    "patchTable": "133696",
+    "build": {
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-ymzzi7j4"
+    },
+    "native": {
+      "results": [
+        {
+          "out": "PLAY 18 CASES HASH 3858873714 BAD 0\nADDRESS FCE2428\n",
+          "except": ""
+        },
+        {
+          "out": "PLAY 18 CASES HASH 3858873714 BAD 0\nADDRESS FB68228\n",
+          "except": ""
+        },
+        {
+          "out": "MODULE OWNER 2 LOADS BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-2arzx7zi"
+    },
+    "addresses": [
+      "FCE2428",
+      "FB68228"
+    ],
+    "scope": "Original TempleOS compiler produces a147456-byte module with the18-case host fixture. A fresh native session relocates it twice and runs two child-owned loads with exact caller data/code heap restoration; frozen HEMU passes both fixtures. The separate143856-byte live module has no test symbols.",
+    "hemu": {
+      "ownerLoads": 2,
+      "web": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+      "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+      "cases": 18,
+      "bad": 0
+    },
+    "oracleManifest": {
+      "templeos": "V5.03",
+      "web": "973091c4480d25b4c1544fa9ec9f7de004fa0c98",
+      "compiler": "7e7213397c5db64ffba6e4ebbf29cf8aa26b86a8",
+      "hemu": "3daa7135a3453a4ac93744a614aa532ac5d7e0bc",
+      "snapshotSha256": "99389d6deade3fae598862bdee1856e8157d62b1843fe901f3530014485ff3d6",
+      "diskSha256": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148",
+      "engineSha256": "cdf3df2c051687604f9451304f3af03cb5ef6d5efbf50be706a93b60443d42c3",
+      "rawSnapshotSha256": "659ae1818239778442da41c38cbf45c112669dc08830e29b06b99626d6586f0f",
+      "rawDiskSha256": "f8673e751d7e313b6552ac5688c31a4ea19148326a7d560b103217f004e1322a"
+    }
+  },
+  "runtime": {
+    "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
+    "compiler": "d0e394e3d79f73990168d88cf937f5bc55832f93",
+    "hemu": "0eff35b30dc9fadf49569c99c889b78f37dfdda7",
+    "path": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+    "hashes": {
+      "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
+      "engine/hemu-worker.js": "0a760df45cf0697deda5a9c140bfb565320e3f5fef8cda5adb2f088b5b39b6a8",
+      "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+      "engine/guestexec.js": "dcdd39026889418506cadfa96654b55d4e67ada171a789029419784408d7a726",
+      "engine/guestinput.js": "7b2cc55fe61d63d9fec4c6129c58c85ed5d0fd1e2f757419e50b10940a82a3f2",
+      "engine/KeyQueue.js": "769df85ef4dbc5614517b1944c2fc7f7b5f242125ecea1c87b4bcacb9d0f8913",
+      "tools/hemu/WorkerHost.mjs": "a1ef452058b569db660732d078eed93b4d89cb1d1a3407899613b1c3b93e3437",
+      "tools/hemu/WorkerShim.mjs": "1eb8de631fc22bdb1480c988f7b5c684e343dc28be858c24a7207e1ca200d61e",
+      "hemu/live.bin.gz": "42db6570ffd1610ea2a39a60dd59e63095c60ac39610350a649c5671528a449a",
+      "hemu/live-smp.bin.gz": "97269db25c5f9e232f042decde6a6574ea992e625130aaca77d2f1ddabfd3973",
+      "hemu/stock.json": "fce58673729385cbe119f9307277ab646edb59239c1a77eb1bcae3b2d1c1856b",
+      "hemu/stock.disk": "032751a6b626aea216ab9d675d2b404f27a5e9f61261903cec8b6ea792d964a8",
+      "hemu/stock-smp.disk": "9079d2238b708e0fa168558e1fa1a5bed703e35c4f89e4e1fd0698a7330ee327",
+      "engine/Stock.js": "d721d929121e69c20bc05eb5cf8a1b214cad7b95ec697536b3067d585ecaeca4",
+      "vendor/images/templeos-hd.qcow2.gz": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+    },
+    "singleSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+    "smpSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5"
+  },
+  "workers": [
+    {
+      "cores": 1,
+      "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+      "fileHashes": {
+        "C:/TOOM/Run.HC": "4565414f117be4c2d5b681bca497d044bd081d2afc3ecdd9afa13435ba162fd5",
+        "C:/TOOM/Toom.BIN": "8728bff5045ce1aa85c1c64a8263f7bb02e367d47c737afc936fd4f274742613",
+        "C:/TOOM/FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "C:/TOOM/TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+      },
+      "firstFrameMs": 3259.0037999999995,
+      "firstShotMs": 4118.240207999999,
+      "initialHash": "7b3496fb0a4086968b5ee1a4ff5ac3644861b4560dd8676b2d9032258f74485a",
+      "pausedHash": "c2544137018b6ce827520db3206dd9ddfa4a7fde20734c1a9f0e267fc9a248f9",
+      "sound": [
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 403.102027027027
+        },
+        {
+          "cmd": "snd",
+          "f": 320.05954935622316
+        },
+        {
+          "cmd": "snd",
+          "f": 320.05954935622316
+        },
+        {
+          "cmd": "snd",
+          "f": 0
+        }
+      ],
+      "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-workers-final/worker-1.json"
+    },
+    {
+      "cores": 4,
+      "wasmSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+      "fileHashes": {
+        "C:/TOOM/Run.HC": "4565414f117be4c2d5b681bca497d044bd081d2afc3ecdd9afa13435ba162fd5",
+        "C:/TOOM/Toom.BIN": "8728bff5045ce1aa85c1c64a8263f7bb02e367d47c737afc936fd4f274742613",
+        "C:/TOOM/FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "C:/TOOM/TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+      },
+      "firstFrameMs": 5240.966885000002,
+      "firstShotMs": 4873.159204999996,
+      "initialHash": "feb1cf447269d00d09ada09cf606fd788601629968c6efb97ffb1051db65f932",
+      "pausedHash": "e0cbac8c2dbc547a4599c94f1f95eda141459db7424651b4d6fcb1a7d167cee7",
+      "sound": [
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 403.102027027027
+        },
+        {
+          "cmd": "snd",
+          "f": 0
+        }
+      ],
+      "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-workers-final/worker-4.json"
+    }
+  ],
+  "workerDriverSha256": "92d9858cbd536a575b5e358f9f2df9bb3b8041aad856ef3b267de3bae1035fab",
+  "browsers": [
+    {
+      "cores": 1,
+      "source": false,
+      "web": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+      "browser": "156.0.8078.79",
+      "runtimeHashes": {
+        "server.mjs": "d5d38523f1789d8542fd9fb066a0424496ab7c1aef5bc324053a6209cffb7dc9",
+        "Keyboard.js": "951b8d76606fb348af1e61592bb61f7add4b4cc178582b6e626ea88ba66741d4",
+        "Os.js": "3ddc7022737d1461ebec7694248a5fb64fc9cd02e4c0c35af2f9826396593d7e",
+        "WinMgr.js": "0c34dd932fdc63eb12be6de2b317dfc6fca137a944e041ece783fcaabb2a6dd2",
+        "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
+        "engine/hemu-worker.js": "0a760df45cf0697deda5a9c140bfb565320e3f5fef8cda5adb2f088b5b39b6a8",
+        "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+        "engine/guestexec.js": "dcdd39026889418506cadfa96654b55d4e67ada171a789029419784408d7a726",
+        "engine/KeyQueue.js": "769df85ef4dbc5614517b1944c2fc7f7b5f242125ecea1c87b4bcacb9d0f8913",
+        "build/hemu.wasm": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "build/hemu-smp.wasm": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+        "hemu/live.bin.gz": "42db6570ffd1610ea2a39a60dd59e63095c60ac39610350a649c5671528a449a",
+        "hemu/live-smp.bin.gz": "97269db25c5f9e232f042decde6a6574ea992e625130aaca77d2f1ddabfd3973",
+        "hemu/stock.json": "fce58673729385cbe119f9307277ab646edb59239c1a77eb1bcae3b2d1c1856b",
+        "hemu/stock.disk": "032751a6b626aea216ab9d675d2b404f27a5e9f61261903cec8b6ea792d964a8",
+        "hemu/stock-smp.disk": "9079d2238b708e0fa168558e1fa1a5bed703e35c4f89e4e1fd0698a7330ee327",
+        "engine/Stock.js": "d721d929121e69c20bc05eb5cf8a1b214cad7b95ec697536b3067d585ecaeca4",
+        "engine/Speaker.js": "b29fcaaf04331400b31c0b5d0887870473edaac8a877e33aac784ae97c10622b",
+        "vendor/images/templeos-hd.qcow2.gz": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+      },
+      "fileHashes": {
+        "Toom.BIN": "8728bff5045ce1aa85c1c64a8263f7bb02e367d47c737afc936fd4f274742613",
+        "Run.HC": "4565414f117be4c2d5b681bca497d044bd081d2afc3ecdd9afa13435ba162fd5",
+        "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+      },
+      "firstFrameMs": 4709.051958000001,
+      "firstShotMs": 3489.3059620000004,
+      "audibleRms": 0.033764792755480236,
+      "sound": [
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 403.102027027027
+        },
+        {
+          "cmd": "snd",
+          "f": 330.0641770401107
+        },
+        {
+          "cmd": "snd",
+          "f": 330.0641770401107
+        },
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 403.102027027027
+        },
+        {
+          "cmd": "snd",
+          "f": 277.0332017645693
+        },
+        {
+          "cmd": "snd",
+          "f": 277.0332017645693
+        },
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 403.102027027027
+        }
+      ],
+      "keys": [
+        29,
+        157,
+        25,
+        153,
+        25,
+        153,
+        224,
+        72,
+        224,
+        200,
+        1,
+        129,
+        42,
+        1,
+        129,
+        170
+      ],
+      "captureReleases": 1,
+      "initialHash": "317429af3e51ee16001b5cae00bd2ac8d915984164e51c2ef99f98c3acb6df1f",
+      "pausedHash": "1464266e0589f6b98c29e8d69350f7a06ee235282232f59a109d61ce2bb8d2dc",
+      "movedHash": "7068e764e0451ea78c2e987beeb642d72b0f1f4dc2d8e7f82f877c0d99fa1925",
+      "scope": "Actual Chromium page, file package, DOM keys, native task ownership and observed PCM presence/silence. No audible140Hz-spacing or controlled-speed claim."
+    },
+    {
+      "cores": 4,
+      "source": false,
+      "web": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+      "browser": "156.0.8078.79",
+      "runtimeHashes": {
+        "server.mjs": "d5d38523f1789d8542fd9fb066a0424496ab7c1aef5bc324053a6209cffb7dc9",
+        "Keyboard.js": "951b8d76606fb348af1e61592bb61f7add4b4cc178582b6e626ea88ba66741d4",
+        "Os.js": "3ddc7022737d1461ebec7694248a5fb64fc9cd02e4c0c35af2f9826396593d7e",
+        "WinMgr.js": "0c34dd932fdc63eb12be6de2b317dfc6fca137a944e041ece783fcaabb2a6dd2",
+        "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
+        "engine/hemu-worker.js": "0a760df45cf0697deda5a9c140bfb565320e3f5fef8cda5adb2f088b5b39b6a8",
+        "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+        "engine/guestexec.js": "dcdd39026889418506cadfa96654b55d4e67ada171a789029419784408d7a726",
+        "engine/KeyQueue.js": "769df85ef4dbc5614517b1944c2fc7f7b5f242125ecea1c87b4bcacb9d0f8913",
+        "build/hemu.wasm": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "build/hemu-smp.wasm": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+        "hemu/live.bin.gz": "42db6570ffd1610ea2a39a60dd59e63095c60ac39610350a649c5671528a449a",
+        "hemu/live-smp.bin.gz": "97269db25c5f9e232f042decde6a6574ea992e625130aaca77d2f1ddabfd3973",
+        "hemu/stock.json": "fce58673729385cbe119f9307277ab646edb59239c1a77eb1bcae3b2d1c1856b",
+        "hemu/stock.disk": "032751a6b626aea216ab9d675d2b404f27a5e9f61261903cec8b6ea792d964a8",
+        "hemu/stock-smp.disk": "9079d2238b708e0fa168558e1fa1a5bed703e35c4f89e4e1fd0698a7330ee327",
+        "engine/Stock.js": "d721d929121e69c20bc05eb5cf8a1b214cad7b95ec697536b3067d585ecaeca4",
+        "engine/Speaker.js": "b29fcaaf04331400b31c0b5d0887870473edaac8a877e33aac784ae97c10622b",
+        "vendor/images/templeos-hd.qcow2.gz": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+      },
+      "fileHashes": {
+        "Toom.BIN": "8728bff5045ce1aa85c1c64a8263f7bb02e367d47c737afc936fd4f274742613",
+        "Run.HC": "4565414f117be4c2d5b681bca497d044bd081d2afc3ecdd9afa13435ba162fd5",
+        "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f"
+      },
+      "firstFrameMs": 4619.529853,
+      "firstShotMs": 5016.103220999998,
+      "audibleRms": 0.03376422633289496,
+      "sound": [
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 403.102027027027
+        },
+        {
+          "cmd": "snd",
+          "f": 277.0332017645693
+        },
+        {
+          "cmd": "snd",
+          "f": 277.0332017645693
+        },
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 403.102027027027
+        },
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 0
+        },
+        {
+          "cmd": "snd",
+          "f": 403.102027027027
+        }
+      ],
+      "keys": [
+        29,
+        157,
+        25,
+        153,
+        25,
+        153,
+        224,
+        72,
+        224,
+        200,
+        1,
+        129,
+        42,
+        1,
+        129,
+        170
+      ],
+      "captureReleases": 1,
+      "initialHash": "121676bd31b20260781d59363d59bd85644b85970891cfb1ed394283afe6857e",
+      "pausedHash": "57793820752bf9ba4da780475b692a46b4cec30186c7d485e1fe676620588839",
+      "movedHash": "87f333ff5478877fc9f45eb93959451130fc35b8b949271c6ecfbb3c185e4482",
+      "scope": "Actual Chromium page, file package, DOM keys, native task ownership and observed PCM presence/silence. No audible140Hz-spacing or controlled-speed claim."
+    }
+  ],
+  "startup": {
+    "scope": "Three reversed-order source/module pairs per core mode. Fresh frozen machine and identical installed source/binary/assets for each sample. No game instrumentation or test symbols in the module. Peer work held; host load sampled independently. This measures cold startup through a displayed shot, not sustained gameplay throughput.",
+    "summary": [
+      {
+        "cores": 1,
+        "source": true,
+        "firstFrameMs": 6581.212385000001,
+        "firstShotFromLaunchMs": 11077.242531
+      },
+      {
+        "cores": 1,
+        "source": false,
+        "firstFrameMs": 3434.454693999999,
+        "firstShotFromLaunchMs": 6806.21006
+      },
+      {
+        "cores": 4,
+        "source": true,
+        "firstFrameMs": 7857.000228999999,
+        "firstShotFromLaunchMs": 11660.566368
+      },
+      {
+        "cores": 4,
+        "source": false,
+        "firstFrameMs": 3071.7218029999995,
+        "firstShotFromLaunchMs": 6925.416101000001
+      }
+    ],
+    "runs": [
+      {
+        "cores": 1,
+        "pair": 0,
+        "source": true,
+        "startMs": 0.8140909999999995,
+        "endMs": 15269.988564,
+        "firstFrameMs": 5654.964792,
+        "firstShotMs": 3188.064338,
+        "firstShotFromLaunchMs": 8923.971806000001,
+        "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/1-0-source/startup-1.json",
+        "artifactSha256": "2d3eed19d220d557e5a9021c3a0a872dfdaa7f70c9325679b3ef4c43af36e26b"
+      },
+      {
+        "cores": 1,
+        "pair": 0,
+        "source": false,
+        "startMs": 15270.780943,
+        "endMs": 27634.476334000003,
+        "firstFrameMs": 2879.4000319999996,
+        "firstShotMs": 3032.4526509999996,
+        "firstShotFromLaunchMs": 5975.826324,
+        "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/1-0-module/startup-1.json",
+        "artifactSha256": "3d22d3a43d4eaadc3789fd23e5422297f90a97416af620e9a527ad5bdd9838fb"
+      },
+      {
+        "cores": 1,
+        "pair": 1,
+        "source": false,
+        "startMs": 27636.137301000002,
+        "endMs": 42245.209264,
+        "firstFrameMs": 4271.612774,
+        "firstShotMs": 2885.470399,
+        "firstShotFromLaunchMs": 7259.9619379999995,
+        "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/1-1-module/startup-1.json",
+        "artifactSha256": "4fc36110aa4ce98ea6b7736bf20e51ec8e9f406ed4dd7a05f1c154f63e36b11c"
+      },
+      {
+        "cores": 1,
+        "pair": 1,
+        "source": true,
+        "startMs": 42246.775593,
+        "endMs": 60185.683073,
+        "firstFrameMs": 6581.212385000001,
+        "firstShotMs": 4492.109281999998,
+        "firstShotFromLaunchMs": 11147.55671,
+        "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/1-1-source/startup-1.json",
+        "artifactSha256": "1bb147c0c8c84a45e5e709f66a6e7044013e55ec9e7c9a2480d960a31be41461"
+      },
+      {
+        "cores": 1,
+        "pair": 2,
+        "source": true,
+        "startMs": 60187.564556,
+        "endMs": 78629.816817,
+        "firstFrameMs": 7574.655081,
+        "firstShotMs": 3398.6276510000007,
+        "firstShotFromLaunchMs": 11077.242531,
+        "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/1-2-source/startup-1.json",
+        "artifactSha256": "48c6628ca583c7ca40f7514458387ffbc74b9f36e9d8e4d204dc158b3eeaad75"
+      },
+      {
+        "cores": 1,
+        "pair": 2,
+        "source": false,
+        "startMs": 78631.155132,
+        "endMs": 92913.125616,
+        "firstFrameMs": 3434.454693999999,
+        "firstShotMs": 3276.306832,
+        "firstShotFromLaunchMs": 6806.21006,
+        "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/1-2-module/startup-1.json",
+        "artifactSha256": "1ee33803534e5f0c14da63fe95b5c3bafea7293af44a621e3e3667e0980e400c"
+      },
+      {
+        "cores": 4,
+        "pair": 0,
+        "source": true,
+        "startMs": 92914.28843700001,
+        "endMs": 111304.524967,
+        "firstFrameMs": 7857.000228999999,
+        "firstShotMs": 3508.8047079999997,
+        "firstShotFromLaunchMs": 11446.384551,
+        "wasmSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/4-0-source/startup-4.json",
+        "artifactSha256": "199d27955269d57d3e80ac192b4ddced20d1117b458c4bb0df9f926e28c4c4b5"
+      },
+      {
+        "cores": 4,
+        "pair": 0,
+        "source": false,
+        "startMs": 111305.46331400001,
+        "endMs": 124944.788902,
+        "firstFrameMs": 3031.842039000001,
+        "firstShotMs": 3804.338296,
+        "firstShotFromLaunchMs": 6925.416101000001,
+        "wasmSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/4-0-module/startup-4.json",
+        "artifactSha256": "9e93ba7cb90db62749a1a7de8cd88117d5998fd79176e16a59c888a48eab6bd3"
+      },
+      {
+        "cores": 4,
+        "pair": 1,
+        "source": false,
+        "startMs": 124945.86679900001,
+        "endMs": 138724.524316,
+        "firstFrameMs": 3071.7218029999995,
+        "firstShotMs": 3603.8848990000006,
+        "firstShotFromLaunchMs": 6758.476127000001,
+        "wasmSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/4-1-module/startup-4.json",
+        "artifactSha256": "0dcd145254f5dba78d1667b64e15d5c9a3e499bc7fb9c33d7dd127ddb2cff61a"
+      },
+      {
+        "cores": 4,
+        "pair": 1,
+        "source": true,
+        "startMs": 138725.658077,
+        "endMs": 157515.01874200001,
+        "firstFrameMs": 8407.272182,
+        "firstShotMs": 3174.019669000001,
+        "firstShotFromLaunchMs": 11660.566368,
+        "wasmSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/4-1-source/startup-4.json",
+        "artifactSha256": "1f92b8a647fdc0a1234a7a1514a4e7145e13662d8f6d6417d18426d96fa6c954"
+      },
+      {
+        "cores": 4,
+        "pair": 2,
+        "source": true,
+        "startMs": 157516.178346,
+        "endMs": 176111.142337,
+        "firstFrameMs": 7855.891395,
+        "firstShotMs": 3725.6911020000007,
+        "firstShotFromLaunchMs": 11669.636682,
+        "wasmSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/4-2-source/startup-4.json",
+        "artifactSha256": "e810768419b2da334b2564b34aa356891fbe29167da740f16b40c960571ae780"
+      },
+      {
+        "cores": 4,
+        "pair": 2,
+        "source": false,
+        "startMs": 176112.452075,
+        "endMs": 190528.270922,
+        "firstFrameMs": 4456.987974000001,
+        "firstShotMs": 2594.4635479999997,
+        "firstShotFromLaunchMs": 7136.595676,
+        "wasmSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
+        "driverSha256": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+        "artifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/4-2-module/startup-4.json",
+        "artifactSha256": "c2137a90c716dc2bd0b343d7feccb25186c5ad2e96547c4cd9c7995e52988763"
+      }
+    ],
+    "hostSamples": [
+      {
+        "ms": 0.1457189999999997,
+        "load": [
+          1.69,
+          3.66,
+          2.89
+        ],
+        "cpu": [
+          245187,
+          8178,
+          43528,
+          2835683,
+          51042,
+          9188,
+          5263,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 1000.749344,
+        "load": [
+          1.69,
+          3.66,
+          2.89
+        ],
+        "cpu": [
+          245334,
+          8178,
+          43559,
+          2838503,
+          51053,
+          9195,
+          5268,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 2001.843323,
+        "load": [
+          1.69,
+          3.66,
+          2.89
+        ],
+        "cpu": [
+          245417,
+          8178,
+          43575,
+          2841399,
+          51067,
+          9201,
+          5272,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 3002.782518,
+        "load": [
+          1.69,
+          3.66,
+          2.89
+        ],
+        "cpu": [
+          245487,
+          8178,
+          43595,
+          2844301,
+          51082,
+          9207,
+          5276,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 4003.852579,
+        "load": [
+          1.72,
+          3.63,
+          2.89
+        ],
+        "cpu": [
+          245665,
+          8178,
+          43612,
+          2847110,
+          51099,
+          9214,
+          5280,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 5004.884251,
+        "load": [
+          1.72,
+          3.63,
+          2.89
+        ],
+        "cpu": [
+          245784,
+          8178,
+          43633,
+          2849972,
+          51109,
+          9222,
+          5286,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 6005.855638,
+        "load": [
+          1.72,
+          3.63,
+          2.89
+        ],
+        "cpu": [
+          245924,
+          8178,
+          43644,
+          2852815,
+          51120,
+          9232,
+          5291,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 7006.899689000001,
+        "load": [
+          1.72,
+          3.63,
+          2.89
+        ],
+        "cpu": [
+          246085,
+          8178,
+          43663,
+          2855628,
+          51130,
+          9241,
+          5297,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 8007.770317,
+        "load": [
+          1.72,
+          3.63,
+          2.89
+        ],
+        "cpu": [
+          246235,
+          8178,
+          43679,
+          2858456,
+          51140,
+          9249,
+          5301,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 9009.126162999999,
+        "load": [
+          1.74,
+          3.6,
+          2.89
+        ],
+        "cpu": [
+          246448,
+          8178,
+          43701,
+          2861217,
+          51150,
+          9258,
+          5306,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 10009.867930999999,
+        "load": [
+          1.74,
+          3.6,
+          2.89
+        ],
+        "cpu": [
+          246599,
+          8178,
+          43711,
+          2864051,
+          51161,
+          9266,
+          5310,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 11010.771631,
+        "load": [
+          1.74,
+          3.6,
+          2.89
+        ],
+        "cpu": [
+          246751,
+          8178,
+          43725,
+          2866882,
+          51171,
+          9274,
+          5314,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 12011.848865,
+        "load": [
+          1.74,
+          3.6,
+          2.89
+        ],
+        "cpu": [
+          246919,
+          8178,
+          43740,
+          2869694,
+          51185,
+          9281,
+          5317,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 13012.740084,
+        "load": [
+          1.74,
+          3.6,
+          2.89
+        ],
+        "cpu": [
+          247114,
+          8178,
+          43771,
+          2872452,
+          51203,
+          9292,
+          5323,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 14013.758738999999,
+        "load": [
+          1.68,
+          3.56,
+          2.87
+        ],
+        "cpu": [
+          247326,
+          8178,
+          43782,
+          2875223,
+          51217,
+          9300,
+          5328,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 15014.733836,
+        "load": [
+          1.68,
+          3.56,
+          2.87
+        ],
+        "cpu": [
+          247477,
+          8178,
+          43796,
+          2878051,
+          51228,
+          9307,
+          5333,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 16015.770401,
+        "load": [
+          1.68,
+          3.56,
+          2.87
+        ],
+        "cpu": [
+          247610,
+          8178,
+          43821,
+          2880901,
+          51239,
+          9313,
+          5337,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 17016.848454000003,
+        "load": [
+          1.68,
+          3.56,
+          2.87
+        ],
+        "cpu": [
+          247702,
+          8178,
+          43839,
+          2883788,
+          51249,
+          9319,
+          5341,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 18017.848902,
+        "load": [
+          1.68,
+          3.56,
+          2.87
+        ],
+        "cpu": [
+          247815,
+          8178,
+          43866,
+          2886648,
+          51259,
+          9327,
+          5346,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 19018.801117000003,
+        "load": [
+          1.79,
+          3.55,
+          2.88
+        ],
+        "cpu": [
+          248088,
+          8178,
+          43895,
+          2889354,
+          51269,
+          9337,
+          5351,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 20019.802706000002,
+        "load": [
+          1.79,
+          3.55,
+          2.88
+        ],
+        "cpu": [
+          248399,
+          8178,
+          43931,
+          2891999,
+          51279,
+          9346,
+          5357,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 21020.859179000003,
+        "load": [
+          1.79,
+          3.55,
+          2.88
+        ],
+        "cpu": [
+          248714,
+          8178,
+          43974,
+          2894638,
+          51291,
+          9354,
+          5363,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 22021.867037,
+        "load": [
+          1.79,
+          3.55,
+          2.88
+        ],
+        "cpu": [
+          249079,
+          8178,
+          44009,
+          2897228,
+          51306,
+          9362,
+          5369,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 23022.721012,
+        "load": [
+          1.79,
+          3.55,
+          2.88
+        ],
+        "cpu": [
+          249324,
+          8178,
+          44038,
+          2899830,
+          51430,
+          9376,
+          5379,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 24023.731793000003,
+        "load": [
+          2.05,
+          3.57,
+          2.89
+        ],
+        "cpu": [
+          249613,
+          8178,
+          44079,
+          2902403,
+          51535,
+          9387,
+          5387,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 25024.8624,
+        "load": [
+          2.05,
+          3.57,
+          2.89
+        ],
+        "cpu": [
+          249940,
+          8178,
+          44107,
+          2905004,
+          51599,
+          9397,
+          5394,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 26025.917825,
+        "load": [
+          2.05,
+          3.57,
+          2.89
+        ],
+        "cpu": [
+          250195,
+          8178,
+          44135,
+          2907661,
+          51672,
+          9411,
+          5403,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 27027.280711,
+        "load": [
+          2.05,
+          3.57,
+          2.89
+        ],
+        "cpu": [
+          250458,
+          8178,
+          44150,
+          2910355,
+          51702,
+          9423,
+          5411,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 28027.642352000003,
+        "load": [
+          2.05,
+          3.57,
+          2.89
+        ],
+        "cpu": [
+          250774,
+          8178,
+          44184,
+          2912950,
+          51754,
+          9433,
+          5417,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 29027.915604,
+        "load": [
+          2.28,
+          3.6,
+          2.9
+        ],
+        "cpu": [
+          251211,
+          8178,
+          44226,
+          2915424,
+          51822,
+          9444,
+          5424,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 30029.178793000003,
+        "load": [
+          2.28,
+          3.6,
+          2.9
+        ],
+        "cpu": [
+          251876,
+          8178,
+          44256,
+          2917717,
+          51846,
+          9456,
+          5431,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 31030.130131,
+        "load": [
+          2.28,
+          3.6,
+          2.9
+        ],
+        "cpu": [
+          252560,
+          8178,
+          44275,
+          2920008,
+          51862,
+          9468,
+          5436,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 32031.458774000002,
+        "load": [
+          2.28,
+          3.6,
+          2.9
+        ],
+        "cpu": [
+          253323,
+          8178,
+          44302,
+          2922219,
+          51879,
+          9482,
+          5441,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 33031.894574,
+        "load": [
+          2.28,
+          3.6,
+          2.9
+        ],
+        "cpu": [
+          254052,
+          8178,
+          44336,
+          2924438,
+          51897,
+          9496,
+          5447,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 34032.862747,
+        "load": [
+          2.74,
+          3.67,
+          2.93
+        ],
+        "cpu": [
+          254596,
+          8178,
+          44355,
+          2926820,
+          51954,
+          9504,
+          5452,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 35033.828708999994,
+        "load": [
+          2.74,
+          3.67,
+          2.93
+        ],
+        "cpu": [
+          255272,
+          8178,
+          44369,
+          2929109,
+          51980,
+          9513,
+          5457,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 36035.078949999996,
+        "load": [
+          2.74,
+          3.67,
+          2.93
+        ],
+        "cpu": [
+          256034,
+          8178,
+          44401,
+          2931291,
+          52013,
+          9523,
+          5463,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 37035.863645,
+        "load": [
+          2.74,
+          3.67,
+          2.93
+        ],
+        "cpu": [
+          256656,
+          8178,
+          44431,
+          2933613,
+          52046,
+          9531,
+          5468,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 38036.824736999995,
+        "load": [
+          2.74,
+          3.67,
+          2.93
+        ],
+        "cpu": [
+          257385,
+          8178,
+          44461,
+          2935849,
+          52057,
+          9541,
+          5474,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 39037.916566,
+        "load": [
+          3.08,
+          3.73,
+          2.95
+        ],
+        "cpu": [
+          258120,
+          8178,
+          44485,
+          2938089,
+          52071,
+          9551,
+          5479,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 40038.979928,
+        "load": [
+          3.08,
+          3.73,
+          2.95
+        ],
+        "cpu": [
+          258897,
+          8178,
+          44536,
+          2940247,
+          52087,
+          9560,
+          5485,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 41039.922713,
+        "load": [
+          3.08,
+          3.73,
+          2.95
+        ],
+        "cpu": [
+          259628,
+          8178,
+          44557,
+          2942486,
+          52099,
+          9569,
+          5490,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 42040.877836,
+        "load": [
+          3.08,
+          3.73,
+          2.95
+        ],
+        "cpu": [
+          260338,
+          8178,
+          44595,
+          2944715,
+          52130,
+          9578,
+          5496,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 43041.858903,
+        "load": [
+          3.08,
+          3.73,
+          2.95
+        ],
+        "cpu": [
+          260949,
+          8178,
+          44705,
+          2946905,
+          52235,
+          9587,
+          5502,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 44042.78129,
+        "load": [
+          3.4,
+          3.78,
+          2.97
+        ],
+        "cpu": [
+          261402,
+          8178,
+          44781,
+          2949168,
+          52451,
+          9599,
+          5510,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 45043.943038,
+        "load": [
+          3.4,
+          3.78,
+          2.97
+        ],
+        "cpu": [
+          261716,
+          8178,
+          44815,
+          2951531,
+          52751,
+          9610,
+          5517,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 46044.90642,
+        "load": [
+          3.4,
+          3.78,
+          2.97
+        ],
+        "cpu": [
+          261900,
+          8178,
+          44839,
+          2953981,
+          53091,
+          9624,
+          5527,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 47045.921251,
+        "load": [
+          3.4,
+          3.78,
+          2.97
+        ],
+        "cpu": [
+          262123,
+          8178,
+          44852,
+          2956280,
+          53552,
+          9638,
+          5537,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 48046.9467,
+        "load": [
+          3.4,
+          3.78,
+          2.97
+        ],
+        "cpu": [
+          262352,
+          8178,
+          44889,
+          2958583,
+          53978,
+          9653,
+          5547,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 49047.886026,
+        "load": [
+          3.68,
+          3.84,
+          2.99
+        ],
+        "cpu": [
+          262796,
+          8178,
+          45081,
+          2960635,
+          54282,
+          9670,
+          5554,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 50049.142877,
+        "load": [
+          3.68,
+          3.84,
+          2.99
+        ],
+        "cpu": [
+          263092,
+          8178,
+          45094,
+          2962192,
+          55418,
+          9682,
+          5563,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 51050.481262,
+        "load": [
+          3.68,
+          3.84,
+          2.99
+        ],
+        "cpu": [
+          263341,
+          8178,
+          45114,
+          2963759,
+          56588,
+          9693,
+          5570,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 52050.75891,
+        "load": [
+          3.68,
+          3.84,
+          2.99
+        ],
+        "cpu": [
+          263606,
+          8178,
+          45255,
+          2965443,
+          57518,
+          9705,
+          5577,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 53052.082891,
+        "load": [
+          3.68,
+          3.84,
+          2.99
+        ],
+        "cpu": [
+          264041,
+          8178,
+          45315,
+          2967920,
+          57555,
+          9716,
+          5584,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 54052.612786,
+        "load": [
+          3.95,
+          3.89,
+          3.02
+        ],
+        "cpu": [
+          264499,
+          8179,
+          45326,
+          2970436,
+          57570,
+          9727,
+          5589,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 55052.858796,
+        "load": [
+          3.95,
+          3.89,
+          3.02
+        ],
+        "cpu": [
+          265072,
+          8179,
+          45354,
+          2972822,
+          57590,
+          9737,
+          5594,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 56054.172993,
+        "load": [
+          3.95,
+          3.89,
+          3.02
+        ],
+        "cpu": [
+          265473,
+          8179,
+          45381,
+          2975379,
+          57615,
+          9746,
+          5600,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 57055.537721,
+        "load": [
+          3.95,
+          3.89,
+          3.02
+        ],
+        "cpu": [
+          266242,
+          8179,
+          45419,
+          2977545,
+          57641,
+          9761,
+          5606,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 58055.813600999994,
+        "load": [
+          3.95,
+          3.89,
+          3.02
+        ],
+        "cpu": [
+          267007,
+          8179,
+          45444,
+          2979751,
+          57652,
+          9772,
+          5610,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 59056.961815999995,
+        "load": [
+          4.36,
+          3.97,
+          3.05
+        ],
+        "cpu": [
+          267710,
+          8179,
+          45476,
+          2982003,
+          57667,
+          9784,
+          5616,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 60058.299589999995,
+        "load": [
+          4.36,
+          3.97,
+          3.05
+        ],
+        "cpu": [
+          268399,
+          8179,
+          45500,
+          2984204,
+          57753,
+          9799,
+          5623,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 61059.177921999995,
+        "load": [
+          4.36,
+          3.97,
+          3.05
+        ],
+        "cpu": [
+          269019,
+          8179,
+          45553,
+          2986527,
+          57766,
+          9809,
+          5628,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 62059.500942,
+        "load": [
+          4.36,
+          3.97,
+          3.05
+        ],
+        "cpu": [
+          269687,
+          8179,
+          45577,
+          2988831,
+          57781,
+          9818,
+          5634,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 63059.928292,
+        "load": [
+          4.36,
+          3.97,
+          3.05
+        ],
+        "cpu": [
+          270262,
+          8179,
+          45618,
+          2991153,
+          57845,
+          9829,
+          5640,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 64060.829893999995,
+        "load": [
+          4.57,
+          4.02,
+          3.07
+        ],
+        "cpu": [
+          270769,
+          8179,
+          45632,
+          2993562,
+          57927,
+          9839,
+          5648,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 65062.131706,
+        "load": [
+          4.57,
+          4.02,
+          3.07
+        ],
+        "cpu": [
+          271401,
+          8179,
+          45660,
+          2995904,
+          57940,
+          9850,
+          5653,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 66062.787947,
+        "load": [
+          4.57,
+          4.02,
+          3.07
+        ],
+        "cpu": [
+          271969,
+          8179,
+          45678,
+          2998199,
+          58064,
+          9862,
+          5659,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 67063.860705,
+        "load": [
+          4.57,
+          4.02,
+          3.07
+        ],
+        "cpu": [
+          272561,
+          8179,
+          45697,
+          3000558,
+          58098,
+          9874,
+          5664,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 68065.235113,
+        "load": [
+          4.57,
+          4.02,
+          3.07
+        ],
+        "cpu": [
+          273227,
+          8179,
+          45718,
+          3002864,
+          58110,
+          9886,
+          5670,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 69066.51618600001,
+        "load": [
+          4.84,
+          4.09,
+          3.1
+        ],
+        "cpu": [
+          273913,
+          8179,
+          45743,
+          3005139,
+          58124,
+          9898,
+          5675,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 70066.47032000001,
+        "load": [
+          4.84,
+          4.09,
+          3.1
+        ],
+        "cpu": [
+          274537,
+          8179,
+          45772,
+          3007243,
+          58363,
+          9911,
+          5683,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 71066.9038,
+        "load": [
+          4.84,
+          4.09,
+          3.1
+        ],
+        "cpu": [
+          275098,
+          8179,
+          45810,
+          3009519,
+          58492,
+          9923,
+          5689,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 72067.80393000001,
+        "load": [
+          4.84,
+          4.09,
+          3.1
+        ],
+        "cpu": [
+          275674,
+          8179,
+          45824,
+          3011917,
+          58507,
+          9932,
+          5694,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 73068.829237,
+        "load": [
+          4.84,
+          4.09,
+          3.1
+        ],
+        "cpu": [
+          276264,
+          8179,
+          45852,
+          3014283,
+          58523,
+          9942,
+          5700,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 74069.880905,
+        "load": [
+          5.02,
+          4.14,
+          3.12
+        ],
+        "cpu": [
+          276837,
+          8179,
+          45863,
+          3016686,
+          58539,
+          9952,
+          5705,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 75071.239067,
+        "load": [
+          5.02,
+          4.14,
+          3.12
+        ],
+        "cpu": [
+          277479,
+          8179,
+          45883,
+          3019013,
+          58556,
+          9962,
+          5711,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 76071.878215,
+        "load": [
+          5.02,
+          4.14,
+          3.12
+        ],
+        "cpu": [
+          278061,
+          8179,
+          45895,
+          3021408,
+          58572,
+          9970,
+          5716,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 77072.79550200001,
+        "load": [
+          5.02,
+          4.14,
+          3.12
+        ],
+        "cpu": [
+          278642,
+          8179,
+          45919,
+          3023800,
+          58585,
+          9979,
+          5721,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 78073.197977,
+        "load": [
+          5.02,
+          4.14,
+          3.12
+        ],
+        "cpu": [
+          279204,
+          8179,
+          45940,
+          3026203,
+          58597,
+          9988,
+          5727,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 79073.717241,
+        "load": [
+          5.01,
+          4.15,
+          3.13
+        ],
+        "cpu": [
+          279728,
+          8179,
+          45967,
+          3028645,
+          58609,
+          9999,
+          5732,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 80074.86802400001,
+        "load": [
+          5.01,
+          4.15,
+          3.13
+        ],
+        "cpu": [
+          280345,
+          8179,
+          45998,
+          3030998,
+          58619,
+          10011,
+          5737,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 81075.84722000001,
+        "load": [
+          5.01,
+          4.15,
+          3.13
+        ],
+        "cpu": [
+          280848,
+          8179,
+          46013,
+          3033471,
+          58630,
+          10021,
+          5743,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 82076.798938,
+        "load": [
+          5.01,
+          4.15,
+          3.13
+        ],
+        "cpu": [
+          281324,
+          8179,
+          46031,
+          3035968,
+          58643,
+          10031,
+          5748,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 83077.996935,
+        "load": [
+          5.01,
+          4.15,
+          3.13
+        ],
+        "cpu": [
+          281897,
+          8179,
+          46059,
+          3038368,
+          58659,
+          10044,
+          5754,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 84079.24957100001,
+        "load": [
+          5.09,
+          4.18,
+          3.14
+        ],
+        "cpu": [
+          282472,
+          8179,
+          46084,
+          3040770,
+          58670,
+          10053,
+          5760,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 85079.791049,
+        "load": [
+          5.09,
+          4.18,
+          3.14
+        ],
+        "cpu": [
+          283061,
+          8179,
+          46109,
+          3043148,
+          58685,
+          10062,
+          5766,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 86080.02493500001,
+        "load": [
+          5.09,
+          4.18,
+          3.14
+        ],
+        "cpu": [
+          283653,
+          8179,
+          46129,
+          3045514,
+          58708,
+          10070,
+          5771,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 87080.763689,
+        "load": [
+          5.09,
+          4.18,
+          3.14
+        ],
+        "cpu": [
+          284226,
+          8179,
+          46143,
+          3047920,
+          58723,
+          10079,
+          5777,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 88081.98960500001,
+        "load": [
+          5.09,
+          4.18,
+          3.14
+        ],
+        "cpu": [
+          284810,
+          8179,
+          46166,
+          3050306,
+          58732,
+          10087,
+          5782,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 89082.75933300001,
+        "load": [
+          5.17,
+          4.21,
+          3.16
+        ],
+        "cpu": [
+          285369,
+          8179,
+          46182,
+          3052726,
+          58743,
+          10095,
+          5787,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 90083.94803,
+        "load": [
+          5.17,
+          4.21,
+          3.16
+        ],
+        "cpu": [
+          285926,
+          8180,
+          46201,
+          3055149,
+          58755,
+          10104,
+          5792,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 91085.22670500001,
+        "load": [
+          5.17,
+          4.21,
+          3.16
+        ],
+        "cpu": [
+          286444,
+          8180,
+          46213,
+          3057621,
+          58764,
+          10111,
+          5797,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 92085.706833,
+        "load": [
+          5.17,
+          4.21,
+          3.16
+        ],
+        "cpu": [
+          286801,
+          8180,
+          46227,
+          3060241,
+          58772,
+          10119,
+          5802,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 93086.793942,
+        "load": [
+          5.17,
+          4.21,
+          3.16
+        ],
+        "cpu": [
+          287050,
+          8180,
+          46253,
+          3062960,
+          58786,
+          10127,
+          5808,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 94086.915313,
+        "load": [
+          4.91,
+          4.18,
+          3.15
+        ],
+        "cpu": [
+          287301,
+          8180,
+          46283,
+          3065685,
+          58797,
+          10135,
+          5813,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 95087.87972900001,
+        "load": [
+          4.91,
+          4.18,
+          3.15
+        ],
+        "cpu": [
+          287509,
+          8180,
+          46294,
+          3068465,
+          58810,
+          10145,
+          5819,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 96088.719872,
+        "load": [
+          4.91,
+          4.18,
+          3.15
+        ],
+        "cpu": [
+          287745,
+          8180,
+          46314,
+          3071209,
+          58824,
+          10154,
+          5824,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 97089.868428,
+        "load": [
+          4.91,
+          4.18,
+          3.15
+        ],
+        "cpu": [
+          287988,
+          8180,
+          46336,
+          3073942,
+          58838,
+          10164,
+          5829,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 98091.02186200001,
+        "load": [
+          4.91,
+          4.18,
+          3.15
+        ],
+        "cpu": [
+          288225,
+          8180,
+          46359,
+          3076673,
+          58848,
+          10175,
+          5834,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 99092.21427200001,
+        "load": [
+          4.76,
+          4.16,
+          3.15
+        ],
+        "cpu": [
+          288460,
+          8180,
+          46368,
+          3079426,
+          58854,
+          10182,
+          5838,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 100093.468565,
+        "load": [
+          4.76,
+          4.16,
+          3.15
+        ],
+        "cpu": [
+          288702,
+          8180,
+          46395,
+          3082147,
+          58864,
+          10192,
+          5842,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 101093.76426000001,
+        "load": [
+          4.76,
+          4.16,
+          3.15
+        ],
+        "cpu": [
+          289016,
+          8180,
+          46410,
+          3084812,
+          58875,
+          10201,
+          5847,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 102093.91165600001,
+        "load": [
+          4.76,
+          4.16,
+          3.15
+        ],
+        "cpu": [
+          289272,
+          8180,
+          46431,
+          3087522,
+          58886,
+          10211,
+          5852,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 103094.708798,
+        "load": [
+          4.76,
+          4.16,
+          3.15
+        ],
+        "cpu": [
+          289562,
+          8180,
+          46454,
+          3090204,
+          58901,
+          10221,
+          5857,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 104095.700236,
+        "load": [
+          4.7,
+          4.15,
+          3.16
+        ],
+        "cpu": [
+          289822,
+          8180,
+          46474,
+          3092903,
+          58921,
+          10231,
+          5862,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 105096.766502,
+        "load": [
+          4.7,
+          4.15,
+          3.16
+        ],
+        "cpu": [
+          290091,
+          8180,
+          46488,
+          3095608,
+          58934,
+          10240,
+          5868,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 106097.746021,
+        "load": [
+          4.7,
+          4.15,
+          3.16
+        ],
+        "cpu": [
+          290423,
+          8180,
+          46680,
+          3098066,
+          58959,
+          10252,
+          5874,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 107097.72592000001,
+        "load": [
+          4.7,
+          4.15,
+          3.16
+        ],
+        "cpu": [
+          290632,
+          8180,
+          46697,
+          3100819,
+          58991,
+          10261,
+          5879,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 108098.70967000001,
+        "load": [
+          4.7,
+          4.15,
+          3.16
+        ],
+        "cpu": [
+          290822,
+          8180,
+          46718,
+          3103591,
+          59014,
+          10271,
+          5884,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 109099.762958,
+        "load": [
+          4.4,
+          4.1,
+          3.14
+        ],
+        "cpu": [
+          290989,
+          8180,
+          46736,
+          3106390,
+          59039,
+          10279,
+          5889,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 110100.71367000001,
+        "load": [
+          4.4,
+          4.1,
+          3.14
+        ],
+        "cpu": [
+          291145,
+          8180,
+          46747,
+          3109212,
+          59048,
+          10287,
+          5893,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 111101.906638,
+        "load": [
+          4.4,
+          4.1,
+          3.14
+        ],
+        "cpu": [
+          291336,
+          8180,
+          46760,
+          3112003,
+          59057,
+          10296,
+          5897,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 112102.556799,
+        "load": [
+          4.4,
+          4.1,
+          3.14
+        ],
+        "cpu": [
+          291483,
+          8180,
+          46790,
+          3114830,
+          59065,
+          10302,
+          5901,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 113102.714303,
+        "load": [
+          4.4,
+          4.1,
+          3.14
+        ],
+        "cpu": [
+          291704,
+          8184,
+          46824,
+          3117567,
+          59076,
+          10312,
+          5908,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 114103.737018,
+        "load": [
+          4.13,
+          4.05,
+          3.13
+        ],
+        "cpu": [
+          291815,
+          8185,
+          46846,
+          3120436,
+          59088,
+          10319,
+          5913,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 115104.71656900001,
+        "load": [
+          4.13,
+          4.05,
+          3.13
+        ],
+        "cpu": [
+          291946,
+          8185,
+          46867,
+          3123285,
+          59101,
+          10327,
+          5918,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 116105.720248,
+        "load": [
+          4.13,
+          4.05,
+          3.13
+        ],
+        "cpu": [
+          292075,
+          8185,
+          46880,
+          3126131,
+          59116,
+          10336,
+          5922,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 117106.857724,
+        "load": [
+          4.13,
+          4.05,
+          3.13
+        ],
+        "cpu": [
+          292220,
+          8185,
+          46898,
+          3128954,
+          59129,
+          10345,
+          5926,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 118108.020359,
+        "load": [
+          4.13,
+          4.05,
+          3.13
+        ],
+        "cpu": [
+          292366,
+          8185,
+          46912,
+          3131787,
+          59138,
+          10355,
+          5930,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 119109.37707100001,
+        "load": [
+          3.96,
+          4.02,
+          3.13
+        ],
+        "cpu": [
+          292577,
+          8185,
+          46946,
+          3134531,
+          59150,
+          10364,
+          5935,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 120110.521152,
+        "load": [
+          3.96,
+          4.02,
+          3.13
+        ],
+        "cpu": [
+          292912,
+          8187,
+          47040,
+          3137086,
+          59160,
+          10378,
+          5940,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 121110.792285,
+        "load": [
+          3.96,
+          4.02,
+          3.13
+        ],
+        "cpu": [
+          293126,
+          8187,
+          47145,
+          3139758,
+          59171,
+          10389,
+          5946,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 122111.964114,
+        "load": [
+          3.96,
+          4.02,
+          3.13
+        ],
+        "cpu": [
+          293289,
+          8187,
+          47251,
+          3142485,
+          59179,
+          10398,
+          5950,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 123112.755382,
+        "load": [
+          3.96,
+          4.02,
+          3.13
+        ],
+        "cpu": [
+          293565,
+          8212,
+          47329,
+          3145191,
+          59188,
+          10410,
+          5955,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 124113.889423,
+        "load": [
+          3.88,
+          4,
+          3.12
+        ],
+        "cpu": [
+          293760,
+          8295,
+          47376,
+          3147871,
+          59205,
+          10421,
+          5960,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 125114.311982,
+        "load": [
+          3.88,
+          4,
+          3.12
+        ],
+        "cpu": [
+          293949,
+          8296,
+          47412,
+          3150642,
+          59215,
+          10431,
+          5966,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 126115.00548200001,
+        "load": [
+          3.88,
+          4,
+          3.12
+        ],
+        "cpu": [
+          294183,
+          8297,
+          47442,
+          3153384,
+          59229,
+          10438,
+          5971,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 127116.32877800001,
+        "load": [
+          3.88,
+          4,
+          3.12
+        ],
+        "cpu": [
+          294324,
+          8298,
+          47466,
+          3156220,
+          59244,
+          10447,
+          5976,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 128117.520598,
+        "load": [
+          3.88,
+          4,
+          3.12
+        ],
+        "cpu": [
+          294489,
+          8301,
+          47492,
+          3159029,
+          59255,
+          10457,
+          5982,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 129118.68914100001,
+        "load": [
+          3.57,
+          3.93,
+          3.11
+        ],
+        "cpu": [
+          294644,
+          8303,
+          47520,
+          3161851,
+          59263,
+          10466,
+          5987,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 130119.75638600001,
+        "load": [
+          3.57,
+          3.93,
+          3.11
+        ],
+        "cpu": [
+          294791,
+          8327,
+          47541,
+          3164661,
+          59271,
+          10475,
+          5992,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 131120.89987,
+        "load": [
+          3.57,
+          3.93,
+          3.11
+        ],
+        "cpu": [
+          295006,
+          8330,
+          47560,
+          3167427,
+          59279,
+          10483,
+          5997,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 132122.086451,
+        "load": [
+          3.57,
+          3.93,
+          3.11
+        ],
+        "cpu": [
+          295167,
+          8331,
+          47580,
+          3170250,
+          59290,
+          10492,
+          6002,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 133123.332611,
+        "load": [
+          3.57,
+          3.93,
+          3.11
+        ],
+        "cpu": [
+          295371,
+          8334,
+          47606,
+          3173017,
+          59301,
+          10502,
+          6007,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 134123.774419,
+        "load": [
+          3.28,
+          3.87,
+          3.09
+        ],
+        "cpu": [
+          295560,
+          8335,
+          47623,
+          3175800,
+          59315,
+          10512,
+          6012,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 135125.136417,
+        "load": [
+          3.28,
+          3.87,
+          3.09
+        ],
+        "cpu": [
+          295771,
+          8341,
+          47651,
+          3178545,
+          59327,
+          10524,
+          6018,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 136125.819548,
+        "load": [
+          3.28,
+          3.87,
+          3.09
+        ],
+        "cpu": [
+          296029,
+          8342,
+          47669,
+          3181257,
+          59342,
+          10536,
+          6024,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 137126.889651,
+        "load": [
+          3.28,
+          3.87,
+          3.09
+        ],
+        "cpu": [
+          296229,
+          8343,
+          47692,
+          3184026,
+          59355,
+          10547,
+          6030,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 138127.81815900002,
+        "load": [
+          3.28,
+          3.87,
+          3.09
+        ],
+        "cpu": [
+          296431,
+          8345,
+          47719,
+          3186796,
+          59367,
+          10559,
+          6035,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 139128.981433,
+        "load": [
+          3.1,
+          3.82,
+          3.08
+        ],
+        "cpu": [
+          296585,
+          8345,
+          47753,
+          3189613,
+          59376,
+          10568,
+          6040,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 140130.175525,
+        "load": [
+          3.1,
+          3.82,
+          3.08
+        ],
+        "cpu": [
+          296744,
+          8347,
+          47782,
+          3192437,
+          59385,
+          10576,
+          6046,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 141130.867353,
+        "load": [
+          3.1,
+          3.82,
+          3.08
+        ],
+        "cpu": [
+          296903,
+          8348,
+          47804,
+          3195254,
+          59394,
+          10585,
+          6051,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 142132.00106100002,
+        "load": [
+          3.1,
+          3.82,
+          3.08
+        ],
+        "cpu": [
+          297023,
+          8350,
+          47829,
+          3198104,
+          59402,
+          10595,
+          6056,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 143132.365827,
+        "load": [
+          3.1,
+          3.82,
+          3.08
+        ],
+        "cpu": [
+          297203,
+          8351,
+          47858,
+          3200900,
+          59411,
+          10606,
+          6062,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 144132.726436,
+        "load": [
+          2.93,
+          3.77,
+          3.07
+        ],
+        "cpu": [
+          297365,
+          8352,
+          47880,
+          3203709,
+          59422,
+          10616,
+          6068,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 145133.759215,
+        "load": [
+          2.93,
+          3.77,
+          3.07
+        ],
+        "cpu": [
+          297533,
+          8354,
+          47898,
+          3206519,
+          59435,
+          10628,
+          6073,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 146134.830454,
+        "load": [
+          2.93,
+          3.77,
+          3.07
+        ],
+        "cpu": [
+          297787,
+          8356,
+          47925,
+          3209238,
+          59447,
+          10639,
+          6079,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 147135.837386,
+        "load": [
+          2.93,
+          3.77,
+          3.07
+        ],
+        "cpu": [
+          297969,
+          8357,
+          47947,
+          3212026,
+          59459,
+          10650,
+          6085,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 148136.748879,
+        "load": [
+          2.93,
+          3.77,
+          3.07
+        ],
+        "cpu": [
+          298159,
+          8359,
+          47974,
+          3214795,
+          59470,
+          10661,
+          6090,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 149137.822228,
+        "load": [
+          3.26,
+          3.83,
+          3.09
+        ],
+        "cpu": [
+          298356,
+          8360,
+          47993,
+          3217570,
+          59479,
+          10672,
+          6095,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 150138.996965,
+        "load": [
+          3.26,
+          3.83,
+          3.09
+        ],
+        "cpu": [
+          298525,
+          8362,
+          48018,
+          3220376,
+          59490,
+          10682,
+          6100,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 151139.26586,
+        "load": [
+          3.26,
+          3.83,
+          3.09
+        ],
+        "cpu": [
+          298727,
+          8365,
+          48034,
+          3223156,
+          59498,
+          10692,
+          6105,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 152139.704946,
+        "load": [
+          3.26,
+          3.83,
+          3.09
+        ],
+        "cpu": [
+          298921,
+          8366,
+          48058,
+          3225938,
+          59508,
+          10703,
+          6110,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 153140.72394300002,
+        "load": [
+          3.26,
+          3.83,
+          3.09
+        ],
+        "cpu": [
+          299105,
+          8366,
+          48077,
+          3228727,
+          59518,
+          10713,
+          6115,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 154141.82983,
+        "load": [
+          3.24,
+          3.81,
+          3.09
+        ],
+        "cpu": [
+          299295,
+          8367,
+          48095,
+          3231516,
+          59530,
+          10724,
+          6120,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 155143.013652,
+        "load": [
+          3.24,
+          3.81,
+          3.09
+        ],
+        "cpu": [
+          299481,
+          8370,
+          48111,
+          3234312,
+          59542,
+          10735,
+          6124,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 156144.246725,
+        "load": [
+          3.24,
+          3.81,
+          3.09
+        ],
+        "cpu": [
+          299675,
+          8372,
+          48131,
+          3237087,
+          59556,
+          10746,
+          6130,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 157145.480431,
+        "load": [
+          3.24,
+          3.81,
+          3.09
+        ],
+        "cpu": [
+          299917,
+          8372,
+          48149,
+          3239828,
+          59570,
+          10756,
+          6135,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 158146.087551,
+        "load": [
+          3.24,
+          3.81,
+          3.09
+        ],
+        "cpu": [
+          300079,
+          8375,
+          48192,
+          3242628,
+          59583,
+          10765,
+          6140,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 159146.261248,
+        "load": [
+          3.14,
+          3.78,
+          3.08
+        ],
+        "cpu": [
+          300204,
+          8375,
+          48214,
+          3245483,
+          59592,
+          10774,
+          6145,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 160147.490668,
+        "load": [
+          3.14,
+          3.78,
+          3.08
+        ],
+        "cpu": [
+          300285,
+          8377,
+          48231,
+          3248377,
+          59603,
+          10782,
+          6149,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 161147.735546,
+        "load": [
+          3.14,
+          3.78,
+          3.08
+        ],
+        "cpu": [
+          300403,
+          8378,
+          48251,
+          3251238,
+          59611,
+          10790,
+          6154,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 162148.825921,
+        "load": [
+          3.14,
+          3.78,
+          3.08
+        ],
+        "cpu": [
+          300561,
+          8380,
+          48276,
+          3254057,
+          59620,
+          10800,
+          6159,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 163149.714573,
+        "load": [
+          3.14,
+          3.78,
+          3.08
+        ],
+        "cpu": [
+          300705,
+          8381,
+          48297,
+          3256891,
+          59629,
+          10810,
+          6163,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 164150.84880900002,
+        "load": [
+          3.05,
+          3.75,
+          3.08
+        ],
+        "cpu": [
+          300897,
+          8382,
+          48324,
+          3259667,
+          59644,
+          10822,
+          6168,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 165151.873789,
+        "load": [
+          3.05,
+          3.75,
+          3.08
+        ],
+        "cpu": [
+          301090,
+          8383,
+          48348,
+          3262442,
+          59658,
+          10832,
+          6174,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 166152.756813,
+        "load": [
+          3.05,
+          3.75,
+          3.08
+        ],
+        "cpu": [
+          301284,
+          8384,
+          48375,
+          3265213,
+          59670,
+          10842,
+          6179,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 167153.790166,
+        "load": [
+          3.05,
+          3.75,
+          3.08
+        ],
+        "cpu": [
+          301527,
+          8387,
+          48401,
+          3267938,
+          59681,
+          10853,
+          6184,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 168154.76098300001,
+        "load": [
+          3.05,
+          3.75,
+          3.08
+        ],
+        "cpu": [
+          301725,
+          8388,
+          48426,
+          3270709,
+          59694,
+          10863,
+          6190,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 169155.758768,
+        "load": [
+          2.96,
+          3.72,
+          3.07
+        ],
+        "cpu": [
+          301921,
+          8389,
+          48446,
+          3273492,
+          59704,
+          10873,
+          6195,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 170156.764913,
+        "load": [
+          2.96,
+          3.72,
+          3.07
+        ],
+        "cpu": [
+          302108,
+          8391,
+          48469,
+          3276284,
+          59712,
+          10883,
+          6200,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 171157.71647400002,
+        "load": [
+          2.96,
+          3.72,
+          3.07
+        ],
+        "cpu": [
+          302274,
+          8392,
+          48488,
+          3279097,
+          59720,
+          10893,
+          6205,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 172158.852939,
+        "load": [
+          2.96,
+          3.72,
+          3.07
+        ],
+        "cpu": [
+          302514,
+          8393,
+          48510,
+          3281836,
+          59729,
+          10904,
+          6209,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 173160.030911,
+        "load": [
+          2.96,
+          3.72,
+          3.07
+        ],
+        "cpu": [
+          302700,
+          8395,
+          48534,
+          3284614,
+          59742,
+          10915,
+          6214,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 174160.764344,
+        "load": [
+          3.05,
+          3.73,
+          3.08
+        ],
+        "cpu": [
+          302893,
+          8406,
+          48555,
+          3287374,
+          59752,
+          10926,
+          6220,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 175160.997982,
+        "load": [
+          3.05,
+          3.73,
+          3.08
+        ],
+        "cpu": [
+          303089,
+          8436,
+          48590,
+          3290099,
+          59764,
+          10937,
+          6225,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 176161.806515,
+        "load": [
+          3.05,
+          3.73,
+          3.08
+        ],
+        "cpu": [
+          303306,
+          8436,
+          48615,
+          3292854,
+          59778,
+          10950,
+          6232,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 177162.836028,
+        "load": [
+          3.05,
+          3.73,
+          3.08
+        ],
+        "cpu": [
+          303597,
+          8437,
+          48667,
+          3295513,
+          59793,
+          10960,
+          6238,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 178164.076249,
+        "load": [
+          3.05,
+          3.73,
+          3.08
+        ],
+        "cpu": [
+          303744,
+          8445,
+          48692,
+          3298337,
+          59808,
+          10970,
+          6245,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 179164.815684,
+        "load": [
+          3.04,
+          3.71,
+          3.08
+        ],
+        "cpu": [
+          303866,
+          8468,
+          48720,
+          3301169,
+          59818,
+          10979,
+          6250,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 180165.76959,
+        "load": [
+          3.04,
+          3.71,
+          3.08
+        ],
+        "cpu": [
+          304023,
+          8475,
+          48747,
+          3303993,
+          59825,
+          10988,
+          6255,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 181166.936926,
+        "load": [
+          3.04,
+          3.71,
+          3.08
+        ],
+        "cpu": [
+          304171,
+          8485,
+          48777,
+          3306812,
+          59834,
+          10999,
+          6260,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 182167.756992,
+        "load": [
+          3.04,
+          3.71,
+          3.08
+        ],
+        "cpu": [
+          304428,
+          8506,
+          48802,
+          3309516,
+          59844,
+          11011,
+          6266,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 183167.899466,
+        "load": [
+          2.88,
+          3.67,
+          3.07
+        ],
+        "cpu": [
+          304611,
+          8521,
+          48833,
+          3312284,
+          59854,
+          11025,
+          6272,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 184168.758958,
+        "load": [
+          2.88,
+          3.67,
+          3.07
+        ],
+        "cpu": [
+          304855,
+          8562,
+          48874,
+          3314954,
+          59870,
+          11036,
+          6278,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 185169.713988,
+        "load": [
+          2.88,
+          3.67,
+          3.07
+        ],
+        "cpu": [
+          305051,
+          8567,
+          48907,
+          3317721,
+          59882,
+          11048,
+          6284,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 186170.768462,
+        "load": [
+          2.88,
+          3.67,
+          3.07
+        ],
+        "cpu": [
+          305263,
+          8575,
+          48931,
+          3320481,
+          59897,
+          11059,
+          6290,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 187171.87911100002,
+        "load": [
+          2.88,
+          3.67,
+          3.07
+        ],
+        "cpu": [
+          305507,
+          8582,
+          48963,
+          3323199,
+          59909,
+          11071,
+          6297,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 188172.759432,
+        "load": [
+          2.97,
+          3.67,
+          3.07
+        ],
+        "cpu": [
+          305743,
+          8589,
+          49001,
+          3325919,
+          59924,
+          11083,
+          6304,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 189173.75097700002,
+        "load": [
+          2.97,
+          3.67,
+          3.07
+        ],
+        "cpu": [
+          305917,
+          8598,
+          49026,
+          3328716,
+          59934,
+          11093,
+          6309,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 190175.341422,
+        "load": [
+          2.97,
+          3.67,
+          3.07
+        ],
+        "cpu": [
+          306109,
+          8732,
+          49147,
+          3331274,
+          59942,
+          11108,
+          6312,
+          0,
+          613,
+          0
+        ]
+      },
+      {
+        "ms": 190529.223666,
+        "load": [
+          2.97,
+          3.67,
+          3.07
+        ],
+        "cpu": [
+          306161,
+          8733,
+          49156,
+          3332272,
+          59945,
+          11112,
+          6314,
+          0,
+          613,
+          0
+        ]
+      }
+    ],
+    "rawArtifact": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-speed/result.json",
+    "rawSha256": "f2b92f05edb528d211506e39852d36dfe2e170541b7e8c5893e74fb69ea87d6a"
+  },
+  "screenshots": [
+    {
+      "path": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-browser/initial-1.png",
+      "sha256": "b8d6557c1624627b2b257140fadac75b194c8c148c8c45534db77e611330dfb4"
+    },
+    {
+      "path": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-browser/moved-1.png",
+      "sha256": "9d49c5e3fbccc2fb5ba89fa1d1ab31f6f2d67fe9908e3285de6684e51cb86e18"
+    },
+    {
+      "path": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-browser/initial-4.png",
+      "sha256": "dc7d77f20ba591cd02d6ea2d9900af73d5579f3c2487df4f1c4fc04a3260e6ba"
+    },
+    {
+      "path": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-browser/moved-4.png",
+      "sha256": "9541ddbeaae17c7da004e0d599580300ad8c4e187c720c5251896dde645ddfc0"
+    }
+  ],
+  "tools": {
+    "Module.HH": "d1d506266daefebbbf583b8fd07895e22d4e705e7f3e9e859ca13d0b5f1d7070",
+    "ModuleRun.HC": "4565414f117be4c2d5b681bca497d044bd081d2afc3ecdd9afa13435ba162fd5",
+    "ModuleOwn.HC": "85001673263e4a96282ce01d69e8c95f60aefcd077bf11db9f0988718b845ef5",
+    "ModulePackage.mjs": "2104ca7b0fa6b14038378697ac720ce3bac4ae2b53c08a2c1c65388e8d529d95",
+    "module.test.mjs": "edd5d94ccd17ab5bb5636f65d4f6cc1b131c7959e125184ed4a6591e170e39d8",
+    "module-worker.test.mjs": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+    "module-browser.test.mjs": "5ea91c2a690b04631431ebb675ac9a33293cb1c9c2840d72c0f22c9e9e0070f5",
+    "module-speed.mjs": "7c7b9b9050353af5340b8466757a9ba66631bc0fa1fdf40f649c14e39a997c3a"
+  },
+  "limits": [
+    "Only Phase1 initial-map startup is timed. Paired host load is recorded; these are not universal machine-speed promises.",
+    "Window checks cover displayed shot, repeated pause, held movement, Esc/ShiftEsc and relaunch on1/4workers and actual Chromium. They are not a full-map gameplay walkthrough.",
+    "Actual PCM presence and silence do not establish audible140Hz transition spacing.",
+    "The first popup fixture omitted child Cd; original Spawn starts in Home. Explicit quoted __DIR__ fixes module/WAD lookup.",
+    "The first cleanup fixture incorrectly expected the browser launch-parent to persist; guestexec deliberately uses a temporary Servant. Both parent and module child must terminate.",
+    "The prototype remains outside the production catalog and ordinary source Run remains unchanged."
+  ]
+}
