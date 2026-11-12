@@ -35,6 +35,14 @@ function HeaderCheck(m)
   return m;
 }
 
+function Zero(bytes)
+{//Four bytes a step: a disk chunk is whole sectors. A byte callback took 4 s on 256 MiB.
+  const w=new Uint32Array(bytes.buffer,bytes.byteOffset,bytes.length>>2);
+  for (let i=0;i<w.length;i++)
+    if (w[i]) return false;
+  return true;
+}
+
 export function SnapshotReader(reader)
 {//Bounded reads avoid a second full copy of the inflated machine.
   let chunk=new Uint8Array(0),pos=0;
@@ -84,10 +92,10 @@ export async function SnapshotOpen(gz,{busProtocol=0,reader=Reader}={})
       memory.grow((meta.memoryBytes-memory.buffer.byteLength)/PAGE);
       await rd.Take(meta.memoryBytes,new Uint8Array(memory.buffer));
       // Sparse disk chunks retain the complete image without allocating its empty sectors.
-      const chunks=new Map(),overlay=new Map();
+      const chunks=new Map(),overlay=new Map(),buf=new Uint8Array(CHUNK);
       for (let off=0;off<meta.diskBytes;off+=CHUNK) {
-        const data=await rd.Take(Math.min(CHUNK,meta.diskBytes-off));
-        if (data.some(v=>v!==0)) chunks.set(off/CHUNK,data);
+        const n=Math.min(CHUNK,meta.diskBytes-off),data=await rd.Take(n,buf.subarray(0,n));
+        if (!Zero(data)) chunks.set(off/CHUNK,data.slice());
       }
       await rd.End();
       return {virtualSize:meta.diskBytes,overlay,

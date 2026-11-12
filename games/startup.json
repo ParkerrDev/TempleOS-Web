@@ -28,7 +28,7 @@
     },
     "fixtureLoaderSha256": "b0dce4977f1a8d5c4da6eff5af2d9896538448d390f2edaaa412e9d3e8a3eca0",
     "guestHarnessSha256": "6237b135f175eeecf35c13bbeb811aa67aa4cbc112651e6373ada604aa47354b",
-    "webRuntimeSha256": "64f4286370b807f87d02a0a3578075451cd57f2d148bfa8b21a69677100e6522",
+    "webRuntimeSha256": "9a9b7df11e9f024a79eebdcf9aca39e790487273ad3a08fa1055e1f7e8d6d0e2",
     "siblings": [
       "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm fc20452bc7711bde44decc0e47ab2f1552361cac",
       "hemu https://github.com/ParkerrDev/HEMU 1e6470e628b5792c85d71c37e76c219710ade9e1"
