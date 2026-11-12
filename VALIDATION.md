@@ -185,7 +185,7 @@ Validated locally on 2026-11-12. Snake, Babel and Volley are rewritten on Terry'
 
 The four programs that newly compile stay on Run in TempleOS until their browser runs are checked.
 
-HolyCraft keeps its two builds, picked by `#ifdef TOS_NATIVE`, the way Terry's own `#if` lines pick a build or a machine. Its TempleOS renderer (about 380 lines: spans over a depth buffer, input from ScanMsg and the key bitmap) does not compile in HolyC-WASM: the first identifier it lacks is `MsSet` (HolyCraft.HC:434). Behind that come `ScanMsg`, `Char2ScanCode`, `kbd.down_bitmap`, `DCNew` and `GrFillPoly3`. So its browser frame rate cannot be compared yet.
+HolyCraft keeps its two builds, picked by `#ifdef TOS_NATIVE`, the way Terry's own `#if` lines pick a build or a machine. Its TempleOS renderer (about 380 lines: spans over a depth buffer, input from ScanMsg and the key bitmap) lacks only `MsSet` in HolyC-WASM (HolyCraft.HC:434). With a stand-in for it, that build compiles and runs in the editor worker, but it is not faster there. Measured in Chromium, rAF uncapped, with the two builds run in turn twice: 3 to 10 frames a second for it against 2 to 11 for the browser build standing still, and 3 to 5 against 5 to 13 walking. That run shared the machine with another job using most of its cores, so the numbers are low, but the order held in both rounds.
 
 ## Every Games entry against TempleOS V5.03
 
