@@ -48,12 +48,14 @@ try {
   Send(2,"beef");
   Send(3,"other","<img src=x onerror=alert(1)>");
   await page.waitForFunction(()=>document.getElementById("chatUnread").textContent==" (2)");
-  assert.equal(await page.locator("#chatLog img").count(),0);
   socket.send(JSON.stringify(history.at(-1)));
   socket.send(JSON.stringify({t:"del",n:1}));
   await page.waitForFunction(()=>document.getElementById("chatUnread").textContent==" (1)");
-  assert.equal(await page.locator('#chatLog [data-n="3"]').count(),1);
+  assert.equal(await page.locator("#chatLog > div").count(),0,"the log is made when it is first seen");
   await page.locator("#chatBtn").click();
+  assert.deepEqual(await page.locator("#chatLog > div").evaluateAll(l=>l.map(d=>d.dataset.n)),
+    ["2","3"],"replayed once, deleted line gone");
+  assert.equal(await page.locator("#chatLog img").count(),0);
   assert.equal(await page.locator("#chatUnread").innerText(),"");
   assert.equal(await page.title(),title);
   await page.locator("#chatMute").click();
@@ -102,7 +104,7 @@ try {
   for (let n=10;n<70;n++)
     history.push({t:"msg",n,at:Date.now(),nick:"Guest",tag:"other",text:"older line "+n});
   await page.goto("http://localhost:8185/",{waitUntil:"load"});
-  await page.locator('#chatLog [data-n="69"]').waitFor({state:"attached"});
+  await page.waitForFunction(()=>document.getElementById("chatStatus")?.textContent=="In chat: 2");
   const gap=()=>page.locator("#chatLog").evaluate(l=>l.scrollHeight-l.scrollTop-l.clientHeight);
   const open=async()=>{
     await page.locator("#chatBtn").click();
@@ -110,6 +112,7 @@ try {
     await page.evaluate(()=>new Promise(requestAnimationFrame));
   };
   await open();
+  await page.locator('#chatLog [data-n="69"]').waitFor({state:"attached"});
   assert(await page.locator("#chatLog").evaluate(l=>l.scrollHeight>2*l.clientHeight),
     "the history is longer than the window");
   assert(await gap()<2,"the log opens at the newest message");
@@ -132,7 +135,7 @@ try {
   assert(await gap()<2,"a smaller window stays at the newest message");
   assert.deepEqual(errors,[]);
   console.log("Browser chat: unread counts/title, own messages, replay/delete, safe text, "+
-    "mute persistence, background alert, notification reopen, cleared room and the log kept at "+
+    "mute persistence, background alert, notification reopen, cleared room and the log made when first opened and kept at "+
     "its newest line passed.");
 } finally {
   await browser.close();server.kill();

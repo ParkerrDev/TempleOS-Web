@@ -2,6 +2,8 @@
 //the Menu's Chat button and the tab's title count what others say while it
 //is shut, and the browser says so while the tab is in the background. Mute
 //in the window silences all three. What others wrote only goes in as text.
+//The log's lines are made the first time the window opens: a hundred of them
+//were most of the page's elements, made while it was still loading.
 import {WinAdd,WinFocus} from "./WinMgr.js";
 import {$} from "./Os.js";
 import {createChat,savedNick,saveNick,stamp} from "./chat.js";
@@ -55,7 +57,7 @@ let ov=$("chatOverlay"),log=$("chatLog"),status=$("chatStatus"),
   send_btn=$("chatSend"),nick_in=$("chatNick"),text_in=$("chatText"),
   mute_btn=$("chatMute"),cnt_el=$("chatUnread"),chat=null,my_tag="",
   pending="",seen=Number(Load(SEEN_KEY)) || 0,last_n=0,unread=new Set,
-  muted=Load(MUTE_KEY)=="1",asked=false,stuck=true;
+  muted=Load(MUTE_KEY)=="1",asked=false,stuck=true,lines=[],drawn=false;
 
 function Load(key)
 {//localStorage can be missing or throw (private windows, blocked storage).
@@ -111,7 +113,6 @@ function Cnt(m)
   if (m.tag==my_tag || m.n<=seen)
     return false;
   unread.add(m.n);
-  CntShow();
   return true;
 }
 
@@ -157,6 +158,17 @@ function LogAdd(el,stick)
     LogEnd();
 }
 
+function LogFill()
+{//Makes the log from lines, all at once.
+  let m,frag=new DocumentFragment;
+  for (m of lines)
+    frag.append(LineMake(m));
+  log.replaceChildren(frag);
+  if (!lines.length)
+    Nobody();
+  drawn=true;
+}
+
 function Nobody()
 {
   let d=document.createElement("div");
@@ -170,6 +182,8 @@ function Note(text)
   let d=document.createElement("div");
   d.className="ce";
   d.textContent=text;
+  if (!drawn)
+    LogFill();
   LogAdd(d,true);
 }
 
@@ -217,15 +231,17 @@ function Hear(e)
   let m;
   if (e.t=="hello") {
     my_tag=e.tag;
-    log.textContent="";
+    lines=e.log;
     last_n=0;
-    for (m of e.log) {
-      LogAdd(LineMake(m),false);
+    for (m of lines)
       last_n=Math.max(last_n,m.n);
+    if (ov.classList.contains("open")) {
+      LogFill();
+      LogEnd();
+    } else {
+      log.textContent="";
+      drawn=false;
     }
-    if (!e.log.length)
-      Nobody();
-    LogEnd();
     status.textContent="In chat: "+e.people;
     send_btn.disabled=false;
     if (Load(SEEN_KEY)==null || seen>last_n)
@@ -239,21 +255,28 @@ function Hear(e)
   } else if (e.t=="msg") {
     if (e.n<=last_n)
       return;
-    LogAdd(LineMake(e),stuck || e.tag==my_tag);
+    lines.push(e);
+    if (lines.length>KEEP)
+      lines.shift();
+    if (drawn)
+      LogAdd(LineMake(e),stuck || e.tag==my_tag);
     last_n=Math.max(last_n,e.n);
     if (Looking())
       SeenAll();
-    else if (Cnt(e))
+    else if (Cnt(e)) {
+      CntShow();
       Notify(e);
+    }
   } else if (e.t=="people")
     status.textContent="In chat: "+e.n;
   else if (e.t=="del") {
+    lines=lines.filter(m=>m.n!=e.n);
     log.querySelector('[data-n="'+e.n+'"]')?.remove();
     unread.delete(e.n);
     CntShow();
   } else if (e.t=="clear") {
-    log.textContent="";
-    Nobody();
+    lines=[];
+    LogFill();
     last_n=0;
     SeenAll();
   } else if (e.t=="err") {
@@ -303,6 +326,8 @@ function Open(ask=true)
 {
   ov.classList.add("open","free");
   WinFocus($("chatWin"));
+  if (!drawn)
+    LogFill();
   LogEnd();
   if (ask && !asked && !muted)
     PermAsk();
