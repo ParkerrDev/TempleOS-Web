@@ -41,7 +41,7 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-i_nb2rdc",
+    "evidence": "HolyC-wasm/tests/.oracle/qemu-i_nb2rdc",
     "sourceSha256": "865f630e458e43fba4144d48af50be82f7ccaadcc15cccedf58174a27ad1ea0e",
     "referenceSha256": "7700308032ea3ffed6d400bf438d4a44d0507fe9d6b72a007d620d530eb79276",
     "referenceSourceSha256": "c3945c6f9c32854e8b5266d11b02f16588129470bba24325429dbd9be263d539",
@@ -75,7 +75,7 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-ltr1xjw_",
+    "evidence": "HolyC-wasm/tests/.oracle/qemu-ltr1xjw_",
     "sourceSha256": "02ee5b6450c3ba39836bd82fb5a42b42af6ab383045fd6506666f365e5dd0988",
     "assetSha256": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d"
   },
@@ -102,7 +102,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-xk3q_auu"
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-xk3q_auu"
     },
     {
       "path": "/tmp/toom-finale-3-1-1210.png",
@@ -112,7 +112,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-8fw4ea4w"
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-8fw4ea4w"
     }
   ],
   "previewHashes": {

@@ -1408,7 +1408,7 @@
           "except": ""
         }
       ],
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-kkogw74g",
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-kkogw74g",
       "marks": [
         {
           "label": "entry",

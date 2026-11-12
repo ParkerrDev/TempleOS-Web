@@ -45,7 +45,7 @@ function Message(m) {
   if (m.cmd==="frame") {
     const src=new Uint8Array(m.buf);
     for (let i=0;i<src.length;i++) rgba[i]=palette[src[i]];
-    ctx.putImageData(pixels,0,0);$("fps").textContent=(m.fps??"—")+" FPS";
+    ctx.putImageData(pixels,0,0);$("fps").textContent=(m.fps??"?")+" FPS";
     canvas.dataset.frames=String(Number(canvas.dataset.frames||0)+1);Post({cmd:"ack"});
   } else if (m.cmd==="palette") {
     palette[m.index]=0xFF000000|(m.rgb&255)<<16|(m.rgb&0xFF00)|(m.rgb>>>16&255);

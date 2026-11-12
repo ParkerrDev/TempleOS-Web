@@ -157,7 +157,7 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-_ffem65w",
+    "evidence": "HolyC-wasm/tests/.oracle/qemu-_ffem65w",
     "prototypeSha256": "8728bff5045ce1aa85c1c64a8263f7bb02e367d47c737afc936fd4f274742613",
     "matchesPrototype": false,
     "scope": "Original TempleOS installs actual named source files, invokes Build.HC from another directory, checks temporary-file cleanup and validates the relocatable binary header. Prototype equality is recorded, not assumed."
@@ -319,7 +319,7 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-tt5_t_nv",
+    "evidence": "HolyC-wasm/tests/.oracle/qemu-tt5_t_nv",
     "prototypeSha256": "8728bff5045ce1aa85c1c64a8263f7bb02e367d47c737afc936fd4f274742613",
     "matchesPrototype": false,
     "scope": "Original TempleOS installs actual named source files, invokes Build.HC from another directory, validates the relocatable binary header, then deliberately fails compilation and checks previous binary preservation and temporary-file cleanup. Prototype equality is recorded, not assumed."
@@ -410,7 +410,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-mcje_e4w"
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-mcje_e4w"
     },
     "native": {
       "results": [
@@ -432,7 +432,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-o6k8qoed"
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-o6k8qoed"
     },
     "addresses": [
       "FCE2828",
@@ -441,7 +441,7 @@
     "scope": "Native AOT module built from unchanged game files by original TempleOS, transferred to a fresh original TempleOS session and loaded at two addresses into separate tasks. Separate fixtures establish interactive host behavior.",
     "hemu": {
       "ownerLoads": 2,
-      "web": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+      "web": "scratch/integration/toom-web-09109b0",
       "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
       "cases": 18,
       "bad": 0
@@ -459,14 +459,14 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-7om9l1l0",
+    "evidence": "HolyC-wasm/tests/.oracle/qemu-7om9l1l0",
     "sourceSha256": "0e6e9a02234e1ada407448abd1469a73a026fd05c0b9e4748509a4f3c5909cd4"
   },
   "runtime": {
     "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
     "compiler": "d0e394e3d79f73990168d88cf937f5bc55832f93",
     "hemu": "0eff35b30dc9fadf49569c99c889b78f37dfdda7",
-    "path": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+    "path": "scratch/integration/toom-web-09109b0",
     "hashes": {
       "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
       "engine/hemu-worker.js": "0a760df45cf0697deda5a9c140bfb565320e3f5fef8cda5adb2f088b5b39b6a8",
@@ -491,7 +491,7 @@
     {
       "cores": 1,
       "source": false,
-      "web": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+      "web": "scratch/integration/toom-web-09109b0",
       "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
       "fileHashes": {
         "C:/TOOM/Toom.BIN": "13a06f6aabca9cc51acf7fad112cc626f3111c301a79e9ff21a14de35aa89a49",
@@ -521,7 +521,7 @@
     {
       "cores": 4,
       "source": false,
-      "web": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+      "web": "scratch/integration/toom-web-09109b0",
       "wasmSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
       "fileHashes": {
         "C:/TOOM/Toom.BIN": "13a06f6aabca9cc51acf7fad112cc626f3111c301a79e9ff21a14de35aa89a49",
@@ -551,7 +551,7 @@
     {
       "cores": 1,
       "source": true,
-      "web": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+      "web": "scratch/integration/toom-web-09109b0",
       "wasmSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
       "fileHashes": {
         "C:/TOOM/Source.HC": "c96139a8dfd45044dd932a7863d2d331a25eb2cc62f503f3e1e6a58c297c9598",
@@ -648,7 +648,7 @@
     {
       "cores": 4,
       "source": true,
-      "web": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+      "web": "scratch/integration/toom-web-09109b0",
       "wasmSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5",
       "fileHashes": {
         "C:/TOOM/Source.HC": "c96139a8dfd45044dd932a7863d2d331a25eb2cc62f503f3e1e6a58c297c9598",
@@ -823,30 +823,30 @@
     }
   ],
   "screenshots": {
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-browser/initial-1.png": "ea643fe06589a21c95f7a5203bd73a24e5cd781d7f9a56d06f7cca82daa1c9e7",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-browser/moved-4.png": "16bdc397f5c3ffd5ef598e2e7439ec9e7048cc9b566e2fab9f8c189a8d7afc28"
+    "scratch/evidence/toom-module-final-browser/initial-1.png": "ea643fe06589a21c95f7a5203bd73a24e5cd781d7f9a56d06f7cca82daa1c9e7",
+    "scratch/evidence/toom-module-final-browser/moved-4.png": "16bdc397f5c3ffd5ef598e2e7439ec9e7048cc9b566e2fab9f8c189a8d7afc28"
   },
   "artifacts": {
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-workers/worker-1.json": "29c9bbda75a5987ac389b0b51a44aa24eaad2fe3a317fa42cc7768a7b4fecbbe",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-workers/worker-4.json": "0fd6f2101f6b57b4734ad017c68900a757bccc64ecc8b1a1e4ac4bb3387ab702",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-source-workers/worker-1.json": "09e1bdc75131498bfb5400d0acd2d9b792a52ed3a9fa2a131da22f821f69ab9e",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-source-workers/worker-4.json": "bfca0c92a66ab00441aa969edc5f46eabcd70a827e73ba55610a6c1937cf7ca6",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-browser/browser-1.json": "7d78eb568951affe18ebc97ecb43aedb62bb2626f068d9db41ada3b405deca45",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-browser/browser-4.json": "a7d8981f32ca53cf485f3a0502c82692395a66863cb56754d3a6036a232e9f96",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-native-build-final2/result.json": "29b094711c34526e7b9321b845be7b2f427eb8da785493aa967914b30b47a4be",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-native-build-final2/native.json": "568f09d51fa8556ff53977e9432a57ed37f74c0fde49b7de9d02bc1f8de23df3",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-native-build-final2/Toom.BIN": "13a06f6aabca9cc51acf7fad112cc626f3111c301a79e9ff21a14de35aa89a49",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-native-build-final3/result.json": "c02c6e9ec6921182c6cf79e722520fb3c7c40891e384c119d4ab3963c05a259d",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-native-build-final3/native.json": "fa73bdfaa2d155c7bc82ffa5faf01cb609ed45f684410736c9da17e6a0ea69dc",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-native-build-final3/Toom.BIN": "384e99765556def18ff68cb942529343698bd13075d32bfa4ef2b06a2c625af6",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-owner/result.json": "f0d95ef16f1e066760bca1e30ff4edc9b56e1e4cf296ee8a6efece887b3e0b21",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-owner/TOOM.BIN": "d0ca03740a724732753981c5365065442523ca988344226674183255d7bb8d39",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-source-native.json": "42d81c913931471360f20655465674d60087063de37c0308bd0e95e3632a5d64",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-browser/module-worker.test.mjs": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-browser/module-browser.test.mjs": "5ea91c2a690b04631431ebb675ac9a33293cb1c9c2840d72c0f22c9e9e0070f5",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-browser/ModulePackage.mjs": "dafe1c1d33532bedc2f5f8113aa1f478713f1278d0767d41e70d6cb7a71115fc",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-browser/module.test.mjs": "0b379ecf119de9547080551600d4d7be289db5ec59aaf2097e018592395ceece",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-module-final-browser/module-build.test.mjs": "2141f657a36cbea889e326c840455ac54f1b6f46fcf52dd71799fcf92ceb6e8a"
+    "scratch/evidence/toom-module-final-workers/worker-1.json": "29c9bbda75a5987ac389b0b51a44aa24eaad2fe3a317fa42cc7768a7b4fecbbe",
+    "scratch/evidence/toom-module-final-workers/worker-4.json": "0fd6f2101f6b57b4734ad017c68900a757bccc64ecc8b1a1e4ac4bb3387ab702",
+    "scratch/evidence/toom-module-final-source-workers/worker-1.json": "09e1bdc75131498bfb5400d0acd2d9b792a52ed3a9fa2a131da22f821f69ab9e",
+    "scratch/evidence/toom-module-final-source-workers/worker-4.json": "bfca0c92a66ab00441aa969edc5f46eabcd70a827e73ba55610a6c1937cf7ca6",
+    "scratch/evidence/toom-module-final-browser/browser-1.json": "7d78eb568951affe18ebc97ecb43aedb62bb2626f068d9db41ada3b405deca45",
+    "scratch/evidence/toom-module-final-browser/browser-4.json": "a7d8981f32ca53cf485f3a0502c82692395a66863cb56754d3a6036a232e9f96",
+    "scratch/evidence/toom-native-build-final2/result.json": "29b094711c34526e7b9321b845be7b2f427eb8da785493aa967914b30b47a4be",
+    "scratch/evidence/toom-native-build-final2/native.json": "568f09d51fa8556ff53977e9432a57ed37f74c0fde49b7de9d02bc1f8de23df3",
+    "scratch/evidence/toom-native-build-final2/Toom.BIN": "13a06f6aabca9cc51acf7fad112cc626f3111c301a79e9ff21a14de35aa89a49",
+    "scratch/evidence/toom-native-build-final3/result.json": "c02c6e9ec6921182c6cf79e722520fb3c7c40891e384c119d4ab3963c05a259d",
+    "scratch/evidence/toom-native-build-final3/native.json": "fa73bdfaa2d155c7bc82ffa5faf01cb609ed45f684410736c9da17e6a0ea69dc",
+    "scratch/evidence/toom-native-build-final3/Toom.BIN": "384e99765556def18ff68cb942529343698bd13075d32bfa4ef2b06a2c625af6",
+    "scratch/evidence/toom-module-final-owner/result.json": "f0d95ef16f1e066760bca1e30ff4edc9b56e1e4cf296ee8a6efece887b3e0b21",
+    "scratch/evidence/toom-module-final-owner/TOOM.BIN": "d0ca03740a724732753981c5365065442523ca988344226674183255d7bb8d39",
+    "scratch/evidence/toom-module-final-source-native.json": "42d81c913931471360f20655465674d60087063de37c0308bd0e95e3632a5d64",
+    "scratch/evidence/toom-module-final-browser/module-worker.test.mjs": "a9ece206c0d6c0287a50f7d45e8246cf8aa9c6617ed2596e1efc222cac137080",
+    "scratch/evidence/toom-module-final-browser/module-browser.test.mjs": "5ea91c2a690b04631431ebb675ac9a33293cb1c9c2840d72c0f22c9e9e0070f5",
+    "scratch/evidence/toom-module-final-browser/ModulePackage.mjs": "dafe1c1d33532bedc2f5f8113aa1f478713f1278d0767d41e70d6cb7a71115fc",
+    "scratch/evidence/toom-module-final-browser/module.test.mjs": "0b379ecf119de9547080551600d4d7be289db5ec59aaf2097e018592395ceece",
+    "scratch/evidence/toom-module-final-browser/module-build.test.mjs": "2141f657a36cbea889e326c840455ac54f1b6f46fcf52dd71799fcf92ceb6e8a"
   },
   "limits": [
     "No production catalog promotion or complete-game qualification.",

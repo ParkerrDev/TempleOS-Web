@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=TempleOS — HEMU
+Name=TempleOS HEMU
 Comment=Run a TempleOS snapshot in a native window
 Exec=hemu-native %f
 TryExec=hemu-native

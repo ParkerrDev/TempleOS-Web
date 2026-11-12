@@ -5,7 +5,7 @@ import HemuNative
 ApplicationWindow {
   visible: true
   width: 800; height: 700; minimumWidth: 640; minimumHeight: 610
-  title: qsTr("TempleOS — HEMU")
+  title: qsTr("TempleOS HEMU")
   color: "#111111"
   id: window
   property bool confirmedClose: false
@@ -78,7 +78,7 @@ ApplicationWindow {
       Button { text: backend.paused?qsTr("Resume"):qsTr("Pause"); enabled: backend.ready&&!backend.busy&&!backend.faulted; onClicked: {backend.pause();screen.forceActiveFocus()} }
       Button { text: qsTr("Restart"); enabled: backend.ready&&!backend.busy; onClicked: window.openSession(backend.path) }
       Button { text: qsTr("Cancel"); enabled: backend.busy; onClicked: backend.cancel() }
-      Label { text: backend.captured?qsTr("Pointer captured — Ctrl+Alt releases it"):backend.status; color: "white"; textFormat: Text.PlainText; wrapMode: Text.Wrap; Layout.fillWidth: true }
+      Label { text: backend.captured?qsTr("Pointer captured. Ctrl+Alt releases it"):backend.status; color: "white"; textFormat: Text.PlainText; wrapMode: Text.Wrap; Layout.fillWidth: true }
     }
   }
 }

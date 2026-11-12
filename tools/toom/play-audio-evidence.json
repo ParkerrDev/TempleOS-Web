@@ -101,7 +101,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-jklve6zj",
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-jklve6zj",
       "cases": [
         {
           "name": "Window",
@@ -136,7 +136,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-ksvit8zo",
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-ksvit8zo",
       "sourceSha256": "4f874e82cb4d3d79a3772f6e2b23a6d7b9a4473419232c8a775731087e7f4bbe"
     },
     "constructorSweep": {
@@ -151,7 +151,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-eviy4vpg",
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-eviy4vpg",
       "sourceSha256": "eeb0cf0efc700510639d6b38176c41e0f44bc6fcb7142a7731c2bd943cc3c76e"
     },
     "renderLoadDiagnostic": {
@@ -166,7 +166,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-b78oknzr",
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-b78oknzr",
       "sourceSha256": "c773bf9ae5f4ec86673894a4173bfb048606ca3e930c283d21ada1621030d160",
       "render": true
     }

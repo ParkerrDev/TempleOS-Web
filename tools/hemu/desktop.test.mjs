@@ -32,7 +32,7 @@ try {
   const count=await Eval('document.getElementById("screen").dataset.frames');
   await new Promise(r=>setTimeout(r,250));
   assert.equal(await Eval('document.getElementById("screen").dataset.frames'),count);
-  assert.match(await Eval('document.getElementById("fps").textContent'),/^(\d+|—) FPS$/);
+  assert.match(await Eval('document.getElementById("fps").textContent'),/^((\d+|\?) )?FPS$/);
   const path=process.env.HEMU_DESKTOP_SHOT||join(tmpdir(),"hemu-desktop.png");
   await page.screenshot({path});
   await Eval('document.getElementById("pause").click()');

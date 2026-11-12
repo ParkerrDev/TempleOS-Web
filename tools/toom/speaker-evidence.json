@@ -22,7 +22,7 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-7ki6jv2f",
+    "evidence": "HolyC-wasm/tests/.oracle/qemu-7ki6jv2f",
     "sourceSha256": "82cb3f9f6db63a149e9713750ef064b6deed8a2f900f499188737250a1da75b3"
   },
   "clockHemu": {
@@ -43,7 +43,7 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-5nl0dtri",
+    "evidence": "HolyC-wasm/tests/.oracle/qemu-5nl0dtri",
     "sourceSha256": "d75957722579ddd04574760d424f7c18fd4de67e62857d598356dcace35b011e"
   },
   "taskHemu": {

@@ -23,7 +23,7 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-5f4vnrko",
+    "evidence": "HolyC-wasm/tests/.oracle/qemu-5f4vnrko",
     "sourceSha256": "7629ea9a699eed1cce3d6fdb8ad1e03dd9c4f0a27838afd17d2f56bf1a9b7b81",
     "assetHashes": {
       "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
@@ -52,7 +52,7 @@
       "accelerator": "kvm",
       "version": "QEMU emulator version 11.1.2"
     },
-    "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-yw6i85p2",
+    "evidence": "HolyC-wasm/tests/.oracle/qemu-yw6i85p2",
     "sourceSha256": "eec2a3d90d9c1e3912cada2ab14a5d1eae25405226b98b24896e51677eb775e7"
   },
   "runtime": {

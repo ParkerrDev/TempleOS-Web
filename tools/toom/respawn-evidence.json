@@ -92,7 +92,7 @@
     "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
     "compiler": "d0e394e3d79f73990168d88cf937f5bc55832f93",
     "hemu": "0eff35b30dc9fadf49569c99c889b78f37dfdda7",
-    "path": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+    "path": "scratch/integration/toom-web-09109b0",
     "hashes": {
       "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
       "engine/hemu-worker.js": "0a760df45cf0697deda5a9c140bfb565320e3f5fef8cda5adb2f088b5b39b6a8",
@@ -136,7 +136,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-3silbjti",
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-3silbjti",
       "sourceSha256": "f94ea7f4dd34a719572b7ffbd3c2bc0e4bf80d6fe927be3d02f23e2eda5a61e3",
       "fixtureSha256": "9e4eb20f2d480911a6856bea1124eb3b2d522005f467c4b60a40479c3996dc0c",
       "reference": {
@@ -174,7 +174,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-2uy_f_ng",
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-2uy_f_ng",
       "sourceSha256": "837c1234189089e7d4f7c976d872c11818cd00e43ad8a7690ba0ed1ba1df83be"
     },
     "integrationHemu": {
@@ -195,7 +195,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-dxqgg0ms",
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-dxqgg0ms",
       "sourceSha256": "b338bb74bcd1df1d32d9c11f882ce2b7b15d46951422d58ea09a14893503a268",
       "assetHashes": {
         "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
@@ -734,7 +734,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-5nrv_87s"
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-5nrv_87s"
     },
     "playNative": {
       "results": [
@@ -748,7 +748,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-57a2lnhm",
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-57a2lnhm",
       "sourceSha256": "1e0655f38684198eec69092575d3cdb68e7e6d881155983c8c0cf615d3050681"
     },
     "thinkOrderNative": {
@@ -763,7 +763,7 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-nriwnpj_"
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-nriwnpj_"
     },
     "thinkOrderHemu": {
       "backend": "hemu",
@@ -930,24 +930,24 @@
         "accelerator": "kvm",
         "version": "QEMU emulator version 11.1.2"
       },
-      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-_35rrvj0",
+      "evidence": "HolyC-wasm/tests/.oracle/qemu-_35rrvj0",
       "prototypeSha256": "8728bff5045ce1aa85c1c64a8263f7bb02e367d47c737afc936fd4f274742613",
       "matchesPrototype": false,
       "scope": "Original TempleOS installs actual named source files, invokes Build.HC from another directory, validates the relocatable binary header, then deliberately fails compilation and checks previous binary preservation and temporary-file cleanup. Prototype equality is recorded, not assumed."
     }
   },
   "artifacts": {
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-decisions-integrated-native.json": "a3b6467a837a6b82d96118afee8961cf13f7a2f39879c7a4e7c25fde6510408e",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-decisions-hemu.json": "2875cbee9735a325713639af0509ea58ad3a27b058bab0ba33345b570e80937c",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-native.json": "8704ecb76597a9701f63a45edfac2cdf7505a1f0c8c7545b19e46f8d809f0998",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-hemu.json": "6a20d6eedf40db4ff6fd81629bcb3060de96397c0b58766e56f5f5ffdcc3ed3d",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-maps-native-clean.json": "bc635a27d70b6180995ad035a0243b5b9e3dc209961e62c1cf4da23386d3df07",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-maps-hemu-clean.json": "97b270276817710e9d993f6558488b14f9e0ad9d7c8a17b64065fbbc5d031a78",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-think-native.json": "3b80c396aeadf5ba023cda485ad58d1e90b20dbac4d71a1d1228406c6082f896",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-play-native.json": "d247ef7ba6e5c247344ea30da73e7b78abb5f4854152ea89d2412bc9faa72c1e",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-think-order-native-final.json": "680f9b2c6985831c9a8c485061dccf1d2af5cd9f759b88442af75c531e0964e7",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-think-order-hemu-final.json": "6c9b4b26cee48e1675fe0b9f378625b07d275acadfa090acdabe07026b6a8c42",
-    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-native-module/result.json": "27adf12cc0dfa0da8a978c710b9e71811531a4947c7e452713bbed85c2c953da"
+    "scratch/evidence/toom-respawn-decisions-integrated-native.json": "a3b6467a837a6b82d96118afee8961cf13f7a2f39879c7a4e7c25fde6510408e",
+    "scratch/evidence/toom-respawn-decisions-hemu.json": "2875cbee9735a325713639af0509ea58ad3a27b058bab0ba33345b570e80937c",
+    "scratch/evidence/toom-respawn-native.json": "8704ecb76597a9701f63a45edfac2cdf7505a1f0c8c7545b19e46f8d809f0998",
+    "scratch/evidence/toom-respawn-hemu.json": "6a20d6eedf40db4ff6fd81629bcb3060de96397c0b58766e56f5f5ffdcc3ed3d",
+    "scratch/evidence/toom-respawn-maps-native-clean.json": "bc635a27d70b6180995ad035a0243b5b9e3dc209961e62c1cf4da23386d3df07",
+    "scratch/evidence/toom-respawn-maps-hemu-clean.json": "97b270276817710e9d993f6558488b14f9e0ad9d7c8a17b64065fbbc5d031a78",
+    "scratch/evidence/toom-respawn-think-native.json": "3b80c396aeadf5ba023cda485ad58d1e90b20dbac4d71a1d1228406c6082f896",
+    "scratch/evidence/toom-respawn-play-native.json": "d247ef7ba6e5c247344ea30da73e7b78abb5f4854152ea89d2412bc9faa72c1e",
+    "scratch/evidence/toom-respawn-think-order-native-final.json": "680f9b2c6985831c9a8c485061dccf1d2af5cd9f759b88442af75c531e0964e7",
+    "scratch/evidence/toom-respawn-think-order-hemu-final.json": "6c9b4b26cee48e1675fe0b9f378625b07d275acadfa090acdabe07026b6a8c42",
+    "scratch/evidence/toom-respawn-native-module/result.json": "27adf12cc0dfa0da8a978c710b9e71811531a4947c7e452713bbed85c2c953da"
   },
   "mapTotals": {
     "phase": 1,
