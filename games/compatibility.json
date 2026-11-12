@@ -40,12 +40,12 @@
     },
     "Snake.HC": {
       "name": "Snake",
-      "sourceSha256": "5e4da94aea21e9fcb51a2eba96b644c682b13feb8344b5626906fc3f9d99dfcb",
+      "sourceSha256": "478f711cc29ef5387b1d9cb37db5f3a4b8333bd55c6d35b3071415611006e3d0",
       "compile": true,
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "c38d658287442ef040cb98c306a348713e02c9706eb90948e0086010b96e8415"
+      "wasmSha256": "b31ede83aa016cb5b17fd6591ec39d25f6318c09f55302a590534575853abd84"
     },
     "FNAF.HC": {
       "name": "FNAF",

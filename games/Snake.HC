@@ -116,7 +116,8 @@ U0 DrawIt(CTask *task,CDC *dc)
 {
   I64 i,pos,ox=(task->pix_width-SNAKE_W*SNAKE_CELL)/2,
 	oy=(task->pix_height-SNAKE_H*SNAKE_CELL)/2;
-  DCFill(dc,BLACK);
+  dc->color=BLACK; //DCFill would clear the whole screen, top line and all.
+  GrRect(dc,0,0,task->pix_width,task->pix_height);
   dc->color=DKGRAY;
   GrBorder(dc,ox-2,oy-2,ox+SNAKE_W*SNAKE_CELL,oy+SNAKE_H*SNAKE_CELL);
   if (apple>=0) {
