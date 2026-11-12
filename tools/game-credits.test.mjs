@@ -10,7 +10,7 @@ for(const pkg of catalog.packages){
  counts.set(credit.author,(counts.get(credit.author)||0)+1);
  assert(new URL(credit.source).protocol==='https:');
 }
-assert.deepEqual(Object.fromEntries(counts),{'Terry A. Davis':47,'Austin Sierra':6,TheTinkerer:8});
+assert.deepEqual(Object.fromEntries(counts),{'Terry A. Davis':47,ParkerrDev:1,TheTinkerer:8,'Austin Sierra':5});
 assert.equal(TERRY_DEMOS.length,31);assert.equal(EXTRA_GAMES.length,29);
 for(const game of EXTRA_GAMES)assert(catalog.packages.some(p=>p.id===game.packageId&&p.entry===game.disk));
 for(const name of ['Castle Frankenstein 2','SpyHunt'])assert.match(EXTRA_GAMES.find(g=>g.name===name).credit.note,/Terry A\. Davis/);

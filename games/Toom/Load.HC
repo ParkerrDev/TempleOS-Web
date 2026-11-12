@@ -51,6 +51,7 @@
 #include "TmSprite"
 #include "TmLevel"
 #include "TmIntermission"
+#include "TmIntermissionGr"
 #include "TmFinale"
 #include "TmFinaleGr"
 #include "TmCast"

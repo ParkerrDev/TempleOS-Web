@@ -32,7 +32,8 @@ for(const game of EXTRA_GAMES){
  }else evidence.push({name:game.name,author:game.credit.author,source:game.credit.source,revision:catalog.packages.find(p=>p.id===game.packageId).revision});
 }
 const toom=catalog.packages.find(p=>p.id==='toom');
-evidence.push({name:toom.name,author:toom.credit.author,source:toom.credit.source,revision:toom.revision});
+const freedoom=JSON.parse(await readFile(resolve(root,'tools/toom/assets.json'))).versions[toom.wad.name.split(' ')[1]];
+evidence.push({name:toom.name,author:toom.credit.author,source:toom.credit.source,freedoom:{url:freedoom.url,archiveSha256:freedoom.archiveSha256,wadSha256:freedoom.sha256}});
 const archives=[];
 for(const name of ['TempleOS.ISO','TOS_Supplemental1.ISO.C','TOS_Supplemental2.ISO.C','TOS_Supplemental3.ISO.C'])archives.push({url:'https://templeos.org/Downloads/'+name,sha256:await sha(resolve(upstream,'TerryArchives',name))});
 for(const name of ['Ezekiel.ISO_.zip','LordofHostsv3.ISO_(1).zip','Temple.ISO_.C(1).zip'])archives.push({url:'https://github.com/austings/GamesMirror/blob/main/'+name,sha256:await sha(resolve(upstream,'AustinGames',name))});

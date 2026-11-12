@@ -4,7 +4,7 @@ const installed = new Map();
 const downloads = new Map();
 export async function gameFile(file) {
   if (!downloads.has(file.url)) downloads.set(file.url, (async () => {
-    if(!file.path.startsWith('C:/Home/')||file.path.includes('..')||!file.url.startsWith('games/upstream/')||file.url.includes('..'))throw new Error('Invalid game package path.');
+    if(!file.path.startsWith('C:/Home/')||file.path.includes('..')||!file.url.startsWith('games/')||file.url.includes('..'))throw new Error('Invalid game package path.');
     const r=await fetch(file.url,{cache:'no-cache'});
     if(!r.ok)throw new Error(`Could not read ${file.url} (${r.status}).`);
     const bytes=await r.arrayBuffer();

@@ -85,26 +85,8 @@ Image *FinaleGrEnd(FinaleGr *tmpg,I64 n)
 }
 
 U0 FinaleGrImage(FinaleGr *tmpg,Image *tmpi,I64 x0,I64 y0,Bool flip=FALSE)
-{//Patch origins and transparent posts retain their original screen placement.
-  I64 x,y,x1,y1,x2,y2,c,step=1;
-  U16 *src;
-  U8 *dst;
-  x0-=tmpi->left; y0-=tmpi->top;
-  x1=MaxI64(x0,0); y1=MaxI64(y0,0);
-  x2=MinI64(x0+tmpi->width,320); y2=MinI64(y0+tmpi->height,200);
-  if (x1>=x2 || y1>=y2) return;
-  if (flip) step=-1;
-  for (y=y1;y<y2;y++) {
-    src=tmpi->pix+(y-y0)*tmpi->width;
-    if (flip) src+=tmpi->width-1-x1+x0;
-    else src+=x1-x0;
-    dst=tmpg->pix+y*320+x1;
-    for (x=x1;x<x2;x++) {
-      c=*src; src+=step;
-      if (c!=TM_TRANSPARENT) *dst=c;
-      dst++;
-    }
-  }
+{
+  ImageDraw(tmpg->pix,320,200,tmpi,x0,y0,flip);
 }
 
 U0 FinaleGrText(FinaleGr *tmpg,Finale *finale)
@@ -180,17 +162,6 @@ U0 FinaleGrDraw(FinaleGr *tmpg,Finale *finale)
 }
 
 U0 FinaleGrBlot(FinaleGr *tmpg,CDC *dc)
-{//Use the same TempleOS 2x2 palette mapping as the world renderer.
-  I64 x,y,color,wi=dc->width_internal;
-  U8 *dst;
-  if (dc->width<640 || dc->height<400) throw('DC');
-  for (y=0;y<200;y++) {
-    dst=dc->body+y*2*wi;
-    for (x=0;x<320;x++) {
-      color=tm_palette[tmpg->pix[y*320+x]];
-      *dst(U16 *)=color;
-      *(dst+wi)(U16 *)=color>>16;
-      dst+=2;
-    }
-  }
+{
+  PaletteBlot(tmpg->pix,320,200,dc);
 }

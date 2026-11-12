@@ -343,7 +343,7 @@ async function runInTempleOS(g,suppliedOverrides=null) {                        
     setStatus(g.name + ": TempleOS is compiling or running the game.");
     os_game.active = true;
     HelpGame(g);
-    OsCaptureSet(g.name === "HolyCraft" || g.name === "TOOM");
+    OsCaptureSet(g.name === "HolyCraft");
     OsInputReset();   // clear any stuck keys + recentre the look on spawn
   } else {
     toast("Couldn't launch <b>" + g.name + "</b>: " + (r?.msg || "unknown error"));

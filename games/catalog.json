@@ -4,10 +4,6 @@
     "TinkerOS": {
       "url": "https://github.com/tinkeros/TinkerOS",
       "revision": "dfadd7f08e2ad68b1235d8856e55e8c7574236f2"
-    },
-    "TOOM": {
-      "url": "https://github.com/Church-of-Templeos/TOOM",
-      "revision": "9d24014e749fee376396c8a6a4acca152e48a250"
     }
   },
   "packages": [
@@ -689,567 +685,499 @@
     {
       "id": "toom",
       "name": "TOOM",
-      "entry": "C:/Home/TOOM/BrowserStart.HC",
+      "entry": "C:/Home/TOOM/Run.HC",
       "files": [
         {
-          "url": "games/upstream/TOOM/Automap.HC",
-          "bytes": 5722,
-          "sha256": "80bc379dd725d95b5040763bdaa85f0b1812a47247ede177306bb2620c5747b6",
-          "path": "C:/Home/TOOM/Automap.HC"
+          "url": "games/Toom/Run.HC",
+          "bytes": 96,
+          "sha256": "c96139a8dfd45044dd932a7863d2d331a25eb2cc62f503f3e1e6a58c297c9598",
+          "path": "C:/Home/TOOM/Run.HC"
         },
         {
-          "url": "games/upstream/TOOM/Ceils.TXT",
-          "bytes": 1022,
-          "sha256": "676b91e184f43745125ad6a7802c8be99df410c15e988262b0eb0722f5937db6",
-          "path": "C:/Home/TOOM/Ceils.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/Collision.HC",
-          "bytes": 24843,
-          "sha256": "b5184d899da842bdd63d627701f6c0a961d65a5fd35148e2800a6d708e401ac7",
-          "path": "C:/Home/TOOM/Collision.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Aiwnios2.HC",
-          "bytes": 3021,
-          "sha256": "15bfdfced0442792fa2cd777a12af0e4345e0dda94e28f9a587b902bbd154bb3",
-          "path": "C:/Home/TOOM/CrossNetShims/Aiwnios2.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/EXODUS.HC",
-          "bytes": 5225,
-          "sha256": "b907c186d1f60bcf920912fd0ea6a97c486bd4b3ff4c330b5ad80d1cb5db11f5",
-          "path": "C:/Home/TOOM/CrossNetShims/EXODUS.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Generic.HC",
-          "bytes": 8240,
-          "sha256": "30e2db89cff84459e6bd6032578f0fb4307927819782a0e9ed52a8f35bc5c319",
-          "path": "C:/Home/TOOM/CrossNetShims/Generic.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Set.HC",
-          "bytes": 840,
-          "sha256": "9e17d0d43110c8cef21c3f5100d7b2264066687c708e7d5886275652a4ea6402",
-          "path": "C:/Home/TOOM/CrossNetShims/Set.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Arp.HC",
-          "bytes": 2890,
-          "sha256": "8b9d48f131c26e9e9e11c45d31b3b288566644d45504031ebca14a0540cad55f",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Arp.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Dhcp.HC",
-          "bytes": 6732,
-          "sha256": "adec31869d2de36c818fec80e21b383120f3ec85542f1f02eafae49616391855",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Dhcp.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Dns.HC",
-          "bytes": 12290,
-          "sha256": "64d9293144d03a28ff69e3d06cb067e2f9d3531653a62ea8f51c1ba257bcb289",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Dns.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Ethernet.HC",
-          "bytes": 1518,
-          "sha256": "ba33ef93586f248f28b3abd4fa6495ecfc8efdbb37f32625f5273e6dc30f661a",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Ethernet.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Http.HC",
-          "bytes": 4166,
-          "sha256": "e44dbd580919c40e855e908de46453c8f896bb2cb9ddce482da80545ac8888d1",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Http.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/IPv4.HC",
-          "bytes": 5498,
-          "sha256": "eec9f0ba54040c6279b8ceaf28678d2bd2d4ec6b199f834f05114cf846f47ca2",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/IPv4.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Icmp.HC",
-          "bytes": 1400,
-          "sha256": "61e67bf2c14138bf42aadf9950c5f565662f2c413052bcb4707ebc273e2f9973",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Icmp.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/MakeSnailNet.HC",
-          "bytes": 1234,
-          "sha256": "c8a64a6e04e76e32bf60c78604c66d00bbdabf753547594c44479f12fa53a0f5",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/MakeSnailNet.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/NativeSocket.HC",
-          "bytes": 6420,
-          "sha256": "473e83e3a1f419f7126b4807d228c27f90ba4a2da2a75e61e09290f64bf78194",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/NativeSocket.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/NetFifo.HC",
-          "bytes": 1861,
-          "sha256": "82ca37c6a803c1be4ca838caa7fce9c7f3c9828b465b8a4be1f735389bc35470",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/NetFifo.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/NetHandlerTask.HC",
-          "bytes": 669,
-          "sha256": "0fc283377d27e947988d710f869a1df2faa56ca802c59aa75782f98817c77de0",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/NetHandlerTask.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Netcfg.HC",
-          "bytes": 3460,
-          "sha256": "40eea9f044f5bf6e50ead04f21cce259a65db3e6f59d8f554936707004a9197b",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Netcfg.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/SnailLib.HC",
-          "bytes": 3011,
-          "sha256": "3a7853f4932bf65ed0b8b4866f175b512d24f36ae01a12d587cae4908e9f1e2b",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/SnailLib.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Socket.HC",
-          "bytes": 606,
-          "sha256": "5b7492435ff0119cc715c51a75740fbaf8bf6948d2403219d967bbc77c59d920",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Socket.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Tcp.HC",
-          "bytes": 23239,
-          "sha256": "670d98fc7c23c57b1072566baacb1cf3921ecaf468f389d9275cb271a4dccd6d",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Tcp.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Udp.HC",
-          "bytes": 5610,
-          "sha256": "d954db905bf08e3841a70dad0b64a6e4ebb38a3bc683e2cc719a37eb8351f862",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Udp.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/Url.HC",
-          "bytes": 1803,
-          "sha256": "b1681deb494b4ad7be390bbb0891787932e63a21f9ee26381cf0449ebf75574e",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/Url.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/CrossNetShims/Shrine/UrlParse.HC",
-          "bytes": 1304,
-          "sha256": "1993f16124a000862391a9f34b6247964ad4db0e838a189ecf796ae34d2a6330",
-          "path": "C:/Home/TOOM/CrossNetShims/Shrine/UrlParse.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Crushers.TXT",
-          "bytes": 439,
-          "sha256": "1311941d033fb4f14de7e48bfb6e397635b0d43a547bd3179c4c32aa1b51b65b",
-          "path": "C:/Home/TOOM/Crushers.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/Donuts.TXT",
-          "bytes": 49,
-          "sha256": "a3d74b20347c32d0a6f7fc2679bd26eb82e4514f845f051d98a83a8129d0d98e",
-          "path": "C:/Home/TOOM/Donuts.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/BrowserDoomGr.HC",
-          "bytes": 6725,
-          "sha256": "8cc165608df72745911d0528f23bd9a7fb050a259ce2417231e0631b079485d0",
-          "path": "C:/Home/TOOM/DoomGr.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Doors.TXT",
-          "bytes": 2071,
-          "sha256": "b77d1d3b830dcfbaabe790cdf025ec8cbb6d4dcdb415962f7d96039b5cd944ac",
-          "path": "C:/Home/TOOM/Doors.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/Elevators.TXT",
-          "bytes": 395,
-          "sha256": "77478ed20c1155be9c667664b2cc4aeceeb60a843b2cf33f1704e3d0c9981cae",
-          "path": "C:/Home/TOOM/Elevators.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/Enemy.HC",
-          "bytes": 87094,
-          "sha256": "dc25a9657ee9de6c2c442d55f99baed3dbb052f586ab213e6fece1ee8825cfeb",
-          "path": "C:/Home/TOOM/Enemy.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Exits.TXT",
-          "bytes": 105,
-          "sha256": "06022981675b15f5d4178744483ea4163a8af16665662f0f7ecf62568f15e548",
-          "path": "C:/Home/TOOM/Exits.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/FastTrig.HC",
-          "bytes": 157,
-          "sha256": "f89813762dbf2bd40f3723644fafa3427358a293f08ab05c07e5c55fd36ac6dd",
-          "path": "C:/Home/TOOM/FastTrig.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Finale.HC",
-          "bytes": 8327,
-          "sha256": "f31f9e9b3f2fe1c4146b476270e307dbda0d485d843acdf673f40a57fafd4d3b",
-          "path": "C:/Home/TOOM/Finale.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Floors.TXT",
-          "bytes": 3145,
-          "sha256": "b1c26b40c0d6e43bf33182093f582488f1c69045d4bd860c59d368ec988665cd",
-          "path": "C:/Home/TOOM/Floors.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/Info1.TXT",
-          "bytes": 29291,
-          "sha256": "b6111f1dc210fd672db0f462a608d8f3de42129e97f305cd9247a22d52e8d528",
-          "path": "C:/Home/TOOM/Info1.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/Install.HC",
-          "bytes": 63,
-          "sha256": "3bebc2a7325f053d4f2dc1e2491e92a5d655e3f6b5812698038d88fe45ceda40",
-          "path": "C:/Home/TOOM/Install.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Intermission.HC",
-          "bytes": 9833,
-          "sha256": "a260a337d16706c6440ec5a602f9a2d4887430b254f344ef25165441303239e0",
-          "path": "C:/Home/TOOM/Intermission.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Intersect.HC",
-          "bytes": 2145,
-          "sha256": "b36b7b062fd1731f87694e8eef13895d4a496e00cf4b587b4a87af81c4cca6b3",
-          "path": "C:/Home/TOOM/Intersect.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Lighting.HC",
-          "bytes": 3545,
-          "sha256": "954aa1debb8dfba0623af9d0d3c9ed5381231053a56d533dad1eab56107c711a",
-          "path": "C:/Home/TOOM/Lighting.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Lights.TXT",
-          "bytes": 460,
-          "sha256": "bff088a38c5a55bbff4b734cdaf82a52a098b42885d2d73dbf160a9eda4e840a",
-          "path": "C:/Home/TOOM/Lights.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/Load.HC",
-          "bytes": 1154,
-          "sha256": "3e487977831da1a357e9fe5654bfecd28bc68bc7aa798d8417afb2bd0a074928",
+          "url": "games/Toom/Load.HC",
+          "bytes": 1279,
+          "sha256": "f352e7da9e1986e85cebace700037ff575fee3fcee20ea48bd8d4ef8506dcd44",
           "path": "C:/Home/TOOM/Load.HC"
         },
         {
-          "url": "games/upstream/TOOM/MPClient.HC",
-          "bytes": 56,
-          "sha256": "1283c5bb93ced6841dd5185ca28d0b05a3d4593f1fb76d1f8933bbad668c2d6d",
-          "path": "C:/Home/TOOM/MPClient.HC"
+          "url": "games/Toom/TmGlbls.HH",
+          "bytes": 1656,
+          "sha256": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+          "path": "C:/Home/TOOM/TmGlbls.HH"
         },
         {
-          "url": "games/upstream/TOOM/MPServer.HC",
+          "url": "games/Toom/TmWad.HC",
+          "bytes": 3241,
+          "sha256": "85463df0ecb634f6a74cc1a1cdeef9ff62c35c4e02a34b368326ba53ac1887d0",
+          "path": "C:/Home/TOOM/TmWad.HC"
+        },
+        {
+          "url": "games/Toom/TmStory.HC",
+          "bytes": 4400,
+          "sha256": "f5cdd86de9d8048a96989bb537e0352c94c7b92ba451531b72a86be6d5ef3b9a",
+          "path": "C:/Home/TOOM/TmStory.HC"
+        },
+        {
+          "url": "games/Toom/TmMap.HC",
+          "bytes": 6248,
+          "sha256": "7b096f40305398fa6114c76788b158dc7c912348469cabe56393258f4abc5069",
+          "path": "C:/Home/TOOM/TmMap.HC"
+        },
+        {
+          "url": "games/Toom/TmGr.HC",
+          "bytes": 2947,
+          "sha256": "ced66b9368859973b443e1525a79b41c4c42d889548013230c678fe8a123bdbd",
+          "path": "C:/Home/TOOM/TmGr.HC"
+        },
+        {
+          "url": "games/Toom/TmTex.HC",
+          "bytes": 4632,
+          "sha256": "1058c3d88663bfd5d511ceef1ca99ccbfa356465405fb58adf7b77e8e5968807",
+          "path": "C:/Home/TOOM/TmTex.HC"
+        },
+        {
+          "url": "games/Toom/TmAnim.HC",
+          "bytes": 3344,
+          "sha256": "88bacb84b0802181b51c5efe643415c5690b0c9babad2064f44c79608085c504",
+          "path": "C:/Home/TOOM/TmAnim.HC"
+        },
+        {
+          "url": "games/Toom/TmData.HH",
+          "bytes": 38557,
+          "sha256": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+          "path": "C:/Home/TOOM/TmData.HH"
+        },
+        {
+          "url": "games/Toom/TmClip.HC",
+          "bytes": 5440,
+          "sha256": "22fbb94fca32b0f1b19bde07c591c088cf2324fd129ace1df060ca90cc09f55b",
+          "path": "C:/Home/TOOM/TmClip.HC"
+        },
+        {
+          "url": "games/Toom/TmState.HC",
+          "bytes": 4375,
+          "sha256": "0a7e57036b0d51d5a153e5cf0a8ffa76ac9f2d70061c48e429a0865899b12fdb",
+          "path": "C:/Home/TOOM/TmState.HC"
+        },
+        {
+          "url": "games/Toom/TmMath.HC",
+          "bytes": 2996,
+          "sha256": "5da8d9243d01fcae7afc35858f1d17586d5addcadef1dad7052c4a86e5f684cf",
+          "path": "C:/Home/TOOM/TmMath.HC"
+        },
+        {
+          "url": "games/Toom/TmWorld.HC",
+          "bytes": 7924,
+          "sha256": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+          "path": "C:/Home/TOOM/TmWorld.HC"
+        },
+        {
+          "url": "games/Toom/TmContact.HC",
+          "bytes": 3214,
+          "sha256": "b8e15824529b0dafb7abf11164a53795c06759e07b1265f6abecce8602c8ed08",
+          "path": "C:/Home/TOOM/TmContact.HC"
+        },
+        {
+          "url": "games/Toom/TmMove.HC",
+          "bytes": 1235,
+          "sha256": "d7235b8aa67b4eb72ca08c1b21d64ff56257c51314374a3523962b9bcffc18dd",
+          "path": "C:/Home/TOOM/TmMove.HC"
+        },
+        {
+          "url": "games/Toom/TmPath.HC",
+          "bytes": 6301,
+          "sha256": "1897a4cc6c617a93f1556344111dabd4cb2247e3d3550c1102c841debe31eef4",
+          "path": "C:/Home/TOOM/TmPath.HC"
+        },
+        {
+          "url": "games/Toom/TmSlide.HC",
+          "bytes": 3245,
+          "sha256": "e7ea0760e058b1d12c474bc135d4466c71ecfe5d5482ba5a6f23c6a7dd5e3da1",
+          "path": "C:/Home/TOOM/TmSlide.HC"
+        },
+        {
+          "url": "games/Toom/TmPlayer.HH",
+          "bytes": 537,
+          "sha256": "ee536c8b0ceb057e3dda7e7320eb33520741d5d54487bb312f803ad7513cc8cf",
+          "path": "C:/Home/TOOM/TmPlayer.HH"
+        },
+        {
+          "url": "games/Toom/TmMotion.HC",
+          "bytes": 5404,
+          "sha256": "d478a24beda3de1bb61756869d95df4d3952f97a89168b9a08c4831544a9f4ee",
+          "path": "C:/Home/TOOM/TmMotion.HC"
+        },
+        {
+          "url": "games/Toom/TmAttack.HC",
+          "bytes": 4894,
+          "sha256": "146737ee26c29ca330eb1b583f4e7131c1cd3580c4ca355610cd02f58d68802d",
+          "path": "C:/Home/TOOM/TmAttack.HC"
+        },
+        {
+          "url": "games/Toom/TmDamage.HC",
+          "bytes": 3580,
+          "sha256": "56e1d56ea69609cdcd34c7b5c22694367643cf51f8cd9cb0d72272522a1ab5bd",
+          "path": "C:/Home/TOOM/TmDamage.HC"
+        },
+        {
+          "url": "games/Toom/TmItems.HC",
+          "bytes": 7678,
+          "sha256": "4f265fd533b2e7820e6fb939517ad9ab5a5e3a7a8f7f8abd548494649ec448d3",
+          "path": "C:/Home/TOOM/TmItems.HC"
+        },
+        {
+          "url": "games/Toom/TmTouch.HC",
+          "bytes": 955,
+          "sha256": "b589423b0ea307643655babf3e8861ded6f2c837d5c99c17273d2a768dc3a53c",
+          "path": "C:/Home/TOOM/TmTouch.HC"
+        },
+        {
+          "url": "games/Toom/TmImpact.HC",
+          "bytes": 4238,
+          "sha256": "bfe59592e58dff4e799cd93f3db7937bf02d2fa9cf1fc1046d4b860f4f42acb9",
+          "path": "C:/Home/TOOM/TmImpact.HC"
+        },
+        {
+          "url": "games/Toom/TmWeapon.HC",
+          "bytes": 11881,
+          "sha256": "2904054222cc7f8bbf19307da47dac9c16e8a8bb5768bd56b17ce1e95733189c",
+          "path": "C:/Home/TOOM/TmWeapon.HC"
+        },
+        {
+          "url": "games/Toom/TmPlayer.HC",
+          "bytes": 5272,
+          "sha256": "8260fa3085ce6ec002872269c244456eeda5315cc35ece10708f9830ef9eb449",
+          "path": "C:/Home/TOOM/TmPlayer.HC"
+        },
+        {
+          "url": "games/Toom/TmSight.HC",
+          "bytes": 1319,
+          "sha256": "dba548702f1a63870416251da4473277a82de0a8e3670309a394e37b53569461",
+          "path": "C:/Home/TOOM/TmSight.HC"
+        },
+        {
+          "url": "games/Toom/TmBlast.HC",
+          "bytes": 2133,
+          "sha256": "197e0c23bb1612d510e0c7094f33bf1162fea98aa1471dd83eca3bb424e1fb4f",
+          "path": "C:/Home/TOOM/TmBlast.HC"
+        },
+        {
+          "url": "games/Toom/TmSector.HC",
+          "bytes": 8191,
+          "sha256": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+          "path": "C:/Home/TOOM/TmSector.HC"
+        },
+        {
+          "url": "games/Toom/TmDoor.HC",
+          "bytes": 6472,
+          "sha256": "ce49864f381d55361788f5efdc070fc377e2b4178f629856f7db74118c612a6a",
+          "path": "C:/Home/TOOM/TmDoor.HC"
+        },
+        {
+          "url": "games/Toom/TmFloor.HC",
+          "bytes": 8560,
+          "sha256": "b86eaee35d5a448c722f063c651f61c2ba3f4160637dda2af13c6084968fa00a",
+          "path": "C:/Home/TOOM/TmFloor.HC"
+        },
+        {
+          "url": "games/Toom/TmPlat.HC",
+          "bytes": 4352,
+          "sha256": "e9541607e935b3f43a3cc0b36d5d79a7ed51849efdb78e5e75d5bf973802bff3",
+          "path": "C:/Home/TOOM/TmPlat.HC"
+        },
+        {
+          "url": "games/Toom/TmCeil.HC",
+          "bytes": 3309,
+          "sha256": "13ce4bc669f4deec87c82d09bb08bb4ef75f623c8da7131f4eb66014ecb15379",
+          "path": "C:/Home/TOOM/TmCeil.HC"
+        },
+        {
+          "url": "games/Toom/TmTeleport.HC",
+          "bytes": 3098,
+          "sha256": "04efd4b10193f52d767883a0decf0e9176e0ff0213af184153b081b6bd7c8f36",
+          "path": "C:/Home/TOOM/TmTeleport.HC"
+        },
+        {
+          "url": "games/Toom/TmSwitch.HC",
+          "bytes": 3663,
+          "sha256": "a158dd8d290558945063ec3d0a6678817335d0d59cbab323f9f303499285aee9",
+          "path": "C:/Home/TOOM/TmSwitch.HC"
+        },
+        {
+          "url": "games/Toom/TmLight.HC",
+          "bytes": 5685,
+          "sha256": "18751745beb55e970363df09f8e03a0979e1eb66fe8e8efe835f10cbad754850",
+          "path": "C:/Home/TOOM/TmLight.HC"
+        },
+        {
+          "url": "games/Toom/TmHazard.HC",
+          "bytes": 1002,
+          "sha256": "b69bdffac3c4a9394fcf757339ee6a7c915f27946b881e2b25a5673f04a8603e",
+          "path": "C:/Home/TOOM/TmHazard.HC"
+        },
+        {
+          "url": "games/Toom/TmSpecial.HC",
+          "bytes": 11779,
+          "sha256": "44a5ef52acf0022dc580e5cb90e9cb3747def44e890a5aa985db90d2fbfe615b",
+          "path": "C:/Home/TOOM/TmSpecial.HC"
+        },
+        {
+          "url": "games/Toom/TmRespawn.HC",
+          "bytes": 1856,
+          "sha256": "363a89ca4ef58cbd88e1aee2b67a9974a1782af3bf5850c7dfd3c83edbbde988",
+          "path": "C:/Home/TOOM/TmRespawn.HC"
+        },
+        {
+          "url": "games/Toom/TmTick.HC",
+          "bytes": 2113,
+          "sha256": "fdb775719b978814ba541a5bf597f64826a7383636283e557bfb1b969a6a511f",
+          "path": "C:/Home/TOOM/TmTick.HC"
+        },
+        {
+          "url": "games/Toom/TmEnemy.HC",
+          "bytes": 6122,
+          "sha256": "332464bcf40c7c8f07dd9fb3776f744659cd3906662848067064b0ab069957b8",
+          "path": "C:/Home/TOOM/TmEnemy.HC"
+        },
+        {
+          "url": "games/Toom/TmChase.HC",
+          "bytes": 4505,
+          "sha256": "c3a53ed3ddae5f1c05a5df3851c194ada85027d81f32acff6df6e1230bdcbc7b",
+          "path": "C:/Home/TOOM/TmChase.HC"
+        },
+        {
+          "url": "games/Toom/TmCombat.HC",
+          "bytes": 9156,
+          "sha256": "069bf282d4ba8ca9faf69c10acbba6f8cf3e578a67fdd118142de7742f89a963",
+          "path": "C:/Home/TOOM/TmCombat.HC"
+        },
+        {
+          "url": "games/Toom/TmVile.HC",
+          "bytes": 4744,
+          "sha256": "bde6455466b79fcbc10369df53b60ad5eb96a20ff72bbbe769e5705fc85c64de",
+          "path": "C:/Home/TOOM/TmVile.HC"
+        },
+        {
+          "url": "games/Toom/TmBoss.HC",
+          "bytes": 3318,
+          "sha256": "0892a31e7c65ee6f31f3b497e940721b800b5d126a518d97ad360383113c62f7",
+          "path": "C:/Home/TOOM/TmBoss.HC"
+        },
+        {
+          "url": "games/Toom/TmBrain.HC",
+          "bytes": 4102,
+          "sha256": "605e90147315d888f9d6493cdc8f65092e24f79fd24d96c3306d3d05fa105554",
+          "path": "C:/Home/TOOM/TmBrain.HC"
+        },
+        {
+          "url": "games/Toom/TmEffect.HC",
+          "bytes": 1805,
+          "sha256": "cdfd0f26beff5f99eeb609ee2d0820472cda0d91f6121a345529dd87071ab80b",
+          "path": "C:/Home/TOOM/TmEffect.HC"
+        },
+        {
+          "url": "games/Toom/TmActions.HC",
+          "bytes": 4377,
+          "sha256": "ae3bff931d7431a5c8cc9a993275114dc99cbb931670356846f4a940eabc57bb",
+          "path": "C:/Home/TOOM/TmActions.HC"
+        },
+        {
+          "url": "games/Toom/TmPal.HC",
+          "bytes": 2983,
+          "sha256": "0ce270fdca3d3efc5607acf0250f2c565941c2037609f30f2adaf2e9debdf6d7",
+          "path": "C:/Home/TOOM/TmPal.HC"
+        },
+        {
+          "url": "games/Toom/TmDraw.HC",
+          "bytes": 14896,
+          "sha256": "89ff3d412fe95123e136228916792b84b0bf6d841f5d6b0c628a3f77569f174e",
+          "path": "C:/Home/TOOM/TmDraw.HC"
+        },
+        {
+          "url": "games/Toom/TmMask.HC",
+          "bytes": 2252,
+          "sha256": "49be08c8e34a92fad7989e3a28672f26fac33877ac2fe212cba2174f1252a33a",
+          "path": "C:/Home/TOOM/TmMask.HC"
+        },
+        {
+          "url": "games/Toom/TmSprite.HC",
+          "bytes": 5349,
+          "sha256": "d3f27d4b403a7c554cb0608665b1606e302b686087290441d0be131e2a8905c6",
+          "path": "C:/Home/TOOM/TmSprite.HC"
+        },
+        {
+          "url": "games/Toom/TmLevel.HC",
+          "bytes": 8120,
+          "sha256": "2468d9920c55a7af7ffd69abcadd5774391ccd35ed9b6d95eb48c4ff06a89846",
+          "path": "C:/Home/TOOM/TmLevel.HC"
+        },
+        {
+          "url": "games/Toom/TmIntermission.HC",
+          "bytes": 5025,
+          "sha256": "eb6720e9d3422ec27a7f57f60a2c184a0c986ff65c162410c1cc3053dc26fe0e",
+          "path": "C:/Home/TOOM/TmIntermission.HC"
+        },
+        {
+          "url": "games/Toom/TmIntermissionGr.HC",
+          "bytes": 7250,
+          "sha256": "978b35e080aa3ee6804b57943b8542bd6479f9f596c7507b3fe6204c83794d91",
+          "path": "C:/Home/TOOM/TmIntermissionGr.HC"
+        },
+        {
+          "url": "games/Toom/TmFinale.HC",
+          "bytes": 1727,
+          "sha256": "cec0b0a9729b659b90162ef88340bcba339562540b415c7d8f4b50efc01d279a",
+          "path": "C:/Home/TOOM/TmFinale.HC"
+        },
+        {
+          "url": "games/Toom/TmFinaleGr.HC",
+          "bytes": 4273,
+          "sha256": "f809d7c25c7c313cbae505ec95c859e70f66ad07067b8599c1fa694b3595fd13",
+          "path": "C:/Home/TOOM/TmFinaleGr.HC"
+        },
+        {
+          "url": "games/Toom/TmCast.HC",
+          "bytes": 3453,
+          "sha256": "d414747eacaca31d2689a8f072f1517519e21af74d6b52a0d5ba1fcb9a3bf132",
+          "path": "C:/Home/TOOM/TmCast.HC"
+        },
+        {
+          "url": "games/Toom/TmCastGr.HC",
+          "bytes": 1034,
+          "sha256": "c1a5cec798eb95342da11d6595a8d154e422c246d6f5d81b4a1c219ade9dac74",
+          "path": "C:/Home/TOOM/TmCastGr.HC"
+        },
+        {
+          "url": "games/Toom/TmInput.HC",
+          "bytes": 2825,
+          "sha256": "5589178e7cd8c3a1884c5e5250adc73812691fa8d32cba4e0a380707f55a2ee9",
+          "path": "C:/Home/TOOM/TmInput.HC"
+        },
+        {
+          "url": "games/Toom/TmSnd.HC",
+          "bytes": 1839,
+          "sha256": "38d7d1cafdf87131a6b89953b32b1b836dba6fa7fbd26c0354ed80ad877db197",
+          "path": "C:/Home/TOOM/TmSnd.HC"
+        },
+        {
+          "url": "games/Toom/TmSpeaker.HC",
+          "bytes": 2381,
+          "sha256": "f314bc4fc7022c0e3aef4081e63961aebe80f324c2847c84891871eb35907021",
+          "path": "C:/Home/TOOM/TmSpeaker.HC"
+        },
+        {
+          "url": "games/Toom/TmSoundBank.HC",
+          "bytes": 1274,
+          "sha256": "7b0bc8790f30bd00579a7f53e305d62f8a9d1e65785365c263862f4894260d01",
+          "path": "C:/Home/TOOM/TmSoundBank.HC"
+        },
+        {
+          "url": "games/Toom/TmSoundData.HH",
+          "bytes": 399,
+          "sha256": "71ca3a12ea1acacaadbe9ff97046511422aced00972eb093a4a0e23bab319b7c",
+          "path": "C:/Home/TOOM/TmSoundData.HH"
+        },
+        {
+          "url": "games/Toom/TmAudio.HC",
+          "bytes": 3572,
+          "sha256": "ee93c78b6c173389f25bfa7c4f047c0a52cf427344fcee8b0616c7f68c530fd7",
+          "path": "C:/Home/TOOM/TmAudio.HC"
+        },
+        {
+          "url": "games/Toom/TmSoundScene.HC",
+          "bytes": 2296,
+          "sha256": "94f3aff023f520f08577652d703f0ffde75171be5ebee790bd0194ec6df7af9a",
+          "path": "C:/Home/TOOM/TmSoundScene.HC"
+        },
+        {
+          "url": "games/Toom/TmOverlay.HC",
+          "bytes": 2316,
+          "sha256": "6f4adb56ed7b326a0e6548be673489713c2e58d047689f79072f2fd677a8feca",
+          "path": "C:/Home/TOOM/TmOverlay.HC"
+        },
+        {
+          "url": "games/Toom/TmScreen.HC",
+          "bytes": 1084,
+          "sha256": "54386654b6eaa3aab7a8f4a8087e59eb989aefdad5d23cd365c2959857e77aa7",
+          "path": "C:/Home/TOOM/TmScreen.HC"
+        },
+        {
+          "url": "games/Toom/TmPlay.HC",
+          "bytes": 13133,
+          "sha256": "471c5997cef8d4be763b0b6ca192a2db59408a8b6d56e9ce7c7b2504ed30ef3f",
+          "path": "C:/Home/TOOM/TmPlay.HC"
+        },
+        {
+          "url": "games/Toom/TMDATA.BIN",
+          "bytes": 90764,
+          "sha256": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f",
+          "path": "C:/Home/TOOM/TMDATA.BIN"
+        },
+        {
+          "url": "games/Toom/Build.HC",
+          "bytes": 626,
+          "sha256": "6d868a83826f3cf1ac52984977ee8806074f4a7c32c60b3170f0f8ff0039702f",
+          "path": "C:/Home/TOOM/Build.HC"
+        },
+        {
+          "url": "games/Toom/Native.HH",
+          "bytes": 996,
+          "sha256": "e80548dbfb4d0cb8a7ec50927c8488c15ec126fe6d08fb70010b78723167f55f",
+          "path": "C:/Home/TOOM/Native.HH"
+        },
+        {
+          "url": "games/Toom/Toom.PRJ",
+          "bytes": 123,
+          "sha256": "a6593828be69f2b6d5047136a9801e0460372f7d6844eac850727ae4750fe37d",
+          "path": "C:/Home/TOOM/Toom.PRJ"
+        },
+        {
+          "url": "games/Toom/RunBin.HC",
           "bytes": 68,
-          "sha256": "4c892204e77ea62b4968d56d8bda604235abd0fbb53c8ec925bed29547567e4b",
-          "path": "C:/Home/TOOM/MPServer.HC"
+          "sha256": "4565414f117be4c2d5b681bca497d044bd081d2afc3ecdd9afa13435ba162fd5",
+          "path": "C:/Home/TOOM/RunBin.HC"
         },
         {
-          "url": "games/upstream/TOOM/MPServerBrowser.HC",
-          "bytes": 6824,
-          "sha256": "89c354373bfac9066090bf26a0e82dcd7f49092955ca872fa9980bfb931db11e",
-          "path": "C:/Home/TOOM/MPServerBrowser.HC"
+          "url": "games/Toom/COPYING",
+          "bytes": 17992,
+          "sha256": "32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670",
+          "path": "C:/Home/TOOM/COPYING"
         },
         {
-          "url": "games/upstream/TOOM/BrowserMainDrawer.HC",
-          "bytes": 114557,
-          "sha256": "aa6baad842afe6bf2afd48a71e6e90a3126678da0d3aac70b35f0ad42c282f0a",
-          "path": "C:/Home/TOOM/MainDrawer.HC"
+          "url": "games/Toom/NOTICE",
+          "bytes": 8034,
+          "sha256": "a6cbde9c031037edc6528224f3c7fe0ee1b82f860895da59a21f3fc240dd048e",
+          "path": "C:/Home/TOOM/NOTICE"
         },
         {
-          "url": "games/upstream/TOOM/Menu.HC",
-          "bytes": 10022,
-          "sha256": "31a54b1fca402f38f29ecc2213059a1992317b99d315c302c1ca7e3caba2a7aa",
-          "path": "C:/Home/TOOM/Menu.HC"
+          "url": "games/upstream/Freedoom/freedoom1.wad",
+          "bytes": 28795076,
+          "sha256": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+          "path": "C:/Home/TOOM/FREEDOOM.WAD"
         },
         {
-          "url": "games/upstream/TOOM/ModMan.HC",
-          "bytes": 1819,
-          "sha256": "a7954c0f3e65ec515188c10ea893ebff7057a4455fcc42cdb88451e1ab50a998",
-          "path": "C:/Home/TOOM/ModMan.HC"
+          "url": "games/upstream/Freedoom/COPYING.txt",
+          "bytes": 1644,
+          "sha256": "7c62f2c520769c798774f416637eec4921e5f0aafdac1245ae7c8a8cf65fe102",
+          "path": "C:/Home/TOOM/Freedoom-COPYING.txt"
         },
         {
-          "url": "games/upstream/TOOM/Mothership.HC",
-          "bytes": 64,
-          "sha256": "94e477338bd289e1c1c367eb2a8c7cda09a654d111a8f4925ee67ebbbeca1e66",
-          "path": "C:/Home/TOOM/Mothership.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Multiplayer.HC",
-          "bytes": 39301,
-          "sha256": "d52e8693470d431e9c15a403de22861afd72e2d7ac15b215c2848c9224d33f0a",
-          "path": "C:/Home/TOOM/Multiplayer.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Music.HC",
-          "bytes": 7109,
-          "sha256": "03cab225af2502933a7c9c6b098d6f72be713a7cdfe1d41029d55579c3f1d94a",
-          "path": "C:/Home/TOOM/Music.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Numbers/Collision.HC",
-          "bytes": 1176,
-          "sha256": "2df019b51bbc9186032314ba7ea0ae32dc5969eba19a4ee263de357c7985aff6",
-          "path": "C:/Home/TOOM/Numbers/Collision.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Numbers/FileBMP.HC",
-          "bytes": 9349,
-          "sha256": "441ba04329e321ead017619395f5d7b09331ca5f7a466ccc5edeb478e769f72a",
-          "path": "C:/Home/TOOM/Numbers/FileBMP.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Numbers/Load.HC",
-          "bytes": 44,
-          "sha256": "4f662162e90d5e46319af2c0a3764cc25c6b6b9996bff7a3409c32efb025c6ad",
-          "path": "C:/Home/TOOM/Numbers/Load.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Numbers/Matrix.HC",
-          "bytes": 5524,
-          "sha256": "7534966fe426ce4cfd1e44d1b89fea96b76ea08623be6af80c4d87418d35c76f",
-          "path": "C:/Home/TOOM/Numbers/Matrix.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Numbers/Pipe.HC",
-          "bytes": 449,
-          "sha256": "6dc960b9fc5afc90ac499e7680c0174e5606e18bd8b9faaa69748808b843a0b3",
-          "path": "C:/Home/TOOM/Numbers/Pipe.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Numbers/RGBTensor.HC",
-          "bytes": 2563,
-          "sha256": "e3a31da7b91430aee2ccf87bbe6db7f4055be4b967e0dbeb2c4e9a787112412f",
-          "path": "C:/Home/TOOM/Numbers/RGBTensor.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Numbers/Tensor3D.HC",
-          "bytes": 4497,
-          "sha256": "0a0a6872fc0b137de4e86a62b7ae1e220040bd4e34f484c9154d98e58fbad4d9",
-          "path": "C:/Home/TOOM/Numbers/Tensor3D.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Numbers/Vector.HC",
-          "bytes": 3362,
-          "sha256": "a6a3a45cecdbca6b9fcd714e081540307438d2e593152a138c52341d3fe0c666",
-          "path": "C:/Home/TOOM/Numbers/Vector.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Physics.HC",
-          "bytes": 4842,
-          "sha256": "8486b4d576618a3393f2ef95ad460b8885e7d67b965a8b3c346907734c136050",
-          "path": "C:/Home/TOOM/Physics.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Platforms.TXT",
-          "bytes": 1549,
-          "sha256": "11580d72e95af7a05bc0dfe6a6d1a17e43cfda81ed4c0791f7cab031b49d2e1a",
-          "path": "C:/Home/TOOM/Platforms.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/Player.HC",
-          "bytes": 4054,
-          "sha256": "d7c1f52e1b053a91b2b2995e2ab4a6c262742250fad5046532e582d3fd4af3f5",
-          "path": "C:/Home/TOOM/Player.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/README.md",
-          "bytes": 6661,
-          "sha256": "bf9492f46b00adf713bc240bea97e9742ff6e93dd80c78cb48d59230cc67bc8b",
-          "path": "C:/Home/TOOM/README.md"
-        },
-        {
-          "url": "games/upstream/TOOM/BrowserST.HC",
-          "bytes": 19261,
-          "sha256": "d5c0edcf60c7412c3edaca55e8bbb565ff675ffddbdcf8807b08c60107a78d3e",
-          "path": "C:/Home/TOOM/ST.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Save.HC",
-          "bytes": 31810,
-          "sha256": "9c347a62f64529ac15d74af4285046947a5677375bc4fd56ad943eb954c5f606",
-          "path": "C:/Home/TOOM/Save.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/BrowserScreenMelt.HC",
-          "bytes": 837,
-          "sha256": "f64238201bf5494afdff51c6a149c187d10e511379e22a89e034068a5ffaad23",
-          "path": "C:/Home/TOOM/ScreenMelt.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Serialize.HC",
-          "bytes": 483,
-          "sha256": "b86772ce46eb3e9dcf4982ac3565b9a4d6f1834aedb08beead99e52ac4bd6747",
-          "path": "C:/Home/TOOM/Serialize.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Set.HC",
-          "bytes": 1183,
-          "sha256": "435d77c9fece7afbe7caffe32c2b174417b653a573666af924417218119e51dc",
-          "path": "C:/Home/TOOM/Set.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/SinglePlayer.HC",
-          "bytes": 250,
-          "sha256": "feeae9541c43ef06e38050d87a5de25f199c5af94770fdf038b165b83fb1da86",
-          "path": "C:/Home/TOOM/SinglePlayer.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/SlimProx.HC",
-          "bytes": 10353,
-          "sha256": "a8f29136e6288ef73745247e0e844ad8c312ddcc5e447653e7cb2cfd603b3ef1",
-          "path": "C:/Home/TOOM/SlimProx.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Stairs.TXT",
-          "bytes": 215,
-          "sha256": "20bd8ce8f60a92f5130d589ff663a81007da9e12bfd89bfa1446980fbbfba82c",
-          "path": "C:/Home/TOOM/Stairs.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/System.HC",
-          "bytes": 49,
-          "sha256": "8d694d6f12f35dfc74696a2885924972641bc4ba1aa55f3b97d155a86281ab4b",
-          "path": "C:/Home/TOOM/System.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/TOOM.HH",
-          "bytes": 0,
-          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-          "path": "C:/Home/TOOM/TOOM.HH"
-        },
-        {
-          "url": "games/upstream/TOOM/TOOM.wad",
-          "bytes": 224874,
-          "sha256": "1f83f5ed84c01b9f253f703c1f33b5781640c1b6d00d681ded2f666dd9a275f1",
-          "path": "C:/Home/TOOM/TOOM.wad"
-        },
-        {
-          "url": "games/upstream/TOOM/Teleporters.TXT",
-          "bytes": 1091,
-          "sha256": "f94fbc9bd9ddb089f476e923063535e7ef13e823cc02042a3573b8a79a2d732c",
-          "path": "C:/Home/TOOM/Teleporters.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/ThingProps.TXT",
-          "bytes": 5680,
-          "sha256": "eac0d6193cab1f7de11bcde0aecf153c65047b12068ea77d3cd86940a9f03e97",
-          "path": "C:/Home/TOOM/ThingProps.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/Things.HC",
-          "bytes": 5878,
-          "sha256": "387b9af7a9011876bd2650539160c9a06b74df9dc3e4c47f4126bf30199d39a2",
-          "path": "C:/Home/TOOM/Things.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Thinker.HC",
-          "bytes": 1985,
-          "sha256": "bce6e170b0ee854afbeb6559f9416e6ed3924ca22b5bbb23c6d48e009982e462",
-          "path": "C:/Home/TOOM/Thinker.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/BrowserWad.HC",
-          "bytes": 42658,
-          "sha256": "f60a34f6354e86d43821734d619df46143375c5d193d675b1acb4e18dbc80fc0",
-          "path": "C:/Home/TOOM/Wad.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/Weapons.HC",
-          "bytes": 2096,
-          "sha256": "6778d6070350ffb4beb3f9db5e997f9ee3b676a7e3c9246712c3fef07ca18521",
-          "path": "C:/Home/TOOM/Weapons.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/World.HC",
-          "bytes": 20634,
-          "sha256": "6a05726a0f3f76fac4b6019a1bf688defc9e33540f0c718e88ca04a129265a5f",
-          "path": "C:/Home/TOOM/World.HC"
-        },
-        {
-          "url": "games/upstream/TOOM/freedoom-0.12.1/COPYING.TXT",
-          "bytes": 1797,
-          "sha256": "bf013a2fd806b86a34c5cb2b92f9a5ea502edc0c8428e8f0c4cd76d6c2d97d23",
-          "path": "C:/Home/TOOM/freedoom-0.12.1/COPYING.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/freedoom-0.12.1/CREDITS.TXT",
-          "bytes": 11669,
-          "sha256": "7f57f26b486184b65a91d2b2ddb449d24a5cc6ce8dfd549d5b9498895a5c5738",
-          "path": "C:/Home/TOOM/freedoom-0.12.1/CREDITS.TXT"
-        },
-        {
-          "url": "games/upstream/TOOM/Freedoom00.BIN",
-          "bytes": 4194304,
-          "sha256": "4d657031227f91ed9a33a75ab8a72413b3adc9b9b99d272a7bd774b1dbec0ded",
-          "path": "C:/Home/TOOM/Freedoom00.BIN"
-        },
-        {
-          "url": "games/upstream/TOOM/Freedoom01.BIN",
-          "bytes": 4194304,
-          "sha256": "e1a300153d12fb08ec5642b76e725bf4d756f20b7fa4b62a4a5992c43f34061f",
-          "path": "C:/Home/TOOM/Freedoom01.BIN"
-        },
-        {
-          "url": "games/upstream/TOOM/Freedoom02.BIN",
-          "bytes": 4194304,
-          "sha256": "13463cc4cc11a15319d178550a8491f7c5aa810e64be426f6710951232f1e7ec",
-          "path": "C:/Home/TOOM/Freedoom02.BIN"
-        },
-        {
-          "url": "games/upstream/TOOM/Freedoom03.BIN",
-          "bytes": 4194304,
-          "sha256": "60ac055e7194fbcf861726b5e9f855f5e39525241af994544d2f517643d5bb8c",
-          "path": "C:/Home/TOOM/Freedoom03.BIN"
-        },
-        {
-          "url": "games/upstream/TOOM/Freedoom04.BIN",
-          "bytes": 4194304,
-          "sha256": "ba1210db4052be357c43d70ff6625199d5970e21ac38665a1842f5d67d0e16ff",
-          "path": "C:/Home/TOOM/Freedoom04.BIN"
-        },
-        {
-          "url": "games/upstream/TOOM/Freedoom05.BIN",
-          "bytes": 4194304,
-          "sha256": "ee3fb63fe4a927dd61c3eff3978c7580926ed15f538bb791e13470bbd92244fd",
-          "path": "C:/Home/TOOM/Freedoom05.BIN"
-        },
-        {
-          "url": "games/upstream/TOOM/Freedoom06.BIN",
-          "bytes": 2119164,
-          "sha256": "a268133a2819a113d10838d6477e6dafe4457a349a7ceca672f0111601a6bccd",
-          "path": "C:/Home/TOOM/Freedoom06.BIN"
-        },
-        {
-          "url": "games/upstream/TOOM/BrowserStart.HC",
-          "bytes": 753,
-          "sha256": "0839c618ad59ad1f9e9121dc7ce2679986e4129d2fe82a1a2ae03200aa6dcc4e",
-          "path": "C:/Home/TOOM/BrowserStart.HC"
+          "url": "games/upstream/Freedoom/CREDITS.txt",
+          "bytes": 15872,
+          "sha256": "72364333d295c598d75ef9553d3b3661ad0b60e27271c87b7637c74b2f46918a",
+          "path": "C:/Home/TOOM/Freedoom-CREDITS.txt"
         }
       ],
-      "upstream": "Church-of-Templeos/TOOM",
-      "revision": "9d24014e749fee376396c8a6a4acca152e48a250",
       "wad": {
-        "name": "Freedoom 0.12.1",
-        "sha256": "c403ea7c27b5b2b77e4c0ca0b691669186790e572065e7eb2b0382801bcb18cc",
-        "bytes": 27284988
+        "name": "Freedoom 0.13.0",
+        "sha256": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "bytes": 28795076
       },
       "credit": {
-        "author": "Austin Sierra",
-        "authorUrl": "https://github.com/austings",
-        "source": "https://github.com/Church-of-Templeos/TOOM",
-        "note": "DOOM by id Software. Game data by the Freedoom contributors."
+        "author": "ParkerrDev",
+        "authorUrl": "https://github.com/ParkerrDev",
+        "source": "https://github.com/ParkerrDev/TempleOS-Web/tree/master/games/Toom",
+        "note": "HolyC game created for TempleOS-Web. Game rules from id Software's GPL DOOM source; maps, art and sounds from Freedoom."
       }
     },
     {

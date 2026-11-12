@@ -13,12 +13,12 @@
     },
     "toom": {
       "name": "TOOM",
-      "sourceSha256": "3236192fa473646cb16878ba0dfb356139b5ea53ed0fe7c5ebda3d0876dccba8",
+      "sourceSha256": "b57aa1257546b1c5e8c6b38d4a824df165db0163e825dffb9e42ab91f4b6f0f6",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/TOOM/ScreenMelt.HC:11:11: parse error: unexpected token in expression (near '=')"
+      "error": "class CFile has no field 'flags'"
     },
     "Babel.HC": {
       "name": "Babel",

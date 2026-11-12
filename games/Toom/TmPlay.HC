@@ -13,6 +13,7 @@ class Play
   Intermission result;
   Finale finale;
   Cast cast;
+  IntermissionGr *result_gr;
   FinaleGr *final_gr;
   SoundScene sound;
   CDC *front,*back;
@@ -76,47 +77,17 @@ U0 PlayHUD(Play *tmpp,CDC *dc)
 	"ARROWS/WASD MOVE  CTRL FIRE  SPACE USE  P PAUSE  ESC EXIT");
 }
 
-U0 PlayTitle(Play *tmpp,CDC *dc,I64 map_num,I64 y)
-{
-  Intermission *tmpi=&tmpp->result;
-  U8 *st=tmpp->story->name[StoryMap(tmpi->episode,map_num,tmpi->commercial)],
-	name[16];
-  if (!st) {
-    if (tmpi->commercial) StrPrint(name,"MAP%02d",map_num);
-    else StrPrint(name,"E%dM%d",tmpi->episode,map_num);
-    st=name;
-  }
-  GrPrint(dc,MaxI64(8,(640-StrLen(st)*FONT_WIDTH)/2),y,"%s",st);
-}
-
 U0 PlayResultDraw(Play *tmpp,CDC *dc)
-{//Native text presents the verified counters; map artwork is not loaded here.
+{//Freedoom's own art loads on the first frame of each result.
   Intermission *tmpi=&tmpp->result;
-  dc->color=BLACK; GrRect(dc,0,0,640,TM_PLAY_HEIGHT);
-  dc->color=YELLOW;
-  if (tmpi->phase!=TM_IM_STATS) {
-    GrPrint(dc,288,112,"ENTERING");
-    PlayTitle(tmpp,dc,tmpi->next,144);
-  } else {
-    PlayTitle(tmpp,dc,tmpi->map_num,32); GrPrint(dc,288,56,"FINISHED");
-    dc->color=WHITE;
-    GrPrint(dc,144,112,"KILLS"); GrPrint(dc,144,152,"ITEMS");
-    GrPrint(dc,144,192,"SECRETS"); GrPrint(dc,144,248,"TIME");
-    if (tmpi->shown_kills>=0) GrPrint(dc,456,112,"%3d%%",tmpi->shown_kills);
-    if (tmpi->shown_items>=0) GrPrint(dc,456,152,"%3d%%",tmpi->shown_items);
-    if (tmpi->shown_secrets>=0)
-      GrPrint(dc,456,192,"%3d%%",tmpi->shown_secrets);
-    if (tmpi->shown_time>=0)
-      GrPrint(dc,448,248,"%d:%02d",tmpi->shown_time/60,
-	    tmpi->shown_time%60);
-    if (tmpi->commercial || tmpi->episode<4) {
-      GrPrint(dc,144,288,"PAR");
-      if (tmpi->shown_par>=0)
-	GrPrint(dc,448,288,"%d:%02d",tmpi->shown_par/60,tmpi->shown_par%60);
-    }
-    dc->color=LTGRAY;
-    GrPrint(dc,176,368,"CTRL/SPACE CONTINUE  ESC EXIT");
+  IntermissionGr *tmpg=tmpp->result_gr;
+  if (!tmpg) {
+    tmpg=IntermissionGrNew(tmpp->game->wad,tmpi);
+    tmpp->result_gr=tmpg;
   }
+  tmpg->pointer_on=tmpi->wait&31<20;
+  IntermissionGrDraw(tmpg,tmpi);
+  IntermissionGrBlot(tmpg,dc);
   if (tmpp->paused || !tmpp->focused) {
     dc->color=YELLOW; GrPrint(dc,8,384,"PAUSED");
   }
@@ -221,6 +192,7 @@ U0 PlayFinish(Play *tmpp)
   I64 n=StoryMap(level->episode,level->map_num,tmpp->game->commercial);
   IntermissionStart(&result,tmpp->game,tmpp->story->par[n],tmpp->did_secret);
   GameFinish(tmpp->game); AudioStop(tmpp->audio);
+  IntermissionGrDel(tmpp->result_gr); tmpp->result_gr=NULL;
   MemCpy(&tmpp->result,&result,sizeof(Intermission));
   tmpp->result.sound=&PlayResultSnd; tmpp->result.context=tmpp;
   tmpp->did_secret=result.did_secret;
@@ -236,6 +208,7 @@ U0 PlayNext(Play *tmpp,I64 keys)
     AudioStop(tmpp->audio);
     GameLoad(tmpp->game,tmpi->episode,tmpi->next);
     PlaySndBind(tmpp);
+    IntermissionGrDel(tmpp->result_gr); tmpp->result_gr=NULL;
     FinaleGrDel(tmpp->final_gr); tmpp->final_gr=NULL;
     tmpp->stage=TM_PLAY_LEVEL;
     ControlsInit(&tmpp->controls); tmpp->blocked=keys;
@@ -326,7 +299,8 @@ U0 PlayDel(Play *tmpp)
     PlayEnter(tmpp);
     try {
       if (tmpp->task) throw('Active');
-      AudioDel(tmpp->audio); FinaleGrDel(tmpp->final_gr);
+      AudioDel(tmpp->audio); IntermissionGrDel(tmpp->result_gr);
+      FinaleGrDel(tmpp->final_gr);
       StoryDel(tmpp->story); GameDel(tmpp->game);
       DCDel(tmpp->front); DCDel(tmpp->back);
     } catch {

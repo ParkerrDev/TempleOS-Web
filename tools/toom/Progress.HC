@@ -36,6 +36,18 @@ U0 TmProgressSkip(Play *play)
   for (i=0;i<10;i++) PlayTick(play,0,TRUE);
 }
 
+U0 TmProgressResult(Play *play)
+{//The stats frame is Freedoom's intermission art for the finished level.
+  IntermissionGr *tmpg=IntermissionGrNew(play->game->wad,&play->result);
+  CDC *dc=DCNew(play->front->width,play->front->height);
+  I64 y,n=play->front->width_internal;
+  if (play->result.map_num!=1 || play->result.next!=2) throw('Result');
+  IntermissionGrDraw(tmpg,&play->result); IntermissionGrBlot(tmpg,dc);
+  for (y=0;y<TM_PLAY_HEIGHT;y++)
+    if (MemCmp(dc->body+y*n,play->front->body+y*n,640)) throw('Frame');
+  DCDel(dc); IntermissionGrDel(tmpg);
+}
+
 U0 TmProgressTest()
 {
   Play *play=PlayNew("C:/ORACLE/FREEDOOM.WAD","C:/ORACLE/TMDATA.BIN");
@@ -79,8 +91,7 @@ U0 TmProgressTest()
   PlayTick(play,1<<TMf_KEY_USE,TRUE);
   if (play->result.state!=1) throw('Focus');
   tm_progress_cases++;
-  PlayFrame(play);
-  if (play->front->body[0]!=BLACK) throw('Frame');
+  PlayFrame(play); TmProgressResult(play);
   tm_progress_hash=2166136261;
   for (i=0;i<play->front->width_internal*play->front->height;i++)
     tm_progress_hash=(tm_progress_hash^play->front->body[i])*

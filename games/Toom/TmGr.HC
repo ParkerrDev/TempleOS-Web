@@ -94,3 +94,27 @@ Image *PatchNew(Wad *tmpw,I64 lump)
   Free(src);
   return tmpi;
 }
+
+U0 ImageDraw(U8 *pix,I64 width,I64 height,Image *tmpi,I64 x0,I64 y0,
+	Bool flip=FALSE)
+{//Patch origins and transparent posts retain their original screen placement.
+  I64 x,y,x1,y1,x2,y2,c,step=1;
+  U16 *src;
+  U8 *dst;
+  x0-=tmpi->left; y0-=tmpi->top;
+  x1=MaxI64(x0,0); y1=MaxI64(y0,0);
+  x2=MinI64(x0+tmpi->width,width); y2=MinI64(y0+tmpi->height,height);
+  if (x1>=x2 || y1>=y2) return;
+  if (flip) step=-1;
+  for (y=y1;y<y2;y++) {
+    src=tmpi->pix+(y-y0)*tmpi->width;
+    if (flip) src+=tmpi->width-1-x1+x0;
+    else src+=x1-x0;
+    dst=pix+y*width+x1;
+    for (x=x1;x<x2;x++) {
+      c=*src; src+=step;
+      if (c!=TM_TRANSPARENT) *dst=c;
+      dst++;
+    }
+  }
+}

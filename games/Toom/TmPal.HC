@@ -44,3 +44,19 @@ U32 tm_palette[256]={
   0x1000001,0x1000001,0x1,0x1,0x1,0x1,
   0x0,0x0,0xE0C0C0E,0xE0C0E0E,0xD0D0D0F,0xD05050D,
   0x505050D,0x5050505,0x5000505,0xC030C0C};
+
+U0 PaletteBlot(U8 *pix,I64 width,I64 height,CDC *dc)
+{//Use the same TempleOS 2x2 palette mapping as the world renderer.
+  I64 x,y,color,wi=dc->width_internal;
+  U8 *dst;
+  if (dc->width<width*2 || dc->height<height*2) throw('DC');
+  for (y=0;y<height;y++) {
+    dst=dc->body+y*2*wi;
+    for (x=0;x<width;x++) {
+      color=tm_palette[pix[y*width+x]];
+      *dst(U16 *)=color;
+      *(dst+wi)(U16 *)=color>>16;
+      dst+=2;
+    }
+  }
+}

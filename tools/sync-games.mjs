@@ -6,12 +6,12 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {syncLibrary} from './sync-game-library.mjs';
 import {gameCredits} from '../game-credits.js';
-import {applyToomSpeed,toomSpeed} from './toom-speed.mjs';
+import {ToomPackage} from './toom/Package.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const tinker=resolve(process.argv[2]||'../.work/upstream/TinkerOS'),toom=resolve(process.argv[3]||'../.work/upstream/TOOM');
+const tinker=resolve(process.argv[2]||'../.work/upstream/TinkerOS');
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const commit=d=>execFileSync('git',['-C',d,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
-const revisions={tinker:commit(tinker),toom:commit(toom)};
+const revisions={tinker:commit(tinker)};
 async function walk(dir){const out=[];for(const e of await readdir(dir,{withFileTypes:true})){if(e.name==='.git')continue;const p=resolve(dir,e.name);if(e.isDirectory())out.push(...await walk(p));else if(e.isFile())out.push(p);}return out.sort();}
 const packages=[],hashes=[];
 async function save(source,path,bytes){bytes??=await readFile(source);
@@ -36,50 +36,9 @@ const castle=packages.find(p=>p.name==='CastleFrankenstein');
 castle.entry='C:/Home/Games/TinkerOS/BrowserCastle.HC';castle.files.push({...castleFile,path:castle.entry});
 packages.push({id:'tinker-Stadium',name:'Stadium',entry:'C:/Home/Games/TinkerOS/Stadium/Stadium.HC',files:hashes.filter(f=>f.url.includes('/Stadium/')).map(f=>({...f,path:'C:/Home/Games/TinkerOS/'+f.url.split('/TinkerOS/')[1]})),upstream:'TinkerOS',revision:revisions.tinker});
 await save(resolve(tinker,'LICENSE'),'TinkerOS/LICENSE');
-const toomFiles=[];
-for(const p of await walk(toom)){
- const rel=relative(toom,p).replaceAll('\\','/');
- if(rel==='doom1.wad'||rel==='freedoom1.wad'||/\.(png|gitignore)$/i.test(rel))continue;
- const f=await save(p,'TOOM/'+rel);toomFiles.push({...f,path:'C:/Home/TOOM/'+rel});
-}
-// The upstream melt transition copies two rows at a time but permits y==height,
-// corrupting the allocation after the destination framebuffer on level entry.
-// Preserve the downloaded source and install an explicit bounds-fixed adapter.
-const meltOriginal=await readFile(resolve(toom,'ScreenMelt.HC'));
-const meltToken='if(y>=2+to->height) break;';
-if(meltOriginal.toString('latin1').split(meltToken).length!==2)throw new Error('Review changed TOOM melt bounds adapter');
-const meltCompat=Buffer.from(meltOriginal.toString('latin1').replace(meltToken,'if(y>=to->height) break;'),'latin1');
-const meltFile=await save(null,'TOOM/BrowserScreenMelt.HC',meltCompat);
-const meltIndex=toomFiles.findIndex(f=>f.path==='C:/Home/TOOM/ScreenMelt.HC');
-toomFiles[meltIndex]={...meltFile,path:'C:/Home/TOOM/ScreenMelt.HC'};
-const drawerOriginal=await readFile(resolve(toom,'MainDrawer.HC'));
-let drawerText=drawerOriginal.toString('latin1');
-const plotToken='  x=GR_WIDTH-x;';
-if(drawerText.split(plotToken).length!==2)throw new Error('Review changed TOOM sector bounds adapter');
-drawerText=drawerText.replace(plotToken,'  x=GR_WIDTH-2-x;\n  if(x<0 || x+1>=dc->width || y<0 || y+1>=dc->height) return;');
-// Speed edits (tools/toom-speed.mjs) keep every frame and every tic identical. Each one
-// checks its upstream text and the import stops if any of them changed.
-drawerText=applyToomSpeed('MainDrawer.HC',drawerText);
-const drawerFile=await save(null,'TOOM/BrowserMainDrawer.HC',Buffer.from(drawerText,'latin1'));
-toomFiles[toomFiles.findIndex(f=>f.path==='C:/Home/TOOM/MainDrawer.HC')]={...drawerFile,path:'C:/Home/TOOM/MainDrawer.HC'};
-for(const name of Object.keys(toomSpeed)){
- if(name==='MainDrawer.HC')continue;
- const index=toomFiles.findIndex(f=>f.path==='C:/Home/TOOM/'+name);
- if(index<0)throw new Error('Review TOOM speed edit target '+name);
- const text=applyToomSpeed(name,(await readFile(resolve(toom,name))).toString('latin1'));
- const file=await save(null,'TOOM/Browser'+name,Buffer.from(text,'latin1'));
- toomFiles[index]={...file,path:'C:/Home/TOOM/'+name};
-}
-const wad=await readFile(resolve(toom,'freedoom1.wad')),chunk=4*1024*1024;
-for(let offset=0,index=0;offset<wad.length;offset+=chunk,index++){
- const rel=`Freedoom${String(index).padStart(2,'0')}.BIN`,f=await save(null,'TOOM/'+rel,wad.subarray(offset,offset+chunk));toomFiles.push({...f,path:'C:/Home/TOOM/'+rel});
-}
-// The two Option calls stop the compiler printing TOOM's 231 unused variable and header
-// mismatch warnings while it loads. The compiled code is the same.
-const startup=`// Browser package entry. Build the Freedoom IWAD from bounded upload parts.\n#exe {Cd(__DIR__);}\nU0 PrepareFreedoom()\n{\n  U8 *all=MAlloc(${wad.length}), *part;\n  I64 i,n,offset=0;\n  U8 name[32];\n  for(i=0;i<${Math.ceil(wad.length/chunk)};i++) {\n    StrPrint(name,"Freedoom%02d.BIN",i);\n    part=FileRead(name,&n);\n    if (!part || n<=0 || n>${chunk} || offset+n>${wad.length}) { Free(part); Free(all); throw('Package'); }\n    MemCpy(all+offset,part,n); offset+=n; Free(part);\n  }\n  if(offset!=${wad.length}) { Free(all); throw('Package'); }\n  if(!FileWrite("freedoom1.wad",all,offset)) { Free(all); throw('Disk'); }\n  Free(all);\n}\nPrepareFreedoom;\nFramePtrAdd("USE_IWAD",StrNew("freedoom1.wad"));\nOption(OPTf_WARN_UNUSED_VAR,OFF);\nOption(OPTf_WARN_HEADER_MISMATCH,OFF);\n#include "SinglePlayer.HC";\n`;
-const f=await save(null,'TOOM/BrowserStart.HC',Buffer.from(startup));toomFiles.push({...f,path:'C:/Home/TOOM/BrowserStart.HC'});
-packages.push({id:'toom',name:'TOOM',entry:'C:/Home/TOOM/BrowserStart.HC',files:toomFiles,upstream:'Church-of-Templeos/TOOM',revision:revisions.toom,wad:{name:'Freedoom 0.12.1',sha256:sha(wad),bytes:wad.length}});
+// TOOM is this site's own HolyC game with Freedoom (tools/toom/Package.mjs).
+packages.push(ToomPackage());
 await syncLibrary({tinker,save,packages});
 for(const pkg of packages)pkg.credit=gameCredits({name:pkg.name,packageId:pkg.id});
-await writeFile(resolve(root,'games/catalog.json'),JSON.stringify({version:1,sources:{TinkerOS:{url:'https://github.com/tinkeros/TinkerOS',revision:revisions.tinker},TOOM:{url:'https://github.com/Church-of-Templeos/TOOM',revision:revisions.toom}},packages},null,2)+'\n');
-console.log(`Imported ${packages.length} packages and ${hashes.length} files. TinkerOS ${revisions.tinker}, TOOM ${revisions.toom}.`);
+await writeFile(resolve(root,'games/catalog.json'),JSON.stringify({version:1,sources:{TinkerOS:{url:'https://github.com/tinkeros/TinkerOS',revision:revisions.tinker}},packages},null,2)+'\n');
+console.log(`Imported ${packages.length} packages and ${hashes.length} files. TinkerOS ${revisions.tinker}.`);

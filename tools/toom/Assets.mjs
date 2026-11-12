@@ -1,53 +1,39 @@
+//Freedoom 0.13.0 Phase 1, kept in games/upstream/Freedoom as its release ZIP
+//ships it. Every test and the package read the IWAD through FreedoomRead,
+//which checks it against assets.json. "node tools/toom/Assets.mjs" downloads
+//the pinned release and checks that the kept files are its own.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {existsSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 
 export const root=fileURLToPath(new URL('../../',import.meta.url));
 const manifest=JSON.parse(readFileSync(new URL('assets.json',import.meta.url)));
-export const version=process.env.FREEDOOM_VERSION||manifest.default;
+export const version=manifest.default;
 export const asset=manifest.versions[version];
-assert(asset,`Unsupported Freedoom release: ${version}`);
 export const wadHash=asset.sha256;
-const cache=resolve(root,`tools/toom/.assets/freedoom-${version}.wad`);
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+
 export function FreedoomRead()
-{
-  let bytes;
-  if(process.env.FREEDOOM_WAD)bytes=readFileSync(process.env.FREEDOOM_WAD);
-  else if(version==='0.12.1')bytes=Buffer.concat(Array.from({length:7},(_,i)=>readFileSync(resolve(root,
-      `games/upstream/TOOM/Freedoom${i.toString().padStart(2,'0')}.BIN`))));
-  else {
-    assert(existsSync(cache),`Run FREEDOOM_VERSION=${version} node tools/toom/Assets.mjs first.`);
-    bytes=readFileSync(cache);
-  }
+{//FREEDOOM_WAD, or the kept IWAD.
+  const bytes=readFileSync(process.env.FREEDOOM_WAD||resolve(root,asset.dir,'freedoom1.wad'));
   assert.equal(hash(bytes),wadHash,`Expected the official Freedoom ${version} Phase 1 IWAD.`);
   return bytes;
 }
 
 if (process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
-  if(!process.env.FREEDOOM_WAD&&version!=='0.12.1'&&!existsSync(cache)) {
-    const response=await fetch(asset.url);assert(response.ok,`Download failed: ${response.status}`);
-    const archive=Buffer.from(await response.arrayBuffer());
-    assert.equal(hash(archive),asset.archiveSha256,'Release ZIP checksum differs.');
-    const decoded=spawnSync('python3',['-c',
+  const response=await fetch(asset.url);assert(response.ok,`Download failed: ${response.status}`);
+  const archive=Buffer.from(await response.arrayBuffer());
+  assert.equal(hash(archive),asset.archiveSha256,'Release ZIP checksum differs.');
+  for(const name of Object.keys(asset.files)) {
+    const out=spawnSync('python3',['-I','-c',
       'import io,sys,zipfile;sys.stdout.buffer.write(zipfile.ZipFile(io.BytesIO(sys.stdin.buffer.read())).read(sys.argv[1]))',
-      asset.archiveEntry],{input:archive,maxBuffer:64*1024*1024});
-    assert.equal(decoded.status,0,decoded.stderr?.toString());
-    assert.equal(hash(decoded.stdout),wadHash,'IWAD checksum differs.');
-    mkdirSync(resolve(root,'tools/toom/.assets'),{recursive:true});
-    writeFileSync(cache,decoded.stdout);
+      asset.archiveDir+name],{input:archive,maxBuffer:64*1024*1024});
+    assert.equal(out.status,0,out.stderr?.toString());
+    assert.equal(hash(out.stdout),asset.files[name],name+' differs in the release.');
+    assert(out.stdout.equals(readFileSync(resolve(root,asset.dir,name))),name+' differs from the release.');
   }
-  const path=resolve(root,'games/Toom/FREEDOOM.WAD'),bytes=FreedoomRead();
-  if(version!=='0.12.1'&&!existsSync(cache)) {
-    mkdirSync(resolve(root,'tools/toom/.assets'),{recursive:true});
-    writeFileSync(cache,bytes);
-  }
-  const notice=readFileSync(resolve(root,`tools/toom/licenses/Freedoom-${version}.txt`));
-  assert.equal(hash(notice),asset.licenseSha256);
-  writeFileSync(path,bytes);
-  writeFileSync(resolve(root,'games/Toom/Freedoom-COPYING.txt'),notice);
-  console.log(`Prepared Freedoom ${version}, ${bytes.length} bytes: ${path}\nSHA-256 ${wadHash}`);
+  console.log(`${asset.dir}: ${Object.keys(asset.files).join(', ')} are Freedoom ${version}'s own.`);
 }

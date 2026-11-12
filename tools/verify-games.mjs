@@ -17,9 +17,9 @@ for(const p of c.packages){
   const b=await readFile(new URL(f.url,root));assert.equal(b.length,f.bytes);assert.equal(hash(b),f.sha256,f.url);count++;
  }
  if(p.id==='toom'){
-  const parts=await Promise.all(p.files.filter(f=>/Freedoom\d+\.BIN$/.test(f.url)).map(f=>readFile(new URL(f.url,root))));
-  assert.equal(hash(Buffer.concat(parts)),p.wad.sha256);assert.equal(Buffer.concat(parts).length,p.wad.bytes);
-  assert(p.files.some(f=>f.path.endsWith('COPYING.TXT')));assert(p.files.some(f=>f.path.endsWith('CREDITS.TXT')));
+  const wad=p.files.find(f=>f.path==='C:/Home/TOOM/FREEDOOM.WAD');
+  assert.equal(wad.sha256,p.wad.sha256);assert.equal(wad.bytes,p.wad.bytes);
+  for(const name of ['COPYING','NOTICE','Freedoom-COPYING.txt','Freedoom-CREDITS.txt'])assert(p.files.some(f=>f.path==='C:/Home/TOOM/'+name),name);
  }
 }
-console.log(`Game packages: ${c.packages.length} entries, ${count} verified assets, Freedoom reconstruction and notices passed.`);
+console.log(`Game packages: ${c.packages.length} entries, ${count} verified assets, Freedoom and its notices passed.`);

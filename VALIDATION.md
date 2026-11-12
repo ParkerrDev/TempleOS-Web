@@ -157,3 +157,16 @@ The final desktop run measured 22.98 ms/frame in the interpreter and 5.57 ms/fra
 ## Text and attribution cleanup
 
 The [declaudify tool](https://github.com/ParkerrDev/declaudify) audited all five repository histories and contributor lists and reported no attribution to remove. No history rewrite was needed. The cleanup made 5,301 punctuation replacements across repository text, including compressed transcript JSON. The final scan covers more than 8,000 text files and rejects literal, escaped and HTML-encoded em dashes. Binary image, disk and WASM data are not altered as if they were text. Future transcriber output normalizes the same punctuation in full text, segments and word records. Stored SHA-256 values were refreshed for the two normalized JSON transcripts so integrity checks continue to recognize them.
+
+## Native TOOM follow-up
+
+Validated locally on 2026-11-12. The Games window's TOOM is now this site's own HolyC game in games/Toom, not the port pinned above. It installs as 80 files (29,265,906 bytes) into C:/Home/TOOM through the same verified installer as every other package, with the unmodified Freedoom 0.13.0 Phase 1 IWAD, its COPYING.txt and CREDITS.txt from games/upstream/Freedoom. `node tools/toom/Assets.mjs` downloads the release ZIP and checks all three files against it.
+
+| Check | Result |
+|---|---|
+| Games window, Chromium, local server | E1M1 HUD 11.6 s after Run in TempleOS; the 3D view changes 18.8 times a second turning, 19.3 walking |
+| Intermission art against Freedoom's lumps (QEMU) | 421 screens, no bad pixels |
+| Intermission under exhausted memory (QEMU) | 271 cases, 265 faults caught, none bad |
+| Play, finale play and play-time allocation (QEMU) | 18, 21 and 675 cases, none bad |
+
+TOOM has no save games, fuzz or light effects, intermission music or title menu yet, and runs at about 20 frames a second in the browser.

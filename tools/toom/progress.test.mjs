@@ -22,12 +22,12 @@ if(backend==='qemu') {
   const result=await QemuRun([Buffer.from(source,'latin1')],{files,timeout:180});
   console.log(JSON.stringify({...result,sourceSha256,assetHashes},null,2));
   assert.equal(result.results[0].except,'');assert.doesNotMatch(result.results[0].out,/WARNING/);
-  assert.match(result.results[0].out,/PROGRESS 8 CASES HASH 2145702326 BAD 0/);
+  assert.match(result.results[0].out,/PROGRESS 8 CASES HASH 2903551559 BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen built runtime.');
   const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'tools/hemu/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
-  for(const f of [...files,{name:'PROGRESS.HC',bytes:Buffer.from(source+"\nif (!tm_progress_done || tm_progress_cases!=8 || tm_progress_hash!=2145702326) throw('Count');\n",'latin1')}]) {
+  for(const f of [...files,{name:'PROGRESS.HC',bytes:Buffer.from(source+"\nif (!tm_progress_done || tm_progress_cases!=8 || tm_progress_hash!=2903551559) throw('Count');\n",'latin1')}]) {
     const id=h.gx.writeFile({path:'C:/ORACLE/'+f.name,bytes:f.bytes});
     for(let i=0;i<4000&&!['done','failed','error'].includes(h.gx.status(id)?.state);i++)await h.Run();
     assert.equal(h.gx.status(id)?.state,'done',JSON.stringify(h.gx.status(id)));

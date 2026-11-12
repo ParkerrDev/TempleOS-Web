@@ -48,7 +48,7 @@ export const GAMES = [
   { name: "CharDemo",      disk: "C:/Home/Games/TinkerOS/CharDemo.HC", packageId: "tinker-CharDemo",      blurb: "A character-set and font demo." },
   { name: "Digits",        disk: "C:/Home/Games/TinkerOS/Digits.HC", packageId: "tinker-Digits",        blurb: "A rainbow-digits graphics demo." },
   { name: "Stadium", disk: "C:/Home/Games/TinkerOS/Stadium/Stadium.HC", packageId: "tinker-Stadium", blurb: "A stadium ball game with the original sprite background." },
-  { name: "TOOM", disk: "C:/Home/TOOM/BrowserStart.HC", packageId: "toom", blurb: "The DOOM engine in TempleOS, bundled with Freedoom.", how: "TOOM may take a minute or two to open. Wait for its menu, then choose New Game, episode and difficulty. WASD or arrows move, mouse looks, left click fires, Space opens doors, Tab opens the map." },
+  { name: "TOOM", disk: "C:/Home/TOOM/Run.HC", packageId: "toom", blurb: "A DOOM engine written in HolyC, with Freedoom's first episode.", how: "Arrows turn and move · W/S move, A/D strafe · Ctrl fires · Space opens doors and switches · Shift runs · number keys pick a weapon · P pauses" },
 ];
 GAMES.push(...EXTRA_GAMES);
 const featured=['HolyCraft','TOOM','Babel','Volley','Snake'];

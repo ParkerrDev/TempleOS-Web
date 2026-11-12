@@ -103,7 +103,7 @@ for (const text of deh.split('\n')) {
   changes.push({frame,field:field[1],column,from:states[frame][column],to:value});
   states[frame][column]=value;
 }
-assert.equal(changes.length,version==='0.13.0'?7:5);
+assert.equal(changes.length,7);
 const header=Buffer.alloc(32);
 header.write('TMST');header.writeUInt32LE(3,4);
 [states.length,actors.length,sprites.length,actions.length,sounds.length,random.length]
