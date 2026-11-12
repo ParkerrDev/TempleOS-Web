@@ -26,8 +26,8 @@ function Run(path,env={}) {
   if(r.status!==0)process.exit(r.status||1);
   count++;
 }
+Run("engine/build.mjs");
 for(const path of quick)Run("tools/hemu/"+path);
-if(args.has("--full")||args.has("--desktop"))Run("engine/build.mjs");
 if(args.has("--full"))for(const path of full)Run("tools/hemu/"+path);
 if(args.has("--full"))for(const path of ["worker-legacy-fault.test.mjs","worker-snapshot.test.mjs"])
   Run("tools/hemu/"+path,{HEMU_BUS_PROTOCOL:"1"});
