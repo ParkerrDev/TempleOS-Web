@@ -125,16 +125,69 @@ try {
       assert.equal(await reopen.isVisible(),false);
       await page.locator("#guide .close").click();
       assert.equal(await page.locator("#terryWin").isVisible(),true,"closing Help leaves Terry visible");
+      await page.evaluate(function () {
+        const play=HTMLMediaElement.prototype.play;
+        window.eggSays=[];
+        HTMLMediaElement.prototype.play=function () {
+          if (!this.src.endsWith(".mp3"))
+            return play.call(this);
+          window.eggSays.push(this.src.split("/").pop());
+          return Promise.resolve();
+        };
+      });
+      const says=()=>page.evaluate(()=>window.eggSays.join());
+      for(let n=0;n<5;n++)await page.locator("#terrySprite").click();
+      const egg=page.locator("#terryEgg"),parrots=egg.locator(".egg-parrot");
+      await egg.waitFor();
+      assert.deepEqual(await egg.evaluate(function (e) {
+        const r=e.getBoundingClientRect();
+        return [e.parentElement==document.body,getComputedStyle(e).position,
+          r.left,r.top,r.width==innerWidth,r.height==innerHeight];
+      }),[true,"fixed",0,0,true,true],"the egg covers the whole page");
+      assert.equal(await egg.locator(".egg-sound").count(),0,"the voice has no switch");
+      assert.equal(await says(),"bird.mp3","the voice plays from the start");
+      assert.equal(await parrots.count(),6,"a flock of parrots");
+      const flight=()=>parrots.first().evaluate(e=>new DOMMatrix(getComputedStyle(e).transform).e);
+      const x0=await flight();
+      await page.waitForTimeout(250);
+      assert.notEqual(await flight(),x0,"the parrots fly across the page");
+      await parrots.first().evaluate(e=>e.click());
+      const glowie=egg.locator(".egg-glowie");
+      await glowie.waitFor();
+      await page.waitForFunction(()=>!document.querySelector("#terryEgg .egg-parrot"),null,{timeout:8000});
+      for (const [n,file] of [[1,"sniper"],[2,"trio-seal"],[3,""]]) {
+        await glowie.evaluate(e=>e.click());
+        await page.waitForFunction(function (file) {
+          const g=document.querySelector("#terryEgg .egg-glowie");
+          return file?g.querySelector("img")?.src.endsWith(file+".webp"):!!g.querySelector("video");
+        },file);
+        assert.match(await egg.locator(".egg-label").innerText(),new RegExp(n+" of 4"));
+      }
+      assert.equal(await glowie.locator("video source").first().getAttribute("src"),
+        "./assets/glowies/cia.webm","the Tenor clip is the last glowie");
+      assert.equal(await glowie.locator("video").evaluate(v=>v.muted),true);
+      await glowie.evaluate(e=>e.click());
+      await egg.locator(".egg-finale").waitFor();
+      assert.match(await egg.locator(".egg-label").innerText(),/complete/);
+      assert.equal(await says(),"bird.mp3,shut-up-bird.mp3,glowie.mp3,glowie.mp3,"+
+        "glowie.mp3,glowie.mp3");
+      await egg.locator(".egg-close").click();
+      assert.equal(await egg.count(),0,"Close takes the egg off the page");
       await page.emulateMedia({reducedMotion:"reduce"});
       for(let n=0;n<5;n++)await page.locator("#terrySprite").click();
       const actor=page.locator("#terryEgg .egg-actor");
       await actor.waitFor();
-      assert.equal(await page.locator("#terryEgg .egg-sound").getAttribute("aria-pressed"),"false");
       assert.equal(await actor.innerText(),"PARROT");
       assert.equal(await actor.locator("img").count(),0);
       await actor.focus();await page.keyboard.press("Enter");
-      assert.equal(await actor.getAttribute("aria-label"),"Catch the glowie");
+      const still=page.locator("#terryEgg .egg-glowie");
+      assert.equal(await still.getAttribute("aria-label"),"Catch the glowie");
+      assert.equal(await still.evaluate(e=>e==document.activeElement),true,
+        "the keyboard stays in the game");
       for(let n=0;n<3;n++)await page.keyboard.press("Enter");
+      assert.equal(await still.locator("video").count(),0,"no clip without motion");
+      assert.equal(await still.locator("img").getAttribute("src"),"./assets/glowies/cia.webp");
+      await page.keyboard.press("Enter");
       assert.match(await page.locator("#terryEgg .egg-label").innerText(),/complete/);
       await page.locator("#terryWin .close").click();
       assert.equal(await page.locator("#terryEgg").count(),0);

@@ -21,7 +21,8 @@ const MIME={".html":"text/html; charset=UTF-8",
   ".css":"text/css; charset=UTF-8",".txt":"text/plain; charset=UTF-8",
   ".json":"application/json",".wasm":"application/wasm",".png":"image/png",
   ".svg":"image/svg+xml",".jpg":"image/jpeg",".ttf":"font/ttf",
-  ".woff2":"font/woff2",".gif":"image/gif",".mp3":"audio/mpeg"};
+  ".woff2":"font/woff2",".gif":"image/gif",".mp3":"audio/mpeg",
+  ".webp":"image/webp",".mp4":"video/mp4",".webm":"video/webm"};
 const CACHE_DFT="public,max-age=0,must-revalidate";//Netlify's own
 
 function PatRegExp(pat)

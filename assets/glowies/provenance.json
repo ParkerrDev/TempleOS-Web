@@ -1,0 +1,37 @@
+{
+  "note": "The CIA glowies of the Terry easter egg (TerryEggs.js). The pictures were supplied by the site's owner; their backgrounds were cut away to transparency. The clip is the Tenor post below, cropped to the glowie so the editor's watermark is gone.",
+  "files": {
+    "glowie.webp": {
+      "source": "owner-supplied picture: one glowie in a CIA cap, on black",
+      "sha256": "9646dbc8e4a4159d36189ff22ef55b338923ce4e624889f5242e9fc4964fafc1"
+    },
+    "sniper.webp": {
+      "source": "owner-supplied picture: a glowie behind a sniper scope, on green",
+      "sha256": "bc35c6956efda4f278e43ce300a6af809092a80ff70b9a03c93b93f06a52c984"
+    },
+    "trio-seal.webp": {
+      "source": "owner-supplied picture: three glowies before the CIA seal, on black",
+      "sha256": "9874cdda5fd3157259bad3a55b47a70a0d31d016a3eddd00394acd363bdaec90"
+    },
+    "trio-smoke.webp": {
+      "source": "owner-supplied picture: three glowies in green smoke",
+      "sha256": "25b90c893dc54132346ee9052d44bb95afe99d9ca19377fd2794337982a1739e"
+    },
+    "cia.mp4": {
+      "source": "https://media.tenor.com/G6SVtbWGUAAAAAPo/cia-the-simpsons.mp4",
+      "page": "https://tenor.com/view/cia-the-simpsons-glowie-meme-memes-2023-gif-1991881542871699456",
+      "edit": "crop=336:272:32:0, no audio",
+      "sha256": "1a161b99e3ced09bb45c09bca5c59510f1751ffffc3297f752ab17e83d9cafff"
+    },
+    "cia.webm": {
+      "source": "https://media.tenor.com/G6SVtbWGUAAAAAPo/cia-the-simpsons.mp4",
+      "page": "https://tenor.com/view/cia-the-simpsons-glowie-meme-memes-2023-gif-1991881542871699456",
+      "edit": "crop=336:272:32:0, VP9, no audio",
+      "sha256": "6c051431dbb5c780984fd71a19f62b828ca779e80aaf6c99f1bc88794b3ed6af"
+    },
+    "cia.webp": {
+      "source": "frame 5 of cia.mp4, the clip's poster",
+      "sha256": "854638cab549cae2bdb37d29c0c8ee20a64441efb4822ce08052ddacc34e2d3a"
+    }
+  }
+}
