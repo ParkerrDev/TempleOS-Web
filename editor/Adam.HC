@@ -3,6 +3,9 @@
 //The first SettingsPush starts the window manager, so a program that never
 //calls it keeps the browser's own drawing.
 
+#define WINMGR_FPS	120 //TempleOS draws 30000.0/1001 times a second. At
+//twice a 60 Hz display no frame misses its beat, and 120 Hz gets every one.
+
 CTask *win_mgr_task;
 
 public Bool AutoComplete(Bool val=OFF)
@@ -111,15 +114,18 @@ public U0 SettingsPop(CTask *task=NULL,I64 flags=0)
 }
 
 U0 WinMgrTask(I64)
-{//Like $LK,"WinMgrTask",A="MN:WinMgrTask"$, calls the window's draw_it 30 times a second.
+{//Like $LK,"WinMgrTask",A="MN:WinMgrTask"$, calls the window's draw_it WINMGR_FPS times a second.
 //WinHostDraw is the browser compiler's: it gives draw_it a fresh alias.
   CTask *task=Fs->parent_task;
+  F64 next=tS;
   while (TRUE) {
     if (task->draw_it) {
       DCFill(gr.dc,task->text_attr>>4);
       WinHostDraw(task,gr.dc);
       Refresh;
     }
-    Sleep(33);
+    next+=1.0/WINMGR_FPS;
+    if (next<tS) next=tS; //A late frame is dropped, not caught up.
+    Sleep(1000*(next-tS));
   }
 }
