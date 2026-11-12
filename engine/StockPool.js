@@ -15,7 +15,9 @@ export function StockPoolStart()
     return res;
   try {
     for(let i=0;i<n;i++) {
-      const w=new Worker(new URL("./StockInflateWorker.js",import.meta.url),{type:"module"});
+      //Each helper has a URL of its own: the browser revalidates one URL at a
+      //time, so five requests for one file come one after another.
+      const w=new Worker(new URL("./StockInflateWorker.js?"+i,import.meta.url),{type:"module"});
       w.failed="";
       w.onerror=e=>{e.preventDefault?.();w.failed=e.message||"an inflate thread failed";w.Done?.();};
       res.push(w);
