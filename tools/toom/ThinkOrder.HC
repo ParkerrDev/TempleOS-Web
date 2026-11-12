@@ -52,16 +52,9 @@ U0 TmOrderStep(I64 kind,I64 n)
   }
 }
 
-Bool TmOrderMotion(Motion *,Actor *actor)
+U0 TmOrderActor(Motion *,Actor *actor)
 {
-  return actor->active;
-}
-
-Bool TmOrderActor(GameData *,Actor *actor,U0 (*action)(Actor *,I64))
-{
-  no_warn action;
-  TmOrderStep(TM_THINK_ACTOR,actor->spawn);
-  return actor->active;
+  if (actor->active) TmOrderStep(TM_THINK_ACTOR,actor->spawn);
 }
 
 U0 TmOrderMover(Sectors *,Mover *mover)

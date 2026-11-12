@@ -1,0 +1,966 @@
+{
+  "claim": "Native nightmare respawn with source-derived original-C semantics and bounded native/HEMU thinker, collision and authored-spawnpoint coverage.",
+  "sourceFiles": {
+    "Build.HC": "6d868a83826f3cf1ac52984977ee8806074f4a7c32c60b3170f0f8ff0039702f",
+    "RunBin.HC": "4565414f117be4c2d5b681bca497d044bd081d2afc3ecdd9afa13435ba162fd5",
+    "Toom.PRJ": "a6593828be69f2b6d5047136a9801e0460372f7d6844eac850727ae4750fe37d",
+    "Native.HH": "e80548dbfb4d0cb8a7ec50927c8488c15ec126fe6d08fb70010b78723167f55f",
+    "Load.HC": "b1b3c8c01fd1dce0a3a1de540c5469c36ce8d444aa2031146e660a9fb0e0038d",
+    "TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+    "TmWad.HC": "85463df0ecb634f6a74cc1a1cdeef9ff62c35c4e02a34b368326ba53ac1887d0",
+    "TmStory.HC": "f5cdd86de9d8048a96989bb537e0352c94c7b92ba451531b72a86be6d5ef3b9a",
+    "TmMap.HC": "7b096f40305398fa6114c76788b158dc7c912348469cabe56393258f4abc5069",
+    "TmGr.HC": "dcf3bfd9e476ba620d1479658410ee72c75e0599e96a8bf171df1b9dbdf7bc8e",
+    "TmTex.HC": "1058c3d88663bfd5d511ceef1ca99ccbfa356465405fb58adf7b77e8e5968807",
+    "TmAnim.HC": "88bacb84b0802181b51c5efe643415c5690b0c9babad2064f44c79608085c504",
+    "TmData.HH": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+    "TmClip.HC": "22fbb94fca32b0f1b19bde07c591c088cf2324fd129ace1df060ca90cc09f55b",
+    "TmState.HC": "0a7e57036b0d51d5a153e5cf0a8ffa76ac9f2d70061c48e429a0865899b12fdb",
+    "TmMath.HC": "5da8d9243d01fcae7afc35858f1d17586d5addcadef1dad7052c4a86e5f684cf",
+    "TmWorld.HC": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+    "TmContact.HC": "b8e15824529b0dafb7abf11164a53795c06759e07b1265f6abecce8602c8ed08",
+    "TmMove.HC": "d7235b8aa67b4eb72ca08c1b21d64ff56257c51314374a3523962b9bcffc18dd",
+    "TmPath.HC": "1897a4cc6c617a93f1556344111dabd4cb2247e3d3550c1102c841debe31eef4",
+    "TmSlide.HC": "e7ea0760e058b1d12c474bc135d4466c71ecfe5d5482ba5a6f23c6a7dd5e3da1",
+    "TmPlayer.HH": "ee536c8b0ceb057e3dda7e7320eb33520741d5d54487bb312f803ad7513cc8cf",
+    "TmMotion.HC": "d478a24beda3de1bb61756869d95df4d3952f97a89168b9a08c4831544a9f4ee",
+    "TmAttack.HC": "146737ee26c29ca330eb1b583f4e7131c1cd3580c4ca355610cd02f58d68802d",
+    "TmDamage.HC": "56e1d56ea69609cdcd34c7b5c22694367643cf51f8cd9cb0d72272522a1ab5bd",
+    "TmItems.HC": "4f265fd533b2e7820e6fb939517ad9ab5a5e3a7a8f7f8abd548494649ec448d3",
+    "TmTouch.HC": "b589423b0ea307643655babf3e8861ded6f2c837d5c99c17273d2a768dc3a53c",
+    "TmImpact.HC": "bfe59592e58dff4e799cd93f3db7937bf02d2fa9cf1fc1046d4b860f4f42acb9",
+    "TmWeapon.HC": "2904054222cc7f8bbf19307da47dac9c16e8a8bb5768bd56b17ce1e95733189c",
+    "TmPlayer.HC": "8260fa3085ce6ec002872269c244456eeda5315cc35ece10708f9830ef9eb449",
+    "TmSight.HC": "dba548702f1a63870416251da4473277a82de0a8e3670309a394e37b53569461",
+    "TmBlast.HC": "197e0c23bb1612d510e0c7094f33bf1162fea98aa1471dd83eca3bb424e1fb4f",
+    "TmSector.HC": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+    "TmDoor.HC": "ce49864f381d55361788f5efdc070fc377e2b4178f629856f7db74118c612a6a",
+    "TmFloor.HC": "b86eaee35d5a448c722f063c651f61c2ba3f4160637dda2af13c6084968fa00a",
+    "TmPlat.HC": "e9541607e935b3f43a3cc0b36d5d79a7ed51849efdb78e5e75d5bf973802bff3",
+    "TmCeil.HC": "13ce4bc669f4deec87c82d09bb08bb4ef75f623c8da7131f4eb66014ecb15379",
+    "TmTeleport.HC": "04efd4b10193f52d767883a0decf0e9176e0ff0213af184153b081b6bd7c8f36",
+    "TmSwitch.HC": "a158dd8d290558945063ec3d0a6678817335d0d59cbab323f9f303499285aee9",
+    "TmLight.HC": "18751745beb55e970363df09f8e03a0979e1eb66fe8e8efe835f10cbad754850",
+    "TmHazard.HC": "b69bdffac3c4a9394fcf757339ee6a7c915f27946b881e2b25a5673f04a8603e",
+    "TmSpecial.HC": "44a5ef52acf0022dc580e5cb90e9cb3747def44e890a5aa985db90d2fbfe615b",
+    "TmRespawn.HC": "363a89ca4ef58cbd88e1aee2b67a9974a1782af3bf5850c7dfd3c83edbbde988",
+    "TmTick.HC": "fdb775719b978814ba541a5bf597f64826a7383636283e557bfb1b969a6a511f",
+    "TmEnemy.HC": "332464bcf40c7c8f07dd9fb3776f744659cd3906662848067064b0ab069957b8",
+    "TmChase.HC": "c3a53ed3ddae5f1c05a5df3851c194ada85027d81f32acff6df6e1230bdcbc7b",
+    "TmCombat.HC": "069bf282d4ba8ca9faf69c10acbba6f8cf3e578a67fdd118142de7742f89a963",
+    "TmVile.HC": "bde6455466b79fcbc10369df53b60ad5eb96a20ff72bbbe769e5705fc85c64de",
+    "TmBoss.HC": "0892a31e7c65ee6f31f3b497e940721b800b5d126a518d97ad360383113c62f7",
+    "TmBrain.HC": "605e90147315d888f9d6493cdc8f65092e24f79fd24d96c3306d3d05fa105554",
+    "TmEffect.HC": "cdfd0f26beff5f99eeb609ee2d0820472cda0d91f6121a345529dd87071ab80b",
+    "TmActions.HC": "ae3bff931d7431a5c8cc9a993275114dc99cbb931670356846f4a940eabc57bb",
+    "TmPal.HC": "657c0c69082fad07cffe9b8800abf1d12df8eaa7603efa04dd62144b6142651f",
+    "TmDraw.HC": "89ff3d412fe95123e136228916792b84b0bf6d841f5d6b0c628a3f77569f174e",
+    "TmMask.HC": "49be08c8e34a92fad7989e3a28672f26fac33877ac2fe212cba2174f1252a33a",
+    "TmSprite.HC": "d3f27d4b403a7c554cb0608665b1606e302b686087290441d0be131e2a8905c6",
+    "TmLevel.HC": "2468d9920c55a7af7ffd69abcadd5774391ccd35ed9b6d95eb48c4ff06a89846",
+    "TmIntermission.HC": "eb6720e9d3422ec27a7f57f60a2c184a0c986ff65c162410c1cc3053dc26fe0e",
+    "TmFinale.HC": "cec0b0a9729b659b90162ef88340bcba339562540b415c7d8f4b50efc01d279a",
+    "TmFinaleGr.HC": "39dd13058ff0e60cfdc3209a97494e5563f885a06ef1fdc60ede1d1d6eacb52e",
+    "TmCast.HC": "d414747eacaca31d2689a8f072f1517519e21af74d6b52a0d5ba1fcb9a3bf132",
+    "TmCastGr.HC": "c1a5cec798eb95342da11d6595a8d154e422c246d6f5d81b4a1c219ade9dac74",
+    "TmInput.HC": "5589178e7cd8c3a1884c5e5250adc73812691fa8d32cba4e0a380707f55a2ee9",
+    "TmSnd.HC": "38d7d1cafdf87131a6b89953b32b1b836dba6fa7fbd26c0354ed80ad877db197",
+    "TmSpeaker.HC": "f314bc4fc7022c0e3aef4081e63961aebe80f324c2847c84891871eb35907021",
+    "TmSoundBank.HC": "7b0bc8790f30bd00579a7f53e305d62f8a9d1e65785365c263862f4894260d01",
+    "TmSoundData.HH": "71ca3a12ea1acacaadbe9ff97046511422aced00972eb093a4a0e23bab319b7c",
+    "TmAudio.HC": "ee93c78b6c173389f25bfa7c4f047c0a52cf427344fcee8b0616c7f68c530fd7",
+    "TmSoundScene.HC": "94f3aff023f520f08577652d703f0ffde75171be5ebee790bd0194ec6df7af9a",
+    "TmOverlay.HC": "6f4adb56ed7b326a0e6548be673489713c2e58d047689f79072f2fd677a8feca",
+    "TmScreen.HC": "54386654b6eaa3aab7a8f4a8087e59eb989aefdad5d23cd365c2959857e77aa7",
+    "TmPlay.HC": "242a792c70a73374de8971498b16fc90b68d12a0bf878460af4bea08bd6be31e"
+  },
+  "fixtureFiles": {
+    "Respawn.HC": "22ca25f1a46af116f36640a072cfde0cdb782c857bd878b5a499f943110eead7",
+    "RespawnDecisions.HC": "6c165f5c93e352afefe6cedc49ebeb2720c6edcea99f9be786543c0e219c0da2",
+    "RespawnMaps.HC": "6ea51b2d2fb1f2ce4952d6995d7e70da54b8bd9e929b2fb8bd90f1ae712fdcf4",
+    "RespawnProbe.HC": "f053b00bc56ee1819c799cb4a57e3c63db042909800f3956fdb451bd9609323e",
+    "RespawnRef.mjs": "2f27e19eaf7e8400e256c36057f59755bd29fbbc2f81a9eac4a16c20ad564d90",
+    "respawn.test.mjs": "0f79cbd33f75e000b236f992f1ae47c6763109b1f16a389be79c41ec654b16b4",
+    "respawn-decisions.test.mjs": "b3bad79936bb3fda657c92eb0c4fab53e8592467696c55dfdc0fd7a36ef2fd19",
+    "respawn-maps.test.mjs": "50d0ab63ff594fb87b50c08720b422f354e3fb29d873f39913a8b759fae6f353",
+    "ThinkOrder.HC": "e9d987606a15918a9e57baee5c3db2740d095cdb6d610e63342b1183704243c6",
+    "think-order.test.mjs": "76fe3a7ca70e08f5734b74b6764ee81adc84a21c673cac399202aa36c559ceb7",
+    "ThinkRef.mjs": "f8d4d5814ecfd5d4ddd7fa27d2209b4ba9a2918652bfb3869fc9bf8e0c5d0748",
+    "Rooms.HC": "b38dcb9303604f9ac1b6718ecfd2eb72998e1a9b42adaa5d7c9978ff41a2461c"
+  },
+  "runtime": {
+    "web": "09109b0fbcd521f4a4e9d54a381e4280bc26decb",
+    "compiler": "d0e394e3d79f73990168d88cf937f5bc55832f93",
+    "hemu": "0eff35b30dc9fadf49569c99c889b78f37dfdda7",
+    "path": "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/integration/toom-web-09109b0",
+    "hashes": {
+      "engine/jit.js": "a30c31a090bb0cc79e26736814227fe12788dd7192d8609a2f3bf705274214a0",
+      "engine/hemu-worker.js": "0a760df45cf0697deda5a9c140bfb565320e3f5fef8cda5adb2f088b5b39b6a8",
+      "engine/hemu-smp-worker.js": "73a4192ed24c254c84d5117a46f43bbf5f40d277fa90653a22e5912f2a3f5d53",
+      "engine/guestexec.js": "dcdd39026889418506cadfa96654b55d4e67ada171a789029419784408d7a726",
+      "engine/guestinput.js": "7b2cc55fe61d63d9fec4c6129c58c85ed5d0fd1e2f757419e50b10940a82a3f2",
+      "engine/KeyQueue.js": "769df85ef4dbc5614517b1944c2fc7f7b5f242125ecea1c87b4bcacb9d0f8913",
+      "tools/hemu/WorkerHost.mjs": "a1ef452058b569db660732d078eed93b4d89cb1d1a3407899613b1c3b93e3437",
+      "tools/hemu/WorkerShim.mjs": "1eb8de631fc22bdb1480c988f7b5c684e343dc28be858c24a7207e1ca200d61e",
+      "hemu/live.bin.gz": "42db6570ffd1610ea2a39a60dd59e63095c60ac39610350a649c5671528a449a",
+      "hemu/live-smp.bin.gz": "97269db25c5f9e232f042decde6a6574ea992e625130aaca77d2f1ddabfd3973",
+      "hemu/stock.json": "fce58673729385cbe119f9307277ab646edb59239c1a77eb1bcae3b2d1c1856b",
+      "hemu/stock.disk": "032751a6b626aea216ab9d675d2b404f27a5e9f61261903cec8b6ea792d964a8",
+      "hemu/stock-smp.disk": "9079d2238b708e0fa168558e1fa1a5bed703e35c4f89e4e1fd0698a7330ee327",
+      "engine/Stock.js": "d721d929121e69c20bc05eb5cf8a1b214cad7b95ec697536b3067d585ecaeca4",
+      "vendor/images/templeos-hd.qcow2.gz": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
+    },
+    "singleSha256": "b42a81161261cc85907bf63e727110f60a7b463ed410e09fb31cce46216dcc7c",
+    "smpSha256": "1b38a0d67faabf2f9c2cc4f0343c87d5686e55f6b53d187c7399cbf6fd5ef2b5"
+  },
+  "referenceCompiler": "cc (GCC) 16.2.1 20260810",
+  "referenceFlags": [
+    "-std=c99",
+    "-O2",
+    "-fwrapv",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-Wno-misleading-indentation"
+  ],
+  "reports": {
+    "decisionsNative": {
+      "results": [
+        {
+          "out": "RESPAWN 3034 DECISIONS BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-3silbjti",
+      "sourceSha256": "f94ea7f4dd34a719572b7ffbd3c2bc0e4bf80d6fe927be3d02f23e2eda5a61e3",
+      "fixtureSha256": "9e4eb20f2d480911a6856bea1124eb3b2d522005f467c4b60a40479c3996dc0c",
+      "reference": {
+        "path": "linuxdoom-1.10/p_mobj.c",
+        "sha256": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f",
+        "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+        "generatedSha256": "a7976e5801d6a597fb95ec4546248d825034fc363f0327b1b42575d89b2ee6ac",
+        "cc": "cc"
+      },
+      "cases": 3034
+    },
+    "decisionsHemu": {
+      "backend": "hemu",
+      "sourceSha256": "f94ea7f4dd34a719572b7ffbd3c2bc0e4bf80d6fe927be3d02f23e2eda5a61e3",
+      "fixtureSha256": "9e4eb20f2d480911a6856bea1124eb3b2d522005f467c4b60a40479c3996dc0c",
+      "reference": {
+        "path": "linuxdoom-1.10/p_mobj.c",
+        "sha256": "21a39bdbd746d6fba38660500203216052f0723b8e0ab033ce2a650ada2b403f",
+        "revision": "a77dfb96cb91780ca334d0d4cfd86957558007e0",
+        "generatedSha256": "a7976e5801d6a597fb95ec4546248d825034fc363f0327b1b42575d89b2ee6ac",
+        "cc": "cc"
+      },
+      "cases": 3034,
+      "bad": 0
+    },
+    "integrationNative": {
+      "results": [
+        {
+          "out": "RESPAWN 12 REAL CASES BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-2uy_f_ng",
+      "sourceSha256": "837c1234189089e7d4f7c976d872c11818cd00e43ad8a7690ba0ed1ba1df83be"
+    },
+    "integrationHemu": {
+      "backend": "hemu",
+      "sourceSha256": "837c1234189089e7d4f7c976d872c11818cd00e43ad8a7690ba0ed1ba1df83be",
+      "cases": 12,
+      "bad": 0
+    },
+    "mapsNative": {
+      "results": [
+        {
+          "out": "RESPAWN MAP 0 MONSTERS 46 REPLACED 46 BLOCKED 0 HASH 2572845295\nRESPAWN MAP 1 MONSTERS 123 REPLACED 122 BLOCKED 1 HASH 1800726336\nRESPAWN MAP 2 MONSTERS 147 REPLACED 146 BLOCKED 1 HASH 2480099330\nRESPAWN MAP 3 MONSTERS 164 REPLACED 164 BLOCKED 0 HASH 4115194592\nRESPAWN MAP 4 MONSTERS 147 REPLACED 147 BLOCKED 0 HASH 3601812963\nRESPAWN MAP 5 MONSTERS 270 REPLACED 263 BLOCKED 7 HASH 3402078995\nRESPAWN MAP 6 MONSTERS 277 REPLACED 275 BLOCKED 2 HASH 2436976018\nRESPAWN MAP 7 MONSTERS 4 REPLACED 4 BLOCKED 0 HASH 2442801525\nRESPAWN MAP 8 MONSTERS 125 REPLACED 125 BLOCKED 0 HASH 1343130537\nRESPAWN MAP 9 MONSTERS 84 REPLACED 84 BLOCKED 0 HASH 1280117292\nRESPAWN MAP 10 MONSTERS 37 REPLACED 37 BLOCKED 0 HASH 1306843729\nRESPAWN MAP 11 MONSTERS 81 REPLACED 81 BLOCKED 0 HASH 880048379\nRESPAWN MAP 12 MONSTERS 147 REPLACED 147 BLOCKED 0 HASH 1129380158\nRESPAWN MAP 13 MONSTERS 158 REPLACED 158 BLOCKED 0 HASH 1194655364\nRESPAWN MAP 14 MONSTERS 144 REPLACED 141 BLOCKED 3 HASH 3914013912\nRESPAWN MAP 15 MONSTERS 256 REPLACED 256 BLOCKED 0 HASH 815354036\nRESPAWN MAP 16 MONSTERS 2 REPLACED 2 BLOCKED 0 HASH 1891106116\nRESPAWN MAP 17 MONSTERS 169 REPLACED 169 BLOCKED 0 HASH 2714395255\nRESPAWN MAP 18 MONSTERS 28 REPLACED 28 BLOCKED 0 HASH 380071694\nRESPAWN MAP 19 MONSTERS 58 REPLACED 58 BLOCKED 0 HASH 3864535023\nRESPAWN MAP 20 MONSTERS 164 REPLACED 163 BLOCKED 1 HASH 1484907228\nRESPAWN MAP 21 MONSTERS 133 REPLACED 131 BLOCKED 2 HASH 2627130638\nRESPAWN MAP 22 MONSTERS 161 REPLACED 157 BLOCKED 4 HASH 1551050053\nRESPAWN MAP 23 MONSTERS 56 REPLACED 55 BLOCKED 1 HASH 3623815271\nRESPAWN MAP 24 MONSTERS 157 REPLACED 157 BLOCKED 0 HASH 2524660489\nRESPAWN MAP 25 MONSTERS 35 REPLACED 35 BLOCKED 0 HASH 2098913177\nRESPAWN MAP 26 MONSTERS 160 REPLACED 160 BLOCKED 0 HASH 1877397257\nRESPAWN MAP 27 MONSTERS 145 REPLACED 142 BLOCKED 3 HASH 1989320116\nRESPAWN MAP 28 MONSTERS 412 REPLACED 389 BLOCKED 23 HASH 2052464477\nRESPAWN MAP 29 MONSTERS 265 REPLACED 263 BLOCKED 2 HASH 3220573249\nRESPAWN MAP 30 MONSTERS 211 REPLACED 201 BLOCKED 10 HASH 4066581930\nRESPAWN MAP 31 MONSTERS 239 REPLACED 218 BLOCKED 21 HASH 2556765799\nRESPAWN MAP 32 MONSTERS 301 REPLACED 280 BLOCKED 21 HASH 2016551809\nRESPAWN MAP 33 MONSTERS 563 REPLACED 533 BLOCKED 30 HASH 2659899556\nRESPAWN MAP 34 MONSTERS 135 REPLACED 133 BLOCKED 2 HASH 2641182830\nRESPAWN MAP 35 MONSTERS 439 REPLACED 415 BLOCKED 24 HASH 1387731360\nRESPAWN MAPS 36 BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-dxqgg0ms",
+      "sourceSha256": "b338bb74bcd1df1d32d9c11f882ce2b7b15d46951422d58ea09a14893503a268",
+      "assetHashes": {
+        "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f",
+        "MAPS.BIN": "8739f5acf22d8c57762df4486d2270f5895f88ad137f97745a2c18f5d951fb84"
+      },
+      "trace": [
+        [
+          0,
+          46,
+          46,
+          0,
+          2572845295
+        ],
+        [
+          1,
+          123,
+          122,
+          1,
+          1800726336
+        ],
+        [
+          2,
+          147,
+          146,
+          1,
+          2480099330
+        ],
+        [
+          3,
+          164,
+          164,
+          0,
+          4115194592
+        ],
+        [
+          4,
+          147,
+          147,
+          0,
+          3601812963
+        ],
+        [
+          5,
+          270,
+          263,
+          7,
+          3402078995
+        ],
+        [
+          6,
+          277,
+          275,
+          2,
+          2436976018
+        ],
+        [
+          7,
+          4,
+          4,
+          0,
+          2442801525
+        ],
+        [
+          8,
+          125,
+          125,
+          0,
+          1343130537
+        ],
+        [
+          9,
+          84,
+          84,
+          0,
+          1280117292
+        ],
+        [
+          10,
+          37,
+          37,
+          0,
+          1306843729
+        ],
+        [
+          11,
+          81,
+          81,
+          0,
+          880048379
+        ],
+        [
+          12,
+          147,
+          147,
+          0,
+          1129380158
+        ],
+        [
+          13,
+          158,
+          158,
+          0,
+          1194655364
+        ],
+        [
+          14,
+          144,
+          141,
+          3,
+          3914013912
+        ],
+        [
+          15,
+          256,
+          256,
+          0,
+          815354036
+        ],
+        [
+          16,
+          2,
+          2,
+          0,
+          1891106116
+        ],
+        [
+          17,
+          169,
+          169,
+          0,
+          2714395255
+        ],
+        [
+          18,
+          28,
+          28,
+          0,
+          380071694
+        ],
+        [
+          19,
+          58,
+          58,
+          0,
+          3864535023
+        ],
+        [
+          20,
+          164,
+          163,
+          1,
+          1484907228
+        ],
+        [
+          21,
+          133,
+          131,
+          2,
+          2627130638
+        ],
+        [
+          22,
+          161,
+          157,
+          4,
+          1551050053
+        ],
+        [
+          23,
+          56,
+          55,
+          1,
+          3623815271
+        ],
+        [
+          24,
+          157,
+          157,
+          0,
+          2524660489
+        ],
+        [
+          25,
+          35,
+          35,
+          0,
+          2098913177
+        ],
+        [
+          26,
+          160,
+          160,
+          0,
+          1877397257
+        ],
+        [
+          27,
+          145,
+          142,
+          3,
+          1989320116
+        ],
+        [
+          28,
+          412,
+          389,
+          23,
+          2052464477
+        ],
+        [
+          29,
+          265,
+          263,
+          2,
+          3220573249
+        ],
+        [
+          30,
+          211,
+          201,
+          10,
+          4066581930
+        ],
+        [
+          31,
+          239,
+          218,
+          21,
+          2556765799
+        ],
+        [
+          32,
+          301,
+          280,
+          21,
+          2016551809
+        ],
+        [
+          33,
+          563,
+          533,
+          30,
+          2659899556
+        ],
+        [
+          34,
+          135,
+          133,
+          2,
+          2641182830
+        ],
+        [
+          35,
+          439,
+          415,
+          24,
+          1387731360
+        ]
+      ]
+    },
+    "mapsHemu": {
+      "backend": "hemu",
+      "sourceSha256": "b338bb74bcd1df1d32d9c11f882ce2b7b15d46951422d58ea09a14893503a268",
+      "assetHashes": {
+        "FREEDOOM.WAD": "7323bcc168c5a45ff10749b339960e98314740a734c30d4b9f3337001f9e703d",
+        "TMDATA.BIN": "324b84a6aec37d174173ed031e28e8ccef2bed3b0834d91b7349309b79b0868f",
+        "MAPS.BIN": "8739f5acf22d8c57762df4486d2270f5895f88ad137f97745a2c18f5d951fb84"
+      },
+      "trace": [
+        [
+          0,
+          46,
+          46,
+          0,
+          2572845295
+        ],
+        [
+          1,
+          123,
+          122,
+          1,
+          1800726336
+        ],
+        [
+          2,
+          147,
+          146,
+          1,
+          2480099330
+        ],
+        [
+          3,
+          164,
+          164,
+          0,
+          4115194592
+        ],
+        [
+          4,
+          147,
+          147,
+          0,
+          3601812963
+        ],
+        [
+          5,
+          270,
+          263,
+          7,
+          3402078995
+        ],
+        [
+          6,
+          277,
+          275,
+          2,
+          2436976018
+        ],
+        [
+          7,
+          4,
+          4,
+          0,
+          2442801525
+        ],
+        [
+          8,
+          125,
+          125,
+          0,
+          1343130537
+        ],
+        [
+          9,
+          84,
+          84,
+          0,
+          1280117292
+        ],
+        [
+          10,
+          37,
+          37,
+          0,
+          1306843729
+        ],
+        [
+          11,
+          81,
+          81,
+          0,
+          880048379
+        ],
+        [
+          12,
+          147,
+          147,
+          0,
+          1129380158
+        ],
+        [
+          13,
+          158,
+          158,
+          0,
+          1194655364
+        ],
+        [
+          14,
+          144,
+          141,
+          3,
+          3914013912
+        ],
+        [
+          15,
+          256,
+          256,
+          0,
+          815354036
+        ],
+        [
+          16,
+          2,
+          2,
+          0,
+          1891106116
+        ],
+        [
+          17,
+          169,
+          169,
+          0,
+          2714395255
+        ],
+        [
+          18,
+          28,
+          28,
+          0,
+          380071694
+        ],
+        [
+          19,
+          58,
+          58,
+          0,
+          3864535023
+        ],
+        [
+          20,
+          164,
+          163,
+          1,
+          1484907228
+        ],
+        [
+          21,
+          133,
+          131,
+          2,
+          2627130638
+        ],
+        [
+          22,
+          161,
+          157,
+          4,
+          1551050053
+        ],
+        [
+          23,
+          56,
+          55,
+          1,
+          3623815271
+        ],
+        [
+          24,
+          157,
+          157,
+          0,
+          2524660489
+        ],
+        [
+          25,
+          35,
+          35,
+          0,
+          2098913177
+        ],
+        [
+          26,
+          160,
+          160,
+          0,
+          1877397257
+        ],
+        [
+          27,
+          145,
+          142,
+          3,
+          1989320116
+        ],
+        [
+          28,
+          412,
+          389,
+          23,
+          2052464477
+        ],
+        [
+          29,
+          265,
+          263,
+          2,
+          3220573249
+        ],
+        [
+          30,
+          211,
+          201,
+          10,
+          4066581930
+        ],
+        [
+          31,
+          239,
+          218,
+          21,
+          2556765799
+        ],
+        [
+          32,
+          301,
+          280,
+          21,
+          2016551809
+        ],
+        [
+          33,
+          563,
+          533,
+          30,
+          2659899556
+        ],
+        [
+          34,
+          135,
+          133,
+          2,
+          2641182830
+        ],
+        [
+          35,
+          439,
+          415,
+          24,
+          1387731360
+        ]
+      ],
+      "cases": 36,
+      "bad": 0
+    },
+    "thinkNative": {
+      "results": [
+        {
+          "out": "THINK 18 REAL CASES BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-5nrv_87s"
+    },
+    "playNative": {
+      "results": [
+        {
+          "out": "PLAY 18 CASES HASH 3858873714 BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-57a2lnhm",
+      "sourceSha256": "1e0655f38684198eec69092575d3cdb68e7e6d881155983c8c0cf615d3050681"
+    },
+    "thinkOrderNative": {
+      "results": [
+        {
+          "out": "THINK 324 CASES 2628 CALLS BAD 0\n",
+          "except": ""
+        }
+      ],
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-nriwnpj_"
+    },
+    "thinkOrderHemu": {
+      "backend": "hemu",
+      "cases": 324,
+      "calls": 2628,
+      "bad": 0
+    },
+    "build": {
+      "sourceFiles": {
+        "Build.HC": "6d868a83826f3cf1ac52984977ee8806074f4a7c32c60b3170f0f8ff0039702f",
+        "RunBin.HC": "4565414f117be4c2d5b681bca497d044bd081d2afc3ecdd9afa13435ba162fd5",
+        "Toom.PRJ": "a6593828be69f2b6d5047136a9801e0460372f7d6844eac850727ae4750fe37d",
+        "Native.HH": "e80548dbfb4d0cb8a7ec50927c8488c15ec126fe6d08fb70010b78723167f55f",
+        "Load.HC": "b1b3c8c01fd1dce0a3a1de540c5469c36ce8d444aa2031146e660a9fb0e0038d",
+        "TmGlbls.HH": "e0ed15ed9a5bfca16df8746706c7e1b45e382e815ea321d3ff6ae602f26d0c9d",
+        "TmWad.HC": "85463df0ecb634f6a74cc1a1cdeef9ff62c35c4e02a34b368326ba53ac1887d0",
+        "TmStory.HC": "f5cdd86de9d8048a96989bb537e0352c94c7b92ba451531b72a86be6d5ef3b9a",
+        "TmMap.HC": "7b096f40305398fa6114c76788b158dc7c912348469cabe56393258f4abc5069",
+        "TmGr.HC": "dcf3bfd9e476ba620d1479658410ee72c75e0599e96a8bf171df1b9dbdf7bc8e",
+        "TmTex.HC": "1058c3d88663bfd5d511ceef1ca99ccbfa356465405fb58adf7b77e8e5968807",
+        "TmAnim.HC": "88bacb84b0802181b51c5efe643415c5690b0c9babad2064f44c79608085c504",
+        "TmData.HH": "ea3cae881c8a9dfc9bc7a8c0a02c03c486684cfc5d70bb1473b1ca3ae63e6750",
+        "TmClip.HC": "22fbb94fca32b0f1b19bde07c591c088cf2324fd129ace1df060ca90cc09f55b",
+        "TmState.HC": "0a7e57036b0d51d5a153e5cf0a8ffa76ac9f2d70061c48e429a0865899b12fdb",
+        "TmMath.HC": "5da8d9243d01fcae7afc35858f1d17586d5addcadef1dad7052c4a86e5f684cf",
+        "TmWorld.HC": "5c1ecacdc23bfc3107d1f4a8c87200706f71316d1c07488207041ffc88b22ef0",
+        "TmContact.HC": "b8e15824529b0dafb7abf11164a53795c06759e07b1265f6abecce8602c8ed08",
+        "TmMove.HC": "d7235b8aa67b4eb72ca08c1b21d64ff56257c51314374a3523962b9bcffc18dd",
+        "TmPath.HC": "1897a4cc6c617a93f1556344111dabd4cb2247e3d3550c1102c841debe31eef4",
+        "TmSlide.HC": "e7ea0760e058b1d12c474bc135d4466c71ecfe5d5482ba5a6f23c6a7dd5e3da1",
+        "TmPlayer.HH": "ee536c8b0ceb057e3dda7e7320eb33520741d5d54487bb312f803ad7513cc8cf",
+        "TmMotion.HC": "d478a24beda3de1bb61756869d95df4d3952f97a89168b9a08c4831544a9f4ee",
+        "TmAttack.HC": "146737ee26c29ca330eb1b583f4e7131c1cd3580c4ca355610cd02f58d68802d",
+        "TmDamage.HC": "56e1d56ea69609cdcd34c7b5c22694367643cf51f8cd9cb0d72272522a1ab5bd",
+        "TmItems.HC": "4f265fd533b2e7820e6fb939517ad9ab5a5e3a7a8f7f8abd548494649ec448d3",
+        "TmTouch.HC": "b589423b0ea307643655babf3e8861ded6f2c837d5c99c17273d2a768dc3a53c",
+        "TmImpact.HC": "bfe59592e58dff4e799cd93f3db7937bf02d2fa9cf1fc1046d4b860f4f42acb9",
+        "TmWeapon.HC": "2904054222cc7f8bbf19307da47dac9c16e8a8bb5768bd56b17ce1e95733189c",
+        "TmPlayer.HC": "8260fa3085ce6ec002872269c244456eeda5315cc35ece10708f9830ef9eb449",
+        "TmSight.HC": "dba548702f1a63870416251da4473277a82de0a8e3670309a394e37b53569461",
+        "TmBlast.HC": "197e0c23bb1612d510e0c7094f33bf1162fea98aa1471dd83eca3bb424e1fb4f",
+        "TmSector.HC": "123f5c6cb936626d5d36696a76a824fa882f2045b50821756486245d124bc2d6",
+        "TmDoor.HC": "ce49864f381d55361788f5efdc070fc377e2b4178f629856f7db74118c612a6a",
+        "TmFloor.HC": "b86eaee35d5a448c722f063c651f61c2ba3f4160637dda2af13c6084968fa00a",
+        "TmPlat.HC": "e9541607e935b3f43a3cc0b36d5d79a7ed51849efdb78e5e75d5bf973802bff3",
+        "TmCeil.HC": "13ce4bc669f4deec87c82d09bb08bb4ef75f623c8da7131f4eb66014ecb15379",
+        "TmTeleport.HC": "04efd4b10193f52d767883a0decf0e9176e0ff0213af184153b081b6bd7c8f36",
+        "TmSwitch.HC": "a158dd8d290558945063ec3d0a6678817335d0d59cbab323f9f303499285aee9",
+        "TmLight.HC": "18751745beb55e970363df09f8e03a0979e1eb66fe8e8efe835f10cbad754850",
+        "TmHazard.HC": "b69bdffac3c4a9394fcf757339ee6a7c915f27946b881e2b25a5673f04a8603e",
+        "TmSpecial.HC": "44a5ef52acf0022dc580e5cb90e9cb3747def44e890a5aa985db90d2fbfe615b",
+        "TmRespawn.HC": "363a89ca4ef58cbd88e1aee2b67a9974a1782af3bf5850c7dfd3c83edbbde988",
+        "TmTick.HC": "fdb775719b978814ba541a5bf597f64826a7383636283e557bfb1b969a6a511f",
+        "TmEnemy.HC": "332464bcf40c7c8f07dd9fb3776f744659cd3906662848067064b0ab069957b8",
+        "TmChase.HC": "c3a53ed3ddae5f1c05a5df3851c194ada85027d81f32acff6df6e1230bdcbc7b",
+        "TmCombat.HC": "069bf282d4ba8ca9faf69c10acbba6f8cf3e578a67fdd118142de7742f89a963",
+        "TmVile.HC": "bde6455466b79fcbc10369df53b60ad5eb96a20ff72bbbe769e5705fc85c64de",
+        "TmBoss.HC": "0892a31e7c65ee6f31f3b497e940721b800b5d126a518d97ad360383113c62f7",
+        "TmBrain.HC": "605e90147315d888f9d6493cdc8f65092e24f79fd24d96c3306d3d05fa105554",
+        "TmEffect.HC": "cdfd0f26beff5f99eeb609ee2d0820472cda0d91f6121a345529dd87071ab80b",
+        "TmActions.HC": "ae3bff931d7431a5c8cc9a993275114dc99cbb931670356846f4a940eabc57bb",
+        "TmPal.HC": "657c0c69082fad07cffe9b8800abf1d12df8eaa7603efa04dd62144b6142651f",
+        "TmDraw.HC": "89ff3d412fe95123e136228916792b84b0bf6d841f5d6b0c628a3f77569f174e",
+        "TmMask.HC": "49be08c8e34a92fad7989e3a28672f26fac33877ac2fe212cba2174f1252a33a",
+        "TmSprite.HC": "d3f27d4b403a7c554cb0608665b1606e302b686087290441d0be131e2a8905c6",
+        "TmLevel.HC": "2468d9920c55a7af7ffd69abcadd5774391ccd35ed9b6d95eb48c4ff06a89846",
+        "TmIntermission.HC": "eb6720e9d3422ec27a7f57f60a2c184a0c986ff65c162410c1cc3053dc26fe0e",
+        "TmFinale.HC": "cec0b0a9729b659b90162ef88340bcba339562540b415c7d8f4b50efc01d279a",
+        "TmFinaleGr.HC": "39dd13058ff0e60cfdc3209a97494e5563f885a06ef1fdc60ede1d1d6eacb52e",
+        "TmCast.HC": "d414747eacaca31d2689a8f072f1517519e21af74d6b52a0d5ba1fcb9a3bf132",
+        "TmCastGr.HC": "c1a5cec798eb95342da11d6595a8d154e422c246d6f5d81b4a1c219ade9dac74",
+        "TmInput.HC": "5589178e7cd8c3a1884c5e5250adc73812691fa8d32cba4e0a380707f55a2ee9",
+        "TmSnd.HC": "38d7d1cafdf87131a6b89953b32b1b836dba6fa7fbd26c0354ed80ad877db197",
+        "TmSpeaker.HC": "f314bc4fc7022c0e3aef4081e63961aebe80f324c2847c84891871eb35907021",
+        "TmSoundBank.HC": "7b0bc8790f30bd00579a7f53e305d62f8a9d1e65785365c263862f4894260d01",
+        "TmSoundData.HH": "71ca3a12ea1acacaadbe9ff97046511422aced00972eb093a4a0e23bab319b7c",
+        "TmAudio.HC": "ee93c78b6c173389f25bfa7c4f047c0a52cf427344fcee8b0616c7f68c530fd7",
+        "TmSoundScene.HC": "94f3aff023f520f08577652d703f0ffde75171be5ebee790bd0194ec6df7af9a",
+        "TmOverlay.HC": "6f4adb56ed7b326a0e6548be673489713c2e58d047689f79072f2fd677a8feca",
+        "TmScreen.HC": "54386654b6eaa3aab7a8f4a8087e59eb989aefdad5d23cd365c2959857e77aa7",
+        "TmPlay.HC": "242a792c70a73374de8971498b16fc90b68d12a0bf878460af4bea08bd6be31e"
+      },
+      "includeOrder": [
+        "Build.HC",
+        "RunBin.HC",
+        "Toom.PRJ",
+        "Native.HH",
+        "Load.HC",
+        "TmGlbls.HH",
+        "TmWad.HC",
+        "TmStory.HC",
+        "TmMap.HC",
+        "TmGr.HC",
+        "TmTex.HC",
+        "TmAnim.HC",
+        "TmData.HH",
+        "TmClip.HC",
+        "TmState.HC",
+        "TmMath.HC",
+        "TmWorld.HC",
+        "TmContact.HC",
+        "TmMove.HC",
+        "TmPath.HC",
+        "TmSlide.HC",
+        "TmPlayer.HH",
+        "TmMotion.HC",
+        "TmAttack.HC",
+        "TmDamage.HC",
+        "TmItems.HC",
+        "TmTouch.HC",
+        "TmImpact.HC",
+        "TmWeapon.HC",
+        "TmPlayer.HC",
+        "TmSight.HC",
+        "TmBlast.HC",
+        "TmSector.HC",
+        "TmDoor.HC",
+        "TmFloor.HC",
+        "TmPlat.HC",
+        "TmCeil.HC",
+        "TmTeleport.HC",
+        "TmSwitch.HC",
+        "TmLight.HC",
+        "TmHazard.HC",
+        "TmSpecial.HC",
+        "TmRespawn.HC",
+        "TmTick.HC",
+        "TmEnemy.HC",
+        "TmChase.HC",
+        "TmCombat.HC",
+        "TmVile.HC",
+        "TmBoss.HC",
+        "TmBrain.HC",
+        "TmEffect.HC",
+        "TmActions.HC",
+        "TmPal.HC",
+        "TmDraw.HC",
+        "TmMask.HC",
+        "TmSprite.HC",
+        "TmLevel.HC",
+        "TmIntermission.HC",
+        "TmFinale.HC",
+        "TmFinaleGr.HC",
+        "TmCast.HC",
+        "TmCastGr.HC",
+        "TmInput.HC",
+        "TmSnd.HC",
+        "TmSpeaker.HC",
+        "TmSoundBank.HC",
+        "TmSoundData.HH",
+        "TmAudio.HC",
+        "TmSoundScene.HC",
+        "TmOverlay.HC",
+        "TmScreen.HC",
+        "TmPlay.HC"
+      ],
+      "loaderSha256": "4565414f117be4c2d5b681bca497d044bd081d2afc3ecdd9afa13435ba162fd5",
+      "sourceSha256": "dda531242bf46fb7eaf95d566fdf2a7a8036671231e633cc183ee3c5cb070e41",
+      "bundleSha256": "ca7327843a899f60939abaa330c6ceec0fd1283535e8ab6bda72c6d927a2a612",
+      "binarySha256": "83fd120d61badb46cc4ccba085f2d264661fbf670bb9c16c3b5e5aabd496d1a7",
+      "bytes": 144688,
+      "backend": {
+        "engine": "qemu",
+        "accelerator": "kvm",
+        "version": "QEMU emulator version 11.1.2"
+      },
+      "evidence": "/home/aphunt/Dev/GitHub/TempleOS/wt/HolyC-wasm-A1/tests/.oracle/qemu-_35rrvj0",
+      "prototypeSha256": "8728bff5045ce1aa85c1c64a8263f7bb02e367d47c737afc936fd4f274742613",
+      "matchesPrototype": false,
+      "scope": "Original TempleOS installs actual named source files, invokes Build.HC from another directory, validates the relocatable binary header, then deliberately fails compilation and checks previous binary preservation and temporary-file cleanup. Prototype equality is recorded, not assumed."
+    }
+  },
+  "artifacts": {
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-decisions-integrated-native.json": "a3b6467a837a6b82d96118afee8961cf13f7a2f39879c7a4e7c25fde6510408e",
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-decisions-hemu.json": "2875cbee9735a325713639af0509ea58ad3a27b058bab0ba33345b570e80937c",
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-native.json": "8704ecb76597a9701f63a45edfac2cdf7505a1f0c8c7545b19e46f8d809f0998",
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-hemu.json": "6a20d6eedf40db4ff6fd81629bcb3060de96397c0b58766e56f5f5ffdcc3ed3d",
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-maps-native-clean.json": "bc635a27d70b6180995ad035a0243b5b9e3dc209961e62c1cf4da23386d3df07",
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-maps-hemu-clean.json": "97b270276817710e9d993f6558488b14f9e0ad9d7c8a17b64065fbbc5d031a78",
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-think-native.json": "3b80c396aeadf5ba023cda485ad58d1e90b20dbac4d71a1d1228406c6082f896",
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-play-native.json": "d247ef7ba6e5c247344ea30da73e7b78abb5f4854152ea89d2412bc9faa72c1e",
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-think-order-native-final.json": "680f9b2c6985831c9a8c485061dccf1d2af5cd9f759b88442af75c531e0964e7",
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-think-order-hemu-final.json": "6c9b4b26cee48e1675fe0b9f378625b07d275acadfa090acdabe07026b6a8c42",
+    "/home/aphunt/.t3/scratch/2026-11-11-continue-the-templeos-work-from-65b3d904/evidence/toom-respawn-native-module/result.json": "27adf12cc0dfa0da8a978c710b9e71811531a4947c7e452713bbed85c2c953da"
+  },
+  "mapTotals": {
+    "phase": 1,
+    "maps": 36,
+    "attempts": 6043,
+    "replaced": 5885,
+    "blocked": 158
+  },
+  "limits": [
+    "The original-C witness stubs collision/spawn/sound boundaries; native integration uses real game owners and collision separately.",
+    "The map sweep forces corpse states at authored spawnpoints; it is not a full-map playthrough.",
+    "Dynamically spawned monsters retain the original zeroed map record and attempt respawn at (0,0).",
+    "Current native module bytes pass build/failure checks but have not yet received a new interactive or matched timing gate. Historical module evidence remains revision-bound.",
+    "Saves, intermission art/music, remaining world visual effects and sustained rendering/audio performance remain unfinished; no production catalog promotion."
+  ]
+}

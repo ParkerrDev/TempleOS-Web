@@ -11,14 +11,14 @@ records.forEach((n,i)=>packed.writeBigInt64LE(BigInt(n),i*8));
 let calls=0;
 for(const row of rows) {let at=7;for(let pass=0;pass<2;pass++){const n=row[at++];calls+=n;at+=n;}assert.equal(at,row.length);}
 const game=resolve(root,'games/Toom'),load=readFileSync(resolve(game,'Load.HC'),'latin1');
-let source=[...load.matchAll(/#include "([^"]+)"/g)].filter(m=>!['TmActions','TmLevel'].includes(m[1])).filter(m=>m[1]!=='TmTick')
-  .map(m=>readFileSync(resolve(game,m[1].includes('.')?m[1]:m[1]+'.HC'),'latin1')).join('\n')+'\n'+
+const names=[...load.matchAll(/#include "([^"]+)"/g)].map(m=>m[1]),end=names.indexOf('TmTick');assert(end>0);
+let source=names.slice(0,end)
+  .map(n=>readFileSync(resolve(game,n.includes('.')?n:n+'.HC'),'latin1')).join('\n')+'\n'+
   readFileSync(resolve(root,'tools/toom/Rooms.HC'),'latin1');
 const fixture=readFileSync(resolve(root,'tools/toom/ThinkOrder.HC'),'latin1'),marker='//ThinkersTick.';
 assert.equal(fixture.split(marker).length,2);
 source+='\n'+fixture.replace(marker,`
-#define ActorMotion TmOrderMotion
-#define ActorTick TmOrderActor
+#define ActorThink TmOrderActor
 #define DoorTick TmOrderMover
 #define FloorTick TmOrderMover
 #define PlatTick TmOrderMover

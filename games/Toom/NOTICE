@@ -20,7 +20,8 @@ its notices intact. No original C runtime, platform shim or network code is
 linked into the TempleOS implementation.
 
 Map collision, wall sliding, fixed-tic actor motion, aiming/shot queries,
-damage/death handling, inventory, hit effects, player and actor projectiles,
+damage/death handling, nightmare monster respawn, inventory, hit effects,
+player and actor projectiles,
 weapon
 control, fixed-tic player movement/view/power/death, actor sight and blast
 damage, moving-plane clipping/crushing, door/floor/lift/ceiling controllers

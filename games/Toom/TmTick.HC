@@ -14,8 +14,7 @@ U0 ThinkersTick(Specials *tmps)
       switch (tmpq->kind) {
 	case TM_THINK_ACTOR:
 	  actor=tmpq;
-	  if (ActorMotion(motion,actor))
-	    ActorTick(world->data,actor,motion->action);
+	  ActorThink(motion,actor);
 	  break;
 	case TM_THINK_MOVER:
 	  mover=tmpq;

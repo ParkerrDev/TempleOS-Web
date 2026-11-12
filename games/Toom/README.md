@@ -65,7 +65,13 @@ The implemented foundation uses native V5.03 file and memory APIs:
   retain the active level. Successful replacement carries inventory, RNG and
   brain phase with original rebirth/setup rules. Contact, line, sound-alert and
   actor actions bind to the same level. Fast/nightmare state changes affect
-  only that session's data; nightmare monster respawn is not yet implemented.
+  only that session's data.
+- Nightmare monsters in permanent death states retry at the 420-tic threshold,
+  on the original 32-tic/random gate. Raw destination occupancy controls the
+  attempt; two teleport fogs and their sounds precede the replacement. Spawn
+  position, angle, ambush/ceiling flags and reaction delay are retained. Newly
+  appended actors run later in the same thinker pass, and respawning does not
+  increase the level's original kill total.
 - A single-player tic runs player logic, shared thinkers, surface updates and
   buttons before advancing the common level clock. Pause stops that sequence;
   player and weapon bob use the same clock as hazards and animation. Normal and
@@ -244,8 +250,8 @@ The implemented foundation uses native V5.03 file and memory APIs:
   lower endpoint and can retry after returning to it; they cannot stall forever
   by decrementing an already-zero wait count.
 
-Fuzz effects, saves, nightmare respawning and complete finale presentation
-remain unfinished. Sustained rendering/audio performance is not yet qualified,
+World fuzz/lighting effects, saves and intermission artwork/music remain
+unfinished. Sustained rendering/audio performance is not yet qualified,
 and the development entry is not in the production catalog.
 
 ## Assets
@@ -786,7 +792,7 @@ TempleOS and include its `Run.HC` entry from any directory. The entry selects
 its own directory before loading modules and default assets. The host uses
 native held-key state, task messages, `SettingsPush`/`SettingsPop` and a
 `DrawIt` callback. It needs no browser API. This entry remains outside the
-production catalog: intermission artwork/music, saves, nightmare respawning
+production catalog: intermission artwork/music, saves
 and remaining world visual effects are unfinished; rendering/audio performance
 also needs further work.
 
@@ -1183,3 +1189,25 @@ universal hardware guarantee. `module-evidence.json` binds every included game
 source, AOT header, loader, binary, asset, compiler/engine revision, runtime file
 and measurement driver. Ordinary `Run.HC` remains unchanged; no catalog entry
 has been promoted.
+
+Nightmare respawn checks compile the pinned original `P_MobjThinker` and
+`P_NightmareRespawn` C routines into an independent witness. 3,034 cases compare
+wait/state/skill gates, all random-stream positions, blocked occupancy, fog and
+sound order, spawn attributes and replacement state. Twelve native integration
+cases exercise real collision, thinker ordering, caller heaps and callback
+failure cleanup. The Phase 1 map sweep tests authored monster spawnpoints in
+all 36 maps and compares the complete native trace with HEMU; it does not stand
+in for a playthrough. `respawn-evidence.json` binds the exact inputs and results.
+
+```sh
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/respawn-decisions.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/respawn.test.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node tools/toom/respawn-maps.test.mjs > /path/to/native.json
+BACKEND=hemu TEMPLEOS_WEB=/path/to/frozen/TempleOS-Web REFERENCE=/path/to/native.json node tools/toom/respawn-maps.test.mjs
+```
+
+Dynamically spawned monsters retain the original zeroed map-spawn record, so a
+nightmare respawn attempts `(0,0)` for those actors. Ordinary authored spawnpoints
+use the retained map record. Conditional random calls use explicit early returns:
+original HolyC can evaluate a call in a Boolean return expression even when an
+earlier term is false.

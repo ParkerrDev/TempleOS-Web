@@ -35,6 +35,7 @@
 #include "TmLight"
 #include "TmHazard"
 #include "TmSpecial"
+#include "TmRespawn"
 #include "TmTick"
 #include "TmEnemy"
 #include "TmChase"
