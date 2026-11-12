@@ -61,7 +61,7 @@ function Message(m) {
     if (!m.ok) Status(m.msg);
   } else if (m.cmd==="paused") {if(faulted&&!m.value)return;paused=m.value;speaker.Pause(paused);$("pause").textContent=paused?"Resume":"Pause";}
   else if (m.cmd==="inputMode") gamePointer=!!m.capture;
-  else if (m.cmd==="snd") speaker.Tone(m.f);
+  else if (m.cmd==="snd") speaker.Tone(m.f,m.ns);
   else if (m.cmd==="error")Fault(m.msg,!!(ctrl&&Atomics.load(ctrl,1))||!m.retained);
   else if (m.cmd==="exportResult" && m.kind==="snapshot") {
     Ready();

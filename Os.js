@@ -109,7 +109,8 @@ function firstFrame()
   }
 }
 let notifyInput = () => {};
-const FIXED_B = +((new URLSearchParams(location.search)).get("b")) || 0;
+const boot_query=new URLSearchParams(location.search);
+const FIXED_B = +(boot_query.get("b")) || 0;
 setInterval(updateFps,500);
 // one-time banner shown when a heavy game freezes the single-core engine -> 1-click switch to multi-core
 
@@ -576,7 +577,7 @@ function runWorker() {
       if (!alive && stockBoot && document.body.classList.contains("touch")) gzBytes = null;
       blit(new Uint8Array(m.buf), m.w, m.h, true, m); worker.postMessage({ cmd: "ack" }); alive = true; firstFrame();
     }
-    else if (m.cmd === "snd") speaker.Tone(m.f);
+    else if (m.cmd === "snd") speaker.Tone(m.f,m.ns);
     else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
     else if (m.cmd === "error") {
       if (m.retained) engineFault(m.msg);
@@ -653,7 +654,7 @@ async function runSMP() {
     bsp.onmessage = (e) => {
       if (!bsp || !current()) return; const m = e.data;
       if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h, true, m); bsp.postMessage({ cmd: "ack" }); alive = true; firstFrame(); }
-      else if (m.cmd === "snd") speaker.Tone(m.f);
+      else if (m.cmd === "snd") speaker.Tone(m.f,m.ns);
       else if (m.cmd === "progress") { setLoad(m.text, m.pct); dbg(m.text); }
       else if (m.cmd === "smpReady") dbg("SMP: " + m.ncore + " cores running in parallel");
       else if (m.cmd === "error") {
@@ -783,6 +784,8 @@ async function OsBoot()
   snap=file?.snapshot;disk=file?.disk;
   if (file?.kind=="snapshot")snap=file.bytes;
   else if (file?.kind=="disk")disk=file.bytes;
+  if (!snap && !disk && boot_query.get("disk"))
+    disk=await UrlDiskRead(boot_query.get("disk"));
   if (snap) {
     setLoad("Checking imported snapshot…",40);
     info=await SnapshotInspect(snap,{busProtocol:BUS_VERSION});
@@ -803,6 +806,29 @@ async function OsBoot()
   if(generation!==osGen)return;
   bootFile=file;importDisk=disk;snapshotInfo=info;stockBoot=!snap;useSMP=smp;gzBytes=bytes;
   bootEngine();
+  if (boot_query.get("run"))
+    UrlRun(boot_query.get("run"),generation);
+}
+
+async function UrlDiskRead(url)
+{//?disk= boots a raw or gzipped C: image from this site.
+  let res=await fetch(url),body=res.body;
+  if (!res.ok)
+    throw new Error("Could not fetch the disk "+url);
+  if (/\.gz$/i.test(url))
+    body=body.pipeThrough(new DecompressionStream("gzip"));
+  return new Response(body).arrayBuffer();
+}
+
+async function UrlRun(path,generation)
+{//?run= runs a program once the guest's prompt takes it.
+  let i;
+  for (i=0;i<90 && generation===osGen;i++) {
+    await new Promise(Resolve=>setTimeout(Resolve,2000));
+    if ((await launchInOS({path,name:path.split("/").pop().replace(/\..*$/,""),
+	  focus:true})).ok)
+      return;
+  }
 }
 
 function OsGen()

@@ -344,7 +344,7 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, rate, patches
     captureUnlock:()=>barrier?.Unlock(),
     palette:(index,rgb)=>postMessage({cmd:"palette",index,rgb}),
     onText: (s) => { if (s && s.indexOf("BADOP") >= 0) console.log("[hemu]", s.trim()); },
-    snd: { tone: (f) => postMessage({ cmd: "snd", f: Number(f) }) },   // AudioContext lives on the main thread
+    snd: { tone: (f,ns) => postMessage({ cmd: "snd", f: Number(f), ns: Number(ns) }) },   // AudioContext lives on the main thread; ns is the guest TSC time
     snapLoad: (base, u8) => { gBase = base; u8.set(snap, base); },   // capture gBase for the JIT
     diskRead: (lba, count, u8, dst) => { if (disk) disk.readInto(lba, count, u8, dst); },   // ATA -> real C: sectors
     diskWrite: (lba, count, u8, src) => { if (disk) disk.writeInto(lba, count, u8, src); },  // ATA writes -> in-session overlay
@@ -494,6 +494,9 @@ async function boot({ gz, wasmUrl, fixedB, diskBytes, smp, repeat, rate, patches
       // guest execution API: bound to this instance now that gBase is known (snapLoad ran in the first frame)
       try { gx = createGuestExec({ inst, gBase, onEvent: gxEvent, access:RamAccess, log: (s) => console.log("[hemu gx] " + s) }); }
       catch (e) { console.warn("[hemu] guest execution API unavailable: " + e.message); postMessage({ cmd: "guestReady", ok: false, probe: { ok: false, errors: [String(e.message || e)], warnings: [] } }); }
+      //The stock snapshot's block cache holds the stock disk's sectors, so an
+      //imported disk would read as the stock one until they are dropped.
+      if (gx && diskBytes) GuestCacheInvalidate();
     }
     gxTick();                                                      // between frames: probe once, then service queued jobs
     const work = performance.now() - now;
