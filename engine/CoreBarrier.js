@@ -17,6 +17,7 @@ export function CaptureBarrier(ctrl,cores,active,clock=performance.now.bind(perf
       return true;
     seq=seq%0x7FFFFFFF+1;
     Atomics.store(ctrl,2,seq);
+    Atomics.notify(ctrl,2);
     held=true;
     const end=clock()+20;
     for (let core=1;core<cores;core++)

@@ -11,10 +11,10 @@ import {BusStop,BUS_VERSION} from "../../engine/CoreBus.js";
 export const SITE=new URL("../../",import.meta.url);
 const SHIM=new URL("./WorkerShim.mjs",import.meta.url);
 
-function WorkerNew(file,fetchHold=[])
+function WorkerNew(file,fetchHold=[],features={})
 {
   let url=new URL(file,SITE).href;
-  return new Worker(SHIM,{workerData:{url,fetchHold:fetchHold.map(path=>new URL(path,SITE).href)}});
+  return new Worker(SHIM,{workerData:{url,fetchHold:fetchHold.map(path=>new URL(path,SITE).href),...features}});
 }
 
 function HashBuf(u8)
@@ -135,7 +135,8 @@ export async function HemuBoot(opt)
       found=await StockIdentify(gz,opt.smp||1,manifest),module=new WebAssembly.Module(readFileSync(new URL(wasm,SITE)));
     StockModuleCheck(module,found.capture,manifest);
   }
-  h.workers.push(WorkerNew("engine/hemu-worker.js"+(opt.nojit?"?nojit":""),opt.fetchHold));
+  const features={waitAsync:opt.waitAsync,idleProbe:opt.idleProbe};
+  h.workers.push(WorkerNew("engine/hemu-worker.js"+(opt.nojit?"?nojit":""),opt.fetchHold,features));
   h.workers[0].on("message",MsgIn);
   h.workers[0].on("error",function WorkerErr(e) {console.log("worker threw: "+e.stack);});
   h.workers[0].on("error",()=>{if(opt.busProtocol===BUS_VERSION&&h.ctrl)BusStop(h.ctrl);});
@@ -150,7 +151,7 @@ export async function HemuBoot(opt)
     wasm_bytes=saved?saved.wasm:readFileSync(new URL(wasm,SITE));
     if (saved) sc.globals.g_ipi_pending=saved.meta.ipiAddr;
     for (k=1;k<opt.smp;k++) {
-      ap=WorkerNew("engine/hemu-smp-worker.js");
+      ap=WorkerNew("engine/hemu-smp-worker.js",[],features);
       ap.on("error",()=>{if(opt.busProtocol===BUS_VERSION)BusStop(new Int32Array(ctrl));});
       ap.on("exit",()=>{if(opt.busProtocol===BUS_VERSION&&!h.stopping)BusStop(new Int32Array(ctrl));});
       ap.on("message",function ApMsg(m) {

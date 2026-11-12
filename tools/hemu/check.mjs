@@ -15,7 +15,7 @@ const quick=["host.selftest.mjs","measure.mjs","cpuid.test.mjs","cpu-native.mjs"
   "fpu-convert.test.mjs","fpu-compare.test.mjs","sse-compare.test.mjs","fpu-ops.test.mjs","cpu-fault.test.mjs","fpu-native.mjs","jit-x87.test.mjs","jit-x87-memory.test.mjs","shift.test.mjs","jit-zero-shift.test.mjs","jitdiff1.mjs"],
   full=["menu-clip.test.mjs","video.test.mjs","raster.test.mjs","raster-native.mjs","raster-alias.mjs","raster-state.test.mjs","raster-fallback.test.mjs","rate.test.mjs","guestcheck.mjs","large-file.test.mjs",
     "jitrecycle.mjs","worker.test.mjs","worker-exec.test.mjs","worker-cpuid.test.mjs","worker-fault.test.mjs","worker-legacy-fault.test.mjs","worker-clock.test.mjs","worker-rate.test.mjs","worker-pause.test.mjs",
-    "worker-patch-pause.test.mjs","worker-snapshot.test.mjs","worker-bus.test.mjs","welcome.test.mjs","god-tools.test.mjs"];
+    "worker-patch-pause.test.mjs","worker-snapshot.test.mjs","worker-bus.test.mjs","idle.test.mjs","welcome.test.mjs","god-tools.test.mjs"];
 let count=0;
 function Run(path,env={}) {
   console.log("Checking",path);

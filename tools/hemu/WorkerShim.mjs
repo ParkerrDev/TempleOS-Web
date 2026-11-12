@@ -5,6 +5,8 @@ import {parentPort,workerData} from "node:worker_threads";
 import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 
+if(workerData.waitAsync===false)Atomics.waitAsync=undefined;
+let idle_runs=0;
 let inst=null,ex=null,g_base=0,work_ms=0,mains=0,syms=null,probe_tries=0,tsc_addr=0;
 let bus_ctrl=null,bus_cores=0;
 //Credit gap has the initial boot-credit offset; differences measure new lag.
@@ -80,6 +82,11 @@ function MsgOut(m,transfer)
 
 function MsgIn(m)
 {
+  if(m?.cmd==="__ping") {
+    parentPort.postMessage({cmd:"__ping",id:m.id,idleRuns:idle_runs,
+      waitAsync:typeof Atomics.waitAsync==="function"});
+    return;
+  }
   if(m?.cmd==="init"&&m.smp?.busProtocol===1) {
     bus_ctrl=new Int32Array(m.smp.ctrl);bus_cores=m.smp.ncore;
   }
@@ -158,6 +165,11 @@ async function Instantiate(mod,imports)
   res=await wasm_instantiate.call(WebAssembly,mod,imports);
   inst=res.instance||res;
   ex=Object.assign({},inst.exports);
+  if(workerData.idleProbe&&ex.RunCore)ex.RunCore=(...args)=>{
+    const result=inst.exports.RunCore(...args);
+    if(result===0n)idle_runs++;
+    return result;
+  };
   ex.__main=MainTimed;
   if (res.instance)
     return {module:res.module,instance:{exports:ex}};
