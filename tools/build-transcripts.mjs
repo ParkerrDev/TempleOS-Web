@@ -1,9 +1,9 @@
 // build-transcripts.mjs - compile the TerryADavis-archive-transcriber output (one Whisper JSON per
 // video) into compact, sharded, gzipped chunks the static site can fuzzy-search client-side.
-//   node build-transcripts.mjs [path-to-transcripts-dir]
+//   node tools/build-transcripts.mjs [path-to-transcripts-dir]
 // Emits assets/transcripts/shard-NN.json.gz + manifest.json. Each shard is a JSON array of videos:
 //   { t: title, d: "YYYY-MM-DD", f: "videos/2007/....wmv" (path within the archive.org item),
-//     n: duration seconds, s: [[startSec, "chunk text"], ...] }
+//     n: duration seconds, p: 1 when archive.org's player plays it, s: [[startSec, "chunk text"], ...] }
 // Whisper artifacts are cleaned at build time: consecutive duplicate segments (the classic
 // "Thank you. Thank you. ..." hallucination loop) collapse to one, and tiny segments merge into
 // ~250-char windows so a search hit carries enough context to read.

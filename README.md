@@ -29,8 +29,8 @@ hottest render routines.
   exactly where you were) or your **C: disk image** (including files you saved in TempleOS);
   import either one back; or upload any file straight into `C:/Home`. This is how you save your
   progress, share programs/games, or boot a custom/modified TempleOS disk.
-- **✞ God Words** - TempleOS's divine word oracle on the page itself: GodBits/GodPick
-  compiled in‑browser by holyc-wasm, entropy from your keystroke timing.
+- **✞ God Tools** - God's words and Bible passages on the page itself, picked in the timing-bit
+  order of Adam/God and seeded by the browser, and Terry's God Song and God Doodle opened in TempleOS.
 - **Chat** - talk with everyone else on the site. It opens in the corner without darkening the
   desktop, so the OS stays usable beside it, and the Menu counts new messages while it is shut.
 - On phones: an on‑screen joystick + L/R mouse buttons + a keyboard summon button appear,

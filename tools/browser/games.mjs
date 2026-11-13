@@ -12,7 +12,7 @@ await once(server.stdout,'data');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
 try{
  const context=await browser.newContext({viewport:{width:1280,height:900},serviceWorkers:'block'});
- await context.route('**/hemu/*.gz',r=>r.abort());
+ await context.route('**/hemu/*.gz',r=>r.abort()); //No snapshot: a browser run must need no HEMU.
  await context.route('https://templeosweb-*.workers.dev/**',r=>r.abort());
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://localhost:8184/',{waitUntil:'load'});

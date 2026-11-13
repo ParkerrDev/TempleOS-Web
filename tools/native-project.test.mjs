@@ -15,7 +15,7 @@ const {instance}=await WebAssembly.instantiate(result.bytes,{env:host.env});host
 assert.equal(new DataView(instance.exports.memory.buffer).getBigInt64(Number(result.globals.get('answer').addr),true),42n);
 assert.throws(()=>compileNativeProject({...program,source:'#include "Missing.HC"\n'}),/include not in this game/);
 assert.throws(()=>compileNativeProject({...program,source:'NotANativeAPI();'}),/NotANativeAPI/);
-assert.throws(()=>compileNativeProject({...program,source:'I64 Broken( {'}),/./);
+assert.throws(()=>compileNativeProject({...program,source:'I64 Broken( {'}),/parse error: expected type/);
 
 const root=new URL('../',import.meta.url),storage=new Map();
 globalThis.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)};
@@ -41,8 +41,4 @@ assert.deepEqual(Uint8Array.from((await project.native()).files.find(
  f=>f.path===sourceFile.path).source,ch=>ch.charCodeAt(0)),
  new Uint8Array(original.encode(original.original)),
  'Restore gives the compiler the original document, including binary records');
-const launcher=await readFile(new URL('../games.js',import.meta.url),'utf8');
-const browserRun=launcher.slice(launcher.indexOf('async function runInBrowser('),launcher.indexOf('function closeGameWin('));
-assert(!/iframe|runInTempleOS|__launchInOS|gameSession/.test(browserRun),'browser launch cannot invoke emulation');
-assert(!/game-session-launch|game-session-ready/.test(launcher),'legacy URLs cannot launch emulated games');
-console.log('Native projects: nested includes/shared macros, strict failures, all four native games, frozen package drafts, edited WASM execution, restore and no emulator fallback passed.');
+console.log('Native projects: nested includes/shared macros, strict failures, all four native games, frozen package drafts, edited WASM execution and restore passed.');

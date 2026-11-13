@@ -209,8 +209,8 @@ document.getElementById('gameRun').addEventListener('click',()=>{if(editorGame&&
 document.getElementById('gameStop').addEventListener('click',()=>{closeGameWin();document.getElementById('gamePreviewStatus').textContent='Stopped. Edit the source and Run to try again.';});
 document.getElementById('gameToDisk').addEventListener('click',()=>{if(editorGame)runInTempleOS(editorGame);});
 document.getElementById('gameWinEdit').addEventListener('click',()=>{if(curGame)editGame(curGame);});
-function openGames() { ovG.classList.add("open"); OsInputRelease(); WinRaise(ovG);   // browsing games -> stop capturing the mouse
-  setTimeout(() => { try { gmSearch.focus(); gmSearch.select(); } catch {} }, 0); }   // ready to type a search immediately
+function openGames() { ovG.classList.add("open"); OsInputRelease(); WinRaise(ovG);
+  setTimeout(() => { try { gmSearch.focus(); gmSearch.select(); } catch {} }, 0); }
 function closeGames() { ovG.classList.remove("open"); }
 document.getElementById("gamesClose").addEventListener("click", closeGames);
 ovG.addEventListener("mousedown", (e) => { if (e.target === ovG) closeGames(); });
@@ -328,7 +328,7 @@ os_game.launchFail = (message) => {
   if(!/A game is busy:/.test(message)){os_game.active=false;OsCaptureSet(false);}
   setStatus("Launch failed: "+message);toast(String(message).replace(/[<>&]/g,""),15000);
 };
-async function runInTempleOS(g,suppliedOverrides=null) {                                            // ▤ install + #include in the OS (HEMU)
+async function runInTempleOS(g,suppliedOverrides=null) {
   if (packageLaunchBusy) { toast("A game is already being prepared. Please wait."); return; }
   closeGameWin();
   packageLaunchBusy = true;

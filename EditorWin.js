@@ -154,7 +154,7 @@ const loadEditorApp = () => {
 function open() {
   ed_game.prepare?.();
   ov.classList.add("open");
-  ov.classList.remove("gamemode");          // full editor, not a game view
+  ov.classList.remove("gamemode");
   WinRaise(ov);
   loadEditorApp().then(() => {
     if (!ranDefault && !ed_game.file) { ranDefault = true; if (os_game.ed && !os_game.ed.isRunning()) os_game.ed.run(); }
@@ -207,7 +207,7 @@ fmtBtn.addEventListener("click", async () => {
   if (!src.trim()) { setStatus("nothing to format"); return; }
   fmtBtn.disabled = true; setStatus("formatting…");
   try {
-    const { formatHolyC } = await import("./holyfmt.js");   // holyc-fmt, compiled+run in-browser
+    const { formatHolyC } = await import("./holyfmt.js");
     const out = await formatHolyC(src, { indent: 2, tabs: true });   // Terry's layout: 2 a level, S2T tabs
     if (ta.value !== src) setStatus("Source changed. Format again to use your latest edits.");
     else if (out !== src) { ta.value = out; ta.dispatchEvent(new Event("input")); setStatus("formatted ✓"); }

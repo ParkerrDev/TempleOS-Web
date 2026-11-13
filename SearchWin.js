@@ -115,8 +115,9 @@ const url=(h,sec)=>ArchiveWatch(h,sec==null?null:Math.max(0,sec-2));
 // ---- VIDEO WINDOWS: each ▶ opens the video in its own draggable TempleOS window (real
 //      chrome via WinDress); any number can play at once. They stack in their own
 //      z tier ABOVE the search overlay, persist after it closes, and [X] destroys them.
-//      Streams the original from archive.org (no isolation on this site, so cross-origin
-//      <video> just works; .mkv plays in Chromium-family; undecodable formats fall back). ----
+//      Streams the original from archive.org. COEP is credentialless (_headers), which lets a
+//      cross-origin <video> through without CORS; .mkv plays in Chromium-family browsers, and
+//      what a browser cannot decode offers a conversion or a download. ----
 const dl=(h,sec)=>ArchiveFile(h.f)+(sec?"#t="+Math.max(0,sec-2):"");
 let vidN = 0;
 const vidWins = new Set();
@@ -170,7 +171,7 @@ const openVideoWindow = (h, sec, play=true) => {
   const clip=ClipPanel(h,Math.max(0,(sec || 0)-2),(sec || 0)+20);
   w.append(x,v,clip.element);
   document.body.appendChild(w);
-  const n = vidN++ % 7;                                  // cascade new windows
+  const n = vidN++ % 7;
   w.dataset.floating = "1";
   w.style.position = "fixed";
   w.style.width = "min(560px, 92vw)";
@@ -303,7 +304,7 @@ out.addEventListener("click", (e) => {
     return; }
   if (e.target.closest("a, button")) return;           // the red title link (and any other control) keeps its own behavior
   const card = e.target.closest(".ts-hit");
-  if (card) expand(refOf(card)); });                   // clicking the card expands the full transcript
+  if (card) expand(refOf(card)); });
 $("tsCopyAll").addEventListener("click", (e) => {
   const qq = q.value.trim();
   if (lastHits.length) copy(`Terry Search: "${qq}" - top ${lastHits.length} of ${lastTotal} matching passages\n\n` +

@@ -1,5 +1,5 @@
 // parse-migration.mjs - extract the pc.ram block from a qemu migration stream (snapshot.bin)
-// into a flat 384 MiB image (live.bin).  This is the LIVE guest RAM qemu-wasm resumes & animates.
+// into a flat 384 MiB image (live.bin), the guest RAM a snapshot resumes from.
 // qemu migration is BIG-ENDIAN.  RAM page stream: each entry = u64(addr|flags); flag bits:
 //   ZERO=0x02 MEM_SIZE=0x04 PAGE=0x08 EOS=0x10 CONTINUE=0x20 XBZRLE=0x40 HOOK=0x80 COMPRESS=0x100
 import { readFileSync, writeFileSync, openSync, writeSync, ftruncateSync, closeSync } from "node:fs";

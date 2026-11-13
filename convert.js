@@ -1,5 +1,5 @@
 // convert.js - shared in-browser video converter (ffmpeg.wasm, vendored, single-thread: no
-// cross-origin isolation needed). Used by the Terry Search video windows (index.html) and the
+// cross-origin isolation needed). Used by the Terry Search video windows (SearchWin.js) and the
 // standalone player page (player.html). The input bytes come from archive.org's /cors/ endpoint -
 // their /download/ nodes send no CORS so fetch() can't read those, but /cors/ serves full files
 // with CORS (verified live; Range is ignored there).
@@ -17,7 +17,7 @@ export async function convertVideo({ f, start = 0, win = 600, onStatus = () => {
   busy = true;
   try {
     if (!ff) {
-      onStatus("loading converter (31 MB, one-time)…");
+      onStatus("loading converter (32 MB, one-time)…");
       const { FFmpeg } = await import("./vendor/ffmpeg/ffmpeg/index.js");
       ff = new FFmpeg();
       await ff.load({ coreURL: new URL("vendor/ffmpeg/core/ffmpeg-core.js", location.href).href,

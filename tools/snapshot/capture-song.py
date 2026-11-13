@@ -1,7 +1,6 @@
 import socket, json, subprocess, time, os
-# Capture a snapshot with the WinMgr in its NORMAL timer-refresh loop: dismiss the
-# AutoComplete popup (ESC) first, let it settle, THEN pause+dump. bootdump6 caught it
-# blocked in AutoComplete-standby (an IPC message-wait), so nothing redrew on resume.
+# Boots /tmp/hemusnap/disk.qcow2 in QEMU, starts God Song and dumps the registers and RAM
+# while it plays, into regs_song.txt and core_song.elf there.
 p=subprocess.Popen(["qemu-system-x86_64","-machine","pc","-m","384M","-accel","tcg",
   "-drive","file=/tmp/hemusnap/disk.qcow2,format=qcow2,if=ide,index=0","-boot","c",
   "-vga","std","-display","none","-qmp","unix:/tmp/hemusnap/qmpS.sock,server,nowait"],

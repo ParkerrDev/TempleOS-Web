@@ -30,7 +30,7 @@
     #msg b { color:yellow; }
     a { color:yellow; }
 
-    /* ---- TempleOS scrollbars: chunky squares, blue-on-white, arrow endcaps ---- */
+    /* ---- scroll bars: black on white with arrow ends (TempleOS windows have none) ---- */
     ::-webkit-scrollbar { width:14px; height:14px; }
     ::-webkit-scrollbar-track { background:#fff; }
     ::-webkit-scrollbar-thumb { background:#000; border:2px solid #fff; }
@@ -98,7 +98,7 @@
       v.addEventListener("loadedmetadata", () => { if (off > 1 && off < (v.duration || 1e9)) { try { v.currentTime = off; } catch {} } }, { once: true });
       v.play().catch(() => {});
       document.getElementById("title").textContent = name + " - converted in your browser" +
-        (r.windowed ? " (" + hms(r.start) + " – " + hms(r.start + r.win) + ")" : "");
+        (r.windowed ? " (" + hms(r.start) + " to " + hms(r.start + r.win) + ")" : "");
       const nx = document.getElementById("convNext");
       if (nx) nx.style.display = r.windowed ? "" : "none";
     }

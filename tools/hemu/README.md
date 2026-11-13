@@ -308,7 +308,7 @@ debug/IRET semantics are outside this measured contract. Re-record the two
 independent oracles with `HOLYC_QEMU_ORACLE=.../tests/oracle/Qemu.mjs node
 tools/hemu/divide.test.mjs --record`; ordinary runs verify source/evidence hashes.
 The bounded entry behavior follows Intel's [System Programming Guide,
-sections 6.12–6.15](https://cdrdv2-public.intel.com/812386/253668-sdm-vol-3a.pdf).
+sections 6.12 to 6.15](https://cdrdv2-public.intel.com/812386/253668-sdm-vol-3a.pdf).
 
 `Raster.HC` owns the named native line/polygon acceleration and its shared
 span filler. `raster-native.mjs` compares 200 source-hashed original QEMU/KVM
@@ -368,7 +368,7 @@ C0/C2/C3 and clearing C1. The corrected FUCOMI encodings are DB/DF E8+i;
 FCOMI is DB/DF F0+i. The stream regression also checks that NaN interpreter
 fallbacks preserve earlier cached stack values and pending integer flags.
 
-The exception contract follows Intel SDM revision 089, volume 2A pp. 3-320–321:
+The exception contract follows Intel SDM revision 089, volume 2A pp. 3-320 to 3-321:
 OF/SF/AF clear even for invalid operands; an unmasked invalid comparison
 retains ZF/PF/CF, sets IE/ES/B, and suppresses the stack pop. The recorded Intel
 CPU instead sets unordered ZF/PF/CF before exception delivery. Of the 52

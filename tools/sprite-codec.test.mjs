@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
-import {PALETTE,quantize,toRGBA,encodeGIF,spritePackage,SPRITE_PLAYER} from '../sprite-codec.js';
+import {PALETTE,quantize,toRGBA,encodeGIF,MAX_FRAMES,spritePackage,SPRITE_PLAYER} from '../sprite-codec.js';
 import {GrNew} from '../sprites/Gr.js';
 const {encodeGR,decodeGR}=await GrNew(readFileSync(new URL('../sprites/Gr.HC',import.meta.url),'utf8'));
 const width=17,height=3, pixels=Uint8Array.from({length:width*height},(_,i)=>i%17===16?255:i%16);
@@ -79,7 +79,8 @@ while(timed[pos]!==59) {
  while(timed[pos])pos+=timed[pos]+1;pos++;
 }
 assert.equal(frameCount,30);assert.equal(totalTicks,100,'30 fps GIF must last one second, not 900 ms');
-assert.doesNotThrow(()=>encodeGIF(Array.from({length:250},()=>new Uint8Array([6])),1,1,40));
+assert.doesNotThrow(()=>encodeGIF(Array.from({length:MAX_FRAMES},()=>new Uint8Array([6])),1,1,40));
+assert.throws(()=>encodeGIF(Array.from({length:MAX_FRAMES+1},()=>new Uint8Array([6])),1,1,40),/frame or pixel limit/);
 if(process.argv[2]){
  const path=process.argv[2];writeFileSync(path+'.GR',gr);writeFileSync(path+'.rgba',rgba);
  const reversed=Uint8Array.from(pixels,(_,i)=>pixels[pixels.length-i-1]);

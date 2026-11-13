@@ -1,4 +1,6 @@
-"""Check tracked and new text files for forbidden punctuation, including JSON gzip assets."""
+"""Check tracked and new text files for em and en dashes, including JSON gzip assets.
+The en dash rule skips text quoted from elsewhere: the games' upstream sources and the
+video transcripts."""
 from pathlib import Path
 import gzip
 import re
@@ -26,7 +28,10 @@ for arg in sys.argv[1:] or [str(Path(__file__).resolve().parents[1])]:
         except UnicodeDecodeError:
             continue
         count += 1
-        if chr(8212) in text or (chr(92) + 'u' + format(8212, '04x')) in text.lower() or re.search(r'&(?:mdash|#8212|#x2014);', text, re.I):
+        bad = chr(8212) in text or (chr(92) + 'u' + format(8212, '04x')) in text.lower() or re.search(r'&(?:mdash|#8212|#x2014);', text, re.I)
+        if not name.startswith(('games/upstream/', 'assets/transcripts/')):
+            bad = bad or chr(8211) in text or (chr(92) + 'u' + format(8211, '04x')) in text.lower() or re.search(r'&(?:ndash|#8211|#x2013);', text, re.I)
+        if bad:
             failed.append(str(path))
 if failed:
     print('\n'.join(failed))

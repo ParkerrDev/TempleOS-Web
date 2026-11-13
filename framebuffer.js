@@ -10,7 +10,8 @@ export const PALETTE=Object.freeze([
 // and one column in every eight come out doubled, so lines and letters look jagged, and at a scale like 1.25
 // GPU rounding even picks different rows by position, so text wobbles. So the canvas holds the frame scaled
 // by a whole number k with integer maths, where every guest pixel is the same k x k block, and the browser
-// scales that the rest of the way with smoothing, which only softens the edge between two blocks. A letter keeps one shape everywhere, and the screen fills its room at any size. When the
+// scales that the rest of the way with smoothing, which only softens the edge between two blocks. A letter
+// keeps one shape everywhere, and the screen fills its room at any size. When the
 // rest of the way is itself a whole number the browser multiplies it without smoothing, and pixels stay hard.
 
 // k is 1 or 2, so the canvas is at most 1280x960 however big the screen is, and the work per frame stays

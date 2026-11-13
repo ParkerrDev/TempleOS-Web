@@ -12,7 +12,7 @@ import {BusStop,BUS_VERSION} from "./engine/CoreBus.js";
 import {GuestRequests} from "./GuestRequests.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
 import {Speaker} from "./engine/Speaker.js";
-import "./xsel.js";   // TempleOS-style invert-on-select (desktop)
+import "./xsel.js";
 
 const $ = (id) => document.getElementById(id);
 const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
@@ -132,7 +132,6 @@ let notifyInput = () => {};
 const boot_query=new URLSearchParams(location.search);
 const FIXED_B = +(boot_query.get("b")) || 0;
 setInterval(updateFps,500);
-// one-time banner shown when a heavy game freezes the single-core engine -> 1-click switch to multi-core
 
 // ---- input: a host-owned cursor + a set-1 scancode queue, pulled by snapshot.HC each frame ----
 let msX = 320, msY = 240, msB = 0, wheelZ = 0;
@@ -368,7 +367,7 @@ addEventListener("paste",function (e) {
     if (el === frame) {
       fsUi(true);
       try { await navigator.keyboard?.lock?.(); dbg("keyboard locked (Esc stays in the OS)"); } catch {}
-      if (!document.body.classList.contains("touch")) setFocused(true);   // route keys to the OS in fullscreen
+      if (!document.body.classList.contains("touch")) setFocused(true);
     } else if (!fake) { fsUi(false); try { navigator.keyboard?.unlock?.(); } catch {} }
   };
   document.addEventListener("fullscreenchange", onFsChange);
@@ -446,7 +445,7 @@ let useSMP = self.crossOriginIsolated && !/[?&](single|nosmp)\b/.test(location.s
 const SMP_N=4,DISK_DELAY=isMobileDev?2500:0;   //phones keep the disk out of the boot's memory peak
 let snapshotInfo=null,bootFile=null;
 
-// ---- load the compressed RAM snapshot (imported, or the default; the SMP snapshot when ?smp) ----
+// ---- downloads the compressed RAM snapshot, the four-core one when useSMP ----
 let gzBytes;
 async function downloadSnapshot(smp=useSMP,generation=osGen) {
   const progress=(text,pct)=>{if(generation===osGen)setLoad(text,pct);};
@@ -463,11 +462,10 @@ async function downloadSnapshot(smp=useSMP,generation=osGen) {
   return buf;
 }
 
-
 // ↻ Restart: reload the OS in place - tear down the running engine and re-boot it from the
 // snapshot WITHOUT reloading the page, so the user's other windows (videos, search, God Tools)
-// are left exactly as they are. A page reload reset the disk to pristine anyway; so does this -
-// disk writes still persist only via Export, same as before.
+// are left exactly as they are. Like a page reload, it puts the disk back as it was; only
+// Export keeps what was written to it.
 let restarting = false, osGen = 0;
 async function restartOS() {
   if (restarting) return; restarting = true;
@@ -482,7 +480,7 @@ async function restartOS() {
     engine.stop?.();
     resetPause();
     fpsMeter.reset();updateFps();
-    started = false; framed = false; PatchHoldEnd(); ld.style.display = "";   // let firstFrame() hide the loader again
+    started = false; framed = false; PatchHoldEnd(); ld.style.display = "";
     setLoad("restarting TempleOS…", 0);
     if (!gzBytes) gzBytes = await downloadSnapshot();  // phones free the snapshot after boot - re-fetch
     bootEngine();
@@ -667,8 +665,8 @@ function runWorker() {
   return true;
 }
 
-// ---- SMP engine (?smp): the BSP is hemu-worker.js over a SHARED memory + N-1 AP workers running
-//      RunCore in parallel. Same BSP message protocol as runWorker, so the whole UI works unchanged. ----
+// ---- four cores, the desktop's default: the BSP is hemu-worker.js over a shared memory and
+//      N-1 AP workers run RunCore beside it. The BSP speaks runWorker's messages. ----
 async function runSMP() {
   const generation=osGen,s=snapshotInfo?SpareTake(null):SpareTake(true);
   let bsp=null,aps=[],ctrl=null,watchdog,alive=false,stopped=false,busFailed=false,manifest;

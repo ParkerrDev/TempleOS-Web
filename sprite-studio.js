@@ -57,7 +57,7 @@ $('play').onclick=()=>{
 };
 async function decoder() {
   if (!ff) {
-    status('Loading media decoder (31 MB, first use)...');
+    status('Loading media decoder (32 MB, first use)...');
     const {FFmpeg}=await import('./vendor/ffmpeg/ffmpeg/index.js');
     if (cancelled) throw new Error('Cancelled.');
     const next=new FFmpeg();ff=next;

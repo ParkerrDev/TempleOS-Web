@@ -1,11 +1,11 @@
 # COEP: credentialless - the best of both worlds:
-#  * SharedArrayBuffer works (the HolyC editor runs blocking programs in a worker with a
-#    shared framebuffer + Atomics input - it NEEDS isolation),
+#  * SharedArrayBuffer works: the four guest cores share one WebAssembly.Memory, and the HolyC
+#    editor runs blocking programs in a worker with a shared framebuffer + Atomics input,
 #  * cross-origin <video>/<img> still load (Terry Search streams archive.org originals
 #    inline; their download nodes send no CORS/CORP, which require-corp would block -
 #    credentialless allows no-cors media, just sent without credentials).
-# Safari doesn't support credentialless: it ignores it -> not isolated -> everything works
-# except the editor's runner, which already shows its own graceful warning there.
+# Safari doesn't support credentialless: it ignores it -> not isolated -> the OS runs on one
+# core and the editor's runner shows its own warning; everything else works.
 /*
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Embedder-Policy: credentialless

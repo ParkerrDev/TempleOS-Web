@@ -20,7 +20,7 @@ const CSS='/* Chat window: opens without the dark backdrop, in the corner, so th
   '#chatLog { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); color:#fff; padding:6px 8px; font-size:12px; line-height:1.0; overflow-wrap:anywhere; }\n'+
   '#chatLog > div { margin-bottom:5px; }\n'+
   '#chatLog .ct { color:#55ffff; margin-right:.5em; }\n'+
-  '#chatLog .cn { color:yellow; }\n'+
+  '#chatLog .cn { color:#ffff55; }\n'+
   '#chatLog .mine .cn { color:#55ff55; }\n'+
   '#chatLog .cg { color:#aaaaaa; margin-right:.5em; }\n'+
   '#chatLog .ce { color:#ff5555; }\n'+

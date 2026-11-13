@@ -46,11 +46,9 @@ for (const group of DEMOS) {
 async function loadDemo(path) {
   let src = SOURCES[path];
   if (src == null) {
-    // Large demos (e.g. the Terry sprite, ~600 KB) aren't in the always-loaded
-    // bundle - fetch the .HC on demand instead of bloating every page load.
+    // A path demo-sources.js lacks comes from beside this module, which works
+    // whether app.js is the page or an overlay on the main site.
     setStatus("fetching " + path + " …");
-    // resolve relative to THIS module (works whether app.js is the page or is
-    // loaded as an overlay from the main site at a different base URL).
     try { const r = await fetch(new URL(path, import.meta.url)); if (r.ok) src = await r.text(); } catch (e) {}
   }
   if (src != null) { editor.value = src; setStatus("loaded " + path); }
@@ -62,7 +60,6 @@ demoSel.addEventListener("change", () => { if (demoSel.value) loadDemo(demoSel.v
 function setStatus(s) { statusEl.textContent = s; }
 function clearConsole() { consoleEl.textContent = ""; }
 function appendConsole(text) {
-  // strip ANSI (worker sends raw text); keep newlines
   consoleEl.textContent += text;
   consoleEl.scrollTop = consoleEl.scrollHeight;
 }
@@ -298,7 +295,6 @@ async function run(source=editor.value,project={}) {
   clearConsole();
   speaker.resume();
 
-  // fresh control block + canvas transfer
   const sab = makeControlSAB();
   ctrl = new Int32Array(sab);
   Atomics.store(ctrl, CTRL.MS_X, 320);
@@ -381,7 +377,6 @@ function runIn(canvasEl, source, {preserveEditor=false,...project}={}) {
 }
 $("stopBtn")?.addEventListener("click", stop);  // optional second button; the overlay uses just runBtn
 
-// check cross-origin isolation
 if (!self.crossOriginIsolated) {
   setStatus("WARNING: not cross-origin isolated - SharedArrayBuffer unavailable. Use the dev server (npm run serve).");
 } else {
