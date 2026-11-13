@@ -187,12 +187,6 @@ node server.mjs               # http://localhost:8080, with _headers (and _redir
   chrome styling (vertical border titles, scrolling title marquee, blinking MENU chip) are
   adopted from [TempleOS-tribute](https://github.com/del-Real/TempleOS-tribute) by
   Alberto del Real (MIT).
-- **Easter egg** - click Terry five times. The parrot, the voice clips and the TempleOS theme
-  that sometimes plays under them are from
-  [afterdavis](https://github.com/ParkerrDev/afterdavis); the glowie pictures were supplied by
-  the site's owner, and the moving one is a
-  [Tenor clip](https://tenor.com/view/cia-the-simpsons-glowie-meme-memes-2023-gif-1991881542871699456)
-  cropped to the glowie (`assets/glowies/provenance.json`).
 - **Menu icons** - [pixelarticons](https://github.com/halfmage/pixelarticons) by Gerrit Halfmann
   (MIT, `assets/pixelarticons-LICENSE.txt`), inline in `index.html`. The cross is its `cross-sharp`
   with the bar raised.
