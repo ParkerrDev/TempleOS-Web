@@ -1,0 +1,76 @@
+# Game provenance
+
+The catalog contains 66 entries: 47 games and interactive demos by Terry A. Davis,
+8 games or adaptations by TheTinkerer, 5 HolyC games by Austin Sierra, and the site's
+HolyCraft, TOOM, Snake, Babel, Volley and FNAF. The featured entries are HolyCraft,
+TOOM, Babel, Volley and Snake.
+
+Authorship is explicit in `GameLib.js` and `GameCredits.js`. Distributing a
+TempleOS game in TinkerOS does not make TheTinkerer its original author.
+`provenance.json` records original-file hashes, distribution-file hashes, pinned
+revisions, introducing commits and archive checksums. `catalog.json` records every
+installed file's checksum, including any compatibility adapter.
+
+| Author | Included collections | Evidence |
+| --- | --- | --- |
+| Terry A. Davis | All 31 entries in Demo/Games; AfterEgypt, Chess, KeepAway, Span, Strut, Titanium, ToTheFront, Vocabulary, X-Caliber; B17, Coach, DiningStars, Flappy, MissileDefense, Rocks, Pilgrims | Compared current TinkerOS files with the official TempleOS ISO and Supplemental 1 at [templeos.org](https://templeos.org/Downloads/). Supplemental 2 and 3 contain hymns. |
+| TheTinkerer | Castle Frankenstein 2, Cube, GlowUFOs, Oregon Trail 1975, Scorch, SpyHunt, Sudoku, Tetris | [TinkerOS source and history](https://github.com/tinkeros/TinkerOS), plus the author's CF2, cube, OT1975, SpyHunt and Sudoku repositories. |
+| Austin Sierra | MarioClone, Malicious Testimonies, Ezekiel, Lord of Hosts, Solomon's Temple | [Author repositories](https://github.com/austings) and [GamesMirror discs](https://github.com/austings/GamesMirror). |
+
+CF2 builds on Terry's Castle Frankenstein, and SpyHunt builds on Terry's Titanium;
+both descriptions credit that ancestry. Oregon Trail credits the MECC original and
+Don Rawitsch's 1975 revisions. Tetris credits Alexey Pajitnov. TOOM, the site's own
+HolyC game in `Toom/`, carries id Software's GPL notice for the game rules it takes from
+DOOM's source and Freedoom 0.13.0's license and credits for its maps, art and sounds
+(`upstream/Freedoom/`, the files of the official release). MarioClone credits Nintendo's original characters
+and game. Pilgrims retains its US Geological Survey map credit. Other component
+credits remain in the upstream sources.
+
+Wordle is credited upstream to xSlendiX, so it is outside this three-author inventory.
+TempleNES and TempleGen are emulators requiring separate game ROMs. The Apps tools
+Budget, TimeClock, Psalmody, Logic and GrModels are not game titles. Austin's Pellet
+archive is a Windows Unity build; Adventure and Cellar_Crawler are Java projects.
+His archive's Home/1.HC is a music test and Ezekiel's cellar.HC is an early temple
+prototype, not additional published game titles. These are not relabeled as HolyC
+games by the three requested authors.
+
+## Reproduce the import
+
+1. Clone `tinkeros/TinkerOS`, `austings/MarioClone`,
+   `austings/MaliciousTestimonies`, and `austings/GamesMirror` into
+   `../.work/upstream/{TinkerOS,MarioClone,MaliciousTestimonies,AustinGames}`.
+   Check out the revisions recorded in `catalog.json` and `provenance.json`.
+2. Download TempleOS.ISO and TOS_Supplemental1/2/3.ISO.C from the official download
+   directory into `../.work/upstream/TerryArchives`.
+3. Run `python3 Demo/Games/GameArchivesExtract.py`. It checks archive hashes, decodes
+   RedSea directory records and TempleOS compression, and writes source trees.
+   It never executes a disc's boot or setup scripts. The decoder also reproduced
+   455 files byte-for-byte against the independently published TempleOS source tree.
+4. Run `node Demo/Games/Toom/Test/Assets.mjs` to check Freedoom against its official release.
+5. Run `node Demo/Games/GamesSync.mjs`, `node Demo/Games/GameOriginsAudit.mjs`,
+   `node Demo/Games/GamesVerify.mjs`, and `node Apps/Games/GameSrc.test.mjs`.
+
+Upstream source and embedded DolDoc sprites are retained under `Demo/Games/Upstream`.
+Em dashes in UTF-8 text are normalized to hyphens; binary sprite data is unchanged.
+Where V5.03 needs a compatibility change, a separate Browser file supplies the
+installed version. Both launch destinations and the HolyC editor use the same source package.
+The editor preserves binary sprite records when changing source text.
+
+## Compatibility
+
+CF2 and Castle Frankenstein adapt TinkerOS's raw mouse APIs. Lord of Hosts reads the
+expanded versions of its original compressed source files. Solomon's Temple uses
+the packaged vocabulary path.
+MarioClone initializes its game state, allocates all 32 particle slots, bounds tile
+access and restarts from the packaged level path. HEMU fixes the reversed x87
+register subtraction/division operands that broke its collision coordinates. Malicious Testimonies has a stock-TempleOS single-player adapter; its upstream
+Aiwnios networking is unavailable in the offline guest and is identified in the UI.
+These compatibility adapters and runtime smoke checks target the explicit TempleOS runner.
+Browser play and editor previews now use HolyC-WASM exclusively; the upstream games
+still need native ports. Guest startup checks do not establish native compatibility.
+Runtime smoke checks establish that a title compiles and opens, not that every level
+or possible interaction has been exhaustively tested.
+
+Sprite Studio separately credits [greg0-4's PNG2GR](https://github.com/greg0-4/PNG2GR)
+for the conversion inspiration and format reference. Its current natural shading
+algorithm is part of TempleOS-Web.

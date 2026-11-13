@@ -53,7 +53,7 @@ live RAM snapshot of the booted desktop, emulates just the hardware TempleOS tou
 (PIC/PIT/HPET/PS‑2/ATA/VGA‑DAC), and pulls input from the host each frame.
 
 Performance comes from three layers:
-- an **x86‑64 → WASM block JIT** (`engine/jit.js`) that compiles hot guest code to native WASM at
+- an **x86‑64 → WASM block JIT** (`Kernel/jit.js`) that compiles hot guest code to native WASM at
   runtime - the same trick TempleOS's own JIT plays, one level up;
 - **HLE** of the hottest render routines (the window compositor blit and the games' span
   fillers), each shadow‑verified bit‑exact against the emulated version before activation;
@@ -71,18 +71,18 @@ zero and resuming waits for a fresh sample. Native editor previews use the worke
 frame sequence for their separate FPS label, avoiding full-screen pixel hashing.
 
 The screen is always a whole number of device pixels per 8x8 character cell, so one letter has one
-shape everywhere. `framebuffer.js` scales each frame itself with integer maths and hands the browser
+shape everywhere. `FrameBuf.js` scales each frame itself with integer maths and hands the browser
 only whole-number zooms: at a scale like 1.25, `image-rendering:pixelated` puts some GPU sample
 points exactly between two guest rows, and the same letter comes out in up to 15 shapes by position,
 wobbling as it moves. Only rows that changed are expanded and uploaded, and scaling in JS stops at 15
 pixels per cell, so the cost per frame stays bounded on any screen.
 
-### What's in `vendor/`
+### The large files
 | Path | Size | What |
 |------|------|------|
 | `vendor/images/templeos-hd.qcow2.gz` | 41 MB | the installed TempleOS hard disk (FAT32 on C:), read on demand |
 | `hemu/live.bin.gz` | 10 MB | booted‑desktop RAM snapshot (instant boot) |
-| `build/hemu.wasm` | ~77 KB | the compiled emulator, built at deploy by `engine/build.mjs` |
+| `build/hemu.wasm` | ~77 KB | the compiled emulator, built at deploy by `Kernel/build.mjs` |
 
 The desktop appears after the 10 MB snapshot loads; the disk image streams in the background
 for file I/O. (The `.gz` assets are decompressed in the browser.)
@@ -93,31 +93,31 @@ for file I/O. (The `.gz` assets are decompressed in the browser.)
 |---|---|---|
 | **TempleOS-web** (this) | the site: pages, search, video windows, converter, assets | deployed on Netlify |
 | [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | the HolyC→WASM compiler and its browser runtime | cloned into `./holyc-wasm` at build time |
-| [HEMU](https://github.com/ParkerrDev/HEMU) | the emulator itself - plain HolyC - and the booted-RAM snapshots | cloned into `./hemu` at build time and compiled into `./build` by `engine/build.mjs` |
-| [HolyC-fmt](https://github.com/ParkerrDev/HolyC-fmt) | the HolyC formatter, written in HolyC (the Format button, `/format.html`) | cloned into `./holyc-fmt` at build time |
+| [HEMU](https://github.com/ParkerrDev/HEMU) | the emulator itself - plain HolyC - and the booted-RAM snapshots | cloned into `./hemu` at build time and compiled into `./build` by `Kernel/build.mjs` |
+| [HolyC-fmt](https://github.com/ParkerrDev/HolyC-fmt) | the HolyC formatter, written in HolyC (the Format button, `/Apps/Editor/Format.html`) | cloned into `./holyc-fmt` at build time |
 | [HolyCraft](https://github.com/ParkerrDev/HolyCraft) | the HolyCraft voxel game, in HolyC, for the browser and for TempleOS | cloned into `./holycraft` at build time |
-| [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline - its output is baked into `assets/transcripts/` by `tools/build-transcripts.mjs` |
+| [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline - its output is baked into `Apps/Search/Transcripts/` by `Apps/Search/TranscriptsMk.mjs` |
 
-`Siblings.txt` pins each sibling repo to a commit. Netlify's build, `tools/NetlifyBuild.sh`, fetches
-each one at its commit, runs the fast tests (`tools/Test.sh`), compiles the emulator into `build/`,
-writes the CDN redirects, and publishes only the files the site serves (`node server.mjs Site`).
+`Siblings.txt` pins each sibling repo to a commit. Netlify's build, `Misc/NetlifyBuild.sh`, fetches
+each one at its commit, runs the fast tests (`Misc/Test.sh`), compiles the emulator into `build/`,
+writes the CDN redirects, and publishes only the files the site serves (`node Misc/Server.mjs Site`).
 A sibling's new work reaches the site when its commit in `Siblings.txt` is moved.
 
-The heavy files never come from Netlify: the build's last step, `tools/offload-redirects.mjs`, writes
+The heavy files never come from Netlify: the build's last step, `Misc/Cdn/OffloadRedirects.mjs`, writes
 `_redirects` that send the disk image, the RAM snapshots, the games, Terry Search's shards, Terry's
-sprites and ffmpeg's wasm to `templeosweb-files`, a Cloudflare Worker over an R2 bucket (`cdn/`),
+sprites and ffmpeg's wasm to `templeosweb-files`, a Cloudflare Worker over an R2 bucket (`Misc/Cdn/`),
 pinned to the commits they came from. The Worker copies a pinned file in from raw GitHub on its first
 request, and the build HEADs every file first, so a bad pin or host fails the build instead of the
-site. Deploy the Worker with `cd cdn && npx wrangler deploy`; a new file or folder to offload goes
-in `cdn/Offload.js`, which both the Worker (`cdn/Files.js`) and `tools/offload-redirects.mjs` read.
+site. Deploy the Worker with `cd Misc/Cdn && npx wrangler deploy`; a new file or folder to offload goes
+in `Misc/Cdn/Offload.js`, which both the Worker (`Misc/Cdn/Files.js`) and `Misc/Cdn/OffloadRedirects.mjs` read.
 
-"Visitors" in the top bar comes from `templeosweb-presence` (`presence/`), a separate Worker with one
+"Visitors" in the top bar comes from `templeosweb-presence` (`Apps/Chat/Room/`), a separate Worker with one
 Durable Object. Each open page holds a WebSocket to it, the number goes out when it changes, and the
 bar shows nothing if it cannot be reached. A random id in localStorage stops one person's tabs
 counting twice. It is held only while the socket is open, and nothing about a visitor is stored.
-Only the main page connects. Deploy it with `cd presence && npx wrangler deploy`.
+Only the main page connects. Deploy it with `cd Apps/Chat/Room && npx wrangler deploy`.
 
-Chat comes from `templeosweb-chat` (`chat/`), another Worker with one Durable Object, kept apart so
+Chat comes from `templeosweb-chat` (`Apps/Chat/ChatRoom/`), another Worker with one Durable Object, kept apart so
 that presence still stores nothing. A page connects the first time someone opens Chat and stays
 connected so the Menu can count what arrives. The room keeps the last 100 messages in its SQLite
 storage: time, name, text and a four-digit tag after the name, made from a salted hash of the
@@ -125,12 +125,12 @@ browser's id, so two people called Guest can be told apart. The id itself and th
 never stored. Each sender (one IP, or one IPv6 /64) gets a burst of 5 messages and then one every
 3 seconds, may not repeat a message within 30 seconds, and may hold 8 sockets. That limit is kept
 in storage under a salted hash of the address, because a hibernating room forgets its memory, and
-each row goes a minute after the sender's last message. `chat/rules.js` holds the limits and the
+each row goes a minute after the sender's last message. `Apps/Chat/ChatRules.js` holds the limits and the
 cleaning (bidi overrides, control characters and piled-up combining marks are removed), shared by
 the Worker and the page, and the page only ever puts a message on screen as text. Deploy with
-`cd chat && npx wrangler deploy`.
+`cd Apps/Chat/ChatRoom && npx wrangler deploy`.
 
-To moderate, set a secret once with `cd chat && npx wrangler secret put ADMIN_TOKEN`, then:
+To moderate, set a secret once with `cd Apps/Chat/ChatRoom && npx wrangler secret put ADMIN_TOKEN`, then:
 
 ```sh
 curl -X POST https://templeosweb-chat.parkerrhunt.workers.dev/admin -H "Authorization: Bearer $TOKEN" -d '{"list":true}'
@@ -141,7 +141,7 @@ curl -X POST https://templeosweb-chat.parkerrhunt.workers.dev/admin -H "Authoriz
 `list` shows each message's number `n`; `delete` removes one from the room and from every open
 page; `clear` empties the room. Without the secret, `/admin` does not exist.
 
-To work on Chat locally, run the Worker with `cd chat && npx wrangler dev --var ORIGINS:http://localhost:8080`
+To work on Chat locally, run the Worker with `cd Apps/Chat/ChatRoom && npx wrangler dev --var ORIGINS:http://localhost:8080`
 and open `http://localhost:8080/?chat=ws://127.0.0.1:8787/`. The page takes `?chat=` only when it
 is served from localhost itself.
 
@@ -149,25 +149,30 @@ is served from localhost itself.
 
 | Path | What |
 |---|---|
-| `index.html`, `*.js`, `*.html` | the desktop UI and its pages and modules (search, converter, games, sprites) |
-| `engine/` | HEMU in the browser - the WASM host for HEMU: `build.mjs`, `compile.js`, `host.js`, the x86→WASM JIT (`jit.js`), guest execution and input, the disk reader, and the two emulator workers (see `engine/README.md`) |
-| `editor/` | the in-browser HolyC editor app: compiles with `holyc-wasm/src` and runs programs in its own worker |
-| `tools/` | tests and dev scripts (run from this directory); `tools/hemu/` the emulator harnesses, `tools/snapshot/` the QEMU recipes that produce HEMU's boot snapshots |
+| `index.html` | the desktop page; with `_headers`, `netlify.toml`, `package.json` and `Siblings.txt` it is all the root holds |
+| `Kernel/` | the machine, HEMU in the browser: `build.mjs`, `compile.js`, `host.js`, the x86→WASM JIT (`jit.js`), guest execution and input, the disk reader and the two emulator workers (see `Kernel/README.md`); `Kernel/Desktop/` the machine alone in a page, `Kernel/Test/` the emulator harnesses, `Kernel/Snapshot/` the QEMU recipes that produce HEMU's boot snapshots |
+| `Adam/` | what every window uses: the host of the OS (`Os.js`), the window manager, keyboard, touch and mouse input, the frame scaler, the fonts and the shell's images |
+| `Apps/<Name>/` | one folder a window, with its module, pages, styles, HolyC, Worker, data and tests: `Chat` (with its two Cloudflare Workers, `ChatRoom/` and `Room/`), `Disk`, `Editor` (the in-browser HolyC editor: compiles with `holyc-wasm/src` and runs programs in its own worker), `Games`, `God`, `Help`, `Search` (Terry Search, the player page, the clip maker in `Clip/`, the transcripts and FFmpeg), `Settings`, `Sprites` and `Terry` |
+| `Demo/Games/` | the HolyC games and their catalog, the packages from elsewhere (`Upstream/`), TOOM (`Toom/`), and the tools and records that check them (`Test/`) |
+| `Doc/` | the validation record |
+| `Misc/` | the server and publisher (`Server.mjs`), the fast tests (`Test.sh`), Netlify's build, the text check, Lighthouse, and `Cdn/`, the Cloudflare Worker that serves the heavy files from R2 (`Files.js`, its list `Offload.js`, `wrangler.toml`) |
 | `build/` | gitignored: `hemu.wasm`, `hemu-smp.wasm`, `hemu-smp.json`, compiled at deploy |
-| `vendor/` | committed binary assets: the TempleOS disk image, fonts |
-| `cdn/` | the Cloudflare Worker that serves the heavy files from R2 (`Files.js`, its list `Offload.js`, `wrangler.toml`) |
-| `presence/` | the Cloudflare Worker that counts the people on the site (`Room.js`, the room both Workers are built on, `wrangler.toml`), and `RoomGlbls.js`, what the rooms and the pages agree on |
-| `chat/` | the Cloudflare Worker behind the Chat window (`ChatRoom.js`, `wrangler.toml`) and the rules it shares with the page (`rules.js`) |
+| `vendor/images/` | the TempleOS disk image, until HEMU holds it |
 | `holyc-wasm/`, `hemu/`, `holyc-fmt/`, `holycraft/` | the sibling repos, cloned here at build time (gitignored) |
+
+A test sits beside what it tests: `Name.test.mjs` runs under node and `Name.browser.mjs` drives a
+browser. A folder named `Test` holds what only tests read. The site publishes `Kernel/`, `Adam/`,
+`Apps/` and `Demo/` without those folders, the tests, the tools, the notes and the Workers
+(`Misc/Server.mjs`), so a new folder needs no entry anywhere.
 
 ## Running locally
 
 ```bash
 git clone https://github.com/ParkerrDev/TempleOS-Web && cd TempleOS-Web
 while read dir url sha; do git clone -q $url $dir && git -C $dir checkout -q $sha; done <Siblings.txt
-node engine/build.mjs build   # compile the emulator into build/
-sh tools/Test.sh              # the fast tests
-node server.mjs               # http://localhost:8080, with _headers (and _redirects, if written)
+node Kernel/build.mjs build   # compile the emulator into build/
+sh Misc/Test.sh               # the fast tests
+node Misc/Server.mjs          # http://localhost:8080, with _headers (and _redirects, if written)
 ```
 
 (For work on the engine or the compiler, clone the repos side by side and symlink them instead:
@@ -178,7 +183,7 @@ node server.mjs               # http://localhost:8080, with _headers (and _redir
 - **TempleOS** - created by **Terry A. Davis**. Public domain. The disk image and snapshot
   contain TempleOS V5.03.
 - **holyc-wasm, HEMU, the JIT** - written for this project; same repository.
-- **ffmpeg.wasm** (`vendor/ffmpeg/`, powers the in-browser video converter) - FFmpeg (GPL) compiled
+- **ffmpeg.wasm** (`Apps/Search/FFmpeg/`, powers the in-browser video converter) - FFmpeg (GPL) compiled
   to WebAssembly by the [ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm) project (MIT wrapper).
 - **Transcripts** - Whisper (large-v3-turbo) transcriptions of the
   [TerryADavis_TempleOS_Archive](https://archive.org/details/TerryADavis_TempleOS_Archive) item.
@@ -188,20 +193,20 @@ node server.mjs               # http://localhost:8080, with _headers (and _redir
   adopted from [TempleOS-tribute](https://github.com/del-Real/TempleOS-tribute) by
   Alberto del Real (MIT).
 - **Menu icons** - [pixelarticons](https://github.com/halfmage/pixelarticons) by Gerrit Halfmann
-  (MIT, `assets/pixelarticons-LICENSE.txt`), inline in `index.html`. The cross is its `cross-sharp`
+  (MIT, `Adam/pixelarticons-LICENSE.txt`), inline in `index.html`. The cross is its `cross-sharp`
   with the bar raised.
 
 ## Sprite Studio and current game packages
 
-Open Sprite Studio from the desktop menu to convert PNG/JPEG/WebP images, GIFs, or video clips to the TempleOS palette. It stays closed on arrival, including visits through old `/#sprites` links. It opens in a draggable desktop window and keeps the current conversion when closed and reopened. Exports include transparent .GR frames, a PNG sheet, an animated GIF, and a ZIP with .GR frames and Play.HC. Clips default to 25 fps, with options up to 50 fps, 600 frames and 20 million pixels. Conversion runs locally: videos use the browser decoder and bounded canvas frame extraction; GIFs and browsers without video-frame callbacks still use the vendored FFmpeg, and palette mapping runs in a separate worker. Supported browsers do not download the 31 MB FFmpeg module for video conversion. The editor visibly credits greg0-4's PNG2GR for the conversion inspiration and format reference. The uncompressed standard-palette .GR reader and writer are shared HolyC in `sprites/Gr.HC`, compiled for Sprite Studio and the Terry player. Native QEMU checks compare them with TempleOS's own `DCLoad` and `DCSave`; `npm run test:sprites` checks the browser preview, downloads, MP4/WebM frame selection, cancellation and cleanup (Python and FFmpeg are needed for its independent fixtures). Exported `Play.HC` restores native window settings and cleans up images on exit or load failure; `node sprites/Play.test.mjs --native` verifies the actual package in TempleOS under QEMU.
+Open Sprite Studio from the desktop menu to convert PNG/JPEG/WebP images, GIFs, or video clips to the TempleOS palette. It stays closed on arrival, including visits through old `/#sprites` links. It opens in a draggable desktop window and keeps the current conversion when closed and reopened. Exports include transparent .GR frames, a PNG sheet, an animated GIF, and a ZIP with .GR frames and Play.HC. Clips default to 25 fps, with options up to 50 fps, 600 frames and 20 million pixels. Conversion runs locally: videos use the browser decoder and bounded canvas frame extraction; GIFs and browsers without video-frame callbacks still use the vendored FFmpeg, and palette mapping runs in a separate worker. Supported browsers do not download the 31 MB FFmpeg module for video conversion. The editor visibly credits greg0-4's PNG2GR for the conversion inspiration and format reference. The uncompressed standard-palette .GR reader and writer are shared HolyC in `Apps/Sprites/Gr.HC`, compiled for Sprite Studio and the Terry player. Native QEMU checks compare them with TempleOS's own `DCLoad` and `DCSave`; `npm run test:sprites` checks the browser preview, downloads, MP4/WebM frame selection, cancellation and cleanup (Python and FFmpeg are needed for its independent fixtures). Exported `Play.HC` restores native window settings and cleans up images on exit or load failure; `node Apps/Sprites/Play.test.mjs --native` verifies the actual package in TempleOS under QEMU.
 
-Natural shading is the default. It fits the unmodified source color with up to three nearby-hue entries from the stock palette, balancing display-RGB error against the contrast of the resulting pattern. There is no saturation boost or penalty for choosing gray. A fixed blue-noise mask keeps the same pattern across animation frames. Local source smoothing removes isolated compression flecks, with exact palette artwork and transparency preserved. Dither strength defaults to 35%; lower values reduce texture and 0% selects solid colors. Reconvert after changing it. The mask is reproducible with `node tools/build-sprite-noise.mjs`. Error diffusion and nearest-color matching remain selectable. Playback caches ImageData and uses elapsed time to recover after late frames; GIF exports distribute fractional delays across frames to preserve the clip duration.
+Natural shading is the default. It fits the unmodified source color with up to three nearby-hue entries from the stock palette, balancing display-RGB error against the contrast of the resulting pattern. There is no saturation boost or penalty for choosing gray. A fixed blue-noise mask keeps the same pattern across animation frames. Local source smoothing removes isolated compression flecks, with exact palette artwork and transparency preserved. Dither strength defaults to 35%; lower values reduce texture and 0% selects solid colors. Reconvert after changing it. The mask is reproducible with `node Apps/Sprites/SpriteNoiseMk.mjs`. Error diffusion and nearest-color matching remain selectable. Playback caches ImageData and uses elapsed time to recover after late frames; GIF exports distribute fractional delays across frames to preserve the clip duration.
 
-The desktop Terry animation uses 251 palette-indexed .GR frames at 176 pixels tall, preserving the original 25 fps timing. Run `node tools/build-terry-sprites.mjs` with FFmpeg and ffprobe installed to regenerate `assets/terry-sprites.gr.gz` from the original GIFs.
+The desktop Terry animation uses 251 palette-indexed .GR frames at 176 pixels tall, preserving the original 25 fps timing. Run `node Apps/Terry/TerrySpritesMk.mjs` with FFmpeg and ffprobe installed to regenerate `Apps/Terry/TerrySprites.gr.gz` from the original GIFs.
 
 Games request mouse capture through the guest input bridge. Click the game screen to capture the mouse; Esc releases it into hybrid mode. Clicking or focusing TempleOS again keeps the cursor free, even if the guest keeps requesting capture. Use Capture mouse to capture again; the HolyC Editor has its own capture button above the native preview. Native previews also support Shift+click and manual capture for programs that do not request it themselves. Use the Keys window's Esc button to send Esc to TempleOS. The Capture mouse button also allows manual capture. Focus loss, window changes and OS restarts clear held keys and mouse buttons. HolyCraft uses relative mouse movement and explicit held-key state in both execution paths.
 
-The Games menu puts HolyCraft, TOOM, Babel, Volley and Snake first. Every description credits the author and links to the original source. Its 66 entries include 47 games and interactive demos by Terry, 8 games or adaptations by TheTinkerer, 5 HolyC games by Austin Sierra, and the site's HolyCraft, TOOM, Snake, Babel, Volley and FNAF. Authors are checked against Terry's official discs and the developers' source histories. See [games/AUTHORS.md](games/AUTHORS.md) for the inventory and attribution evidence. Both destinations read the same pinned, checksum-verified sources; only Run in TempleOS installs files in the guest. See [games/README.md](games/README.md) for sources and refresh instructions.
+The Games menu puts HolyCraft, TOOM, Babel, Volley and Snake first. Every description credits the author and links to the original source. Its 66 entries include 47 games and interactive demos by Terry, 8 games or adaptations by TheTinkerer, 5 HolyC games by Austin Sierra, and the site's HolyCraft, TOOM, Snake, Babel, Volley and FNAF. Authors are checked against Terry's official discs and the developers' source histories. See [Demo/Games/AUTHORS.md](Demo/Games/AUTHORS.md) for the inventory and attribution evidence. Both destinations read the same pinned, checksum-verified sources; only Run in TempleOS installs files in the guest. See [Demo/Games/README.md](Demo/Games/README.md) for sources and refresh instructions.
 
 Developers can propose a game from the submission notice at the top of the Games window. It opens a GitHub issue draft asking for the game's source, author credit, launch instructions, screenshots and permission to share its code and assets.
 
@@ -211,32 +216,32 @@ Run plays the game beside its source using the same runner as Run in Browser. Yo
 
 Browser games open in a larger window and scale the 640x480 canvas to fit while preserving its aspect ratio. Capture mouse and Fullscreen are available inside the game window. HolyC Editor offers Fullscreen editor for the whole workspace and Fullscreen game for just its preview. Escape or Exit fullscreen restores the previous layout and releases the mouse. Fullscreen survives preview reruns and uses a viewport fallback when the browser does not support element fullscreen. Native input handles left/right button combinations and retains quick clicks between worker polls.
 
-Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. Each run compiles `editor/Adam.HC` first, which gives the browser compiler SettingsPush, SettingsPop, AutoComplete and a window manager task that calls draw_it, so a game written for TempleOS runs unchanged. Browser compilation currently passes for HolyCraft, Snake, Babel, Volley, TicTacToe, Collision, ElephantWalk, Digits and B17. The first four also pass recorded worker-startup, advancing-frame and stop checks. The other five stay on Run in TempleOS until their browser runs are checked. The launcher requires both compilation and startup evidence; changing the program, compiler or browser runner invalidates that evidence. Startup does not establish input response or full gameplay parity. Run in TempleOS stays available for every package that passes the startup check below. Run `node tools/native-games-audit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability. The separate [native game checks](tools/games/README.md) verify input, rendering and repeated-launch cleanup in original TempleOS and HEMU; every entry is also launched in original TempleOS V5.03 under QEMU and in HEMU, and Run in TempleOS is enabled only for those that start and quit the same way in both (`games/startup.json`); that is not gameplay proof.
+Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. Each run compiles `Apps/Editor/Adam.HC` first, which gives the browser compiler SettingsPush, SettingsPop, AutoComplete and a window manager task that calls draw_it, so a game written for TempleOS runs unchanged. Browser compilation currently passes for HolyCraft, Snake, Babel, Volley, TicTacToe, Collision, ElephantWalk, Digits and B17. The first four also pass recorded worker-startup, advancing-frame and stop checks. The other five stay on Run in TempleOS until their browser runs are checked. The launcher requires both compilation and startup evidence; changing the program, compiler or browser runner invalidates that evidence. Startup does not establish input response or full gameplay parity. Run in TempleOS stays available for every package that passes the startup check below. Run `node Demo/Games/NativeGamesAudit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability. The separate [native game checks](Demo/Games/Test/README.md) verify input, rendering and repeated-launch cleanup in original TempleOS and HEMU; every entry is also launched in original TempleOS V5.03 under QEMU and in HEMU, and Run in TempleOS is enabled only for those that start and quit the same way in both (`Demo/Games/startup.json`); that is not gameplay proof.
 
-The editor's runner (`editor/worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `tools/holycraft-input.test.mjs`.
+The editor's runner (`Apps/Editor/worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `Demo/Games/HolyCraftInput.test.mjs`.
 
-`node tools/game-source.test.mjs` checks all 304 source files, byte preservation for the 64 files with embedded sprites, draft persistence, edited installations, restoration, partial-write recovery and OS restarts.
+`node Apps/Games/GameSrc.test.mjs` checks all 304 source files, byte preservation for the 64 files with embedded sprites, draft persistence, edited installations, restoration, partial-write recovery and OS restarts.
 
 ```sh
-node tools/sprite-codec.test.mjs
-node tools/sprite-player.test.mjs
-node tools/guest-fps.test.mjs
-node tools/presence.test.mjs
-node tools/chat.test.mjs
-node tools/chat-worker.test.mjs     # the chat Worker in wrangler dev, on this machine only (needs npx)
-node tools/holycraft-input.test.mjs
-node tools/game-capture.test.mjs
-node tools/native-clicks.test.mjs
-node tools/game-view.test.mjs
-node tools/native-project.test.mjs
-node tools/framebuffer.test.mjs
-node tools/verify-games.mjs
-node tools/game-credits.test.mjs
-python3 tools/redsea.test.py
-python3 tools/check-text.py
+node Apps/Sprites/SpriteCodec.test.mjs
+node Apps/Sprites/SpritePlayer.test.mjs
+node Adam/GuestFps.test.mjs
+node Apps/Chat/Presence.test.mjs
+node Apps/Chat/Chat.test.mjs
+node Apps/Chat/ChatWorker.test.mjs     # the chat Worker in wrangler dev, on this machine only (needs npx)
+node Demo/Games/HolyCraftInput.test.mjs
+node Apps/Games/GameCapture.test.mjs
+node Apps/Editor/NativeClicks.test.mjs
+node Apps/Games/GameView.test.mjs
+node Apps/Editor/NativeProject.test.mjs
+node Adam/FrameBuf.test.mjs
+node Demo/Games/GamesVerify.mjs
+node Apps/Games/GameCredits.test.mjs
+python3 Demo/Games/RedSea.test.py
+python3 Misc/ChkText.py
 ```
 
-The emulator harnesses (`tools/hemu/`, memory-hungry, need the decompressed snapshot and a raw disk) and the QEMU capture recipes (`tools/snapshot/`) are documented in `engine/README.md`. `npm run test:browser` checks the desktop/mobile shell, including fullscreen keyboard focus. `npm run test:search` checks the native query parser and real search worker, copied/downloaded transcripts, archive links and video windows. These browser checks start their own local server and use Playwright with `CHROMIUM` (default `/usr/bin/chromium`). The search check also needs FFmpeg to generate small MP4/MKV fixtures; network routes supply these known files without depending on archive availability. Live archive/CDN delivery remains a separate deployment check.
+The emulator harnesses (`Kernel/Test/`, memory-hungry, need the decompressed snapshot and a raw disk) and the QEMU capture recipes (`Kernel/Snapshot/`) are documented in `Kernel/README.md`. `npm run test:browser` checks the desktop/mobile shell, including fullscreen keyboard focus. `npm run test:search` checks the native query parser and real search worker, copied/downloaded transcripts, archive links and video windows. These browser checks start their own local server and use Playwright with `CHROMIUM` (default `/usr/bin/chromium`). The search check also needs FFmpeg to generate small MP4/MKV fixtures; network routes supply these known files without depending on archive availability. Live archive/CDN delivery remains a separate deployment check.
 
 ```sh```
 

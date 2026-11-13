@@ -1,0 +1,23 @@
+{
+  "format": 1,
+  "compilerSha256": "2f59ee7ae0d9235848756ffba3f49e01b15b1e03b0aab13635a60ffbc6964e67",
+  "runnerSha256": "a82871b830b699c92aad03270f079e716fc9c1c7f462903ddb476894ac696314",
+  "programs": {
+    "HolyCraft.HC": {
+      "sourceSha256": "324876d5ab8947b025f6e4cca0c8df8ee799ad929cf3a6981691d24da121c5d9",
+      "startup": true
+    },
+    "Babel.HC": {
+      "sourceSha256": "a76e7d5a51f8ba3335af62b49a2a71dac2862af3f68f45a502cef94a1adbf6f5",
+      "startup": true
+    },
+    "Volley.HC": {
+      "sourceSha256": "7dc37ac5d8889e27119211dfcf6459f7bdd90b8d3f76debe3b609b5fb9e332dd",
+      "startup": true
+    },
+    "Snake.HC": {
+      "sourceSha256": "478f711cc29ef5387b1d9cb37db5f3a4b8333bd55c6d35b3071415611006e3d0",
+      "startup": true
+    }
+  }
+}

@@ -1,0 +1,134 @@
+<!doctype html>
+<!-- Player.html - standalone player page. Reached ONLY from a result's red title link when the
+     video can't be played on archive.org (no web derivative: .mkv/.avi/.wmv originals), and from
+     copied/shared links. Chromium plays Matroska natively, so streaming the original beats a
+     download for most of these. ?f=<path within the item>&t=<seconds>&n=<title>&p=1 (p=1 -> the
+     file IS in archive.org's web player, so offer "Open in Archive.org"). -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="../../Adam/Logo128x152.jpg" type="image/jpeg" />
+  <title>Terry A. Davis - archive player</title>
+  <style>
+    @font-face { font-family:'dos_vga'; src:url('../../Adam/Fonts/dos_vga_new.woff2') format('woff2'); font-display:swap; }
+    :root { --blue:#0000aa; --red:#aa0000; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html,body { height:100%; }
+    body { background:var(--blue); color:#fff; font-family:'dos_vga','TempleOS',monospace; font-size:16px;
+           display:flex; flex-direction:column; gap:10px; padding:14px; }
+    #bar { display:flex; gap:14px; align-items:center; }
+    a.btn, button.btn { background:#fff; color:#000; text-decoration:none; padding:3px 10px; border:2px solid #fff;
+                        font-family:inherit; font-size:16px; }
+    a.btn:hover, button.btn:hover { border-color:yellow; }
+    #dl { margin-left:auto; }
+    h1 { font-size:16px; font-weight:normal; color:yellow; word-break:break-word; }
+    #wrap { flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; background:#000;
+            border:4px double #fff; }
+    video { max-width:100%; max-height:100%; outline:none; background:#000; }
+    #msg { display:none; padding:24px; max-width:640px; line-height:1.5; }
+    #msg b { color:yellow; }
+    a { color:yellow; }
+
+    /* ---- scroll bars: black on white with arrow ends (TempleOS windows have none) ---- */
+    ::-webkit-scrollbar { width:14px; height:14px; }
+    ::-webkit-scrollbar-track { background:#fff; }
+    ::-webkit-scrollbar-thumb { background:#000; border:2px solid #fff; }
+    ::-webkit-scrollbar-thumb:hover { background:#333; }
+    ::-webkit-scrollbar-corner { background:#fff; }
+    ::-webkit-scrollbar-button { background:#fff; width:14px; height:14px; }
+    ::-webkit-scrollbar-button:vertical:decrement { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 1 L9 8 H1 Z' fill='%23000000'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
+    ::-webkit-scrollbar-button:vertical:increment { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 9 L9 2 H1 Z' fill='%23000000'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
+    ::-webkit-scrollbar-button:horizontal:decrement { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M1 5 L8 1 V9 Z' fill='%23000000'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
+    ::-webkit-scrollbar-button:horizontal:increment { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M9 5 L2 1 V9 Z' fill='%23000000'/%3E%3C/svg%3E") center/9px no-repeat #fff; }
+    @supports not selector(::-webkit-scrollbar) {   /* Firefox: closest equivalent */
+      * { scrollbar-color: #000 #fff; scrollbar-width: auto; }
+    }
+  </style>
+  <link rel="stylesheet" href="Clip/Panel.css">
+</head>
+<body>
+  <div id="bar">
+    <button class="btn" id="back" title="back">←</button>
+    <a class="btn" id="arch" href="#" target="_blank" rel="noopener" style="display:none">Open in Archive.org</a>
+    <a class="btn" id="dl" href="#" download>↓ Download video</a>
+  </div>
+  <h1 id="title">…</h1>
+  <div id="wrap">
+    <video id="v" controls autoplay playsinline preload="metadata"></video>
+    <div id="msg"></div>
+  </div>
+  <script type="module">
+    import {ArchiveFile,ArchiveDetails} from "./Archive.js";
+    import {ClipPanel} from "./Clip/Panel.js";
+    const P = new URLSearchParams(location.search);
+    const f = P.get("f") || "", t = Math.max(0, Number(P.get("t")) || 0), name = P.get("n") || f.split("/").pop();
+    const src=ArchiveFile(f);
+    const clip=ClipPanel({f,t:name},t,t+20);
+    document.getElementById("wrap").append(clip.element);
+    addEventListener("pagehide",clip.Close);
+    const v = document.getElementById("v"), msg = document.getElementById("msg");
+    const hms = (s) => { s |= 0; const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
+      return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(ss).padStart(2, "0"); };
+    document.getElementById("title").textContent = name + (t ? " - from " + hms(t) : "");
+    document.title = name + " - Terry A. Davis";
+    document.getElementById("dl").href = src;
+    document.getElementById("back").addEventListener("click", () => {
+      if (history.length > 1) history.back(); else location.href = "../../"; });
+    if (P.get("p") === "1" && f) {        // playable on archive.org too -> offer their player (double-decoded path form)
+      const a = document.getElementById("arch");
+      a.href=ArchiveDetails(f,t);
+      a.style.display = "";
+    }
+    // ---- in-browser converter: shared module (Convert.js - same code as the video windows). ----
+    const WIN = Math.max(5, Number(P.get("win")) || 600);    // seconds per converted window (?win= for tests)
+    const ext = (f.split(".").pop() || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    let winStart = 0, blobUrl = null;
+    const say = (m) => { const e = document.getElementById("convSt"); if (e) e.textContent = m; };
+    async function convert(start) {
+      winStart = start;
+      const { convertVideo } = await import("./Convert.js");
+      const r = await convertVideo({ f, start, win: WIN, onStatus: say });
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      blobUrl = r.blobUrl;
+      msg.style.display = "none"; v.style.display = "";
+      v.onerror = null;                                            // a converted-output error shouldn't reopen the converter UI
+      v.src = blobUrl;
+      const off = Math.max(0, t - r.start);                        // wanted moment, relative to this window
+      v.addEventListener("loadedmetadata", () => { if (off > 1 && off < (v.duration || 1e9)) { try { v.currentTime = off; } catch {} } }, { once: true });
+      v.play().catch(() => {});
+      document.getElementById("title").textContent = name + " - converted in your browser" +
+        (r.windowed ? " (" + hms(r.start) + " to " + hms(r.start + r.win) + ")" : "");
+      const nx = document.getElementById("convNext");
+      if (nx) nx.style.display = r.windowed ? "" : "none";
+    }
+    window.__convert = convert;                                    // ⏭ button + tests
+    function showFallback() {
+      v.style.display = "none"; msg.style.display = "block";
+      msg.innerHTML = "<b>This browser can't decode this ." + (ext || "?") + " file natively</b> - archive.org never " +
+        "web-encoded it. You can convert it RIGHT HERE (ffmpeg compiled to WebAssembly, runs locally, " +
+        "nothing uploaded):<br><br>" +
+        "<button class='btn' id='convGo'>▶ Convert &amp; play here</button> " +
+        "<button class='btn' id='convNext' style='display:none'>⏭ next " + Math.round(WIN / 60) + " min</button>" +
+        "<div id='convSt' style='margin-top:10px'></div><br>" +
+        "Unsupported formats convert a <b>" + Math.round(WIN / 60) + "-minute window</b> from <b>" + hms(t) + "</b> " +
+        "(x264 ultrafast - expect slower than realtime). Or <b>↓ Download video</b> above for VLC/mpv.";
+      document.getElementById("convGo").addEventListener("click", () => {
+        document.getElementById("convGo").disabled = true;
+        convert(Math.max(0, t - 5)).catch((e) => { say("✗ " + e.message); document.getElementById("convGo").disabled = false; });
+      });
+      document.getElementById("convNext").addEventListener("click", () => {
+        convert(winStart + WIN).catch((e) => { say("✗ " + e.message); });
+      });
+    }
+    if (!f) { v.style.display = "none"; msg.style.display = "block"; msg.textContent = "no video specified."; }
+    else {
+      v.src = src + (t ? "#t=" + t : "");
+      // some servers ignore media fragments on this container - seek again once metadata is in
+      v.addEventListener("loadedmetadata", () => { if (t && Math.abs(v.currentTime - t) > 2) { try { v.currentTime = t; } catch {} } });
+      v.onerror = showFallback;                                    // property (not addEventListener) so convert() can detach it
+      if (P.get("conv") === "1") { try { v.removeAttribute("src"); } catch {} showFallback(); }   // force the converter UI (tests / unsupported-everywhere formats)
+    }
+  </script>
+</body>
+</html>

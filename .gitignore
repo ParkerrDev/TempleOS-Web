@@ -4,16 +4,16 @@ node_modules/
 # NOTE: vendor/**/*.wasm is intentionally committed - the site needs it.
 reference/
 TerryADavis-archive-transcriber/
-# sibling repos, assembled here at build time (Netlify) / symlinked for local dev (root only: tools/hemu is tracked)
+# sibling repos, assembled here at build time (Netlify) / symlinked for local dev
 /holyc-wasm
 /hemu
 /holyc-fmt
 /holycraft
-# the compiled emulator (hemu.wasm, hemu-smp.wasm, hemu-smp.json): node engine/build.mjs
+# the compiled emulator (hemu.wasm, hemu-smp.wasm, hemu-smp.json): node Kernel/build.mjs
 /build/
-# written by tools/offload-redirects.mjs during the Netlify build
+# written by Misc/Cdn/OffloadRedirects.mjs during the Netlify build
 /_redirects
-# what Netlify publishes: node server.mjs Site
+# what Netlify publishes: node Misc/Server.mjs Site
 /Site/
 
 # Python archive-tool caches

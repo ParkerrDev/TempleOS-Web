@@ -1,8 +1,67 @@
-# Netlify runs tools/NetlifyBuild.sh: the sibling repos at the commits in
+# Netlify runs Misc/NetlifyBuild.sh: the sibling repos at the commits in
 # Siblings.txt, the fast tests, the engine and the CDN redirects. Only the
 # files the site serves are copied into Site/, which is published.
 [build]
-  command = "sh tools/NetlifyBuild.sh"
+  command = "sh Misc/NetlifyBuild.sh"
   publish = "Site"
 [build.environment]
   NODE_VERSION = "26"   # the Workers' tests need 22.15 or later
+
+# The pages' old addresses, from before each window had a folder. The query
+# string goes along by itself.
+[[redirects]]
+  from = "/player.html"
+  to = "/Apps/Search/Player.html"
+  status = 301
+[[redirects]]
+  from = "/player"
+  to = "/Apps/Search/Player.html"
+  status = 301
+[[redirects]]
+  from = "/sprites.html"
+  to = "/Apps/Sprites/Sprites.html"
+  status = 301
+[[redirects]]
+  from = "/sprites"
+  to = "/Apps/Sprites/Sprites.html"
+  status = 301
+[[redirects]]
+  from = "/format.html"
+  to = "/Apps/Editor/Format.html"
+  status = 301
+[[redirects]]
+  from = "/format"
+  to = "/Apps/Editor/Format.html"
+  status = 301
+[[redirects]]
+  from = "/gameplay.html"
+  to = "/Apps/Games/GamePlay.html"
+  status = 301
+[[redirects]]
+  from = "/gameplay"
+  to = "/Apps/Games/GamePlay.html"
+  status = 301
+[[redirects]]
+  from = "/hemu-smp.html"
+  to = "/Kernel/HemuSmp.html"
+  status = 301
+[[redirects]]
+  from = "/hemu-smp"
+  to = "/Kernel/HemuSmp.html"
+  status = 301
+[[redirects]]
+  from = "/hemu.html"
+  to = "/"
+  status = 301
+[[redirects]]
+  from = "/hemu"
+  to = "/"
+  status = 301
+[[redirects]]
+  from = "/editor"
+  to = "/"
+  status = 301
+[[redirects]]
+  from = "/editor/index.html"
+  to = "/"
+  status = 301
