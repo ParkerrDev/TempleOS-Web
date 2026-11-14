@@ -1,0 +1,151 @@
+import assert from "node:assert/strict";
+import {readFile} from "node:fs/promises";
+import {createServer} from "node:http";
+import {once} from "node:events";
+import {chromium} from "playwright-core";
+import {ServeReq} from "../Misc/Server.mjs";
+import {DesktopServer} from "../hemu/Misc/Server.mjs";
+import {BrowserMachine,MachineReady} from "../hemu/Kernel/Test/BrowserMachine.mjs";
+
+const root=new URL("..",import.meta.url),site=createServer(ServeReq).listen(0,"127.0.0.1");
+await once(site,"listening");
+const desktop=await DesktopServer({cores:4}),browser=await chromium.launch({
+  executablePath:process.env.CHROMIUM||"/usr/bin/chromium",headless:true,args:["--no-sandbox"]});
+try {
+  for(const app of ["page","desktop"])for(const late of ["success","error"]) {
+    const context=await browser.newContext({viewport:{width:1280,height:800}});
+    try {
+      await BrowserMachine(context);
+      let first=true,release,heldResolve;
+      const held=new Promise(resolve=>heldResolve=resolve);
+      await context.route("**/build/hemu-smp.wasm",async route=>{
+        if(first) {
+          first=false;heldResolve();await new Promise(resolve=>release=resolve);
+          if(late==="error"){await route.abort();return;}
+        }
+        await route.fulfill({body:await readFile(new URL("hemu/build/hemu-smp.wasm",root)),contentType:"application/wasm"});
+      });
+      const page=await context.newPage(),errors=[];
+      page.on("pageerror",error=>errors.push(error.message));page.on("dialog",dialog=>dialog.accept());
+      await page.goto(app==="page"?`http://127.0.0.1:${site.address().port}/?smp`:desktop.url);
+      await held;
+      if(app==="page")await page.locator("#restartBtn").click();
+      else await page.locator("#open").setInputFiles({name:"single.bin.gz",mimeType:"application/gzip",
+        buffer:await readFile(new URL("hemu/live.bin.gz",root))});
+      const cores=app==="page"?4:1;
+      await MachineReady(page,cores);
+      //The spares started at page load end with the boot they were for, before any init.
+      const before=await page.evaluate(()=>({workers:window.machine.workers.filter(w=>!w.machineTerminated).length,
+        frames:window.machine.frames}));
+      assert.equal(before.workers,cores,"the cancelled fetch created no workers");
+      release();
+      await page.waitForFunction(n=>window.machine.frames>n+10,before.frames);
+      const after=await page.evaluate(()=>({workers:window.machine.workers.filter(w=>!w.machineTerminated).length,
+        terminated:window.machine.terminations.length,
+        errors:window.machine.events.filter(m=>m.cmd==="error")}));
+      assert.deepEqual(after,{workers:cores,terminated:0,errors:[]},"a late boot result cannot replace or stop the new machine");
+      if(app==="desktop")assert.doesNotMatch(await page.locator("#status").innerText(),/fetch|failed|error/i);
+      else assert.equal(await page.locator("#loadui").isVisible(),false);
+      assert.deepEqual(errors,[]);
+      console.log(`${app}: cancelled asynchronous boot ignores a late ${late}; only the replacement's ${cores} workers run.`);
+    } finally {await context.close();}
+  }
+  for(const late of ["body","read-error","http-error"]) {
+    const context=await browser.newContext({viewport:{width:1280,height:800}});
+    try {
+      await BrowserMachine(context);
+      await context.addInitScript(late=>{
+        const Fetch=window.fetch;let first=true;
+        window.fetch=async function(resource,...args) {
+          const response=await Fetch(resource,...args);
+          if(!String(resource).endsWith("/hemu/live-smp.bin.gz")||!first)return response;
+          first=false;
+          if(late==="http-error") {
+            await new Promise(resolve=>{window.snapshotRelease=resolve;});
+            return new Response("late error",{status:503});
+          }
+          const bytes=new Uint8Array(await response.arrayBuffer());
+          return new Response(new ReadableStream({start(controller) {
+            controller.enqueue(bytes.subarray(0,1));
+            window.snapshotRelease=()=>{
+              if(late==="read-error")controller.error(new Error("late snapshot stream failure"));
+              else {controller.enqueue(bytes.subarray(1));controller.close();}
+            };
+          }}),{headers:response.headers});
+        };
+      },late);
+      const page=await context.newPage(),errors=[];
+      page.on("pageerror",error=>errors.push(error.message));page.on("dialog",dialog=>dialog.accept());
+      await page.goto(`http://127.0.0.1:${site.address().port}/?smp`);
+      await page.waitForFunction(()=>!!window.snapshotRelease);
+      await page.locator("#restartBtn").click();await MachineReady(page,4);
+      const before=await page.evaluate(()=>({text:document.getElementById("ldtext").textContent,
+        bar:document.getElementById("ldbar").style.width,frames:window.machine.frames}));
+      await page.evaluate(()=>window.snapshotRelease());
+      await page.waitForFunction(n=>window.machine.frames>n+10,before.frames);
+      assert.deepEqual(await page.evaluate(()=>({text:document.getElementById("ldtext").textContent,
+        bar:document.getElementById("ldbar").style.width})),{text:before.text,bar:before.bar},
+        "a canceled snapshot download cannot overwrite the replacement's loader text or progress");
+      assert.equal(await page.locator("#loadui").isVisible(),false);
+      assert.deepEqual(errors,[]);
+      console.log(`page: canceled snapshot ${late} leaves the replacement's loader text and progress unchanged.`);
+    } finally {await context.close();}
+  }
+  for(const source of ["initial","file"])for(const late of ["success","error"]) {
+    const context=await browser.newContext({viewport:{width:1000,height:800}});
+    try {
+      await BrowserMachine(context);
+      await context.addInitScript(({source,late})=>{
+        const Hold=async bytes=>{
+          await new Promise(resolve=>{window.bootReadRelease=resolve;});
+          window.bootReadFinished=true;
+          if(late==="error")throw new Error("stale boot read failed");
+          return bytes;
+        };
+        if(source==="initial") {
+          const Fetch=window.fetch;
+          window.fetch=async function(resource,...args) {
+            const response=await Fetch(resource,...args);
+            if(String(resource)!=="/live-smp.bin.gz")return response;
+            const bytes=await response.arrayBuffer();
+            await Hold(bytes);
+            return new Response(bytes,{headers:response.headers});
+          };
+        } else {
+          const Read=File.prototype.arrayBuffer;
+          File.prototype.arrayBuffer=async function() {
+            const bytes=await Read.call(this);
+            return this.name==="slow-smp.bin.gz"?Hold(bytes):bytes;
+          };
+        }
+      },{source,late});
+      const page=await context.newPage(),errors=[];
+      page.on("pageerror",error=>errors.push(error.message));page.on("dialog",dialog=>dialog.accept());
+      await page.goto(desktop.url);
+      if(source==="file") {
+        await MachineReady(page,4);
+        await page.locator("#open").setInputFiles({name:"slow-smp.bin.gz",mimeType:"application/gzip",
+          buffer:await readFile(new URL("hemu/live-smp.bin.gz",root))});
+      }
+      await page.waitForFunction(()=>!!window.bootReadRelease);
+      const after=await page.evaluate(()=>window.machine.events.length);
+      await page.locator("#open").setInputFiles({name:"latest-single.bin.gz",mimeType:"application/gzip",
+        buffer:await readFile(new URL("hemu/live.bin.gz",root))});
+      await MachineReady(page,1,{after});
+      const before=await page.evaluate(()=>({frames:window.machine.frames,workers:window.machine.workers.length,
+        stops:window.machine.terminations.length}));
+      await page.evaluate(()=>window.bootReadRelease());
+      await page.waitForFunction(n=>window.bootReadFinished&&window.machine.frames>n+30,before.frames);
+      assert.deepEqual(await page.evaluate(()=>({workers:window.machine.workers.length,
+        stops:window.machine.terminations.length,active:window.machine.workers.filter(w=>!w.machineTerminated).length,
+        cores:document.getElementById("screen").dataset.cores})),
+        {workers:before.workers,stops:before.stops,active:1,cores:"1"},
+        "a stale download or file read cannot replace the user's newer session");
+      assert.doesNotMatch(await page.locator("#status").innerText(),/stale boot read failed/);
+      assert.deepEqual(errors,[]);
+      console.log(`desktop: delayed ${source} ${late} cannot replace a newer imported session or its status.`);
+    } finally {await context.close();}
+  }
+} finally {
+  await browser.close();await desktop.close();site.closeAllConnections();await new Promise(resolve=>site.close(resolve));
+}

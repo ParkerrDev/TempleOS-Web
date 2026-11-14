@@ -3,7 +3,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import * as protocol from '../../holyc-wasm/src/runtime/protocol.js';
+import {sourceDocument,sourceString} from '../Editor/Source.js';
+import * as protocol from '../../hemu/holyc-wasm/src/runtime/protocol.js';
 import {KEY,KeyBytes,KeyInput} from '../../Adam/Keyboard.js';
 
 const nodes=new Map(),workers=[],windowEvents=new EventTarget();
@@ -40,7 +41,7 @@ class Worker {
 }
 const context=vm.createContext({
   ...protocol,KEY,KeyBytes,KeyInput,document,console,URL,Event,Worker,Int32Array,Uint8Array,SharedArrayBuffer,Atomics,
-  DEMOS:[],SOURCES:{'Demo/Graphics/Lines.HC':'// test source'},PointerEvent:true,crossOriginIsolated:true,performance,
+  DEMOS:[],sourceDocument,sourceString,TextEncoder,TextDecoder,fetch:async()=>new Response('// test source'),PointerEvent:true,crossOriginIsolated:true,performance,
   Speaker:class {resume(){} tone(){}},Framebuffer:class {present(){}},
   addEventListener:windowEvents.addEventListener.bind(windowEvents),
   dispatchEvent:windowEvents.dispatchEvent.bind(windowEvents),
@@ -49,7 +50,7 @@ const context=vm.createContext({
 context.window=context;context.self=context;
 const path=new URL('../Editor/App.js',import.meta.url);
 const source=readFileSync(path,'utf8').replace(/^import[\s\S]*?;\n/gm,'').replaceAll('import.meta.url',JSON.stringify(path.href));
-new vm.Script(source,{filename:path.pathname}).runInContext(context);
+await new vm.Script('(async()=>{'+source+'})()',{filename:path.pathname}).runInContext(context);
 const api=context.__holycEditor,{CTRL,KEY_STATE_BASE}=protocol;
 const emit=(target,type,fields={})=>{
   const event=new Event(type,{cancelable:true});Object.assign(event,fields);target.dispatchEvent(event);

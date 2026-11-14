@@ -11,8 +11,8 @@ import {chromium} from 'playwright-core';
 import {root} from './Assets.mjs';
 
 const out=resolve(process.env.OUT||'/tmp/toom-games-window');
-const {BrowserMachine}=await import(pathToFileURL(resolve(root,'Kernel/Test/BrowserMachine.mjs')));
-const {TextRow}=await import(pathToFileURL(resolve(root,'Kernel/Test/WorkerHost.mjs')));
+const {BrowserMachine}=await import(pathToFileURL(resolve(root,'hemu/Kernel/Test/BrowserMachine.mjs')));
+const {TextRow}=await import(pathToFileURL(resolve(root,'hemu/Kernel/Test/WorkerHost.mjs')));
 let url=process.argv[2],server;
 if(!url) {
   const {ServeReq}=await import(pathToFileURL(resolve(root,'Misc/Server.mjs')));

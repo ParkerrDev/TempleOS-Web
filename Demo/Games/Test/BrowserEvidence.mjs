@@ -16,7 +16,7 @@ async function Sources(paths){
  return hash.digest('hex');
 }
 export async function CompilerInputs(){
- return Sources([...await Files('holyc-wasm/src/'),'Apps/Editor/Project.js','Apps/Editor/Adam.HC']);
+ return Sources([...await Files('hemu/holyc-wasm/src/'),'Apps/Editor/Project.js']);
 }
 export async function BrowserInputs(){
  return {

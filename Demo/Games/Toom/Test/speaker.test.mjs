@@ -21,7 +21,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/SPEAKER 1000 CLOCK POINTS PORTS MUTE BUSY PAUSE STOP BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (tm_speaker_done!=1 || tm_speaker_cases!=1000) throw('Count');\n";
   const write=h.gx.writeFile({path:'C:/ORACLE/SPEAKER.HC',bytes:Buffer.from(check,'latin1')});

@@ -2,9 +2,8 @@ import {ClipProgram} from "./Program.js";
 
 export async function Mp4Clip(source,start,end)
 {
-  const {fn,Put,Call,Copy,Input,Alloc}=await ClipProgram("Mp4.HC",[
-    "ClipPlan","ClipReadPos","ClipReadSize","ClipReadPut","ClipResult",
-    "ClipResultSize","ClipError","ClipScan","ClipMetaSize"],"ClipError");
+  const {fn,Put,Call,Copy,Input,Alloc}=await ClipProgram(
+    new URL("../../../build/Mp4.wasm",import.meta.url),"ClipError");
   let pos=0,next,header,moov,at,size,ptr,data,cnt=0,header_pos=0;
   header=await source.Read(0,64);
   while (true) {

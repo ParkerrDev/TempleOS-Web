@@ -1,23 +1,24 @@
 # TempleOS‑wasm
 
-**The real, complete TempleOS V5.03 running in your browser** - on **HEMU**, a clean‑room
-x86‑64 emulator written almost entirely in **HolyC** and compiled to WebAssembly by the
-bundled from‑scratch HolyC→WASM compiler ([`holyc-wasm/`](./holyc-wasm)). The actual
-TempleOS kernel, HolyC JIT, graphics, games, keyboard and mouse - not a reimplementation,
-not a screenshot. It boots to the installed desktop **in a few seconds**, and the 3D games
-run at their designed 30 fps thanks to an x86‑64→WASM block JIT and native HLE of the
-hottest render routines.
+**TempleOS V5.03 running in your browser**, through the
+[HEMU](https://github.com/ParkerrDev/HEMU) x86-64 emulator. HEMU's CPU and
+devices are HolyC, compiled to WebAssembly by
+[HolyC-wasm](https://github.com/ParkerrDev/HolyC-wasm); its JavaScript host
+connects browser workers, storage, input and display, and compiles hot guest
+instructions to WASM. TempleOS runs its own kernel, HolyC compiler and desktop.
+The initial capture already contains the display corrections, Welcome card
+and native Take Tour question.
 
 > This is a static site. Drop it on any static host (with cross‑origin isolation - see
 > *Deploying*) and it runs entirely client‑side.
 
 ## Try it
 
-- The desktop boots automatically - restored from a RAM snapshot in ~4 s.
+- The desktop resumes automatically from a prepared RAM/register/disk capture.
 - **Click the screen** for keyboard and mouse input. **Esc** releases mouse capture;
   use the Keys window's Esc button to send Escape to a captured game.
 - **Ctrl+M** opens the personal menu - click a game sprite (Varoom, BlackDiamond, …) to play.
-- **↻ Restart** reloads the clean snapshot any time the OS gets into a weird state.
+- **↻ Restart** reloads the stock desktop while preserving your saved C: drive.
 - **⌨ HolyC Editor** - write & run TempleOS HolyC compiled *natively* to WASM (no emulation).
   Save/open `.HC` files, or write your source straight into `C:/Home` for the OS to run.
 - **Games** - every game has Run in Browser, Run in TempleOS and Edit source. Browser play
@@ -39,21 +40,20 @@ hottest render routines.
 ### URL options
 | URL | What it does |
 |-----|--------------|
-| `/` | Installed desktop, restored instantly from a snapshot (~4 s) |
-| `/?single` | Force the single‑threaded in‑page engine (no worker) |
+| `/` | Prepared desktop, with four cores when shared memory is available |
+| `/?single` | Use the single-core engine in a worker |
 | `/?b=N` | Pin the guest instruction budget per frame (debug) |
 
 ## How it works
 
-TempleOS is 64‑bit‑only and is its own self‑hosting compiler, so it can't be cross‑compiled
-to WASM directly. HEMU takes the emulation route, TempleOS‑style: a **TempleOS‑only x86‑64
-emulator written in HolyC** ([HEMU](https://github.com/ParkerrDev/HEMU): `hemu/Kernel/Cpu.HC` + `Snapshot.HC`, ~1.7k lines), compiled
-to WebAssembly by **holyc-wasm**, a from‑scratch HolyC compiler in JavaScript. It resumes a
-live RAM snapshot of the booted desktop, emulates just the hardware TempleOS touches
-(PIC/PIT/HPET/PS‑2/ATA/VGA‑DAC), and pulls input from the host each frame.
+HEMU resumes TempleOS's captured 64-bit machine. It emulates the hardware
+TempleOS uses (PIC/PIT/HPET/PS-2/ATA/VGA-DAC), while the browser host supplies
+input, display, sound and storage. It does not execute the DVD's 16-bit BIOS
+loader. [HEMU's runtime documentation](hemu/Kernel/README.md) covers the
+machine boundary, build, checks and supported behavior.
 
 Performance comes from three layers:
-- an **x86‑64 → WASM block JIT** (`Kernel/Jit.js`) that compiles hot guest code to native WASM at
+- an **x86‑64 → WASM block JIT** (`hemu/Kernel/Jit.js`) that compiles hot guest code to native WASM at
   runtime - the same trick TempleOS's own JIT plays, one level up;
 - **HLE** of the hottest render routines (the window compositor blit and the games' span
   fillers), each shadow‑verified bit‑exact against the emulated version before activation;
@@ -77,31 +77,43 @@ points exactly between two guest rows, and the same letter comes out in up to 15
 wobbling as it moves. Only rows that changed are expanded and uploaded, and scaling in JS stops at 15
 pixels per cell, so the cost per frame stays bounded on any screen.
 
-### The large files
-| Path | Size | What |
-|------|------|------|
-| `hemu/templeos-hd.qcow2.gz` | 41 MB | the installed TempleOS hard disk (FAT32 on C:), read on demand |
-| `hemu/live.bin.gz` | 10 MB | booted‑desktop RAM snapshot (instant boot) |
-| `build/hemu.wasm` | ~77 KB | the compiled emulator, built at deploy by `Kernel/Build.mjs` |
+### Startup assets
 
-The desktop appears after the 10 MB snapshot loads; the disk image streams in the background
-for file I/O. (The `.gz` assets are decompressed in the browser.)
+| Path | What |
+|------|------|
+| `hemu/live.bin.gz`, `hemu/live-smp.bin.gz` | one- and four-core RAM captures, stored as gzipped sparse 64-byte ranges |
+| `hemu/stock.json`, `hemu/stock*.disk` | capture identities and disk sectors changed from the base image |
+| `hemu/templeos-hd.qcow2.gz` | the base C: disk, loaded in the background |
+| `hemu/build/hemu*.wasm`, `hemu/build/hemu-smp.json` | matching engines and SMP metadata, compiled at deployment |
+
+The loader overlaps snapshot download, worker startup and engine preparation.
+Only populated RAM ranges are inflated and copied into the zeroed 384 MiB guest
+memory. The corrections and Welcome task were compiled in native TempleOS
+before capture; startup resumes them directly. C: restores from browser storage
+when available. The stock disk is fetched separately when no saved drive exists.
 
 ## Repository layout (6 repos)
 
 | repo | what | consumed how |
 |---|---|---|
 | **TempleOS-web** (this) | the site: pages, search, video windows, converter, assets | deployed on Netlify |
-| [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | the HolyC→WASM compiler and its browser runtime | cloned into `./holyc-wasm` at build time |
-| [HEMU](https://github.com/ParkerrDev/HEMU) | the emulator itself - plain HolyC - and the booted-RAM snapshots | cloned into `./hemu` at build time and compiled into `./build` by `Kernel/Build.mjs` |
+| [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | the HolyC→WASM compiler, task/settings runtime and scan-code input | pinned by HEMU in `./hemu/holyc-wasm`; shared by the machine and site apps |
+| [HEMU](https://github.com/ParkerrDev/HEMU) | CPU/devices, browser runtime/JIT, machine lifecycle, disk storage, build, tests and captures | cloned into `./hemu`; `hemu/Kernel/Build.mjs` writes `hemu/build/` |
 | [HolyC-fmt](https://github.com/ParkerrDev/HolyC-fmt) | the HolyC formatter, written in HolyC (the Format button, `/Apps/Editor/Format.html`) | cloned into `./holyc-fmt` at build time |
 | [HolyCraft](https://github.com/ParkerrDev/HolyCraft) | the HolyCraft voxel game, in HolyC, for the browser and for TempleOS | cloned into `./holycraft` at build time |
 | [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline - its output is baked into `Apps/Search/Transcripts/` by `Apps/Search/TranscriptsMk.mjs` |
 
-`Siblings.txt` pins each sibling repo to a commit. Netlify's build, `Misc/NetlifyBuild.sh`, fetches
-each one at its commit, runs the fast tests (`Misc/Test.sh`), compiles the emulator into `build/`,
-writes the CDN redirects, and publishes only the files the site serves (`node Misc/Server.mjs Site`).
-A sibling's new work reaches the site when its commit in `Siblings.txt` is moved.
+`Siblings.txt` pins the site's sibling repos; `hemu/Siblings.txt` pins the
+compiler. Netlify's build, `Misc/NetlifyBuild.sh`, fetches those commits, builds
+the fixed app programs with `Misc/AppsBuild.mjs`, generates module preloads,
+runs the fast checks, and builds HEMU. It then writes CDN redirects and publishes
+the served files with `node Misc/Server.mjs Site`.
+
+The six fixed HolyC programs are the sprite codec (`Gr.HC`), search parser
+(`Query.HC`), MP4 and MKV planners, God Tools' timing-bit queue (`GodBits.HC`),
+and HolyC-fmt. Their WASM is built once into `build/`; using these features
+loads it directly. Editable programs and games still need the compiler at run
+time.
 
 The heavy files never come from Netlify: the build's last step, `Misc/Cdn/OffloadRedirects.mjs`, writes
 `_redirects` that send the disk image, the RAM snapshots, the games, Terry Search's shards, Terry's
@@ -150,38 +162,42 @@ is served from localhost itself.
 | Path | What |
 |---|---|
 | `index.html` | the desktop page; with `_headers`, `netlify.toml`, `package.json` and `Siblings.txt` it is all the root holds |
-| `Kernel/` | the machine, HEMU in the browser: `Build.mjs`, `Compile.js`, `Host.js`, the x86→WASM JIT (`Jit.js`), guest execution and input, the disk reader and the two emulator workers (see `Kernel/README.md`); `Kernel/Desktop/` the machine alone in a page, `Kernel/Test/` the emulator harnesses, `Kernel/Snapshot/` the QEMU recipes that produce HEMU's boot snapshots |
 | `Adam/` | what every window uses: the host of the OS (`Os.js`), the window manager, keyboard, touch and mouse input, the frame scaler, the fonts and the shell's images |
-| `Apps/<Name>/` | one folder a window, with its module, pages, styles, HolyC, Worker, data and tests: `Chat` (with its two Cloudflare Workers, `ChatRoom/` and `Room/`), `Disk`, `Editor` (the in-browser HolyC editor: compiles with `holyc-wasm/src` and runs programs in its own worker), `Games`, `God`, `Help`, `Search` (Terry Search, the player page, the clip maker in `Clip/`, the transcripts and FFmpeg), `Settings`, `Sprites` and `Terry` |
+| `Apps/<Name>/` | one folder a window, with its module, pages, styles, HolyC, Worker, data and tests: `Chat` (with its two Cloudflare Workers, `ChatRoom/` and `Room/`), `Disk`, `Editor` (the in-browser HolyC editor: compiles with `hemu/holyc-wasm/src` and runs programs in its own worker), `Games`, `God`, `Help`, `Search` (Terry Search, the player page, the clip maker in `Clip/`, the transcripts and FFmpeg), `Settings`, `Sprites` and `Terry` |
 | `Demo/Games/` | the HolyC games and their catalog, the packages from elsewhere (`Upstream/`), TOOM (`Toom/`), and the tools and records that check them (`Test/`) |
 | `Doc/` | the validation record |
 | `Misc/` | the server and publisher (`Server.mjs`), the fast tests (`Test.sh`), Netlify's build, the text check, Lighthouse, and `Cdn/`, the Cloudflare Worker that serves the heavy files from R2 (`Files.js`, its list `Offload.js`, `wrangler.toml`) |
-| `build/` | gitignored: `hemu.wasm`, `hemu-smp.wasm`, `hemu-smp.json`, compiled at deploy |
-| `holyc-wasm/`, `hemu/`, `holyc-fmt/`, `holycraft/` | the sibling repos, cloned here at build time (gitignored) |
+| `build/` | gitignored fixed app programs: `Gr.wasm`, `Query.wasm`, `Mp4.wasm`, `Mkv.wasm`, `GodBits.wasm`, `HolyCFmt.wasm` |
+| `hemu/`, `holyc-fmt/`, `holycraft/` | the sibling repos, cloned at build time (gitignored); HEMU contains the shared compiler mount |
 
 A test sits beside what it tests: `Name.test.mjs` runs under node and `Name.browser.mjs` drives a
-browser. A folder named `Test` holds what only tests read. The site publishes `Kernel/`, `Adam/`,
-`Apps/` and `Demo/` without those folders, the tests, the tools, the notes and the Workers
-(`Misc/Server.mjs`), so a new folder needs no entry anywhere.
+browser. A folder named `Test` holds what only tests read. The publisher
+(`Misc/Server.mjs`) serves the site and sibling runtime assets while excluding
+tests, build tools, notes and server-side Worker sources. Machine checks live in
+`hemu/Kernel/Test/`; shell integration checks live beside `Adam/` and the apps.
 
 ## Running locally
 
 ```bash
 git clone https://github.com/ParkerrDev/TempleOS-Web && cd TempleOS-Web
 while read dir url sha; do git clone -q $url $dir && git -C $dir checkout -q $sha; done <Siblings.txt
-node Kernel/Build.mjs build   # compile the emulator into build/
+while read dir url sha; do git clone -q $url hemu/$dir && git -C hemu/$dir checkout -q $sha; done <hemu/Siblings.txt
+node hemu/Kernel/Build.mjs hemu/build
+node Misc/AppsBuild.mjs
+node Misc/Preload.mjs
 sh Misc/Test.sh               # the fast tests
 node Misc/Server.mjs          # http://localhost:8080, with _headers (and _redirects, if written)
 ```
 
-(For work on the engine or the compiler, clone the repos side by side and symlink them instead:
-`ln -s ../HolyC-wasm holyc-wasm`, and the same for `hemu`, `holyc-fmt` and `holycraft`.)
+For local sibling development, symlink HEMU, HolyC-fmt and HolyCraft at those
+mounts. The compiler belongs at `hemu/holyc-wasm`, so HEMU and the site use the
+same compiler and runtime.
 
 ## Credits & licenses
 
 - **TempleOS** - created by **Terry A. Davis**. Public domain. The disk image and snapshot
   contain TempleOS V5.03.
-- **holyc-wasm, HEMU, the JIT** - written for this project; same repository.
+- **HolyC-wasm and HEMU** - companion projects; the x86-to-WASM JIT lives in HEMU.
 - **ffmpeg.wasm** (`Apps/Search/FFmpeg/`, powers the in-browser video converter) - FFmpeg (GPL) compiled
   to WebAssembly by the [ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm) project (MIT wrapper).
 - **Transcripts** - Whisper (large-v3-turbo) transcriptions of the
@@ -215,9 +231,9 @@ Run plays the game beside its source using the same runner as Run in Browser. Yo
 
 Browser games open in a larger window and scale the 640x480 canvas to fit while preserving its aspect ratio. Capture mouse and Fullscreen are available inside the game window. HolyC Editor offers Fullscreen editor for the whole workspace and Fullscreen game for just its preview. Escape or Exit fullscreen restores the previous layout and releases the mouse. Fullscreen survives preview reruns and uses a viewport fallback when the browser does not support element fullscreen. Native input handles left/right button combinations and retains quick clicks between worker polls.
 
-Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. Each run compiles `Apps/Editor/Adam.HC` first, which gives the browser compiler SettingsPush, SettingsPop, AutoComplete and a window manager task that calls draw_it, so a game written for TempleOS runs unchanged. Browser compilation currently passes for HolyCraft, Snake, Babel, Volley, TicTacToe, Collision, ElephantWalk, Digits and B17. The first four also pass recorded worker-startup, advancing-frame and stop checks. The other five stay on Run in TempleOS until their browser runs are checked. The launcher requires both compilation and startup evidence; changing the program, compiler or browser runner invalidates that evidence. Startup does not establish input response or full gameplay parity. Run in TempleOS stays available for every package that passes the startup check below. Run `node Demo/Games/NativeGamesAudit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability. The separate [native game checks](Demo/Games/Test/README.md) verify input, rendering and repeated-launch cleanup in original TempleOS and HEMU; every entry is also launched in original TempleOS V5.03 under QEMU and in HEMU, and Run in TempleOS is enabled only for those that start and quit the same way in both (`Demo/Games/Startup.json`); that is not gameplay proof.
+Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. HolyC-wasm supplies SettingsPush/SettingsPop and a draw task through its prelude; AutoComplete returns false because the browser runtime has no autocomplete task. The compiler also owns scan-code conversion and held-key ownership; the site routes DOM input to the active program. Browser compilation currently passes for HolyCraft, Snake, Babel, Volley, TicTacToe, Collision, ElephantWalk, Digits and B17. The first four also pass recorded worker-startup, advancing-frame and stop checks. The other five stay on Run in TempleOS until their browser runs are checked. The launcher requires both compilation and startup evidence; changing the program, compiler or browser runner invalidates that evidence. Startup does not establish input response or full gameplay parity. Run in TempleOS stays available for every package that passes the startup check below. Run `node Demo/Games/NativeGamesAudit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability. The separate [native game checks](Demo/Games/Test/README.md) verify input, rendering and repeated-launch cleanup in original TempleOS and HEMU; every entry is also launched in original TempleOS V5.03 under QEMU and in HEMU, and Run in TempleOS is enabled only for those that start and quit the same way in both (`Demo/Games/Startup.json`); that is not gameplay proof.
 
-The editor's runner (`Apps/Editor/Worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `Demo/Games/HolyCraftInput.test.mjs`.
+The editor's runner (`Apps/Editor/Worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `Apps/Games/HolyCraft.test.mjs`.
 
 `node Apps/Games/GameSrc.test.mjs` checks all 304 source files, byte preservation for the 64 files with embedded sprites, draft persistence, edited installations, restoration, partial-write recovery and OS restarts.
 
@@ -228,7 +244,7 @@ node Adam/GuestFps.test.mjs
 node Apps/Chat/Presence.test.mjs
 node Apps/Chat/Chat.test.mjs
 node Apps/Chat/ChatWorker.test.mjs     # the chat Worker in wrangler dev, on this machine only (needs npx)
-node Demo/Games/HolyCraftInput.test.mjs
+node Apps/Games/HolyCraft.test.mjs
 node Apps/Games/GameCapture.test.mjs
 node Apps/Editor/NativeClicks.test.mjs
 node Apps/Games/GameView.test.mjs
@@ -240,9 +256,16 @@ python3 Demo/Games/RedSea.test.py
 python3 Misc/ChkText.py
 ```
 
-The emulator harnesses (`Kernel/Test/`, memory-hungry, need the decompressed snapshot and a raw disk) and the QEMU capture recipes (`Kernel/Snapshot/`) are documented in `Kernel/README.md`. `npm run test:browser` checks the desktop/mobile shell, including fullscreen keyboard focus. `npm run test:search` checks the native query parser and real search worker, copied/downloaded transcripts, archive links and video windows. These browser checks start their own local server and use Playwright with `CHROMIUM` (default `/usr/bin/chromium`). The search check also needs FFmpeg to generate small MP4/MKV fixtures; network routes supply these known files without depending on archive availability. Live archive/CDN delivery remains a separate deployment check.
+The emulator harnesses (`hemu/Kernel/Test/`, which can need several hundred MiB
+per guest) and native capture recipes (`hemu/Misc/Capture/`) are documented in
+[HEMU's runtime guide](hemu/Kernel/README.md). `npm run test:browser` checks the desktop/mobile shell, including fullscreen keyboard focus. `npm run test:search` checks the native query parser and real search worker, copied/downloaded transcripts, archive links and video windows. These browser checks start their own local server and use Playwright with `CHROMIUM` (default `/usr/bin/chromium`). The search check also needs FFmpeg to generate small MP4/MKV fixtures; network routes supply these known files without depending on archive availability. Live archive/CDN delivery remains a separate deployment check.
 
-```sh```
+
+The example picker fetches the selected `.HC` file from `Apps/Editor/Demos/`.
+Native examples retain their original bytes, including embedded DolDoc records.
+Open and Save preserve an unchanged file byte for byte; editing its text keeps
+the binary tail. `Apps/Editor/Demos.browser.mjs` checks actual default drawing,
+file round trips and pending-download races.
 
 The editor uses native TempleOS keyboard decoding and cooperative tasks when a program needs them. `npm run test:editor` checks extended keys, modifiers, held-state release, queue overflow, blocked-input wakeups, child failures and worker-load errors in the actual browser worker. Unsupported blocking APIs fail before program initialization.
 

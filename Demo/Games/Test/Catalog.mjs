@@ -5,8 +5,8 @@ import {resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 import {promisify} from "node:util";
 import {GAMES} from "../../../Apps/Games/GameCatalog.js";
-import {fat32Read} from "../../../Kernel/QCow2.js";
-import {GuestHarness} from "../../../Kernel/Test/GuestHarness.mjs";
+import {fat32Read} from "../../../hemu/Kernel/QCow2.js";
+import {GuestHarness} from "../../../hemu/Kernel/Test/GuestHarness.mjs";
 import {Hash,RuntimeInputs,root} from "./Evidence.mjs";
 import {ESC,FRAME_SECONDS,GameInstall,SHIFT_ESC,START_QUIT,START_WAIT} from "./Install.mjs";
 

@@ -5,13 +5,13 @@ import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {chromium} from 'playwright-core';
 import {ServeReq} from '../../Misc/Server.mjs';
-import {BrowserMachine,MachinePost} from '../../Kernel/Test/BrowserMachine.mjs';
+import {BrowserMachine,MachinePost} from '../../hemu/Kernel/Test/BrowserMachine.mjs';
 
 const headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};
 const root=new URL('../../',import.meta.url),site=createServer(ServeReq).listen(0,'127.0.0.1');
 await once(site,'listening');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
-const worker=await readFile(new URL('Kernel/HemuWorker.js',root),'utf8'),
+const worker=await readFile(new URL('hemu/Kernel/HemuWorker.js',root),'utf8'),
   diskBody=await readFile(new URL('hemu/templeos-hd.qcow2.gz',root));
 function Replace(source,needle,value) {
   assert.equal(source.split(needle).length,2);return source.replace(needle,value);
@@ -31,16 +31,7 @@ try {
     let releaseDisk=()=>{},fetches=0;
     try {
       await BrowserMachine(context);
-      await context.addInitScript(()=>{
-        const Base=Worker;
-        window.Worker=class extends Base {
-          postMessage(m,...args) {
-            if(m.cmd==='init')m={...m,patches:false};
-            return super.postMessage(m,...args);
-          }
-        };
-      });
-      let source=Replace(worker,'StockModuleCheck,StockDiskAside}', 'StockModuleCheck,StockDiskAside as diskLoad}');
+      let source=Replace(worker,'StockDiskAside,StockInflate}', 'StockDiskAside as diskLoad,StockInflate}');
       source+='\nasync function StockDiskAside(...args) {try{return await diskLoad(...args);}finally{setTimeout(()=>postMessage({cmd:"testDiskSettled"}),0);}}\n';
       if(outcome==='scheduled') {
         source=Replace(source,'setTimeout(async()=>{','globalThis.testDiskStart=async()=>{');

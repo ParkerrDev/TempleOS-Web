@@ -47,8 +47,7 @@ seconds later, Shift-Esc, as the Keys window sends them. The report says how it
 ran (`running`, `returned`, `closed`, `never` or `except:CODE`), which key ended
 it (`esc`, `shift-esc` or `ignored`) and how it ended. `--all` gives every entry a
 fresh emulator process and writes reports under `tmp/games/catalog/`; `OUT`
-changes the directory and `CATALOG_FRAMES` the run (938 frames of 16 ms). The old
-`Kernel/Test/GameSuite.mjs` command forwards here.
+changes the directory and `CATALOG_FRAMES` the run (938 frames of 16 ms).
 
 `node Demo/Games/Test/Start.mjs` runs each entry in original TempleOS V5.03 under
 QEMU as well. `Start.HC` copies the entry's files, staged under 8.3 names, to the

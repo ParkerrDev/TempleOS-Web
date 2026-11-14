@@ -1,44 +1,10 @@
+import {sourceDocument,sourceString} from "../Editor/Source.js";
 import {gameCatalog,gameFile} from './GamePkgs.js';
 
 const projects=new Map();
 const editable=path=>/\.(HC|HH)$/i.test(path);
 // HolyCraft is its own repo (ParkerrDev/HolyCraft), cloned into ./holycraft at build time.
 const SITE_GAMES={'HolyCraft.HC':'holycraft/HolyCraft.HC','Snake.HC':'Demo/Games/Snake.HC','Babel.HC':'Demo/Games/Babel.HC','Volley.HC':'Demo/Games/Volley.HC','FNAF.HC':'Demo/Games/FNAF.HC'};
-
-export function sourceString(buffer,utf8=false) {
-  const bytes=new Uint8Array(buffer);
-  if(utf8)return new TextDecoder().decode(bytes);
-  let text='';
-  for(let start=0;start<bytes.length;start+=8192)
-    text+=String.fromCharCode(...bytes.subarray(start,start+8192));
-  return text;
-}
-
-// TempleOS documents are byte strings followed by optional binary sprite records.
-// Keep the records outside the textarea and append them unchanged on export.
-export function sourceDocument(buffer,utf8=false) {
-  const bytes=new Uint8Array(buffer),zero=utf8?-1:bytes.indexOf(0);
-  const end=zero<0?bytes.length:zero;
-  const text=sourceString(bytes.subarray(0,end),utf8);
-  const original=text.replace(/\r\n?/g,'\n');
-  return {
-    original,hasSprites:zero>=0,
-    encode(source) {
-      if(source===original)return bytes.slice().buffer;
-      if(source.includes('\0'))throw new Error('The source cannot contain a NUL character.');
-      if(utf8)return new TextEncoder().encode(source).buffer;
-      const prefix=new Uint8Array(source.length);
-      for(let i=0;i<source.length;i++){
-        const code=source.charCodeAt(i);
-        if(code>255)throw new Error(`TempleOS source uses 8-bit characters. Replace ${JSON.stringify(source[i])} before running or saving.`);
-        prefix[i]=code;
-      }
-      const output=new Uint8Array(prefix.length+bytes.length-end);
-      output.set(prefix);output.set(bytes.subarray(end),prefix.length);
-      return output.buffer;
-    },
-  };
-}
 
 export async function gameProject(game) {
   const id=game.packageId || game.file;
@@ -111,10 +77,7 @@ async function loadProject(game,id) {
         const raw=drafts.get(file.path) ?? (game.packageId?await gameFile(file):(await open(file.path)).encode((await open(file.path)).original));
         files.push({path:file.path,source:sourceString(raw,!game.packageId)});
       }
-      // The browser compiler lacks parts of Adam that games use (SettingsPush,
-      // the window manager that calls draw_it). Apps/Editor/Adam.HC runs first.
-      const adam=sourceString(await (await fetch(new URL('../Editor/Adam.HC',import.meta.url))).arrayBuffer());
-      return {source:adam+'#include "'+pkg.entry+'"\n',filename:'Adam.HC',files,nativeGame:true};
+      return {source:files.find(file=>file.path===pkg.entry).source,filename:pkg.entry,files,nativeGame:true};
     },
   };
 }

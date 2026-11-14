@@ -1,14 +1,14 @@
 // App.js - main-thread controller for the in-browser HolyC IDE.
 // Spawns the worker, wires keyboard/mouse into the control SAB, drains the
 // sound ring into WebAudio, and shows console output.
-import { Speaker } from "../../holyc-wasm/src/runtime/sound.js";
+import { Speaker } from "../../hemu/holyc-wasm/src/runtime/sound.js";
 import {
   CTRL, KB_BASE, KB_RING, SND_BASE, SND_RING, SND_TONE, SND_NOTE, KEY_STATE_BASE, makeControlSAB, keyPacketPush, keyPacketReset,
-} from "../../holyc-wasm/src/runtime/protocol.js";
+} from "../../hemu/holyc-wasm/src/runtime/protocol.js";
 import {KEY,KeyBytes,KeyInput} from "../../Adam/Keyboard.js";
 import { DEMOS } from "./Demos.js";
-import { Framebuffer } from "../../holyc-wasm/src/runtime/graphics.js";
-import { SOURCES } from "./DemoSrcs.js";
+import {sourceDocument,sourceString} from "./Source.js";
+import { Framebuffer } from "../../hemu/holyc-wasm/src/runtime/graphics.js";
 
 const $ = (id) => document.getElementById(id);
 const editor = $("editor");
@@ -43,17 +43,33 @@ for (const group of DEMOS) {
   demoSel.appendChild(og);
 }
 
+let demoRequest=0,documentSource=sourceDocument(new Uint8Array()),documentName="MyProgram.HC";
+editor.addEventListener("input",function () {demoRequest++;});
+function FileLoad(bytes,name,utf8=false)
+{
+  demoRequest++;
+  documentSource=sourceDocument(bytes,utf8);
+  documentName=name;
+  editor.value=documentSource.original;
+  editor.dispatchEvent(new Event("input"));
+}
+function FileBytes()
+{
+  return documentSource.encode(editor.value);
+}
 async function loadDemo(path) {
-  let src = SOURCES[path];
-  if (src == null) {
-    // A path DemoSrcs.js lacks comes from beside this module, which works
-    // whether App.js is the page or an overlay on the main site.
-    setStatus("fetching " + path + " …");
-    try { const r = await fetch(new URL(path, import.meta.url)); if (r.ok) src = await r.text(); } catch (e) {}
+  const request=++demoRequest;
+  setStatus("fetching " + path + " …");
+  try {
+    const response=await fetch(new URL(path,import.meta.url));
+    if (!response.ok) throw new Error("HTTP "+response.status);
+    const bytes=await response.arrayBuffer();
+    if (request!==demoRequest) return;
+    FileLoad(bytes,path.split("/").pop());
+    setStatus("loaded "+path);
+  } catch (error) {
+    if (request===demoRequest) setStatus("Could not load "+path+": "+error.message);
   }
-  if (src != null) { editor.value = src; setStatus("loaded " + path); }
-  else { editor.value = "// missing source: " + path; setStatus("load failed"); }
-  editor.dispatchEvent(new Event("input"));   // refresh the host page's syntax highlighting
 }
 demoSel.addEventListener("change", () => { if (demoSel.value) loadDemo(demoSel.value); });
 
@@ -290,7 +306,11 @@ function stop() {
   $("runBtn").textContent = "▶ Run";
 }
 
-async function run(source=editor.value,project={}) {
+async function run(source,project={}) {
+  if (source===undefined) {
+    try {source=sourceString(FileBytes(),documentSource.utf8);}
+    catch (error) {setStatus(error.message);return;}
+  }
   if (running) { stop(); return; }
   clearConsole();
   speaker.resume();
@@ -370,8 +390,7 @@ function runIn(canvasEl, source, {preserveEditor=false,...project}={}) {
   if (running) stop();
   curCanvas = canvasEl;
   if(!preserveEditor){
-    editor.value = source;
-    editor.dispatchEvent(new Event("input"));
+    FileLoad(new TextEncoder().encode(source),"MyProgram.HC",true);
   }
   return run(source,project);
 }
@@ -385,13 +404,13 @@ if (!self.crossOriginIsolated) {
 
 // load a default GRAPHICS demo so the editor opens with something to run.
 {
-  const def = SOURCES["Demo/Graphics/Lines.HC"] ? "Demo/Graphics/Lines.HC" : DEMOS[0].items[0].path;
+  const def = "Demos/Graphics/Lines.HC";
   demoSel.value = def;
-  loadDemo(def);
+  await loadDemo(def);
 }
 // Expose run/stop so the host page (the overlay opener) can drive the editor:
 // run the default demo when the window opens, stop it when the window closes.
-window.__holycEditor = { run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null,
+window.__holycEditor = { FileLoad,FileBytes,FileName:()=>documentName,run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null,
   inputCanvas:()=>running?curCanvas:null,
   touchMouse:{
     position:()=>ctrl?[Atomics.load(ctrl,CTRL.MS_X),Atomics.load(ctrl,CTRL.MS_Y)]:[320,240],

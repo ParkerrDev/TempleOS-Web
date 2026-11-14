@@ -1,4 +1,4 @@
-import {compileHolyC} from '../../holyc-wasm/src/compiler.js';
+import {compileHolyC} from '../../hemu/holyc-wasm/src/compiler.js';
 
 function normalize(path){
   const parts=[];

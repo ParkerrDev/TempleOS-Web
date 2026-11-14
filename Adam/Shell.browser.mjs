@@ -329,11 +329,11 @@ try {
         "Shift+Escape and Shift+Space reach native GetChar with TempleOS character values.");
       let releaseFormatter;
       const formatterGate=new Promise(resolve=>{releaseFormatter=resolve;});
-      await page.route("**/holyc-fmt/HolyCFmt.HC",async route=>{
+      await page.route("**/build/HolyCFmt.wasm",async route=>{
         await formatterGate;
         await route.continue();
       });
-      const formatterRequest=page.waitForRequest("**/holyc-fmt/HolyCFmt.HC");
+      const formatterRequest=page.waitForRequest("**/build/HolyCFmt.wasm");
       await page.locator("#editor").fill('U0 Before()\n{\n}\n');
       await page.locator("#edFmt").click();
       await formatterRequest;
@@ -342,7 +342,7 @@ try {
       await page.waitForFunction(()=>document.getElementById("status").textContent.startsWith("Source changed."));
       assert.equal(await page.locator("#editor").inputValue(),'U0 After()\n{\n}\n',
         "Formatting cannot overwrite edits made while its program is loading.");
-      await page.unroute("**/holyc-fmt/HolyCFmt.HC");
+      await page.unroute("**/build/HolyCFmt.wasm");
       await page.locator("#editor").fill('U0 Example()\n{\n"é Ç ╬ 🚀";\n}\n');
       await page.locator("#edFmt").click();
       await page.waitForFunction(()=>document.getElementById("status").textContent=="formatted ✓");

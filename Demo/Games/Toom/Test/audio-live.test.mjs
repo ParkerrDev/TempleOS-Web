@@ -23,7 +23,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/AUDIO LIVE 108 EFFECTS 10 FAULTS OWNERS PAUSE END HEAP BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (tm_audio_live_done!=1 || tm_audio_live_cases!=108 || tm_audio_live_faults!=10) throw('Count');\n";
   const write=h.gx.writeFile({path:'C:/ORACLE/AUDIOLIV.HC',bytes:Buffer.from(check,'latin1')});

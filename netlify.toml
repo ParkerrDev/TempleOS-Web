@@ -43,11 +43,11 @@
   status = 301
 [[redirects]]
   from = "/hemu-smp.html"
-  to = "/Kernel/HemuSmp.html"
+  to = "/?smp"
   status = 301
 [[redirects]]
   from = "/hemu-smp"
-  to = "/Kernel/HemuSmp.html"
+  to = "/?smp"
   status = 301
 [[redirects]]
   from = "/hemu.html"

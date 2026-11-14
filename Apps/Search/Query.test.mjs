@@ -3,7 +3,7 @@ import {readFile,writeFile,mkdir} from "node:fs/promises";
 import {QueryProgram,QueryEdit} from "./Query.js";
 
 const source=await readFile(new URL("Query.HC",import.meta.url),"utf8"),
-  Parse=await QueryProgram(source),
+  Parse=await QueryProgram(await readFile(new URL("../../build/Query.wasm",import.meta.url))),
   cases=[
     ["",{scope:"all",groups:[],phrases:[],notWords:[],notPhrases:[],
       dateAny:[],dateFrom:"",dateTo:"",years:[],withoutScope:"",withoutYears:""}],
@@ -59,7 +59,7 @@ console.log("Native search grammar, quoted operators, filters and edits pass; 20
   Math.round(performance.now()-started)+" ms.");
 
 if (process.argv.includes("--native")) {
-  const {QemuRun}=await import("../../holyc-wasm/tests/oracle/Qemu.mjs"),
+  const {QemuRun}=await import("../../hemu/holyc-wasm/tests/oracle/Qemu.mjs"),
     queries=[...cases.map(([text])=>text),year_query,controls,long],
     files=queries.map((text,index)=>({name:"Q"+String(index).padStart(4,"0")+".TXT",
       bytes:Buffer.from(text+"\0")})),

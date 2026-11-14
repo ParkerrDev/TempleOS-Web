@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {chromium} from 'playwright-core';
-import {compileHolyC} from '../../holyc-wasm/src/compiler.js';
-import {createHost} from '../../holyc-wasm/src/runtime/host.js';
-import {Framebuffer} from '../../holyc-wasm/src/runtime/graphics.js';
+import {compileHolyC} from '../../hemu/holyc-wasm/src/compiler.js';
+import {createHost} from '../../hemu/holyc-wasm/src/runtime/host.js';
+import {Framebuffer} from '../../hemu/holyc-wasm/src/runtime/graphics.js';
 const site=new URL('../../',import.meta.url);
 const draw=`text.raw_flags=RWF_SCROLL|RWF_SHOW_DOLLAR;
 RawPutChar('F');`,scroll=`I64 i; text.raw_col=4799;
@@ -37,8 +37,8 @@ try{
  await page.goto('http://localhost:8186/',{waitUntil:'load'});
  await page.locator('#editorBtn').click();await page.waitForFunction(()=>!!window.__holycEditor);
  await page.evaluate(async()=>{
-  window.rawProtocol=(await import('/holyc-wasm/src/runtime/protocol.js')).CTRL;
-  const {Framebuffer}=await import('/holyc-wasm/src/runtime/graphics.js'),present=Framebuffer.prototype.present;
+  window.rawProtocol=(await import('/hemu/holyc-wasm/src/runtime/protocol.js')).CTRL;
+  const {Framebuffer}=await import('/hemu/holyc-wasm/src/runtime/graphics.js'),present=Framebuffer.prototype.present;
   window.rawPresentCount=0;
   Framebuffer.prototype.present=function(...args){rawPresentCount++;return present.apply(this,args);};
  });

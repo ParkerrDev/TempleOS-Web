@@ -26,7 +26,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/PROGRESS 8 CASES HASH 2903551559 BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen built runtime.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   for(const f of [...files,{name:'PROGRESS.HC',bytes:Buffer.from(source+"\nif (!tm_progress_done || tm_progress_cases!=8 || tm_progress_hash!=2903551559) throw('Count');\n",'latin1')}]) {
     const id=h.gx.writeFile({path:'C:/ORACLE/'+f.name,bytes:f.bytes});

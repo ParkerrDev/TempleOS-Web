@@ -1,14 +1,11 @@
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {createHash} from "node:crypto";
-import {compileHolyC} from "../../holyc-wasm/src/compiler.js";
-import {createHost} from "../../holyc-wasm/src/runtime/host.js";
+import {createHost} from "../../hemu/holyc-wasm/src/runtime/host.js";
 import {BibleReader} from "./Bible.js";
 
-const source=await readFile(new URL("./GodBits.HC",import.meta.url),"utf8"),
-  r=compileHolyC(source,{filename:"GodBits.HC",lenient:false,
-    exports:["GodFifoRst","GodBitsIns","GodBits"]}),host=createHost({}),
-  wasm=await WebAssembly.instantiate(r.bytes,{env:host.env});
+const bytes=await readFile(new URL("../../build/GodBits.wasm",import.meta.url)),
+  host=createHost({}),wasm=await WebAssembly.instantiate(bytes,{env:host.env});
 host.attach(wasm.instance);
 wasm.instance.exports.__main();
 const fn=wasm.instance.exports;

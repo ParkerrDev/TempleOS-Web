@@ -6,13 +6,12 @@ async function FmtLoad()
 {
   if (!formatter) {
     formatter=Promise.all([
-      import("../../holyc-wasm/src/compiler.js"),
-      import("../../holyc-wasm/src/runtime/host.js"),
-      fetch(new URL("../../holyc-fmt/HolyCFmt.HC",import.meta.url))
-    ]).then(async function ([compiler,host,response]) {
+      import("../../hemu/holyc-wasm/src/runtime/host.js"),
+      fetch(new URL("../../build/HolyCFmt.wasm",import.meta.url))
+    ]).then(async function ([host,response]) {
       if (!response.ok)
-        throw new Error("Could not load HolyCFmt.HC ("+response.status+").");
-      return FmtNew(await response.text(),compiler.compileHolyC,host.createHost);
+        throw new Error("Could not load the formatter ("+response.status+").");
+      return FmtNew(new Uint8Array(await response.arrayBuffer()),host.createHost);
     }).catch(function (error) {
       formatter=null;
       throw error;

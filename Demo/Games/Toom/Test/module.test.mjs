@@ -79,7 +79,7 @@ const report={sourceSha256,headerSha256:hash(Buffer.from(header,'latin1')),fixtu
   build:{backend:built.backend,evidence:built.evidence},native:loaded,addresses,
   scope:'Native AOT module built from unchanged game files by original TempleOS, transferred to a fresh original TempleOS session and loaded at two addresses into separate tasks. Separate fixtures establish interactive host behavior.'};
 if(process.env.TEMPLEOS_WEB) {
-  const web=resolve(process.env.TEMPLEOS_WEB),{GuestHarness}=await import(pathToFileURL(resolve(web,'Kernel/Test/GuestHarness.mjs'))),
+  const web=resolve(process.env.TEMPLEOS_WEB),{GuestHarness}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/GuestHarness.mjs'))),
     h=await GuestHarness({disk:true});
   for(const file of [...assets,{name:'TOOM.BIN',bytes:binary}]) {
     const id=h.gx.writeFile({path:`C:/ORACLE/${file.name}`,bytes:file.bytes});
@@ -92,7 +92,7 @@ if(process.env.TEMPLEOS_WEB) {
   const owner=h.gx.launch({src:readFileSync(new URL('ModuleOwn.HC',import.meta.url),'latin1')});
   for(let i=0;i<8000&&!['done','failed','error'].includes(h.gx.status(owner)?.state);i++)await h.Run();
   assert.equal(h.gx.status(owner)?.state,'done',JSON.stringify(h.gx.status(owner)));
-  report.hemu={ownerLoads:2,web,wasmSha256:hash(readFileSync(resolve(web,'build/hemu.wasm'))),cases:18,bad:0};
+  report.hemu={ownerLoads:2,web,wasmSha256:hash(readFileSync(resolve(web,'hemu/build/hemu.wasm'))),cases:18,bad:0};
 }
 writeFileSync(resolve(out,'result.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report,null,2));

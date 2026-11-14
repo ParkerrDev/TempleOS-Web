@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {compileNativeProject} from './Project.js';
-import {createHost} from '../../holyc-wasm/src/runtime/host.js';
+import {createHost} from '../../hemu/holyc-wasm/src/runtime/host.js';
 import {gameProject} from '../Games/GameSrc.js';
 
 const entry='C:/Home/Test/Main.HC';
@@ -24,6 +24,15 @@ for(const file of ['HolyCraft.HC','Snake.HC','Babel.HC','Volley.HC']){
   const project=await gameProject({name:file,file}),snapshot=await project.native();
   assert(snapshot.nativeGame);assert(WebAssembly.validate(compileNativeProject(snapshot).bytes));
 }
+const entryProject=await gameProject({name:'Snake.HC',file:'Snake.HC'});
+await entryProject.open(entryProject.entry);
+entryProject.change(entryProject.entry,'I64 answer=42;\n');
+const actualEntry=compileNativeProject(await entryProject.native()),entryHost=createHost({onText(){}}),
+  entryModule=await WebAssembly.instantiate(actualEntry.bytes,{env:entryHost.env});
+entryHost.attach(entryModule.instance);entryModule.instance.exports.__main();
+assert.equal(new DataView(entryModule.instance.exports.memory.buffer).getBigInt64(
+  Number(actualEntry.globals.get('answer').addr),true),42n,'The project entry executes instead of including itself.');
+await entryProject.reset(entryProject.entry);
 const project=await gameProject({name:'CastleFrankenstein',packageId:'tinker-CastleFrankenstein'});
 const sourceFile=project.sources.find(f=>f.path!==project.entry),original=await project.open(sourceFile.path);
 await project.open(project.entry);

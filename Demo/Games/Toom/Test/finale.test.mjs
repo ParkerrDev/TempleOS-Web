@@ -23,7 +23,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/FINALE 120 CASES 180000 TICS 64 FAULTS BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen built runtime.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (!tm_final_done || tm_final_cases!=120 || tm_final_ticks!=180000 || tm_final_faults!=64) throw('Count');\n";
   for(const file of [...files,{name:'FINAL.HC',bytes:Buffer.from(check,'latin1')}]) {

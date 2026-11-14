@@ -1,6 +1,6 @@
 import {readFile,readdir} from "node:fs/promises";
 import {createHash} from "node:crypto";
-import {FixtureInputs} from "../../../Kernel/Test/Fixtures.mjs";
+import {FixtureInputs} from "../../../hemu/Kernel/Test/Fixtures.mjs";
 
 export const root=new URL("../../../",import.meta.url);
 export const GAME_CHECKS=["Babel","Volley","Snake"];
@@ -10,17 +10,18 @@ export const Hash=bytes=>createHash("sha256").update(bytes).digest("hex");
 export async function RuntimeInputs()
 {
   const runtime=createHash("sha256");
-  for (const name of (await readdir(new URL("Kernel/",root))).filter(name=>name.endsWith(".js")).sort()) {
+  for (const name of (await readdir(new URL("hemu/Kernel/",root))).filter(name=>name.endsWith(".js")).sort()) {
     runtime.update(name+"\0");
-    runtime.update(await readFile(new URL("Kernel/"+name,root)));
+    runtime.update(await readFile(new URL("hemu/Kernel/"+name,root)));
   }
   return {
     fixtures:FixtureInputs(),
-    fixtureLoaderSha256:Hash(await readFile(new URL("Kernel/Test/Fixtures.mjs",root))),
-    guestHarnessSha256:Hash(await readFile(new URL("Kernel/Test/GuestHarness.mjs",root))),
-    webRuntimeSha256:runtime.digest("hex"),
+    fixtureLoaderSha256:Hash(await readFile(new URL("hemu/Kernel/Test/Fixtures.mjs",root))),
+    guestHarnessSha256:Hash(await readFile(new URL("hemu/Kernel/Test/GuestHarness.mjs",root))),
+    machineRuntimeSha256:runtime.digest("hex"),
     siblings:(await readFile(new URL("Siblings.txt",root),"utf8")).split("\n").
-      filter(line=>/^(hemu|holyc-wasm) /.test(line))
+      filter(line=>/^hemu /.test(line)),
+    compiler:(await readFile(new URL("hemu/Siblings.txt",root),"utf8")).trim()
   };
 }
 

@@ -1,9 +1,9 @@
 import {WinAdd,WinRaise} from "../../Adam/WinMgr.js";
 import {$,dbg,engine,os_disk,OsReady,OsFileWrite,OsDirList} from "../../Adam/Os.js";
 import {BootFileSave} from "../../Adam/BootFile.js";
-import {SnapshotInspect} from "../../Kernel/Snapshot.js";
-import {StockIdentify,StockModuleCheck} from "../../Kernel/Stock.js";
-import {makeDisk} from "../../Kernel/QCow2.js";
+import {SnapshotInspect} from "../../hemu/Kernel/Snapshot.js";
+import {StockIdentify,StockModuleCheck} from "../../hemu/Kernel/Stock.js";
+import {makeDisk} from "../../hemu/Kernel/QCow2.js";
 
 const CSS='    /* Disk & Save window */\n'+
   '    #diskWin { display:flex; flex-direction:column; width:min(560px,94vw); max-height:88vh; margin:0; padding:10px; }\n'+
@@ -156,7 +156,7 @@ async function Import(kind)
     if (kind=="snapshot") {
       bytes=await file.arrayBuffer();
       if(!await SnapshotInspect(bytes,{busProtocol:1})) {
-        const found=await StockIdentify(bytes),response=await fetch(found.capture.cores===4?"./build/hemu-smp.wasm":"./build/hemu.wasm",{cache:"no-cache"});
+        const found=await StockIdentify(bytes),response=await fetch(found.capture.cores===4?"./hemu/build/hemu-smp.wasm":"./hemu/build/hemu.wasm",{cache:"no-cache"});
         if(!response.ok)throw Error("Could not read the matching stock engine");
         StockModuleCheck(await WebAssembly.compile(await response.arrayBuffer()),found.capture,found.manifest);
       }

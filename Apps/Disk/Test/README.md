@@ -21,7 +21,7 @@ image and keeps session writes in a separate overlay. Validation covers this
 storage representation, not whether a disk contains a valid TempleOS filesystem.
 
 Format reference: [QEMU qcow2 specification](https://www.qemu.org/docs/master/interop/qcow2.html).
-`Kernel/Test/Snapshot.browser.mjs` confirms rejected disk imports preserve the active
+`Apps/Disk/Snapshot.browser.mjs` confirms rejected disk imports preserve the active
 page and leave no reload record. `Apps/Disk/DiskImport.browser.mjs` checks worker
 imports against delayed/default loads on one and four cores.
 

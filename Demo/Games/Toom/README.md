@@ -716,6 +716,17 @@ motion, attack, damage, inventory, impact, weapon, player, blast, sight, sector,
 door, floor, mover, teleport, switch, lighting, sector-effect, line-event, thinker
 or surface/clock
 checks using the original TempleOS compiler and file I/O under HEMU.
+`TEMPLEOS_WEB` remains the site checkout root. These harnesses import the
+machine from `hemu/Kernel/` and read built engines from `hemu/build/` beneath
+that root. HEMU owns the compiler mount at `hemu/holyc-wasm/`; build with
+`node hemu/Kernel/Build.mjs hemu/build` from the site root. `HOLYC_WASM`, used
+for original-TempleOS oracle runs, names the compiler checkout itself.
+The current stock capture already includes its display corrections and
+Welcome/tour tasks, so browser checks wait for machine readiness rather than
+a runtime correction job. Recorded JSON evidence retains its historical
+paths and hashes; running a check writes new observations only to its stated
+output destination.
+
 The draw check compares wall/plane depth against independently traced map segs
 at eight poses in each of 36 maps, including exact BSP/sky boundary cases.
 It guards the pixel, depth, plane and clipping buffers and verifies private

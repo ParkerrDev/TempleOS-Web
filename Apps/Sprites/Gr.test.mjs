@@ -4,7 +4,7 @@ import {gunzipSync} from "node:zlib";
 import {GrNew} from "./Gr.js";
 
 const source=await readFile(new URL("Gr.HC",import.meta.url),"utf8"),
-  codec=await GrNew(source),files=[],cases=[];
+  codec=await GrNew(await readFile(new URL("../../build/Gr.wasm",import.meta.url))),files=[],cases=[];
 for (const [width,height] of [[1,1],[7,3],[8,3],[9,3],[17,3],[639,1],[640,480]]) {
   const pixels=Uint8Array.from({length:width*height},(_,i)=>i%17==16?255:i%16),
     bytes=codec.encodeGR(pixels,width,height);
@@ -44,7 +44,7 @@ assert.equal(at,bundle.length);
 console.log("Native GR: dimensions, padding, palette, malformed files and "+count+" exact Terry frames pass.");
 
 if (process.argv.includes("--native")) {
-  const {QemuRun}=await import("../../holyc-wasm/tests/oracle/Qemu.mjs"),
+  const {QemuRun}=await import("../../hemu/holyc-wasm/tests/oracle/Qemu.mjs"),
     code=source+String.raw`
 U0 SpriteNativeCheck(U8 *name,I64 width,I64 height)
 {

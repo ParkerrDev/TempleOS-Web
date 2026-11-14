@@ -2,7 +2,7 @@
 //(8080) with _headers and _redirects applied. "node Misc/Server.mjs Site" copies
 //the files Netlify publishes into Site/, as Misc/NetlifyBuild.sh does.
 import {createServer} from "node:http";
-import {cpSync,existsSync,readdirSync,readFileSync,statSync} from "node:fs";
+import {cpSync,existsSync,readdirSync,readFileSync,statSync,writeFileSync} from "node:fs";
 import {dirname,extname,join,normalize,resolve} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
 
@@ -12,8 +12,9 @@ const ROOT=fileURLToPath(new URL("..",import.meta.url));
 //and the snapshots (which _redirects sends to the CDN when the build has
 //written it).
 const SERVED=new RegExp("^(index\\.html|_headers|_redirects|"+
-  "(Kernel|Adam|Apps|Demo|holyc-wasm/src)/.+|holyc-fmt/Fmt\\.js|"+
-  "build/(?:hemu\\.wasm|hemu-smp\\.(?:wasm|json))|"+
+  "(Adam|Apps|Demo|hemu/Kernel|hemu/holyc-wasm/src)/.+|holyc-fmt/Fmt\\.js|"+
+  "build/(?:Gr|Query|Mp4|Mkv|GodBits|HolyCFmt)\\.wasm|"+
+  "hemu/build/hemu(?:-smp)?\\.(?:wasm|json)|"+
   "(holyc-fmt|holycraft)/[^/]+\\.HC|"+
   "hemu/(?:[^/]+\\.gz|stock(?:-smp)?\\.disk|stock\\.json))$");
 //Not for visitors, by what a file is: a test, a tool or a note by its suffix,
@@ -109,6 +110,11 @@ function Publish(dir)
       cpSync(join(ROOT,rel),resolve(ROOT,dir,rel),{dereference:true});
       cnt++;
     }
+  const pin=readFileSync(join(ROOT,"Siblings.txt"),"utf8").split("\n").find(line=>line.startsWith("hemu ")).split(" ")[2],
+    page=resolve(ROOT,dir,"index.html"),html=readFileSync(page,"utf8");
+  if (!/^[a-f0-9]{40}$/.test(pin)) throw Error("Missing HEMU publication pin");
+  writeFileSync(page,html.replace('stock="./hemu/"',
+    'stock="https://templeosweb-files.parkerrhunt.workers.dev/HEMU/'+pin+'/"'));
   console.log("Published "+cnt+" files to "+dir+"/");
 }
 

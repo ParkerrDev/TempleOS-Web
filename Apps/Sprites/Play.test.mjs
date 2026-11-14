@@ -5,7 +5,7 @@ import {spritePackage,SPRITE_PLAYER} from "./SpriteCodec.js";
 import {GrNew} from "./Gr.js";
 
 const source=await readFile(SPRITE_PLAYER,"utf8"),
-  codec=await GrNew(await readFile(new URL("Gr.HC",import.meta.url),"utf8")),
+  codec=await GrNew(await readFile(new URL("../../build/Gr.wasm",import.meta.url))),
   frames=[Uint8Array.of(4,255,1),Uint8Array.of(2,14,5)],
   encoded=frames.map(frame=>codec.encodeGR(frame,3,1)),
   dir=new URL("../../tmp/sprites/",import.meta.url);
@@ -20,7 +20,7 @@ assert.deepEqual(JSON.parse(Buffer.from(files["animation.json"],"base64")),
   {width:3,height:1,frames:2,delayMs:100,palette:"TempleOS standard",transparent:255});
 
 if (process.argv.includes("--native")) {
-  const {QemuRun}=await import("../../holyc-wasm/tests/oracle/Qemu.mjs"),
+  const {QemuRun}=await import("../../hemu/holyc-wasm/tests/oracle/Qemu.mjs"),
     fixture=String.raw`
 #exe {
   Cd("C:/ORACLE");

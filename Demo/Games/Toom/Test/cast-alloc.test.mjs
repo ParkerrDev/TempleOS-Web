@@ -25,7 +25,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/CAST ALLOC \d+ CASES \d+ FAULTS BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen built runtime.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true}),check=source+"\nif (!tm_cast_alloc_done || tm_cast_alloc_cases<32 || tm_cast_alloc_faults!=tm_cast_alloc_cases-2) throw('Count');\n";
   for(const file of [...files,{name:'CASTALL.HC',bytes:Buffer.from(check,'latin1')}]) {
     const id=h.gx.writeFile({path:'C:/ORACLE/'+file.name,bytes:file.bytes});

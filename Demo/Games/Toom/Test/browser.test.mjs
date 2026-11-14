@@ -12,8 +12,8 @@ import {ToomReader,ToomSources} from './Package.mjs';
 assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the frozen site checkout.');
 const web=resolve(process.env.TEMPLEOS_WEB),out=resolve(process.env.OUT||'/tmp/toom-browser');
 const {ServeReq}=await import(pathToFileURL(resolve(web,'Misc/Server.mjs')));
-const {BrowserMachine,MachinePost,MachineReady}=await import(pathToFileURL(resolve(web,'Kernel/Test/BrowserMachine.mjs')));
-const {TextRow}=await import(pathToFileURL(resolve(web,'Kernel/Test/WorkerHost.mjs')));
+const {BrowserMachine,MachinePost,MachineReady}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/BrowserMachine.mjs')));
+const {TextRow}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/WorkerHost.mjs')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const game=resolve(process.env.GAME_DIR||resolve(root,'Demo/Games/Toom'));
 const finale=!!process.env.FINALE,progression=!!process.env.PROGRESSION;
@@ -23,11 +23,11 @@ const files=new Map(names.map(n=>[n,readFileSync(resolve(game,n))]));
 files.set('FREEDOOM.WAD',finale?readFileSync(resolve(root,'Demo/Games/Toom/Test/.assets/freedoom-0.13.0-phase2.wad')):FreedoomRead());
 files.set('TMDATA.BIN',readFileSync(resolve(game,'TMDATA.BIN')));
 const fileHashes=Object.fromEntries([...files].map(([n,bytes])=>[n,hash(bytes)]));
-const runtimeNames=['Misc/Server.mjs','Adam/Keyboard.js','Adam/Os.js','Adam/WinMgr.js','Kernel/Jit.js',
-  'Kernel/HemuWorker.js','Kernel/HemuSmpWorker.js','Kernel/GuestExec.js',
-  'Kernel/KeyQueue.js','build/hemu.wasm','build/hemu-smp.wasm',
+const runtimeNames=['Misc/Server.mjs','Adam/Keyboard.js','Adam/Os.js','Adam/WinMgr.js','hemu/Kernel/Jit.js',
+  'hemu/Kernel/HemuWorker.js','hemu/Kernel/HemuSmpWorker.js','hemu/Kernel/GuestExec.js',
+  'hemu/Kernel/KeyQueue.js','hemu/build/hemu.wasm','hemu/build/hemu-smp.wasm',
   'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
-  'Kernel/Stock.js','Kernel/Speaker.js','hemu/templeos-hd.qcow2.gz'];
+  'hemu/Kernel/Stock.js','hemu/Kernel/Speaker.js','hemu/templeos-hd.qcow2.gz'];
 const runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
 const probe=readFileSync(new URL('Worker.HC',import.meta.url),'latin1')+'\n'+readFileSync(new URL('AudioWorker.HC',import.meta.url),'latin1')+
   (progression||finale?'\n'+readFileSync(new URL('ProgressWorker.HC',import.meta.url),'latin1'):'')+
@@ -121,7 +121,6 @@ try {
       await page.goto(url+(count===1?'/?single':'/'),{waitUntil:'load'});
       await MachineReady(page,count);
       await page.waitForFunction(()=>document.getElementById('loadui').style.display==='none');
-      await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==='guestPatch'&&m.state==='installed'),null,{timeout:60000});
       await Done('probe-vars',probe);
       await page.evaluate(async names=>{
         const files=await Promise.all(names.map(async name=>({path:'C:/TOOM/'+name,

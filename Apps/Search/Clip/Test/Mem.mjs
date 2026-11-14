@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
-import {compileHolyC} from "../../../../holyc-wasm/src/compiler.js";
-import {createHost} from "../../../../holyc-wasm/src/runtime/host.js";
+import {compileHolyC} from "../../../../hemu/holyc-wasm/src/compiler.js";
+import {createHost} from "../../../../hemu/holyc-wasm/src/runtime/host.js";
 
 const source=await readFile(new URL("../Mkv.HC",import.meta.url),"utf8"),
   bytes=await readFile(new URL("../../../../tmp/clip/source.mkv",import.meta.url)),

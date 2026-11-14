@@ -1,5 +1,4 @@
-import {compileHolyC} from "../../holyc-wasm/src/compiler.js";
-import {createHost} from "../../holyc-wasm/src/runtime/host.js";
+import {createHost} from "../../hemu/holyc-wasm/src/runtime/host.js";
 import {BibleReader} from "./Bible.js";
 
 let core=null,words=null;
@@ -16,11 +15,11 @@ async function Text(path)
 
 async function Core()
 {
-  let source=await Text("./GodBits.HC"),r=compileHolyC(source,{
-    filename:"GodBits.HC",lenient:false,
-    exports:["GodFifoRst","GodBitsIns","GodBits"]}),
-    host=createHost({}),res=await WebAssembly.instantiate(r.bytes,
-      {env:host.env});
+  const response=await fetch(new URL("../../build/GodBits.wasm",import.meta.url));
+  if (!response.ok)
+    throw new Error("Could not load God tools ("+response.status+"). Try again.");
+  const host=createHost({}),res=await WebAssembly.instantiate(
+    await response.arrayBuffer(),{env:host.env});
   host.attach(res.instance);
   res.instance.exports.__main();
   return res.instance.exports;

@@ -10,27 +10,37 @@
   <!-- the snapshot, disk, games and Terry Search are redirected to this CDN (Misc/Cdn/OffloadRedirects.mjs):
        open the connection while the page is still parsing -->
   <link rel="preconnect" href="https://templeosweb-files.parkerrhunt.workers.dev" crossorigin />
-  <!-- the engine worker loads its modules while the page loads its own; the
-       first stock boot takes it (Adam/Os.js EarlyEngine) -->
   <script>
-    try {self.hemuEarly=new Worker("./Kernel/HemuWorker.js",{type:"module"});} catch (e) {}
+    {
+      const mobile=navigator.maxTouchPoints>1 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent),
+        smp=crossOriginIsolated && !/[?&](single|nosmp)\b/.test(location.search) &&
+          (/[?&]smp\b/.test(location.search) || !mobile),
+        stock="./hemu/",abort=new AbortController(),
+        response=fetch(stock+(smp?"live-smp.bin.gz":"live.bin.gz"),{signal:abort.signal,priority:"high"});
+      response.catch(function () {});
+      self.hemuBoot={mobile,smp,abort,response};
+      try {self.hemuEarly=new Worker("./hemu/Kernel/HemuWorker.js",{type:"module"});} catch (e) {}
+    }
   </script>
-  <!-- modules the page's scripts import: Adam/Preload.test.mjs -->
+  <!-- modules the page's scripts import: Misc/Preload.mjs -->
   <link rel="modulepreload" href="Adam/BootFile.js" />
   <link rel="modulepreload" href="Adam/FrameBuf.js" />
   <link rel="modulepreload" href="Adam/GuestFps.js" />
-  <link rel="modulepreload" href="Adam/GuestRqsts.js" />
   <link rel="modulepreload" href="Adam/Keyboard.js" />
   <link rel="modulepreload" href="Adam/MobileInput.js" />
   <link rel="modulepreload" href="Adam/WinPointer.js" />
   <link rel="modulepreload" href="Adam/XSel.js" />
-  <link rel="modulepreload" href="Kernel/CoreBus.js" />
-  <link rel="modulepreload" href="Kernel/GuestPatch.js" />
-  <link rel="modulepreload" href="Kernel/Snapshot.js" />
-  <link rel="modulepreload" href="Kernel/Speaker.js" />
-  <link rel="modulepreload" href="Kernel/Stock.js" />
+  <link rel="modulepreload" href="hemu/Kernel/CoreBus.js" />
+  <link rel="modulepreload" href="hemu/Kernel/Machine.js" />
+  <link rel="modulepreload" href="hemu/Kernel/Snapshot.js" />
+  <link rel="modulepreload" href="hemu/Kernel/Speaker.js" />
+  <link rel="modulepreload" href="hemu/Kernel/Stock.js" />
   <link rel="modulepreload" href="Adam/TouchCtrls.js" />
-  <link rel="modulepreload" href="Kernel/QCow2.js" />
+  <link rel="modulepreload" href="hemu/Kernel/GuestPatch.js" />
+  <link rel="modulepreload" href="hemu/Kernel/GuestRqsts.js" />
+  <link rel="modulepreload" href="hemu/Kernel/QCow2.js" />
+  <link rel="modulepreload" href="hemu/Kernel/Ram.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/src/runtime/keyboard.js" />
   <style>
     /* afterdavis theme: the TempleOS desktop look. */
     /* TempleOS system font: the real 322-glyph font the site has always used, laundered CLEAN via

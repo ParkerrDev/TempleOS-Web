@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import {readFile,writeFile,mkdir} from "node:fs/promises";
 import {execFileSync} from "node:child_process";
-import {compileHolyC} from "../../../../holyc-wasm/src/compiler.js";
-import {createHost} from "../../../../holyc-wasm/src/runtime/host.js";
+import {compileHolyC} from "../../../../hemu/holyc-wasm/src/compiler.js";
+import {createHost} from "../../../../hemu/holyc-wasm/src/runtime/host.js";
 
 const tmp=new URL("../../../../tmp/clip/",import.meta.url);
 await mkdir(tmp,{recursive:true});

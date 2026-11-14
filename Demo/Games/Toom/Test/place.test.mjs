@@ -21,7 +21,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/PLACE 165 CASES BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (tm_place_done!=1 || tm_place_cases!=165) throw('Count');\n";
   for(const file of [...files,{name:'PLACE.HC',bytes:Buffer.from(check,'latin1')}]) {

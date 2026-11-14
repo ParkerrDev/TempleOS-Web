@@ -21,8 +21,8 @@ if (mirror) {
   source.status=execFileSync("git",["status","--short"],{cwd:root,encoding:"utf8"});
   source.hashes={};
   for (const name of ["index.html","Adam/Os.js","Adam/WinMgr.js","Siblings.txt",
-      "Apps/Terry/TerrySprite.js","Apps/Sprites/Gr.js","Apps/Sprites/GrBuild.js","Apps/Sprites/GrWorker.js",
-      "build/hemu.wasm","build/hemu-smp.wasm"])
+      "Apps/Terry/TerrySprite.js","Apps/Sprites/Gr.js","build/Gr.wasm",
+      "hemu/build/hemu.wasm","hemu/build/hemu-smp.wasm"])
     source.hashes[name]=createHash("sha256").update(await readFile(new URL(name,root))).digest("hex");
 }
 let server;

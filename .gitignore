@@ -4,11 +4,10 @@ node_modules/
 reference/
 TerryADavis-archive-transcriber/
 # sibling repos, assembled here at build time (Netlify) / symlinked for local dev
-/holyc-wasm
 /hemu
 /holyc-fmt
 /holycraft
-# the compiled emulator (hemu.wasm, hemu-smp.wasm, hemu-smp.json): node Kernel/Build.mjs
+# Fixed application WASMs: node Misc/AppsBuild.mjs
 /build/
 # written by Misc/Cdn/OffloadRedirects.mjs during the Netlify build
 /_redirects

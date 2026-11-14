@@ -22,7 +22,7 @@ const write=process.argv.includes("--write"),
   }):GAMES,
   jobs=Number(process.env.JOBS || 6),
   out=resolve(process.env.OUT || fileURLToPath(new URL("tmp/games/start/",root))),
-  oracle=resolve(process.env.HOLYC_WASM || fileURLToPath(new URL("holyc-wasm/",root)),
+  oracle=resolve(process.env.HOLYC_WASM || fileURLToPath(new URL("hemu/holyc-wasm/",root)),
     "tests/oracle/"),
   start=await readFile(new URL("Start.HC",import.meta.url)),
   run=promisify(execFile);

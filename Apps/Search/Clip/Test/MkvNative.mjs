@@ -3,7 +3,7 @@ import {readFile} from "node:fs/promises";
 import {pathToFileURL} from "node:url";
 import {resolve} from "node:path";
 import {MkvClip} from "../Mkv.js";
-const oracle_root=process.env.HOLYC_WASM || new URL("../../../../holyc-wasm/",import.meta.url).pathname,
+const oracle_root=process.env.HOLYC_WASM || new URL("../../../../hemu/holyc-wasm/",import.meta.url).pathname,
   {QemuRun}=await import(pathToFileURL(resolve(oracle_root,"tests/oracle/Qemu.mjs"))),
   root=new URL("../../../../",import.meta.url),source=await readFile(new URL("Apps/Search/Clip/Mkv.HC",root),"utf8"),
   files=[],expected=[];

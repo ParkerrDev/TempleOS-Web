@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {GameInputs,Hash,root,GAME_CHECKS} from "./Evidence.mjs";
-import {compileHemu} from "../../../Kernel/Compile.js";
+import {compileHemu} from "../../../hemu/Kernel/Compile.js";
 
 const evidence=JSON.parse(await readFile(new URL("Demo/Games/Test/Evidence.json",root))),
   inputs=await GameInputs();

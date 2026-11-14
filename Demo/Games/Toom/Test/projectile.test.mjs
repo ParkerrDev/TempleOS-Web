@@ -36,7 +36,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,new RegExp(`PROJECTILE ${total} REAL CASES BAD 0`));
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+`\nif (tm_proj_real_done!=1 || tm_proj_real_cases!=${total}) throw('Count');\n`;
   for(const file of [...files,{name:'PROJREAL.HC',bytes:Buffer.from(check,'latin1')}]) {

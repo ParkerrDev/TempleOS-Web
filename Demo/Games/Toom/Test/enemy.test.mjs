@@ -21,7 +21,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/ENEMY 21 REAL CASES BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (tm_enemy_real_done!=1 || tm_enemy_real_cases!=21) throw('Count');\n";
   for(const file of [...files,{name:'ENEMY.HC',bytes:Buffer.from(check,'latin1')}]) {

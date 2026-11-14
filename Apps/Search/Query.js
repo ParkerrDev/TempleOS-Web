@@ -1,14 +1,10 @@
-import {compileHolyC} from "../../holyc-wasm/src/compiler.js";
-import {createHost} from "../../holyc-wasm/src/runtime/host.js";
+import {createHost} from "../../hemu/holyc-wasm/src/runtime/host.js";
 
-export async function QueryProgram(source)
+export async function QueryProgram(bytes)
 {
-  const compiled=compileHolyC(source,{filename:"Query.HC",lenient:false,
-    resilient:false,exports:["SearchQuery","MAlloc","Free","StrLen"]}),
-    host=createHost({}),
-    {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env}),
+  const host=createHost({}),
+    {instance}=await WebAssembly.instantiate(bytes,{env:host.env}),
     fn=instance.exports,encoder=new TextEncoder(),decoder=new TextDecoder();
-  if (compiled.warnings.length) throw new Error(compiled.warnings.join("\n"));
   host.attach(instance);fn.__main();
   return function Parse(text)
   {
@@ -36,9 +32,9 @@ let pending;
 export function QueryLoad()
 {
   if (!pending) pending=(async function () {
-    const response=await fetch(new URL("Query.HC",import.meta.url));
+    const response=await fetch(new URL("../../build/Query.wasm",import.meta.url));
     if (!response.ok) throw new Error("Could not load search controls.");
-    return QueryProgram(await response.text());
+    return QueryProgram(await response.arrayBuffer());
   })().catch(error=>{pending=null;throw error;});
   return pending;
 }

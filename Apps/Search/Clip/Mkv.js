@@ -2,10 +2,8 @@ import {ClipProgram} from "./Program.js";
 
 export async function MkvClip(source,start,end)
 {
-  const {fn,Call,Copy,Input}=await ClipProgram("Mkv.HC",[
-    "MkScan","MkScanSize","MkScanHead","MkMeta","MkSeekPos","MkPlan",
-    "MkReadStart","MkReadEnd","MkClusterPut","MkFinish","MkResult",
-    "MkResultSize","MkStart","MkEnd","MkError"],"MkError"),
+  const {fn,Call,Copy,Input}=await ClipProgram(
+    new URL("../../../build/Mkv.wasm",import.meta.url),"MkError"),
     metadata=new Set([0x1549A966,0x1654AE6B,0x1C53BB6B]),found=new Set();
   let pos=0,cached=await source.Read(0,65536),cache_pos=0,head,size,kind,count=0;
   async function Read(at,n)

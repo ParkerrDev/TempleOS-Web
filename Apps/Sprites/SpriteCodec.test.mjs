@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {PALETTE,quantize,toRGBA,encodeGIF,MAX_FRAMES,spritePackage,SPRITE_PLAYER} from './SpriteCodec.js';
 import {GrNew} from './Gr.js';
-const {encodeGR,decodeGR}=await GrNew(readFileSync(new URL('./Gr.HC',import.meta.url),'utf8'));
+const {encodeGR,decodeGR}=await GrNew(readFileSync(new URL('../../build/Gr.wasm',import.meta.url)));
 const width=17,height=3, pixels=Uint8Array.from({length:width*height},(_,i)=>i%17===16?255:i%16);
 const rgba=toRGBA(pixels,width,height);
 assert.deepEqual(quantize(rgba,width,height),pixels);

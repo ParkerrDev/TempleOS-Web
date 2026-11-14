@@ -3,13 +3,13 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {compileHolyC} from '../../holyc-wasm/src/compiler.js';
+import {compileHolyC} from '../../hemu/holyc-wasm/src/compiler.js';
 import {compileNativeProject} from './Project.js';
 import {createMouseButtons} from './MsBttns.js';
-import {createHost} from '../../holyc-wasm/src/runtime/host.js';
-import {MS_ADDR,MS} from '../../holyc-wasm/src/abi.js';
-import {Framebuffer} from '../../holyc-wasm/src/runtime/graphics.js';
-import * as protocol from '../../holyc-wasm/src/runtime/protocol.js';
+import {createHost} from '../../hemu/holyc-wasm/src/runtime/host.js';
+import {MS_ADDR,MS} from '../../hemu/holyc-wasm/src/abi.js';
+import {Framebuffer} from '../../hemu/holyc-wasm/src/runtime/graphics.js';
+import * as protocol from '../../hemu/holyc-wasm/src/runtime/protocol.js';
 
 const {CTRL,makeControlSAB}=protocol,controlSAB=makeControlSAB(),ctrl=new Int32Array(controlSAB),messages=[];
 let waits=0,time=0;

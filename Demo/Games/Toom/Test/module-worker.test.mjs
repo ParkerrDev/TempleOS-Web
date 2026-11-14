@@ -8,7 +8,7 @@ import {ModulePackage} from './ModulePackage.mjs';
 assert(process.env.TEMPLEOS_WEB,'Set the frozen runtime path.');
 const web=resolve(process.env.TEMPLEOS_WEB),out=resolve(process.env.OUT||'/tmp/toom-module-workers'),
   source=!!process.env.SOURCE,hash=b=>createHash('sha256').update(b).digest('hex'),
-  {HemuBoot,ReadyWait,FramesWait,Sleep,TextRow}=await import(pathToFileURL(resolve(web,'Kernel/Test/WorkerHost.mjs'))),
+  {HemuBoot,ReadyWait,FramesWait,Sleep,TextRow}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/WorkerHost.mjs'))),
   packageFiles=ModulePackage(process.env.MODULE,process.env.COMPARE?true:source),
   moduleFiles=process.env.COMPARE?ModulePackage(process.env.MODULE):null,
   files=[...(moduleFiles?(packageFiles.set('Toom.BIN',moduleFiles.get('Toom.BIN')),
@@ -16,14 +16,14 @@ const web=resolve(process.env.TEMPLEOS_WEB),out=resolve(process.env.OUT||'/tmp/t
   fileHashes=Object.fromEntries(files.map(f=>[f.path,hash(f.bytes)])),results=[],
   driverSha256=hash(readFileSync(new URL('module-worker.test.mjs',import.meta.url))),
   cores=process.env.CORES?[Number(process.env.CORES)]:[1,4],
-  runtimeNames=['Kernel/Jit.js','Kernel/HemuWorker.js','Kernel/HemuSmpWorker.js','Kernel/GuestExec.js',
-    'Kernel/GuestInput.js','Kernel/KeyQueue.js','Kernel/Test/WorkerHost.mjs','Kernel/Test/WorkerShim.mjs',
+  runtimeNames=['hemu/Kernel/Jit.js','hemu/Kernel/HemuWorker.js','hemu/Kernel/HemuSmpWorker.js','hemu/Kernel/GuestExec.js',
+    'hemu/Kernel/GuestInput.js','hemu/Kernel/KeyQueue.js','hemu/Kernel/Test/WorkerHost.mjs','hemu/Kernel/Test/WorkerShim.mjs',
     'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
-    'Kernel/Stock.js','hemu/templeos-hd.qcow2.gz'],
+    'hemu/Kernel/Stock.js','hemu/templeos-hd.qcow2.gz'],
   runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
 assert(cores.every(n=>n===1||n===4));mkdirSync(out,{recursive:true});
 for(const count of cores) {
-  const smp=count===4?4:0,wasm=resolve(web,`build/hemu${smp?'-smp':''}.wasm`),wasmSha256=hash(readFileSync(wasm)),
+  const smp=count===4?4:0,wasm=resolve(web,`hemu/build/hemu${smp?'-smp':''}.wasm`),wasmSha256=hash(readFileSync(wasm)),
     h=await HemuBoot({smp,busProtocol:smp?1:0,rate:60,keep_buf:true,keep:180,patches:false});
   const Wait=(pred,ms=60000)=>h.msgs.find(pred)||h.Wait(pred,ms),
     Result=id=>Wait(m=>m.cmd==='fileResult'&&m.id===id),

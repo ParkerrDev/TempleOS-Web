@@ -1,12 +1,10 @@
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
-import {compileHolyC} from "../../holyc-wasm/src/compiler.js";
-import {createHost} from "../../holyc-wasm/src/runtime/host.js";
+import {compileHolyC} from "../../hemu/holyc-wasm/src/compiler.js";
+import {createHost} from "../../hemu/holyc-wasm/src/runtime/host.js";
 
-//The browser compiles Apps/Editor/Adam.HC before a game, so the test does too.
-const adam=await readFile(new URL("../../Apps/Editor/Adam.HC",import.meta.url),"utf8"),
-  source=await readFile(new URL("./Babel.HC",import.meta.url),"utf8"),
-  compiled=compileHolyC(adam+source.replace(/\nBabel;\s*$/,"\n"),{
+const source=await readFile(new URL("./Babel.HC",import.meta.url),"utf8"),
+  compiled=compileHolyC(source.replace(/\nBabel;\s*$/,"\n"),{
     filename:"Babel.HC",lenient:false,
     exports:["RotInit","BagNext","StoneNew","StoneTurn","StoneFits","StoneLock"]}),
   host=createHost({}),res=await WebAssembly.instantiate(compiled.bytes,

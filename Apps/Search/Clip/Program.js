@@ -1,13 +1,11 @@
-import {compileHolyC} from "../../../holyc-wasm/src/compiler.js";
-import {createHost} from "../../../holyc-wasm/src/runtime/host.js";
+import {createHost} from "../../../hemu/holyc-wasm/src/runtime/host.js";
 
-export async function ClipProgram(file,exports,error_name)
+export async function ClipProgram(file,error_name)
 {
-  let response=await fetch(new URL(file,import.meta.url));
+  let response=await fetch(file);
   if (!response.ok) throw new Error("Could not load the clip program.");
-  const compiled=compileHolyC(await response.text(),{filename:file,
-    lenient:false,exports}),host=createHost({}),
-    {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env}),
+  const host=createHost({}),
+    {instance}=await WebAssembly.instantiate(await response.arrayBuffer(),{env:host.env}),
     fn=instance.exports;
   host.attach(instance);fn.__main();
   function Alloc(size)

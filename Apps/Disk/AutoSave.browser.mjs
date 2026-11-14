@@ -3,7 +3,7 @@ import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {chromium} from 'playwright-core';
 import {ServeReq} from '../../Misc/Server.mjs';
-import {BrowserMachine} from '../../Kernel/Test/BrowserMachine.mjs';
+import {BrowserMachine} from '../../hemu/Kernel/Test/BrowserMachine.mjs';
 const site=createServer(ServeReq).listen(0,'127.0.0.1');
 await once(site,'listening');
 const url='http://127.0.0.1:'+site.address().port;

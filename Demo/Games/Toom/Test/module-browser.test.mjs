@@ -13,12 +13,12 @@ const web=resolve(process.env.TEMPLEOS_WEB),out=resolve(process.env.OUT||'/tmp/t
   source=!!process.env.SOURCE,files=ModulePackage(process.env.MODULE,source),hash=b=>createHash('sha256').update(b).digest('hex'),
   fileHashes=Object.fromEntries([...files].map(([n,b])=>[n,hash(b)])),
   {ServeReq}=await import(pathToFileURL(resolve(web,'Misc/Server.mjs'))),
-  {BrowserMachine,MachinePost,MachineReady}=await import(pathToFileURL(resolve(web,'Kernel/Test/BrowserMachine.mjs'))),
-  {TextRow}=await import(pathToFileURL(resolve(web,'Kernel/Test/WorkerHost.mjs'))),
-  runtimeNames=['Misc/Server.mjs','Adam/Keyboard.js','Adam/Os.js','Adam/WinMgr.js','Kernel/Jit.js','Kernel/HemuWorker.js',
-    'Kernel/HemuSmpWorker.js','Kernel/GuestExec.js','Kernel/KeyQueue.js','build/hemu.wasm','build/hemu-smp.wasm',
+  {BrowserMachine,MachinePost,MachineReady}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/BrowserMachine.mjs'))),
+  {TextRow}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/WorkerHost.mjs'))),
+  runtimeNames=['Misc/Server.mjs','Adam/Keyboard.js','Adam/Os.js','Adam/WinMgr.js','hemu/Kernel/Jit.js','hemu/Kernel/HemuWorker.js',
+    'hemu/Kernel/HemuSmpWorker.js','hemu/Kernel/GuestExec.js','hemu/Kernel/KeyQueue.js','hemu/build/hemu.wasm','hemu/build/hemu-smp.wasm',
     'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
-    'Kernel/Stock.js','Kernel/Speaker.js','hemu/templeos-hd.qcow2.gz'],
+    'hemu/Kernel/Stock.js','hemu/Kernel/Speaker.js','hemu/templeos-hd.qcow2.gz'],
   runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))])),
   server=createServer(ServeReq).listen(0,'127.0.0.1');await once(server,'listening');
 const url=`http://127.0.0.1:${server.address().port}`,
@@ -99,7 +99,6 @@ try {
     try {
       await page.goto(url+(count===1?'/?single':'/'),{waitUntil:'load'});await MachineReady(page,count);
       await page.waitForFunction(()=>document.getElementById('loadui').style.display==='none');
-      await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==='guestPatch'&&m.state==='installed'),null,{timeout:60000});
       await page.evaluate(async names=>{
         const files=await Promise.all(names.map(async name=>({path:'C:/TOOM/'+name,bytes:new Uint8Array(await(await fetch('/__toom/'+name)).arrayBuffer())})));
         window.machine.workers.findLast(w=>w.machineCore===0&&!w.machineTerminated).postMessage({cmd:'osInstall',id:'install',files});

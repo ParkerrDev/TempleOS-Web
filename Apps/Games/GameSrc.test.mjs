@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {sourceDocument,gameProject} from './GameSrc.js';
+import {gameProject} from './GameSrc.js';
+import {sourceDocument} from '../Editor/Source.js';
 import {installGame,gameFile} from './GamePkgs.js';
 const root=new URL('../../',import.meta.url),catalog=JSON.parse(await readFile(new URL('Demo/Games/Catalog.json',root)));
 const storage=new Map();

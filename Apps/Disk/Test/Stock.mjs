@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
-import {makeDisk} from '../../../Kernel/QCow2.js';
+import {makeDisk} from '../../../hemu/Kernel/QCow2.js';
 const dir=mkdtempSync(join(tmpdir(),'hemu-stock-disk-'));
 try {
   const bytes=gunzipSync(readFileSync(new URL('../../../hemu/templeos-hd.qcow2.gz',import.meta.url))),disk=makeDisk(bytes);

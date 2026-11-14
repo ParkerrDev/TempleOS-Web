@@ -1,4 +1,4 @@
-import {CTRL} from '../../holyc-wasm/src/runtime/protocol.js';
+import {CTRL} from '../../hemu/holyc-wasm/src/runtime/protocol.js';
 
 // Keep short clicks visible through a complete input iteration. Polls within
 // that iteration must not consume the edge before the game reads ms.lb/ms.rb.

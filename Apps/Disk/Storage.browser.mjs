@@ -9,7 +9,7 @@ const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless
 try {
  const page=await browser.newPage();await page.goto('http://127.0.0.1:'+site.address().port+'/test');
  const result=await page.evaluate(async()=>{
-   const {DiskStoreOpen}=await import('/Kernel/DiskStore.js'),{makeDisk}=await import('/Kernel/QCow2.js');
+   const {DiskStoreOpen}=await import('/hemu/Kernel/DiskStore.js'),{makeDisk}=await import('/hemu/Kernel/QCow2.js');
    const events=[],store=await DiskStoreOpen(m=>events.push(m)),disk=makeDisk(new Uint8Array(2048));
    await store.Attach(disk);
    disk.writeInto(1,1,new Uint8Array(512).fill(7),0);

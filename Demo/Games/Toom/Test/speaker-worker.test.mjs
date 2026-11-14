@@ -8,10 +8,10 @@ import {SpeakerRenderSource} from './SpeakerRenderSource.mjs';
 
 const web=resolve(process.env.TEMPLEOS_WEB||root),out=resolve(process.env.OUT||'/tmp/toom-audio-workers');
 mkdirSync(out,{recursive:true});
-const {HemuBoot,ReadyWait,FramesWait,TextRow}=await import(pathToFileURL(resolve(web,'Kernel/Test/WorkerHost.mjs')));
+const {HemuBoot,ReadyWait,FramesWait,TextRow}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/WorkerHost.mjs')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const runtimeNames=['Kernel/Jit.js','Kernel/HemuWorker.js','Kernel/HemuSmpWorker.js','Kernel/GuestExec.js',
-  'Kernel/Test/WorkerHost.mjs','Kernel/Test/WorkerShim.mjs','hemu/live.bin.gz','hemu/live-smp.bin.gz',
+const runtimeNames=['hemu/Kernel/Jit.js','hemu/Kernel/HemuWorker.js','hemu/Kernel/HemuSmpWorker.js','hemu/Kernel/GuestExec.js',
+  'hemu/Kernel/Test/WorkerHost.mjs','hemu/Kernel/Test/WorkerShim.mjs','hemu/live.bin.gz','hemu/live-smp.bin.gz',
   'hemu/templeos-hd.qcow2.gz'];
 const runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
 const cores=process.env.CORES?[Number(process.env.CORES)]:[1,4];
@@ -19,7 +19,7 @@ assert(cores.every(n=>n===1||n===4));
 const render=process.env.RENDER!=='0',results=[];
 const {source,files}=SpeakerRenderSource(render),bytes=Buffer.from(source,'latin1'),sourceSha256=hash(bytes);
 for(const count of cores) {
-  const smp=count===4?4:0,wasm=resolve(web,`build/hemu${smp?'-smp':''}.wasm`),wasmSha256=hash(readFileSync(wasm));
+  const smp=count===4?4:0,wasm=resolve(web,`hemu/build/hemu${smp?'-smp':''}.wasm`),wasmSha256=hash(readFileSync(wasm));
   const h=await HemuBoot({smp,busProtocol:smp?1:0,rate:60,keep_buf:true,keep:60,patches:false}),tones=[];
   h.workers[0].on('message',m=>{if(m.cmd==='snd')tones.push({t:performance.now(),f:m.f});});
   const Wait=(pred,ms=180000)=>h.msgs.find(pred)||h.Wait(pred,ms);

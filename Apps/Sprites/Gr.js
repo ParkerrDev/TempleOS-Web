@@ -1,13 +1,10 @@
-import {GrBuild} from "./GrBuild.js";
-import {createHost} from "../../holyc-wasm/src/runtime/host.js";
+import {createHost} from "../../hemu/holyc-wasm/src/runtime/host.js";
 
-export async function GrNew(source)
+export async function GrNew(bytes)
 {
-  const compiled=await GrBuild(source),
-    host=createHost({}),
-    {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env}),
+  const host=createHost({}),
+    {instance}=await WebAssembly.instantiate(bytes,{env:host.env}),
     fn=instance.exports,decoder=new TextDecoder();
-  if (compiled.warnings.length) throw new Error(compiled.warnings.join("\n"));
   host.attach(instance);fn.__main();
   const maxSize=Number(fn.SpriteGrMax());
   function Convert(write,bytes,width,height)
@@ -49,9 +46,9 @@ let pending;
 export function GrLoad()
 {
   if (!pending) pending=(async function () {
-    const response=await fetch(new URL("Gr.HC",import.meta.url));
+    const response=await fetch(new URL("../../build/Gr.wasm",import.meta.url));
     if (!response.ok) throw new Error("Could not load the TempleOS sprite codec.");
-    return GrNew(await response.text());
+    return GrNew(await response.arrayBuffer());
   })().catch(error=>{pending=null;throw error;});
   return pending;
 }

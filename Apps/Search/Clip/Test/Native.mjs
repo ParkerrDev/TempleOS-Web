@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {pathToFileURL} from "node:url";
 import {resolve} from "node:path";
-const oracle_root=process.env.HOLYC_WASM || new URL("../../../../holyc-wasm/",import.meta.url).pathname;
+const oracle_root=process.env.HOLYC_WASM || new URL("../../../../hemu/holyc-wasm/",import.meta.url).pathname;
 const {QemuRun}=await import(pathToFileURL(resolve(oracle_root,"tests/oracle/Qemu.mjs")));
 
 const root=new URL("../../../../",import.meta.url),source=await readFile(new URL("Apps/Search/Clip/Mp4.HC",root),"utf8"),

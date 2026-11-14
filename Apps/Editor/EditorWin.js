@@ -2,7 +2,7 @@
 //(Apps/Editor/App.js, loaded on first open), and the window games run in, which
 //shares the editor's screen and runner.
 import {WinAdd,WinRaise} from "../../Adam/WinMgr.js";
-import {os_game,OsHomeWrite} from "../../Adam/Os.js";
+import {os_game,OsFileWrite} from "../../Adam/Os.js";
 import {setupGameViews} from "../Games/GameView.js";
 
 const CSS='    #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }\n'+
@@ -157,7 +157,7 @@ function open() {
   ov.classList.remove("gamemode");
   WinRaise(ov);
   loadEditorApp().then(() => {
-    if (!ranDefault && !ed_game.file) { ranDefault = true; if (os_game.ed && !os_game.ed.isRunning()) os_game.ed.run(); }
+    if (!ranDefault && !ed_game.file) { ranDefault = true; if (os_game.ed && !os_game.ed.isRunning() && document.getElementById("editor").value) os_game.ed.run(); }
   }).catch(() => {});
 }
 function close() {
@@ -181,23 +181,39 @@ document.getElementById("gameBack").addEventListener("click", () => {
 // ---- editor Save (.HC download) / Open (.HC upload) / To C:/Home ----
 const ta = document.getElementById("editor");
 const setStatus = (s) => { const st = document.getElementById("status"); if (st) st.textContent = s; };
-const curName = () => { if(ed_game.file)return ed_game.file.filename(); const sel = document.getElementById("demoSelect");
-  const v = sel && sel.value ? sel.value.split("/").pop() : ""; return (v && /\.HC$/i.test(v)) ? v : "MyProgram.HC"; };
+const curName=()=>ed_game.file?ed_game.file.filename():os_game.ed?.FileName()||"MyProgram.HC";
 document.getElementById("edSave").addEventListener("click", async () => {
   const name=curName();
-  let source; try{source=ed_game.file?await ed_game.file.bytes():ta.value;}
+  let source; try{source=ed_game.file?await ed_game.file.bytes():os_game.ed.FileBytes();}
   catch(e){setStatus(e.message);return;}
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([source], { type: "application/octet-stream" }));
   a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); setStatus("saved " + a.download);
 });
 document.getElementById("edOpen").addEventListener("click", () => {
   const i = document.createElement("input"); i.type = "file"; i.accept = ".HC,.hc,.txt,text/plain";
-  i.onchange = async () => { const f = i.files[0]; if (!f) return; ed_game.leave?.(); ta.value = await f.text();
-    ta.dispatchEvent(new Event("input")); setStatus("opened " + f.name); }; i.click();
+  i.onchange=async()=>{
+    const file=i.files[0];
+    if (!file) return;
+    try {
+      const bytes=await file.arrayBuffer();
+      await loadEditorApp();
+      ed_game.leave?.();
+      document.getElementById("demoSelect").value="";
+      os_game.ed.FileLoad(bytes,file.name);
+      setStatus("opened "+file.name);
+    } catch (error) {setStatus(error.message);}
+  };
+  i.click();
 });
-document.getElementById("edToDisk").addEventListener("click", () => {
-  const name = prompt("Write to C:/Home as:", curName()); if (!name) return;
-  OsHomeWrite(name, ta.value); setStatus("writing " + name + " to C:/Home…");
+document.getElementById("edToDisk").addEventListener("click",async()=>{
+  const name=prompt("Write to C:/Home as:",curName());
+  if (!name) return;
+  try {
+    const bytes=ed_game.file?await ed_game.file.bytes():os_game.ed.FileBytes();
+    setStatus("writing "+name+" to C:/Home…");
+    const result=await OsFileWrite("C:/Home/"+name,bytes);
+    setStatus(result.ok?"wrote "+name+" to C:/Home":result.msg);
+  } catch (error) {setStatus(error.message);}
 });
 // Format: reformat the editor source with holyc-fmt (the HolyC formatter, run in-browser)
 const fmtBtn = document.getElementById("edFmt");

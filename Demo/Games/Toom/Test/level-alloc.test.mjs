@@ -24,7 +24,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/LEVEL ALLOC \d+ CASES \d+ FAULTS BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (tm_level_alloc_done!=1 || tm_level_alloc_cases!=tm_level_alloc_faults+3) throw('Count');\n";
   for(const file of [...files,{name:'LVLALLOC.HC',bytes:Buffer.from(check,'latin1')}]) {

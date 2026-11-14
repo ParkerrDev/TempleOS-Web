@@ -20,7 +20,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/WAD LOCK 26 CASES 16 FAULTS [1-7] GAPS BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen built runtime.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const bytes=Buffer.from(source+"\nif (!tm_wad_done || tm_wad_cases!=26 || tm_wad_faults!=16 || !tm_wad_gaps) throw('Count');\n",'latin1');
   let id=h.gx.writeFile({path:'C:/ORACLE/WADLOCK.HC',bytes});

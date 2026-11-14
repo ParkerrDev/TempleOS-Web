@@ -1,10 +1,10 @@
 {
   "format": 1,
-  "runtimeSha256": "6e96ca1b6d7a03272ac531e20980b00567dc2af263282e7e8e0d11b89855caea",
+  "runtimeSha256": "a6ac689e2a544e3ddea4952919c0fd8b3da2e3c78feb26c320d9c9b2138ebb4f",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
-      "sourceSha256": "324876d5ab8947b025f6e4cca0c8df8ee799ad929cf3a6981691d24da121c5d9",
+      "sourceSha256": "019734ed0220d9ad548c1a6f24560d8a7f8e513ec861f54f4c93ec1544a59136",
       "compile": true,
       "browserStartup": true,
       "gameplay": "unverified",
@@ -13,7 +13,7 @@
     },
     "toom": {
       "name": "TOOM",
-      "sourceSha256": "b38205d7123eeca7928b03349bf4f2443e4acbac42dd9bde50e8502abd0cf50d",
+      "sourceSha256": "2a4ce449caf0a69375494a9adedb11ae844bf83cb1d1474bf7376f469bc04005",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -22,34 +22,34 @@
     },
     "Babel.HC": {
       "name": "Babel",
-      "sourceSha256": "a76e7d5a51f8ba3335af62b49a2a71dac2862af3f68f45a502cef94a1adbf6f5",
+      "sourceSha256": "c1c0a2c14c3c18a973f9f55a19643811bd8d932ef2a8dd2e29a3d1391f52349b",
       "compile": true,
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "17f2f47a0fcfbc71e254e480378623a6d65ea0cf710a21ca3fecd2539c177289"
+      "wasmSha256": "a2ed79cf2274d3884132189dea471dcaf4677ca4c032beb5339d3a3770bdd250"
     },
     "Volley.HC": {
       "name": "Volley",
-      "sourceSha256": "7dc37ac5d8889e27119211dfcf6459f7bdd90b8d3f76debe3b609b5fb9e332dd",
+      "sourceSha256": "1a90fc2e900b9a87afe479854879b34324f327fdd3b0bc491736ff1ec2d149fe",
       "compile": true,
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "7146a96bd6e31eb2c738d8e0ed6c898117583792c51b0bdf482b9a7c4e1e540c"
+      "wasmSha256": "434e2ee3e7fe281e585f97b7299d664b9ced7c7450919ce8cc77adcc85846363"
     },
     "Snake.HC": {
       "name": "Snake",
-      "sourceSha256": "478f711cc29ef5387b1d9cb37db5f3a4b8333bd55c6d35b3071415611006e3d0",
+      "sourceSha256": "6f2bf1de66293ca3d6ee4c8b5b829105acb776fd4d3c756c772550150885705e",
       "compile": true,
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "b31ede83aa016cb5b17fd6591ec39d25f6318c09f55302a590534575853abd84"
+      "wasmSha256": "e2fe83d1dbde2b8c62096c4dc647e52582ae9d5c4d30eaaebf338c293ef7c98d"
     },
     "FNAF.HC": {
       "name": "FNAF",
-      "sourceSha256": "c0b031d4105f3e64b4ae67f9721b76bfd8f522e4ff811ecea9dd54e5b1e57c8d",
+      "sourceSha256": "2c5afadbdc94d8229d05f8666cf6adfa73ce8d2272fef9926478d7b2aef84949",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -58,7 +58,7 @@
     },
     "tinker-Varoom": {
       "name": "Varoom",
-      "sourceSha256": "70789002600c7104acd243caa809d724e3c735a42e3ced308ed2678b6641d557",
+      "sourceSha256": "6859626d516ac82665bf07bc50e15c51cad36698d34ea60640afdc892339a370",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -67,7 +67,7 @@
     },
     "tinker-Talons": {
       "name": "Talons",
-      "sourceSha256": "6c8c71b0f976bf81c8ee93f48632acc092af35e16415691a4f49aa97b36e58bb",
+      "sourceSha256": "07eb815120601a16f87a4760b41a56b472c366141cdeb62d4812aecae72dd0e0",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -76,7 +76,7 @@
     },
     "tinker-BlackDiamond": {
       "name": "BlackDiamond",
-      "sourceSha256": "72f6508825f640ff8fc3cbe07650d2f45e4a327e19e5fbbe069bf4bfe2d608dc",
+      "sourceSha256": "fc48669e079c2a865b8192bf1616abde1c33c6f0bd040eb59099d8035167e429",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -85,7 +85,7 @@
     },
     "tinker-FlatTops": {
       "name": "FlatTops",
-      "sourceSha256": "7d23eec49d4ac9201df594048f1b2a21baa7cfe845b4bd334815d35855238fd5",
+      "sourceSha256": "46299a1fde666a33af3b0f2daee578c0543377940c80b44bc509e177176f0858",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -94,7 +94,7 @@
     },
     "tinker-Halogen": {
       "name": "Halogen",
-      "sourceSha256": "50bbb482d1ceb69f8561802c7c387805600883dd37f0e05fac86c2797badb656",
+      "sourceSha256": "b1bdf05447702985185ecf22b9e3ef0bfe2d9ca501f2ae0c3b57fb3446786ddd",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -103,7 +103,7 @@
     },
     "tinker-CastleFrankenstein": {
       "name": "CastleFrankenstein",
-      "sourceSha256": "f8e7f698e2960562bc3f27be3538c7d79be0129582b72d24a7a255c5db9558a3",
+      "sourceSha256": "ad4a860adce300294d6cb83e49d5c64ac4756bd1c3abd7026cfed93a9463b1ef",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -112,7 +112,7 @@
     },
     "tinker-BattleLines": {
       "name": "BattleLines",
-      "sourceSha256": "fbae1d4425e1136c172210c1212061830db1df80f6388d09f7dfbae0ec30e2a4",
+      "sourceSha256": "7b83a484dc2368f88a04cdae046c3c3bf5e1fc6ac7795b6891597fc5f036162d",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -121,7 +121,7 @@
     },
     "tinker-BigGuns": {
       "name": "BigGuns",
-      "sourceSha256": "73bf058bb8f024b16c2b67f4f742b26c261a8a81ebe9bcf82f8b9e6741947e37",
+      "sourceSha256": "a8d761dce8015da54068c96feff5ffb7add1967755dea7739614d2637e4b5368",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -130,7 +130,7 @@
     },
     "tinker-BomberGolf": {
       "name": "BomberGolf",
-      "sourceSha256": "2d705e0b0537361f00919d6135dcfd6df220ab3b0ad39290bb70cabbdc80dda6",
+      "sourceSha256": "ac17441ba15369398fed48165c9ce8afdfd791651f53ffa7d71d7016c060a6f6",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -139,7 +139,7 @@
     },
     "tinker-FlapBat": {
       "name": "FlapBat",
-      "sourceSha256": "95586cfbe31d2bfdcc65d4aa4112f41111cfdeb9c768d16f4a1db6cacba39834",
+      "sourceSha256": "b0b7b99fceb6550be038a4680e4b40fbe810cd620f751d73cc3d3a7329957660",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -148,7 +148,7 @@
     },
     "tinker-Maze": {
       "name": "Maze",
-      "sourceSha256": "387e198d90b6c3a1338a38467bc8cf6036de98085c7c7258441a38b21e50e5a4",
+      "sourceSha256": "a643d69dc57e2ce0d7442d8b63c8a4a77b63a205f0e6f95a913e9dac5768f5c8",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -157,7 +157,7 @@
     },
     "tinker-TreeCheckers": {
       "name": "TreeCheckers",
-      "sourceSha256": "0440ead0cc5866d3e97d0a38fd897c84038d16b3a255d5e138769a67f2268a89",
+      "sourceSha256": "29cfd36ebca8e316690fa53444bba20d813587a0a3c811a38ffb6b495049e784",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -166,7 +166,7 @@
     },
     "tinker-TicTacToe": {
       "name": "TicTacToe",
-      "sourceSha256": "847afa9d761649168465ca48b606da7323c8084d8e775871aebf42b5757f94ff",
+      "sourceSha256": "af7dfa613107c8dfb46486d600aeca1a0ad53ffefbe6353435f16805117a3c6a",
       "compile": true,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -175,7 +175,7 @@
     },
     "tinker-Whap": {
       "name": "Whap",
-      "sourceSha256": "d6921c79001c30eee5e20135dd6ddaf191d671c56784628a2437d7a08bd7e779",
+      "sourceSha256": "27d854fe5517d5b1babdc6d8bc94454bca726a76bf44910d35008c999a00e1f7",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -184,7 +184,7 @@
     },
     "tinker-Wenceslas": {
       "name": "Wenceslas",
-      "sourceSha256": "a0a245dcd1c32578a1e9f8c38b3a97fbb8085ffc6b1c51845c6802cbba4a6188",
+      "sourceSha256": "fbb99c9ab1f06d36b962c849a7f34ffe30d6c0fedac515a61e5f09e14dd15f26",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -193,7 +193,7 @@
     },
     "tinker-RawHide": {
       "name": "RawHide",
-      "sourceSha256": "8b435740a7b6b322c97fb1fe33a0ac8e45de2477bd8d3e94fddf51c2a3a2127d",
+      "sourceSha256": "e7b8e7a90dfbdc7b7d0025094857cab7f55d450e939242916042b9e581c049f6",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -202,7 +202,7 @@
     },
     "tinker-TheDead": {
       "name": "TheDead",
-      "sourceSha256": "f2a8b037f8e1e75fd010e8b2e9676844b842d5e1faa088f985991839e804b4fb",
+      "sourceSha256": "5cb9c959f149aac587f5152838a0456b13cb45043ed40e587b4a8026c411e7e3",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -211,7 +211,7 @@
     },
     "tinker-Squirt": {
       "name": "Squirt",
-      "sourceSha256": "0908056963c68f0b9e4f8313a03ce417685f5a00d44898ae93214c3bb5c25c99",
+      "sourceSha256": "26c8521d12e0f57ff6fd1b91b1e5fba34894f2725893cc76385558f10d763e5b",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -220,7 +220,7 @@
     },
     "tinker-Zing": {
       "name": "Zing",
-      "sourceSha256": "aa6c7b2a2f293ab9b0313e52560c81d48b2495f9d0283bcd9a3ab6f4bead9f00",
+      "sourceSha256": "8f58573c328eec3440aee039cd321dbcc137c4559ff99f659c1ce0cb236126ab",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -229,7 +229,7 @@
     },
     "tinker-ZoneOut": {
       "name": "ZoneOut",
-      "sourceSha256": "fa0466e472d42d395912d63f0eeb3f4444e6764aa1287a35d9538e948ff680bb",
+      "sourceSha256": "2f5ce3b8de295fac7c88c65b02781ede30d814669e0b74157b19dbb60c26fe5b",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -238,7 +238,7 @@
     },
     "tinker-RocketScience": {
       "name": "RocketScience",
-      "sourceSha256": "4b6f7d95a67bbdf0e92d20f8efa8991baefae54db090e20eee7775b195f35d52",
+      "sourceSha256": "6c7ce2af44c942c6314a2b5f8494bbf0d6ce7f6939a0902555f6292a30319810",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -247,7 +247,7 @@
     },
     "tinker-Rocket": {
       "name": "Rocket",
-      "sourceSha256": "54b2ee9583d0d92623fd91c0cdb7b5da0e5e73909bd903243da2222c80d3494c",
+      "sourceSha256": "8bbf14bb508027ac663008feec2e31f357acd8fe0c509216e409ac132f3db894",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -256,7 +256,7 @@
     },
     "tinker-DunGen": {
       "name": "DunGen",
-      "sourceSha256": "4d2ed6225a5c4461d392bc3a502e72ebe77dacfbec469a3e494aeaa2ac75b985",
+      "sourceSha256": "0278556f7ff7b0e3b8f5f257a89f18a9eded6fc65fbda27255a5e47895bc9fc1",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -265,7 +265,7 @@
     },
     "tinker-MassSpring": {
       "name": "MassSpring",
-      "sourceSha256": "ad539ff3b2d1ffb7434519719c503fdf8f825c2a1f194b3bf2d92d126363ff67",
+      "sourceSha256": "46996f114bec2646c92540c73f4dda2956a507010cf77594cb0165243a9288c8",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -274,16 +274,16 @@
     },
     "tinker-Collision": {
       "name": "Collision",
-      "sourceSha256": "8dfa79d40f0492677d86b405d7a1bfa9cfa3c46ac484f5118e9ea4882b9b3234",
+      "sourceSha256": "53035f9525c6dcf561d166f8bba6880dc66721469d7e642ca96f0b42b8a9dd47",
       "compile": true,
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "ffddf972cba6c1170e9163c27509543cd6cb7cb4b7f2d3bf746a248ab85e70e0"
+      "wasmSha256": "50cac75927c7c1d41506477b46637dcb403bd1568ed8fe220d0489799fc56da3"
     },
     "tinker-RainDrops": {
       "name": "RainDrops",
-      "sourceSha256": "20439b565512697f65800ec287fad60030cd96362e4936974006823aa1819e8d",
+      "sourceSha256": "7b1caf46b3047ba14910d7c3179bb130b09efa288c6971452aed3c401b0033ee",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -292,7 +292,7 @@
     },
     "tinker-CircleTrace": {
       "name": "CircleTrace",
-      "sourceSha256": "e026bdc5da3eebb24c6693bb2510edbbf8f712d0fd6d48c8495805496ec0271d",
+      "sourceSha256": "b6f9ca7c8d1ee4b7ffb172e480031b0a5ea496be7db3625c06a5dc29b5107ea5",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -301,16 +301,16 @@
     },
     "tinker-ElephantWalk": {
       "name": "ElephantWalk",
-      "sourceSha256": "fa584a1c046fcdefc7ca86a9c9f23d723c6afa946ec2aecadce511930cae125b",
+      "sourceSha256": "bf99773a087b2f9695801b24b8919505ab321486bf29bd3d73e8b72f6cc1969c",
       "compile": true,
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "ac87e94df1be032698698f5b81929f55a10b68c2a1f2f9d500f6a9535d7b7c4d"
+      "wasmSha256": "3ea3b0026a2f4300e582fabc980de59ae6d6427e71c91197abc7aad30279f913"
     },
     "tinker-CharDemo": {
       "name": "CharDemo",
-      "sourceSha256": "4a90699e5da63be05e93f0fb4c5b2ef6e3b97b42dd8e1b5a90d8f51990fe338a",
+      "sourceSha256": "929f3cb7968ac3cdbc749ee09eda8feacde4270ced348fafd0e1494fc968186c",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -319,16 +319,16 @@
     },
     "tinker-Digits": {
       "name": "Digits",
-      "sourceSha256": "8914b22bf96be4b235b911835b4e59cf457adcb5af25b1cc04309800982fc597",
+      "sourceSha256": "77b4d703a32bdab32c0c7bf8f1e09f0551c8038814f954c09c3dca19bda5a854",
       "compile": true,
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "b24346c025c0ce3a974d07e6b74300723c06c94732156f8dcf28a6bfa5a9c564"
+      "wasmSha256": "d8c4a30ffad21298cb32d4238ceb6d710a20396c9f774d140e49a7f6f31265c6"
     },
     "tinker-Stadium": {
       "name": "Stadium",
-      "sourceSha256": "e5dff4c98207343842c8b382e0c50c5cbc738622735eb2c6bbc504c1e29cab9b",
+      "sourceSha256": "873c51662043fb0ee691e8ae89987d551bae9262ea24569f0f47c4cca7ce29d4",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -337,7 +337,7 @@
     },
     "library-AfterEgypt": {
       "name": "AfterEgypt",
-      "sourceSha256": "2ce065afc49a83b11b952843cce775a8cc5282ae0b5a21bc388c94e4fb248520",
+      "sourceSha256": "763bf6596a3be19b41bfaa89e28be4ef80ed49b1afa43fc133a4967cbadc805d",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -346,7 +346,7 @@
     },
     "library-Chess": {
       "name": "Chess",
-      "sourceSha256": "3b6860b01a02904736c81ee958f3f717289d651ddd014ffa21092d551cbca6c4",
+      "sourceSha256": "52f220f63f4e2ed0be8fa43c04db3143877775fd9a8061c1fd9975a259ccfc2d",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -355,7 +355,7 @@
     },
     "library-KeepAway": {
       "name": "KeepAway",
-      "sourceSha256": "9db5e76500c047957c95ca49c6a81bea053f41fc60cf8679ee6e399370b9c13f",
+      "sourceSha256": "71dc254207a72b8d6b13891957d6c8e95a5a51ba9a49fe66d452b7cd169b650c",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -364,7 +364,7 @@
     },
     "library-Span": {
       "name": "Span",
-      "sourceSha256": "85a72125cb7dc864834c5d4a4c5a2db7c556b9bb71b7d995da64f4c121c3d0a3",
+      "sourceSha256": "7530d2af1ac990dab808e7804b6434c6746c6f4a75f42881df245c07ac91b636",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -373,7 +373,7 @@
     },
     "library-Strut": {
       "name": "Strut",
-      "sourceSha256": "b547c2012ff33112fe99c2b174a04a5ab43ef0b30720d0b2e95cff874fca174d",
+      "sourceSha256": "1df0b036f899ac11a33a05142b66627c11f6d1576a5471fc50399157cb978a87",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -382,7 +382,7 @@
     },
     "library-Titanium": {
       "name": "Titanium",
-      "sourceSha256": "004c1a78ff08b9acff41d4b649877ec7d109fb7461bfb48295b94a25e3f2b6ca",
+      "sourceSha256": "61ba9ab208b3cc250a5e8a116eed4f256236c664fb409ea8f9bdf798df3a7808",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -391,7 +391,7 @@
     },
     "library-ToTheFront": {
       "name": "ToTheFront",
-      "sourceSha256": "969a85357cb6f60fa87cf1e68a8b56c51109e74060a016da493388a0fd58f0c8",
+      "sourceSha256": "339fc4050d0c5667b148251317b7a94715c99f6e4f57b2532a35acb2495ffa32",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -400,7 +400,7 @@
     },
     "library-Vocabulary": {
       "name": "Vocabulary",
-      "sourceSha256": "e1efd0e25f1c8e53dbf8e2c6129c8e9098d139ae8d9c8ccb5f09671826361f80",
+      "sourceSha256": "0964d0bd59a8533488dd6fbcb186d3e0860920b23247989ad7517ef973385c35",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -409,7 +409,7 @@
     },
     "library-XCaliber": {
       "name": "X-Caliber",
-      "sourceSha256": "15b5d68da16c0abc7ff1eb525c3ead8ae400e3679811f94342479864d4dff8e0",
+      "sourceSha256": "d94d96c2858b9d0ae8f77b60d43449f19de05b259c8f6e00731f9e8a443b6314",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -418,7 +418,7 @@
     },
     "library-CastleFrankenstein2": {
       "name": "Castle Frankenstein 2",
-      "sourceSha256": "1dfe04253c9f48ace5cac1837801da30da852797b6f95a2bf116793f6f744dca",
+      "sourceSha256": "750974eeff129e46a195915128a6d8559f087c5f6d309909fac8b0ffa2be86d3",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -427,7 +427,7 @@
     },
     "library-Cube": {
       "name": "Cube",
-      "sourceSha256": "7d5f3827f8eec3c59e620fb4610a334b367205ba71c0c5c4806a48de2c93def1",
+      "sourceSha256": "59f2c78c033d5e615a373cd62ddec2c2169ec589ae6da47235018b03640b340d",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -436,7 +436,7 @@
     },
     "library-GlowUFOs": {
       "name": "GlowUFOs",
-      "sourceSha256": "0a8dbb24c3933131bc69c9bcd0d0e6d81c8ac4f25bcac123f75eb8cec0595fdd",
+      "sourceSha256": "baec8fdedef7cd23b28c304b204517b177ea0bc1e632a4ff8ecd67976278ac9d",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -445,7 +445,7 @@
     },
     "library-OregonTrail1975": {
       "name": "Oregon Trail 1975",
-      "sourceSha256": "124a4b401033b8af5c5edd0b39e391a6e0b0d5c153faed8d724f9b3acc5df4d8",
+      "sourceSha256": "477d0cc38ed49aa125d989126e12277b4b307cf66d6e4c3dda574cb355404eac",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -454,7 +454,7 @@
     },
     "library-Scorch": {
       "name": "Scorch",
-      "sourceSha256": "d89491adb7737a42e296b89906ff8a753b1d6ff2229f495d9c9c6cf97aae1579",
+      "sourceSha256": "9a6b0376fc894f4e023504b98f6b564cfed3d2502bb828b5c5c7d321fc4a4176",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -463,7 +463,7 @@
     },
     "library-SpyHunt": {
       "name": "SpyHunt",
-      "sourceSha256": "c082e37b8722a4f9c21e112b5fbf5c65ee934fd9431d8e090d26b7391573baa5",
+      "sourceSha256": "fce754f5becb0f7a671279ddd38e6cfc961c044d3305867bfc994b54e7b8cfd6",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -472,7 +472,7 @@
     },
     "library-Sudoku": {
       "name": "Sudoku",
-      "sourceSha256": "bf57dd691720f1b5185b102d8998a9545d24c62df27879fe8881f28298e95eff",
+      "sourceSha256": "f2d1c86d79a1823d435ad9f467585290ef701d83289743c229d6eed6b2f3f50c",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -481,7 +481,7 @@
     },
     "library-Tetris": {
       "name": "Tetris",
-      "sourceSha256": "12ab362c8ac1ab77d822d6b6d77503b7f35bd13a5597ab69da8dcececf268bcf",
+      "sourceSha256": "aba98fabad78f71ca25cc979e94acadc4b01f98be1b99bfa06f8c5bce97a8694",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -490,16 +490,16 @@
     },
     "library-B17": {
       "name": "B17",
-      "sourceSha256": "7ab6ef23d844590c1e88dce1f975606ff6d061abe49587fb14507d7a3897cc11",
+      "sourceSha256": "41fbbca35230db33f1f42c029e52985d67831e51518534a8a39989a33d8f28e0",
       "compile": true,
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "529f600f845ea9ccd8a1faa837e61dbd559c2e1882190e22a4a8db413bc5441f"
+      "wasmSha256": "93b6bf62130bc8f35f9d05d8cbfa55649703d35e9c94a232d4712927bd23df36"
     },
     "library-Coach": {
       "name": "Coach",
-      "sourceSha256": "2905c9fdedb6ca40fc48b08255ee3a3d2ad3f65211ed87b1294bf21d19066002",
+      "sourceSha256": "f610c9a8c88c1df73aff5a3fe834b0308e45aedf2578d69dc0ef235cf01227e6",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -508,7 +508,7 @@
     },
     "library-DiningStars": {
       "name": "DiningStars",
-      "sourceSha256": "de4426a62719b54b23ebcf35f9ad9a6c641b37c6b0442e997104ecf1d2b0f069",
+      "sourceSha256": "53247182446bfd047d3e92d00a84f263a72c52f0504289dab63e360b05622d83",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -517,7 +517,7 @@
     },
     "library-Flappy": {
       "name": "Flappy",
-      "sourceSha256": "f34d7046b2bae2ac2aae8300191dec8cbb79be1bb8f5d646d705394d070886f0",
+      "sourceSha256": "e8e0393fa4795c3ab70c82b0054e411750d00a5c490bbb434b9842ebdba8db57",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -526,7 +526,7 @@
     },
     "library-MissileDefense": {
       "name": "MissileDefense",
-      "sourceSha256": "8352e1bfeac938409a339ab7debb4765f9f29dc9051f87244c2ed3369bf479cd",
+      "sourceSha256": "5a1c4f4750918bf76732205ac5fdc1e9ee395889c9dff548bc8192b7044a8adf",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -535,7 +535,7 @@
     },
     "library-Rocks": {
       "name": "Rocks",
-      "sourceSha256": "2a107960965d72eccb0918a460d0d835a1a76c3dbaf489e606d55e8c2bd656b2",
+      "sourceSha256": "6207e077a8e6c7cc58e32737e3982f8632d3a3ae332aa12beee64b921582f153",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -544,7 +544,7 @@
     },
     "library-Pilgrims": {
       "name": "Pilgrims",
-      "sourceSha256": "a6c0c005845ec0b5d9bd0fc9b091ae2a2e10c7151e7cc30b138c53727540b548",
+      "sourceSha256": "32c21652498abb3c29fc990b3bf5aa56e8733a95fb35979eca2c3e78d80acd31",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -553,7 +553,7 @@
     },
     "library-MarioClone": {
       "name": "MarioClone",
-      "sourceSha256": "f9d591b35f3167ab69774979224d7d43ec22d038f75bb293204b2b33d4f24a40",
+      "sourceSha256": "0720064f6aa0061737228ad16ef270aa9417e9373b2d44a73855af6cb6986019",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -562,7 +562,7 @@
     },
     "library-MaliciousTestimonies": {
       "name": "Malicious Testimonies",
-      "sourceSha256": "d73b55e7e348eb6e0151dc2ec6213270add22539a240b3036b7d7e5d3104a74f",
+      "sourceSha256": "780e87f1c9fcd9f7a1173d56dbad46e3758dda6844d5226c89a4ad6b6d1cd412",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -571,7 +571,7 @@
     },
     "library-Ezekiel": {
       "name": "Ezekiel",
-      "sourceSha256": "9a6624a77f7bafa91a24eb9c642bea78160496122185bb35eac992121ec180e7",
+      "sourceSha256": "1ad9464870f6c0f54c342ffb739c5a6af51f7c4e2182e103a38d97d707065e01",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -580,7 +580,7 @@
     },
     "library-LordofHosts": {
       "name": "Lord of Hosts",
-      "sourceSha256": "7862edc8dac972212700098d265dbe9758afedbc3599a9e3804d52961d9c02c3",
+      "sourceSha256": "b983161405eec567b43774578be7206f053776202f38bdf2ce00296bafda1141",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",
@@ -589,7 +589,7 @@
     },
     "library-SolomonsTemple": {
       "name": "Solomon's Temple",
-      "sourceSha256": "b277ea913023dc436501490a3cd0abd025cfb789616518d3222f85a5f0cb9d00",
+      "sourceSha256": "0791a98844e1e92ac935f8de6fcfd225feb56517be0a68c5178579334cdba13c",
       "compile": false,
       "browserStartup": false,
       "gameplay": "unverified",

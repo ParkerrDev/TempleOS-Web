@@ -23,7 +23,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/INTERMISSION 144 CASES 92160 TICS BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen built runtime.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   for(const f of [...files,{name:'INTER.HC',bytes:Buffer.from(source+"\nif (!tm_im_done) throw('Count');\n",'latin1')}]) {
     const id=h.gx.writeFile({path:'C:/ORACLE/'+f.name,bytes:f.bytes});

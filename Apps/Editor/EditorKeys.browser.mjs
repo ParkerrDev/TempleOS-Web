@@ -25,7 +25,7 @@ try{
  await page.goto('http://localhost:8183/',{waitUntil:'load'});
  await page.locator('#editorBtn').click();
  await page.waitForFunction(()=>!!window.__holycEditor);
- await page.evaluate(async()=>{const protocol=await import('/holyc-wasm/src/runtime/protocol.js');window.packet=protocol.KEY_PACKET;window.control=protocol.CTRL;});
+ await page.evaluate(async()=>{const protocol=await import('/hemu/holyc-wasm/src/runtime/protocol.js');window.packet=protocol.KEY_PACKET;window.control=protocol.CTRL;});
  async function run(source){
   await page.evaluate(()=>{__holycEditor.stop();workerEvents=[];holdInput=false;});
   await page.locator('#editor').fill(source);

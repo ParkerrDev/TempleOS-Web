@@ -3,6 +3,7 @@ import {execFileSync} from "node:child_process";
 import {readFile,writeFile,mkdir} from "node:fs/promises";
 import {MkvClip} from "../Mkv.js";
 import {ClipProgram} from "../Program.js";
+import {compileHolyC} from "../../../../hemu/holyc-wasm/src/compiler.js";
 
 const root=new URL("../../../../",import.meta.url),dir=new URL("tmp/clip/",root);
 await mkdir(dir,{recursive:true});
@@ -74,7 +75,12 @@ for (const name of ["source.mkv","source-split.mkv","source.webm"]) {
     async Read(pos,size) {return damaged.subarray(pos,pos+size);}},1,2),/EBML/);
 }
 await writeFile(new URL("mkv-check.json",dir),JSON.stringify(results,null,2)+"\n");
-const parser=await ClipProgram("Mkv.HC",["MkLace","MkError","MkReset"],"MkError");
+const probe=new URL("Lace.wasm",dir),
+  source=await readFile(new URL("../Mkv.HC",import.meta.url),"utf8"),
+  compiled=compileHolyC(source,{filename:"Mkv.HC",lenient:false,
+    exports:["MkLace","MkError","MkReset"]});
+await writeFile(probe,compiled.bytes);
+const parser=await ClipProgram(probe,"MkError");
 for (const [flags,header,payload,count] of [
   [2,[2,255,255,255,35,255,245],2300,3],
   [6,[2,0x43,0x20,0x5e,0xd3],2300,3],

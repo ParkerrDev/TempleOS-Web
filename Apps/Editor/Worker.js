@@ -1,12 +1,12 @@
 //Synchronous legacy programs and native cooperative tasks share the display.
-import { compileHolyC } from "../../holyc-wasm/src/compiler.js";
+import { compileHolyC } from "../../hemu/holyc-wasm/src/compiler.js";
 import { compileNativeProject } from "./Project.js";
 import { createMouseButtons } from "./MsBttns.js";
-import {MS_ADDR,MS} from "../../holyc-wasm/src/abi.js";
-import { createHost } from "../../holyc-wasm/src/runtime/host.js";
-import {createTaskHost} from "../../holyc-wasm/src/runtime/tasks.js";
-import { Framebuffer } from "../../holyc-wasm/src/runtime/graphics.js";
-import { CTRL, KB_BASE, KB_RING, SND_BASE, SND_RING, SND_TONE, SND_NOTE, KEY_STATE_BASE, keyPacketRead } from "../../holyc-wasm/src/runtime/protocol.js";
+import {MS_ADDR,MS} from "../../hemu/holyc-wasm/src/abi.js";
+import { createHost } from "../../hemu/holyc-wasm/src/runtime/host.js";
+import {createTaskHost} from "../../hemu/holyc-wasm/src/runtime/tasks.js";
+import { Framebuffer } from "../../hemu/holyc-wasm/src/runtime/graphics.js";
+import { CTRL, KB_BASE, KB_RING, SND_BASE, SND_RING, SND_TONE, SND_NOTE, KEY_STATE_BASE, keyPacketRead } from "../../hemu/holyc-wasm/src/runtime/protocol.js";
 
 let ctrl = null;       // Int32Array view over the control SAB
 let fb = null;

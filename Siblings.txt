@@ -1,4 +1,3 @@
-holyc-wasm https://github.com/ParkerrDev/HolyC-wasm fc20452bc7711bde44decc0e47ab2f1552361cac
-hemu https://github.com/ParkerrDev/HEMU 68a1fe20a0207baa2d4bbcab712cd50b9a0bc42d
-holyc-fmt https://github.com/ParkerrDev/HolyC-fmt 0007beeef051ff1d72a97fb705cb0ca8576a4173
+hemu https://github.com/ParkerrDev/HEMU b7b6bcf2c1de9f484b14dfb0f24bae5178caee2a
+holyc-fmt https://github.com/ParkerrDev/HolyC-fmt 04aeb25acea585c3b020f58f0180cf59fd168220
 holycraft https://github.com/ParkerrDev/HolyCraft 2c6182fcce546c31b9dab7a2a3bc1fcef9ea0db0
