@@ -4,7 +4,7 @@
 //          hemu-smp.wasm   the shared-memory SMP engine (BSP + AP workers over one WebAssembly.Memory)
 //          hemu-smp.json   sidecar: the address of the SMP IPI mailboxes
 // Netlify rebuilds production engines; historical test modules are pinned fixtures.
-// HEMU's source is found by Compile.js (../hemu/src; HEMU_SRC overrides).
+// HEMU's source is found by Compile.js (../hemu/Kernel; HEMU_SRC overrides).
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { compileHemu } from "./Compile.js";

@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import {makeDisk} from '../../../Kernel/QCow2.js';
 const dir=mkdtempSync(join(tmpdir(),'hemu-stock-disk-'));
 try {
-  const bytes=gunzipSync(readFileSync(new URL('../../../vendor/images/templeos-hd.qcow2.gz',import.meta.url))),disk=makeDisk(bytes);
+  const bytes=gunzipSync(readFileSync(new URL('../../../hemu/templeos-hd.qcow2.gz',import.meta.url))),disk=makeDisk(bytes);
   writeFileSync(join(dir,'stock.qcow2'),bytes);
   execFileSync('qemu-img',['convert','-f','qcow2','-O','raw','stock.qcow2','expected.raw'],{cwd:dir});
   const fd=openSync(join(dir,'expected.raw'),'r'),hash=createHash('sha256');

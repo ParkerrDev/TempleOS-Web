@@ -1,4 +1,4 @@
-// Host.js - the WASM side of HEMU's host contract (HEMU/src/host.HC). createHemuHost() is holyc-wasm's
+// Host.js - the WASM side of HEMU's host contract (HEMU/Kernel/Host.HC). createHemuHost() is holyc-wasm's
 // generic createHost() plus every import hemu declares: the snapshot / present / disk / palette adapters
 // (from opts) and default stubs for input, pacing and the optional JIT hooks. Runners override
 // env.__host_* and env.__jit_* on the returned env before instantiating (HemuWorker.js, the harnesses

@@ -133,7 +133,7 @@ const boot_query=new URLSearchParams(location.search);
 const FIXED_B = +(boot_query.get("b")) || 0;
 setInterval(updateFps,500);
 
-// ---- input: a host-owned cursor + a set-1 scancode queue, pulled by snapshot.HC each frame ----
+// ---- input: a host-owned cursor + a set-1 scancode queue, pulled by Snapshot.HC each frame ----
 let msX = 320, msY = 240, msB = 0, wheelZ = 0;
 const keyq = [];
 let keysUp=false,pasteGen=0;

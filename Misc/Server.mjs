@@ -15,8 +15,7 @@ const SERVED=new RegExp("^(index\\.html|_headers|_redirects|"+
   "(Kernel|Adam|Apps|Demo|holyc-wasm/src)/.+|holyc-fmt/Fmt\\.js|"+
   "build/(?:hemu\\.wasm|hemu-smp\\.(?:wasm|json))|"+
   "(holyc-fmt|holycraft)/[^/]+\\.HC|"+
-  "hemu/(?:[^/]+\\.gz|stock(?:-smp)?\\.disk|stock\\.json)|"+
-  "vendor/images/.+)$");//vendor/images: the stock disk, until HEMU holds it
+  "hemu/(?:[^/]+\\.gz|stock(?:-smp)?\\.disk|stock\\.json))$");
 //Not for visitors, by what a file is: a test, a tool or a note by its suffix,
 //what only tests read by its Test folder, and a Worker by the wrangler.toml
 //beside it.

@@ -31,7 +31,7 @@ export async function DesktopServer({root=ROOT,snapshot=null,cores=1,port=0}={})
       }
       const local=path==="/"?"/Kernel/Desktop/index.html":path;
       const allowed=local==="/Adam/Keyboard.js" || /^\/(Kernel|build|holyc-wasm\/src)\//.test(local) ||
-        /^\/hemu\/(live(-smp)?\.bin\.gz|stock(-smp)?\.disk|stock\.json)$/.test(local) || local==="/vendor/images/templeos-hd.qcow2.gz";
+        /^\/hemu\/(live(-smp)?\.bin\.gz|stock(-smp)?\.disk|stock\.json)$/.test(local) || local==="/hemu/templeos-hd.qcow2.gz";
       const file=local==="/session.hemu"&&snapshot?snapshot:resolve(root,"."+local);
       if (!(local==="/session.hemu"&&snapshot) && (!allowed || !file.startsWith(root+sep) || !MIME[extname(file)])) {
         res.writeHead(404,headers);res.end();return;

@@ -60,7 +60,7 @@ if(!isMainThread) {
   const Expand=name=>hemuFile(name).replace(/^#include\s+"([^"]+)".*$/gm,(_,child)=>Expand(child));
   for(const scenario of ["split","cmp16"]) {
     const pair=scenario==="cmp16";
-    let source=Expand("snapshot.HC");
+    let source=Expand("Snapshot.HC");
     const marker=pair?"WrMem(addr,8,lo);WrMem(addr+8,8,hi);":"word=RdMem(addr,size);",
       replacement=pair?"WrMem(addr,8,lo);__test_read(addr,16,lo);WrMem(addr+8,8,hi);":marker+"__test_read(addr,size,word);";
     assert.equal(source.split(marker).length,2);

@@ -24,7 +24,7 @@ assert.equal(sourceHash,native.sourceHash);assert.equal(guestHash,native.guestHa
 assert.deepEqual(native.out.trim().split("\n"),physical);
 assert.equal(physical.length,768);assert.equal(faults.length,204);
 const Expand=name=>hemuFile(name).replace(/^#include\s+"([^"]+)".*$/gm,(_,child)=>Expand(child));
-let instrumented=Expand("snapshot.HC"),writes=[];
+let instrumented=Expand("Snapshot.HC"),writes=[];
 const marker="{//Unaligned little-endian RAM accesses match x86 and WASM loads/stores.";
 assert.equal(instrumented.split(marker).length,2);
 instrumented='import U0 __cmp16_write(U64 addr,I64 size,U64 value);\n'+instrumented.replace(marker,marker+'\n  __cmp16_write(a,sz,v);');

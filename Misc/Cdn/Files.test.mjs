@@ -102,7 +102,8 @@ function GithubFetch(path)
     return new Response(MANIFEST,{headers:{"Content-Encoding":"gzip",
 	  "Content-Length":String(gzipSync(MANIFEST).length)}});
   if (path=="TempleOS-Web/"+SHA+"/Apps/Search/FFmpeg/core/ffmpeg-core.wasm" ||
-	path=="HEMU/"+SHA+"/live.bin.gz")
+      path=="HEMU/"+SHA+"/live.bin.gz" ||
+      path=="HEMU/"+SHA+"/templeos-hd.qcow2.gz")
     return new Response(Chunks(WASM),
 	  {headers:{"Content-Length":String(WASM.length)}});
   return new Response("404: Not Found",{status:404});
@@ -183,7 +184,11 @@ const WORKER=(await import("./Files.js")).default;
   assert.deepEqual(await res.bytes(),WASM,"A big file streams in whole");
   [res,up]=await Ask(env,FILES+"HEMU/"+SHA+"/live.bin.gz");
   assert.equal(res.status,200,"HEMU's snapshots are served too");
+  [res,up]=await Ask(env,FILES+"HEMU/"+SHA+"/templeos-hd.qcow2.gz");
+  assert.equal(res.status,200,"HEMU owns the base disk too");
+  assert.deepEqual(await res.bytes(),WASM);
   for (path of ["TempleOS-Web/"+SHA+"/index.html",
+      "TempleOS-Web/"+SHA+"/vendor/images/templeos-hd.qcow2.gz",
 	"TempleOS-Web/"+SHA+"/index.html",
 	"TempleOS-Web/"+SHA+"/Apps/Search%2F..%2F..%2Findex.html",
 	"TempleOS-Web/"+SHA+"/Apps/Search/Transcripts","HEMU/"+SHA+"/index.html",

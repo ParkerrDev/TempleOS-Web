@@ -12,7 +12,7 @@ export function StockManifestCheck(meta)
   if(meta?.version!==1||!meta.base||!Array.isArray(meta.captures)||meta.captures.length!==2)
     Fail("unsupported manifest");
   const b=meta.base;
-  if(b.file!=="../vendor/images/templeos-hd.qcow2.gz"||!HashValid(b.gzipSha256)||!HashValid(b.rawSha256)||!Number.isSafeInteger(b.decodedBytes)||
+  if(b.file!=="templeos-hd.qcow2.gz"||!HashValid(b.gzipSha256)||!HashValid(b.rawSha256)||!Number.isSafeInteger(b.decodedBytes)||
       b.decodedBytes<512||b.decodedBytes>1024*1024*1024||b.virtualBytes!==268435456)
     Fail("invalid base disk identity");
   for(const [i,c] of meta.captures.entries()) {
@@ -119,7 +119,7 @@ export function StockOverlayApply(disk,bytes,capture)
 export async function StockDiskFiles(capture,manifest)
 {//The checked base image, inflated, and the capture's checked overlay.
   manifest??=await StockManifest();
-  const [base,patch]=await Promise.all([FetchBytes(new URL("../vendor/images/templeos-hd.qcow2.gz",import.meta.url)),
+  const [base,patch]=await Promise.all([FetchBytes(new URL(manifest.base.file,ROOT)),
     FetchBytes(new URL(capture.overlay,ROOT))]);
   if(await StockHash(base)!==manifest.base.gzipSha256)Fail("base disk checksum");
   if(await StockHash(patch)!==capture.overlaySha256)Fail("disk overlay checksum");

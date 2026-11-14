@@ -45,12 +45,12 @@ try {
         await route.fulfill({body:outcome==='boot-error'?Buffer.from([0]):
           await readFile(new URL('build/'+binary,root)),contentType:'application/wasm'});
       });
-      await context.route('**/vendor/images/templeos-hd.qcow2.gz',async route=>{
+      await context.route('**/hemu/templeos-hd.qcow2.gz',async route=>{
         if(firstDisk) {
           firstDisk=false;diskHeld();await new Promise(resolve=>releaseDisk=resolve);
           if(outcome.endsWith('disk-error')){await route.abort();return;}
         }
-        await route.fulfill({body:await readFile(new URL('vendor/images/templeos-hd.qcow2.gz',root)),contentType:'application/gzip'});
+        await route.fulfill({body:await readFile(new URL('hemu/templeos-hd.qcow2.gz',root)),contentType:'application/gzip'});
       });
       const page=await context.newPage(),errors=[];
       page.on('pageerror',error=>errors.push(error.message));

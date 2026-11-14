@@ -12,7 +12,7 @@ const root=new URL('../../',import.meta.url),site=createServer(ServeReq).listen(
 await once(site,'listening');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
 const worker=await readFile(new URL('Kernel/HemuWorker.js',root),'utf8'),
-  diskBody=await readFile(new URL('vendor/images/templeos-hd.qcow2.gz',root));
+  diskBody=await readFile(new URL('hemu/templeos-hd.qcow2.gz',root));
 function Replace(source,needle,value) {
   assert.equal(source.split(needle).length,2);return source.replace(needle,value);
 }
@@ -50,7 +50,7 @@ try {
       await context.route('**/Kernel/HemuWorker.js',route=>route.fulfill({body:source,contentType:'text/javascript',headers}));
       let held;
       const diskHeld=new Promise(resolve=>held=resolve);
-      await context.route('**/vendor/images/templeos-hd.qcow2.gz',async route=>{
+      await context.route('**/hemu/templeos-hd.qcow2.gz',async route=>{
         fetches++;held();await new Promise(resolve=>releaseDisk=resolve);
         if(outcome==='failure')await route.abort();
         else await route.fulfill({body:diskBody,contentType:'application/gzip'});

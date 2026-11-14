@@ -1,6 +1,6 @@
 // Compile.js - compile HEMU (the HolyC x86-64 emulator) with holyc-wasm: the one way Build.mjs and
 // every harness in Kernel/Test does it. HEMU's source is pure HolyC and its host contract
-// is HEMU/src/host.HC; this module fixes the compiler options that contract needs:
+// is HEMU/Kernel/Host.HC; this module fixes the compiler options that contract needs:
 //   lenient:false - every symbol must resolve (an emulator has to be exactly right)
 //   exports       - the functions the WASM host calls back into: the JIT's RdMem/WrMem/Step/RasterHLE,
 //                   the guest-execution entry points (GuestExec.js), and RunCore for the SMP engine.
@@ -14,11 +14,11 @@ import {createHash} from "node:crypto";
 import {STOCK_SECTION,StockManifestCheck,StockModuleRecord} from "./Stock.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
-export const HEMU_SRC = process.env.HEMU_SRC ? resolve(process.env.HEMU_SRC) : resolve(here, "../hemu/src");
+export const HEMU_SRC = process.env.HEMU_SRC ? resolve(process.env.HEMU_SRC) : resolve(here, "../hemu/Kernel");
 export const SITE_DIR = process.env.SITE ? resolve(process.env.SITE) : resolve(here, "..");
 export const JIT_EXPORTS = ["RdMem", "WrMem", "Step", "RasterHLE"];
 //What Kernel/GuestExec.js and the workers call: injected guest calls, the
-//guest's names (sym.HC), and an application core's attach and run.
+//guest's names (Sym.HC), and an application core's attach and run.
 export const GUEST_EXPORTS = ["CpuFault", "GuestCallPost", "GuestCallTry", "GuestCallState", "GuestCallRes", "GuestCallAck", "GuestInfo",
   "GuestPatchJump", "GuestFun", "GuestArgCnt", "GuestVar", "GuestMember", "RamBase", "CoreAttach", "KbdRptSet", "WinRateSet", "SnapshotResume", "TscRead"];
 export const HEMU_EXPORTS = [...JIT_EXPORTS, ...GUEST_EXPORTS];
@@ -31,7 +31,7 @@ export function hemuIncludeResolver(p) { try { return hemuFile(p); } catch { ret
 //                sharedMemory alone (no SMP snapshot) is a separate switch for the smpboot experiment
 //   exports      extra function names to export (test probes); extraSource is appended to the entry file
 //   source       compile this text instead of reading filename from HEMU_SRC (includes still resolve there)
-export function compileHemu({ smp = false, sharedMemory = smp, exports = [], extraSource = "", defines = {}, source, filename = "snapshot.HC" } = {}) {
+export function compileHemu({ smp = false, sharedMemory = smp, exports = [], extraSource = "", defines = {}, source, filename = "Snapshot.HC" } = {}) {
   const src = (source ?? hemuFile(filename)) + extraSource;
   const result=compileHolyC(src, {
     filename, lenient: false,
@@ -40,9 +40,9 @@ export function compileHemu({ smp = false, sharedMemory = smp, exports = [], ext
     includeResolver: hemuIncludeResolver,
   });
   const path=resolve(HEMU_SRC,"../stock.json");
-  if(filename==="snapshot.HC"&&existsSync(path)) {
+  if(filename==="Snapshot.HC"&&existsSync(path)) {
     const meta=StockManifestCheck(JSON.parse(readFileSync(path,"utf8"))),capture=meta.captures.find(c=>c.cores===(smp?4:1)),
-      registers=readFileSync(resolve(HEMU_SRC,smp?"snapregs-smp.HC":"snapregs.HC"));
+      registers=readFileSync(resolve(HEMU_SRC,smp?"SnapRegsSmp.HC":"SnapRegs.HC"));
     if(createHash("sha256").update(registers).digest("hex")!==capture.sourceSha256)
       throw Error("Stock captured-register source differs from its manifest");
     const leb=n=>{const bytes=[];do{let b=n&127;n>>>=7;if(n)b|=128;bytes.push(b);}while(n);return bytes;},

@@ -23,9 +23,9 @@ try {
       await route.fulfill({body:await readFile(new URL("hemu/"+name,root)),
         contentType:"application/gzip"});
     });
-    await context.route("**/vendor/images/templeos-hd.qcow2.gz",async route=>
+    await context.route("**/hemu/templeos-hd.qcow2.gz",async route=>
       route.fulfill({body:await readFile(new URL(
-        "vendor/images/templeos-hd.qcow2.gz",root)),contentType:"application/gzip"}));
+        "hemu/templeos-hd.qcow2.gz",root)),contentType:"application/gzip"}));
     await context.route("https://templeosweb-*.workers.dev/**",route=>route.abort());
     await context.routeWebSocket(/templeosweb-.*\.workers\.dev/,socket=>socket.close());
     await context.addInitScript(function () {

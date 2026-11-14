@@ -27,7 +27,7 @@ const ram=execFileSync("git",["show",ref+":live-smp.bin.gz"],{cwd,maxBuffer:32*1
 const hash=createHash("sha256").update(c.bytes).digest("hex"),
   meta={engineRef:git("rev-parse",ref).trim(),compilerRef,sha256:hash,bytes:c.bytes.length,
     ramSha256:createHash("sha256").update(ram).digest("hex"),ramBytes:ram.byteLength,ramRef:ref+":live-smp.bin.gz",
-    diskSha256:createHash("sha256").update(readFileSync(new URL("../../vendor/images/templeos-hd.qcow2.gz",import.meta.url))).digest("hex"),
+    diskSha256:createHash("sha256").update(readFileSync(new URL("../../hemu/templeos-hd.qcow2.gz",import.meta.url))).digest("hex"),
     heapAbi:1,globals:{g_ipi_pending:Number(c.globals.get("g_ipi_pending").addr)}};
 writeFileSync(new URL("./Fixtures/LegacySmp.wasm",import.meta.url),c.bytes);
 writeFileSync(new URL("./Fixtures/LegacySmp.ram.gz",import.meta.url),ram);

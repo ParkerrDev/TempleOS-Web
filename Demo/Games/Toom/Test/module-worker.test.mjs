@@ -19,7 +19,7 @@ const web=resolve(process.env.TEMPLEOS_WEB),out=resolve(process.env.OUT||'/tmp/t
   runtimeNames=['Kernel/Jit.js','Kernel/HemuWorker.js','Kernel/HemuSmpWorker.js','Kernel/GuestExec.js',
     'Kernel/GuestInput.js','Kernel/KeyQueue.js','Kernel/Test/WorkerHost.mjs','Kernel/Test/WorkerShim.mjs',
     'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
-    'Kernel/Stock.js','vendor/images/templeos-hd.qcow2.gz'],
+    'Kernel/Stock.js','hemu/templeos-hd.qcow2.gz'],
   runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
 assert(cores.every(n=>n===1||n===4));mkdirSync(out,{recursive:true});
 for(const count of cores) {

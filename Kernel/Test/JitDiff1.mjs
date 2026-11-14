@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 const RAMSZ = 402653184, SCRATCH = 0x10000000, MOPND = 0x10100000;   // guest scratch within real RAM (256MB): code + mem operand
 const liveBuf = SnapshotRead();
 const r = compileHemu();
-// reg/rfl/rip/fpr/fsp/x87_sw moved into per-core CCpuState (snapshot.HC); capture their addresses from the
+// reg/rfl/rip/fpr/fsp/x87_sw moved into per-core CCpuState (Snapshot.HC); capture their addresses from the
 // guest's __jit_state/__jit_x87 handoff (robust vs the globals map). halted is 16B after rip in CCpuState.
 let REG = 0, RFL = 0, RIP = 0, FPR = 0, FSP = 0, X87 = 0, HALTED = 0;
 const mod = await WebAssembly.compile(r.bytes);

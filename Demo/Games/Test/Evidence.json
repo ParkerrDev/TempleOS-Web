@@ -19,12 +19,12 @@
       "overlaySha256": "894ceacb281d444e58508622008fbbe34c93db435233053976065a1d1bef86e3"
     }
   },
-  "fixtureLoaderSha256": "092b7a0fccc49847df64ad4e621cd4ce7ec8b658e6bf7e44dbf63fe425bc9e8b",
+  "fixtureLoaderSha256": "7d1417aff750e4fa697cb43044484eca6ad5aa3ce9d9bac512c4d4d74c6ca1cc",
   "guestHarnessSha256": "0630bc86f9854260813d5d95dadfbebb898a4d005a8fad2e808c39c792fae1bd",
-  "webRuntimeSha256": "76b5e5ff7c6eca39746e04d9a07db77e0dfda009f9cc1c79078cd0b9f6bbc59b",
+  "webRuntimeSha256": "fb17b4d29e3f2798264bf3b1f3aec25cc0313d9b490fcc3fdc9adad9a5a554c3",
   "siblings": [
     "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm fc20452bc7711bde44decc0e47ab2f1552361cac",
-    "hemu https://github.com/ParkerrDev/HEMU 1e6470e628b5792c85d71c37e76c219710ade9e1"
+    "hemu https://github.com/ParkerrDev/HEMU 68a1fe20a0207baa2d4bbcab712cd50b9a0bc42d"
   ],
   "engineSha256": "00e1957a7d7041f0e34644d40f5b31440c53436ff65c44d7d51ffa75cd939ee0",
   "backend": {
@@ -32,7 +32,7 @@
     "accelerator": "kvm",
     "version": "QEMU emulator version 11.1.2"
   },
-  "oracle": "qemu-zvndm_dj",
+  "oracle": "qemu-1hu9yy0h",
   "programs": {
     "Babel": {
       "sourceSha256": "605df9a7f7c5cf48213f77727734778830039185daa0ccb60f44ca64e3ae0953",

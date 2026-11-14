@@ -1,5 +1,5 @@
 import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
-// GuestChk.mjs: headless proof of the backend guest-execution API (GuestExec.js + src/guestcall.HC).
+// GuestChk.mjs: headless proof of the backend guest-execution API (GuestExec.js + src/GuestCall.HC).
 // Boots the bundled TempleOS snapshot with the JIT on and, WITHOUT a single synthetic keystroke or
 // TaskMsg, exercises: symbol probe, source execution in Adam, honest compile/runtime error reporting,
 // guest mkdir + native FileWrite of a binary asset into a nested path (verified by reading it back

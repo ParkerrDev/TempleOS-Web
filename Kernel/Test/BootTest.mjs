@@ -1,4 +1,4 @@
-// BootTest.mjs - compile boot.HC, run the embedded x86-64 kernel in hemu
+// BootTest.mjs - compile Boot.HC, run the embedded x86-64 kernel in hemu
 // headless, and confirm it drew the expected framebuffer pattern.
 import { compileHemu } from "../Compile.js";
 import { createHemuHost } from "../Host.js";
@@ -7,7 +7,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 let r;
-try { r = compileHemu({ filename: "boot.HC" }); }
+try { r = compileHemu({ filename: "Boot.HC" }); }
 catch (e) { console.error("COMPILE ERROR:", e.message); process.exit(1); }
 console.log(`compiled: ${r.bytes.length} bytes, ${r.warnings.length} warnings`);
 

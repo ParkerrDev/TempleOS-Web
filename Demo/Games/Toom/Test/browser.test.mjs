@@ -27,7 +27,7 @@ const runtimeNames=['Misc/Server.mjs','Adam/Keyboard.js','Adam/Os.js','Adam/WinM
   'Kernel/HemuWorker.js','Kernel/HemuSmpWorker.js','Kernel/GuestExec.js',
   'Kernel/KeyQueue.js','build/hemu.wasm','build/hemu-smp.wasm',
   'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
-  'Kernel/Stock.js','Kernel/Speaker.js','vendor/images/templeos-hd.qcow2.gz'];
+  'Kernel/Stock.js','Kernel/Speaker.js','hemu/templeos-hd.qcow2.gz'];
 const runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
 const probe=readFileSync(new URL('Worker.HC',import.meta.url),'latin1')+'\n'+readFileSync(new URL('AudioWorker.HC',import.meta.url),'latin1')+
   (progression||finale?'\n'+readFileSync(new URL('ProgressWorker.HC',import.meta.url),'latin1'):'')+

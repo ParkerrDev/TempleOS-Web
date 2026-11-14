@@ -7,7 +7,7 @@ import {createHost} from "../../holyc-wasm/src/runtime/host.js";
 import {hemuFile} from "../Compile.js";
 
 const probe=readFileSync(new URL("./DevNative.HC",import.meta.url)),
-  sources=Object.fromEntries(["Dev","time","keyboard"].map(name=>[name,hemuFile(name)])),
+  sources=Object.fromEntries(["Dev","Time","Kbd"].map(name=>[name,hemuFile(name)])),
   hash=bytes=>createHash("sha256").update(bytes).digest("hex"),
   expand=s=>s.replace(/#include "([^"]+)"/g,(_,name)=>expand(sources[name])),
   source=expand(probe.toString("latin1")),file=new URL("./DevNative.json",import.meta.url);

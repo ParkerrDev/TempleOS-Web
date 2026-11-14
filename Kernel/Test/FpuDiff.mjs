@@ -28,7 +28,7 @@ U64 FpuAddr(I64 n)
 }`;
 async function Make(before) {
   const Read=before?Previous:hemuFile,
-    c=compileHolyC(Read("snapshot.HC")+extra,{filename:"snapshot.HC",lenient:false,
+    c=compileHolyC(Read(before?"snapshot.HC":"Snapshot.HC")+extra,{filename:"snapshot.HC",lenient:false,
       exports:[...JIT_EXPORTS,"InitMem","FpuAddr"],includeResolver:Read});
   assert.deepEqual(c.warnings,[]);
   const host=createHemuHost({onText:()=>{}}),

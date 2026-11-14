@@ -12,6 +12,8 @@ import subprocess
 import tempfile
 import time
 
+HEMU_MISC=Path(__file__).resolve().parents[2]/"hemu"/"Misc"
+
 class Qmp:
     def __init__(self, path):
         self.socket = socket.socket(socket.AF_UNIX)
@@ -141,8 +143,8 @@ def Main(default_cores=1):
                     qmp.command("cont");return False
                 Wait(Quiescent,"all CPUs halted with empty x87 stacks")
                 # The same strict parser used by publication must accept this stopped state.
-                script=Path(__file__).with_name("BakeRegsSmp.mjs" if args.cores==4 else "BakeRegs.mjs")
-                subprocess.run(["node",str(script),str(work/"registers.txt"),str(work/"snapregs.HC")],check=True)
+                script=HEMU_MISC/"RegsMk.mjs"
+                subprocess.run(["node",str(script),str(work/"registers.txt"),str(work/"SnapRegs.HC")],check=True)
                 if qmp.command("query-status")["status"]!="paused":raise RuntimeError("Capture resumed unexpectedly")
                 qmp.monitor(f'pmemsave 0 0x18000000 "{work / "live.bin"}"')
                 if (work/"live.bin").stat().st_size!=402653184:raise RuntimeError("Incomplete RAM capture")
@@ -151,9 +153,9 @@ def Main(default_cores=1):
                 evidence={"backend":subprocess.check_output(["qemu-system-x86_64","--version"],text=True).splitlines()[0],
                     "accel":args.accel,"cores":args.cores,"inputDiskSha256":Hash(disk),"inputRawDiskSha256":initial_disk,
                     "fontSha256":Hash(args.font),"captureScriptSha256":Hash(Path(__file__)),
-                    "parserSha256":Hash(Path(__file__).with_name("Regs.mjs")),"samples":len(samples),
+                    "parserSha256":Hash(HEMU_MISC/"Regs.mjs"),"samples":len(samples),
                     "files":{name:{"bytes":(work/name).stat().st_size,"sha256":Hash(work/name)}
-                        for name in ("live.bin","disk.raw","registers.txt","snapregs.HC","captured.ppm")}}
+                        for name in ("live.bin","disk.raw","registers.txt","SnapRegs.HC","captured.ppm")}}
                 (work/"samples.json").write_text(json.dumps(samples,indent=2)+"\n")
                 (work/"evidence.json").write_text(json.dumps(evidence,indent=2)+"\n")
                 print(json.dumps(evidence))

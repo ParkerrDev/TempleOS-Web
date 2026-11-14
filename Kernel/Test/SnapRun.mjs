@@ -11,7 +11,7 @@ const RAMSZ = 402653184;
 const ELF = process.env.ELF || process.argv[2] || "/tmp/hemusnap/core7.elf";   // VM-paused capture
 
 const r = compileHemu();
-console.log(`compiled snapshot.HC: ${r.bytes.length} bytes, ${r.warnings.length} warnings`);
+console.log(`compiled Snapshot.HC: ${r.bytes.length} bytes, ${r.warnings.length} warnings`);
 
 // A ".bin" snapshot is a FLAT image (offset == guest physical address) - e.g. live.bin extracted
 // from a qemu migration stream.  A ".elf" is a core dump (PT_LOAD segments).
@@ -75,7 +75,7 @@ const host = createHemuHost({
   },
 });
 
-// Host-driven input (snapshot.HC pulls these each frame). Headless: synthetic cursor sweep +
+// Host-driven input (Snapshot.HC pulls these each frame). Headless: synthetic cursor sweep +
 // a '1' keystroke (set-1 make 0x02 / break 0x82) every 8 frames, to prove cursor + keyboard echo.
 const keyq = [];
 host.env.__host_msx = () => { const f = presentCount; if (!process.env.NOKEYS && f % 8 === 2) keyq.push(0x02); if (!process.env.NOKEYS && f % 8 === 3) keyq.push(0x82); return BigInt(60 + (f * 4) % 520); };

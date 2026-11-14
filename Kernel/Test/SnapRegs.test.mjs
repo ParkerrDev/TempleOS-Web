@@ -7,7 +7,7 @@ import {createHash} from "node:crypto";
 import {compileHolyC} from "../../holyc-wasm/src/compiler.js";
 import {createHemuHost} from "../Host.js";
 import {hemuIncludeResolver} from "../Compile.js";
-import {RegsRead,RegsSource} from "../Snapshot/Regs.mjs";
+import {RegsRead,RegsSource} from "../../hemu/Misc/Regs.mjs";
 
 const dir=mkdtempSync(join(tmpdir(),"hemu-regs-"));
 const fixture=name=>readFileSync(new URL(`../Snapshot/Test/${name}.txt`,import.meta.url),"utf8");
@@ -24,9 +24,9 @@ for(const name of ["xmm","occupied"]) {
 }
 try {
   for(const [count,raw] of [[1,one],[4,four],[1,xmm]]) {
-    const capture=RegsRead(raw,count),script=`BakeRegs${count===4?"Smp":""}.mjs`,out=join(dir,"regs.HC"),input=join(dir,"regs.txt");
+    const capture=RegsRead(raw,count),out=join(dir,"regs.HC"),input=join(dir,"regs.txt");
     writeFileSync(input,raw);
-    const generated=spawnSync(process.execPath,[new URL("../Snapshot/"+script,import.meta.url).pathname,input,out],{encoding:"utf8"});
+    const generated=spawnSync(process.execPath,[new URL("../../hemu/Misc/RegsMk.mjs",import.meta.url).pathname,input,out],{encoding:"utf8"});
     assert.equal(generated.status,0,generated.stderr);
     assert.equal(readFileSync(out,"utf8"),RegsSource(capture));
     const source=RegsSource(capture),probe=`U64 RegProbe(I64 n,I64 core=0,I64 i=0) {
@@ -41,7 +41,7 @@ try {
         case 12:return g_xmm_lo[core][i];case 13:return g_xmm_hi[core][i];
       }return 0;
     }`;
-    const compiled=compileHolyC('#include "cpu.HC"\n'+source+probe,{filename:out,lenient:false,
+    const compiled=compileHolyC('#include "Cpu"\n'+source+probe,{filename:out,lenient:false,
       exports:["SetSnapRegs","RegProbe"],includeResolver:hemuIncludeResolver});
     assert.deepEqual(compiled.warnings,[]);
     const host=createHemuHost(),{instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env});

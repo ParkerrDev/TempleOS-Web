@@ -12,13 +12,13 @@ Capture the installed original TempleOS disk, without HEMU:
 
 ```sh
 python3 Kernel/Snapshot/Capture.py --cores 1 \
-  --disk vendor/images/templeos-hd.qcow2.gz \
+  --disk hemu/templeos-hd.qcow2.gz \
   --font holyc-wasm/src/runtime/font.js --out /tmp/stock-one
 python3 Kernel/Snapshot/Capture.py --cores 4 \
-  --disk vendor/images/templeos-hd.qcow2.gz \
+  --disk hemu/templeos-hd.qcow2.gz \
   --font holyc-wasm/src/runtime/font.js --out /tmp/stock-four
-python3 Kernel/Snapshot/Pack.py \
-  --base vendor/images/templeos-hd.qcow2.gz \
+python3 hemu/Misc/Pack.py \
+  --base hemu/templeos-hd.qcow2.gz \
   --one /tmp/stock-one --four /tmp/stock-four --out /tmp/stock-package
 ```
 
@@ -36,7 +36,9 @@ register record; the emulator's empty F64 slots are cleared.
 RAM and registers are read while QEMU is stopped. QEMU then exits to flush the
 private disk before its checksum is recorded. Packaging verifies the source
 artifacts, regenerates the HolyC register source, compresses RAM and records
-only disk sectors differing from the hash-bound original disk. The complete
+only disk sectors differing from the hash-bound original disk. HEMU owns the
+parser and packer in Misc; the package contains the base disk, capture files
+and generated register sources in Kernel. The complete
 reconstructed disk checksum is checked by `Kernel/Test/Stock.test.mjs`.
 
 This is exact pairing of the captured RAM, supported CPU fields and disk, not
@@ -53,9 +55,9 @@ TOP2/FTW04, which the stock parser refuses. Run and optionally refresh its
 source-bound register fixtures with:
 
 ```sh
-python3 Kernel/Snapshot/Probe.py --disk vendor/images/templeos-hd.qcow2.gz \
+python3 Kernel/Snapshot/Probe.py --disk hemu/templeos-hd.qcow2.gz \
   --font holyc-wasm/src/runtime/font.js --out /tmp/stock-xmm --record
-python3 Kernel/Snapshot/Probe.py --disk vendor/images/templeos-hd.qcow2.gz \
+python3 Kernel/Snapshot/Probe.py --disk hemu/templeos-hd.qcow2.gz \
   --font holyc-wasm/src/runtime/font.js --out /tmp/stock-occupied --occupied --record
 node Kernel/Test/SnapRegs.test.mjs
 node Kernel/Test/Stock.test.mjs

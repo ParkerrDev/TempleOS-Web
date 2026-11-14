@@ -1,4 +1,4 @@
-// Measure.mjs - compile HEMU's self-test battery (HEMU/src/test.HC, which #includes cpu.HC) with
+// Measure.mjs - compile HEMU's self-test battery (HEMU/Kernel/Test.HC, which #includes Cpu.HC) with
 // holyc-wasm, run it headless, report correctness + speed.   node Kernel/Test/Measure.mjs
 import assert from "node:assert/strict";
 import { compileHemu, HEMU_SRC } from "../Compile.js";
@@ -7,11 +7,11 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const src = readFileSync(resolve(HEMU_SRC, "test.HC"), "latin1");   // HEMU/src/test.HC (#includes cpu.HC)
+const src = readFileSync(resolve(HEMU_SRC, "Test.HC"), "latin1");   // HEMU/Kernel/Test.HC (#includes Cpu.HC)
 
 let r;
 try {
-  r = compileHemu({ source: src, filename: "test.HC",exports:["MeasureIdle"],extraSource:`
+  r = compileHemu({ source: src, filename: "Test.HC",exports:["MeasureIdle"],extraSource:`
 I64 MeasureIdle()
 {
   Reset;

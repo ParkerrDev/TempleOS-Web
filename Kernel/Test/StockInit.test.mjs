@@ -4,7 +4,7 @@ import {resolve} from "node:path";
 import {compileHemu,HEMU_SRC} from "../Compile.js";
 import {createHemuHost} from "../Host.js";
 import {SnapshotRead} from "./Fixtures.mjs";
-import {RegsRead} from "../Snapshot/Regs.mjs";
+import {RegsRead} from "../../hemu/Misc/Regs.mjs";
 import * as jit from "../Jit.js";
 for(const smp of [false,true]) {
  const extraSource=`

@@ -11,7 +11,7 @@ export async function LegacySnapshot()
   const meta=JSON.parse(readFileSync(new URL("./Fixtures/LegacySmp.json",import.meta.url))),
     wasm=readFileSync(new URL("./Fixtures/LegacySmp.wasm",import.meta.url)),
     gz=readFileSync(new URL("./Fixtures/LegacySmp.ram.gz",import.meta.url)),
-    diskGz=readFileSync(new URL("../../vendor/images/templeos-hd.qcow2.gz",import.meta.url)),
+    diskGz=readFileSync(new URL("../../hemu/templeos-hd.qcow2.gz",import.meta.url)),
     Hash=b=>createHash("sha256").update(b).digest("hex");
   assert.equal(Hash(wasm),meta.sha256);assert.equal(Hash(gz),meta.ramSha256);
   assert.equal(Hash(diskGz),meta.diskSha256);

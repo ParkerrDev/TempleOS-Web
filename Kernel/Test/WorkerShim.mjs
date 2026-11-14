@@ -1,6 +1,6 @@
 //Runs one engine worker file in a Node worker thread the way a browser runs it.
 //Each frame message leaves with a probe: the guest's jiffies, refresh count
-//and fps, found by name through the engine's own lookup (HEMU's sym.HC).
+//and fps, found by name through the engine's own lookup (HEMU's Sym.HC).
 import {Worker as NodeWorker,parentPort,workerData} from "node:worker_threads";
 import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";

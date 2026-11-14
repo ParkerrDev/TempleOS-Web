@@ -237,3 +237,33 @@ suites cover desktop/mobile windows, editor, chat, search, clips, sprites, disk
 import, worker lifecycle and snapshot round trips. Browser startup evidence was
 refreshed after the final credit correction. Source-bound native game evidence
 remains valid, and all 66 startup records still match original TempleOS V5.03.
+
+## HEMU owns the captured machine
+
+Validated on 2026-11-14 with HEMU 68a1fe2. Its HolyC sources now live in
+Kernel with MixedCaps names and extensionless includes. HEMU also owns the
+base disk, register parser, register-source generator and capture packer;
+the website reads the complete machine through its pinned HEMU mount.
+The unused esbuild dependency and the site's duplicate disk are removed.
+
+Both WebAssembly engines remain byte-for-byte identical after the source
+move. Regenerating and packaging the one-core and four-core captures
+preserves their RAM, register, generated-source, disk and overlay hashes.
+The packer rejects a capture with the wrong CPU count. Device reset,
+captured device initialization and clock restoration remain distinct
+phases; combining them would change the machine's startup state.
+
+The 51 engine checks pass. Native CPU and device witnesses agree with
+original TempleOS V5.03, including all 519 device results. Chromium checks
+pass for one and four cores: disk import, snapshot export/import/reload,
+guest readiness, cancellation, fault recovery and the engine controls.
+Babel, Volley and Snake retain their native input, frame and cleanup
+results, and all four supported editor games start, draw and stop.
+The 66-entry startup comparison was rerun against the new HEMU pin;
+every entry starts and quits the same way in original V5.03 and HEMU.
+The refreshed Startup.json binds these results to the current sources.
+
+The installed Linux app's executable and four-core capture match the
+current HEMU sources and assets. It runs through KVM, independently of
+the browser compiler. Its launcher is TempleOS, with Super+Alt+T bound
+to the same executable.

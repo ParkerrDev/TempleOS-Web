@@ -22,7 +22,7 @@ function SnapshotFile(smp)
 function DiskFile()
 {
   return process.env.RAW?{path:process.env.RAW,gzip:false}:
-    {path:resolve(SITE_DIR,"vendor/images/templeos-hd.qcow2.gz"),gzip:true};
+    {path:resolve(SITE_DIR,"hemu/templeos-hd.qcow2.gz"),gzip:true};
 }
 
 export function SnapshotRead(smp=false)

@@ -27,7 +27,7 @@ for(const line of faults) {
   assert.deepEqual(f.slice(5,8).map(n=>BigInt("0x"+n)),[14n,7n,0n],"read-only pages fault as writes on both outcomes");
 }
 const Expand=name=>hemuFile(name).replace(/^#include\s+"([^"]+)".*$/gm,(_,child)=>Expand(child));
-let instrumented=Expand("snapshot.HC"),writes=[],running=false;
+let instrumented=Expand("Snapshot.HC"),writes=[],running=false;
 const marker="{//Unaligned little-endian RAM accesses match x86 and WASM loads/stores.";
 assert.equal(instrumented.split(marker).length,2);
 instrumented='import U0 __cmp_write(U64 addr,I64 size,U64 value);\n'+instrumented.replace(marker,marker+'\n  __cmp_write(a,sz,v);');

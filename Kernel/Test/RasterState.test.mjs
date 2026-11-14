@@ -5,7 +5,7 @@ import {Worker} from 'node:worker_threads';
 import {GuestHarness} from './GuestHarness.mjs';
 const fixture=JSON.parse(readFileSync(new URL('./RasterState.json',import.meta.url))),
   Expand=source=>source.replace(/#include "([^"]+)"/g,(_,name)=>Expand(hemuFile(name))),
-  source=Expand(hemuFile('snapshot.HC')).replace(
+  source=Expand(hemuFile('Snapshot.HC')).replace(
     /U16\s+RasterRand\s*\(\s*U64\s+fsb\s*\)\s*\{[\s\S]*?\n\}/,
     body=>body.replace('RasterRand','RasterRandStep')+`
 U16 RasterRand(U64 fsb)

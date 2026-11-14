@@ -18,7 +18,7 @@ const web=resolve(process.env.TEMPLEOS_WEB),out=resolve(process.env.OUT||'/tmp/t
   runtimeNames=['Misc/Server.mjs','Adam/Keyboard.js','Adam/Os.js','Adam/WinMgr.js','Kernel/Jit.js','Kernel/HemuWorker.js',
     'Kernel/HemuSmpWorker.js','Kernel/GuestExec.js','Kernel/KeyQueue.js','build/hemu.wasm','build/hemu-smp.wasm',
     'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
-    'Kernel/Stock.js','Kernel/Speaker.js','vendor/images/templeos-hd.qcow2.gz'],
+    'Kernel/Stock.js','Kernel/Speaker.js','hemu/templeos-hd.qcow2.gz'],
   runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))])),
   server=createServer(ServeReq).listen(0,'127.0.0.1');await once(server,'listening');
 const url=`http://127.0.0.1:${server.address().port}`,

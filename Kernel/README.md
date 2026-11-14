@@ -1,17 +1,17 @@
 # Kernel/ - HEMU in the browser
 
 [HEMU](https://github.com/ParkerrDev/HEMU) is a TempleOS x86-64 emulator written in plain HolyC; its whole
-interface to the outside world is `HEMU/src/host.HC`. This directory is the WebAssembly side of that
+interface to the outside world is `HEMU/Kernel/Host.HC`. This directory is the WebAssembly side of that
 contract - what turns the HolyC source (cloned at build time into `../hemu`) into the engine this site runs,
 using the [HolyC-wasm](https://github.com/ParkerrDev/HolyC-wasm) compiler (cloned into `../holyc-wasm`).
 
 | File | What |
 |---|---|
-| `Compile.js` | `compileHemu()`: the one way HEMU is compiled - strict mode plus the exports the host calls back into. Reads `../hemu/src` (`HEMU_SRC` overrides) |
+| `Compile.js` | `compileHemu()`: the one way HEMU is compiled - strict mode plus the exports the host calls back into. Reads `../hemu/Kernel` (`HEMU_SRC` overrides) |
 | `Build.mjs` | `node Kernel/Build.mjs [outDir]` → `hemu.wasm`, `hemu-smp.wasm` (the shared-memory SMP engine) and `hemu-smp.json` (the shared IPI mailbox address). `netlify.toml` runs it right after cloning, into `build/`; nothing compiled is committed |
-| `Host.js` | `createHemuHost()`: holyc-wasm's `createHost()` plus every import `host.HC` declares - the snapshot / present / disk / palette adapters and default stubs for input, pacing and the JIT hooks. Runners override `env.__host_*` and `env.__jit_*` before instantiating |
+| `Host.js` | `createHemuHost()`: holyc-wasm's `createHost()` plus every import `Host.HC` declares - the snapshot / present / disk / palette adapters and default stubs for input, pacing and the JIT hooks. Runners override `env.__host_*` and `env.__jit_*` before instantiating |
 | `Jit.js` | the x86-64 → WASM block JIT: decodes guest code out of hemu's memory and emits one native function per hot block with holyc-wasm's emitter. Guest registers live in WASM locals for a block's duration, flags are computed lazily, and a native dispatch module chains blocks without returning to JS |
-| `GuestExec.js` | the backend guest-execution API over `HEMU/src/guestcall.HC`: resolves kernel functions and class layouts from the running OS's symbol tables and exposes `exec`, `include`, `mkdir`, `writeFile` and `launch`, with request IDs and queued / running / done / failed states |
+| `GuestExec.js` | the backend guest-execution API over `HEMU/Kernel/GuestCall.HC`: resolves kernel functions and class layouts from the running OS's symbol tables and exposes `exec`, `include`, `mkdir`, `writeFile` and `launch`, with request IDs and queued / running / done / failed states |
 | `GuestInput.js` | mouse state resolved through `GuestExec.js` metadata: relative deltas and capture hints; raw keyboard bytes use `KeyQueue.js` and HEMU IRQ1 |
 | `QCow2.js` | qcow2/raw sector I/O and host FAT32 listing, upload and read |
 | `Stock.js` | capture manifest, RAM/engine identity checks, bounded inflation and paired disk overlays shared by page, desktop and worker |

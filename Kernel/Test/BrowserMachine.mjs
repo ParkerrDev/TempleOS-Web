@@ -6,8 +6,8 @@ export async function BrowserMachine(context,{gate=false}={}) {
   await context.route("**/hemu/*.gz",async route=>route.fulfill({
     body:await readFile(new URL("hemu/"+new URL(route.request().url()).pathname.split("/").pop(),root)),
     contentType:"application/gzip"}));
-  await context.route("**/vendor/images/templeos-hd.qcow2.gz",async route=>route.fulfill({
-    body:await readFile(new URL("vendor/images/templeos-hd.qcow2.gz",root)),contentType:"application/gzip"}));
+  await context.route("**/hemu/templeos-hd.qcow2.gz",async route=>route.fulfill({
+    body:await readFile(new URL("hemu/templeos-hd.qcow2.gz",root)),contentType:"application/gzip"}));
   await context.route("https://templeosweb-*.workers.dev/**",route=>route.abort());
   await context.routeWebSocket(/templeosweb-.*\.workers\.dev/,socket=>socket.close());
   if(gate) {

@@ -47,7 +47,7 @@ hottest render routines.
 
 TempleOS is 64‑bit‑only and is its own self‑hosting compiler, so it can't be cross‑compiled
 to WASM directly. HEMU takes the emulation route, TempleOS‑style: a **TempleOS‑only x86‑64
-emulator written in HolyC** ([HEMU](https://github.com/ParkerrDev/HEMU): `hemu/src/cpu.HC` + `snapshot.HC`, ~1.7k lines), compiled
+emulator written in HolyC** ([HEMU](https://github.com/ParkerrDev/HEMU): `hemu/Kernel/Cpu.HC` + `Snapshot.HC`, ~1.7k lines), compiled
 to WebAssembly by **holyc-wasm**, a from‑scratch HolyC compiler in JavaScript. It resumes a
 live RAM snapshot of the booted desktop, emulates just the hardware TempleOS touches
 (PIC/PIT/HPET/PS‑2/ATA/VGA‑DAC), and pulls input from the host each frame.
@@ -80,7 +80,7 @@ pixels per cell, so the cost per frame stays bounded on any screen.
 ### The large files
 | Path | Size | What |
 |------|------|------|
-| `vendor/images/templeos-hd.qcow2.gz` | 41 MB | the installed TempleOS hard disk (FAT32 on C:), read on demand |
+| `hemu/templeos-hd.qcow2.gz` | 41 MB | the installed TempleOS hard disk (FAT32 on C:), read on demand |
 | `hemu/live.bin.gz` | 10 MB | booted‑desktop RAM snapshot (instant boot) |
 | `build/hemu.wasm` | ~77 KB | the compiled emulator, built at deploy by `Kernel/Build.mjs` |
 
@@ -157,7 +157,6 @@ is served from localhost itself.
 | `Doc/` | the validation record |
 | `Misc/` | the server and publisher (`Server.mjs`), the fast tests (`Test.sh`), Netlify's build, the text check, Lighthouse, and `Cdn/`, the Cloudflare Worker that serves the heavy files from R2 (`Files.js`, its list `Offload.js`, `wrangler.toml`) |
 | `build/` | gitignored: `hemu.wasm`, `hemu-smp.wasm`, `hemu-smp.json`, compiled at deploy |
-| `vendor/images/` | the TempleOS disk image, until HEMU holds it |
 | `holyc-wasm/`, `hemu/`, `holyc-fmt/`, `holycraft/` | the sibling repos, cloned here at build time (gitignored) |
 
 A test sits beside what it tests: `Name.test.mjs` runs under node and `Name.browser.mjs` drives a

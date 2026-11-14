@@ -6,18 +6,18 @@ import {resolve} from "node:path";
 import {compileHemu,HEMU_SRC,SITE_DIR} from "../Compile.js";
 import {makeDisk} from "../QCow2.js";
 import {StockIdentify,StockInflate,StockManifestCheck,StockModuleCheck,StockOverlayApply} from "../Stock.js";
-import {RegsRead,RegsSource} from "../Snapshot/Regs.mjs";
+import {RegsRead,RegsSource} from "../../hemu/Misc/Regs.mjs";
 
 const root=resolve(HEMU_SRC,".."),manifest=StockManifestCheck(JSON.parse(readFileSync(resolve(root,"stock.json")))),
   hash=b=>createHash("sha256").update(b).digest("hex"),
-  base=readFileSync(resolve(SITE_DIR,"vendor/images/templeos-hd.qcow2.gz"));
+  base=readFileSync(resolve(SITE_DIR,"hemu/templeos-hd.qcow2.gz"));
 assert.equal(hash(base),manifest.base.gzipSha256);
 const decoded=gunzipSync(base),baseDisk=makeDisk(decoded),chunk=new Uint8Array(131072),baseHash=createHash("sha256");
 for(let off=0;off<baseDisk.virtualSize;off+=chunk.length){baseDisk.readInto(off/512,chunk.length/512,chunk,0);baseHash.update(chunk);}
 assert.equal(baseHash.digest("hex"),manifest.base.rawSha256);
 for(const capture of manifest.captures) {
   const registers=readFileSync(resolve(root,capture.registers),"utf8"),
-    source=readFileSync(resolve(HEMU_SRC,capture.cores===4?"snapregs-smp.HC":"snapregs.HC"),"utf8");
+    source=readFileSync(resolve(HEMU_SRC,capture.cores===4?"SnapRegsSmp.HC":"SnapRegs.HC"),"utf8");
   assert.equal(hash(registers),capture.registerSha256);
   assert.equal(hash(source),capture.sourceSha256);
   assert.equal(RegsSource(RegsRead(registers,capture.cores)),source,"captured registers regenerate the compiled source exactly");

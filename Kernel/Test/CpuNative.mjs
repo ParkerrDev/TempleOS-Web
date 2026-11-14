@@ -6,8 +6,8 @@ import {hemuFile,compileHemu} from "../Compile.js";
 import {createHemuHost} from "../Host.js";
 const adapter=readFileSync(new URL("./CpuNativeHost.HC",import.meta.url),"latin1"),
   expand=source=>source.replace(/#include "([^"]+)"/g,(_,name)=>
-    name==="host.HC"?adapter:expand(hemuFile(name))),
-  source=expand(hemuFile("test.HC"))+muldivSource()+atomSource()+stackSource()+cpuIdSource()+cmp16Source()+cmpWriteSource(),
+    name==="Host"?adapter:expand(hemuFile(name))),
+  source=expand(hemuFile("Test.HC"))+muldivSource()+atomSource()+stackSource()+cpuIdSource()+cmp16Source()+cmpWriteSource(),
   hash=createHash("sha256").update(Buffer.from(source,"latin1")).digest("hex"),
   file=new URL("./CpuNative.json",import.meta.url);
 if(process.argv.includes("--record")) {
@@ -22,7 +22,7 @@ if(process.argv.includes("--record")) {
 }
 const expected=JSON.parse(readFileSync(file,"utf8"));
 assert.equal(hash,expected.sourceHash,"rerun original V5.03 after changing the interpreter or its native fixture");
-const compiled=compileHemu({filename:"test.HC",extraSource:muldivSource()+atomSource()+stackSource()+cpuIdSource()+cmp16Source()+cmpWriteSource()});assert.deepEqual(compiled.warnings,[]);
+const compiled=compileHemu({filename:"Test.HC",extraSource:muldivSource()+atomSource()+stackSource()+cpuIdSource()+cmp16Source()+cmpWriteSource()});assert.deepEqual(compiled.warnings,[]);
 let output="";
 const host=createHemuHost({onText:text=>output+=text}),
   {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env});

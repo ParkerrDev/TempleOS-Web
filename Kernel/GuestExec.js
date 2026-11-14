@@ -2,10 +2,10 @@
 // harnesses). Runs HolyC source, disk includes, game launches, directory creation and native FileWrite
 // inside the emulated TempleOS with NO synthetic keystrokes and NO per-character TaskMsg injection.
 //
-// How it works (see src/guestcall.HC for the CPU-side primitive):
+// How it works (see src/GuestCall.HC for the CPU-side primitive):
 //   1. probe(): looks up the kernel entry points (TaskExe, JobResScan, PopUp), the globals
 //	(adam_task, sys_focus_task) and the CTask, CJob and CJobCtrl members by name, through HEMU's
-//	own lookup over the guest's hash tables (src/sym.HC). Every address is checked (task
+//	own lookup over the guest's hash tables (src/Sym.HC). Every address is checked (task
 //	signatures, function prologues, arg counts) before use.
 //   2. A request becomes ONE TempleOS job: the source text is staged in the scratch window above the OS's
 //      RAM, and TaskExe(target, NULL, src, 0) is called through the injected-call primitive. TaskExe copies
@@ -26,7 +26,7 @@ const JOBf = { DONE: 1 << 5, DISPATCHED: 1 << 6 };
 const TASKf = { IDLE: 1 << 3, CMD_LINE_PMT: 1 << 4, AWAITING_MSG: 1 << 9 };
 // Scratch window layout (offsets from the window base = RAM_SIZE): call args, request mailboxes, the
 // two names of a lookup, job source text, file payloads. The last 16 bytes hold the call sentinel
-// (guestcall.HC).
+// (GuestCall.HC).
 const SCR = { ARGS: 0x0000, MBOX: 0x0100, MBOX_N: 64, MBOX_SZ: 32, NAME: 0x0A00, MEMBER: 0x0A80, TEXT: 0x10000, TEXT_SZ: 0xF0000, DATA: 0x100000 };
 const NAME_LEN=128;
 const CALL_BUDGET = 8000000;                       // interpreter steps allowed for one injected call (TaskExe takes a few thousand)
