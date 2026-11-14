@@ -87,6 +87,9 @@ pixels per cell, so the cost per frame stays bounded on any screen.
 | `hemu/build/hemu*.wasm`, `hemu/build/hemu-smp.json` | matching engines and SMP metadata, compiled at deployment |
 
 The loader overlaps snapshot download, worker startup and engine preparation.
+Chat, visitor presence and the Terry animation wait for the first desktop frame.
+Games and Terry Search load only when opened. The Games catalog loads separately
+from its editor and runners, with immediate cancellable loading feedback.
 Only populated RAM ranges are inflated and copied into the zeroed 384 MiB guest
 memory. The corrections and Welcome task were compiled in native TempleOS
 before capture; startup resumes them directly. C: restores from browser storage

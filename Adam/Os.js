@@ -70,7 +70,10 @@ canvas.parentElement.addEventListener("winsize",fitScreen);
     $("tb-time").textContent = `${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`; };
   tick(); setInterval(tick, 1000); }
 
-// ---- "Visitors" in the topbar. Not awaited: the OS never waits on it ----
+//The visitor connection starts after the first desktop frame.
+addEventListener("osstate",function PresenceStart(e) {
+if(!e.detail.ready)return;
+removeEventListener("osstate",PresenceStart);
 import("../Apps/Chat/Presence.js").then(({createPresence}) => {
   const tb = $("tb-people");
   const presence = createPresence((people) => {
@@ -81,6 +84,7 @@ import("../Apps/Chat/Presence.js").then(({createPresence}) => {
   document.addEventListener("visibilitychange", () => { if (!document.hidden) presence.wake(); });
   addEventListener("online", presence.wake);
 }).catch((e) => dbg("presence: " + e.message, true));
+});
 
 function blit(idx, w, h, immutable = false, stats = null) {
   drawFrame(idx,w,h,immutable);

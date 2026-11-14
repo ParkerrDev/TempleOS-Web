@@ -9,7 +9,7 @@
     "test": "sh Misc/Test.sh",
     "test:browser": "node Adam/Shell.browser.mjs",
     "test:editor": "node Apps/Editor/EditorKeys.browser.mjs && node Apps/Editor/Palette.browser.mjs && node Apps/Editor/Raw.browser.mjs && node Apps/Editor/Demos.browser.mjs",
-    "test:games:browser": "node Apps/Games/Games.browser.mjs",
+    "test:games:browser": "node Apps/Games/Loading.browser.mjs && node Apps/Games/Games.browser.mjs",
     "test:engine": "node Adam/Engine.browser.mjs",
     "test:snapshot": "node Apps/Disk/Snapshot.browser.mjs",
     "test:clip": "node Apps/Search/Clip/Test/Mp4.mjs && node Apps/Search/Clip/Test/Mkv.mjs && node Apps/Search/Clip/Test/Mem.mjs && node Apps/Search/Clip/Test/Clip.browser.mjs",

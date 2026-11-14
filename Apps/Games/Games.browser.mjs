@@ -21,7 +21,7 @@ try{
   await page.locator('#gmSearch').fill(name);
   const card=page.locator('.gm-card').filter({has:page.getByRole('heading',{name,exact:true})});
   await card.getByRole('button',{name:'Edit source',exact:true}).click();
-  await page.waitForFunction(()=>document.getElementById('editorRuntimeInfo').textContent.startsWith('Edit, Run') && !document.getElementById('editor').disabled);
+  await page.waitForFunction(()=>document.getElementById('editorRuntimeInfo')?.textContent.startsWith('Edit, Run') && !document.getElementById('editor').disabled);
   await page.locator('#gameRun').click();
   try{await page.waitForFunction(()=>/HolyC-WASM: (compiled|running)/.test(document.getElementById('gamePreviewStatus').textContent),null,{timeout:30000});}
   catch(error){throw new Error(name+' launch: '+await page.locator('#gamePreviewStatus').innerText()+'; '+await page.locator('#console').innerText(),{cause:error});}

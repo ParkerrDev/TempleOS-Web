@@ -64,6 +64,7 @@ try {
     for(const direction of ["Left","Right","Up","Down"])
       assert.equal(await page.locator('[data-key="Arrow'+direction+'"]').isVisible(),mobile);
     if(!mobile) {
+      await page.evaluate(()=>dispatchEvent(new CustomEvent("osstate",{detail:{ready:true}})));
       await page.waitForFunction(()=>document.getElementById("terrySprite").dataset.format==="TempleOS GR");
       const first=await page.locator("#terrySprite").evaluate(canvas=>canvas.toDataURL());
       await page.waitForFunction(first=>document.getElementById("terrySprite").toDataURL()!==first,first);

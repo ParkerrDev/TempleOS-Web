@@ -101,7 +101,7 @@ api.stop();await flush();
 console.log('Native capture: manual and automatic input modes, 2D motion, Escape/key release, sticky hybrid, explicit recapture, stop and replacement canvas passed.');
 
 // Exercise the actual editor controls against the same native controller.
-const games=readFileSync(new URL('./GamesWin.js',import.meta.url),'utf8');
+const games=readFileSync(new URL('./GamesRun.js',import.meta.url),'utf8');
 const router=games.slice(games.indexOf('const previewCapture='),games.indexOf('async function runInBrowser('));
 context.previewOverlay={classList:{contains:()=>false}};
 context.os_game={get ed(){return context.__holycEditor;},mouse:null};

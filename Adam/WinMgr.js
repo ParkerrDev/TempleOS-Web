@@ -309,12 +309,39 @@ const WINS={editorBtn:"../Apps/Editor/EditorWin.js",gamesBtn:"../Apps/Games/Game
   tsBtn:"../Apps/Search/SearchWin.js",chatBtn:"../Apps/Chat/ChatWin.js",
   settingsBtn:"../Apps/Settings/SettingsWin.js",mobileHelp:"../Apps/Help/HelpWin.js"};
 
+let opening=0;
+function LoadingClose()
+{
+  opening++;
+  $("winLoadingOverlay").classList.remove("open");
+}
 async function WinOpen(id)
-{//Opens the window a Menu button names, loading its module the first time.
-  let m=await import(WINS[id]);
-  m.Open();
+{//Give feedback before requesting a window's modules.
+  if (!$("winLoadingOverlay")) {
+    WinAdd('#winLoading { width:min(420px,92vw); }',
+      '<div id="winLoadingOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Opening window">'+
+      '<div id="winLoading" class="win" data-title="Loading"><button class="close" id="winLoadingClose" aria-label="Cancel opening">[X]</button>'+
+      '<p id="winLoadingText" role="status"></p></div></div>');
+    $("winLoadingClose").addEventListener("click",LoadingClose);
+    $("winLoadingOverlay").addEventListener("pointerdown",function(e) {
+      if(e.target===e.currentTarget)LoadingClose();
+    });
+  }
+  const request=++opening;
+  $("winLoadingText").textContent="Opening "+$(id).textContent.trim()+"…";
+  $("winLoadingOverlay").classList.add("open");
+  WinFocus($("winLoading"));
   MenuShow(false);
-  document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id}}));
+  try {
+    const m=await import(WINS[id]);
+    if(request!==opening)return;
+    $("winLoadingOverlay").classList.remove("open");
+    m.Open();
+    document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id}}));
+  } catch(e) {
+    if(request===opening)$("winLoadingText").textContent="Could not open this window. Close and try again.";
+    console.error(e);
+  }
 }
 
 function MenuClick(e)
@@ -322,22 +349,18 @@ function MenuClick(e)
   WinOpen(e.currentTarget.id).catch(console.error);
 }
 
-function ChatLoad()
-{//Chat connects while the page is idle, to count what arrives while shut.
+function DesktopExtras(e)
+{//Optional windows wait until the machine has presented its first frame.
+  if(!e.detail.ready)return;
+  removeEventListener("osstate",DesktopExtras);
   import("../Apps/Chat/ChatWin.js").catch(console.error);
+  import("../Apps/Terry/TerryWin.js").catch(console.error);
 }
-
-function PageLoaded()
-{
-  if (window.requestIdleCallback)
-    requestIdleCallback(ChatLoad,{timeout:5000});
-  else
-    setTimeout(ChatLoad,2000);
-}
+addEventListener("osstate",DesktopExtras);
 
 for (const id in WINS)
   $(id).addEventListener("click",MenuClick);
-addEventListener("load",PageLoaded);
+
 
 function MenuShow(open)
 {
@@ -360,4 +383,3 @@ document.querySelector(".toolbar .close").addEventListener("click",
 $("mobileFull").addEventListener("click",function () {$("fsBtn").click();});
 
 import("../Apps/Help/HelpWin.js").catch(console.error);
-import("../Apps/Terry/TerryWin.js").catch(console.error);
