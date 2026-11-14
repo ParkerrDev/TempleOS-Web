@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>TempleOS - the real 64-bit OS in your browser</title>
+  <title>TempleOS in your browser</title>
   <meta name="description" content="TempleOS V5.03 running in your browser on HEMU, an x86-64 emulator written in HolyC and compiled to WebAssembly. Play its games, write HolyC, search Terry A. Davis video transcripts, and chat." />
   <link rel="icon" href="Adam/Logo128x152.jpg" type="image/jpeg" />
   <link rel="apple-touch-icon" href="Adam/Logo128x152.jpg" />
@@ -231,6 +231,7 @@
     body.mouse-locked #xcursor { visibility:hidden !important; }
     .terrywin canvas { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
+    .footer-heart { width:18px; height:16px; fill:var(--ltred); vertical-align:-3px; shape-rendering:crispEdges; }
     footer { text-align:center; padding:4px; font-size:12px; color:var(--ltgray); }
 
     /* ---- overlays (HolyC Editor, God Tools): a window floating over the desktop ---- */
@@ -290,7 +291,7 @@
     #helpContext { color:var(--red); margin-bottom:8px; font-size:12px; }
     #helpBubble { border:2px solid var(--blue); padding:10px; line-height:1.4; min-height:100px; position:relative; }
     #helpLabel { display:block; color:var(--red); margin-bottom:6px; }
-    #helpNext { width:auto; margin:8px 0; }
+    #helpNext { width:auto; margin:8px 2px; max-width:calc(100% - 4px); }
     @media (prefers-reduced-motion:reduce) { .wtitle > span, .wmenu { animation:none; } }
     @media (max-width:979.98px) {
       body { padding-bottom:68px; }
@@ -340,7 +341,7 @@
 </head>
 <body>
 <!-- Menu icons: pixelarticons by Gerrit Halfmann (MIT, Adam/pixelarticons-LICENSE.txt). i-cross is its cross-sharp with the bar raised.
-     i-chat is drawn for this site on the same 24-unit grid. -->
+     i-chat and i-settings are drawn for this site on the same 24-unit grid. -->
 <svg style="display:none">
   <symbol id="i-pause" viewBox="0 0 24 24"><path d="M10 20H4V4h6v16Zm8-16v16h-6V4h6Zm-4 2v12h2V6h-2ZM6 18h2V6H6v12Z"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M15 11h-2V9h2zm0 4h-2v-2h2zm-2 2h-2v-2h2zm0-8h-2V7h2zm-2-2H9V5h2zM9 21H7V3h2zm6-8h2v-2h-2zm-6 4h2v2H9z"/></symbol>
@@ -354,7 +355,7 @@
   <symbol id="i-mouse" viewBox="0 0 24 24"><path d="M8 2h8v2H8zm0 20h8v-2H8zM6 4h2v2H6zm0 16h2v-2H6zM16 4h2v2h-2zm0 16h2v-2h-2zM4 6h2v12H4zm14 0h2v12h-2zm-7 0h2v4h-2z"/></symbol>
   <symbol id="i-touch" viewBox="0 0 24 24"><path d="M2 14h20v2H2zm0 6h20v2H2zm0-4h2v4H2zm18 0h2v4h-2zM8 2h8v2H8zm0 2h2v4H8zm6 0h2v4h-2zM8 8h8v2H8zm3 2h2v4h-2zm-4 2h2v2H7z"/></symbol>
   <symbol id="i-window" viewBox="0 0 24 24"><path d="M2 2h20v2H2zm2 6h16v2H4zM2 20h20v2H2zM2 4h2v16H2zm18 0h2v16h-2zM5 5h2v2H5zm3 0h2v2H8z"/></symbol>
-  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M8 0h8v2h-8zM2 2h4v2h-4zM8 2h8v2h-8zM18 2h4v2h-4zM2 4h20v2h-20zM4 6h16v2h-16zM0 8h10v2h-10zM14 8h10v2h-10zM0 10h8v2h-8zM16 10h8v2h-8zM0 12h8v2h-8zM16 12h8v2h-8zM0 14h10v2h-10zM14 14h10v2h-10zM4 16h16v2h-16zM2 18h20v2h-20zM2 20h4v2h-4zM8 20h8v2h-8zM18 20h4v2h-4zM8 22h8v2h-8z"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M2 5h4v2H2zM12 5h10v2H12zM6 3h6v6H6zM8 5v2h2V5zM2 11h12v2H2zM20 11h2v2h-2zM14 9h6v6h-6zM16 11v2h2v-2zM2 17h4v2H2zM12 17h10v2H12zM6 15h6v6H6zM8 17v2h2v-2z"/></symbol>
   <symbol id="i-keys" viewBox="0 0 24 24"><path d="M0 4h24v2h-24zM0 6h2v2h-2zM22 6h2v2h-2zM0 8h2v2h-2zM4 8h2v2h-2zM8 8h2v2h-2zM12 8h2v2h-2zM16 8h2v2h-2zM22 8h2v2h-2zM0 10h2v2h-2zM22 10h2v2h-2zM0 12h2v2h-2zM6 12h2v2h-2zM10 12h2v2h-2zM14 12h2v2h-2zM18 12h2v2h-2zM22 12h2v2h-2zM0 14h2v2h-2zM22 14h2v2h-2zM0 16h2v2h-2zM6 16h12v2h-12zM22 16h2v2h-2zM0 18h2v2h-2zM22 18h2v2h-2zM0 20h24v2h-24z"/></symbol>
   <symbol id="i-terry" viewBox="0 0 24 24"><path d="M8 0h8v2h-8zM8 2h8v2h-8zM8 4h8v2h-8zM10 6h4v2h-4zM2 8h20v2h-20zM0 10h2v2h-2zM8 10h8v2h-8zM22 10h2v2h-2zM8 12h8v2h-8zM8 14h8v2h-8zM8 16h2v2h-2zM14 16h2v2h-2zM6 18h4v2h-4zM14 18h4v2h-4zM4 20h4v2h-4zM16 20h4v2h-4zM2 22h4v2h-4zM18 22h4v2h-4z"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M6 0h12v2h-12zM4 2h4v2h-4zM16 2h4v2h-4zM4 4h4v2h-4zM16 4h4v2h-4zM16 6h4v2h-4zM14 8h4v2h-4zM12 10h4v2h-4zM10 12h4v2h-4zM10 14h4v2h-4zM10 18h4v2h-4zM10 20h4v2h-4z"/></symbol>
@@ -376,10 +377,9 @@
   <header>
     <img class="logo" src="Adam/TempleOS.svg" width="416" height="470" alt="TempleOS" title="TempleOS" />
     <div class="htxt">
-      <h1>TempleOS - the real 64-bit OS, booting in your browser</h1>
-      <p><b>TempleOS V5.03</b> on <b>HEMU</b> - a clean-room x86-64 emulator written in
-         HolyC, compiled to WebAssembly. Real kernel, HolyC JIT, graphics, games, keyboard &amp; mouse.
-         <a href="https://github.com/ParkerrDev/TempleOS-Web">source &amp; build notes →</a></p>
+      <h1>TempleOS in your browser</h1>
+      <p>Write HolyC, play games, and explore Terry A. Davis's operating system.
+         <a href="https://github.com/ParkerrDev/TempleOS-Web">Source →</a></p>
     </div>
   </header>
 
@@ -468,7 +468,7 @@
   </div>
 
   <footer>
-    <p>Made with ♥ by <a href="https://parkerhunt.me">parkerhunt.me</a> - R.I.P. Terry A. Davis (1969 to 2018), “the smartest programmer that's ever lived.” · <a href="https://github.com/ParkerrDev/TempleOS-Web/issues/new" target="_blank" rel="noopener">bug? idea?</a></p>
+    <p>Made with <svg class="footer-heart" viewBox="0 0 8 7" role="img" aria-label="love"><path d="M1 0h2v1H1zM5 0h2v1H5zM0 1h8v3H0zM1 4h6v1H1zM2 5h4v1H2zM3 6h2v1H3z"/></svg> by <a href="https://parkerhunt.me">parkerhunt.me</a> - R.I.P. Terry A. Davis (1969 to 2018), “the smartest programmer that's ever lived.” · <a href="https://github.com/ParkerrDev/TempleOS-Web/issues/new" target="_blank" rel="noopener">bug? idea?</a></p>
   </footer>
   </main>
 
