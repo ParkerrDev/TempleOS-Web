@@ -3,9 +3,6 @@
 //with no parent, so the game's task hangs off Seth and nothing waits on it.
 //Keys go in where $LK,"KbdPktRead",A="MN:KbdPktRead"$ puts the bytes it reads.
 
-#define START_WAIT	15.0 //Seconds a game must run to count as started
-#define START_QUIT	5.0 //Seconds it has after each key to quit
-
 #define RUN_STARTED	1 //What the launch writes in StartBox.state
 #define RUN_RETURNED	2
 #define RUN_EXCEPT	3

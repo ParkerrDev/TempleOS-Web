@@ -341,7 +341,7 @@ async function run(source,project={}) {
     rafId = requestAnimationFrame(present);
   };
 
-  worker = new Worker(new URL("./Worker.js", import.meta.url), { type: "module" });
+  worker = new Worker(new URL("../../hemu/holyc-wasm/src/runtime/worker.js", import.meta.url), { type: "module" });
   const startedWorker=worker;
   worker.onmessage = (e) => {
     if(worker!==startedWorker)return;

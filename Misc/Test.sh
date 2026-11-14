@@ -12,6 +12,7 @@ for t in $(git ls-files '*.test.mjs'); do
     *) if [ -f "$t" ]; then node $t; fi ;;
   esac
 done
+npm --prefix hemu/holyc-wasm run test:execution
 node Demo/Games/GamesVerify.mjs
 node Demo/Games/Toom/Test/Package.mjs
 node Demo/Games/NativeGamesAudit.mjs --check

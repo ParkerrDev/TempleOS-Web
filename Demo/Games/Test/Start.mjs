@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import {execFile} from "node:child_process";
-import {mkdir,readFile,writeFile} from "node:fs/promises";
+import {mkdir,readFile,rm,writeFile} from "node:fs/promises";
 import {resolve} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
 import {promisify} from "node:util";
 import {GAMES} from "../../../Apps/Games/GameCatalog.js";
 import {RuntimeInputs,root} from "./Evidence.mjs";
-import {GameFiles,StartInputs} from "./Install.mjs";
+import {GameFiles,StartInputs,START_WAIT,START_QUIT} from "./Install.mjs";
 
 //Every Games entry, installed and launched as the site does, in original
 //TempleOS V5.03 under QEMU and in the site's HEMU. Usage:
@@ -24,7 +24,8 @@ const write=process.argv.includes("--write"),
   out=resolve(process.env.OUT || fileURLToPath(new URL("tmp/games/start/",root))),
   oracle=resolve(process.env.HOLYC_WASM || fileURLToPath(new URL("hemu/holyc-wasm/",root)),
     "tests/oracle/"),
-  start=await readFile(new URL("Start.HC",import.meta.url)),
+  start=Buffer.concat([Buffer.from(`#define START_WAIT ${START_WAIT}\n#define START_QUIT ${START_QUIT}\n`),
+    await readFile(new URL("Start.HC",import.meta.url))]),
   run=promisify(execFile);
 assert(!write || !names.length,"--write records every entry; give no names.");
 assert(Number.isInteger(jobs) && jobs>=1 && jobs<=16,"JOBS must be 1 to 16.");
@@ -91,6 +92,8 @@ async function Real({files,launch})
 async function Site(game)
 {//The shared catalog harness: the site's installer and launch in HEMU.
   const file=resolve(out,"hemu",(game.packageId || game.file)+".json");
+  await rm(file,{force:true});
+  let failure;
   try {
     await run(process.execPath,["--max-old-space-size=3072",
       fileURLToPath(new URL("Catalog.mjs",import.meta.url)),game.name],
@@ -98,8 +101,15 @@ async function Site(game)
   } catch (error) {
     if (error.killed || error.signal)
       return {run:"timeout",quit:"-",end:"-",detail:"HEMU child stopped: "+(error.signal || "time")};
+    failure=String(error.message).slice(0,400);
   }
-  const report=JSON.parse(await readFile(file,"utf8"));
+  let report;
+  try {
+    report=JSON.parse(await readFile(file,"utf8"));
+  } catch (error) {
+    return {run:"harness-error",quit:"-",end:"-",
+      detail:failure || "HEMU report unreadable: "+error.message};
+  }
   return {run:report.run || "harness-error",quit:report.quit || "-",end:report.end || "-",
     engineSha256:report.engineSha256,
     detail:report.failure?report.failure.split("\n")[0]:undefined};
@@ -132,9 +142,10 @@ if (write) {
   assert(engines.size==1,"HEMU engines differ between runs.");
   const record={
     scope:"Each Games entry installed and launched as the site does, in original "+
-      "TempleOS V5.03 under QEMU and in the site's HEMU: still running after 15 s "+
-      "of guest time, then whether Esc or Shift-Esc ends it and how it ends. "+
-      "Gameplay is not compared.",
+      `TempleOS V5.03 under QEMU and in the site's HEMU: still running after ${START_WAIT} s `+
+      `of guest time, then completion within ${START_QUIT} s after Esc or the subsequent Shift-Esc. `+
+      "These are observation windows, not proof of which key caused completion. "+
+      "Gameplay and timing parity are not compared.",
     real:{templeos:manifest.templeos,diskSha256:manifest.rawDiskSha256,backend},
     site:{...await RuntimeInputs(),engineSha256:[...engines][0]},
     inputs:await StartInputs(),

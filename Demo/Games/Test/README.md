@@ -42,25 +42,32 @@ or given replacement drawing/input functions by this check.
 `node Demo/Games/Test/Catalog.mjs NAME` installs one entry in HEMU with the site's
 own installer and launch (`Install.mjs` follows `runInTempleOS` in `GamesWin.js`),
 checks every written file byte for byte and lets the game run for 15 seconds of
-guest time. A game still running then gets Esc and, if it is still running five
+guest time. A game still running then gets Esc and, if it is still running ten
 seconds later, Shift-Esc, as the Keys window sends them. The report says how it
-ran (`running`, `returned`, `closed`, `never` or `except:CODE`), which key ended
-it (`esc`, `shift-esc` or `ignored`) and how it ended. `--all` gives every entry a
+ran (`running`, `returned`, `closed`, `never` or `except:CODE`), the window in which
+it ended (`esc`, `shift-esc` or `ignored`) and how it ended. These windows do not
+prove which key caused completion: normal cleanup may continue after a key.
+`--all` gives every entry a
 fresh emulator process and writes reports under `tmp/games/catalog/`; `OUT`
 changes the directory and `CATALOG_FRAMES` the run (938 frames of 16 ms).
 
 `node Demo/Games/Test/Start.mjs` runs each entry in original TempleOS V5.03 under
-QEMU as well. `Start.HC` copies the entry's files, staged under 8.3 names, to the
+QEMU as well. `Start.mjs` copies the entry's files, staged under 8.3 names, to the
 paths the site writes with `CopySingle`, launches the game with the site's own
 `PopUp` script and puts its keys in `kbd.fifo2`, where the keyboard interrupt
 puts the bytes it reads. Every entry gets a freshly booted V5.03 and the same 15
-and 5 seconds. `--write` records all of them in `Demo/Games/Startup.json`, bound to
+and 10 seconds, defined once in `Install.mjs` and injected into `Start.HC`.
+`--write` records all of them in `Demo/Games/Startup.json`, bound to
 each entry's files and launch, the check's own sources and the site runtime, and
 `Startup.test.mjs` fails the build when any of those change. The Games window
 enables Run in TempleOS only for an entry that starts and quits as it does in
 V5.03. `running` means the task was alive after 15 seconds: it may be at a menu
 or an intro dialog (BigGuns' two PopUpOk dialogs take both keys, in V5.03 too).
-`ignored` entries are killed after the check. Gameplay is not compared.
+`ignored` entries are killed after the check. Gameplay and timing parity are not
+compared. The cleanup window allows native initialization after Main returns;
+Solomon's Temple, for example, restores AutoComplete while its original drawing
+callback is still active. In HEMU that completed 5.040 guest seconds after Esc,
+without a second key; the former five-second window misclassified it.
 
 The browser launcher also requires recorded startup evidence. Run
 `node Apps/Games/Games.browser.mjs --write`, then

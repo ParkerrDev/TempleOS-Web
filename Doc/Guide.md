@@ -52,23 +52,27 @@ input, display, sound and storage. It does not execute the DVD's 16-bit BIOS
 loader. [HEMU's runtime documentation](https://github.com/ParkerrDev/HEMU/blob/master/Kernel/README.md) covers the
 machine boundary, build, checks and supported behavior.
 
-Performance comes from three layers:
-- an **x86‑64 → WASM block JIT** (`hemu/Kernel/Jit.js`) that compiles hot guest code to native WASM at
-  runtime - the same trick TempleOS's own JIT plays, one level up;
-- **HLE** of the hottest render routines (the window compositor blit and the games' span
-  fillers), each shadow‑verified bit‑exact against the emulated version before activation;
-- a worker engine that runs the emulator off the main thread.
+HEMU executes guest instructions through an interpreter and an **x86-64 → WASM
+block JIT** (`hemu/Kernel/Jit.js`). TempleOS's own graphics functions execute
+through those paths; HEMU does not replace named drawing functions with its
+own implementations. The engine runs in workers so it does not block the page.
 
-The guest clock is paced to real time (the OS clock ticks at 1.00× and the games run at
-their designed ~30 fps), and keystroke timing feeds the OS's God apps with real entropy,
-exactly like the TSC sampling on real hardware.
+Imported full machine saves include their original engine; an older save may
+therefore retain its old drawing replacements. Restart uses the current engine
+while keeping saved C: files, rather than preserving the old running RAM state.
 
-The top FPS counter reads TempleOS's own `winmgr.fps`, resolved once from the guest's
-symbol metadata. Its update sequence detects stalls even if the host repeats an old
-frame. Two scalar reads travel with existing frame messages; the label checks twice
-per second and writes to the DOM only when the displayed value changes. Pausing shows
-zero and resuming waits for a fresh sample. Native editor previews use the worker's
-frame sequence for their separate FPS label, avoiding full-screen pixel hashing.
+Removing those replacements does not establish complete PC or cycle accuracy.
+The current machine still resumes prepared snapshots, observes completed frames
+through TempleOS's symbols, integrates mouse state with the guest, and applies
+requested display-rate settings. These boundaries are documented in HEMU.
+The guest clock follows host elapsed time; achievable rendering speed depends
+on the workload and host. Input timing reaches the emulated clock, without a
+claim that its entropy or timing matches physical hardware.
+
+The top FPS counter reads the digits painted in the last completed TempleOS
+frame. A covered label is unknown; repeated frames cannot invent new samples.
+Pausing retains the frozen frame's label. Direct-WASM editor previews use their
+own worker's frame sequence for a separate FPS label.
 
 The screen is always a whole number of device pixels per 8x8 character cell, so one letter has one
 shape everywhere. `FrameBuf.js` scales each frame itself with integer maths and hands the browser
@@ -238,7 +242,7 @@ Browser games open in a larger window and scale the 640x480 canvas to fit while 
 
 Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. HolyC-wasm supplies SettingsPush/SettingsPop and a draw task through its prelude; AutoComplete returns false because the browser runtime has no autocomplete task. The compiler also owns scan-code conversion and held-key ownership; the site routes DOM input to the active program. Browser compilation currently passes for HolyCraft, Snake, Babel, Volley, TicTacToe, Collision, ElephantWalk, Digits and B17. The first four also pass recorded worker-startup, advancing-frame and stop checks. The other five stay on Run in TempleOS until their browser runs are checked. The launcher requires both compilation and startup evidence; changing the program, compiler or browser runner invalidates that evidence. Startup does not establish input response or full gameplay parity. Run in TempleOS stays available for every package that passes the startup check below. Run `node Demo/Games/NativeGamesAudit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability. The separate [native game checks](../Demo/Games/Test/README.md) verify input, rendering and repeated-launch cleanup in original TempleOS and HEMU; every entry is also launched in original TempleOS V5.03 under QEMU and in HEMU, and Run in TempleOS is enabled only for those that start and quit the same way in both (`Demo/Games/Startup.json`); that is not gameplay proof.
 
-The editor's runner (`Apps/Editor/Worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `Apps/Games/HolyCraft.test.mjs`.
+The editor's runner (`hemu/holyc-wasm/src/runtime/worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `Apps/Games/HolyCraft.test.mjs`.
 
 `node Apps/Games/GameSrc.test.mjs` checks all 304 source files, byte preservation for the 64 files with embedded sprites, draft persistence, edited installations, restoration, partial-write recovery and OS restarts.
 
@@ -251,7 +255,7 @@ node Apps/Chat/Chat.test.mjs
 node Apps/Chat/ChatWorker.test.mjs     # the chat Worker in wrangler dev, on this machine only (needs npx)
 node Apps/Games/HolyCraft.test.mjs
 node Apps/Games/GameCapture.test.mjs
-node Apps/Editor/NativeClicks.test.mjs
+node hemu/holyc-wasm/tests/worker-input.mjs
 node Apps/Games/GameView.test.mjs
 node Apps/Editor/NativeProject.test.mjs
 node Adam/FrameBuf.test.mjs

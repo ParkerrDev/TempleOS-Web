@@ -29,7 +29,7 @@ export async function GameInstall(game,write)
 }
 
 //Seconds of guest time, the same in both machines.
-export const START_WAIT=15,START_QUIT=5,FRAME_SECONDS=0.016;
+export const START_WAIT=15,START_QUIT=10,FRAME_SECONDS=0.016;
 export const ESC=[0x01,0x81],SHIFT_ESC=[0x2A,0x01,0x81,0xAA];
 
 export async function GameFiles(game)

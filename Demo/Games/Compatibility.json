@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "runtimeSha256": "a6ac689e2a544e3ddea4952919c0fd8b3da2e3c78feb26c320d9c9b2138ebb4f",
+  "runtimeSha256": "637a7e1a8c64a88b7b741c29cf8ae6d369fc5ef7e06d460b20950c2a39e9153a",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
@@ -9,7 +9,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "3ee82dd618862df3e7e32336fa9486640218f19266effbc25898b0fac4a251e1"
+      "wasmSha256": "ab49d04714cc36640a99b968d06bac3ff42a8560b3e2e924aeb3f900546e50b2"
     },
     "toom": {
       "name": "TOOM",
@@ -27,7 +27,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "a2ed79cf2274d3884132189dea471dcaf4677ca4c032beb5339d3a3770bdd250"
+      "wasmSha256": "3365703cab67721b91308fe61ab21d8f8f3532d7cbbcef9f387b5ef698710ea9"
     },
     "Volley.HC": {
       "name": "Volley",
@@ -36,7 +36,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "434e2ee3e7fe281e585f97b7299d664b9ced7c7450919ce8cc77adcc85846363"
+      "wasmSha256": "3c3c752ddbc4acd67565aa82f4fde1071d0772bcfd50bd24c13b11854b7cf5ce"
     },
     "Snake.HC": {
       "name": "Snake",
@@ -45,7 +45,7 @@
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "e2fe83d1dbde2b8c62096c4dc647e52582ae9d5c4d30eaaebf338c293ef7c98d"
+      "wasmSha256": "07663e95e57967687aa5ef5f6c8df5bb0a6927710dabada7efefff0a7e36a778"
     },
     "FNAF.HC": {
       "name": "FNAF",
@@ -171,7 +171,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "6a6439e145942cda41c820cffc475b0f66135e1bb6aed5b63c5e29b139eb44ba"
+      "wasmSha256": "f3c19a728e27b91c53889df7f1ca435776ccdecac508ee79f67f170df2f178d4"
     },
     "tinker-Whap": {
       "name": "Whap",
@@ -279,7 +279,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "50cac75927c7c1d41506477b46637dcb403bd1568ed8fe220d0489799fc56da3"
+      "wasmSha256": "a6da927181c0a6408f6b560169ceeeec58fce39e30c150ff5c25783ee16eefce"
     },
     "tinker-RainDrops": {
       "name": "RainDrops",
@@ -306,7 +306,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "3ea3b0026a2f4300e582fabc980de59ae6d6427e71c91197abc7aad30279f913"
+      "wasmSha256": "37979fc44de4f3d1c055ab74443a0e81f06038b190833d91e7888fc104222c8a"
     },
     "tinker-CharDemo": {
       "name": "CharDemo",
@@ -324,7 +324,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "d8c4a30ffad21298cb32d4238ceb6d710a20396c9f774d140e49a7f6f31265c6"
+      "wasmSha256": "cc497b63d92f099d40fb2590bb2f2893518c47ba9fdec2bfa2b7872073055f42"
     },
     "tinker-Stadium": {
       "name": "Stadium",
@@ -495,7 +495,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "93b6bf62130bc8f35f9d05d8cbfa55649703d35e9c94a232d4712927bd23df36"
+      "wasmSha256": "b71486a61be236ac26365342b3861c6c8713683d763c6c97341faf43c3a26d2d"
     },
     "library-Coach": {
       "name": "Coach",

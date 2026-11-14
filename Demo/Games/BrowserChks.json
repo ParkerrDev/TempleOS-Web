@@ -1,7 +1,7 @@
 {
   "format": 1,
-  "compilerSha256": "a6ac689e2a544e3ddea4952919c0fd8b3da2e3c78feb26c320d9c9b2138ebb4f",
-  "runnerSha256": "0de312a5182df38f57f37ebe6c8f7cb3346fee2c82261ba4a4ecbd764cc8d797",
+  "compilerSha256": "637a7e1a8c64a88b7b741c29cf8ae6d369fc5ef7e06d460b20950c2a39e9153a",
+  "runnerSha256": "cce4d7b6a86f66d982da748a1f10a59091d381ae6b485d3a3ec396ac37602cbd",
   "programs": {
     "HolyCraft.HC": {
       "sourceSha256": "019734ed0220d9ad548c1a6f24560d8a7f8e513ec861f54f4c93ec1544a59136",

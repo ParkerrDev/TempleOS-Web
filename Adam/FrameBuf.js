@@ -1,9 +1,5 @@
-//The 16 colors the guest starts with, gr_palette_std (Adam/Gr/GrPalette.HC),
-//and the 16 the page's CSS names. The guest sends any it changes.
-export const PALETTE=Object.freeze([
-  [0,0,0],[0,0,170],[0,170,0],[0,170,170],[170,0,0],[170,0,170],[170,85,0],
-  [170,170,170],[85,85,85],[85,85,255],[85,255,85],[85,255,255],[255,85,85],
-  [255,85,255],[255,255,85],[255,255,255]].map(Object.freeze));
+import {PALETTE} from "../hemu/holyc-wasm/src/runtime/palette.js";
+export {PALETTE};
 
 // Guest frames arrive as 640x480 palette indexes and are shown the way emulators call "sharp bilinear".
 // Nearest-neighbour scaling by anything but a whole number gives guest pixels uneven sizes: at 1.125, one row

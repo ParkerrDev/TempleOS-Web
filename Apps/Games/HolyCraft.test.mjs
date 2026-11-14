@@ -24,13 +24,7 @@ host.env.__host_msx=()=>input?.x()??320n;host.env.__host_msy=()=>input?.y()??240
 host.env.__host_key = () => keys.length?BigInt(keys.shift()):-1n;
 host.env.__host_budget = () => 12000000n; host.env.__host_dt = () => 16n; host.env.__host_time = () => 0n;
 if (!process.env.NOJIT) {
-  host.env.__jit_state = (rg, fl, rp) => { jit.jitState(rg, fl, rp, gBase, inst.exports.memory, inst.exports.RdMem, inst.exports.WrMem, inst.exports.RasterHLE); return 1n; };
-  host.env.__jit_compile = (rip) => BigInt(jit.jitCompile(Number(rip)));
-  host.env.__jit_run = (rip) => BigInt(jit.jitRun(Number(rip)));
-  host.env.__jit_x87 = (a, b, c) => jit.jitX87(a, b, c);
-  host.env.__jit_dispatch = (b) => BigInt(jit.jitDispatch(Number(b)));
-  host.env.__jit_chain = (a, b) => jit.jitChain(a, b); host.env.__jit_seg = (...a) => jit.jitSeg(...a.map(Number));
-  jit.jitReset();
+  Object.assign(host.env,jit.jitImports(()=>inst.exports));
 }
 inst = await WebAssembly.instantiate(mod, { env: host.env }); host.attach(inst); inst.exports.__rt_init();
 const dv = () => new DataView(inst.exports.memory.buffer);

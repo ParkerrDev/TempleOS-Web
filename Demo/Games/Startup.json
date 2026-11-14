@@ -1,5 +1,5 @@
 {
-  "scope": "Each Games entry installed and launched as the site does, in original TempleOS V5.03 under QEMU and in the site's HEMU: still running after 15 s of guest time, then whether Esc or Shift-Esc ends it and how it ends. Gameplay is not compared.",
+  "scope": "Each Games entry installed and launched as the site does, in original TempleOS V5.03 under QEMU and in the site's HEMU: still running after 15 s of guest time, then completion within 10 s after Esc or the subsequent Shift-Esc. These are observation windows, not proof of which key caused completion. Gameplay and timing parity are not compared.",
   "real": {
     "templeos": "V5.03",
     "diskSha256": "f8673e751d7e313b6552ac5688c31a4ea19148326a7d560b103217f004e1322a",
@@ -27,19 +27,19 @@
       }
     },
     "fixtureLoaderSha256": "b61d98bce6cfc8c963979f43b56c714872b9e3bc7c67453b78e348a9b6ad0b83",
-    "guestHarnessSha256": "0630bc86f9854260813d5d95dadfbebb898a4d005a8fad2e808c39c792fae1bd",
-    "machineRuntimeSha256": "4452bbfcb9a8be71f547b0455fa3cc3142cfb9fc9f76c3544f3dd9c7f5ab064a",
+    "guestHarnessSha256": "a15db5b9cd7b47dfe9db8f1f23c5d1278685be6837daf098ab350340e7814dad",
+    "machineRuntimeSha256": "f89f5f3a28d4a89439f18b34e8a45961889d39ed6e0318dbef55568ed4e32720",
     "siblings": [
-      "hemu https://github.com/ParkerrDev/HEMU b7b6bcf2c1de9f484b14dfb0f24bae5178caee2a"
+      "hemu https://github.com/ParkerrDev/HEMU d53a3f154d22dfd9f29d3c94dcd9ecf080e60795"
     ],
-    "compiler": "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm 233668811c54c212b9354c51e8107ec016b4cabc",
-    "engineSha256": "8467152abdd44ab9254251342a5f798f306cab6c7732b94bc50c1aa47a2c8f08"
+    "compiler": "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm 27496218ff1beb91345a7ca9b1987d1d3c1dfce6",
+    "engineSha256": "c040bff72788173418356a72281b6670d8edd69d9cc0a724a1ff9665f47571a7"
   },
   "inputs": {
-    "Demo/Games/Test/Start.HC": "a460698cbf6e50fcab7b59b732758ca69e93557699339a0530c553e112cb741e",
-    "Demo/Games/Test/Start.mjs": "05342b05a8d0d6220418be68808af39cba43551ed4e72d2fdb01d97d042fdb30",
+    "Demo/Games/Test/Start.HC": "2a33006accabad62f28559b584101a4c00e265601e15d549d4fa9afd0b5553b8",
+    "Demo/Games/Test/Start.mjs": "b8b317305fb2a83a586f3dc1461875f6d9bce95766e02c435d263d6efadee833",
     "Demo/Games/Test/Catalog.mjs": "e8818791ea03df24a244dcee436b2cacb9b3088bc75861af2a7aad185dc60654",
-    "Demo/Games/Test/Install.mjs": "21583eb444dd2a827ef19d80e7524ee7456e3b757574012ac3b8674fc3a12692",
+    "Demo/Games/Test/Install.mjs": "0cc8a92ad50347be2437cd4c29dfb8ffd7156d18c2c755ba2d6e41f1661f3751",
     "Apps/Games/GamePkgs.js": "28093d65b38a01f802addf9046011ebc8a5d2bcbdec517838aca31b1741ccd14",
     "Apps/Games/GameSrc.js": "52b9cb059a73b7f9c7696ee60f3fc03ebc9da94ecc53545c670229d3479946dc"
   },

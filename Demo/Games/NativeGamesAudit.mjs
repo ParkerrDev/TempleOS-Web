@@ -1,7 +1,7 @@
 import {readFile,writeFile} from "node:fs/promises";
 import {Hash,CompilerInputs,BrowserInputs} from "./Test/BrowserEvidence.mjs";
 import {gameProject} from "../../Apps/Games/GameSrc.js";
-import {compileNativeProject} from "../../Apps/Editor/Project.js";
+import {compileProject} from "../../hemu/holyc-wasm/src/project.js";
 import {GAMES} from "../../Apps/Games/GameCatalog.js";
 
 const ROOT=new URL("../../",import.meta.url),FILE=new URL(
@@ -33,7 +33,7 @@ for (const game of GAMES) {
     record={name:game.name,sourceSha256:Hash(JSON.stringify(project)),
       compile:false,browserStartup:false,gameplay:"unverified",templeos:"unverified"};
   try {
-    const result=compileNativeProject(project);
+    const result=compileProject(project);
     if (!WebAssembly.validate(result.bytes))
       throw new Error("Generated module failed WebAssembly validation.");
     record.compile=true;
