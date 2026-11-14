@@ -53,7 +53,7 @@ live RAM snapshot of the booted desktop, emulates just the hardware TempleOS tou
 (PIC/PIT/HPET/PS‑2/ATA/VGA‑DAC), and pulls input from the host each frame.
 
 Performance comes from three layers:
-- an **x86‑64 → WASM block JIT** (`Kernel/jit.js`) that compiles hot guest code to native WASM at
+- an **x86‑64 → WASM block JIT** (`Kernel/Jit.js`) that compiles hot guest code to native WASM at
   runtime - the same trick TempleOS's own JIT plays, one level up;
 - **HLE** of the hottest render routines (the window compositor blit and the games' span
   fillers), each shadow‑verified bit‑exact against the emulated version before activation;
@@ -82,7 +82,7 @@ pixels per cell, so the cost per frame stays bounded on any screen.
 |------|------|------|
 | `vendor/images/templeos-hd.qcow2.gz` | 41 MB | the installed TempleOS hard disk (FAT32 on C:), read on demand |
 | `hemu/live.bin.gz` | 10 MB | booted‑desktop RAM snapshot (instant boot) |
-| `build/hemu.wasm` | ~77 KB | the compiled emulator, built at deploy by `Kernel/build.mjs` |
+| `build/hemu.wasm` | ~77 KB | the compiled emulator, built at deploy by `Kernel/Build.mjs` |
 
 The desktop appears after the 10 MB snapshot loads; the disk image streams in the background
 for file I/O. (The `.gz` assets are decompressed in the browser.)
@@ -93,7 +93,7 @@ for file I/O. (The `.gz` assets are decompressed in the browser.)
 |---|---|---|
 | **TempleOS-web** (this) | the site: pages, search, video windows, converter, assets | deployed on Netlify |
 | [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | the HolyC→WASM compiler and its browser runtime | cloned into `./holyc-wasm` at build time |
-| [HEMU](https://github.com/ParkerrDev/HEMU) | the emulator itself - plain HolyC - and the booted-RAM snapshots | cloned into `./hemu` at build time and compiled into `./build` by `Kernel/build.mjs` |
+| [HEMU](https://github.com/ParkerrDev/HEMU) | the emulator itself - plain HolyC - and the booted-RAM snapshots | cloned into `./hemu` at build time and compiled into `./build` by `Kernel/Build.mjs` |
 | [HolyC-fmt](https://github.com/ParkerrDev/HolyC-fmt) | the HolyC formatter, written in HolyC (the Format button, `/Apps/Editor/Format.html`) | cloned into `./holyc-fmt` at build time |
 | [HolyCraft](https://github.com/ParkerrDev/HolyCraft) | the HolyCraft voxel game, in HolyC, for the browser and for TempleOS | cloned into `./holycraft` at build time |
 | [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline - its output is baked into `Apps/Search/Transcripts/` by `Apps/Search/TranscriptsMk.mjs` |
@@ -150,7 +150,7 @@ is served from localhost itself.
 | Path | What |
 |---|---|
 | `index.html` | the desktop page; with `_headers`, `netlify.toml`, `package.json` and `Siblings.txt` it is all the root holds |
-| `Kernel/` | the machine, HEMU in the browser: `build.mjs`, `compile.js`, `host.js`, the x86→WASM JIT (`jit.js`), guest execution and input, the disk reader and the two emulator workers (see `Kernel/README.md`); `Kernel/Desktop/` the machine alone in a page, `Kernel/Test/` the emulator harnesses, `Kernel/Snapshot/` the QEMU recipes that produce HEMU's boot snapshots |
+| `Kernel/` | the machine, HEMU in the browser: `Build.mjs`, `Compile.js`, `Host.js`, the x86→WASM JIT (`Jit.js`), guest execution and input, the disk reader and the two emulator workers (see `Kernel/README.md`); `Kernel/Desktop/` the machine alone in a page, `Kernel/Test/` the emulator harnesses, `Kernel/Snapshot/` the QEMU recipes that produce HEMU's boot snapshots |
 | `Adam/` | what every window uses: the host of the OS (`Os.js`), the window manager, keyboard, touch and mouse input, the frame scaler, the fonts and the shell's images |
 | `Apps/<Name>/` | one folder a window, with its module, pages, styles, HolyC, Worker, data and tests: `Chat` (with its two Cloudflare Workers, `ChatRoom/` and `Room/`), `Disk`, `Editor` (the in-browser HolyC editor: compiles with `holyc-wasm/src` and runs programs in its own worker), `Games`, `God`, `Help`, `Search` (Terry Search, the player page, the clip maker in `Clip/`, the transcripts and FFmpeg), `Settings`, `Sprites` and `Terry` |
 | `Demo/Games/` | the HolyC games and their catalog, the packages from elsewhere (`Upstream/`), TOOM (`Toom/`), and the tools and records that check them (`Test/`) |
@@ -170,7 +170,7 @@ browser. A folder named `Test` holds what only tests read. The site publishes `K
 ```bash
 git clone https://github.com/ParkerrDev/TempleOS-Web && cd TempleOS-Web
 while read dir url sha; do git clone -q $url $dir && git -C $dir checkout -q $sha; done <Siblings.txt
-node Kernel/build.mjs build   # compile the emulator into build/
+node Kernel/Build.mjs build   # compile the emulator into build/
 sh Misc/Test.sh               # the fast tests
 node Misc/Server.mjs          # http://localhost:8080, with _headers (and _redirects, if written)
 ```
@@ -216,9 +216,9 @@ Run plays the game beside its source using the same runner as Run in Browser. Yo
 
 Browser games open in a larger window and scale the 640x480 canvas to fit while preserving its aspect ratio. Capture mouse and Fullscreen are available inside the game window. HolyC Editor offers Fullscreen editor for the whole workspace and Fullscreen game for just its preview. Escape or Exit fullscreen restores the previous layout and releases the mouse. Fullscreen survives preview reruns and uses a viewport fallback when the browser does not support element fullscreen. Native input handles left/right button combinations and retains quick clicks between worker polls.
 
-Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. Each run compiles `Apps/Editor/Adam.HC` first, which gives the browser compiler SettingsPush, SettingsPop, AutoComplete and a window manager task that calls draw_it, so a game written for TempleOS runs unchanged. Browser compilation currently passes for HolyCraft, Snake, Babel, Volley, TicTacToe, Collision, ElephantWalk, Digits and B17. The first four also pass recorded worker-startup, advancing-frame and stop checks. The other five stay on Run in TempleOS until their browser runs are checked. The launcher requires both compilation and startup evidence; changing the program, compiler or browser runner invalidates that evidence. Startup does not establish input response or full gameplay parity. Run in TempleOS stays available for every package that passes the startup check below. Run `node Demo/Games/NativeGamesAudit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability. The separate [native game checks](Demo/Games/Test/README.md) verify input, rendering and repeated-launch cleanup in original TempleOS and HEMU; every entry is also launched in original TempleOS V5.03 under QEMU and in HEMU, and Run in TempleOS is enabled only for those that start and quit the same way in both (`Demo/Games/startup.json`); that is not gameplay proof.
+Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. Each run compiles `Apps/Editor/Adam.HC` first, which gives the browser compiler SettingsPush, SettingsPop, AutoComplete and a window manager task that calls draw_it, so a game written for TempleOS runs unchanged. Browser compilation currently passes for HolyCraft, Snake, Babel, Volley, TicTacToe, Collision, ElephantWalk, Digits and B17. The first four also pass recorded worker-startup, advancing-frame and stop checks. The other five stay on Run in TempleOS until their browser runs are checked. The launcher requires both compilation and startup evidence; changing the program, compiler or browser runner invalidates that evidence. Startup does not establish input response or full gameplay parity. Run in TempleOS stays available for every package that passes the startup check below. Run `node Demo/Games/NativeGamesAudit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability. The separate [native game checks](Demo/Games/Test/README.md) verify input, rendering and repeated-launch cleanup in original TempleOS and HEMU; every entry is also launched in original TempleOS V5.03 under QEMU and in HEMU, and Run in TempleOS is enabled only for those that start and quit the same way in both (`Demo/Games/Startup.json`); that is not gameplay proof.
 
-The editor's runner (`Apps/Editor/worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `Demo/Games/HolyCraftInput.test.mjs`.
+The editor's runner (`Apps/Editor/Worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `Demo/Games/HolyCraftInput.test.mjs`.
 
 `node Apps/Games/GameSrc.test.mjs` checks all 304 source files, byte preservation for the 64 files with embedded sprites, draft persistence, edited installations, restoration, partial-write recovery and OS restarts.
 

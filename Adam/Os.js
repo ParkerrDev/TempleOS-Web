@@ -396,7 +396,7 @@ $("touchBtn").addEventListener("click",function () {
   dispatchEvent(new Event("input-view-change"));
   releaseHeld();
 });
-{ // The mouse: the real TempleOS pointer. The cursor.png arrow (recolored white) rides the
+{ // The mouse: the real TempleOS pointer. The Cursor.png arrow (recolored white) rides the
   // pointer and mix-blend-mode:difference inverts the pixels under it - the browser equivalent
   // of the OS's ROP_XOR mouse. On automatically for desktop (mice); touch keeps its own UI.
   const xc = $("xcursor");
@@ -596,10 +596,10 @@ function EngineSpare(smp)
   for (const p of [spare.wasm,spare.sc,spare.manifest])
     p?.catch(()=>{});   //A boot that needs one again asks for it again.
   try {
-    spare.bsp=EarlyEngine()||new Worker("./Kernel/hemu-worker.js",{type:"module"});
+    spare.bsp=EarlyEngine()||new Worker("./Kernel/HemuWorker.js",{type:"module"});
     if (smp)
       for (k=1;k<SMP_N;k++)
-	spare.aps.push(new Worker("./Kernel/hemu-smp-worker.js",{type:"module"}));
+	spare.aps.push(new Worker("./Kernel/HemuSmpWorker.js",{type:"module"}));
   } catch (e) {
     spare.bsp?.terminate();
     for (const ap of spare.aps) ap.terminate();
@@ -620,7 +620,7 @@ const Settled=p=>p?p.catch(()=>undefined):Promise.resolve(undefined);
 function runWorker() {
   const generation=osGen,s=SpareTake(false);
   let worker, watchdog, alive = false;
-  try { worker = s?.bsp || new Worker("./Kernel/hemu-worker.js", { type: "module" }); } catch (e) { return false; }
+  try { worker = s?.bsp || new Worker("./Kernel/HemuWorker.js", { type: "module" }); } catch (e) { return false; }
   engine.kind = "worker"; engine.post = (m, t) => worker?.postMessage(m, t || []);
   const stop=()=>{clearTimeout(watchdog);worker?.terminate();worker=null;
     if(engine.stop===stop){speaker.Stop();engine.kind=null;notifyInput=()=>{};}};
@@ -665,7 +665,7 @@ function runWorker() {
   return true;
 }
 
-// ---- four cores, the desktop's default: the BSP is hemu-worker.js over a shared memory and
+// ---- four cores, the desktop's default: the BSP is HemuWorker.js over a shared memory and
 //      N-1 AP workers run RunCore beside it. The BSP speaks runWorker's messages. ----
 async function runSMP() {
   const generation=osGen,s=snapshotInfo?SpareTake(null):SpareTake(true);
@@ -711,7 +711,7 @@ async function runSMP() {
     if(!current())return false;
     const mem = new WebAssembly.Memory({ initial: 512, maximum: 8192, shared: true });
     ctrl=new SharedArrayBuffer(64);
-    bsp = s?.bsp || new Worker("./Kernel/hemu-worker.js", { type: "module" });
+    bsp = s?.bsp || new Worker("./Kernel/HemuWorker.js", { type: "module" });
     engine.kind="smp";
     engine.post=(m,t)=>{
       if(!current())return;
@@ -742,7 +742,7 @@ async function runSMP() {
     else diskMsg(m);
     };
     for (let k=1;k<sc.ncore;k++) {
-      const ap = s?.aps[k-1] || new Worker("./Kernel/hemu-smp-worker.js", { type: "module" });
+      const ap = s?.aps[k-1] || new Worker("./Kernel/HemuSmpWorker.js", { type: "module" });
       ap.onmessage = (e) => {
         if(!current())return;
         const m=e.data;

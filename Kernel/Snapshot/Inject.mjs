@@ -1,5 +1,5 @@
 import {readFileSync,openSync,writeSync,closeSync} from "node:fs";
-import {makeDisk,fat32Upload} from "../qcow2.js";
+import {makeDisk,fat32Upload} from "../QCow2.js";
 const [image,source]=process.argv.slice(2);
 if(!image||!source)throw Error("Usage: node Kernel/Snapshot/Inject.mjs PRIVATE.raw PROBE.HC");
 const disk=makeDisk(readFileSync(image));

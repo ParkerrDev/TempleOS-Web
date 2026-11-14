@@ -10,7 +10,7 @@ from RedSea import expand
 class CompressionTest(unittest.TestCase):
     def test_original_disc_fixtures(self):
         root = Path(__file__).parent / 'Test/RedSea'
-        for fixture in json.loads((root / 'manifest.json').read_text()):
+        for fixture in json.loads((root / 'Manifest.json').read_text()):
             with self.subTest(file=fixture['file']):
                 packed = (root / fixture['file']).read_bytes()
                 self.assertEqual(sha256(packed).hexdigest(), fixture['packedSha256'])

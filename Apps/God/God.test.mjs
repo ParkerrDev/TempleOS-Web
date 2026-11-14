@@ -29,8 +29,8 @@ fn.GodBitsIns(21n,0n);
 assert.equal(fn.GodBits(21n),0n);
 
 const root=new URL("./",import.meta.url),raw=await readFile(
-  new URL("kjv.txt",root)),lines=raw.toString().trimEnd().split("\n"),
-  idx=JSON.parse(await readFile(new URL("Bible/index.json",root)));
+  new URL("Kjv.txt",root)),lines=raw.toString().trimEnd().split("\n"),
+  idx=JSON.parse(await readFile(new URL("Bible/Index.json",root)));
 assert.equal(idx.sha256,createHash("sha256").update(raw).digest("hex"));
 assert.equal(idx.lines,lines.length);
 assert.equal(idx.books.length,66);

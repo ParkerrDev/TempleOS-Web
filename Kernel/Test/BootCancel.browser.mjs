@@ -4,7 +4,7 @@ import {createServer} from "node:http";
 import {once} from "node:events";
 import {chromium} from "playwright-core";
 import {ServeReq} from "../../Misc/Server.mjs";
-import {DesktopServer} from "./desktop.mjs";
+import {DesktopServer} from "./Desktop.mjs";
 import {BrowserMachine,MachineReady} from "./BrowserMachine.mjs";
 
 const root=new URL("../../",import.meta.url),site=createServer(ServeReq).listen(0,"127.0.0.1");

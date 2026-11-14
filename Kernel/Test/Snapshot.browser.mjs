@@ -100,7 +100,7 @@ try {
       assert.equal(await page.locator("#ulSnap").isEnabled(),true);
       await page.evaluate(()=>window.stockImportAlive="same machine");
       const rawChoosing=page.waitForEvent("filechooser");await page.locator("#ulSnap").click();
-      await(await rawChoosing).setFiles(new URL("Kernel/Test/Fixtures/legacy-smp.ram.gz",root).pathname);
+      await(await rawChoosing).setFiles(new URL("Kernel/Test/Fixtures/LegacySmp.ram.gz",root).pathname);
       await page.waitForFunction(()=>document.getElementById("diskStatus").textContent.includes("missing or mismatched CPU state"));
       assert.equal(await page.evaluate(()=>window.stockImportAlive),"same machine");
       assert.equal(await page.evaluate(async()=>(await import("/Adam/BootFile.js")).BootFileRead()),null);
@@ -143,7 +143,7 @@ try {
     assert.equal(saved.meta.version,cores===4&&!legacy?2:1);
     assert.equal(saved.meta.requiredBusProtocol,cores===4&&!legacy?1:undefined);
     if(legacy)assert.equal(saved.meta.engineHash,
-      JSON.parse(await readFile(new URL("Kernel/Test/Fixtures/legacy-smp.json",root),"utf8")).sha256);
+      JSON.parse(await readFile(new URL("Kernel/Test/Fixtures/LegacySmp.json",root),"utf8")).sha256);
     assert.equal(await page.locator("#dlSnap").isEnabled(),true);
     const choosing=page.waitForEvent("filechooser");
     await page.locator("#ulSnap").click();

@@ -2,15 +2,15 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {createHash} from "node:crypto";
 import {gunzipSync} from "node:zlib";
-import {createHemuHost} from "../host.js";
-import {makeDisk} from "../qcow2.js";
+import {createHemuHost} from "../Host.js";
+import {makeDisk} from "../QCow2.js";
 import {SnapshotSave} from "../Snapshot.js";
 
 export async function LegacySnapshot()
 {//Historical CPU and RAM become a full fixture; the live stock loader never guesses their pairing.
-  const meta=JSON.parse(readFileSync(new URL("./Fixtures/legacy-smp.json",import.meta.url))),
-    wasm=readFileSync(new URL("./Fixtures/legacy-smp.wasm",import.meta.url)),
-    gz=readFileSync(new URL("./Fixtures/legacy-smp.ram.gz",import.meta.url)),
+  const meta=JSON.parse(readFileSync(new URL("./Fixtures/LegacySmp.json",import.meta.url))),
+    wasm=readFileSync(new URL("./Fixtures/LegacySmp.wasm",import.meta.url)),
+    gz=readFileSync(new URL("./Fixtures/LegacySmp.ram.gz",import.meta.url)),
     diskGz=readFileSync(new URL("../../vendor/images/templeos-hd.qcow2.gz",import.meta.url)),
     Hash=b=>createHash("sha256").update(b).digest("hex");
   assert.equal(Hash(wasm),meta.sha256);assert.equal(Hash(gz),meta.ramSha256);

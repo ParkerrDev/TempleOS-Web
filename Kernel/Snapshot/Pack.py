@@ -44,7 +44,7 @@ def Pack(base,one,four,out):
                     patch=b"".join(struct.pack("<I",i//512)+new[i:i+512] for i in range(0,len(old),512) if old[i:i+512]!=new[i:i+512])
             (out/overlay).write_bytes(patch)
             shutil.copyfile(folder/"registers.txt",out/registers)
-            subprocess.run(["node",str(Path(__file__).with_name(f"bake-regs{suffix}.mjs")),str(out/registers),str(out/f"snapregs{suffix}.HC")],check=True)
+            subprocess.run(["node",str(Path(__file__).with_name("BakeRegsSmp.mjs" if cores==4 else "BakeRegs.mjs")),str(out/registers),str(out/f"snapregs{suffix}.HC")],check=True)
             record={"cores":cores,"ram":ram,"ramBytes":402653184,"ramSha256":Hash(folder/"live.bin"),
                 "gzipSha256":Hash(out/ram),"registers":registers,"registerSha256":Hash(out/registers),
                 "sourceSha256":Hash(out/f"snapregs{suffix}.HC"),"parserSha256":Hash(Path(__file__).with_name("Regs.mjs")),"overlay":overlay,"overlayBytes":len(patch),

@@ -17,7 +17,7 @@ export async function gameFile(file) {
   return (await downloads.get(file.url)).slice(0);
 }
 export async function gameCatalog() {
-  if (!catalogPromise) catalogPromise=fetch(new URL('Demo/Games/catalog.json',SITE),{cache:'no-cache'}).then(async r=>{
+  if (!catalogPromise) catalogPromise=fetch(new URL('Demo/Games/Catalog.json',SITE),{cache:'no-cache'}).then(async r=>{
     if(!r.ok)throw new Error(`Game catalog could not load (${r.status}).`);
     const c=await r.json();if(c.version!==1||!Array.isArray(c.packages))throw new Error('Unsupported game catalog.');return c;
   }).catch(e=>{catalogPromise=null;throw e;});

@@ -50,7 +50,7 @@ exclusive instruction cannot produce a resumable snapshot. Registered owner
 exit/error and cancellation need deterministic controller notification; a
 bounded wait is a final fail-stop fallback, not evidence of normal progress.
 
-`bus.test.mjs` currently proves forced shared-reader blocking, actual ordinary
+`Bus.test.mjs` currently proves forced shared-reader blocking, actual ordinary
 WASM loads and raw host writes against a paused half-write, simultaneous
 upgrades, nested access and capture handoff after simulated instruction
 retirement/RunCore unwind. Unguarded negative controls deterministically see
@@ -58,13 +58,13 @@ or cause torn values. Worker termination while owning/upgrading and a thrown
 exclusive callback fail-stop without stealing ownership. Late continuations
 are refused during serialization and work again after thaw.
 
-`bus-hemu.test.mjs` pauses actual AtomPart after reading a cross-word operand,
+`BusHemu.test.mjs` pauses actual AtomPart after reading a cross-word operand,
 using a test-only inserted import absent from production. Against LOCK INC
 from 1, an interpreter MOV, compiled MOV and real guestexec wr64 all wait until
 the instruction retires, then write 10. Disabling their guard makes each
 negative control lose its write, producing 2; no legal ordering of those two
 instructions produces 2. Four real worker instances share the same WASM
-memory. `atom-split.test.mjs` also compares 2,064 coordinated SMP executions
+memory. `AtomSplit.test.mjs` also compares 2,064 coordinated SMP executions
 against original V5.03/physical x86 vectors while preserving uncoordinated
 refusal, neighboring bytes, defined flags and interrupt deferral.
 
@@ -75,11 +75,11 @@ instead leaves 10,6, which no legal ordering of the locked exchange and those
 two peer stores permits. This verifies exclusive ownership for aligned pairs;
 the unaligned-field predicate alone would not protect them.
 
-`worker-bus.test.mjs` runs four real TempleOS tasks with 1,024 split LOCK INC
+`WorkerBus.test.mjs` runs four real TempleOS tasks with 1,024 split LOCK INC
 operations and 1,024 complementary-pair CMPXCHG16B increments.
-`worker-snapshot.test.mjs` with HEMU_BUS_PROTOCOL=1 preserves CPU,
+`WorkerSnapshot.test.mjs` with HEMU_BUS_PROTOCOL=1 preserves CPU,
 devices, pixels, palette, disk, active game and settings across full restore.
-The same option on worker-legacy-fault tests the actual historical 7ea5d3e
+The same option on WorkerLegacyFault.test.mjs tests the actual historical 7ea5d3e
 embedded module: missing polling capability prevents exclusive ownership,
 and its version-1 full save and retained native AP fault still work.
 
@@ -105,7 +105,7 @@ machine or start a second set of workers.
 
 A fully coordinated save has requiredBusProtocol:1 and mandatory header
 version 2 within the existing HEMUSNP1 envelope. The actual unmodified
-version-1 decoder (fixture Snapshot-v1.mjs, Web b0d51bf) rejects version 2.
+version-1 decoder (fixture SnapshotV1.mjs, Web b0d51bf) rejects version 2.
 The new loader reads both versions, verifies the embedded module's polling
 imports and rejects unsupported ownership before memory growth/restoration.
 SnapshotOpen/Inspect(bytes,{busProtocol}) default to protocol 0, so existing
@@ -122,7 +122,7 @@ format; it does not silently introduce a second lock or protocol version.
 
 `Kernel/Test/Snapshot.browser.mjs` verifies real page one/four-core export, import,
 reload and restart, including exact displayed RGBA/FPS and the mandatory
-version-2 header. `desktop-lifecycle.test.mjs` covers the same desktop lifecycle,
+version-2 header. `DesktopLifecycle.test.mjs` covers the same desktop lifecycle,
 native CPU faults and the historical embedded engine's version-1 safe refusal.
 `HEMU_LEGACY=1 node Kernel/Test/Snapshot.browser.mjs` also restores that actual older
 embedded engine through the page's export/import/reload/restart UI.

@@ -1,5 +1,5 @@
 //Starts a game the way the site's Games window does and says how it went.
-//The launch is the site's own, from Kernel/guestexec.js: $LK,"PopUp",A="MN:PopUp"$
+//The launch is the site's own, from Kernel/GuestExec.js: $LK,"PopUp",A="MN:PopUp"$
 //with no parent, so the game's task hangs off Seth and nothing waits on it.
 //Keys go in where $LK,"KbdPktRead",A="MN:KbdPktRead"$ puts the bytes it reads.
 

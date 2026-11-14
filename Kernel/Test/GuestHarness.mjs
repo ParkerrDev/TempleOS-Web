@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import {compileHemu} from "../compile.js";
-import {createHemuHost} from "../host.js";
-import {createGuestExec} from "../guestexec.js";
-import * as jit from "../jit.js";
+import {compileHemu} from "../Compile.js";
+import {createHemuHost} from "../Host.js";
+import {createGuestExec} from "../GuestExec.js";
+import * as jit from "../Jit.js";
 import {KeyQueue} from "../KeyQueue.js";
 import {SnapshotRead,DiskRead} from "./Fixtures.mjs";
 

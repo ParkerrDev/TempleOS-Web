@@ -16,8 +16,8 @@ const web=resolve(process.env.TEMPLEOS_WEB),out=resolve(process.env.OUT||'/tmp/t
   fileHashes=Object.fromEntries(files.map(f=>[f.path,hash(f.bytes)])),results=[],
   driverSha256=hash(readFileSync(new URL('module-worker.test.mjs',import.meta.url))),
   cores=process.env.CORES?[Number(process.env.CORES)]:[1,4],
-  runtimeNames=['Kernel/jit.js','Kernel/hemu-worker.js','Kernel/hemu-smp-worker.js','Kernel/guestexec.js',
-    'Kernel/guestinput.js','Kernel/KeyQueue.js','Kernel/Test/WorkerHost.mjs','Kernel/Test/WorkerShim.mjs',
+  runtimeNames=['Kernel/Jit.js','Kernel/HemuWorker.js','Kernel/HemuSmpWorker.js','Kernel/GuestExec.js',
+    'Kernel/GuestInput.js','Kernel/KeyQueue.js','Kernel/Test/WorkerHost.mjs','Kernel/Test/WorkerShim.mjs',
     'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
     'Kernel/Stock.js','vendor/images/templeos-hd.qcow2.gz'],
   runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));

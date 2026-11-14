@@ -11,7 +11,7 @@
     html, body { margin:0; height:100%; background:#000; overflow:hidden; }
     body { display:flex; align-items:center; justify-content:center; font-family:'TempleOS',monospace; }
     #screen { display:block; width:min(640px,100vw,calc(100vh * 4 / 3)); height:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; }
-    /* app.js needs these elements to exist, but the player only shows the screen */
+    /* App.js needs these elements to exist, but the player only shows the screen */
     #editor, #console, #demoSelect, #runBtn, #stopBtn, #status { position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0; pointer-events:none; }
     #err { display:none; color:#fff; padding:24px; font-size:15px; line-height:1.5; max-width:600px; }
     #err b { color:yellow; }
@@ -44,12 +44,12 @@
       }
     } catch (e) { fail("Couldn't load " + game + ": " + e.message); }
     if (src) {
-      try { await import("../Editor/app.js"); } catch (e) { fail("Failed to load the HolyC runtime: " + e.message); }
+      try { await import("../Editor/App.js"); } catch (e) { fail("Failed to load the HolyC runtime: " + e.message); }
       const ed = document.getElementById("editor");
       const t0 = Date.now();
-      (function go() {                                   // app.js exposes window.__holycEditor when ready
+      (function go() {                                   // App.js exposes window.__holycEditor when ready
         if (window.__holycEditor) {
-          ed.value = src; ed.dispatchEvent(new Event("input"));   // set OUR game source (overriding app.js's default demo)
+          ed.value = src; ed.dispatchEvent(new Event("input"));   // set OUR game source (overriding App.js's default demo)
           if (window.__holycEditor.isRunning()) window.__holycEditor.stop();
           window.__holycEditor.run();                              // run() captures editor.value synchronously
           document.getElementById("screen").focus();

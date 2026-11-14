@@ -29,7 +29,7 @@ try {
       window.Worker=class extends Base {
         constructor(...args) {
           super(...args);
-          this.guestWorker=/\/Kernel\/hemu-(smp-)?worker\.js$/.test(new URL(args[0],location.href).pathname);
+          this.guestWorker=/\/Kernel\/Hemu(Smp)?Worker\.js$/.test(new URL(args[0],location.href).pathname);
           if(!this.guestWorker)return;
           this.addEventListener("message",({data:m})=>{
             if (m.cmd=="frame") window.guestFrames++;

@@ -10,7 +10,7 @@ const hash=b=>createHash('sha256').update(b).digest('hex');
 const sha=async path=>hash(await readFile(path));
 const main=resolve(upstream,'TerryOriginal/TempleOS.ISO'),sup=resolve(upstream,'TerryOriginal/TOS_Supplemental1.ISO.C');
 const tinker=resolve(upstream,'TinkerOS');
-const catalog=JSON.parse(await readFile(resolve(root,'Demo/Games/catalog.json')));
+const catalog=JSON.parse(await readFile(resolve(root,'Demo/Games/Catalog.json')));
 const evidence=[];
 async function compare(name,original,current){
  assert((await stat(original)).isFile());
@@ -37,5 +37,5 @@ evidence.push({name:toom.name,author:toom.credit.author,source:toom.credit.sourc
 const archives=[];
 for(const name of ['TempleOS.ISO','TOS_Supplemental1.ISO.C','TOS_Supplemental2.ISO.C','TOS_Supplemental3.ISO.C'])archives.push({url:'https://templeos.org/Downloads/'+name,sha256:await sha(resolve(upstream,'TerryArchives',name))});
 for(const name of ['Ezekiel.ISO_.zip','LordofHostsv3.ISO_(1).zip','Temple.ISO_.C(1).zip'])archives.push({url:'https://github.com/austings/GamesMirror/blob/main/'+name,sha256:await sha(resolve(upstream,'AustinGames',name))});
-await writeFile(resolve(root,'Demo/Games/provenance.json'),JSON.stringify({tinkerRevision:catalog.sources.TinkerOS.revision,archives,evidence},null,2)+'\n');
+await writeFile(resolve(root,'Demo/Games/Provenance.json'),JSON.stringify({tinkerRevision:catalog.sources.TinkerOS.revision,archives,evidence},null,2)+'\n');
 console.log('Verified '+evidence.length+' game origins against official discs and author repositories.');

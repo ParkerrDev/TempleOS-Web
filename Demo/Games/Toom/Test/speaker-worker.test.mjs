@@ -10,7 +10,7 @@ const web=resolve(process.env.TEMPLEOS_WEB||root),out=resolve(process.env.OUT||'
 mkdirSync(out,{recursive:true});
 const {HemuBoot,ReadyWait,FramesWait,TextRow}=await import(pathToFileURL(resolve(web,'Kernel/Test/WorkerHost.mjs')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const runtimeNames=['Kernel/jit.js','Kernel/hemu-worker.js','Kernel/hemu-smp-worker.js','Kernel/guestexec.js',
+const runtimeNames=['Kernel/Jit.js','Kernel/HemuWorker.js','Kernel/HemuSmpWorker.js','Kernel/GuestExec.js',
   'Kernel/Test/WorkerHost.mjs','Kernel/Test/WorkerShim.mjs','hemu/live.bin.gz','hemu/live-smp.bin.gz',
   'vendor/images/templeos-hd.qcow2.gz'];
 const runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));

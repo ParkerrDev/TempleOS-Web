@@ -1,0 +1,58 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {Worker} from "node:worker_threads";
+import {HemuBoot,ReadyWait} from "./WorkerHost.mjs";
+import {SnapshotInspect} from "../Snapshot.js";
+
+const Request=(h,m,p,ms=30000)=>{const wait=h.Wait(p,ms);h.Post(m);return wait;};
+let h;
+try {
+  h=await HemuBoot({smp:4,busProtocol:1,rate:60,patches:false});
+  assert.equal((await ReadyWait(h,20000)).ok,true);
+  const ready=h.msgs.find(m=>m.cmd==="busReady")||await h.Wait(m=>m.cmd==="busReady",10000);
+  assert.deepEqual(ready,{cmd:"busReady",version:1,ready:true});
+  if(!h.msgs.some(m=>m.cmd==="smpReady"))await h.Wait(m=>m.cmd==="smpReady",10000);
+  if(!h.msgs.some(m=>m.cmd==="diskInfo"&&m.ok))await h.Wait(m=>m.cmd==="diskInfo"&&m.ok,30000);
+  for(const name of ["BusGuest","Cmp16Guest"]) {
+    const result=await Request(h,{cmd:"osExec",id:name,target:"adam",
+      src:readFileSync(new URL(`./${name}.HC`,import.meta.url),"latin1")},m=>m.cmd==="fileResult"&&m.id===name);
+    assert.equal(result.ok,true,result.msg);
+  }
+  assert.ok(!h.apMsgs.some(m=>m.cmd==="error"));
+  await Request(h,{cmd:"pause",value:true},m=>m.cmd==="paused"&&m.value);
+  const saved=await Request(h,{cmd:"exportSnapshot"},m=>m.cmd==="exportResult",60000);
+  assert.equal(saved.ok,true,saved.msg);
+  assert.equal((await SnapshotInspect(saved.buf,{busProtocol:1})).meta.requiredBusProtocol,1);
+  await h.Stop();h=null;
+  await assert.rejects(()=>HemuBoot({snapshot:saved.buf}),/requires shared RAM protocol 1/);
+  h=await HemuBoot({snapshot:saved.buf,busProtocol:1,patches:false});
+  await h.Wait(m=>m.cmd==="restored",30000);
+  assert.ok(h.msgs.some(m=>m.cmd==="guestReady"&&m.restored&&m.diskReady&&!m.diskPending));
+  await Request(h,{cmd:"pause",value:false},m=>m.cmd==="paused"&&!m.value);
+  const resumed=await Request(h,{cmd:"osExec",id:"restored-cas",target:"adam",src:"Cmp16Guest;"},
+    m=>m.cmd==="fileResult"&&m.id==="restored-cas");
+  assert.equal(resumed.ok,true,resumed.msg);
+  assert.ok(!h.apMsgs.some(m=>m.cmd==="error"));
+  await h.Stop();h=null;
+  for(const core of [0,1]) {
+    const memory=new WebAssembly.Memory({initial:512,maximum:8192,shared:true}),
+      ctrl=new SharedArrayBuffer(64),sentinel=new Uint8Array(memory.buffer),
+      url=new URL(core?"../HemuSmpWorker.js":"../HemuWorker.js",import.meta.url),
+      worker=new Worker(new URL("./WorkerShim.mjs",import.meta.url),{workerData:{url:url.href}});
+    sentinel[0]=0xA5;sentinel[sentinel.length-1]=0x5A;
+    try {
+      const error=new Promise((resolve,reject)=>{
+        const timer=setTimeout(()=>reject(new Error("missing early refusal")),10000);
+        worker.on("message",m=>{if(m.cmd==="error"){clearTimeout(timer);resolve(m);}});
+      });
+      worker.postMessage(core?{cmd:"init",core,mem:memory,ctrl,requiredBusProtocol:1,sc:{ncore:4}}:
+        {cmd:"init",gz:saved.buf,smp:{mem:memory,ctrl,ncore:4}});
+      assert.match((await error).msg,/requires shared RAM protocol 1/);
+      assert.equal(memory.buffer.byteLength,sentinel.length);
+      assert.equal(sentinel[0],0xA5);assert.equal(sentinel[sentinel.length-1],0x5A);
+      assert.equal(sentinel.subarray(1,-1).some(v=>v!==0),false,"refusal precedes WASM initialization");
+      assert.equal(new Int32Array(ctrl).some(v=>v!==0),false);
+    } finally {await worker.terminate();}
+  }
+  console.log("Four real TempleOS tasks complete 1,024 split LOCK INC operations and 1,024 128-bit CAS increments, repeated after full restore; the version-2 save refuses an uncoordinated controller, BSP and AP before memory/control mutation.");
+} finally {await h?.Stop();}

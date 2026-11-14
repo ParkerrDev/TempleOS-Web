@@ -36,11 +36,11 @@ Checks (Node, ffmpeg/ffprobe and Chromium installed):
 
 ```
 npm run test:clip
-HOLYC_WASM=/path/to/HolyC-wasm node Apps/Search/Clip/Test/native.mjs
-HOLYC_WASM=/path/to/HolyC-wasm node Apps/Search/Clip/Test/mkv-native.mjs
-node Apps/Search/Clip/Test/archive.mjs
-node Apps/Search/Clip/Test/archive.mjs mkv
-node Apps/Search/Clip/Test/archive.mjs webm
+HOLYC_WASM=/path/to/HolyC-wasm node Apps/Search/Clip/Test/Native.mjs
+HOLYC_WASM=/path/to/HolyC-wasm node Apps/Search/Clip/Test/MkvNative.mjs
+node Apps/Search/Clip/Test/Archive.mjs
+node Apps/Search/Clip/Test/Archive.mjs mkv
+node Apps/Search/Clip/Test/Archive.mjs webm
 ```
 
 The archive commands read real videos over HTTP; they are optional network

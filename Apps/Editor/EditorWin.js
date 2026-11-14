@@ -1,5 +1,5 @@
 //The HolyC editor: HolyC compiled to WebAssembly and run in a worker
-//(Apps/Editor/app.js, loaded on first open), and the window games run in, which
+//(Apps/Editor/App.js, loaded on first open), and the window games run in, which
 //shares the editor's screen and runner.
 import {WinAdd,WinRaise} from "../../Adam/WinMgr.js";
 import {os_game,OsHomeWrite} from "../../Adam/Os.js";
@@ -142,12 +142,12 @@ export const ed_view = setupGameViews({ release: () => os_game.ed?.releaseMouse(
 
 const ov = document.getElementById("editorOverlay");
 const closeBtn = document.getElementById("editorClose");
-// shared, memoized loader for the HolyC runtime (Apps/Editor/app.js) - used by the editor AND
+// shared, memoized loader for the HolyC runtime (Apps/Editor/App.js) - used by the editor AND
 // the Games launcher (which drives the same compile+worker+canvas+input machinery).
 let appPromise = null, ranDefault = false;
 const loadEditorApp = () => {
-  if (!appPromise) appPromise = import("./app.js")
-    .then(() => { os_game.ed = window.__holycEditor; })   // Apps/Editor/app.js publishes itself there
+  if (!appPromise) appPromise = import("./App.js")
+    .then(() => { os_game.ed = window.__holycEditor; })   // Apps/Editor/App.js publishes itself there
     .catch((e) => { appPromise = null; const s = document.getElementById("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); throw e; });
   return appPromise;
 };

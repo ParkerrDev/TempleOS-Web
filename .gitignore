@@ -9,7 +9,7 @@ TerryADavis-archive-transcriber/
 /hemu
 /holyc-fmt
 /holycraft
-# the compiled emulator (hemu.wasm, hemu-smp.wasm, hemu-smp.json): node Kernel/build.mjs
+# the compiled emulator (hemu.wasm, hemu-smp.wasm, hemu-smp.json): node Kernel/Build.mjs
 /build/
 # written by Misc/Cdn/OffloadRedirects.mjs during the Netlify build
 /_redirects

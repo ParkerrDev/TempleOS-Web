@@ -7,8 +7,8 @@ TOOM, Babel, Volley and Snake.
 
 Authorship is explicit in `GameLib.js` and `GameCredits.js`. Distributing a
 TempleOS game in TinkerOS does not make TheTinkerer its original author.
-`provenance.json` records original-file hashes, distribution-file hashes, pinned
-revisions, introducing commits and archive checksums. `catalog.json` records every
+`Provenance.json` records original-file hashes, distribution-file hashes, pinned
+revisions, introducing commits and archive checksums. `Catalog.json` records every
 installed file's checksum, including any compatibility adapter.
 
 | Author | Included collections | Evidence |
@@ -39,7 +39,7 @@ games by the three requested authors.
 1. Clone `tinkeros/TinkerOS`, `austings/MarioClone`,
    `austings/MaliciousTestimonies`, and `austings/GamesMirror` into
    `../.work/upstream/{TinkerOS,MarioClone,MaliciousTestimonies,AustinGames}`.
-   Check out the revisions recorded in `catalog.json` and `provenance.json`.
+   Check out the revisions recorded in `Catalog.json` and `Provenance.json`.
 2. Download TempleOS.ISO and TOS_Supplemental1/2/3.ISO.C from the official download
    directory into `../.work/upstream/TerryArchives`.
 3. Run `python3 Demo/Games/GameArchivesExtract.py`. It checks archive hashes, decodes

@@ -14,7 +14,7 @@ for t in $(git ls-files '*.test.mjs'); do
 done
 node Demo/Games/GamesVerify.mjs
 node Demo/Games/Toom/Test/Package.mjs
-node Kernel/Test/stock-segments.mjs
+node Kernel/Test/StockSegments.mjs
 node Demo/Games/NativeGamesAudit.mjs --check
-node Demo/Games/Test/evidence.test.mjs
-node Demo/Games/Test/startup.test.mjs
+node Demo/Games/Test/Evidence.test.mjs
+node Demo/Games/Test/Startup.test.mjs

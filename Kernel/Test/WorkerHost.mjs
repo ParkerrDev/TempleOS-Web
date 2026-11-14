@@ -1,7 +1,7 @@
 import {StockIdentify,StockModuleCheck} from "../Stock.js";
 //Boots the engine worker under Node as the page does and keeps what it sends.
-//Single core: one Kernel/hemu-worker.js. SMP: that worker as core 0 over a
-//shared memory, and Kernel/hemu-smp-worker.js for each other core.
+//Single core: one Kernel/HemuWorker.js. SMP: that worker as core 0 over a
+//shared memory, and Kernel/HemuSmpWorker.js for each other core.
 import {Worker} from "node:worker_threads";
 import {readFileSync} from "node:fs";
 import {SnapshotInspect} from "../Snapshot.js";
@@ -136,7 +136,7 @@ export async function HemuBoot(opt)
     StockModuleCheck(module,found.capture,manifest);
   }
   const features={waitAsync:opt.waitAsync,idleProbe:opt.idleProbe,webWorker:opt.webWorker};
-  h.workers.push(WorkerNew("Kernel/hemu-worker.js"+(opt.nojit?"?nojit":""),opt.fetchHold,features));
+  h.workers.push(WorkerNew("Kernel/HemuWorker.js"+(opt.nojit?"?nojit":""),opt.fetchHold,features));
   h.workers[0].on("message",MsgIn);
   h.workers[0].on("error",function WorkerErr(e) {console.log("worker threw: "+e.stack);});
   h.workers[0].on("error",()=>{if(opt.busProtocol===BUS_VERSION&&h.ctrl)BusStop(h.ctrl);});
@@ -151,7 +151,7 @@ export async function HemuBoot(opt)
     wasm_bytes=saved?saved.wasm:readFileSync(new URL(wasm,SITE));
     if (saved) sc.globals.g_ipi_pending=saved.meta.ipiAddr;
     for (k=1;k<opt.smp;k++) {
-      ap=WorkerNew("Kernel/hemu-smp-worker.js",[],features);
+      ap=WorkerNew("Kernel/HemuSmpWorker.js",[],features);
       ap.on("error",()=>{if(opt.busProtocol===BUS_VERSION)BusStop(new Int32Array(ctrl));});
       ap.on("exit",()=>{if(opt.busProtocol===BUS_VERSION&&!h.stopping)BusStop(new Int32Array(ctrl));});
       ap.on("message",function ApMsg(m) {

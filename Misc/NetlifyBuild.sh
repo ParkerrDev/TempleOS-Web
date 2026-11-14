@@ -11,6 +11,6 @@ while read dir url sha; do
   git -C $dir checkout -q FETCH_HEAD
 done <Siblings.txt
 sh Misc/Test.sh
-node Kernel/build.mjs build
+node Kernel/Build.mjs build
 node Misc/Cdn/OffloadRedirects.mjs
 node Misc/Server.mjs Site

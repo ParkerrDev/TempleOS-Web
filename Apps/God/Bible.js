@@ -12,7 +12,7 @@ export function BibleReader(Fetch=fetch)
   async function Index()
   {
     if (!index)
-      index=Json("index.json").catch(function (e) {index=null;throw e;});
+      index=Json("Index.json").catch(function (e) {index=null;throw e;});
     return index;
   }
   async function Passage(bits)

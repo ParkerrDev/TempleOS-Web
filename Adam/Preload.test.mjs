@@ -9,7 +9,7 @@ const root=new URL("../",import.meta.url),page=new URL("index.html",root),
   html=readFileSync(page,"utf8"),
   START="  <!-- modules the page's scripts import: Adam/Preload.test.mjs -->\n",
   IMPORT=/^\s*(?:import|export)\s+(?:[^'"]*?\sfrom\s*)?["'](\.[^"']+)["']/gm,
-  WORKERS=["Kernel/hemu-worker.js","Kernel/hemu-smp-worker.js","Kernel/StockDiskWorker.js",
+  WORKERS=["Kernel/HemuWorker.js","Kernel/HemuSmpWorker.js","Kernel/StockDiskWorker.js",
     "Kernel/StockInflateWorker.js"];
 
 function Graph(entries)

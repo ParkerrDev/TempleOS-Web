@@ -5,7 +5,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright-core';
 import {BrowserInputs,Hash,root} from '../../Demo/Games/Test/BrowserEvidence.mjs';
 
-const write=process.argv.includes('--write'),file=new URL('Demo/Games/browser-checks.json',root);
+const write=process.argv.includes('--write'),file=new URL('Demo/Games/BrowserChks.json',root);
 const inputs=await BrowserInputs(),evidence={format:1,...inputs,programs:{}};
 const server=spawn(process.execPath,['Misc/Server.mjs'],{cwd:root,env:{...process.env,PORT:'8184'},stdio:['ignore','pipe','inherit']});
 await once(server.stdout,'data');
@@ -48,7 +48,7 @@ try{
   console.log(name+': actual editor worker starts, renders advancing frames and stops.');
  }
  const gate=await context.newPage();
- await gate.route('**/Demo/Games/compatibility.json',route=>route.fulfill({json:{programs:{
+ await gate.route('**/Demo/Games/Compatibility.json',route=>route.fulfill({json:{programs:{
   'HolyCraft.HC':{compile:true,browserStartup:false},
   'Babel.HC':{compile:true,browserStartup:true}
  }}}));
@@ -58,8 +58,8 @@ try{
  await button('HolyCraft').waitFor({state:'attached'});
  assert(await button('HolyCraft').isDisabled(),'Compilation alone must not enable browser launch.');
  assert(await button('Babel').isEnabled(),'Recorded startup evidence enables browser launch.');
- await gate.unroute('**/Demo/Games/compatibility.json');
- await gate.route('**/Demo/Games/compatibility.json',route=>route.fulfill({status:503,body:'unavailable'}));
+ await gate.unroute('**/Demo/Games/Compatibility.json');
+ await gate.route('**/Demo/Games/Compatibility.json',route=>route.fulfill({status:503,body:'unavailable'}));
  await gate.reload({waitUntil:'load'});
  await gate.locator('#gamesBtn').click();
  await button('Babel').waitFor({state:'attached'});

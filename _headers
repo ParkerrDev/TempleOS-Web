@@ -20,9 +20,9 @@
   Cache-Control: no-cache
 /build/*
   Cache-Control: no-cache
-# build/hemu*.wasm is compiled at deploy from hemu/src by Kernel/build.mjs, and Kernel/jit.js reads the
+# build/hemu*.wasm is compiled at deploy from hemu/src by Kernel/Build.mjs, and Kernel/Jit.js reads the
 # engine's CPU-state offsets at runtime - keep the engine, the compiler runtime, the snapshots and the
-# build uncached so a browser never pairs an old JIT or snapshot with a new engine (a stale jit.js
+# build uncached so a browser never pairs an old JIT or snapshot with a new engine (a stale Jit.js
 # corrupts segment bases: BADOP crash). Apps/Editor/ imports the compiler live, so it revalidates too.
 /holyc-wasm/*
   Cache-Control: no-cache

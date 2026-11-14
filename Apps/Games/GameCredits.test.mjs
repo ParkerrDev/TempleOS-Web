@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
+import {readFile,stat} from 'node:fs/promises';
 import {gameCredits} from './GameCredits.js';
+import {GAMES} from './GameCatalog.js';
 import {EXTRA_GAMES,TERRY_DEMOS} from './GameLib.js';
-const catalog=JSON.parse(await readFile(new URL('../../Demo/Games/catalog.json',import.meta.url)));
+const catalog=JSON.parse(await readFile(new URL('../../Demo/Games/Catalog.json',import.meta.url)));
 const counts=new Map();
 for(const pkg of catalog.packages){
  const credit=gameCredits({name:pkg.name,packageId:pkg.id});
@@ -15,4 +16,12 @@ assert.equal(TERRY_DEMOS.length,31);assert.equal(EXTRA_GAMES.length,29);
 for(const game of EXTRA_GAMES)assert(catalog.packages.some(p=>p.id===game.packageId&&p.entry===game.disk));
 for(const name of ['Castle Frankenstein 2','SpyHunt'])assert.match(EXTRA_GAMES.find(g=>g.name===name).credit.note,/Terry A\. Davis/);
 assert.throws(()=>gameCredits({name:'Unreviewed',packageId:'tinker-Unreviewed'}),/Missing verified/);
+for (const game of GAMES) {
+  const url=new URL(gameCredits(game).source),
+	match=/^\/ParkerrDev\/TempleOS-Web\/(blob|tree)\/master\/(.+)$/.exec(url.pathname);
+  if (url.hostname=='github.com' && match) {
+    const file=await stat(new URL('../../'+match[2],import.meta.url));
+    assert.equal(file.isDirectory(),match[1]=='tree',game.name+' source link');
+  }
+}
 console.log('All 61 package credits match the UI, all 29 additions have matching launch entries, derivative credits and unknown-author rejection passed.');

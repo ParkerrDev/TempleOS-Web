@@ -44,8 +44,8 @@ export async function GameFiles(game)
 export async function StartInputs()
 {//The files that decide what the startup check does, beside the site runtime.
   const res={};
-  for (const name of ["Demo/Games/Test/Start.HC","Demo/Games/Test/start.mjs",
-    "Demo/Games/Test/catalog.mjs","Demo/Games/Test/Install.mjs","Apps/Games/GamePkgs.js","Apps/Games/GameSrc.js"])
+  for (const name of ["Demo/Games/Test/Start.HC","Demo/Games/Test/Start.mjs",
+    "Demo/Games/Test/Catalog.mjs","Demo/Games/Test/Install.mjs","Apps/Games/GamePkgs.js","Apps/Games/GameSrc.js"])
     res[name]=Hash(await readFile(new URL(name,root)));
   return res;
 }

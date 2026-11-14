@@ -6,9 +6,9 @@ snapshot and disk; no `/tmp` image is needed. `LIVE` and `RAW` can explicitly
 select other images. Disk writes stay in each test's private sector overlay.
 
 ```
-node Kernel/Test/check.mjs
-node Kernel/Test/check.mjs --full
-node Kernel/Test/check.mjs --desktop
+node Kernel/Test/Chk.mjs
+node Kernel/Test/Chk.mjs --full
+node Kernel/Test/Chk.mjs --desktop
 ```
 
 The default suite checks CPU/JIT/device primitives, emulated atomic instructions
@@ -34,18 +34,18 @@ worker loop were removed. `GuestHarness.mjs` provides native source/call access;
 `WorkerHost.mjs` exercises the production loop. Instruction-code recycling,
 real x86 conversion fixtures, and QEMU snapshot capture tools remain.
 
-`cpuid.test.mjs` checks 528 complete register states across supported core
+`CpuId.test.mjs` checks 528 complete register states across supported core
 configurations, including high input halves, ignored subleaf inputs, preserved
 flags and the stock cache-line expression. Its saved physical and original
 TempleOS probes independently establish the register layout; they do not copy
 the physical machine's feature mask into HEMU. The BootDVD capability decision
 runs with 32-bit registers in the long-mode interpreter, not through its BIOS
-loader. `worker-cpuid.test.mjs` runs the installed native CPUId wrapper on every
+loader. `WorkerCpuId.test.mjs` runs the installed native CPUId wrapper on every
 guest core, then repeats after one/four-core full-session restoration.
 
 Set `HOLYC_QEMU_ORACLE` to the compiler checkout's `tests/oracle/Qemu.mjs` and
-run `node Kernel/Test/cpuid.test.mjs --record` on x86-64 to refresh both native
-and physical references. `cpu-native.mjs --record` separately verifies the
+run `node Kernel/Test/CpuId.test.mjs --record` on x86-64 to refresh both native
+and physical references. `CpuNative.mjs --record` separately verifies the
 complete interpreter source under original V5.03, including the synthetic
 CPU's results. The register fields follow the
 [Intel CPUID specification](https://cdrdv2-public.intel.com/774492/325383-sdm-vol-2abcd.pdf).
@@ -73,8 +73,8 @@ this correction changes newly built engines without changing saved state.
   `WorkerShim.mjs` gives the worker a browser `Worker` and cross-origin
   isolation, so it inflates the stock RAM in parts on threads of its own as
   Chromium does; `webWorker:false` runs it as Safari, inflating whole.
-  `worker-inflate.test.mjs` boots both ways on both topologies to the desktop
-  with the corrections in. `stock-segments.mjs` (in `Misc/Test.sh`) inflates
+  `WorkerInflate.test.mjs` boots both ways on both topologies to the desktop
+  with the corrections in. `StockSegments.mjs` (in `Misc/Test.sh`) inflates
   each snapshot's parts alone, 26 or 27 at once and then 4 and 3, and checks
   each result against the manifest's RAM SHA-256.
 - Guest execution checks cover source errors, exceptions, file readback,
@@ -107,7 +107,7 @@ For readable Node CPU profiles, preload `Kernel/Test/Profile.mjs` before a
 headless fixture:
 
 ```sh
-node --import ./Kernel/Test/Profile.mjs --cpu-prof --cpu-prof-dir=/tmp Kernel/Test/guestcheck.mjs
+node --import ./Kernel/Test/Profile.mjs --cpu-prof --cpu-prof-dir=/tmp Kernel/Test/GuestChk.mjs
 ```
 
 The preload appends only WASM name metadata; it does not instrument function
@@ -116,7 +116,7 @@ WASM-memory address of their first byte guard (`guest-host-...`), so subtract
 the fixture's guest base before matching a native symbol. Sampled profiles
 include initialization and are diagnostic evidence, not a renderer benchmark.
 
-`mem-native.mjs` compiles the actual HEMU memory module under original V5.03
+`MemNative.mjs` compiles the actual HEMU memory module under original V5.03
 and compares its 324 outputs with the WASM build. The fixture exercises byte
 widths, unaligned and boundary accesses, RAM aliases and the existing saved
 guest MMIO/IPI contract. It verifies native source compatibility and preserves
@@ -125,7 +125,7 @@ Set `HOLYC_QEMU_ORACLE` to the compiler's `tests/oracle/Qemu.mjs` and use
 `--record` to refresh its source-hashed native fixture. The test host supplies
 core IDs and maps atomic exchange to native `LXchgI64`.
 
-`jit-memory.test.mjs` compares 1,122 explicit memory operands with Step across
+`JitMem.test.mjs` compares 1,122 explicit memory operands with Step across
 RSP/RBP/RIP addressing, signed displacements, RAM aliases and modeled devices.
 It checks registers, flags, neighboring bytes and exact device callback counts.
 Only an in-range constant RIP-relative address can skip the RAM/device test;
@@ -137,7 +137,7 @@ ends. The current memory module reserves 16 padding bytes and checks the start
 address, so these spans continue into that padding. This preserves the existing
 model; it is not a claim about physical memory outside installed RAM.
 
-`jit-x87-memory.test.mjs` compares 5,120 x87/FX memory states with Step, including
+`JitX87Mem.test.mjs` compares 5,120 x87/FX memory states with Step, including
 2,752 exact-prefix fallbacks. It checks integer conversions, arithmetic,
 control words and FX save/restore across RAM, aliases and devices, with dirty
 integer and floating-point caches. Non-RAM operands leave the compiled block
@@ -146,16 +146,16 @@ once through the memory module. FX save/restore also checks the complete
 512-byte span. The prior JIT traps on a device FLD; the regression requires no
 speculative host callback and compares registers, flags, FP/XMM state and bytes.
 
-`stack.test.mjs` compares 88 interpreter/JIT states with 44 source-hashed
+`Stk.test.mjs` compares 88 interpreter/JIT states with 44 source-hashed
 physical x86-64 results. The witnesses cover old-SP push sources, post-increment
 POP destinations, RSP versus R12/indexed/RIP-relative addresses, indirect CALL
 targets overlapping the pushed return address, return adjustments, and 16-bit
 PUSH/POP/LEAVE with REX.W overrides and extended-register opcodes. Every register, defined flag, target and
 640 neighboring bytes must agree. The same hardware vectors run through the
-original V5.03 compiler in `cpu-native.mjs`; `--record` refreshes the separate
-physical fixture in `stack.test.mjs` on Linux x86-64.
+original V5.03 compiler in `CpuNative.mjs`; `--record` refreshes the separate
+physical fixture in `Stk.test.mjs` on Linux x86-64.
 
-`jit-stack-memory.test.mjs` checks 1,086 implicit stack/device states, including
+`JitStkMem.test.mjs` checks 1,086 implicit stack/device states, including
 693 exact-prefix fallbacks, plus 28 reserved POP refusals. Non-RAM stack access
 exits before register changes or explicit-operand reads, so a resumed Step
 performs device effects once. CALL/RET, LEAVE, flag stack operations and the
@@ -163,36 +163,36 @@ existing flat IRET frame are covered, including dirty cached SP/FPU state.
 This does not establish privilege transitions, stack/page-fault delivery,
 address-size overrides, 16-bit flag-stack semantics or a complete IRET model.
 
-`dev-native.mjs` runs the extracted port devices, clock and keyboard source
+`DevNative.mjs` runs the extracted port devices, clock and keyboard source
 through original V5.03 and the current WASM compiler: 519 output records cover
 PIC selection/EOI, CMOS, PS/2 replies, speaker/DAC, ATA transfers and reset.
 The fixture supplies explicit host callbacks; it verifies source semantics,
 not complete physical-device emulation. Device reset also has a public-port
 regression: a partial ATA command, PS/2 reply and speaker tone must not survive.
-`snapregs.test.mjs` compiles regenerated one/four-core QEMU register fixtures
+`SnapRegs.test.mjs` compiles regenerated one/four-core QEMU register fixtures
 against the actual CPU layout and requires V5.03's 1192-count PIT period.
 
-`cpu-native.mjs` requires a source-hashed original V5.03 compile/run of the
+`CpuNative.mjs` requires a source-hashed original V5.03 compile/run of the
 entire interpreter, its instruction battery and sampled hardware arithmetic
 vectors. The native host
 adapter provides a core ID, serialized atomics and explicit headless callbacks;
 it supplies neither a desktop, disk nor native JIT. The same 31 battery checks
 and 707 multiply/divide, 3,829 stack and 861 split-field atomic assertions execute with zero badops in both builds;
 instruction totals cover the battery and exclude HLT time budgets. Use
-`HOLYC_QEMU_ORACLE=/path/to/tests/oracle/Qemu.mjs node Kernel/Test/cpu-native.mjs --record`
+`HOLYC_QEMU_ORACLE=/path/to/tests/oracle/Qemu.mjs node Kernel/Test/CpuNative.mjs --record`
 to refresh this evidence after interpreter changes. This is a bounded native
 source test, not proof of complete x86 coverage or a native TempleOS host app.
 
-`atomic.test.mjs` runs 71 contending guest programs on four emulator workers:
+`Atomic.test.mjs` runs 71 contending guest programs on four emulator workers:
 implicit-lock XCHG protects an ordinary counter, LOCK arithmetic and unary
 operations modify shared operands, and CMPXCHG/8B retries retain each increment.
 Unaligned fields sharing a 64-bit CAS word preserve each other and adjacent native byte atomics.
-Every supported width is exercised. `atomic-flags.test.mjs` compares 42,930
+Every supported width is exercised. `AtomicFlags.test.mjs` compares 42,930
 locked, ordinary, immediate and compiled memory-RMW cases with 6,768 actual
 x86-64 instruction results; 8,982 comparisons execute compiled blocks. It
 includes 10,152 contained unaligned placements, all architecturally defined
 flags and register writeback. The stored source/output hashes and CPU/compiler metadata bind the hardware evidence;
-`node Kernel/Test/atomic-flags.test.mjs --record` regenerates it on x86-64.
+`node Kernel/Test/AtomicFlags.test.mjs --record` regenerates it on x86-64.
 
 Aligned RAM, contained unaligned fields and the TempleOS RAM alias are
 supported atomic operands. With exactly one guest core, valid cross-word
@@ -206,13 +206,13 @@ XCHG end a JIT block so the interpreter owns their atomic operation.
 covering arithmetic, logic, unary operations, implicit-lock XCHG, XADD and
 CMPXCHG/8B across eight-byte and cache-line boundaries. The separate physical
 probe matches all 387 within-line cases, including flags, registers and adjacent
-bytes. `atom-split.test.mjs` makes 6,192 single-core and 2,064 coordinated SMP
+bytes. `AtomSplit.test.mjs` makes 6,192 single-core and 2,064 coordinated SMP
 comparisons across private/shared WASM memory, direct/aliased RAM and
 interpreted/JIT prefixes. It requires
 no host callback or IRQ delivery during an instruction, checks the valid RAM-end
 boundary, and verifies 4,128 uncoordinated multi-core attempts retain faults without writes.
 Re-record with `HOLYC_QEMU_ORACLE=.../tests/oracle/Qemu.mjs node
-Kernel/Test/atom-split.test.mjs --record`.
+Kernel/Test/AtomSplit.test.mjs --record`.
 
 Multi-core cross-word fields require [coordinated CPU and host ownership](Bus.md),
 including ordinary interpreter/JIT readers, host writes and capture handoff.
@@ -222,16 +222,16 @@ explicitly unsupported, without architectural exception delivery for those
 cases. The bounded behavior follows Intel's [locked operation
 contract](https://cdrdv2-public.intel.com/835754/253668-sdm-vol-3a.pdf).
 
-`bit.test.mjs` compares 2,112 bit-string operations (264 compiled) with exact
+`Bit.test.mjs` compares 2,112 bit-string operations (264 compiled) with exact
 x86 opcodes: signed register offsets and width-masked encoded immediates,
-including neighboring bytes and defined CF/ZF. `cmpxchg8b.test.mjs` compares
+including neighboring bytes and defined CF/ZF. `CmpXchg8b.test.mjs` compares
 384 memory/register/flag cases, covering success/failure, high register halves,
 aligned LOCK and ordinary unaligned operands. Both use `OpcodeOracle.mjs` to
 record source-hashed native fixtures with CPU/compiler metadata; add `--record`
 on x86-64 to regenerate them. Reserved forms must
 retain faults without writing operands.
 
-`cmpwrite.test.mjs` catches failed unlocked CMPXCHG/CMPXCHG8B operations that
+`CmpWrite.test.mjs` catches failed unlocked CMPXCHG/CMPXCHG8B operations that
 omit their mandatory memory write cycle. It compares 72 physical and original
 V5.03 register/RAM results through 384 HEMU executions, observes real write
 calls, and checks 32 ICR command/latch side effects. The old engine fails the
@@ -248,7 +248,7 @@ complete hardware APIC implementation. Guest page protection and architectural
 #PF delivery remain open. Set `HOLYC_QEMU_ORACLE` and pass `--record` to refresh
 the native and physical source-bound references.
 
-`mmio-alias.test.mjs` stores VGA pixels at page offsets 0x300 and 0x310 through
+`MmioAlias.test.mjs` stores VGA pixels at page offsets 0x300 and 0x310 through
 the low, uncached and 2^40 aliases, as TempleOS draws through its uncached
 alias, and checks that none of them latches an ICR destination or sends an
 IPI. The LAPIC ICR, LAPIC version and HPET counter still decode on their own
@@ -256,7 +256,7 @@ pages. The old decode, which matched only the page offset, sent IPIs whose
 vector was pixel data; an exception vector crashed an AP and left the BSP in
 single-user mode, so a game froze while the window manager kept drawing.
 
-`cmpxchg16b.test.mjs` compares 768 original V5.03 results with a separate
+`CmpXchg16b.test.mjs` compares 768 original V5.03 results with a separate
 physical oracle, then makes 15,360 interpreter/JIT-fallback comparisons across
 private/shared RAM, aliases and coordinated core configurations. It checks
 both mismatching halves, full registers and defined flags, adjacent bytes,
@@ -271,7 +271,7 @@ Locked SMP pairs use the existing bus protocol; unlocked pairs make no atomic
 promise. CX16 remains unadvertised while these architectural limits remain.
 
 `MulDiv.HC` owns full products, signed/unsigned double-width dividends, byte
-AX/AH:AL results and quotient bounds. `muldiv.test.mjs` compares 102,432 register
+AX/AH:AL results and quotient bounds. `MulDiv.test.mjs` compares 102,432 register
 and unaligned-memory cases with 25,608 independent hardware results. Its 50
 compiled encodings include one/two/three-operand multiply, signed immediates,
 all operand widths, and 19,360 retained divide-fault comparisons. It checks
@@ -294,7 +294,7 @@ five-word aligned stack frame without an error code. Interrupt gates clear IF;
 trap gates retain it. The code-descriptor accessed bit is set as on hardware.
 `DivideEntry.HC` and `DivideNative.HC` record 1,536 actual QEMU/KVM entries across
 four widths, signed/unsigned division, three fault kinds, every stack alignment,
-two gate types and two flag seeds. `divide.test.mjs` compares 3,072 interpreter/
+two gate types and two flag seeds. `Divide.test.mjs` compares 3,072 interpreter/
 JIT outcomes, 16 deferred-flag prefix chains and 56 valid quotient-limit cases.
 It also compares 48 physical-host SIGFPE contexts, gate DPL/selector RPL/accessed
 behavior and the original guest's `try`/`catch` of `DivZero`.
@@ -306,22 +306,22 @@ selector. The same-selector restriction preserves compatibility with the
 existing IRET path. Exception cascades, paging, #GP/#DF delivery, CET and general
 debug/IRET semantics are outside this measured contract. Re-record the two
 independent oracles with `HOLYC_QEMU_ORACLE=.../tests/oracle/Qemu.mjs node
-Kernel/Test/divide.test.mjs --record`; ordinary runs verify source/evidence hashes.
+Kernel/Test/Divide.test.mjs --record`; ordinary runs verify source/evidence hashes.
 The bounded entry behavior follows Intel's [System Programming Guide,
 sections 6.12 to 6.15](https://cdrdv2-public.intel.com/812386/253668-sdm-vol-3a.pdf).
 
 `Raster.HC` owns the named native line/polygon acceleration and its shared
-span filler. `raster-native.mjs` compares 200 source-hashed original QEMU/KVM
+span filler. `RasterNative.mjs` compares 200 source-hashed original QEMU/KVM
 cases with native execution and acceleration in HEMU: horizontal/vertical
 lines and triangles, clipping, reversed endpoints, all raster modes, ordered
 and probability dithering, recorded extents, nearest distance and draw-disabled
 contexts. Pixel/depth storage, changed/collision counts and final RNG state
-must agree. Regenerate with `HOLYC_QEMU_ORACLE=... node Kernel/Test/raster-native.mjs --record`.
+must agree. Regenerate with `HOLYC_QEMU_ORACLE=... node Kernel/Test/RasterNative.mjs --record`.
 
-`raster-alias.mjs` adds 30 source-hashed original QEMU/KVM cases in which
+`RasterAlias.mjs` adds 30 source-hashed original QEMU/KVM cases in which
 pixel or depth storage overlaps the task seed, dither probability or each
 other. All three raster operations and both line orientations run with HLE
-on and off. `raster-state.test.mjs` forces a real second Worker to change the
+on and off. `RasterState.test.mjs` forces a real second Worker to change the
 seed, task flags, probability or clock at selected draws of an eight-pixel
 span in shared memory. Its 16 cases compare pixels, depth, return count and
 final seed with the frozen pre-change fixture. This is a controlled-clock
@@ -331,13 +331,13 @@ with a bounded wait; no callback or state cache is added to production.
 Caching probability at span entry fails the forced-write test. One configured
 CPU does not prove exclusive access to shared memory.
 
-`raster-fallback.test.mjs` retains two negative witnesses: a valid 5,000-pixel
+`RasterFallback.test.mjs` retains two negative witnesses: a valid 5,000-pixel
 line previously consumed one RNG value before fallback, and a wide triangle
 returned -1 without drawing. Rejection now precedes random sampling, and
 unsupported polygon contexts fall back before any triangle starts. Existing
 extent/nearest updates before line fallback remain idempotent, matching final
 native state; the change does not claim a general transaction for arbitrary
-malformed guest pointers. `raster.test.mjs` additionally checks 674 native
+malformed guest pointers. `Raster.test.mjs` additionally checks 674 native
 triangle/line results, including every pixel/depth value and collision state.
 
 ## Frame protocol
@@ -353,16 +353,16 @@ iteration), `__capture_lock` and `__capture_unlock`. The stock host uses an
 always-successful capture lock for one core; the production worker uses a
 per-generation shared-memory barrier when its AP workers are running.
 
-`fpu-oracle.txt` records 816 masked FISTP/FISTTP operations on real x86
-hardware. `fpu-convert.test.mjs` checks the interpreter and JIT against it,
+`FpuOracle.txt` records 816 masked FISTP/FISTTP operations on real x86
+hardware. `FpuCvt.test.mjs` checks the interpreter and JIT against it,
 including status flags, integer widths, rounding ties, NaN and overflow.
-Regenerate on x86 with `cc -O2 Kernel/Test/fpu-oracle.c -o /tmp/hemu-fpu-oracle`
+Regenerate on x86 with `cc -O2 Kernel/Test/FpuOracle.c -o /tmp/hemu-fpu-oracle`
 and redirect that executable's output to the fixture. The independent
 QEMU/KVM TempleOS conversion probe agrees on 64-bit invalid conversions.
 This does not cover 80-bit extended intermediates or every FPU exception.
 
-`fpu-compare-oracle.txt` retains 784 actual Intel i9-14900HX comparisons,
-including masked and unmasked invalid operands. `fpu-compare.test.mjs` tests
+`FpuCompareOracle.txt` retains 784 actual Intel i9-14900HX comparisons,
+including masked and unmasked invalid operands. `FpuCompare.test.mjs` tests
 both execution engines at three stack tops and two operand slots, preserving
 C0/C2/C3 and clearing C1. The corrected FUCOMI encodings are DB/DF E8+i;
 FCOMI is DB/DF F0+i. The stream regression also checks that NaN interpreter
@@ -380,11 +380,11 @@ from the architecture expectations, never rewritten as matching hardware.
 EFLAGS immediately before comparison and captures flags and nonwaiting FNSTSW
 before FNINIT clears the pending exception. QEMU/KVM matches the Intel CPU;
 QEMU/TCG 11.1.2 also sets unordered flags but additionally pops on unmasked
-FCOMIP. Both 16-case recordings are retained in `fpu-flags-{kvm,tcg}.json`.
+FCOMIP. Both 16-case recordings are retained in `FpuFlags.{kvm,tcg}.json`.
 To repeat them, set `HOLYC_QEMU_ORACLE` to HolyC-wasm's `tests/oracle/Qemu.mjs`
-and run `ORACLE_ACCEL=kvm node Kernel/Test/fpu-flags-native.mjs` (or `tcg`).
+and run `ORACLE_ACCEL=kvm node Kernel/Test/FpuFlagsNative.mjs` (or `tcg`).
 `--record` deliberately refreshes a fixture. The original C fixture builds
-with `cc -O2 -mno-red-zone Kernel/Test/fpu-compare-oracle.c -o /tmp/fpu-compare`.
+with `cc -O2 -mno-red-zone Kernel/Test/FpuCompareOracle.c -o /tmp/fpu-compare`.
 Do not erase its CPU/compiler metadata when recording another processor.
 
 The full x87 tag model, 80-bit precision, pending #MF delivery and every
@@ -399,7 +399,7 @@ instructions cannot silently pass a coverage gate. The former low-64-bit
 uses the documented tag-less approximation needed by TempleOS's FFREE /
 FINCSTP discard sequence; success is not a claim of complete stack-tag checks.
 
-`fpu-ops-oracle.c` records 108 additional real x86 results: all eight FCMOV
+`FpuOpsOracle.c` records 108 additional real x86 results: all eight FCMOV
 conditions against all CF/PF/ZF combinations, FNSTSW/FNCLEX at eight stack
 positions, and signed 16/32-bit FICOM/FICOMP comparisons. The 494-check gate
 repeats them through both execution engines, checks memory-store width and
@@ -425,13 +425,13 @@ acknowledgements. Older saved engines without `CpuFault` retain the BSP
 `GuestInfo` fallback; their AP `error` messages should also pause the BSP in
 the page host. Their embedded instruction implementation is unchanged.
 
-`worker-legacy-fault.test.mjs` boots the tracked historical four-core engine
-in `Fixtures/legacy-smp.wasm`, exports a real full save embedding it, then
+`WorkerLegacyFault.test.mjs` boots the tracked historical four-core engine
+in `Fixtures/LegacySmp.wasm`, exports a real full save embedding it, then
 restores that save under the current host. Native UD2 on AP1 verifies the
 retained error, page-style BSP pause, frozen state/frames and held AP barrier.
 The old module intentionally has no CpuFault export and contains the former
 first-fault recovery behavior. Its compiler/source refs, hash and IPI address
-are recorded alongside it. `legacy-engine.mjs ENGINE_REF COMPILER_REF` rebuilds
+are recorded alongside it. `LegacyEngine.mjs ENGINE_REF COMPILER_REF` rebuilds
 that fixture explicitly using the matching compiler checkout; normal tests
 consume the pinned bytes and never regenerate their reference.
 
@@ -464,7 +464,7 @@ regression measures actual WebAudio samples for those paths and paused full-save
 restore. This does not establish guest-timestamped 140Hz tone playback: worker
 messages still apply each frequency when the main thread receives it.
 
-`jit-primitives.test.mjs` covers x87 constants, control-word loads/stores,
+`JitPrimitives.test.mjs` covers x87 constants, control-word loads/stores,
 rounding and deferred integer flags, plus all conditional moves and byte sets
 across flag combinations and operand widths. It also checks that an untaken
 32-bit CMOV clears the upper half of its destination, as x86 specifies.
@@ -518,9 +518,9 @@ fixture while `holyc-wasm` points at the old compiler/runtime, then restore it
 after switching to the current pinned build:
 
 ```
-node Kernel/Test/snapshot-legacy.test.mjs save /path/legacy.hemu
-node Kernel/build.mjs
-node Kernel/Test/snapshot-legacy.test.mjs restore /path/legacy.hemu
+node Kernel/Test/SnapshotLegacy.test.mjs save /path/legacy.hemu
+node Kernel/Build.mjs
+node Kernel/Test/SnapshotLegacy.test.mjs restore /path/legacy.hemu
 ```
 
 The two stages retain the saved pixel hash/palette beside the fixture and
@@ -530,12 +530,12 @@ checked into source control.
 
 ## Desktop window
 
-From this checkout, after `node Kernel/build.mjs build`:
+From this checkout, after `node Kernel/Build.mjs build`:
 
 ```
-node Kernel/Test/desktop.mjs
-node Kernel/Test/desktop.mjs --cores 4
-node Kernel/Test/desktop.mjs --snapshot /path/to/session.hemu
+node Kernel/Test/Desktop.mjs
+node Kernel/Test/Desktop.mjs --cores 4
+node Kernel/Test/Desktop.mjs --snapshot /path/to/session.hemu
 ```
 
 This starts a loopback-only server and opens an application window in an
@@ -556,14 +556,14 @@ save. Running CPU faults retain the paused machine; coordination failure stops
 all participants and refuses exports of an interrupted instruction.
 No internet service is required once the build and bundled images are local.
 
-`node Kernel/Test/desktop.test.mjs` drives a real installed Chromium headlessly;
+`node Kernel/Test/Desktop.test.mjs` drives a real installed Chromium headlessly;
 `HEMU_DESKTOP_CORES=4` exercises the parallel path. Both were verified on Linux
 x86-64: offline boot, actual frames/FPS, disk readiness, pause/resume and rate
 changes, with the screenshot inspected. Mac and Windows executable lookup is
 implemented but untested. This is a portable WASM host in a desktop window,
 not native-code HEMU, direct hardware access, or a measured memory reduction.
 
-`desktop-lifecycle.test.mjs` additionally checks current one/four-core and
+`DesktopLifecycle.test.mjs` additionally checks current one/four-core and
 historical embedded version-1 saves, exact restored RGBA/FPS, native faults and
 restart. `Kernel/Test/Bus.browser.mjs` forces failure/cancellation while an AP owns a
 cross-word instruction and verifies stop-before-termination with no partial
@@ -588,19 +588,19 @@ older frames are waiting for the page, so a paused restore shows identical
 pixels. worker-pause.test deliberately fills the presentation queue to cover
 this case.
 
-`shift.test.mjs` compares the interpreter and supported compiled shifts with
-3,808 real x86-64 cases recorded by `shift-oracle.c`. It covers ROL/ROR/RCL/RCR,
+`Shift.test.mjs` compares the interpreter and supported compiled shifts with
+3,808 real x86-64 cases recorded by `ShiftOracle.c`. It covers ROL/ROR/RCL/RCR,
 SHL/SHR/SAR, all operand widths, both carry inputs, zero/masked counts and the
 architecturally defined flags. Regenerate the fixture on x86-64 with
-`cc -O2 -mno-red-zone Kernel/Test/shift-oracle.c -o /tmp/shift-oracle`, then
-`/tmp/shift-oracle > Kernel/Test/shift-oracle.txt`. Undefined flag bits are not
-used as an oracle. `jitdiff1.mjs` is deterministic parity coverage and fails
+`cc -O2 -mno-red-zone Kernel/Test/ShiftOracle.c -o /tmp/shift-oracle`, then
+`/tmp/shift-oracle > Kernel/Test/ShiftOracle.txt`. Undefined flag bits are not
+used as an oracle. `JitDiff1.mjs` is deterministic parity coverage and fails
 its process when a comparison fails; it is not an independent CPU oracle.
 
-`menu-clip.test.mjs` checks 288 completed frames against independent QEMU/KVM
+`MenuClip.test.mjs` checks 288 completed frames against independent QEMU/KVM
 pixels: the stock Ctrl+M Titanium sprite at six native scrollbar positions,
 with raster/video acceleration enabled and disabled. The reference generator
-`menu-clip-oracle.mjs` first records 48 unmodified V5.03 frames, which alternate
+`MenuClipOracle.mjs` first records 48 unmodified V5.03 frames, which alternate
 between blank and visible tails, then verifies 24 corrected native refreshes
 at every position. Set `HOLYC_QEMU_ORACLE` to the compiler checkout's
 `tests/oracle/Qemu.mjs` to regenerate it. Fixture hashes bind both HolyC probe
@@ -631,16 +631,16 @@ not wait for the clock. The jobs start before the page's first request and
 are background requests: each queues behind whatever the page already asked
 of its task, and a page request that comes while one runs queues behind it
 instead of being refused as busy (`guest-ready.mjs` writes a file to Adam
-while the one-core build holds it). `worker-patch-core.test.mjs` boots both topologies on
+while the one-core build holds it). `WorkerPatchCore.test.mjs` boots both topologies on
 the page's bus and checks that four cores build on CPU 1 with no frame gap
-over 250 ms. `patch-copy.test.mjs` builds and installs both
+over 250 ms. `PatchCopy.test.mjs` builds and installs both
 corrections from the copies on a guest with no disk, shows that a copy one
 byte off is refused before anything compiles, and that AutoComplete built
 apart installs without a second build. The entry instructions must
 match the supported V5.03 routine. Installation holds the all-core
 barrier and leaves the original frame-setup instructions intact; tasks already
 suspended before or after stack allocation still have a valid continuation.
-`patch.test.mjs` checks those entry states, invalid addresses/signatures and
+`Patch.test.mjs` checks those entry states, invalid addresses/signatures and
 all four CPU slots. A failed application is reported as `guestPatch` with an
 error message; the original routine remains active.
 
@@ -698,28 +698,28 @@ and on again opens where the last one was left.
 switches taken while the window is hidden, in a listing phase, a StandBy
 phase and a phase that goes between them. `ACMove.HC` then drags the window
 as the window manager does, lists again, shows StandBy and the Ctrl-Alt key
-map, lists again, and turns AutoComplete off and on. `ac-flicker-oracle.mjs`
+map, lists again, and turns AutoComplete off and on. `ACFlickerOracle.mjs`
 runs both in QEMU/KVM on stock V5.03: the window manager drew 8, 1 and 3
 frames without the window and every one of 75 refills let tasks run with it
 hidden, and the dragged window went back to 51, 13 with each list; corrected,
 none of 74 refills did, and it stayed where it was dragged, with the key map at
-27, 3 either way. `ac-flicker.test.mjs` repeats all of it on HEMU, with the same
+27, 3 either way. `ACFlicker.test.mjs` repeats all of it on HEMU, with the same
 window places, and checks the corrected list text, the second install refusal,
 that a drag before the install is kept, and that while held asleep
 AutoComplete refills nothing as the probe types, then wakes. Set
 `HOLYC_QEMU_ORACLE` as above to regenerate the reference.
 
-`stock.test.mjs` validates the hash-bound stock RAM/module identities and
+`Stock.test.mjs` validates the hash-bound stock RAM/module identities and
 reconstructs every byte of both captured disks from the original base and
-small sector overlays. `stock-init.test.mjs` checks native FCW/FSW/TOP before
+small sector overlays. `StockInit.test.mjs` checks native FCW/FSW/TOP before
 any guest instruction, then confirms that scheduler context saves retain the
-window manager's 037f control word. `snapregs.test.mjs` includes independent
+window manager's 037f control word. `SnapRegs.test.mjs` includes independent
 native distinct-XMM/TOP witnesses and rejects unrepresentable or malformed
 captures. See `Kernel/Snapshot/README.md` for provenance and the unchanged
 synthetic device/80-bit x87 limitations. Historical module tests now restore
 self-contained full snapshots, never an old engine paired with new stock RAM.
 
-`speaker.test.mjs` compares275 actual native port0x61 gate reads with original
+`Speaker.test.mjs` compares275 actual native port0x61 gate reads with original
 QEMU/V5.03: all byte writes, both independently held gate bits, read-modify-write
 transitions and the original Snd stop/restart path. The pre-fix engine fails
 this fixture by returning zero. Only the two output gate bits are modeled;
@@ -730,4 +730,4 @@ The existing Boolean spk_on remains the tone-enabled state, while spk_ctrl
 preserves both gates. Reset clears both, and one/four-core full-save tests
 retain the silent data-only state through disk export and snapshot restore.
 Regenerate the source-bound independent fixture with
-`HOLYC_QEMU_ORACLE=... node Kernel/Test/speaker.test.mjs --record`.
+`HOLYC_QEMU_ORACLE=... node Kernel/Test/Speaker.test.mjs --record`.

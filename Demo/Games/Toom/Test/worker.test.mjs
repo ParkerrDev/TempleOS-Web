@@ -24,8 +24,8 @@ const probe=readFileSync(resolve(root,'Demo/Games/Toom/Test/Worker.HC'),'latin1'
   (startup?'\n'+readFileSync(new URL('StartupWorker.HC',import.meta.url),'latin1'):'');
 const out=resolve(process.env.OUT||'/tmp/toom-workers');mkdirSync(out,{recursive:true});
 const fileHashes=Object.fromEntries(files.map(f=>[f.path,hash(f.bytes)]));
-const runtimeNames=['Kernel/jit.js','Kernel/hemu-worker.js','Kernel/hemu-smp-worker.js',
-  'Kernel/guestexec.js','Kernel/guestinput.js','Kernel/KeyQueue.js',
+const runtimeNames=['Kernel/Jit.js','Kernel/HemuWorker.js','Kernel/HemuSmpWorker.js',
+  'Kernel/GuestExec.js','Kernel/GuestInput.js','Kernel/KeyQueue.js',
   'Kernel/Test/WorkerHost.mjs','Kernel/Test/WorkerShim.mjs','hemu/live.bin.gz',
   'hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
   'Kernel/Stock.js','vendor/images/templeos-hd.qcow2.gz'];
@@ -96,7 +96,7 @@ for(const count of cores) {
         h.Post({cmd:'exportDisk'});
         const saved=await Wait(m=>m.cmd==='exportResult'&&m.kind==='disk',60000);
         assert(saved.ok,saved.msg);
-        const {makeDisk,fat32Read}=await import(pathToFileURL(resolve(web,'Kernel/qcow2.js')));
+        const {makeDisk,fat32Read}=await import(pathToFileURL(resolve(web,'Kernel/QCow2.js')));
         const bytes=Buffer.from(fat32Read(makeDisk(gunzipSync(saved.buf)),'TOOM','STARTUP.BIN'));
         assert.equal(bytes.length,256*8);
         writeFileSync(resolve(out,`startup-${count}.bin`),bytes);

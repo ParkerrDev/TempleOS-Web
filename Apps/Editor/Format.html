@@ -7,8 +7,8 @@
 <link rel="icon" href="../../Adam/Logo128x152.jpg" type="image/jpeg" />
 <meta name="description" content="Lay HolyC out the way Terry A. Davis's own tools left TempleOS, in your browser. HolyC-fmt is a formatter written in HolyC, compiled here by HolyC-wasm." />
 <style>
-  @font-face { font-family:'TempleOS'; src:url('../../Adam/Fonts/templeos.ttf?v=4') format('truetype'); }
-  @font-face { font-family:'dos_vga'; src:url('../../Adam/Fonts/dos_vga_new.woff2') format('woff2'); }
+  @font-face { font-family:'TempleOS'; src:url('../../Adam/Fonts/TempleOS.ttf?v=4') format('truetype'); }
+  @font-face { font-family:'dos_vga'; src:url('../../Adam/Fonts/DosVgaNew.woff2') format('woff2'); }
   :root { --blue:#0000A8; --red:rgb(161,6,8); }
   * { margin:0; padding:0; box-sizing:border-box; font-family:'TempleOS','dos_vga',"Courier New",monospace;
       -webkit-font-smoothing:none; text-rendering:optimizeSpeed; }
@@ -39,7 +39,7 @@
   #status { color:yellow; min-height:1em; margin-top:8px; }
   /* the inverting TempleOS pointer (same as the main site) */
   #xcursor { position:fixed; left:0; top:0; width:18px; height:18px; z-index:2147483647; pointer-events:none;
-      display:none; will-change:transform; image-rendering:pixelated; background:url('../../Adam/cursor.png') no-repeat top left;
+      display:none; will-change:transform; image-rendering:pixelated; background:url('../../Adam/Cursor.png') no-repeat top left;
       filter:brightness(0) invert(1); mix-blend-mode:difference; }
   body.xc #xcursor { display:block; } body.xc, body.xc * { cursor:none !important; }
 </style>

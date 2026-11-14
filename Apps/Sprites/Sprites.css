@@ -1,5 +1,5 @@
-@font-face { font-family:TempleOS; src:url('../../Adam/Fonts/templeos.ttf?v=4'); }
-@font-face { font-family:VGA; src:url('../../Adam/Fonts/dos_vga_new.woff2'); }
+@font-face { font-family:TempleOS; src:url('../../Adam/Fonts/TempleOS.ttf?v=4'); }
+@font-face { font-family:VGA; src:url('../../Adam/Fonts/DosVgaNew.woff2'); }
 :root { color-scheme:light; --blue:#0000a8; --gray:#aaa; }
 * { box-sizing:border-box; }
 body { margin:0; background:#fff; color:#000; font:12px/1.35 TempleOS,VGA,monospace; }

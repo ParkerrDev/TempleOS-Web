@@ -1,14 +1,14 @@
 // FontClean.mjs - fix + size the real TempleOS webfont.
-// Misc/templeos_orig.ttf is the real font (322 glyphs, the design the site has always used) but its OS/2
+// Misc/TempleOSOrig.ttf is the real font (322 glyphs, the design the site has always used) but its OS/2
 // table is version 5 with malformed version-5 fields -> OTS "Failed to decode" error. This re-exports it
 // via opentype.js with OS/2 downgraded to v4 (drops the optical-point-size fields) and, if a SCALE arg is
-// given, uniformly scales every glyph + metric so it renders SCALE x its original size. Output: Adam/Fonts/templeos.ttf
+// given, uniformly scales every glyph + metric so it renders SCALE x its original size. Output: Adam/Fonts/TempleOS.ttf
 //   node Adam/Fonts/FontClean.mjs [scale]      (e.g. 0.8; default 1.0 = original size)
 import opentype from "opentype.js";
 import { readFileSync, writeFileSync } from "node:fs";
 
 const SCALE = +(process.argv[2]) || 1.0;
-const f = opentype.parse(readFileSync("Misc/templeos_orig.ttf").buffer);
+const f = opentype.parse(readFileSync("Misc/TempleOSOrig.ttf").buffer);
 f.tables.os2.version = 4;
 delete f.tables.os2.usLowerOpticalPointSize; delete f.tables.os2.usUpperOpticalPointSize;
 
@@ -22,5 +22,5 @@ if (SCALE !== 1) {
   const o = f.tables.os2; for (const k of ["sTypoAscender", "sTypoDescender", "sTypoLineGap", "usWinAscent", "usWinDescent", "sxHeight", "sCapHeight"]) if (o[k] !== undefined) o[k] = sc(o[k]);
   const h = f.tables.hhea; if (h) for (const k of ["ascender", "descender", "lineGap"]) if (h[k] !== undefined) h[k] = sc(h[k]);
 }
-writeFileSync("Adam/Fonts/templeos.ttf", Buffer.from(f.toArrayBuffer()));
-console.log(`Adam/Fonts/templeos.ttf: ${f.glyphs.length} glyphs, em ${f.unitsPerEm}, OS/2 v${f.tables.os2.version}, scale ${SCALE}`);
+writeFileSync("Adam/Fonts/TempleOS.ttf", Buffer.from(f.toArrayBuffer()));
+console.log(`Adam/Fonts/TempleOS.ttf: ${f.glyphs.length} glyphs, em ${f.unitsPerEm}, OS/2 v${f.tables.os2.version}, scale ${SCALE}`);

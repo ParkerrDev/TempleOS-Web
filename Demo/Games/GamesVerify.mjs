@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {EXTRA_GAMES,TERRY_DEMOS} from '../../Apps/Games/GameLib.js';
 const expected=TERRY_DEMOS.length+1+EXTRA_GAMES.length;
 const root=new URL('../../',import.meta.url);
-const c=JSON.parse(await readFile(new URL('Demo/Games/catalog.json',root)));
+const c=JSON.parse(await readFile(new URL('Demo/Games/Catalog.json',root)));
 const hash=b=>createHash('sha256').update(b).digest('hex');
 assert.equal(c.packages.length,expected);assert.equal(new Set(c.packages.map(p=>p.id)).size,expected);
 let count=0;

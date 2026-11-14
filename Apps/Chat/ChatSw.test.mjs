@@ -25,7 +25,7 @@ for (const open of [false,true]) {
   if (open) {
     assert(focused);assert.equal(message.cmd,"chat-open");assert.equal(opened,undefined);
   } else {
-    assert(!focused);assert.equal(opened,"../../?open=chat");
+    assert(!focused);assert.equal(opened,"/?open=chat");
   }
 }
 console.log("Chat notification click focuses an existing page or opens chat in a new page.");

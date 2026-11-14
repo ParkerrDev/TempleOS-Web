@@ -101,7 +101,7 @@ ${maps.map(name=>`BenchRun("${name}");`).join('\n')}
   const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   result.engineHash=createHash('sha256').update(h.compiled.bytes)
-    .update(readFileSync(resolve(process.env.TEMPLEOS_WEB,'Kernel/jit.js'))).digest('hex');
+    .update(readFileSync(resolve(process.env.TEMPLEOS_WEB,'Kernel/Jit.js'))).digest('hex');
   for(const file of files) {
     const id=h.gx.writeFile({path:`C:/TOOM/${file.name}`,bytes:file.bytes});
     for(let i=0;i<4000&&!['done','failed','error'].includes(h.gx.status(id)?.state);i++)await h.Run();

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {sourceDocument,gameProject} from './GameSrc.js';
 import {installGame,gameFile} from './GamePkgs.js';
-const root=new URL('../../',import.meta.url),catalog=JSON.parse(await readFile(new URL('Demo/Games/catalog.json',root)));
+const root=new URL('../../',import.meta.url),catalog=JSON.parse(await readFile(new URL('Demo/Games/Catalog.json',root)));
 const storage=new Map();
 globalThis.localStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)};
 globalThis.fetch=async url=>new Response(await readFile(new URL(url,root)));

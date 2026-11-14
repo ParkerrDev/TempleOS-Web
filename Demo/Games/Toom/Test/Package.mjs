@@ -1,6 +1,6 @@
-//The toom entry of Demo/Games/catalog.json: the game from Demo/Games/Toom and Freedoom
+//The toom entry of Demo/Games/Catalog.json: the game from Demo/Games/Toom and Freedoom
 //from Demo/Games/Upstream/Freedoom, installed into C:/Home/TOOM.
-//  node Demo/Games/Toom/Test/Package.mjs --write	puts it into Demo/Games/catalog.json
+//  node Demo/Games/Toom/Test/Package.mjs --write	puts it into Demo/Games/Catalog.json
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
@@ -59,15 +59,15 @@ export function ToomPackage()
 }
 
 if (process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
-  const path=resolve(root,'Demo/Games/catalog.json'),catalog=JSON.parse(readFileSync(path)),
+  const path=resolve(root,'Demo/Games/Catalog.json'),catalog=JSON.parse(readFileSync(path)),
     i=catalog.packages.findIndex(p=>p.id==='toom'),pkg=ToomPackage();
-  assert(i>=0,'Demo/Games/catalog.json has no toom entry.');
+  assert(i>=0,'Demo/Games/Catalog.json has no toom entry.');
   if(process.argv[2]==='--write') {
     catalog.packages[i]=pkg;
     writeFileSync(path,JSON.stringify(catalog,null,2)+'\n');
-    console.log(`TOOM: ${pkg.files.length} files written into Demo/Games/catalog.json.`);
+    console.log(`TOOM: ${pkg.files.length} files written into Demo/Games/Catalog.json.`);
   } else {
     assert.deepEqual(catalog.packages[i],pkg,'Run node Demo/Games/Toom/Test/Package.mjs --write.');
-    console.log(`TOOM: Demo/Games/catalog.json matches its ${pkg.files.length} files.`);
+    console.log(`TOOM: Demo/Games/Catalog.json matches its ${pkg.files.length} files.`);
   }
 }

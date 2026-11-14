@@ -77,7 +77,7 @@ async function gameSrc(g) {
 }
 const cards = [];
 function Record(name)
-{//A verification record beside this module, or null when it cannot load.
+{//A verification record in Demo/Games, or null when it cannot load.
   return fetch(new URL("../../Demo/Games/"+name+".json",import.meta.url)).
     then(function (res) {
       if (!res.ok)
@@ -85,9 +85,9 @@ function Record(name)
       return res.json();
     }).catch(function (e) {console.warn(e.message);return null;});
 }
-const [evidence,startup]=await Promise.all([Record("compatibility"),Record("startup")]);
+const [evidence,startup]=await Promise.all([Record("Compatibility"),Record("Startup")]);
 function StartNote(s)
-{//What Demo/Games/startup.json proves about one entry.
+{//What Demo/Games/Startup.json proves about one entry.
   if (!s)
     return "TempleOS startup check pending";
   if (!s.same)

@@ -1,5 +1,5 @@
 //A stock RAM snapshot inflates in parts at once. A cut is a deflate block that
-//starts after 32 KB of zeros (Kernel/Test/stock-segments.mjs finds them), so the
+//starts after 32 KB of zeros (Kernel/Test/StockSegments.mjs finds them), so the
 //part from one cut to the next is a whole raw deflate stream once a block of
 //zeros goes before it, for the copies that reach back, and an empty final
 //block after it. Each part is inflated on its own thread into one shared

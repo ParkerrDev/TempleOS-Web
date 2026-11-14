@@ -2,8 +2,8 @@ import {readFileSync,existsSync} from "node:fs";
 import {createHash} from "node:crypto";
 import {gunzipSync} from "node:zlib";
 import {resolve} from "node:path";
-import {HEMU_SRC,SITE_DIR} from "../compile.js";
-import {makeDisk} from "../qcow2.js";
+import {HEMU_SRC,SITE_DIR} from "../Compile.js";
+import {makeDisk} from "../QCow2.js";
 import {StockManifestCheck,StockOverlayApply} from "../Stock.js";
 const Hash=bytes=>createHash("sha256").update(bytes).digest("hex");
 function Stock(smp) {

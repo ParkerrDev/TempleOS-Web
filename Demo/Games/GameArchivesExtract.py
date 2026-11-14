@@ -14,7 +14,7 @@ from RedSea import files, expand
 
 root = Path(__file__).resolve().parents[2]
 upstream = Path(sys.argv[1] if len(sys.argv) > 1 else '../.work/upstream').resolve()
-manifest = json.loads((root / 'Demo/Games/provenance.json').read_text())
+manifest = json.loads((root / 'Demo/Games/Provenance.json').read_text())
 expected = {entry['url'].rsplit('/', 1)[1]: entry['sha256'] for entry in manifest['archives']}
 
 

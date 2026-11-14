@@ -12,7 +12,7 @@ so chat and presence receive the origin they allow. Their services, the OS and
 the assets remain enabled. A temporary certificate is trusted only by the audit
 browser. This needs Chromium and OpenSSL; `CHROMIUM` overrides the executable.
 
-`node Misc/Lighthouse/check.mjs https://templeosweb.netlify.app/` audits the live
+`node Misc/Lighthouse/Chk.mjs https://templeosweb.netlify.app/` audits the live
 site without the mirror, hostname mapping or certificate override. Neither mode
 is a PageSpeed Insights service result. Audit the deployed URL again after its
 commit and sibling dependency pins have been published.

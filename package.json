@@ -12,13 +12,13 @@
     "test:games:browser": "node Apps/Games/Games.browser.mjs",
     "test:engine": "node Kernel/Test/Engine.browser.mjs",
     "test:snapshot": "node Kernel/Test/Snapshot.browser.mjs",
-    "test:clip": "node Apps/Search/Clip/Test/mp4.mjs && node Apps/Search/Clip/Test/mkv.mjs && node Apps/Search/Clip/Test/memory.mjs && node Apps/Search/Clip/Test/Clip.browser.mjs",
+    "test:clip": "node Apps/Search/Clip/Test/Mp4.mjs && node Apps/Search/Clip/Test/Mkv.mjs && node Apps/Search/Clip/Test/Mem.mjs && node Apps/Search/Clip/Test/Clip.browser.mjs",
     "build:bible": "node Apps/God/BibleMk.mjs",
     "serve": "node Misc/Server.mjs",
     "test:chat": "node Apps/Chat/Chat.browser.mjs",
     "test:search": "node Apps/Search/Query.test.mjs && node Apps/Search/QueryMemory.test.mjs && node Apps/Search/Search.browser.mjs",
     "test:sprites": "node Apps/Sprites/Gr.test.mjs && node Apps/Sprites/Play.test.mjs && node Apps/Sprites/SpriteCodec.test.mjs && node Apps/Sprites/Sprites.browser.mjs && node Apps/Sprites/VideoFrames.browser.mjs",
-    "test:lighthouse": "node Misc/Lighthouse/check.mjs"
+    "test:lighthouse": "node Misc/Lighthouse/Chk.mjs"
   },
   "devDependencies": {
     "chrome-launcher": "1.2.1",

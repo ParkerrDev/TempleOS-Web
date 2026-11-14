@@ -47,7 +47,7 @@ const context=vm.createContext({
   requestAnimationFrame:()=>1,cancelAnimationFrame(){},setInterval:()=>1,clearInterval(){},
 });
 context.window=context;context.self=context;
-const path=new URL('../Editor/app.js',import.meta.url);
+const path=new URL('../Editor/App.js',import.meta.url);
 const source=readFileSync(path,'utf8').replace(/^import[\s\S]*?;\n/gm,'').replaceAll('import.meta.url',JSON.stringify(path.href));
 new vm.Script(source,{filename:path.pathname}).runInContext(context);
 const api=context.__holycEditor,{CTRL,KEY_STATE_BASE}=protocol;

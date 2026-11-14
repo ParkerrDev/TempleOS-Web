@@ -8,7 +8,7 @@
 // changed them, so unrelated commits reuse the copies already in R2, and the snapshots to the HEMU
 // commit cloned next to this build, so a snapshot always matches the engine compiled from that same
 // HEMU (a mismatched pair is the BADOP crash). A folder is pinned as a whole, so Terry Search's
-// manifest always matches its shards and every game file matches Demo/Games/catalog.json's checksums.
+// manifest always matches its shards and every game file matches Demo/Games/Catalog.json's checksums.
 // Before writing, it HEADs every file behind every rule and wants the local file's length back: that
 // makes the Worker copy anything missing into R2 now, so no visitor waits on GitHub, and a wrong host,
 // pin or allowlist (Misc/Cdn/Offload.js) fails the build (the live deploy stays) instead of breaking the site.

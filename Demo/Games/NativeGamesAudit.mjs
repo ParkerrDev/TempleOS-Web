@@ -1,11 +1,11 @@
 import {readFile,writeFile} from "node:fs/promises";
 import {Hash,CompilerInputs,BrowserInputs} from "./Test/BrowserEvidence.mjs";
 import {gameProject} from "../../Apps/Games/GameSrc.js";
-import {compileNativeProject} from "../../Apps/Editor/project.js";
+import {compileNativeProject} from "../../Apps/Editor/Project.js";
 import {GAMES} from "../../Apps/Games/GameCatalog.js";
 
 const ROOT=new URL("../../",import.meta.url),FILE=new URL(
-  "Demo/Games/compatibility.json",ROOT),mode=process.argv[2] || "--audit";
+  "Demo/Games/Compatibility.json",ROOT),mode=process.argv[2] || "--audit";
 if (!["--audit","--check","--write"].includes(mode))
   throw new Error("Use --audit, --check or --write.");
 globalThis.fetch=async function (url) {
@@ -22,7 +22,7 @@ try {
     throw e;
 }
 let browser=null;
-try {browser=JSON.parse(await readFile(new URL("Demo/Games/browser-checks.json",ROOT)));}
+try {browser=JSON.parse(await readFile(new URL("Demo/Games/BrowserChks.json",ROOT)));}
 catch (e) {if(e.code!=="ENOENT")throw e;}
 const browserInputs=await BrowserInputs(),browserCurrent=browser?.format===1 &&
   Object.entries(browserInputs).every(([key,value])=>browser[key]===value);
@@ -62,7 +62,7 @@ if (mode=="--write")
 else if (mode=="--check") {
   if (JSON.stringify(old)!=JSON.stringify(evidence))
     throw new Error("Program evidence is missing or stale. Run the audit and "+
-      "review the results before regenerating Demo/Games/compatibility.json.");
+      "review the results before regenerating Demo/Games/Compatibility.json.");
 } else if (failures)
   process.exitCode=1;
 console.log(GAMES.length-failures+"/"+GAMES.length+

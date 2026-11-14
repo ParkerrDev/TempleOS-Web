@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {compileNativeProject} from './project.js';
+import {compileNativeProject} from './Project.js';
 import {createHost} from '../../holyc-wasm/src/runtime/host.js';
 import {gameProject} from '../Games/GameSrc.js';
 

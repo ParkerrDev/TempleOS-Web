@@ -5,7 +5,7 @@ export function gameCredits(game) {
   if(extra)return extra.credit;
   if(game.packageId==='toom')return {
     author:'ParkerrDev',authorUrl:'https://github.com/ParkerrDev',
-    source:'https://github.com/ParkerrDev/TempleOS-Web/tree/master/games/Toom',
+    source:'https://github.com/ParkerrDev/TempleOS-Web/tree/master/Demo/Games/Toom',
     note:'HolyC game created for TempleOS-Web. Game rules from id Software\'s GPL DOOM source; maps, art and sounds from Freedoom.',
   };
   if(TERRY_DEMOS.some(name=>game.packageId==='tinker-'+name))return {
@@ -20,17 +20,17 @@ export function gameCredits(game) {
   };
   if(['Babel.HC','Volley.HC'].includes(game.file))return {
     author:'ParkerrDev',authorUrl:'https://github.com/ParkerrDev',
-    source:'https://github.com/ParkerrDev/TempleOS-Web/blob/master/games/'+game.file,
+    source:'https://github.com/ParkerrDev/TempleOS-Web/blob/master/Demo/Games/'+game.file,
     note:'HolyC game created for TempleOS-Web.',
   };
   if(game.file==='Snake.HC')return {
     author:'ParkerrDev',authorUrl:'https://github.com/ParkerrDev',
-    source:'https://github.com/ParkerrDev/TempleOS-Web/blob/master/games/Snake.HC',
+    source:'https://github.com/ParkerrDev/TempleOS-Web/blob/master/Demo/Games/Snake.HC',
     note:'HolyC game created for TempleOS-Web.',
   };
   if(game.file==='FNAF.HC')return {
     author:'ParkerrDev',authorUrl:'https://github.com/ParkerrDev',
-    source:'https://github.com/ParkerrDev/TempleOS-Web/blob/master/games/FNAF.HC',
+    source:'https://github.com/ParkerrDev/TempleOS-Web/blob/master/Demo/Games/FNAF.HC',
     note:'HolyC port of Five Nights at Freddy\'s by Scott Cawthon, with its images and sounds converted from the original.',
   };
   throw new Error('Missing verified game attribution: '+game.name);

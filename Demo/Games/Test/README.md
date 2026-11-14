@@ -6,7 +6,7 @@ a deterministic paused scene through the game's own draw callback, and verifies
 that Escape and Shift+Escape restore prior settings and release animation tasks.
 The identical HolyC fixture runs in original V5.03 under QEMU/KVM and in HEMU.
 
-Run `node Demo/Games/Test/native.mjs --write` to refresh all three scenarios,
+Run `node Demo/Games/Test/Native.mjs --write` to refresh all three scenarios,
 Babel, Volley and Snake. The fast test checks the exact program source, fixture,
 compiler/HEMU pins, compiled engine and host source against this evidence; stale
 evidence fails the build. Keep the pins fixed while a check runs.
@@ -18,7 +18,7 @@ and self collision, all four boundaries, circular-buffer wrap, each possible
 last free apple cell and a full board.
 
 For a candidate source, set `GAME_SOURCE_DIR` and name the game, for example
-`GAME_SOURCE_DIR=/path/to/drafts node Demo/Games/Test/native.mjs Tetris`. Candidate
+`GAME_SOURCE_DIR=/path/to/drafts node Demo/Games/Test/Native.mjs Tetris`. Candidate
 results go to `tmp/games/`; they cannot replace production evidence.
 
 The Tetris candidate also needs `Help.DD` in its source directory. Its scenario
@@ -39,7 +39,7 @@ Snake animation task for controlled physics states, then invokes the
 game's compiled functions using TempleOS's `Call` API. No game source is rewritten
 or given replacement drawing/input functions by this check.
 
-`node Demo/Games/Test/catalog.mjs NAME` installs one entry in HEMU with the site's
+`node Demo/Games/Test/Catalog.mjs NAME` installs one entry in HEMU with the site's
 own installer and launch (`Install.mjs` follows `runInTempleOS` in `GamesWin.js`),
 checks every written file byte for byte and lets the game run for 15 seconds of
 guest time. A game still running then gets Esc and, if it is still running five
@@ -48,16 +48,16 @@ ran (`running`, `returned`, `closed`, `never` or `except:CODE`), which key ended
 it (`esc`, `shift-esc` or `ignored`) and how it ended. `--all` gives every entry a
 fresh emulator process and writes reports under `tmp/games/catalog/`; `OUT`
 changes the directory and `CATALOG_FRAMES` the run (938 frames of 16 ms). The old
-`Kernel/Test/game-suite.mjs` command forwards here.
+`Kernel/Test/GameSuite.mjs` command forwards here.
 
-`node Demo/Games/Test/start.mjs` runs each entry in original TempleOS V5.03 under
+`node Demo/Games/Test/Start.mjs` runs each entry in original TempleOS V5.03 under
 QEMU as well. `Start.HC` copies the entry's files, staged under 8.3 names, to the
 paths the site writes with `CopySingle`, launches the game with the site's own
 `PopUp` script and puts its keys in `kbd.fifo2`, where the keyboard interrupt
 puts the bytes it reads. Every entry gets a freshly booted V5.03 and the same 15
-and 5 seconds. `--write` records all of them in `Demo/Games/startup.json`, bound to
+and 5 seconds. `--write` records all of them in `Demo/Games/Startup.json`, bound to
 each entry's files and launch, the check's own sources and the site runtime, and
-`startup.test.mjs` fails the build when any of those change. The Games window
+`Startup.test.mjs` fails the build when any of those change. The Games window
 enables Run in TempleOS only for an entry that starts and quits as it does in
 V5.03. `running` means the task was alive after 15 seconds: it may be at a menu
 or an intro dialog (BigGuns' two PopUpOk dialogs take both keys, in V5.03 too).
@@ -69,7 +69,7 @@ The browser launcher also requires recorded startup evidence. Run
 change. The browser check uses the actual editor worker, observes visible and
 advancing frames, checks worker survival and Stop, and tests the launcher's
 refusal when compilation is the only evidence or the evidence cannot load.
-`Demo/Games/browser-checks.json` records exact project/compiler/runner hashes.
+`Demo/Games/BrowserChks.json` records exact project/compiler/runner hashes.
 The fast compiler audit rejects stale records. These four startup scenarios
 (HolyCraft, Babel, Volley and Snake) do not establish input response, complete
 gameplay or native parity; `gameplay` remains explicitly unverified.

@@ -1,5 +1,5 @@
 // CursorMk.mjs - reconstruct the authentic TempleOS mouse pointer and write it to
-// Adam/cursor.png.  TempleOS has no cursor image file; the pointer is drawn by
+// Adam/Cursor.png.  TempleOS has no cursor image file; the pointer is drawn by
 // DrawStdMs (Adam/Gr/GrComposites.HC) as GrArrow3(dc, x+8,y+8,0, x,y,0) with thick=1.
 // GrArrow3 (same file) draws, with the tip = hotspot at the top-left:
 //   shaft  (8,8) -> (0,0)
@@ -51,5 +51,5 @@ const dataUrl = await page.evaluate(({ W, H, SCALE, px }) => {
 }, { W, H, SCALE, px });
 await browser.close();
 
-writeFileSync("Adam/cursor.png", Buffer.from(dataUrl.split(",")[1], "base64"));
-console.log(`wrote Adam/cursor.png (${W}x${H}, white, 1-bit)`);
+writeFileSync("Adam/Cursor.png", Buffer.from(dataUrl.split(",")[1], "base64"));
+console.log(`wrote Adam/Cursor.png (${W}x${H}, white, 1-bit)`);

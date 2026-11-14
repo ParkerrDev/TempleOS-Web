@@ -23,7 +23,7 @@ export async function LegacyBsp(m)
       }).catch(err=>send({cmd:"error",msg:err.message}));
     }
   };
-  await import("./hemu-worker.js");
+  await import("./HemuWorker.js");
   const wasmUrl=URL.createObjectURL(new Blob([m.wasmBytes],{type:"application/wasm"}));
   self.onmessage({data:{cmd:"init",gz:m.snapGz,wasmUrl,
     smp:{mem:m.mem,ctrl:m.ctrl,ipiAddr:m.sc.globals.g_ipi_pending,ncore:m.sc.ncore}}});

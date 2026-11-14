@@ -7,8 +7,8 @@ import {join} from "node:path";
 import {fileURLToPath} from "node:url";
 
 export function OpcodeOracle(name) {
-  const source=new URL(`./${name}-oracle.c`,import.meta.url),fixture=new URL(`./${name}-oracle.txt`,import.meta.url),
-    provenance=new URL(`./${name}-oracle.json`,import.meta.url),
+  const source=new URL(`./${name}Oracle.c`,import.meta.url),fixture=new URL(`./${name}Oracle.txt`,import.meta.url),
+    provenance=new URL(`./${name}Oracle.json`,import.meta.url),
     Hash=file=>createHash("sha256").update(readFileSync(file)).digest("hex");
   if(process.argv.includes("--record")) {
     assert.equal(process.arch,"x64","the independent opcode oracle needs x86-64 hardware");

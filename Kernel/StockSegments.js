@@ -1,4 +1,4 @@
-//Written by Kernel/Test/stock-segments.mjs --write: where each stock RAM
+//Written by Kernel/Test/StockSegments.mjs --write: where each stock RAM
 //snapshot, named by its gzip SHA-256, can be cut to inflate in parts.
 export const STOCK_SEGMENTS={
  "95011614748141aa2c23d8f2110ff7e898773448a0d893a2243c16583e18b9e8":{file:"live.bin.gz",size:402653184,cuts:[

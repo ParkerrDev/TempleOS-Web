@@ -11,7 +11,7 @@ const ROOT=new URL("./",import.meta.url),CHUNK_LINES=512,
   "Galatians|Ephesians|Philippians|Colossians|1 Thessalonians|"+
   "2 Thessalonians|1 Timothy|2 Timothy|Titus|Philemon|Hebrews|James|"+
   "1 Peter|2 Peter|1 John|2 John|3 John|Jude|Revelation").split("|");
-const source=await readFile(new URL("kjv.txt",ROOT)),
+const source=await readFile(new URL("Kjv.txt",ROOT)),
   lines=source.toString("utf8").replace(/\r/g,"").trimEnd().split("\n"),
   books=[],refs=[];
 let i,start,match,verse="",n=0,chunk;
@@ -31,7 +31,7 @@ for (start=0;start<lines.length;start+=CHUNK_LINES) {
   await writeFile(new URL("Bible/"+start/CHUNK_LINES+".json",ROOT),
     JSON.stringify(chunk)+"\n");
 }
-await writeFile(new URL("Bible/index.json",ROOT),JSON.stringify({
+await writeFile(new URL("Bible/Index.json",ROOT),JSON.stringify({
   sha256:createHash("sha256").update(source).digest("hex"),
   lines:lines.length,chunkLines:CHUNK_LINES,passageLines:PASSAGE_LINES,books
 })+"\n");

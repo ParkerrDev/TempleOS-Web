@@ -3,7 +3,7 @@ import {$,dbg,engine,os_disk,OsReady,OsFileWrite,OsDirList} from "../../Adam/Os.
 import {BootFileSave} from "../../Adam/BootFile.js";
 import {SnapshotInspect} from "../../Kernel/Snapshot.js";
 import {StockIdentify,StockModuleCheck} from "../../Kernel/Stock.js";
-import {makeDisk} from "../../Kernel/qcow2.js";
+import {makeDisk} from "../../Kernel/QCow2.js";
 
 const CSS='    /* Disk & Save window */\n'+
   '    #diskWin { display:flex; flex-direction:column; width:min(560px,94vw); max-height:88vh; margin:0; padding:10px; }\n'+

@@ -23,8 +23,8 @@ const files=new Map(names.map(n=>[n,readFileSync(resolve(game,n))]));
 files.set('FREEDOOM.WAD',finale?readFileSync(resolve(root,'Demo/Games/Toom/Test/.assets/freedoom-0.13.0-phase2.wad')):FreedoomRead());
 files.set('TMDATA.BIN',readFileSync(resolve(game,'TMDATA.BIN')));
 const fileHashes=Object.fromEntries([...files].map(([n,bytes])=>[n,hash(bytes)]));
-const runtimeNames=['Misc/Server.mjs','Adam/Keyboard.js','Adam/Os.js','Adam/WinMgr.js','Kernel/jit.js',
-  'Kernel/hemu-worker.js','Kernel/hemu-smp-worker.js','Kernel/guestexec.js',
+const runtimeNames=['Misc/Server.mjs','Adam/Keyboard.js','Adam/Os.js','Adam/WinMgr.js','Kernel/Jit.js',
+  'Kernel/HemuWorker.js','Kernel/HemuSmpWorker.js','Kernel/GuestExec.js',
   'Kernel/KeyQueue.js','build/hemu.wasm','build/hemu-smp.wasm',
   'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
   'Kernel/Stock.js','Kernel/Speaker.js','vendor/images/templeos-hd.qcow2.gz'];

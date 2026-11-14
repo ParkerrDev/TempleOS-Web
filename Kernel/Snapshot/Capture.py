@@ -141,7 +141,7 @@ def Main(default_cores=1):
                     qmp.command("cont");return False
                 Wait(Quiescent,"all CPUs halted with empty x87 stacks")
                 # The same strict parser used by publication must accept this stopped state.
-                script=Path(__file__).with_name("bake-regs-smp.mjs" if args.cores==4 else "bake-regs.mjs")
+                script=Path(__file__).with_name("BakeRegsSmp.mjs" if args.cores==4 else "BakeRegs.mjs")
                 subprocess.run(["node",str(script),str(work/"registers.txt"),str(work/"snapregs.HC")],check=True)
                 if qmp.command("query-status")["status"]!="paused":raise RuntimeError("Capture resumed unexpectedly")
                 qmp.monitor(f'pmemsave 0 0x18000000 "{work / "live.bin"}"')

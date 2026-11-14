@@ -85,7 +85,7 @@ try{
  await run('I64 Side() {"SHOULD_NOT_RUN\\n";return 1;} I64 side=Side; U0 Child(U8 *) {Sleep(1);} Spawn(&Child); ScanChar;');
  await page.waitForFunction(()=>document.getElementById('console').textContent.includes('[error]') && !__holycEditor.isRunning());
  const refused=await page.locator('#console').innerText();assert.match(refused,/ScanChar is not yet supported/);assert(!refused.includes('SHOULD_NOT_RUN'));
- await context.route('**/Apps/Editor/worker.js',route=>route.abort(),{times:1});
+ await context.route('**/Apps/Editor/Worker.js',route=>route.abort(),{times:1});
  await run('"NEVER\\n";');
  await page.waitForFunction(()=>document.getElementById('console').textContent.includes('[error]') && !__holycEditor.isRunning());
  assert.match(await page.locator('#console').innerText(),/worker could not start/);

@@ -11,7 +11,7 @@ const headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resou
 const root=new URL('../../',import.meta.url),site=createServer(ServeReq).listen(0,'127.0.0.1');
 await once(site,'listening');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
-const worker=await readFile(new URL('Kernel/hemu-worker.js',root),'utf8'),
+const worker=await readFile(new URL('Kernel/HemuWorker.js',root),'utf8'),
   diskBody=await readFile(new URL('vendor/images/templeos-hd.qcow2.gz',root));
 function Replace(source,needle,value) {
   assert.equal(source.split(needle).length,2);return source.replace(needle,value);
@@ -47,7 +47,7 @@ try {
         source=Replace(source,'},diskDelay);','};');
         source+='\naddEventListener("message",e=>{if(e.data.cmd==="testDiskStart")testDiskStart().then(()=>postMessage({cmd:"testDiskSettled"}));});\n';
       }
-      await context.route('**/Kernel/hemu-worker.js',route=>route.fulfill({body:source,contentType:'text/javascript',headers}));
+      await context.route('**/Kernel/HemuWorker.js',route=>route.fulfill({body:source,contentType:'text/javascript',headers}));
       let held;
       const diskHeld=new Promise(resolve=>held=resolve);
       await context.route('**/vendor/images/templeos-hd.qcow2.gz',async route=>{

@@ -25,9 +25,9 @@ export async function BrowserMachine(context,{gate=false}={}) {
       throw new Error("Forced exclusive owner failure");
     }
     return true;`)}));
-    await context.route("**/Kernel/hemu-smp-worker.js",async route=>route.fulfill({contentType:"text/javascript",headers,
+    await context.route("**/Kernel/HemuSmpWorker.js",async route=>route.fulfill({contentType:"text/javascript",headers,
       body:'addEventListener("message",e=>{if(e.data.cmd==="init")globalThis.__testBusGate=e.data.testBusGate;});\n'+
-        await readFile(new URL("Kernel/hemu-smp-worker.js",root),"utf8")}));
+        await readFile(new URL("Kernel/HemuSmpWorker.js",root),"utf8")}));
   }
   await context.addInitScript(()=>{
     localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
@@ -36,7 +36,7 @@ export async function BrowserMachine(context,{gate=false}={}) {
       constructor(url,...args) {
         super(url,...args);
         this.machineURL=String(url);this.machineId=machine.workers.length;
-        if(!/\/Kernel\/hemu-(smp-)?worker\.js/.test(new URL(url,location.href).pathname))return;
+        if(!/\/Kernel\/Hemu(Smp)?Worker\.js/.test(new URL(url,location.href).pathname))return;
         machine.workers.push(this);
         this.addEventListener("message",({data:m})=>{
           if(m.cmd==="frame")machine.frames++;

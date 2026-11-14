@@ -31,7 +31,7 @@ Validated locally on 2026-09-13. Changes span TempleOS-Web, HolyC-wasm, Hemu-was
 
 These are regression and smoke checks, not complete game playthroughs or full x86 conformance. TOOM's first launch compiles inside TempleOS and can take a minute or two before its menu appears. TOOM multiplayer networking is not implemented. SMP remains a separate experimental execution path.
 
-Run the dependency-free checks listed in the repository READMEs. `Kernel/Test/game-suite.mjs --all` writes per-game screenshots and JSON under `/tmp/hemu-games`, or `OUT`. `Demo/Games/catalog.json` records every source revision and asset hash.
+Run the dependency-free checks listed in the repository READMEs. `Kernel/Test/GameSuite.mjs --all` writes per-game screenshots and JSON under `/tmp/hemu-games`, or `OUT`. `Demo/Games/Catalog.json` records every source revision and asset hash.
 
 ## Desktop window and input follow-up
 
@@ -177,8 +177,8 @@ Validated locally on 2026-11-12. Snake, Babel and Volley are rewritten on Terry'
 
 | Check | Result |
 |---|---|
-| `Demo/Games/Test/native.mjs`, original V5.03 under QEMU/KVM and HEMU, two launches each | Babel frame 1BEB230827ABCDD3 and Volley frame 070264F24E97EB62, both the same as before the rewrite; Snake frame 3716A3A5AF0D0095 with logic, input and exit checks |
-| `Demo/Games/Test/catalog.mjs` in HEMU | Snake, Babel and Volley install and keep running |
+| `Demo/Games/Test/Native.mjs`, original V5.03 under QEMU/KVM and HEMU, two launches each | Babel frame 1BEB230827ABCDD3 and Volley frame 070264F24E97EB62, both the same as before the rewrite; Snake frame 3716A3A5AF0D0095 with logic, input and exit checks |
+| `Demo/Games/Test/Catalog.mjs` in HEMU | Snake, Babel and Volley install and keep running |
 | `Apps/Games/Games.browser.mjs`, the editor worker in Chromium | HolyCraft, Babel, Volley and Snake start, draw advancing frames and stop |
 | Browser frame rate, Chromium, steady play | 60 fps (the display's rate) for all three; a 60 Hz window manager beat against the display and gave 52 to 57, and a fixed Sleep(33) gave 20 |
 | `Demo/Games/NativeGamesAudit.mjs` | 9 of 66 programs compile to WebAssembly, up from 5: Collision, ElephantWalk, Digits and B17 needed only SettingsPush and AutoComplete |
@@ -189,7 +189,7 @@ HolyCraft keeps its two builds, picked by `#ifdef TOS_NATIVE`, the way Terry's o
 
 ## Every Games entry against TempleOS V5.03
 
-Validated locally on 2026-11-12. `node Demo/Games/Test/start.mjs --write` installs each of the 66 entries with the site's own installer and launch, once in original TempleOS V5.03 under QEMU/KVM (a freshly booted guest per entry) and once in the site's HEMU, waits 15 seconds of guest time, then sends Esc and, if the game is still running five seconds later, Shift-Esc. `Demo/Games/startup.json` holds both results, bound to every entry's files and launch, the check's own sources and the HEMU runtime. `Demo/Games/Test/startup.test.mjs`, now in `Misc/Test.sh`, fails when any of them change.
+Validated locally on 2026-11-12. `node Demo/Games/Test/Start.mjs --write` installs each of the 66 entries with the site's own installer and launch, once in original TempleOS V5.03 under QEMU/KVM (a freshly booted guest per entry) and once in the site's HEMU, waits 15 seconds of guest time, then sends Esc and, if the game is still running five seconds later, Shift-Esc. `Demo/Games/Startup.json` holds both results, bound to every entry's files and launch, the check's own sources and the HEMU runtime. `Demo/Games/Test/Startup.test.mjs`, now in `Misc/Test.sh`, fails when any of them change.
 
 | Result in both machines | Entries |
 |---|---|
@@ -205,7 +205,7 @@ The Games window reads the record: Run in TempleOS is enabled only for an entry 
 
 ## PageSpeed
 
-Measured on 2026-11-12 with Lighthouse 13.6.0 through `node Misc/Lighthouse/check.mjs https://templeosweb.netlify.app/`, which runs the mobile and desktop defaults. The PageSpeed Insights service itself refused with its daily quota spent, so these are local runs, not its numbers.
+Measured on 2026-11-12 with Lighthouse 13.6.0 through `node Misc/Lighthouse/Chk.mjs https://templeosweb.netlify.app/`, which runs the mobile and desktop defaults. The PageSpeed Insights service itself refused with its daily quota spent, so these are local runs, not its numbers.
 
 Before 104e332, with the machine's load average near 35, three mobile runs gave Performance 90, 100 and 87; the two low ones came from total blocking time of 410 and 500 ms. The longest page task was the chat Worker's first message: it made the 100 kept lines at once while the page was loading (523 of the page's 811 elements), and the first `toLocaleString` started ICU. The Chat window now makes its lines the first time it opens. On the local mirror of the site, three mobile runs each gave total blocking time 37, 126 and 158 ms before and 25, 28 and 52 ms after.
 
@@ -217,4 +217,23 @@ Three live runs after 54282e5:
 | 2 | 100/100/100/100/100 | 100/100/100/100/100 | 2/2, 2/2 | 74 ms | 1.72 s |
 | 3 | 99/100/100/100/100 | 99/100/100/100/100 | 2/2, 2/2 | 7 ms | 2.97 s |
 
-The 99s are Speed Index alone. After the first second the only thing that changes on screen is TempleOS's own window: the 9.6 MB RAM snapshot's progress bar, then the desktop. In run 3 the snapshot came at 2.2 MB/s (requested at 0.69 s, done at 4.99 s), so the desktop showed late. Asking for it before the first paint was not tried, since Lighthouse's simulated mobile link of 1.6 Mbps could then charge it to the first paint. The local mirror run (`node Misc/Lighthouse/check.mjs` with no URL) sometimes fails robots.txt and llms.txt with "Fetch failed": the mirror compresses large files synchronously while those requests wait. The live site answers both with 404 at once, and every live run passed them.
+The 99s are Speed Index alone. After the first second the only thing that changes on screen is TempleOS's own window: the 9.6 MB RAM snapshot's progress bar, then the desktop. In run 3 the snapshot came at 2.2 MB/s (requested at 0.69 s, done at 4.99 s), so the desktop showed late. Asking for it before the first paint was not tried, since Lighthouse's simulated mobile link of 1.6 Mbps could then charge it to the first paint. The local mirror run (`node Misc/Lighthouse/Chk.mjs` with no URL) sometimes fails robots.txt and llms.txt with "Fetch failed": the mirror compresses large files synchronously while those requests wait. The live site answers both with 404 at once, and every live run passed them.
+
+## TempleOS file tree
+
+Validated on 2026-11-14. The root keeps the eight files required by the web,
+Git, npm and Netlify. The machine lives in Kernel, shared desktop code in Adam,
+each window with its code, assets and checks in Apps, games in Demo/Games, and
+build and deployment tools in Misc. Public page redirects retain existing links.
+
+The stage 2 publication contains the same 857 files as stage 1 after applying the
+rename map, with no missing or extra files. Only the three browser engine outputs
+are published from build; obsolete local Qt outputs are refused by the publisher
+and HTTP server. All five game Source links into this repository resolve in the
+new tree, and the credit regression checks them against the actual files.
+
+The fast suite, engine builds and 51 engine checks pass. The recorded browser
+suites cover desktop/mobile windows, editor, chat, search, clips, sprites, disk
+import, worker lifecycle and snapshot round trips. Browser startup evidence was
+refreshed after the final credit correction. Source-bound native game evidence
+remains valid, and all 66 startup records still match original TempleOS V5.03.

@@ -42,7 +42,7 @@ async function Run(msg)
     return bible.Passage(bits);
   if (msg.action=="word") {
     if (!words)
-      words=Text("./godwords.txt").then(function (text) {
+      words=Text("./GodWords.txt").then(function (text) {
         let list=text.split("\n").filter(Boolean);
         if (!list.length)
           throw new Error("The vocabulary is empty.");

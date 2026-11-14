@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
-import {makeDisk,makeQcow2,makeRaw} from '../../Kernel/qcow2.js';
-const root=new URL('./Test/',import.meta.url),evidence=JSON.parse(readFileSync(new URL('evidence.json',root)));
+import {makeDisk,makeQcow2,makeRaw} from '../../Kernel/QCow2.js';
+const root=new URL('./Test/',import.meta.url),evidence=JSON.parse(readFileSync(new URL('Evidence.json',root)));
 function Fixture(name) {
   const bytes=gunzipSync(readFileSync(new URL(name+'.gz',root)));
   assert.equal(bytes.length,evidence.files[name].bytes);

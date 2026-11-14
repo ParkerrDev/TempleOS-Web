@@ -61,7 +61,7 @@ const ctrl = new SharedArrayBuffer(64);
 let bsp = null; const workers = [];
 status(`booting ${N} cores (BSP loads the snapshot, ~10 MB)…`);
 for (let k = 0; k < N; k++) {
-  const w = new Worker("./hemu-smp-worker.js", { type: "module" });
+  const w = new Worker("./HemuSmpWorker.js", { type: "module" });
   w.onmessage = (e) => {
     const m = e.data;
     if (m.cmd === "frame") { blit(new Uint8Array(m.buf), m.w, m.h); w.postMessage({ cmd: "ack" }); }

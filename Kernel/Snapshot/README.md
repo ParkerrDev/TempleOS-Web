@@ -37,7 +37,7 @@ RAM and registers are read while QEMU is stopped. QEMU then exits to flush the
 private disk before its checksum is recorded. Packaging verifies the source
 artifacts, regenerates the HolyC register source, compresses RAM and records
 only disk sectors differing from the hash-bound original disk. The complete
-reconstructed disk checksum is checked by `Kernel/Test/stock.test.mjs`.
+reconstructed disk checksum is checked by `Kernel/Test/Stock.test.mjs`.
 
 This is exact pairing of the captured RAM, supported CPU fields and disk, not
 a complete QEMU device snapshot. HEMU still initializes PIC, PIT and RTC using
@@ -57,9 +57,9 @@ python3 Kernel/Snapshot/Probe.py --disk vendor/images/templeos-hd.qcow2.gz \
   --font holyc-wasm/src/runtime/font.js --out /tmp/stock-xmm --record
 python3 Kernel/Snapshot/Probe.py --disk vendor/images/templeos-hd.qcow2.gz \
   --font holyc-wasm/src/runtime/font.js --out /tmp/stock-occupied --occupied --record
-node Kernel/Test/snapregs.test.mjs
-node Kernel/Test/stock.test.mjs
-node Kernel/Test/stock-init.test.mjs
+node Kernel/Test/SnapRegs.test.mjs
+node Kernel/Test/Stock.test.mjs
+node Kernel/Test/StockInit.test.mjs
 ```
 
 The historical RAM fixture under `Kernel/Test/Fixtures` preserves the old

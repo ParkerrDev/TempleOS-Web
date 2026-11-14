@@ -184,8 +184,8 @@ const WORKER=(await import("./Files.js")).default;
   [res,up]=await Ask(env,FILES+"HEMU/"+SHA+"/live.bin.gz");
   assert.equal(res.status,200,"HEMU's snapshots are served too");
   for (path of ["TempleOS-Web/"+SHA+"/index.html",
-	"TempleOS-Web/"+SHA+"/Apps/Search/Transcripts/../../../index.html",
-	"TempleOS-Web/"+SHA+"/Apps/Search/Transcripts/..%2F..%2F..%2Findex.html",
+	"TempleOS-Web/"+SHA+"/index.html",
+	"TempleOS-Web/"+SHA+"/Apps/Search%2F..%2F..%2Findex.html",
 	"TempleOS-Web/"+SHA+"/Apps/Search/Transcripts","HEMU/"+SHA+"/index.html",
 	"TempleOS-Web/"+SHA+"/Apps/Terry/TerrySprites.gr.gz.old",
 	"Other/"+SHA+"/Apps/Search/Transcripts/manifest.json",

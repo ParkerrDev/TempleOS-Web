@@ -19,9 +19,9 @@ try {
     try {
       await BrowserMachine(context);
       if(outcome==='early-disk-error') {
-        const source=await readFile(new URL('Kernel/hemu-worker.js',root),'utf8'),needle='gxFrames >= 3';
+        const source=await readFile(new URL('Kernel/HemuWorker.js',root),'utf8'),needle='gxFrames >= 3';
         assert.equal(source.split(needle).length,2);
-        await context.route('**/Kernel/hemu-worker.js',route=>route.fulfill({contentType:'text/javascript',headers,
+        await context.route('**/Kernel/HemuWorker.js',route=>route.fulfill({contentType:'text/javascript',headers,
           body:'let testProbe=false;addEventListener("message",e=>{if(e.data.cmd==="testProbe")testProbe=true;});\n'+
             source.replace(needle,'testProbe && '+needle)}));
       }

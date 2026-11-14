@@ -40,5 +40,5 @@ await save(resolve(tinker,'LICENSE'),'TinkerOS/LICENSE');
 packages.push(ToomPackage());
 await syncLibrary({tinker,save,packages});
 for(const pkg of packages)pkg.credit=gameCredits({name:pkg.name,packageId:pkg.id});
-await writeFile(resolve(root,'Demo/Games/catalog.json'),JSON.stringify({version:1,sources:{TinkerOS:{url:'https://github.com/tinkeros/TinkerOS',revision:revisions.tinker}},packages},null,2)+'\n');
+await writeFile(resolve(root,'Demo/Games/Catalog.json'),JSON.stringify({version:1,sources:{TinkerOS:{url:'https://github.com/tinkeros/TinkerOS',revision:revisions.tinker}},packages},null,2)+'\n');
 console.log(`Imported ${packages.length} packages and ${hashes.length} files. TinkerOS ${revisions.tinker}.`);

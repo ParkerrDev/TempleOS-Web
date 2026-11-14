@@ -1,4 +1,4 @@
-import {makeDisk} from "./qcow2.js";
+import {makeDisk} from "./QCow2.js";
 
 export const STOCK_SECTION="hemu.stock";
 const ROOT=new URL("../hemu/",import.meta.url),RAM_BYTES=402653184;

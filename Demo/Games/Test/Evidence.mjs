@@ -29,7 +29,7 @@ export async function GameInputs()
   return {
     launchesPerTask:GAME_RUNS,
     harnessSha256:Hash(await readFile(new URL("Demo/Games/Test/Native.HC",root))),
-    runnerSha256:Hash(await readFile(new URL("Demo/Games/Test/native.mjs",root))),
+    runnerSha256:Hash(await readFile(new URL("Demo/Games/Test/Native.mjs",root))),
     ...await RuntimeInputs()
   };
 }
