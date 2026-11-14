@@ -247,3 +247,19 @@ The emulator harnesses (`Kernel/Test/`, memory-hungry, need the decompressed sna
 The editor uses native TempleOS keyboard decoding and cooperative tasks when a program needs them. `npm run test:editor` checks extended keys, modifiers, held-state release, queue overflow, blocked-input wakeups, child failures and worker-load errors in the actual browser worker. Unsupported blocking APIs fail before program initialization.
 
 The Keys window routes presses to the active HolyC preview or TempleOS. Each release goes back to the program that accepted the press; physical and on-screen holds share ownership. Mobile keys stay above dialogs, and focus loss clears both held keys and latched modifiers. The browser editor check includes actual touch taps and legacy preview input.
+
+### Automatic C: saving
+
+C: is saved in this browser with IndexedDB and restored on the next visit.
+The worker batches changed sectors after each guest turn; Restart waits for the
+last transaction to commit. Importing a disk or snapshot replaces the saved C:.
+Only one tab writes the saved drive at a time. Other tabs show that their changes
+are not saved. The Disk & Save window shows saving, saved and storage errors,
+and still exports portable disk and machine backups. Opening it requests
+persistent browser storage where supported. Clearing site data, private browsing
+or browser eviction can remove local saves; export a backup for safekeeping.
+
+Checks: `node Apps/Disk/AutoSave.browser.mjs` exercises actual guest file writes,
+restart, tab close/reopen and multiple tabs with one and four cores;
+`node Apps/Disk/Storage.browser.mjs` checks exact sector restoration, replacement
+and transaction failure.

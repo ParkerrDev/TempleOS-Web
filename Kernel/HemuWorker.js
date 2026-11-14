@@ -1,3 +1,4 @@
+import {DiskStoreOpen} from "./DiskStore.js";
 // HemuWorker.js - runs the HolyC x86-64 emulator on a dedicated Worker thread.
 //
 // This is the "multi-core" engine: emulation happens HERE (one CPU core) while the main thread
@@ -45,6 +46,7 @@ function SettingsApply(rateChanged=true)
 let curBudget = 1500000, dtMs = 16, dtNs = 16000000;         // guest instr/frame + real wall-clock ms/frame
 let outstanding = 0, snap = null, snapWrote = null, loaded = false, disk = null, gBase = 0, instRef = null;
 let paused=false,saving=false,machineBarrier=null,engineBytes=null,hostRef=null,showStoppedFrame=null;
+let diskStore=null;
 let machineBus=null,diskPending=false,diskGeneration=0,stockCapture=null,stockManifest=null;
 const RamAccess=fn=>machineBus?machineBus.Access(fn):fn();
 const deferred=[];
@@ -218,7 +220,7 @@ function gxTick() {                          // once per emulated frame: service
 
 const guestInput = createGuestInput({guest:()=>gx,
   onState:state=>postMessage({cmd:"inputMode",...state})});
-onmessage = (e) => {
+onmessage = async (e) => {
   const m = e.data;
   if (saving && m.cmd!=="ack") {deferred.push(m);return;}
   if (m.cmd === "init") boot(m).catch(err => {
@@ -242,16 +244,24 @@ onmessage = (e) => {
   else if (m.cmd === "pause") {try {PauseSet(m.value);} catch(err) {postMessage({cmd:"error",msg:err.message});}}
   else if (m.cmd === "exportSnapshot") exportImage("snapshot");
   else if (m.cmd === "exportDisk") exportImage("disk");
+  else if (m.cmd === "flushDisk") {
+    try {PauseSet(true);await diskStore?.Flush();fileResult(m.id,{ok:true});}
+    catch(err) {fileResult(m.id,{ok:false,msg:err.message});}
+  }
   else if (m.cmd === "importDisk") {
+    const wasPaused=paused;
     try {
       const next=makeDisk(new Uint8Array(m.bytes));
+      PauseSet(true);
       GuestCacheInvalidate();
-      disk=next;diskGeneration++;diskPending=false;
+      diskGeneration++;
+      await diskStore?.Attach(next);
+      disk=next;diskPending=false;
       postMessage({cmd:"diskInfo",ok:true,diskReady:true,diskPending,
         msg:"Disk imported ("+(m.bytes.byteLength/1048576).toFixed(0)+" MB)"});
     } catch(err) {
       postMessage({cmd:"diskInfo",ok:false,diskReady:!!disk,diskPending,msg:String(err.message||err)});
-    }
+    } finally {PauseSet(wasPaused);}
   }
   else if (m.cmd === "uploadFile") {
     try { if (!disk) throw new Error("disk not loaded yet - wait a moment after boot");
@@ -333,7 +343,7 @@ async function SnapInflate(gz,capture)
   postMessage({cmd:"ramReady",parts:res.parts,ms:Math.round(performance.now()-t0)});
   return res.ram;
 }
-async function boot({ gz, wasmUrl, wasmBytes, manifest, fixedB, diskBytes, smp, repeat, rate, patches, diskDelay=2500 }) {
+async function boot({ gz, wasmUrl, wasmBytes, manifest, fixedB, diskBytes, smp, repeat, rate, patches, resumeDisk=false, diskDelay=2500 }) {
   if ([0,30,60,120].includes(rate)) refreshRate=rate;
   if (typeof repeat==="boolean") repeatKeys=repeat;
   smpCfg = smp || null;
@@ -353,8 +363,12 @@ async function boot({ gz, wasmUrl, wasmBytes, manifest, fixedB, diskBytes, smp, 
     snap=found.ram||await SnapInflate(gz,stockCapture);
   }
   StockPoolEnd(inflatePool);
+  diskStore=await DiskStoreOpen(postMessage);
   gz=null;
-  if (!saved && diskBytes) disk=makeDisk(new Uint8Array(diskBytes));
+  if (!saved && diskBytes) {
+    disk=makeDisk(new Uint8Array(diskBytes));
+    await diskStore?.Attach(disk);
+  }
   const mod=await compiled;
   if(!saved)StockModuleCheck(mod,stockCapture,stockManifest);
   if(smpCfg?.busProtocol!==undefined) {
@@ -440,6 +454,9 @@ async function boot({ gz, wasmUrl, wasmBytes, manifest, fixedB, diskBytes, smp, 
     if(saved.meta.requiredBusProtocol && !machineBus?.Ready())
       throw new Error("Saved machine requires every core to coordinate RAM access");
     disk=await saved.Restore(inst.exports.memory,{busProtocol:smpCfg?.busProtocol||0});
+    const restoredDisk=resumeDisk && await diskStore?.Load();
+    if(restoredDisk)disk=restoredDisk;
+    await diskStore?.Attach(disk,!!restoredDisk);
     const m=saved.meta;
     gBase=m.base;host.state.heapPtr=m.heapPtr;inst.exports.__sp.value=BigInt(m.sp);
     if (Number(inst.exports.RamBase())!==gBase) throw new Error("Snapshot RAM base does not match its engine");
@@ -447,6 +464,7 @@ async function boot({ gz, wasmUrl, wasmBytes, manifest, fixedB, diskBytes, smp, 
     curBudget=m.budget;keyq.Restore(m.keyboard);guestInput.restore(m.pointer);
     loaded=true;inst.exports.SnapshotResume();
     gx=createGuestExec({inst,gBase,onEvent:gxEvent,access:RamAccess});gxProbe=gx.probe();
+    if(restoredDisk)GuestCacheInvalidate();
     if (!gxProbe.ok) throw new Error("Saved guest API could not be restored: "+gxProbe.errors.join("; "));
     gx.restoreLaunch(m.launch);
     postMessage({cmd:"guestReady",ok:true,probe:gxProbe,restored:true,diskReady:!!disk,diskPending:false});
@@ -526,9 +544,13 @@ async function boot({ gz, wasmUrl, wasmBytes, manifest, fixedB, diskBytes, smp, 
         setTimeout(async()=>{
           if(generation!==diskGeneration)return;
           try {
-            const next=await StockDiskAside(stockCapture,stockManifest);
+            const restored=await diskStore?.Load();
+            const next=restored || await StockDiskAside(stockCapture,stockManifest);
+            if(generation!==diskGeneration)return;
+            await diskStore?.Attach(next,!!restored);
             if(generation!==diskGeneration)return;
             disk=next;diskPending=false;
+            if(restored && gx)GuestCacheInvalidate();
             postMessage({cmd:"diskInfo",ok:true,diskReady:true,diskPending,msg:"Disk ready"});
           } catch(err) {
             if(generation!==diskGeneration)return;

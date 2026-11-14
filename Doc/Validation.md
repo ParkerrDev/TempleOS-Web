@@ -267,3 +267,21 @@ The installed Linux app's executable and four-core capture match the
 current HEMU sources and assets. It runs through KVM, independently of
 the browser compiler. Its launcher is TempleOS, with Super+Alt+T bound
 to the same executable.
+
+
+## Automatic browser disk storage
+
+C: now persists independently of the running RAM snapshot. The worker writes
+changed sectors to IndexedDB after each guest turn, with atomic transactions
+and one writer per origin through a Web Lock. The complete base is stored once
+when a disk is installed; imports replace the base and sectors atomically.
+Restored disks invalidate the captured guest block cache. Restart pauses the
+machine and waits for the pending save before terminating its workers.
+
+The storage browser check verifies exact sector contents, disk replacement,
+and a forced quota failure that preserves the previous save. The full machine
+browser check writes a file through TempleOS and finds it after Restart and
+a tab close/reopen, on one and four cores. A concurrent tab reports that its
+changes cannot be saved. Existing delayed disk-import and snapshot round-trip
+checks also pass on both core counts. Storage failures are visible in the page
+and Disk & Save window. Export remains available for portable backups.

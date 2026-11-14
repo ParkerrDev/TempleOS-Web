@@ -48,7 +48,7 @@ export function makeQcow2(buf) {
   }
   const overlay=new Map();
   return {
-    virtualSize,overlay,
+    virtualSize,overlay,base:buf,
     readInto(lba,count,dst,dstOff) {
       for(let s=0;s<count;s++) {
         const at=dstOff+s*512,changed=overlay.get(lba+s);
@@ -69,7 +69,7 @@ export function makeRaw(buf) {
   if(buf.length<512||buf.length%512)throw new Error('A raw disk image must contain complete 512-byte sectors.');
   const overlay = new Map();
   return {
-    virtualSize: buf.length,
+    virtualSize: buf.length,base:buf,
     overlay,
     readInto(lba, count, dst, dstOff) {
       for (let s = 0; s < count; s++) {

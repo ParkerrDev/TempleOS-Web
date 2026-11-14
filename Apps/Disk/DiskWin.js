@@ -23,7 +23,9 @@ const HTML='  <div id="diskOverlay" class="overlay" role="dialog" aria-modal="tr
   '      <span class="close" id="diskClose" title="Close">[X]</span>\n'+
   '      <div class="disk-body">\n'+
   '        <div class="disk-sec">\n'+
-  '          <h3>Save your progress</h3>\n'+
+  '          <h3>Automatic C: save</h3>\n'+
+  '          <p>C: is saved automatically in this browser and restored on your next visit. Clearing site data removes it. Export a backup to keep a separate copy.</p>\n'+
+  '          <p id="diskSaveStatus" role="status">Waiting for C:…</p>\n'+
   '          <p>A <b>snapshot</b> saves the running machine, its C: disk and settings together. Import it to resume that session. A <b>disk image</b> saves the C: drive by itself.</p>\n'+
   '          <div class="disk-row">\n'+
   '            <button id="dlSnap">↑ Export snapshot</button>\n'+
@@ -224,6 +226,7 @@ addEventListener("osstate",function (e) {
 
 export function Open()
 {
+  navigator.storage?.persist?.().catch(function () {});
   ov.classList.add("open");
   WinRaise(ov);
   Busy(pending);
@@ -239,3 +242,8 @@ $("diskClose").addEventListener("click",Close);
 ov.addEventListener("pointerdown",function (e) {
   if (e.target==ov) Close();
 });
+
+addEventListener("disksave",function (e) {
+  $("diskSaveStatus").textContent=e.detail.msg;
+});
+if (os_disk.save) $("diskSaveStatus").textContent=os_disk.save.msg;

@@ -19,7 +19,7 @@ const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
 dbg("hemu host starting…");
 addEventListener("error", (e) => dbg("JS: " + e.message, true));
 export const os_game = { active: false, mouse: null, launchFail: null, ed: null };   // GamesWin.js and EditorWin.js fill these
-export const os_disk = { msg: null };   // DiskWin.js
+export const os_disk = { msg: null,save: null };   // DiskWin.js
 
 const pal32 = new Uint32Array(16);
 for (let i = 0; i < 16; i++) { const [r,g,b] = PALETTE[i]; pal32[i] = (255<<24)|(b<<16)|(g<<8)|r; }
@@ -464,13 +464,16 @@ async function downloadSnapshot(smp=useSMP,generation=osGen) {
 
 // ↻ Restart: reload the OS in place - tear down the running engine and re-boot it from the
 // snapshot WITHOUT reloading the page, so the user's other windows (videos, search, God Tools)
-// are left exactly as they are. Like a page reload, it puts the disk back as it was; only
-// Export keeps what was written to it.
+// are left exactly as they are. C: is committed before stopping the worker.
 let restarting = false, osGen = 0;
 async function restartOS() {
   if (restarting) return; restarting = true;
   try {
     dbg("↻ restarting TempleOS (reloading the OS, keeping your windows)…");
+    if (OsReady()) {
+      const saved=await osRequest({cmd:"flushDisk"});
+      if (!saved.ok) throw Error(saved.msg);
+    }
     cancelOSRequests();
     patchFailed.clear();OsNotice();
     dispatchEvent(new CustomEvent("osstate",{detail:{ready:false,
@@ -659,7 +662,7 @@ function runWorker() {
   importDisk = null;
   Promise.all([Settled(s?.wasm),Settled(s?.manifest)]).then(function ([wasmBytes,manifest]) {
     worker?.postMessage({ cmd: "init", gz, wasmUrl: new URL("./build/hemu.wasm", location.href).href, fixedB: FIXED_B, diskBytes,
-      wasmBytes, manifest, diskDelay: DISK_DELAY, ...os_cfg }, [diskBytes,wasmBytes].filter(Boolean));
+      wasmBytes, manifest, diskDelay: DISK_DELAY,resumeDisk:osGen>0, ...os_cfg }, [diskBytes,wasmBytes].filter(Boolean));
   });
   watchdog = setTimeout(() => { if (!alive) fallback("no frame in 10s"); }, 10000);
   return true;
@@ -763,7 +766,7 @@ async function runSMP() {
         requiredBusProtocol:snapshotInfo?.meta.requiredBusProtocol });
     }
     bsp.postMessage({ cmd: "init", gz: gzBytes, wasmUrl: new URL("./build/hemu-smp.wasm", location.href).href, fixedB: FIXED_B,...os_cfg,
-      wasmBytes:snapshotInfo?undefined:wasmBytes,manifest,diskDelay:DISK_DELAY,
+      wasmBytes:snapshotInfo?undefined:wasmBytes,manifest,diskDelay:DISK_DELAY,resumeDisk:osGen>0,
       diskBytes: importDisk, smp: { mem, ctrl, ipiAddr: sc.globals.g_ipi_pending, ncore: sc.ncore,busProtocol:BUS_VERSION } },
       importDisk ? [importDisk] : []);
     importDisk = null;
@@ -805,6 +808,12 @@ const PATCH_NOTICE={
 const patchFailed=new Map();
 const diskMsg = (m) => {
   guestRequests.Receive(m);
+  if (m.cmd=="diskSave") {
+    os_disk.save=m;
+    dispatchEvent(new CustomEvent("disksave",{detail:m}));
+    if(m.state=="error") {dbg(m.msg,true);OsNotice(m.msg);}
+    return;
+  }
   if (m.cmd=="guestPatch") {
     if (m.patch && patchLeft.delete(m.patch) && !patchLeft.size && framed)
       OsShow();
@@ -815,7 +824,7 @@ const diskMsg = (m) => {
       dbg(m.msg,true);
     } else if (m.state=="installed") {   // one fix going in must not hide another's failure
       patchFailed.delete(m.patch);
-      OsNotice([...patchFailed.values()].at(-1)||"");
+      OsNotice([...patchFailed.values()].at(-1)||(os_disk.save?.state=="error"?os_disk.save.msg:""));
     }
     return;
   }
