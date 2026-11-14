@@ -226,7 +226,7 @@ const WORKER=(await import("./Files.js")).default;
   assert.match(res.headers.get("Access-Control-Expose-Headers"),
 	/Content-Range.*Accept-Ranges.*Content-Length.*ETag/,
 	"and the page may read its headers");
-  assert.equal(res.headers.get("Cache-Control"),"public, max-age=86400");
+  assert.equal(res.headers.get("Cache-Control"),"private, max-age=86400");
   [res,up]=await Ask(env,url,{method:"HEAD"});
   assert.deepEqual([res.status,res.headers.get("Content-Length")],
 	[200,String(SIZE)],"HEAD gives the size");

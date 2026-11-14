@@ -121,7 +121,9 @@ time.
 The heavy files never come from Netlify: the build's last step, `Misc/Cdn/OffloadRedirects.mjs`, writes
 `_redirects` that send the disk image, the RAM snapshots, the games, Terry Search's shards, Terry's
 sprites and ffmpeg's wasm to `templeosweb-files`, a Cloudflare Worker over an R2 bucket (`Misc/Cdn/`),
-pinned to the commits they came from. The Worker copies a pinned file in from raw GitHub on its first
+pinned to the commits they came from. Workers Cache serves these immutable files
+from Cloudflare's edge, including on workers.dev. Archive byte-range replies
+remain browser-cached only. The Worker copies a pinned file in from raw GitHub on its first
 request, and the build HEADs every file first, so a bad pin or host fails the build instead of the
 site. Deploy the Worker with `cd Misc/Cdn && npx wrangler deploy`; a new file or folder to offload goes
 in `Misc/Cdn/Offload.js`, which both the Worker (`Misc/Cdn/Files.js`) and `Misc/Cdn/OffloadRedirects.mjs` read.

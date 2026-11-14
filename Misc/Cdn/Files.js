@@ -30,7 +30,7 @@ const ARCHIVE_HEADERS=["Content-Type","Content-Length","Content-Range","ETag",
 
 function Fail(status,text)
 {
-  return new Response(text,{status,headers:CORS});
+  return new Response(text,{status,headers:{...CORS,"Cache-Control":"no-store"}});
 }
 
 function Served(repo,path)
@@ -151,9 +151,9 @@ async function ArchiveFetch(req,item,path)
   if (src.status==206 || src.status==416 ||
 	src.status==200 && req.method=="HEAD") {
     headers=ArchiveHeaders(src);
-    //The files date from 2018 and come with no Cache-Control. The Cache API,
-    //which could keep them at the edge, does nothing on workers.dev.
-    headers.set("Cache-Control","public, max-age=86400");
+    //Range replies stay in the browser cache; only whole pinned files use
+    //the shared Worker cache, so distinct byte ranges cannot collide.
+    headers.set("Cache-Control","private, max-age=86400");
     return new Response(src.body,{status:src.status,headers});
   }
   await src.body?.cancel();

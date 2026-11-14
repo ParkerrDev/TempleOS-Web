@@ -1,7 +1,7 @@
 # templeosweb-files: serves the site's heavy files from R2 (see Files.js).
 name = "templeosweb-files"
 main = "Files.js"
-compatibility_date = "2026-10-01"
+compatibility_date = "2026-11-14"
 workers_dev = true
 
 # The bucket drops an object 30 days after it is written, by the rule in
@@ -11,3 +11,7 @@ workers_dev = true
 [[r2_buckets]]
 binding = "FILES"
 bucket_name = "templeosweb"
+
+# Cache immutable capture URLs at the edge, including workers.dev.
+[cache]
+enabled = true
