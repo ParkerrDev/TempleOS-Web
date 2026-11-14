@@ -14,6 +14,8 @@ WinAdd(`
   <div id="settingsWin" class="win" data-title="Settings">
     <span id="settingsClose" class="close">[X]</span>
     <div id="settingsBody">
+      <label><input id="showHeader" type="checkbox"> Show header introduction</label>
+      <label><input id="showFooter" type="checkbox"> Show footer credits</label>
       <label for="frameRate">TempleOS refresh rate</label>
       <select id="frameRate">
         <option value="0">Uncapped</option>
@@ -41,6 +43,8 @@ function Close()
 export function Open()
 {
   let cfg=OsCfg();
+  $("showHeader").checked=!document.documentElement.classList.contains("hide-header");
+  $("showFooter").checked=!document.documentElement.classList.contains("hide-footer");
   $("frameRate").value=String(cfg.rate);
   $("biosRepeat").checked=cfg.repeat;
   $("settingsOverlay").classList.add("open");
@@ -70,3 +74,14 @@ $("settingsOverlay").addEventListener("pointerdown",function (e) {
   if (e.target==e.currentTarget)
     Close();
 });
+
+for (const [id,part] of [["showHeader","header"],["showFooter","footer"]])
+  $(id).addEventListener("change",function (e) {
+    document.documentElement.classList.toggle("hide-"+part,!e.target.checked);
+    try {
+      localStorage.setItem("tos-show-"+part,String(e.target.checked));
+    } catch (err) {
+      $("settingsStatus").textContent="Display changed for this visit; browser storage is unavailable.";
+    }
+    dispatchEvent(new Event("resize"));
+  });

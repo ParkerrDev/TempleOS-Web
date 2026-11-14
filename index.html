@@ -19,6 +19,11 @@
         response=fetch(stock+(smp?"live-smp.bin.gz":"live.bin.gz"),{signal:abort.signal,priority:"high"});
       response.catch(function () {});
       self.hemuBoot={mobile,smp,abort,response};
+      try {
+        for (const part of ["header","footer"])
+          if (localStorage.getItem("tos-show-"+part)==="false")
+            document.documentElement.classList.add("hide-"+part);
+      } catch (e) {}
       try {self.hemuEarly=new Worker("./hemu/Kernel/HemuWorker.js",{type:"module"});} catch (e) {}
     }
   </script>
@@ -90,6 +95,7 @@
     /* header shares the centered content width of the desktop row below it */
     header { display:flex; align-items:stretch; gap:10px; padding:4px 8px 1px;
              width:fit-content; max-width:96vw; margin:0 auto; text-align:left; }
+    .hide-header header, .hide-footer footer { display:none; }
     header .htxt { display:flex; flex-direction:column; justify-content:center; }
     header .logo { flex:0 0 auto; align-self:stretch; width:64px; height:auto; border:2px solid #fff;
                    background:var(--ltcyan); object-fit:contain; }
@@ -377,9 +383,10 @@
   <header>
     <img class="logo" src="Adam/TempleOS.svg" width="416" height="470" alt="TempleOS" title="TempleOS" />
     <div class="htxt">
-      <h1>TempleOS in your browser running on Holy Emulator (HEMU)→</h1>
-      <p>Write HolyC, play games, and explore Terry A. Davis's operating system.
-         <a href="https://github.com/ParkerrDev/TempleOS-Web">Source →</a></p>
+      <h1>TempleOS in your browser</h1>
+      <p>Powered by <a href="https://github.com/ParkerrDev/HEMU">Holy Emulator (HEMU)</a>,
+         an x86-64 emulator written in HolyC and compiled to WebAssembly.
+         <a href="https://github.com/ParkerrDev/TempleOS-Web">TempleOS-Web source →</a></p>
     </div>
   </header>
 

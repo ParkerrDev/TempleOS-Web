@@ -28,6 +28,34 @@ try {
     await page.waitForFunction(function () {
       return !document.documentElement.classList.contains("fontwait");
     });
+    //Display preferences work before the OS loads and survive a page reload.
+    async function SettingsOpen() {
+      if (mobile) await page.locator("#mobileMenu").click();
+      await page.locator("#settingsBtn").click();
+      await page.locator("#showHeader").waitFor();
+    }
+    await SettingsOpen();
+    assert.equal(await page.locator("header").isVisible(),true);
+    assert.equal(await page.locator("footer").isVisible(),true);
+    const stageHeight=await page.locator("main.stage").evaluate(e=>e.clientHeight);
+    await page.locator("#showHeader").uncheck();
+    assert.equal(await page.locator("header").isVisible(),false);
+    assert.equal(await page.locator("footer").isVisible(),true);
+    assert(await page.locator("main.stage").evaluate(e=>e.clientHeight)>stageHeight);
+    await page.locator("#showFooter").uncheck();
+    assert.equal(await page.locator("footer").isVisible(),false);
+    await page.reload({waitUntil:"load"});
+    await page.locator("#frame .wbar").waitFor();
+    assert.equal(await page.locator("header").isVisible(),false);
+    assert.equal(await page.locator("footer").isVisible(),false);
+    await SettingsOpen();
+    assert.equal(await page.locator("#showHeader").isChecked(),false);
+    assert.equal(await page.locator("#showFooter").isChecked(),false);
+    await page.locator("#showHeader").check();
+    await page.locator("#showFooter").check();
+    assert.equal(await page.locator("header").isVisible(),true);
+    assert.equal(await page.locator("footer").isVisible(),true);
+    await page.locator("#settingsClose").click();
     assert.equal(await page.locator("#guide").isVisible(),!mobile);
     assert.equal(await page.locator("#terryWin").isVisible(),!mobile);
     assert.equal(await page.locator("#guide #terrySprite").count(),0);
