@@ -160,8 +160,8 @@ try {
   await Restart("ac-dbl-buf-v1","installed");
   assert.equal(await page.locator("#osNotice").isVisible(),false);
   assert.deepEqual(errors,[]);
-  assert.equal(await page.evaluate(()=>window.guestEvents.some(m=>m.name==="Welcome")),false);
-  console.log("Browser engine: no automatic Welcome, visible FPS, settings acknowledgement, "+
+  assert.equal(await page.evaluate(()=>window.guestEvents.some(m=>m.name==="Welcome")),true);
+  console.log("Browser engine: automatic Welcome, visible FPS, settings acknowledgement, "+
     "God Doodle launch/input/exit, both TempleOS corrections and their visible failure/retry passed. Screen: "+screen);
 } catch (e) {
   if (page) {

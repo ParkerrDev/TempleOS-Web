@@ -7,7 +7,7 @@ const CTX={
     "Esc releases a captured mouse. The Keys strip can send Esc to the OS.",
     "Drag a title or left border to move a window. Drag its right or bottom border to resize.",
     "The yellow boxes scroll the window. On a phone, swipe inside its contents.",
-    "Save a snapshot in Disk & Save before leaving to keep your session."]},
+    "C: saves automatically in this browser. Export a snapshot to keep the running session."]},
   gamesWin:{name:"Games",tips:[
     "Choose a game, then a supported runner. Run in TempleOS uses the OS screen.",
     "Many TempleOS games begin with a title screen. Enter or Space starts them.",

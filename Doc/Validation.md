@@ -285,3 +285,18 @@ a tab close/reopen, on one and four cores. A concurrent tab reports that its
 changes cannot be saved. Existing delayed disk-import and snapshot round-trip
 checks also pass on both core counts. Storage failures are visible in the page
 and Disk & Save window. Export remains available for portable backups.
+
+
+## Native startup splash card
+
+The page opens the older sword-and-scales splash as a native HolyC popup after
+its disk and display corrections are ready. The bitmap uses Terry's original
+pixel bytes from the 2014-07-15 archive, with its header adapted to V5.03. The
+card displays V5.03 and leaves the captured Take Tour(y or n)? prompt intact.
+A full machine snapshot resumes its own windows without a duplicate card.
+
+Original TempleOS V5.03 under QEMU/KVM compiles, displays and closes the card.
+The browser check on one and four cores verifies its visible text, the tour
+question behind it, Shift-Esc dismissal and reopening after Restart. The
+headless engine does not launch the page's splash. Attribution and the precise
+bitmap conversion are recorded in Apps/Help/README.md.

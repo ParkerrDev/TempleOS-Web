@@ -19,7 +19,8 @@
     "test:search": "node Apps/Search/Query.test.mjs && node Apps/Search/QueryMemory.test.mjs && node Apps/Search/Search.browser.mjs",
     "test:sprites": "node Apps/Sprites/Gr.test.mjs && node Apps/Sprites/Play.test.mjs && node Apps/Sprites/SpriteCodec.test.mjs && node Apps/Sprites/Sprites.browser.mjs && node Apps/Sprites/VideoFrames.browser.mjs",
     "test:lighthouse": "node Misc/Lighthouse/Chk.mjs",
-    "test:disk": "node Apps/Disk/Storage.browser.mjs && node Apps/Disk/AutoSave.browser.mjs && node Apps/Disk/DiskImport.browser.mjs"
+    "test:disk": "node Apps/Disk/Storage.browser.mjs && node Apps/Disk/AutoSave.browser.mjs && node Apps/Disk/DiskImport.browser.mjs",
+    "test:welcome": "node Apps/Help/Welcome.browser.mjs"
   },
   "devDependencies": {
     "chrome-launcher": "1.2.1",

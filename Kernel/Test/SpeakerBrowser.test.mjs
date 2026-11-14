@@ -64,6 +64,7 @@ try {
       page.on("dialog",dialog=>dialog.accept());
       await page.goto(app?.url||origin+"/?smp");
       await MachineReady(page,cores);
+      if(!desktop)await page.waitForFunction(()=>window.machine.events.some(m=>m.name==="Welcome"&&m.state==="done"));
       if(!desktop&&cores===1)
         assert.equal(await page.evaluate(async()=>(await import("/Adam/Os.js")).engine.kind),"worker","failed stock SMP boot falls back to one core");
       await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==="guestPatch"&&m.state==="installed"));
@@ -95,6 +96,7 @@ try {
         await page.waitForFunction(()=>window.speakerRms()===0,null,{timeout:2000});
       } finally {release();}
       await MachineReady(page,cores,{after});
+      if(!desktop)await page.waitForFunction(after=>window.machine.events.slice(after).some(m=>m.name==="Welcome"&&m.state==="done"),after);
       await context.unroute("**/Kernel/HemuWorker.js");
       await page.waitForFunction(after=>window.machine.events.slice(after).some(m=>m.cmd==="guestPatch"&&m.state==="installed"),after);
       assert.equal(await page.evaluate(()=>window.speakerRms()),0,"restart forgets the previous machine's tone");
@@ -127,8 +129,8 @@ Spawn(&SpeakerFault,,,${cores===4?1:-1});
       await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==="error"&&m.retained),null,{timeout:15000});
       await page.waitForFunction(()=>window.speakerRms()===0,null,{timeout:2000});
       assert.equal(await page.locator(pause).isDisabled(),true);
-      assert.equal(await page.evaluate(()=>window.machine.events.some(m=>m.name==="Welcome")),false,
-        "stock boot and restart do not queue a Welcome popup");
+      assert.equal(await page.evaluate(()=>window.machine.events.some(m=>m.name==="Welcome")),!desktop,
+        "web stock boots open the welcome card; the standalone host retains its own startup");
       assert.deepEqual(errors,[]);
       console.log(`${desktop?"Desktop":"Web"} ${cores}: actual audio passes keyboard unlock, pause/resume, suspended-context recovery, native silence, blocked restart${desktop?", paused full-save restore":""} and native CPU fault.`);
     } catch(error) {

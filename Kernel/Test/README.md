@@ -452,9 +452,9 @@ guest only through IRQ1 make/break bytes; the bridge no longer writes the
 OS keyboard bitmap. Repeat is implemented in HolyC using the guest's PS/2
 0xF3 delay/rate, and excludes modifier/lock/PrintScreen/Pause sequences.
 
-Stock boots resume the installed desktop without opening Welcome. Full machine
+The page opens the native splash card after a stock boot; the engine worker itself does not open UI. Full machine
 saves retain their existing guest windows. The one/four-core startup check
-verifies no Welcome job or document appears automatically.
+verifies a headless worker opens no Welcome job or document. Apps/Help/Welcome.browser.mjs checks the page popup, tour prompt and dismissal.
 
 The web and desktop hosts share `Speaker.js`: the current guest tone survives
 host pause, but audible output stops until resume. Restart discards the old

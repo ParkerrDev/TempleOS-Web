@@ -775,7 +775,29 @@ async function runSMP() {
   } catch (e) {fallback("SMP init threw: "+(e.message||e));return false;}
 }
 
+let welcomeGen=-1,welcomeDisk=false,welcomeGuest=false;
+const welcomePatches=new Set();
+async function WelcomeTry()
+{
+  if (snapshotInfo || welcomeGen==osGen || !welcomeDisk || !welcomeGuest ||
+      welcomePatches.size || !framed || paused || osFault) return;
+  const generation=welcomeGen=osGen;
+  if (os_game.active || boot_query.has("run")) return;
+  try {
+    const {WelcomeSource}=await import("../Apps/Help/Welcome.js");
+    const src=await WelcomeSource();
+    if (generation!=osGen) return;
+    const result=await osRequest({cmd:"osExec",target:"adam",name:"Welcome",src});
+    if (!result.ok) throw Error(result.msg);
+  } catch (e) {
+    if (generation==osGen) OsNotice("The welcome window could not open: "+e.message);
+  }
+}
+
 function bootEngine() {
+  welcomeGen=-1;welcomeDisk=welcomeGuest=false;
+  welcomePatches.clear();
+  if (!snapshotInfo) for (const patch of GUEST_PATCHES) welcomePatches.add(patch);
   speaker.Pause(snapshotInfo?.meta.paused??paused);
   framed=false;PatchHoldEnd();patchLeft.clear();
   //A saved session keeps the corrections it was saved with, and four cores
@@ -808,6 +830,10 @@ const PATCH_NOTICE={
 const patchFailed=new Map();
 const diskMsg = (m) => {
   guestRequests.Receive(m);
+  if (m.cmd=="guestReady" && m.ok) {welcomeGuest=true;welcomeDisk=!!m.diskReady;}
+  if (m.cmd=="diskInfo" && m.diskReady) welcomeDisk=true;
+  if (m.cmd=="guestPatch" && ["installed","failed"].includes(m.state)) welcomePatches.delete(m.patch);
+  queueMicrotask(WelcomeTry);
   if (m.cmd=="diskSave") {
     os_disk.save=m;
     dispatchEvent(new CustomEvent("disksave",{detail:m}));
