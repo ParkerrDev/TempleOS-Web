@@ -353,7 +353,6 @@ function DesktopExtras(e)
 {//Optional windows wait until the machine has presented its first frame.
   if(!e.detail.ready)return;
   removeEventListener("osstate",DesktopExtras);
-  import("../Apps/Chat/ChatWin.js").catch(console.error);
   import("../Apps/Terry/TerryWin.js").catch(console.error);
 }
 addEventListener("osstate",DesktopExtras);
