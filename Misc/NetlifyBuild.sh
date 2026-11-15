@@ -1,6 +1,6 @@
 #!/bin/sh
 #Netlify's build (netlify.toml). The siblings come from the commits in
-#Siblings.txt, the fast tests must pass, the engine is compiled, the heavy
+#Siblings.txt, the engine is built and tested, the heavy
 #files go to the CDN through _redirects, and only served files reach Site/.
 set -e
 cd "$(dirname "$0")/.."
@@ -18,6 +18,5 @@ done <hemu/Siblings.txt
 node Misc/AppsBuild.mjs
 node Misc/Preload.mjs
 sh Misc/Test.sh
-node hemu/Kernel/Build.mjs hemu/build
 node Misc/Cdn/OffloadRedirects.mjs
 node Misc/Server.mjs Site

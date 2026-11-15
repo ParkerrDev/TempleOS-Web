@@ -6,7 +6,7 @@
 #stay local checks.
 set -e
 cd "$(dirname "$0")/.."
-npm --prefix hemu/holyc-wasm run build
+node hemu/Kernel/Build.mjs hemu/build
 for t in $(git ls-files '*.test.mjs'); do
   case $t in
     */Test/*|Apps/Chat/ChatWorker.test.mjs|Apps/Sprites/Play.test.mjs) ;;

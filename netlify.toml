@@ -1,5 +1,5 @@
 # Netlify runs Misc/NetlifyBuild.sh: the sibling repos at the commits in
-# Siblings.txt, the fast tests, the engine and the CDN redirects. Only the
+# Siblings.txt, the engine build, tests and CDN redirects. Only the
 # files the site serves are copied into Site/, which is published.
 [build]
   command = "sh Misc/NetlifyBuild.sh"

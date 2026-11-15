@@ -152,7 +152,7 @@ when available. The stock disk is fetched separately when no saved drive exists.
 `Siblings.txt` pins the site's sibling repos; `hemu/Siblings.txt` pins the
 compiler. Netlify's build, `Misc/NetlifyBuild.sh`, fetches those commits, builds
 the fixed app programs with `Misc/AppsBuild.mjs`, generates module preloads,
-runs the fast checks, and builds HEMU. It then writes CDN redirects and publishes
+builds HEMU and runs the fast checks through `Misc/Test.sh`. It then writes CDN redirects and publishes
 the served files with `node Misc/Server.mjs Site`.
 
 The fixed HolyC programs are the sprite codec (`Gr.HC`), transcript search
