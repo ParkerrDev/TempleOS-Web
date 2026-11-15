@@ -114,15 +114,14 @@ resolved HTML/CSS layout. Native HolyC draws its text, rectangles and indexed
 images with `GrPrint`, `GrRect` and `GrBlot`. SVG icons become palette bitmaps,
 including icons that refer to shared SVG symbols.
 
-The original browser controllers still own editing, clipboard, forms, storage
-and network requests. Native mouse events carry the target and coordinates back
-to those controls. Text fields retain selection and keyboard editing; checkboxes,
-dropdowns, double-clicks, hover states, nested scroll areas and canvases work in
-the native window. The browser editor's existing syntax colors are retained.
-Native resize reflows the layout, and game/editor fullscreen controls maximize
-the native window. Closing it closes its browser tool. Dragging the native title
-outside returns that same tool to the page. **Return windows** leaves passthrough
-enabled.
+TempleOS handles pointer hits and keyboard navigation in guest tasks. Clicking a text
+field opens its native document editor; Enter accepts a single-line field and
+Escape cancels it. Multiline fields use TempleOS's Escape to accept and
+Shift-Escape to cancel. Dropdowns use native list pickers. The browser receives
+accepted values and actions for services such as chat, file access and compilation;
+it never focuses an invisible HTML field for native typing. HolyC source keeps
+its original CP437 bytes. Other Unicode text uses `\u{...}` escapes in the native
+editor when the character is outside TempleOS's font.
 
 Compatible tools opened from a native tool stay inside TempleOS, including
 Files → Editor, Editor → Files, game launchers, dropdown menus and save/replace
@@ -141,7 +140,9 @@ and captured-mouse programs stay on the TempleOS screen. The bridge's own scene
 tasks return to their browser owner instead of entering guest capture. Pausing or
 disabling passthrough returns windows to their original environment; resuming enables
 dragging again. Restart and snapshot restore also return native windows before
-further dragging. Old saved engines require Restart to enable passthrough.
+further dragging. Old saved engines require Restart to enable passthrough. Accept native text edits
+before refreshing: restored browser-backed windows reopen from their accepted values,
+not from unfinished editor dialogs.
 
 Both window options are off initially and remembered independently of Web
 Optimization. Detached documents use isolated native pixel buffers. HEMU stops

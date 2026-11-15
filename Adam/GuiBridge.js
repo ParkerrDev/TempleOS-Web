@@ -1,18 +1,37 @@
 import {GrLoad} from "../Apps/Sprites/Gr.js";
-import {CharByte} from "../hemu/holyc-wasm/src/encoding.js";
+import {CharByte,Identifier} from "../hemu/holyc-wasm/src/encoding.js";
 
 const LIMIT=1048576,CHROME=".wdraw,.wc,.wbar,.wvert,.wcorn,.wszcorner,.wszr,.wszb,.close",
   codec=await GrLoad(),colors=new Map,icons=new Map,bitmaps=new WeakMap;
 const glyphs="☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼";
-function Bytes(text)
+const unicodeBytes=new Map(Array.from({length:128},(_,i)=>[Identifier(String.fromCharCode(i+128)),i+128]));
+function Bytes(text,raw=false)
 {
   return Uint8Array.from([...text,"\0"],function (ch) {
     const n=ch.charCodeAt(0),i=glyphs.indexOf(ch);
     if (i>=0) return i+1;
-    if (n<=255) return n;
+    if (n<128 || raw && n<=255) return n;
+    if (unicodeBytes.has(ch)) return unicodeBytes.get(ch);
     const plain=({"…":46,"–":45,"—":45,"’":39,"“":34,"”":34,"✓":251})[ch];
     if (plain) return plain;
     try {return CharByte(ch);} catch {return 63;}
+  });
+}
+
+function FieldText(value,raw)
+{//Unrepresentable Unicode uses explicit escapes in TempleOS's CP437 editor.
+  if (raw) return value;
+  return Array.from(value,ch=>ch=="\\"?"\\\\":(ch.charCodeAt(0)>=32 && ch.charCodeAt(0)<128 || ch=="\n" || ch=="\t" || unicodeBytes.has(ch))?ch:
+    "\\u{"+ch.codePointAt(0).toString(16)+"}").join("");
+}
+
+export function GuiValue(value,raw)
+{
+  if (raw) return value;
+  return Identifier(value).replace(/\\(\\|u\{([0-9a-fA-F]{1,6})\})/g,function (match,escape,hex) {
+    if (!hex) return "\\";
+    const n=parseInt(hex,16);
+    return n<=0x10FFFF?String.fromCodePoint(n):match;
   });
 }
 
@@ -123,11 +142,19 @@ export function GuiScene(win,ids=new WeakMap)
     actions.set(id,el);
     controls.set(id,{el,...b});
     Command(4,b.x,b.y,b.w,b.h,0,id);
+    if (el.matches("canvas[data-native-input]")) Command(7,b.x,b.y,b.w,b.h,0,id);
+    else if (el.closest('[role="listbox"]')) Command(8,b.x,b.y,b.w,b.h,0,id);
     return id;
   }
   function Text(node,style)
   {
-    const range=win.ownerDocument.createRange(),color=CssColor(style.color),text=node.textContent;
+    const range=win.ownerDocument.createRange(),color=CssColor(style.color),text=node.textContent,
+      box=node.parentElement.getBoundingClientRect(),
+      inset=parseFloat(style.borderTopWidth)+parseFloat(style.paddingTop),
+      lineHeight=parseFloat(style.lineHeight) || parseFloat(style.fontSize),
+      contentHeight=box.height-inset-parseFloat(style.borderBottomWidth)-parseFloat(style.paddingBottom),
+      oneLine=Math.abs(contentHeight-lineHeight)<0.5,
+      lineTop=Math.round((box.top+inset-rect.top-win.clientTop)*scale+(lineHeight*scale-8)/2);
     let line="",left=0,top=0,last=0;
     function Flush() {
       if (line.trim()) Command(2,left,top,0,0,color,0,
@@ -137,24 +164,35 @@ export function GuiScene(win,ids=new WeakMap)
     for (let i=0;i<text.length;i++) {
       range.setStart(node,i);range.setEnd(node,i+1);
       const r=range.getBoundingClientRect(),b=Bounds(r);
+      //Font ink can overhang a CSS line box, including an overflow-hidden label.
+      b.y=oneLine && box.top+inset<=r.top+r.height/2 && r.top+r.height/2<box.top+inset+lineHeight?
+        lineTop:b.y+Math.max(0,Math.round((b.h-8)/2));
       if (!r.width || !r.height || b.x<clip.x || b.x+8>clip.x+clip.w ||
           b.y<clip.y || b.y+8>clip.y+clip.h) {Flush();continue;}
       if (line && (Math.abs(b.y-top)>2 || Math.abs(b.x-last)>2)) Flush();
-      if (!line) {left=b.x;top=b.y+Math.max(0,Math.round((b.h-8)/2));}
+      if (!line) {left=b.x;top=b.y;}
       line+=text[i];last=b.x+8;
     }
     Flush();
   }
   function Field(el,b,style)
-  {//HTML retains editing, selection, clipboard and form behavior.
-    const id=Action(el,b),focus=el==el.ownerDocument.activeElement,
+  {//Values are presentation; TempleOS owns editing and selection.
+    const id=Action(el,b),
       color=CssColor(style.color)==255?0:CssColor(style.color),
       x=b.x+Math.round((parseFloat(style.paddingLeft)+el.clientLeft)*scale),
       y=b.y+Math.round((parseFloat(style.paddingTop)+el.clientTop)*scale),
       cols=Math.max(1,Math.floor((b.w-(parseFloat(style.paddingLeft)+parseFloat(style.paddingRight))*scale)/8)),
       top=Math.floor(el.scrollTop*scale/8),left=Math.floor(el.scrollLeft*scale/8),
       rows=Math.max(1,Math.floor((b.h-(parseFloat(style.paddingTop)+parseFloat(style.paddingBottom))*scale)/8));
-    let value=el.value || "",start=el.selectionStart,end=el.selectionEnd;
+    let value=el.value || "";
+    if (id && !el.readOnly && !el.matches('input[type=checkbox],input[type=radio],input[type=file]')) {
+      const kind=el.tagName=="SELECT"?3:el.tagName=="TEXTAREA"?2:1,
+        title=(el.getAttribute("aria-label") || el.placeholder || el.title || el.name || "Edit text").slice(0,31),
+        options=el.tagName=="SELECT"?[...el.options].map(o=>(o.disabled?"0":"1")+o.textContent):[],
+        payload=Bytes([title,FieldText(value,el.hasAttribute("data-cp437")),...options,""].join("\0"),el.hasAttribute("data-cp437"));
+      Command(6,kind,el.maxLength>0?Math.min(65536,el.maxLength*(el.hasAttribute("data-cp437")?1:10)):65536,
+        kind==1?1:0,0,0,id,payload);
+    }
     if (el.tagName=="TEXTAREA" && CssColor(style.color)==255)
       Command(1,b.x,b.y,b.w,b.h,15);
     if (el.matches('input[type=checkbox],input[type=radio]')) {
@@ -195,23 +233,14 @@ export function GuiScene(win,ids=new WeakMap)
       offset++;
     }
     lines.push({cells:line,end:offset});
-    if (controls.has(id)) Object.assign(controls.get(id),{lines,x,y,top,left,cols});
     for (let row=top;row<Math.min(lines.length,top+rows);row++) {
       const cells=lines[row].cells,part=cells.slice(left,left+cols),py=y+(row-top)*8;
-      for (let col=0;col<part.length;col++)
-        if (focus && value && start<=part[col].pos && part[col].pos<end)
-          Command(1,x+col*8,py,8,8,9);
       for (let col=0;col<part.length;) {
-        const first=col,c=focus && start<=part[col].pos && part[col].pos<end?15:value?syntax[part[col].pos]:8;
+        const first=col,c=value?syntax[part[col].pos]:8;
         let text="";
-        while (col<part.length && (focus && start<=part[col].pos && part[col].pos<end?15:value?syntax[part[col].pos]:8)==c)
+        while (col<part.length && (value?syntax[part[col].pos]:8)==c)
           text+=part[col++].ch;
-        Command(2,x+first*8,py,0,0,c,0,Bytes(text));
-      }
-      if (focus && start==end) {
-        let col=cells.findIndex(c=>c.pos==start);
-        if (col<0 && lines[row].end==start) col=cells.length;
-        if (left<=col && col<=left+cols) Command(1,x+(col-left)*8,py,1,8,color);
+        Command(2,x+first*8,py,0,0,c,0,Bytes(text,el.hasAttribute("data-cp437")));
       }
     }
   }

@@ -14,13 +14,14 @@ const container={replaceChild(next){nodes.set(next.id,next);}};
 const flush=()=>new Promise(resolve=>queueMicrotask(resolve));
 class Node extends EventTarget {
   constructor(id=''){
-    super();this.id=id;this.ownerDocument=document;this.parentNode=container;this.value='';this.textContent='';this.style={};
+    super();this.id=id;this.ownerDocument=document;this.parentNode=container;this.value='';this.textContent='';this.style={};this.dataset={};
     const classes=new Set();
     this.classList={contains:name=>classes.has(name),add:(...names)=>names.forEach(name=>classes.add(name)),
       remove:(...names)=>names.forEach(name=>classes.delete(name))};
   }
   appendChild(child){return child;}
   cloneNode(){return new Node(this.id);}
+  closest(){return null;}
   focus(){document.activeElement=this;}
   getContext(){return {};}
   getBoundingClientRect(){return {left:0,top:0,right:640,bottom:480,width:640,height:480};}

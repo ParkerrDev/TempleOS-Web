@@ -1,3 +1,4 @@
+import {osMouse} from "../../Adam/Os.js";
 // App.js - main-thread controller for the in-browser HolyC IDE.
 // Spawns the worker, wires keyboard/mouse into the control SAB, drains the
 // sound ring into WebAudio, and shows console output.
@@ -134,7 +135,7 @@ function keyToChar(e) {
 }
 
 let captureWanted=false, manualCapture=false, hybridMouse=false, wasMouseLocked=false, hybridTracking=false;
-const isMouseCaptured=()=>curCanvas.ownerDocument.pointerLockElement===curCanvas;
+const isMouseCaptured=()=>curCanvas.closest(".win-pass-owned")?osMouse.isMouseCaptured():curCanvas.ownerDocument.pointerLockElement===curCanvas;
 const mouseStateChanged=()=>window.dispatchEvent(new Event('game-mouse-change'));
 const scanKeys={KeyW:0x11,KeyA:0x1e,KeyS:0x1f,KeyD:0x20,KeyR:0x13,KeyF:0x21,KeyJ:0x24,KeyL:0x26,KeyI:0x17,KeyK:0x25,KeyP:0x19,Space:0x39,
   ArrowUp:0x48,ArrowLeft:0x4b,ArrowRight:0x4d,ArrowDown:0x50};   // TempleOS merged scan codes
@@ -154,7 +155,7 @@ function InputWindow(win)
 {
   const doc=win.document;
   win.addEventListener('keydown',e=>{
-    if(!running||!hasInputFocus())return;
+    if(!running||curCanvas.closest(".win-pass-owned")||!hasInputFocus())return;
     if(e.code==='Escape'&&isMouseCaptured()){releaseMouse();return;}
     if(nativeKeys){
       const key=KEY[e.code];
@@ -177,7 +178,7 @@ function InputWindow(win)
     curCanvas.ownerDocument.body.classList.toggle('mouse-locked',!!curCanvas.ownerDocument.pointerLockElement);
     mouseStateChanged();
   });
-  doc.addEventListener('pointerdown',e=>{if(e.target!==curCanvas&&!e.target?.closest?.('#keysbar,#touchui'))releaseInput();},true);
+  doc.addEventListener('pointerdown',e=>{if(!curCanvas.closest('.win-pass-owned')&&e.target!==curCanvas&&!e.target?.closest?.('#keysbar,#touchui'))releaseInput();},true);
   doc.addEventListener('mousemove',e=>{
     if(!running)return;
     if(curCanvas.ownerDocument.pointerLockElement!==curCanvas){
@@ -195,6 +196,7 @@ function InputWindow(win)
   });
 
   doc.addEventListener('mouseup',e=>{
+    if(curCanvas.closest('.win-pass-owned'))return;
     if(e.button===0||e.button===2)setButton(e.button===2?CTRL.MS_RB:CTRL.MS_LB,false);
   },true);
 }
@@ -222,6 +224,9 @@ function setButton(which, down) {
 
 function captureMouse({automatic=false}={}) {
   if(!running)return false;
+  if(curCanvas.closest(".win-pass-owned")) {
+    curCanvas.dispatchEvent(new CustomEvent("guicapture",{bubbles:true,detail:{on:true}}));return true;
+  }
   manualCapture=!automatic;hybridMouse=false;curCanvas.focus({preventScroll:true});releaseInput();speaker.resume();
   const requestedCanvas=curCanvas;
   const failed=error=>{
@@ -236,10 +241,46 @@ function captureMouse({automatic=false}={}) {
   return true;
 }
 function releaseMouse() {
+  if(curCanvas.closest(".win-pass-owned")) {
+    curCanvas.dispatchEvent(new CustomEvent("guicapture",{bubbles:true,detail:{on:false}}));releaseInput();return;
+  }
   hybridMouse=true;manualCapture=false;releaseInput();
   if(isMouseCaptured())curCanvas.ownerDocument.exitPointerLock();
 }
 function attachInput(target) {
+  target.dataset.nativeInput="1";
+  target.addEventListener("nativeinput",function (e) {
+    if (!running || target!==curCanvas || !ctrl) return;
+    const m=e.detail,key=(m.arg2&127)|((m.arg2&128)?256:0),source="guest-"+key;
+    if (m.kind==11 || m.kind==13) {releaseInput();return;}
+    if (m.kind==12) {
+      Atomics.add(ctrl,CTRL.MS_DX,Math.round(m.arg1));
+      Atomics.add(ctrl,CTRL.MS_DY,Math.round(m.arg2));return;
+    }
+    if (m.kind==7 || m.kind==8) {
+      const input=nativeKeys?nativeInput:legacyInput;
+      if (m.kind==8) input.up(source);
+      else {
+        const first=input.down(source,key);
+        if (nativeKeys && !first) sendNative(KeyBytes(key,true));
+        if (!nativeKeys && m.arg1) pushKey(m.arg1);
+      }
+    } else if (m.kind==1 || m.kind==2 || m.kind==3) {
+      if (m.captured) {
+        if (m.kind!=3) setButton(CTRL.MS_LB,m.kind==1);
+        return;
+      }
+      if (captureWanted) {
+        Atomics.add(ctrl,CTRL.MS_DX,Math.round(m.dx));
+        Atomics.add(ctrl,CTRL.MS_DY,Math.round(m.dy));
+      } else {
+        Atomics.store(ctrl,CTRL.MS_X,Math.max(0,Math.min(639,Math.round(m.x))));
+        Atomics.store(ctrl,CTRL.MS_Y,Math.max(0,Math.min(479,Math.round(m.y))));
+      }
+      if (m.kind!=3) setButton(CTRL.MS_LB,m.kind==1);
+      speaker.resume();
+    }
+  });
   target.addEventListener("blur",event=>{if(target===curCanvas&&!isMouseCaptured()&&!event.relatedTarget?.closest?.("#touchui"))releaseInput();});
   const mouseDown=e=>{
     if(!running||target!==curCanvas||![0,2].includes(e.button))return;
@@ -303,6 +344,7 @@ function pumpSound() {
 
 // ---- run / stop ----
 function stop() {
+  if(curCanvas.closest(".win-pass-owned")) releaseMouse();
   cancelAnimationFrame(rafId);rafId=0;
   releaseInput();captureWanted=false;manualCapture=false;if(curCanvas.ownerDocument.pointerLockElement===curCanvas)curCanvas.ownerDocument.exitPointerLock();
   if (ctrl) { Atomics.store(ctrl, CTRL.RUNNING, 0); Atomics.notify(ctrl, CTRL.SLEEP_FUTEX); }

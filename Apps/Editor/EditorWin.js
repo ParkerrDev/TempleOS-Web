@@ -113,7 +113,7 @@ const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="
   '          <div class="ed-h">HolyC source <span id="draftStatus" role="status"></span></div>\n'+
   '          <select id="gameFile" aria-label="Game source file"></select>\n'+
   '          <span id="gameDraft" role="status"></span>\n'+
-  '          <div class="ed-editwrap"><pre id="editorHL" aria-hidden="true"></pre><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea></div>\n'+
+  '          <div class="ed-editwrap"><pre id="editorHL" aria-hidden="true"></pre><textarea id="editor" data-cp437 spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea></div>\n'+
   '        </section>\n'+
   '        <section class="ed-pane" id="editorPreview">\n'+
   '          <div class="ed-h ed-screenhead"><span>Screen - 640×480, 16-color</span><div class="action-bar"><button id="gameCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this preview; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="previewFullscreen" type="button" title="Show the game preview fullscreen" aria-pressed="false">' + Icon('fullscreen') + ' <span>Fullscreen game</span></button></div></div>\n'+

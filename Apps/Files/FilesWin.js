@@ -259,12 +259,12 @@ $("filesNew").addEventListener("click",async function () {
 for (const button of $("filesWin").querySelectorAll("[data-path]"))
   button.addEventListener("click",()=>Navigate(button.dataset.path));
 list.addEventListener("keydown",function (e) {
-  if (e.key=="Enter") {e.preventDefault();Activate(entries.find(file=>file.name==e.target.dataset.name) || selected);}
+  if (e.key=="Enter") {e.preventDefault();Activate(e.isTrusted?entries.find(file=>file.name==e.target.dataset.name) || selected:selected);}
   if (!["ArrowUp","ArrowDown","Home","End"].includes(e.key)) return;
   e.preventDefault();
-  const buttons=[...list.querySelectorAll("button")],i=buttons.indexOf(e.target),
+  const buttons=[...list.querySelectorAll("button")],i=e.isTrusted?buttons.indexOf(e.target):buttons.findIndex(b=>b.dataset.name==selected?.name),
     next=e.key=="Home"?0:e.key=="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,i+(e.key=="ArrowDown"?1:-1)));
-  buttons[next]?.click();buttons[next]?.focus();
+  buttons[next]?.click();if (e.isTrusted) buttons[next]?.focus();
 });
 $("filesDrop").addEventListener("dragover",function (e) {
   if (e.dataTransfer.types.includes("Files")) {e.preventDefault();e.dataTransfer.dropEffect="copy";this.classList.add("dropping");}

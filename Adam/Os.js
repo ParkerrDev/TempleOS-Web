@@ -210,11 +210,14 @@ const guestInputMode=state=>{
 const requestCapture=()=>{
   canvas.focus({preventScroll:true});
   setFocused(true);releaseHeld();
-  try{const request=canvas.requestPointerLock();request?.catch(()=>{tbKey.textContent='Mouse capture unavailable. Click the screen to retry.';});}
-  catch{tbKey.textContent='Mouse capture unavailable in this browser.';}
+  try {
+    const request=canvas.requestPointerLock();
+    if (request) return request.then(()=>locked(),()=>{tbKey.textContent='Mouse capture unavailable. Click the screen to retry.';return false;});
+    return true;
+  } catch {tbKey.textContent='Mouse capture unavailable in this browser.';return false;}
 };
-const osMouse={
-  captureMouse:()=>{hybridMouse=false;explicitCapture=true;requestCapture();return true;},
+export const osMouse={
+  captureMouse:()=>{hybridMouse=false;explicitCapture=true;return requestCapture();},
   releaseMouse:()=>{hybridMouse=true;explicitCapture=false;releaseHeld();if(locked())LockedDoc()?.exitPointerLock();},
   isMouseCaptured:locked,
   isRunning:()=>true,
@@ -248,8 +251,9 @@ $("frame").addEventListener('mousedown',e=>{
   if(e.target!==canvas && (e.target!==e.currentTarget ||
     !e.currentTarget.classList.contains('fsmode')))return;
   if(document.body.classList.contains('touch'))return;
-  win_slot=-1;win_task=win_num=0;
   e.preventDefault();canvas.focus({preventScroll:true});setFocused(true);
+  if(e.target!==canvas)return;
+  win_slot=-1;win_task=win_num=0;
   if(captureWanted()&&!locked()){requestCapture();return;} // Capture click must not fire a weapon.
   if(!relativeMouse())mapAbs(e,canvas.getBoundingClientRect());
   msB|=btnBit(e);notifyInput();
@@ -337,69 +341,115 @@ ViewOn("paste",function (e) {
   }
 });
 
-// ---- fullscreen, mobile included. Real Fullscreen API where available; iPhone Safari has
-//      none for elements, so we pin the frame over the viewport ("fakefs"). In either mode
-//      the touch controls stay (they live inside #frame) and the keys bar floats on top. ----
-{ const frame = $("frame");
-  let fake = false;
-  //VisualViewport excludes the phone keyboard; keep the exit button above it.
-  const vv = window.visualViewport;
-  const layoutFs = () => {
-    const onFs = document.body.classList.contains("touch") && frame.classList.contains("fsmode");
-    if (!onFs) { frame.style.removeProperty("--fsx-top"); frame.classList.remove("fsx-mid"); return; }
-    const kb = vv ? Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) : 0;   // ≈ keyboard height
-    const kbTop = innerHeight - kb, cr = canvas.getBoundingClientRect();
-    // [X] stays OUT of the OS AND clear of the right-side buttons. Portrait: there's a black
-    // letterbox below the canvas → center it there (.fsx-mid), just under the OS but never under
-    // the keyboard. Landscape: the canvas fills the height → no room below, so it sits top-left
-    // in the side bar (.fsx-mid off).
-    const belowOS = innerHeight - cr.bottom >= 44;
-    frame.classList.toggle("fsx-mid", belowOS);
-    const top = belowOS ? Math.min(cr.bottom + 6, kbTop - 44) : 6;
-    frame.style.setProperty("--fsx-top", Math.max(6, Math.round(top)) + "px");
-  };
-  const fsUi = (on) => {
-    frame.classList.toggle("fsmode", on);
-    if (on) {
-      if (frame.dataset.floating) {                  // a dragged frame has inline pos that fights fullscreen
-        frame._fsSaved = { left: frame.style.left, top: frame.style.top, width: frame.style.width, height: frame.style.height };
-        frame.style.left = frame.style.top = frame.style.width = frame.style.height = "";
-      }
-    } else if (frame.dataset.floating && frame._fsSaved) {
-      Object.assign(frame.style, frame._fsSaved); frame._fsSaved = null;
-    }
-    fitScreen();
-    layoutFs(); dispatchEvent(new Event("input-view-change")); requestAnimationFrame(layoutFs);     // position controls/[X]; recompute once the layout settles
-  };
-  const fauxOn = () => { fake = true; document.body.classList.add("fakefs"); fsUi(true); scrollTo(0, 0); };
-  const fauxOff = () => { fake = false; document.body.classList.remove("fakefs"); fsUi(false); };
-  const fsEl = () => frame.ownerDocument.fullscreenElement || frame.ownerDocument.webkitFullscreenElement;
-  const fsExitReal = () => (frame.ownerDocument.exitFullscreen || frame.ownerDocument.webkitExitFullscreen).call(frame.ownerDocument);
-  $("fsBtn").addEventListener("click", () => {
-    if (fsEl()) { fsExitReal(); return; }
-    if (fake) { fauxOff(); return; }
-    const req = frame.requestFullscreen || frame.webkitRequestFullscreen;
-    if (req) { try { const p = req.call(frame); if (p && p.catch) p.catch(() => fauxOn()); } catch { fauxOn(); } }
-    else fauxOn();
-  });
-  $("fsExit").addEventListener("click", () => {
-    if (fsEl()) fsExitReal();
-    else fauxOff();
-  });
-  const onFsChange = async () => {
-    const el = frame.ownerDocument.fullscreenElement || frame.ownerDocument.webkitFullscreenElement;
-    if (el === frame) {
-      fsUi(true);
-      try { await navigator.keyboard?.lock?.(); dbg("keyboard locked (Esc stays in the OS)"); } catch {}
-      if (!document.body.classList.contains("touch")) setFocused(true);
-    } else if (!fake) { fsUi(false); try { navigator.keyboard?.unlock?.(); } catch {} }
-  };
-  DocOn("fullscreenchange", onFsChange);
-  DocOn("webkitfullscreenchange", onFsChange);
-  vv?.addEventListener("resize", layoutFs);          // keyboard open/close, URL-bar show/hide
-  vv?.addEventListener("scroll", layoutFs);
-  addEventListener("orientationchange", () => setTimeout(layoutFs, 80));
+const fullscreen_frame=$("frame"),fullscreen_viewport=window.visualViewport;
+let fullscreen_fake=false;
+
+function FullscreenLayout()
+{//VisualViewport excludes the phone keyboard; keep the exit button above it.
+  let frame=fullscreen_frame,vv=fullscreen_viewport,
+    on=document.body.classList.contains("touch") && frame.classList.contains("fsmode"),
+    kb=0,top,rect;
+  if (!on) {
+    frame.style.removeProperty("--fsx-top");
+    frame.classList.remove("fsx-mid");
+    return;
+  }
+  if (vv)
+    kb=Math.max(0,Math.round(innerHeight-vv.height-vv.offsetTop));
+  rect=canvas.getBoundingClientRect();
+  frame.classList.toggle("fsx-mid",innerHeight-rect.bottom>=44);
+  top=6;
+  if (frame.classList.contains("fsx-mid"))
+    top=Math.min(rect.bottom+6,innerHeight-kb-44);
+  frame.style.setProperty("--fsx-top",Math.max(6,Math.round(top))+"px");
 }
+
+function FullscreenShow(on)
+{
+  let frame=fullscreen_frame;
+  if (frame.classList.contains("fsmode")==on)
+    return;
+  frame.classList.toggle("fsmode",on);
+  if (on) {
+    if (frame.dataset.floating) {
+      frame._fsSaved={left:frame.style.left,top:frame.style.top,
+        width:frame.style.width,height:frame.style.height};
+      frame.style.left=frame.style.top=frame.style.width=frame.style.height="";
+    }
+  } else if (frame.dataset.floating && frame._fsSaved) {
+    Object.assign(frame.style,frame._fsSaved);
+    frame._fsSaved=null;
+  }
+  fitScreen();
+  FullscreenLayout();
+  dispatchEvent(new Event("input-view-change"));
+  requestAnimationFrame(FullscreenLayout);
+}
+
+export async function OsFullscreenExit()
+{//Browser-only tools must leave the OS fullscreen subtree to become visible.
+  let doc=fullscreen_frame.ownerDocument,el=doc.fullscreenElement || doc.webkitFullscreenElement;
+  if (el==fullscreen_frame)
+    await (doc.exitFullscreen || doc.webkitExitFullscreen).call(doc);
+  if (fullscreen_fake) {
+    fullscreen_fake=false;
+    document.body.classList.remove("fakefs");
+    FullscreenShow(false);
+  }
+}
+
+async function FullscreenToggle()
+{
+  let frame=fullscreen_frame,doc=frame.ownerDocument,
+    el=doc.fullscreenElement || doc.webkitFullscreenElement,
+    Request=frame.requestFullscreen || frame.webkitRequestFullscreen;
+  if (el || fullscreen_fake) {
+    await OsFullscreenExit();
+    return;
+  }
+  if (Request) {
+    try {
+      await Request.call(frame);
+      return;
+    } catch (error) {
+      dbg("Fullscreen unavailable: "+error.message);
+    }
+  }
+  //iPhone Safari does not implement fullscreen for arbitrary elements.
+  fullscreen_fake=true;
+  document.body.classList.add("fakefs");
+  FullscreenShow(true);
+  scrollTo(0,0);
+}
+
+async function FullscreenChanged()
+{
+  let frame=fullscreen_frame,doc=frame.ownerDocument,
+    el=doc.fullscreenElement || doc.webkitFullscreenElement;
+  if (el==frame) {
+    FullscreenShow(true);
+    if (!document.body.classList.contains("touch")) {
+      canvas.focus({preventScroll:true});
+      setFocused(true);
+    }
+    try {
+      await navigator.keyboard?.lock?.();
+    } catch (error) {
+      dbg("Keyboard lock unavailable: "+error.message);
+    }
+  } else if (!fullscreen_fake) {
+    FullscreenShow(false);
+    navigator.keyboard?.unlock?.();
+  }
+}
+
+$("fsBtn").addEventListener("click",FullscreenToggle);
+$("fsExit").addEventListener("click",OsFullscreenExit);
+DocOn("fullscreenchange",FullscreenChanged);
+DocOn("webkitfullscreenchange",FullscreenChanged);
+fullscreen_viewport?.addEventListener("resize",FullscreenLayout);
+fullscreen_viewport?.addEventListener("scroll",FullscreenLayout);
+addEventListener("orientationchange",function () {requestAnimationFrame(FullscreenLayout);});
 
 // ---- touch controls: direct touch = absolute cursor + tap-to-click; joystick = fine relative
 //      moves; L/R = holdable mouse buttons (drags); ⌨ opens the device keyboard. ----
@@ -432,7 +482,7 @@ $("touchBtn").addEventListener("click",function () {
     const rect=frame?.getBoundingClientRect();
     xc.style.transform=`translate(${e.clientX+(rect?.left||0)}px,${e.clientY+(rect?.top||0)}px)`;
     xc.style.visibility=e.target?.id==='canvas' ||
-      e.target?.closest('.wszr,.wszb,.wszcorner,[data-native-cursor]') ||
+      e.target?.closest('#frame.fsmode,.wszr,.wszb,.wszcorner') ||
       document.fullscreenElement?.matches('video')?'hidden':'visible';
   };
   window.__desktopCursor={enabled:xcOn,move:moveCursor,hide:hideCursor};

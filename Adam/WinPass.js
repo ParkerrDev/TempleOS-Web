@@ -1,8 +1,10 @@
 import {WinFocus,WinRaise,WinMobile,WinOutside,WinPopup,WinPopupReturn,
-  WinDocuments,WinFind,WinDialog,WinOrigin} from "./WinMgr.js";
+  WinDocuments,WinFind,WinAction} from "./WinMgr.js";
+import {OsFullscreenExit,osMouse} from "./Os.js";
+import {KEY} from "./Keyboard.js";
 import {PointerDrag} from "./WinPointer.js";
 
-import {GuiScene,GuiCompatible,GuiHoverStyles} from "./GuiBridge.js";
+import {GuiScene,GuiCompatible,GuiHoverStyles,GuiValue} from "./GuiBridge.js";
 
 export function WinPass({canvas,pal,Request,Input,Status})
 {//Native task surfaces and browser scenes share guest identities.
@@ -59,12 +61,15 @@ export function WinPass({canvas,pal,Request,Input,Status})
 
   function HostRestore(host,point=host.return_point || null)
   {
+    if (host.capture) {osMouse.releaseMouse();host.capture=0;}
     if (host.timer)
       clearTimeout(host.timer);
+    for (const el of host.el.querySelectorAll("canvas[data-native-input]"))
+      el.dispatchEvent(new CustomEvent("nativeinput",{detail:{kind:11}}));
     host.watch.disconnect();
     if (host.animation) cancelAnimationFrame(host.animation);
     host.el.removeEventListener("guiupdate",host.changed);
-    for (const type of ["input","change","scroll","select","focusin","focusout"])
+    for (const type of ["input","change","scroll"])
       host.el.removeEventListener(type,host.changed,true);
     for (const el of host.el.querySelectorAll(".gui-hover,.gui-press"))
       el.classList.remove("gui-hover","gui-press");
@@ -178,7 +183,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
       characterData:true,attributes:true,
       attributeFilter:["disabled","hidden","class","style","aria-selected","aria-pressed","aria-current","checked","value"]});
     host.el.addEventListener("guiupdate",host.changed);
-    for (const type of ["input","change","scroll","select","focusin","focusout"])
+    for (const type of ["input","change","scroll"])
       host.el.addEventListener(type,host.changed,true);
     hosts.set(res.slot,host);
     HostHide(host);
@@ -192,16 +197,8 @@ export function WinPass({canvas,pal,Request,Input,Status})
       host.animation=requestAnimationFrame(Frame);
     }
     Input({focus:true,slot:-1});
-    if (w.contains(w.ownerDocument.activeElement)) HostFocus(host,w.ownerDocument.activeElement);
-    else canvas.focus({preventScroll:true});
+    canvas.focus({preventScroll:true});
     Status(doc.title+" is now a TempleOS window.");
-  }
-
-  function HostFocus(host,el)
-  {
-    if (!el || el.disabled) return;
-    el.focus({preventScroll:true});
-    host.changed();
   }
 
   function HostPoint(host,action)
@@ -215,22 +212,27 @@ export function WinPass({canvas,pal,Request,Input,Status})
       bubbles:true,cancelable:true,button:0,buttons:host.pressed?1:0};
   }
 
-  function HostSelect(host,control,action,extend=false)
-  {
-    if (!control?.lines || control.el.selectionStart===null) return;
-    const {el,lines,x,y,top,left}=control,
-      row=Math.max(0,Math.min(lines.length-1,top+Math.floor((action.y-y)/8))),
-      col=Math.max(0,left+Math.round((action.x-x)/8)),line=lines[row],
-      pos=line.cells[col]?.pos??line.end;
-    if (!extend) host.anchor=pos;
-    el.setSelectionRange(Math.min(host.anchor,pos),Math.max(host.anchor,pos),pos<host.anchor?"backward":"forward");
-    host.changed();
-  }
-
   async function HostAction(host,action)
   {
     let el=host.actions.get(action.id),control=host.scene.controls.get(action.id);
     const point=HostPoint(host,action),kind=action.kind || 0;
+    if ((kind==2 || kind==3) && host.pressed?.matches("canvas[data-native-input]")) {
+      el=host.pressed;control=host.scene.controls.get(host.ids.get(el));
+    }
+    if (kind==13) osMouse.releaseMouse();
+    if (el?.matches("canvas[data-native-input]")) {
+      if (kind==1) host.pressed=el;
+      if (kind==2 || kind==11) host.pressed=null;
+      el.dispatchEvent(new CustomEvent("nativeinput",{detail:{...action,
+        x:(action.x-control.x)*640/control.w,y:(action.y-control.y)*480/control.h,
+        captured:host.capture==action.id,
+        arg1:kind==12?action.x*640/action.arg1:action.arg1,
+        arg2:kind==12?action.y*480/action.arg2:action.arg2,
+        dx:point.movementX*host.scene.scale*640/control.w,
+        dy:point.movementY*host.scene.scale*480/control.h}}));
+      if (kind==1 || kind==3) host.pointer={x:action.x,y:action.y};
+      return;
+    }
     if (kind==1 || kind==3) host.pointer={x:action.x,y:action.y};
     if (kind==3) {
       const hovered=new Set;
@@ -246,7 +248,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
       host.hovered=hovered;
       if (host.pressed) {
         el=host.pressed;
-        const id=host.ids.get(el);HostSelect(host,host.scene.controls.get(id),action,true);
+
       }
       el?.dispatchEvent(new PointerEvent("pointermove",{...point,pointerId:1,pointerType:"mouse"}));
       el?.dispatchEvent(new MouseEvent("mousemove",point));
@@ -256,46 +258,45 @@ export function WinPass({canvas,pal,Request,Input,Status})
       const pressed=host.pressed;
       host.pressed=null;
       pressed?.classList.remove("gui-press");
-      (el || pressed)?.dispatchEvent(new PointerEvent("pointerup",{...point,buttons:0,pointerId:1,pointerType:"mouse"}));
-      (el || pressed)?.dispatchEvent(new MouseEvent("mouseup",{...point,buttons:0}));
       host.changed();return;
     }
     if (!el?.isConnected || el.disabled) return;
     if (kind==1) {
       host.pressed=el;el.classList.add("gui-press");
-      el.dispatchEvent(new PointerEvent("pointerdown",{...point,buttons:1,pointerId:1,pointerType:"mouse"}));
-      el.dispatchEvent(new MouseEvent("mousedown",{...point,buttons:1}));
-      HostFocus(host,el);HostSelect(host,control,action);return;
+      return;
     }
-    if (kind==4) {HostFocus(host,el);return;}
-    HostFocus(host,el);
-    if (el.tagName=="SELECT") {
-      const choice=await WinDialog(el.getAttribute("aria-label") || el.title || "Choose an option",undefined,
-        WinOrigin(el),[...el.options].map(option=>({label:option.textContent,disabled:option.disabled})));
-      if (choice!==null && el.isConnected && !el.disabled) {
-        el.selectedIndex=choice;
-        el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));
-      }
-      HostFocus(host,el);
-    } else if (el.matches('input[type=range]')) {
-      const min=Number(el.min || 0),max=Number(el.max || 100),step=Number(el.step || 1);
-      el.value=String(min+Math.round(Math.max(0,Math.min(1,(action.x-control.x)/control.w))*(max-min)/step)*step);
-      el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));
-    } else {
-      const now=performance.now(),dbl=host.last_click?.el==el && now-host.last_click.time<500;
-      host.last_click={el,time:now};
-      el.dispatchEvent(new MouseEvent("click",{...point,buttons:0,detail:dbl?2:1}));
-      if (dbl) {
-        el.dispatchEvent(new MouseEvent("dblclick",{...point,detail:2}));
-        if (control?.lines && el.selectionStart==el.selectionEnd) {
-          const pos=el.selectionStart,value=el.value;
-          let start=pos,end=pos;
-          while (start>0 && /\w/.test(value[start-1])) start--;
-          while (end<value.length && /\w/.test(value[end])) end++;
-          el.setSelectionRange(start,end);
+    if (kind==4) return;
+    WinAction(el,function () {
+      if (kind==9 || kind==10) {
+        const code=Object.keys(KEY).find(code=>KEY[code]==((action.arg2&127)|((action.arg2&128)?256:0))),
+          key=action.arg1?String.fromCharCode(action.arg1):code;
+        el.dispatchEvent(new KeyboardEvent(kind==9?"keydown":"keyup",{code,key:action.arg1==10?"Enter":key,
+          ctrlKey:!!(action.arg2&1024),shiftKey:!!(action.arg2&512),altKey:!!(action.arg2&2048),bubbles:true,cancelable:true}));
+      } else if (kind==5) {
+        host.accepted=0;
+        if (el.tagName=="SELECT") el.selectedIndex=Number(action.value);
+        else {
+          const value=GuiValue(action.value,el.hasAttribute("data-cp437"));
+          if (el.maxLength>0 && value.length>el.maxLength) {
+            Status("This field accepts at most "+el.maxLength+" characters.");return;
+          }
+          el.value=value;
         }
+        host.accepted=action.id;
+        el.dispatchEvent(new Event("input",{bubbles:true}));
+        el.dispatchEvent(new Event("change",{bubbles:true}));
+      } else if (kind==6) {
+        if (host.accepted!=action.id) return;
+        host.accepted=0;
+        el.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",code:"Enter",bubbles:true,cancelable:true}));
+        el.form?.requestSubmit();
+      } else {
+        const now=performance.now(),dbl=host.last_click?.el==el && now-host.last_click.time<500;
+        host.last_click={el,time:now};
+        el.dispatchEvent(new MouseEvent("click",{...point,buttons:0,detail:dbl?2:1}));
+        if (dbl) el.dispatchEvent(new MouseEvent("dblclick",{...point,detail:2}));
       }
-    }
+    });
     host.changed();
   }
 
@@ -561,7 +562,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
         id=Identity(w);
         host=hosts.get(w.slot);
         if (host && host.task==w.task && host.num==w.num) {
-          host.seen=true;
+          host.seen=true;host.capture=w.capture || 0;
           if (host.size && (host.size.w!=w.w || host.size.h!=w.h ||
               Math.abs(host.el.clientWidth*host.scene.scale-w.w+16)>7 ||
               Math.abs(host.el.clientHeight*host.scene.scale-w.h+16)>7)) {
@@ -632,14 +633,43 @@ export function WinPass({canvas,pal,Request,Input,Status})
     return enabled;
   }
 
+  document.addEventListener("guicapture",async function (e) {
+    const host=[...hosts.values()].find(host=>host.el.contains(e.target));
+    if (!host) return;
+    const on=e.detail.on;
+    if (on && !osMouse.isMouseCaptured()) {
+      const locked=await new Promise(function (resolve) {
+        function Done() {
+          document.removeEventListener("pointerlockchange",Done);
+          document.removeEventListener("pointerlockerror",Done);
+          resolve(osMouse.isMouseCaptured());
+        }
+        document.addEventListener("pointerlockchange",Done);
+        document.addEventListener("pointerlockerror",Done);
+        const request=osMouse.captureMouse();
+        if (request===false) Done();
+        else if (request?.then) request.then(Done);
+      });
+      if (!locked) {osMouse.releaseMouse();return;}
+    } else if (!on) osMouse.releaseMouse();
+    if (!enabled || hosts.get(host.slot)!=host) {osMouse.releaseMouse();return;}
+    Input({slot:-1,focus:true});
+    const res=await Send("capture",{slot:host.slot,task:host.task,num:host.num,control:host.ids.get(e.target),on});
+    if (!res?.ok) osMouse.releaseMouse();
+  });
+  document.addEventListener("pointerlockchange",function () {
+    if (osMouse.isMouseCaptured()) return;
+    for (const host of hosts.values())
+      if (host.capture) Send("capture",{slot:host.slot,task:host.task,num:host.num,control:host.capture,on:false});
+  });
   document.addEventListener("winmoved",function (e) {
     if (enabled && Inside(e.detail))
       HostNew(e.target,e.detail);
   });
-  document.addEventListener("winlaunch",function (e) {
+  document.addEventListener("winlaunch",async function (e) {
     if (!enabled) return;
     const w=e.detail.win;
-    if (!GuiCompatible(w)) return;
+    if (!GuiCompatible(w)) {await OsFullscreenExit();WinFocus(w);return;}
     const r=canvas.getBoundingClientRect(),parent=[...hosts.values()].find(host=>host.el.id==e.detail.origin.id),
       native=windows.find(win=>win.slot==parent?.slot);
     HostNew(w,{clientX:r.left+((native?.x || 100)+80)*r.width/640,
@@ -653,21 +683,8 @@ export function WinPass({canvas,pal,Request,Input,Status})
     else {host.normal={cols:(win.w-16)/8,rows:(win.h-16)/8,x:win.x,y:win.y};size={cols:78,rows:58,x:0,y:0};}
     Send("size",{slot:host.slot,task:host.task,num:host.num,...size});
   });
-  document.addEventListener("keydown",function (e) {
-    if (e.defaultPrevented) return;
-    const host=[...hosts.values()].find(host=>host.el.contains(e.target));
-    if (!host) return;
-    if (e.key=="Tab") {
-      e.preventDefault();
-      const items=[...host.el.querySelectorAll("button,input,textarea,select,a[href],summary,[tabindex]")].filter(el=>
-        !el.disabled && el.tabIndex>=0 && el.getClientRects().length && getComputedStyle(el).visibility!="hidden" && !el.closest(".wc")),
-        i=items.indexOf(e.target),step=e.shiftKey?-1:1,el=items[(i+step+items.length)%items.length];
-      HostFocus(host,el);el?.scrollIntoView({block:"nearest",inline:"nearest"});
-    } else if (e.key=="Escape") {
-      e.preventDefault();host.el.querySelector(".close")?.click();
-    } else if (e.target.tagName=="SELECT" && ["Enter"," "].includes(e.key)) {
-      e.preventDefault();HostAction(host,{id:host.ids.get(e.target)}).catch(error=>Status(error.message));
-    }
+  document.addEventListener("focusin",function (e) {
+    if (e.target.closest?.(".win-pass-owned")) canvas.focus({preventScroll:true});
   });
   document.addEventListener("winfocus",function (e) {
     let host;
@@ -688,19 +705,6 @@ export function WinPass({canvas,pal,Request,Input,Status})
       }
   }
   canvas._winAt=e=>HostAt(e)?.host.el;
-  canvas.addEventListener("pointermove",function (e) {
-    const at=HostAt(e);
-    let cursor="";
-    if (at) for (const c of at.host.scene.controls.values())
-      if (c.x<=at.x && at.x<c.x+c.w && c.y<=at.y && at.y<c.y+c.h)
-        cursor=c.el.matches("textarea,input:not([type=checkbox]):not([type=range])")?"text":"pointer";
-    canvas.toggleAttribute("data-native-cursor",!!cursor);
-    canvas.style.setProperty("--native-cursor",cursor || "auto");
-  });
-  canvas.addEventListener("pointerleave",function () {
-    canvas.removeAttribute("data-native-cursor");
-    for (const host of hosts.values()) HostAction(host,{kind:3,x:-1000,y:-1000});
-  });
   for (const type of ["dragover","dragleave","drop"])
     canvas.addEventListener(type,function (e) {
       const at=HostAt(e);
@@ -708,7 +712,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
       const region=at.host.scene.regions.findLast(c=>c.x<=at.x && at.x<c.x+c.w && c.y<=at.y && at.y<c.y+c.h);
       if (!region) return;
       const event=new DragEvent(type,{...HostPoint(at.host,at),dataTransfer:e.dataTransfer});
-      if (!region.el.dispatchEvent(event)) e.preventDefault();
+      if (!WinAction(region.el,()=>region.el.dispatchEvent(event))) e.preventDefault();
     });
   canvas.addEventListener("pointerdown",GuestDown);
   canvas.addEventListener("pointermove",GuestMove);

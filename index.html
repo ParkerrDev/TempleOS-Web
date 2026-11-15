@@ -114,7 +114,8 @@
         filter:brightness(0) invert(1); mix-blend-mode:difference; }
     body.xcursor #xcursor { display:block; }
     body.xcursor, body.xcursor * { cursor:none !important; }   /* the inverting arrow replaces the native cursor */
-    body.xcursor [data-native-cursor] { cursor:var(--native-cursor,auto) !important; }
+    body.xcursor #frame.fsmode, body.xcursor #frame.fsmode * { cursor:auto !important; }
+    body.xcursor #frame.fsmode #canvas { cursor:none !important; }
     body.xcursor video:fullscreen, body.xcursor video:fullscreen * { cursor:auto !important; }
     body.xcursor video:-webkit-full-screen { cursor:auto !important; }
     html { height:100%; overflow:hidden; }

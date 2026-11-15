@@ -1,3 +1,4 @@
+import {OsFullscreenExit} from "../../Adam/Os.js";
 import {WinDress,WinFocus,WinRestore,WinWorkspaceSave,WinTitle} from "../../Adam/WinMgr.js";
 import {VideoPlayer,VideoList,VideoRandom} from "./Video.js";
 
@@ -34,7 +35,8 @@ export function VideoOpen(video,seconds=0,play=true,id)
     player.Close();win.remove();
     for (let entry of windows) if (entry.win==win) windows.delete(entry);
   }
-  WinDress(win,{onClose:Close,restore});WinFocus(win);
+  WinDress(win,{onClose:Close,restore});
+  OsFullscreenExit().then(function () {if (win.isConnected) WinFocus(win);});
   return {win,player};
 }
 
@@ -42,7 +44,7 @@ export function VideoSeek(file,seconds)
 {
   for (let {win,player} of windows)
     if (player.State().video.f==file && win.isConnected) {
-      player.Seek(seconds);WinFocus(win);return true;
+      player.Seek(seconds);OsFullscreenExit().then(()=>WinFocus(win));return true;
     }
   return false;
 }

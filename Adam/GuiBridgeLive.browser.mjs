@@ -40,6 +40,13 @@ try {
     localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
     window.passEvents=[];window.passRequests=[];window.passWindows=[];
     window.passBuffers={};window.passFrames=0;window.passActions=[];
+    const WorkerBase=window.Worker;
+    window.Worker=class extends WorkerBase {
+      postMessage(m,...args) {
+        if (m.type=="run") window.inputCtrl=new Int32Array(m.controlSAB);
+        return super.postMessage(m,...args);
+      }
+    };
     const Base=window.SharedWorker;
     window.SharedWorker=class extends Base {
       constructor(...args) {
@@ -133,7 +140,7 @@ try {
   async function Button(id,selector)
   {
     const point=await Point(id,selector);
-    await page.mouse.click(point.x,point.y,{delay:150});
+    await page.mouse.click(point.x,point.y);
     await page.waitForTimeout(350);
   }
   async function ReturnAll()
@@ -142,14 +149,53 @@ try {
     await page.waitForFunction(()=>!document.querySelector(".win-pass-owned"));
     await page.evaluate(async()=>{const m=await import("/Adam/WinMgr.js");m.WinWorkspaceReset();});
   }
+  async function Accept(id,selector,key)
+  {
+    const before=await page.evaluate(()=>window.passWindows.map(w=>w.num));
+    await Button(id,selector);
+    await page.waitForFunction(before=>window.passWindows.some(w=>!before.includes(w.num) && !w.host),before);
+    await page.keyboard.press(key);
+    await page.waitForFunction(before=>!window.passWindows.some(w=>!before.includes(w.num) && !w.host),before);
+  }
   async function Type(id,selector,value)
   {
-
+    const before=await page.evaluate(()=>window.passWindows.map(w=>w.num));
     await Button(id,selector);
-    await page.waitForFunction(selector=>document.activeElement==document.querySelector(selector),selector);
-    await page.keyboard.press("Control+a");await page.keyboard.type(value);
-    assert.equal(await page.locator(selector).inputValue(),value);
+    await page.waitForFunction(before=>window.passWindows.some(w=>!before.includes(w.num) && !w.host),before);
+    assert.equal(await page.evaluate(()=>document.activeElement.id),"canvas",
+      "native editing keeps browser focus on the OS surface");
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Shift+End");
+    await page.keyboard.press("Control+x");
+    const shifted={'"':"'",':':';','{':'[','}':']','<':',','>':'.','?':'/','_':'-','+':'=','!':'1','@':'2','#':'3','$':'4','%':'5','^':'6','&':'7','*':'8','(':'9',')':'0','|':'\\','~':'`'};
+    for (const ch of value) {
+      if (ch=="\n") await page.keyboard.press("Enter");
+      else if (/[A-Z]/.test(ch) || shifted[ch]) {
+        await page.keyboard.down("Shift");await page.keyboard.type(shifted[ch] || ch.toLowerCase());await page.keyboard.up("Shift");
+      } else await page.keyboard.type(ch);
+    }
+    await page.waitForTimeout(200);
+    await page.screenshot({path:"tmp/gui/native-input.png"});
+    const multiline=await page.locator(selector).evaluate(el=>el.tagName=="TEXTAREA");
+    await page.keyboard.press(multiline?"Escape":"Enter");
+    await page.waitForFunction(before=>!window.passWindows.some(w=>!before.includes(w.num) && !w.host),before);
   }
+  await Transfer("desktopMenu");
+  const menuChat=await Point("desktopMenu","#chatBtn");
+  await page.mouse.click(menuChat.x,menuChat.y);
+  await page.waitForFunction(()=>document.getElementById("chatWin")?.classList.contains("win-pass-owned"),null,{timeout:30000});
+  await page.locator("#chatNick").evaluate(el=>{el.value="café💖";el.dispatchEvent(new Event("input",{bubbles:true}));});
+  await page.waitForTimeout(350);
+  await Accept("chatWin","#chatNick","Enter");
+  assert.equal(await page.locator("#chatNick").inputValue(),"café💖","native CP437 and Unicode escapes preserve service values");
+  await Type("chatWin","#chatNick","Bridge test");
+  await page.locator("#canvas").evaluate(async el=>{await el.closest("#frame").requestFullscreen();el.focus();});
+  await Type("chatWin","#chatText","Native input fixture");
+  await page.waitForFunction(()=>document.getElementById("chatText").value=="");
+  assert(sent.some(m=>m.text=="Native input fixture"),"native form submits to the local mocked chat socket");
+  await page.evaluate(()=>document.exitFullscreen());
+  await ReturnAll();await page.locator("#chatClose").click();
+
   await Transfer("terryWin");
   await page.waitForFunction(()=>window.passRequests.filter(m=>m.op=="update" && m.gui).length>=2);
   await page.waitForTimeout(500);
@@ -192,18 +238,12 @@ try {
   assert.equal(await page.locator("#winPassDock").count(),0);
   await page.locator("#settingsClose").click();
   await page.locator("#godClose").click();
-  await page.locator("#chatBtn").click();await Transfer("chatWin");
-  await Type("chatWin","#chatNick","Bridge test");
-  await Type("chatWin","#chatText","Native input fixture");
-  await page.keyboard.press("Enter");
-  await page.waitForFunction(()=>document.getElementById("chatText").value=="");
-  assert(sent.some(m=>m.text=="Native input fixture"),"native form submits to the local mocked chat socket");
-  await ReturnAll();await page.locator("#chatClose").click();
+
 
   await page.locator("#filesBtn").click();
   await page.waitForFunction(()=>document.getElementById("filesPath")?.disabled===false);
   await Transfer("filesWin");
-  await Type("filesWin","#filesPath","C:/Home/");await page.keyboard.press("Enter");
+  await Type("filesWin","#filesPath","C:/Home/");
   await page.waitForFunction(()=>document.getElementById("filesStatus").textContent.includes("items"));
   const chooser=page.waitForEvent("filechooser");
   await Button("filesWin","#filesImport");
@@ -222,8 +262,12 @@ try {
   await page.screenshot({path:"tmp/gui/native-files.png"});
   await Button("filesWin","#filesNew");
   await page.waitForFunction(()=>document.getElementById("editorWin")?.classList.contains("win-pass-owned"),null,{timeout:30000});
-  await Type("editorWin","#editor",'"Native editor";');
-  await page.keyboard.press("End");await page.keyboard.press("Enter");await page.keyboard.type('"Second line";');
+  await page.evaluate(()=>window.__holycEditor.FileLoad(Uint8Array.of(34,233,34,59),"Encoding.HC"));
+  await page.waitForTimeout(350);
+  await Accept("editorWin","#editor","Escape");
+  assert.deepEqual(await page.evaluate(()=>Array.from(new Uint8Array(window.__holycEditor.FileBytes()))),[34,233,34,59],
+    "accepting native source preserves its CP437 bytes instead of converting them to Unicode");
+  await Type("editorWin","#editor",'"Native editor";\n"Second line";');
   assert.equal(await page.locator("#editor").inputValue(),'"Native editor";\n"Second line";');
   await page.waitForTimeout(500);await page.screenshot({path:"tmp/gui/native-editor.png"});
   await Button("editorWin","#runBtn");
@@ -231,7 +275,7 @@ try {
   await Button("editorWin","#edToDisk");
   await page.waitForFunction(()=>!!document.querySelector('[id^="dialog-"].win-pass-owned'));
   let dialog=await page.locator('[id^="dialog-"].win-pass-owned').getAttribute("id");
-  await Type(dialog,'#'+dialog+' input',"C:/Home/GuiBridgeTest.HC");await page.keyboard.press("Enter");
+  await Type(dialog,'#'+dialog+' input',"C:/Home/GuiBridgeTest.HC");
   await page.waitForFunction(()=>document.getElementById("status").textContent=="Saved C:/Home/GuiBridgeTest.HC",null,{timeout:30000});
   const bytes=await page.evaluate(async()=>Array.from(new Uint8Array((await (await import("/Adam/Os.js")).OsFileRead("C:/Home/GuiBridgeTest.HC")).bytes)));
   assert.match(new TextDecoder().decode(new Uint8Array(bytes)),/Native editor/);
@@ -250,10 +294,10 @@ try {
   await page.waitForFunction(()=>document.documentElement.classList.contains("hide-header"));
   await Button("settingsWin","#showHeader");
   await page.waitForFunction(()=>!document.documentElement.classList.contains("hide-header"));
+  const nativeBefore=await page.evaluate(()=>window.passWindows.map(w=>w.num));
   await Button("settingsWin","#windowScale");
-  await page.waitForFunction(()=>!!document.querySelector('[id^="dialog-"].win-pass-owned'));
-  dialog=await page.locator('[id^="dialog-"].win-pass-owned').getAttribute("id");
-  await Button(dialog,'#'+dialog+' form button:nth-of-type(1)');
+  await page.waitForFunction(before=>window.passWindows.some(w=>!before.includes(w.num) && !w.host),nativeBefore);
+  await page.keyboard.press("Home");await page.keyboard.press("Space");
   await page.waitForFunction(()=>document.getElementById("windowScale").value=="1");
   await ReturnAll();await page.locator("#settingsClose").click();
 
@@ -273,6 +317,26 @@ try {
   await page.waitForFunction(()=>document.getElementById("gameWin").classList.contains("win-pass-owned"),null,{timeout:30000});
   await page.waitForFunction(()=>window.__holycEditor?.isRunning(),null,{timeout:30000});
   await Button("gameWin","#screen");await page.keyboard.press("Enter");
+  await page.evaluate(async()=>{window.control=(await import("/hemu/holyc-wasm/src/runtime/protocol.js")).CTRL;});
+  point=await Point("gameWin","#screen");
+  await page.mouse.move(point.x,point.y);await page.mouse.down();
+  await page.waitForFunction(()=>Atomics.load(inputCtrl,control.MS_LB)==1);
+  const gameTitle=await page.evaluate(()=>{const w=passWindows.find(w=>w.host=="gameWin"),r=document.getElementById("canvas").getBoundingClientRect();return{x:r.x+(w.x+12)*r.width/640,y:r.y+(w.y+4)*r.height/480};});
+  await page.mouse.move(gameTitle.x,gameTitle.y);await page.mouse.up();
+  await page.waitForFunction(()=>Atomics.load(inputCtrl,control.MS_LB)==0);
+  await Button("gameWin","#screen");await page.keyboard.down("w");
+  await page.waitForFunction(()=>passActions.some(a=>a.kind==7 && a.arg1==119));
+  await page.locator("#canvas").evaluate(async el=>{await el.closest("#frame").requestFullscreen();el.focus();});
+  await Button("gameWin","#gameWinCapture");
+  await page.waitForFunction(()=>document.pointerLockElement?.id=="canvas" && passWindows.some(w=>w.host=="gameWin" && w.capture));
+  await page.keyboard.up("w");
+  await page.mouse.move(point.x+20,point.y+10);
+  await page.waitForFunction(()=>passActions.some(a=>a.kind==12 && (a.x || a.y)));
+  assert.equal(await page.evaluate(()=>document.activeElement.id),"canvas","native capture never focuses the hidden game canvas");
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(()=>!document.pointerLockElement && !passWindows.some(w=>w.capture));
+  assert(await page.evaluate(()=>passActions.some(a=>a.kind==11)),"native focus changes release backend held input");
+  await page.evaluate(()=>document.fullscreenElement?document.exitFullscreen():undefined);
   await page.waitForTimeout(500);
   await page.screenshot({path:"tmp/gui/native-game.png"});
   assert.equal(await page.locator("#gameWin").evaluate(el=>el.classList.contains("win-pass-owned")),true);
@@ -291,6 +355,7 @@ try {
     console.error(error);
     console.error(await page.evaluate(()=>({events:window.passEvents.slice(-8),actions:window.passActions.slice(-20),
       status:document.getElementById("windowPassStatus")?.textContent,
+      captures:window.passRequests.filter(m=>m.op=="capture"),
       requests:window.passRequests.filter(m=>m.cmd=="windows").slice(-15).map(({gui,...m})=>m),
       windows:window.passWindows.map(({buf,...w})=>w)})).catch(e=>({error:e.message})));
     await page.screenshot({path:"tmp/gui/native-error.png"});

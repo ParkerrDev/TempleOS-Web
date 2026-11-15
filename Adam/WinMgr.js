@@ -229,9 +229,26 @@ export function WinRaise(el)
   el.style.zIndex=++z_top;
 }
 
-export function WinOrigin(el=document.activeElement)
+let action_origin=null;
+
+export function WinOrigin(el)
 {//Capture before awaiting a load; later focus changes cannot reroute it.
+  if (!el && action_origin)
+    return action_origin;
+  if (!el)
+    el=document.activeElement;
   return {native:!!el?.closest?.(".win-pass-owned"),id:el?.closest?.(".win")?.id};
+}
+
+export function WinAction(el,Run)
+{//A guest action has an owner even when the browser cannot focus its DOM.
+  let previous=action_origin;
+  action_origin=WinOrigin(el);
+  try {
+    return Run();
+  } finally {
+    action_origin=previous;
+  }
 }
 
 export function WinRoute(w,origin)
@@ -573,9 +590,8 @@ function LoadingClose()
   opening++;
   $("winLoadingOverlay").classList.remove("open");
 }
-async function WinOpen(id)
+async function WinOpen(id,origin)
 {
-  const origin=WinOrigin();
   if (!$("winLoadingOverlay")) {
     WinAdd('#winLoading { width:min(420px,92vw); }',
       '<div id="winLoadingOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Opening window">'+
@@ -589,14 +605,15 @@ async function WinOpen(id)
   const request=++opening;
   $("winLoadingText").textContent="Opening "+$(id).textContent.trim()+"…";
   $("winLoadingOverlay").classList.add("open");
-  WinFocus($("winLoading"));
+  if (!origin.native)
+    WinFocus($("winLoading"));
   WinRoute($("winLoading"),origin);
   MenuShow(false);
   try {
     const m=await import(WINS[id][1]);
     if(request!==opening)return;
     $("winLoadingOverlay").classList.remove("open");
-    m.Open();
+    WinAction($(id),m.Open);
     WinApply($(WINS[id][0]));
     WinRoute($(WINS[id][0]),origin);
     document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id}}));
@@ -608,7 +625,7 @@ async function WinOpen(id)
 
 function MenuClick(e)
 {
-  WinOpen(e.currentTarget.id).catch(console.error);
+  WinOpen(e.currentTarget.id,WinOrigin(e.currentTarget)).catch(console.error);
 }
 
 function DesktopExtras(e)
