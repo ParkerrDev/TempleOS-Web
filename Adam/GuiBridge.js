@@ -16,9 +16,9 @@ export function GuiScene(win,ids=new Map)
 {//Convert resolved browser layout into native rectangles, text and images.
   if (win.querySelector("video,audio,iframe,textarea,input,select,[contenteditable=true]"))
     return null;
-  const rect=win.getBoundingClientRect(),scale=Math.min(2/3,624/(rect.width-16)),
-    width=Math.min(624,Math.max(96,Math.ceil((rect.width-16)*scale/8)*8)),
-    height=Math.min(464,Math.max(32,Math.ceil((rect.height-16)*scale/8)*8)),
+  const rect=win.getBoundingClientRect(),scale=Math.min(2/3,624/win.clientWidth),
+    width=Math.min(624,Math.max(96,Math.ceil(win.clientWidth*scale/8)*8)),
+    height=Math.min(464,Math.max(32,Math.ceil(win.clientHeight*scale/8)*8)),
     data=new Uint8Array(LIMIT),view=new DataView(data.buffer),actions=new Map,scroll=new Map;
   let used=24,count=0,animated=false,clip={x:0,y:0,w:width,h:height};
   function Command(kind,x,y,w,h,color=0,id=0,bytes=new Uint8Array)
@@ -36,7 +36,8 @@ export function GuiScene(win,ids=new Map)
   }
   function Bounds(r)
   {
-    return {x:Math.round((r.left-rect.left-8)*scale),y:Math.round((r.top-rect.top-8)*scale),
+    return {x:Math.round((r.left-rect.left-win.clientLeft)*scale),
+      y:Math.round((r.top-rect.top-win.clientTop)*scale),
       w:Math.round(r.width*scale),h:Math.round(r.height*scale)};
   }
   function Action(el,b)

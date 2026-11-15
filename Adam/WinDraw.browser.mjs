@@ -120,6 +120,17 @@ try {
   });
   assert.equal(await popup.locator("#godWin .wdraw").isVisible(),true,
     "optional HolyC drawing follows the live window into its popup");
+  await page.evaluate(async()=>{
+    (await import("/Adam/WinDraw.js")).WinDrawCfg({scale:1.5});
+  });
+  await popup.waitForFunction(()=>{
+    const w=document.getElementById("godWin");
+    return getComputedStyle(w).borderLeftWidth=="12px" &&
+      w.querySelector(".wdraw").width==Math.round(w.getBoundingClientRect().width/1.5);
+  });
+  await page.evaluate(async()=>{
+    (await import("/Adam/WinDraw.js")).WinDrawCfg({scale:1});
+  });
   await popup.screenshot({path:"/home/aphunt/Dev/GitHub/TempleOS/untangle/evidence/2026-11-15-workspace/Window-native-chrome-popup.png"});
   await popup.locator("#popupReturn").click().catch(function (error) {
     if (!popup.isClosed()) throw error;
@@ -148,12 +159,39 @@ try {
     return getComputedStyle(w).borderLeftWidth;
   }),"12px");
   assert.equal(await page.locator("#frame .wdraw").isVisible(),false);
+  const textSize=await page.locator("#terryRandom").evaluate(el=>getComputedStyle(el).fontSize);
+  await page.locator("#godClose").click();
+  await page.locator("#settingsBtn").click();
+  await page.locator("#windowScale").selectOption("1.5");
+  assert.equal(await page.locator("#nativeDrawing").isChecked(),false);
+  assert.equal(await page.locator("#frame").evaluate(w=>getComputedStyle(w).borderLeftWidth),"18px");
+  await page.locator("#nativeDrawing").check();
+  await page.locator("#windowScale").selectOption("2");
+  await page.waitForFunction(()=>{
+    const w=document.getElementById("terryWin");
+    return getComputedStyle(w).borderLeftWidth=="16px" &&
+      w.querySelector(".wdraw").width==Math.round(w.getBoundingClientRect().width/2);
+  });
+  assert.equal(await page.locator("#nativeDrawing").isChecked(),true,
+    "changing scale preserves the selected drawing mode");
+  assert.equal(await page.locator("#settingsClose").evaluate(el=>getComputedStyle(el).fontSize),"16px");
+  assert.equal(await page.locator("#terryRandom").evaluate(el=>getComputedStyle(el).fontSize),textSize,
+    "decoration scale does not enlarge the content");
+  await page.locator("#settingsClose").click();
+  await page.locator("#settingsOverlay").waitFor({state:"hidden"});
+  await page.screenshot({path:root+"tmp/native-layout/WinDraw-200.png"});
+  await page.reload({waitUntil:"load"});
+  await page.locator("#settingsBtn").click();
+  assert.equal(await page.locator("#windowScale").inputValue(),"2");
+  assert.equal(await page.locator("#nativeDrawing").isChecked(),true);
+  await page.locator("#nativeDrawing").uncheck();
+  assert.equal(await page.locator("#frame").evaluate(w=>getComputedStyle(w).borderLeftWidth),"24px");
   assert.deepEqual(errors,[]);
   const mobile=await browser.newPage({viewport:{width:390,height:844},
     reducedMotion:"reduce",hasTouch:true,isMobile:true});
   await mobile.route("**/hemu/*.gz",function (route) {route.abort();});
   await mobile.addInitScript(function () {
-    localStorage.setItem("templeos.windraw",'{"native":true}');
+    localStorage.setItem("templeos.windraw",'{"native":true,"scale":2}');
   });
   await mobile.goto("http://localhost:8199/",{waitUntil:"load"});
   await mobile.locator("#frame .wdraw").waitFor();
@@ -164,6 +202,12 @@ try {
   assert.equal(await mobile.locator("#frame .wdraw").evaluate(function (c) {
     return c.toDataURL();
   }),still,"reduced motion freezes native blinking and title scrolling");
+  await mobile.locator("#mobileMenu").click();
+  await mobile.locator("#settingsBtn").click();
+  assert.equal(await mobile.locator("#windowScale").inputValue(),"2");
+  assert.equal(await mobile.locator("#settingsWin").evaluate(w=>getComputedStyle(w).borderLeftWidth),"16px");
+  await mobile.screenshot({path:root+"tmp/native-layout/WinDraw-mobile-200.png"});
+  await mobile.locator("#settingsClose").click();
   const failed=await browser.newPage();
   let failures=0;
   await failed.route("**/hemu/*.gz",function (route) {route.abort();});

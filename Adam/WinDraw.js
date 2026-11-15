@@ -1,19 +1,24 @@
 import {WinDocuments} from "./WinPopup.js";
 import {PALETTE} from "../hemu/holyc-wasm/src/runtime/palette.js";
 
-let cfg={native:false},core=null,loading=null,frame=0,last=0;
+let cfg={native:false,scale:1},core=null,loading=null,frame=0,last=0;
 const reduced=matchMedia("(prefers-reduced-motion:reduce)");
 try {
-  cfg.native=JSON.parse(localStorage.getItem("templeos.windraw"))?.native===true;
+  const saved=JSON.parse(localStorage.getItem("templeos.windraw"));
+  cfg.native=saved?.native===true;
+  if (Number.isFinite(saved?.scale)) cfg.scale=Math.max(1,Math.min(2,saved.scale));
 } catch {}
 
 export function WinDrawCfg(change)
 {//The browser preference does not depend on a running guest.
   if (change) {
-    cfg.native=change.native===true;
+    if (change.native!==undefined) cfg.native=change.native===true;
+    if (Number.isFinite(change.scale)) cfg.scale=Math.max(1,Math.min(2,change.scale));
     try {localStorage.setItem("templeos.windraw",JSON.stringify(cfg));} catch {}
     dispatchEvent(new CustomEvent("windrawsettings",{detail:{...cfg}}));
   }
+  for (let doc of WinDocuments())
+    doc.documentElement.style.setProperty("--win-scale",cfg.scale);
   if (cfg.native)
     WinDrawStart();
   else {
@@ -77,8 +82,8 @@ function WinScrollPos(w,axis)
 
 function WinDrawOne(w,time)
 {//Present indexed HolyC pixels; retain DOM controls for input and access.
-  let width=Math.round(w.getBoundingClientRect().width),
-    height=Math.round(w.getBoundingClientRect().height),canvas=w._draw,
+  let rect=w.getBoundingClientRect(),width=Math.round(rect.width/cfg.scale),
+    height=Math.round(rect.height/cfg.scale),canvas=w._draw,
     title=w.dataset.winTitle || "",mem,ptr,stride,src,dst,i,x,y,color,held=0;
   if (width<24 || height<24 || !w.getClientRects().length ||
       w.classList.contains("fsmode"))
@@ -95,10 +100,10 @@ function WinDrawOne(w,time)
   if (canvas.width!=width || canvas.height!=height) {
     canvas.width=width;
     canvas.height=height;
-    canvas.style.width=width+"px";
-    canvas.style.height=height+"px";
     canvas._image=canvas.getContext("2d").createImageData(width,height);
   }
+  canvas.style.width=rect.width+"px";
+  canvas.style.height=rect.height+"px";
   ptr=Number(core.WinDrawTitle());
   mem=new Uint8Array(core.memory.buffer);
   for (i=0;i<Math.min(title.length,255);i++) {
@@ -157,4 +162,5 @@ function WinDrawFrame(time)
   frame=requestAnimationFrame(WinDrawFrame);
 }
 
+addEventListener("winpopup",function () {WinDrawCfg();});
 WinDrawCfg();

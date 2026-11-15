@@ -29,7 +29,7 @@ and native Take Tour question.
 - **⏸ Pause** - freeze and resume the OS (guest time stops too).
 - **Files** - browse C: in its own window, with places, back/up navigation, a path bar, filtering and file sizes. Select a file to edit or download it; drop files into the current folder to import them. New program opens HolyC Editor with this folder as its save destination.
 - **Disk & Save** - save the session or import/export a whole snapshot or disk.
-- **Cheatsheet** - browse common TempleOS commands, editor shortcuts and a first HolyC program.
+- **Help → Cheatsheet** - browse common TempleOS commands, editor shortcuts and a first HolyC program.
 - Tabs share one live TempleOS machine. The host tab owns its four CPU workers; a shared worker routes frames and requests. This keeps all tabs on the same filesystem.
 - C: saves after writes. Full sessions save after input settles outside gameplay and when the page hides. **Save session** creates an explicit checkpoint. Closing or refreshing the host tab restores the last completed checkpoint; a crash or immediate close can lose newer RAM changes. Newer saved files are never replaced by an older checkpoint.
 - Website windows remember their positions and open state. Settings can reset their positions. Desktop windows can move into browser popups; mobile windows stay in the page so scrolling works.
@@ -94,6 +94,9 @@ own worker's frame sequence for a separate FPS label.
 renderer using TempleOS's font, `TextBorder` and `DrawWinScroll`. Titles and
 controls use the native 8x8 grid. Turn it off for the existing browser styling.
 The renderer loads only when selected and works before boot and while paused.
+**Window decoration scale (DPI)** in Settings adjusts borders, titles and scroll
+handles from 100% to 200% in either drawing style. Contents keep their existing
+size. The scale applies immediately, follows popup windows and survives reload.
 Browser content and accessible controls remain HTML; this does not turn a web
 form into a TempleOS application. Native task addresses and editor status are
 omitted from browser frames. The reference check compares focused and unfocused

@@ -70,6 +70,8 @@ try {
     return window.passEvents.some(function (e) {return e.cmd=="guestReady" && e.ok;});
   },null,{timeout:60000});
   await page.locator("#settingsBtn").click();
+  await page.locator("#nativeDrawing").check();
+  await page.locator("#windowScale").selectOption("2");
   await page.locator("#windowPassthrough").check();
   await page.locator("#settingsClose").click();
   await page.waitForFunction(function () {

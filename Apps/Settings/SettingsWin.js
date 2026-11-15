@@ -22,6 +22,15 @@ WinAdd(`
       <label><input id="nativeDrawing" type="checkbox"> Native window drawing</label>
       <p>Draw browser window borders with HolyC and TempleOS's own font.
         This works independently of the emulated machine.</p>
+      <label for="windowScale">Window decoration scale (DPI)</label>
+      <select id="windowScale">
+        <option value="1">100%</option>
+        <option value="1.25">125%</option>
+        <option value="1.5">150%</option>
+        <option value="1.75">175%</option>
+        <option value="2">200%</option>
+      </select>
+      <p>Resize borders, titles and scroll handles.</p>
       <label><input id="windowPassthrough" type="checkbox"> Window passthrough</label>
       <button id="returnWindows">Return windows</button>
       <p>Use a mouse to drag a TempleOS window's title out of the screen onto the
@@ -70,6 +79,7 @@ export function Open()
   $("biosRepeat").checked=cfg.repeat;
   $("fastGraphics").checked=cfg.fast;
   $("nativeDrawing").checked=WinDrawCfg().native;
+  $("windowScale").value=String(WinDrawCfg().scale);
   $("windowPassthrough").checked=cfg.pass;
   $("windowPassStatus").textContent=OsWinPassStatus();
   $("settingsOverlay").classList.add("open");
@@ -87,6 +97,7 @@ function Status(state)
 addEventListener("ossettings",function (e) {Status(e.detail);});
 addEventListener("windrawsettings",function (e) {
   $("nativeDrawing").checked=e.detail.native;
+  $("windowScale").value=String(e.detail.scale);
 });
 addEventListener("windrawerror",function (e) {Status({msg:e.detail});});
 addEventListener("winpasssettings",function (e) {
@@ -120,6 +131,9 @@ $("fastGraphics").addEventListener("change",function (e) {
 });
 $("nativeDrawing").addEventListener("change",function (e) {
   WinDrawCfg({native:e.target.checked});
+});
+$("windowScale").addEventListener("change",function (e) {
+  WinDrawCfg({scale:Number(e.target.value)});
 });
 $("windowPassthrough").addEventListener("change",function (e) {
   OsCfg({pass:e.target.checked});

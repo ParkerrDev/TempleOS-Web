@@ -93,18 +93,24 @@ try {
     assert.equal(await page.locator("header").isVisible(),true);
     assert.equal(await page.locator("footer").isVisible(),true);
     await page.locator("#settingsClose").click();
-    if (mobile) await page.locator("#mobileMenu").click();
+    if (mobile) await page.locator("#mobileHelp").click();
+    assert.equal(await page.locator("#desktopMenu #cheatsheetBtn").count(),0);
+    assert.equal(await page.locator("#guide #cheatsheetBtn").count(),1);
     await page.locator("#cheatsheetBtn").click();
     await page.locator("#cheatsheetWin").waitFor({state:"visible"});
     assert((await page.locator("#cheatsheetWin").innerText()).includes('Ed("Hello.HC");'));
     assert.equal(await page.locator(".cheatsheet-body").evaluate(el=>el.scrollWidth<=el.clientWidth),true);
     await page.screenshot({path:root+"tmp/native-layout/cheatsheet-"+(mobile?"mobile":"desktop")+".png"});
     await page.locator("#cheatsheetClose").click();
+    if (mobile) {
+      assert(await page.locator("#guide").isVisible(),"closing Cheatsheet returns to Help");
+      await page.locator("#guide .close").click();
+    }
     assert.equal(await page.locator("#guide").isVisible(),!mobile);
     assert.equal(await page.locator("#terryWin").isVisible(),!mobile);
     assert.equal(await page.locator("#guide #terrySprite").count(),0);
     assert.equal(await page.locator("#helpQuotes,#helpSource").count(),0);
-    assert.deepEqual(await page.locator("#guide button").allTextContents(),["Next tip"]);
+    assert.deepEqual(await page.locator("#guide button").allTextContents(),["Next tip","Cheatsheet"]);
     for(const direction of ["Left","Right","Up","Down"])
       assert.equal(await page.locator('[data-key="Arrow'+direction+'"]').isVisible(),mobile);
     if(!mobile) {

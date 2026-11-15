@@ -147,8 +147,8 @@
     /* A TempleOS window (TextBorder, Adam/Gr/GrTextBase.HC): a text cell of BLUE border round a WHITE
        text area, drawn with the font's chars 2 to 13 (Kernel/FontStd.HC), double on the focused window.
        The site's 12px text is the 8x8 font at 1.5x, so a cell is 12px. */
-    .win, #frame { --wcell:12px; position:relative; background:var(--white); color:var(--blue); margin:3px 5px; overflow:visible;
-                   border:var(--wcell) solid transparent; border-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' shape-rendering='crispEdges' fill='%230000AA'%3E%3Cpath d='M3 4h18v1H3zM3 20h18v1H3zM3 5h2v15H3zM19 5h2v15h-2z'/%3E%3C/svg%3E") 12 / 12px; }
+    .win, #frame { --wcell:calc(12px*var(--win-scale,1)); position:relative; background:var(--white); color:var(--blue); margin:3px 5px; overflow:visible;
+                   border-width:var(--wcell); border-style:solid; border-color:transparent; border-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' shape-rendering='crispEdges' fill='%230000AA'%3E%3Cpath d='M3 4h18v1H3zM3 20h18v1H3zM3 5h2v15H3zM19 5h2v15h-2z'/%3E%3C/svg%3E") 12 / 1; }
     .win.active, #frame.active { border-image-source:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' shape-rendering='crispEdges' fill='%230000AA'%3E%3Cpath d='M2 2h21v1H2zM2 20h21v1H2zM2 3h2v17H2zM21 3h2v17h-2zM5 4h15v1H5zM5 18h15v1H5zM5 5h2v13H5zM18 5h2v13h-2z'/%3E%3C/svg%3E"); }
     .win { padding:.7em; }
     .wc { position:absolute; z-index:2; font-size:var(--wcell); line-height:var(--wcell); user-select:none; touch-action:none; }
@@ -158,7 +158,7 @@
     .wmenu, .wbar > .close { position:relative; z-index:1; background:var(--white); color:var(--blue); }
     .wmenu { animation:menuBlink .4s step-start infinite; }   /* Blink at 2.5 Hz, Kernel/KMisc.HC */
     @keyframes menuBlink { 50% { background:var(--blue); color:var(--white); } }
-    .wtitle { position:absolute; left:calc(50% - 7.5*var(--wcell)); width:calc(15*var(--wcell)); overflow:hidden; white-space:pre;
+    .wtitle { position:absolute; left:50%; transform:translateX(-50%); width:max(0px,min(calc(15*var(--wcell)),calc(100% - 8*var(--wcell)))); overflow:hidden; white-space:pre;
               background:var(--blue); color:var(--white); }
     .wtitle > span { display:inline-block; animation:wscroll linear infinite; }
     @keyframes wscroll { to { transform:translateX(-50%); } }
@@ -177,12 +177,12 @@
     .win *, #frame * { scrollbar-width:none; }   /* the scroll boxes stand for the scroll bars */
     .win ::-webkit-scrollbar, #frame ::-webkit-scrollbar { display:none; }
     /* Native chrome retains the same DOM controls and geometry. */
-    .native-chrome .win, .native-chrome #frame { --wcell:8px; border-image:none; }
+    .native-chrome .win, .native-chrome #frame { --wcell:calc(8px*var(--win-scale,1)); border-image:none; }
     .wdraw { display:none; pointer-events:none; }
-    .native-chrome .wdraw { display:block; left:-8px; top:-8px; z-index:2; image-rendering:pixelated; }
+    .native-chrome .wdraw { display:block; left:calc(-1*var(--wcell)); top:calc(-1*var(--wcell)); z-index:2; image-rendering:pixelated; }
     .native-chrome .wmenu, .native-chrome .wtitle, .native-chrome .wvert > span,
     .native-chrome .wbar > .close { color:transparent; background:transparent; animation:none; }
-    .native-chrome .wbar > .close { font-size:8px; line-height:8px; padding:0; border:0; min-height:0; }
+    .native-chrome .wbar > .close { font-size:var(--wcell); line-height:var(--wcell); padding:0; border:0; min-height:0; }
     .native-chrome .wtitle > span { animation:none; }
     .native-chrome .wsv, .native-chrome .wsh { background:transparent; border:0; }
     #winPopupNotice { position:fixed; left:12px; right:12px; bottom:12px; z-index:2147483646; display:flex; align-items:center; gap:12px; padding:12px; background:var(--white); color:var(--blue); border:3px double var(--blue); }
@@ -356,7 +356,8 @@
     #helpContext { color:var(--red); margin-bottom:8px; font-size:12px; }
     #helpBubble { border:2px solid var(--blue); padding:10px; line-height:1.4; min-height:100px; position:relative; }
     #helpLabel { display:block; color:var(--red); margin-bottom:6px; }
-    #helpNext { width:auto; margin:8px 2px; max-width:calc(100% - 4px); }
+    #helpActions { display:flex; flex-wrap:wrap; gap:8px; padding:8px 2px 2px; }
+    #helpActions button { width:auto; max-width:100%; }
     @media (prefers-reduced-motion:reduce) { .wtitle > span, .wmenu { animation:none; } }
     @media (max-width:979.98px) {
       html { height:auto; overflow-y:auto; overflow-x:hidden; }
@@ -431,7 +432,6 @@
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M6 0h12v2h-12zM4 2h4v2h-4zM16 2h4v2h-4zM4 4h4v2h-4zM16 4h4v2h-4zM16 6h4v2h-4zM14 8h4v2h-4zM12 10h4v2h-4zM10 12h4v2h-4zM10 14h4v2h-4zM10 18h4v2h-4zM10 20h4v2h-4z"/></symbol>
   <symbol id="i-cross" viewBox="0 0 24 24"><path d="M16 6h6v8h-6v8H8v-8H2V6h6V2h8v4Zm-6 2H4v4h6v8h4v-8h6V8h-6V4h-4v4Z"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 2h16v2H4zM2 4h2v10H2zM20 4h2v10h-2zM8 14h12v2H8zM4 14h2v6H4zM6 16h2v2H6zM7 8h2v2H7zM11 8h2v2h-2zM15 8h2v2h-2z"/></symbol>
-  <symbol id="i-sheet" viewBox="0 0 24 24"><path d="M4 1h12l4 4v18H4V1Zm2 2v18h12V7h-4V3H6Zm10 1v1h1l-1-1ZM8 9h8v2H8V9Zm0 4h8v2H8v-2Zm0 4h6v2H8v-2Z"/></symbol>
 </svg>
 <div id="xcursor" aria-hidden="true"></div>
   <div id="topbar">
@@ -475,7 +475,6 @@
         <button id="gamesBtn" title="Run games with HolyC-WASM or explicitly in TempleOS, and edit their source"><span class="ico"><svg><use href="#i-games"/></svg></span> Games</button>
         <button id="spritesBtn" title="Convert images, GIFs and video to TempleOS sprites"><span class="ico"><svg><use href="#i-sprite"/></svg></span> Sprite Studio</button>
         <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico"><svg><use href="#i-cross"/></svg></span> God Tools</button>
-        <button id="cheatsheetBtn" title="TempleOS commands and keyboard shortcuts"><span class="ico"><svg><use href="#i-sheet"/></svg></span> Cheatsheet</button>
         <button id="filesBtn" title="Browse TempleOS files, import, download and open in HolyC Editor"><span class="ico"><svg><use href="#i-folder"/></svg></span> Files</button>
         <button id="diskBtn" title="Save your session or import and export backups"><span class="ico"><svg><use href="#i-save"/></svg></span> Disk &amp; Save</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico"><svg><use href="#i-search"/></svg></span> Terry Search</button>
@@ -537,7 +536,10 @@
         <div id="helpBody">
           <h2 id="helpContext">TempleOS</h2>
           <div id="helpBubble"><small id="helpLabel">Desktop tip</small><p id="helpText">Click the screen to use TempleOS. Ctrl+M opens its games menu.</p></div>
-          <button id="helpNext" type="button">Next tip</button>
+          <div id="helpActions">
+            <button id="helpNext" type="button">Next tip</button>
+            <button id="cheatsheetBtn" type="button" title="TempleOS commands and keyboard shortcuts">Cheatsheet</button>
+          </div>
         </div>
       </div>
       <div id="terryWin" class="win terrywin" data-title="Terry" data-icon="terry"><span class="close">[X]</span><canvas id="terrySprite" width="128" height="176" role="button" tabindex="0" aria-label="Terry A. Davis, animated TempleOS sprite"></canvas><button id="terryRandom" type="button" title="Play a random Terry video">Random video</button></div>
