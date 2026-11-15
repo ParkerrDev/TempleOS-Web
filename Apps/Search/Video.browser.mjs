@@ -75,7 +75,11 @@ try {
     if (!mobile) {
       await page.goto(origin+"/?single");
       await page.getByRole("button",{name:"Random video",exact:true}).click();
-      await page.locator(".vidwin video").waitFor();
+      await page.waitForFunction(()=>document.querySelector(".vidwin video")?.readyState>=2 ||
+        document.querySelector(".vidwin .video-copy")?.hidden===false);
+      if (await page.locator(".vidwin .video-copy").isVisible())
+        await page.locator(".vidwin .video-copy").click();
+      await page.waitForFunction(()=>document.querySelector(".vidwin video")?.readyState>=2);
       assert.equal(await page.locator(".vidwin .clip-panel").count(),0);
       const title=await page.locator(".vidwin").getAttribute("data-win-title");
       await page.locator('.vidwin [aria-label="Clip controls"]').click();
@@ -89,6 +93,13 @@ try {
       await mkdir(new URL("../../tmp/search/",import.meta.url),{recursive:true});
       await page.screenshot({path:new URL("../../tmp/search/video-controls.png",import.meta.url).pathname});
       const current=await page.locator(".vidwin video").getAttribute("src");
+      await page.locator(".vidwin video").evaluate(video=>video.requestFullscreen());
+      await page.waitForFunction(()=>document.fullscreenElement?.tagName=="VIDEO");
+      await page.mouse.move(100,100);
+      assert.equal(await page.locator("video:fullscreen").evaluate(video=>getComputedStyle(video).cursor),"auto",
+        "Native video fullscreen retains a visible system cursor.");
+      assert.equal(await page.locator("#xcursor").evaluate(el=>getComputedStyle(el).visibility),"hidden");
+      await page.evaluate(()=>document.exitFullscreen());
       const file=decodeURIComponent(new URL(current).pathname.split("/TerryADavis_TempleOS_Archive/")[1].split("#")[0]);
       await page.locator(".vidwin .video-transcript").click();
       await page.waitForFunction(()=>document.querySelectorAll("#tsOut .ts-line").length==1);

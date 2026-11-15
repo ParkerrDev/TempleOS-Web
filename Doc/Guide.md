@@ -3,9 +3,10 @@
 **TempleOS V5.03 running in your browser**, through the
 [HEMU](https://github.com/ParkerrDev/HEMU) x86-64 emulator. HEMU's CPU and
 devices are HolyC, compiled to WebAssembly by
-[HolyC-wasm](https://github.com/ParkerrDev/HolyC-wasm); its JavaScript host
-connects browser workers, storage, input and display, and compiles hot guest
-instructions to WASM. TempleOS runs its own kernel, HolyC compiler and desktop.
+[HolyC-wasm](https://github.com/ParkerrDev/HolyC-wasm). HolyC-wasm also owns the
+JavaScript host that connects browser workers, storage, input and display.
+HEMU's HolyC JIT emits WebAssembly for hot guest instructions; the host loads
+those blocks. TempleOS runs its own kernel, HolyC compiler and desktop.
 The initial capture already contains the display corrections, Welcome card
 and native Take Tour question.
 
@@ -28,6 +29,7 @@ and native Take Tour question.
 - **⏸ Pause** - freeze and resume the OS (guest time stops too).
 - **Files** - browse C: in its own window, with places, back/up navigation, a path bar, filtering and file sizes. Select a file to edit or download it; drop files into the current folder to import them. New program opens HolyC Editor with this folder as its save destination.
 - **Disk & Save** - save the session or import/export a whole snapshot or disk.
+- **Cheatsheet** - browse common TempleOS commands, editor shortcuts and a first HolyC program.
 - Tabs share one live TempleOS machine. The host tab owns its four CPU workers; a shared worker routes frames and requests. This keeps all tabs on the same filesystem.
 - C: saves after writes. Full sessions save after input settles outside gameplay and when the page hides. **Save session** creates an explicit checkpoint. Closing or refreshing the host tab restores the last completed checkpoint; a crash or immediate close can lose newer RAM changes. Newer saved files are never replaced by an older checkpoint.
 - Website windows remember their positions and open state. Settings can reset their positions. Desktop windows can move into browser popups; mobile windows stay in the page so scrolling works.
@@ -53,7 +55,7 @@ Terry Search favors browser formats (MP4, WebM and Ogg video) before other forma
 HEMU resumes TempleOS's captured 64-bit machine. It emulates the hardware
 TempleOS uses (PIC/PIT/HPET/PS-2/ATA/VGA-DAC), while the browser host supplies
 input, display, sound and storage. It does not execute the DVD's 16-bit BIOS
-loader. [HEMU's runtime documentation](https://github.com/ParkerrDev/HEMU/blob/master/Kernel/README.md) covers the
+loader. [HEMU's runtime documentation](https://github.com/ParkerrDev/HolyC-wasm/blob/master/Apps/HEMU/README.md) covers the
 machine boundary, build, checks and supported behavior.
 
 HEMU executes guest instructions through an interpreter and an **x86-64 → WASM
@@ -97,20 +99,36 @@ form into a TempleOS application. Native task addresses and editor status are
 omitted from browser frames. The reference check compares focused and unfocused
 borders, moving titles and scrollbar states with original V5.03 drawing.
 
-**Window passthrough** lets you use a mouse to drag a compatible title bar across the
-screen edge to move that live window onto the page. Drag its title back over the
+**Window passthrough** lets you drag a compatible TempleOS title bar across the
+screen edge to move its live window onto the page. Drag its title back over the
 screen to return it. Its task, document, keyboard, mouse and scroll controls still
-run inside TempleOS. Menu, Help and God Tools can move the other way: dragging
-them onto the screen creates actual native DolDoc windows whose buttons invoke
-the same browser actions. Their Return to browser button restores the web tool.
+run inside TempleOS.
 
-Passthrough supports bordered documents and their native sprites and scrollbars.
-Custom drawing callbacks, persistent desktop graphics, fullscreen programs and
-captured-mouse programs stay on the TempleOS screen. Settings, editors, Sprite
-Studio, file pickers and media tools stay on the page. Pausing or disabling
-passthrough returns windows to their original environment; resuming enables
-dragging again. Restart and snapshot restore also return native windows before further
-dragging. Old saved engines require Restart to enable passthrough.
+Browser windows can move the other way, including Terry, Menu, Help, the
+cheatsheet and God Tools. A shared converter reads their resolved HTML/CSS layout
+and sends rectangles, text, palette images, canvas frames and button/link targets
+to a real TempleOS task. Native HolyC draws that scene with `GrRect`, `GrPrint`
+and `GrBlot`. Clicking native controls calls the original browser actions, so
+Terry's Random video button opens the browser player. Scrollable content responds
+to the mouse wheel, arrow keys, Page Up/Down and Home/End. Dragging the native
+title outside returns the original browser window. **Return windows** in Settings
+returns current windows while leaving passthrough enabled.
+
+The converter uses TempleOS's 8x8 font and sixteen-color palette. It supports
+rectangular CSS layout and clipping, not every CSS effect: transformed elements,
+editable fields, video/audio and embedded browsers remain on the page. SVG icon
+art, gradients, shadows and rounded corners are not reproduced. Icon-only buttons
+use their accessible labels, shortened to fit. Native window
+frames replace browser frame decorations; they are not included in the scene.
+Settings, editors, Sprite Studio, file pickers and media tools remain browser tools.
+
+Guest capture supports bordered documents and their native sprites and scrollbars.
+Arbitrary custom drawing callbacks, persistent desktop graphics, fullscreen programs
+and captured-mouse programs stay on the TempleOS screen. The bridge's own scene
+tasks return to their browser owner instead of entering guest capture. Pausing or
+disabling passthrough returns windows to their original environment; resuming enables
+dragging again. Restart and snapshot restore also return native windows before
+further dragging. Old saved engines require Restart to enable passthrough.
 
 Both window options are off initially and remembered independently of Web
 Optimization. Detached documents use isolated native pixel buffers. HEMU stops
@@ -147,8 +165,8 @@ when available. The stock disk is fetched separately when no saved drive exists.
 | repo | what | consumed how |
 |---|---|---|
 | **TempleOS-web** (this) | the site: pages, search, video windows, converter, assets | deployed on Netlify |
-| [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | the HolyC→WASM compiler, task/settings runtime and scan-code input | pinned by HEMU in `./hemu/holyc-wasm`; shared by the machine and site apps |
-| [HEMU](https://github.com/ParkerrDev/HEMU) | CPU/devices, browser runtime/JIT, machine lifecycle, disk storage, build, tests and captures | cloned into `./hemu`; `hemu/Kernel/Build.mjs` writes `hemu/build/` |
+| [holyc-wasm](https://github.com/ParkerrDev/HolyC-wasm) | compiler and HolyC runtime; `Apps/HEMU` owns the WebAssembly host, browser lifecycle/storage, build and integration tests | pinned by HEMU in `./hemu/holyc-wasm`; shared by the machine and site apps |
+| [HEMU](https://github.com/ParkerrDev/HEMU) | HolyC CPU/devices/JIT, native Linux host, instruction self-tests and captures | cloned into `./hemu`; `hemu/holyc-wasm/Apps/HEMU/Kernel/Build.mjs` writes `hemu/build/` |
 | [HolyC-fmt](https://github.com/ParkerrDev/HolyC-fmt) | the HolyC formatter, written in HolyC (the Format button, `/Apps/Editor/Format.html`) | cloned into `./holyc-fmt` at build time |
 | [HolyCraft](https://github.com/ParkerrDev/HolyCraft) | the HolyCraft voxel game, in HolyC, for the browser and for TempleOS | cloned into `./holycraft` at build time |
 | [TerryADavis-archive-transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) | Whisper transcription pipeline | offline - its output is baked into `Apps/Search/Transcripts/` by `Apps/Search/TranscriptsMk.mjs` |
@@ -226,7 +244,7 @@ A test sits beside what it tests: `Name.test.mjs` runs under node and `Name.brow
 browser. A folder named `Test` holds what only tests read. The publisher
 (`Misc/Server.mjs`) serves the site and sibling runtime assets while excluding
 tests, build tools, notes and server-side Worker sources. Machine checks live in
-`hemu/Kernel/Test/`; shell integration checks live beside `Adam/` and the apps.
+`hemu/holyc-wasm/Apps/HEMU/Kernel/Test/`; shell integration checks live beside `Adam/` and the apps.
 
 ## Running locally
 
@@ -234,7 +252,7 @@ tests, build tools, notes and server-side Worker sources. Machine checks live in
 git clone https://github.com/ParkerrDev/TempleOS-Web && cd TempleOS-Web
 while read dir url sha; do git clone -q $url $dir && git -C $dir checkout -q $sha; done <Siblings.txt
 while read dir url sha; do git clone -q $url hemu/$dir && git -C hemu/$dir checkout -q $sha; done <hemu/Siblings.txt
-node hemu/Kernel/Build.mjs hemu/build
+node hemu/holyc-wasm/Apps/HEMU/Kernel/Build.mjs hemu/build
 node Misc/AppsBuild.mjs
 node Misc/Preload.mjs
 sh Misc/Test.sh               # the fast tests
@@ -314,9 +332,9 @@ python3 Demo/Games/RedSea.test.py
 python3 Misc/ChkText.py
 ```
 
-The emulator harnesses (`hemu/Kernel/Test/`, which can need several hundred MiB
+The emulator harnesses (`hemu/holyc-wasm/Apps/HEMU/Kernel/Test/`, which can need several hundred MiB
 per guest) and native capture recipes (`hemu/Misc/Capture/`) are documented in
-[HEMU's runtime guide](https://github.com/ParkerrDev/HEMU/blob/master/Kernel/README.md). `npm run test:browser` checks the desktop/mobile shell, including fullscreen keyboard focus. `npm run test:search` checks the native query parser and real search worker, copied/downloaded transcripts, archive links and video windows. These browser checks start their own local server and use Playwright with `CHROMIUM` (default `/usr/bin/chromium`). The search check also needs FFmpeg to generate small MP4/MKV fixtures; network routes supply these known files without depending on archive availability. Live archive/CDN delivery remains a separate deployment check.
+[HEMU's runtime guide](https://github.com/ParkerrDev/HolyC-wasm/blob/master/Apps/HEMU/README.md). `npm run test:browser` checks the desktop/mobile shell, including fullscreen keyboard focus. `npm run test:search` checks the native query parser and real search worker, copied/downloaded transcripts, archive links and video windows. These browser checks start their own local server and use Playwright with `CHROMIUM` (default `/usr/bin/chromium`). The search check also needs FFmpeg to generate small MP4/MKV fixtures; network routes supply these known files without depending on archive availability. Live archive/CDN delivery remains a separate deployment check.
 
 
 The example picker fetches the selected `.HC` file from `Apps/Editor/Demos/`.

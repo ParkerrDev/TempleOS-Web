@@ -1,18 +1,22 @@
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import {once} from "node:events";
+import {mkdirSync} from "node:fs";
 import {chromium} from "playwright-core";
 
 const root=new URL("../",import.meta.url).pathname,
   server=spawn(process.execPath,["Misc/Server.mjs"],{cwd:root,
     env:{...process.env,PORT:"8199"},stdio:["ignore","pipe","inherit"]});
 await once(server.stdout,"data");
+mkdirSync(root+"tmp/native-layout",{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM ||
   "/usr/bin/chromium",headless:true,args:["--no-sandbox"]});
 try {
   const page=await browser.newPage({viewport:{width:1280,height:900}}),
     errors=[],loads=[];
   await page.route("**/hemu/*.gz",function (route) {route.abort();});
+  await page.route("**/Apps/Terry/TerrySprites.gr.gz",route=>route.fulfill({
+    path:root+"Apps/Terry/TerrySprites.gr.gz",contentType:"application/gzip"}));
   page.on("pageerror",function (e) {errors.push(e.message);});
   page.on("request",function (r) {
     if (r.url().includes("WinDraw.wasm")) loads.push(r.url());
@@ -37,6 +41,34 @@ try {
   assert.equal(await page.locator("#frame .wdraw").evaluate(function (c) {
     return c.getContext("2d").getImageData(c.width/2,c.height/2,1,1).data[3];
   }),0,"chrome does not obscure guest or browser content");
+  await page.evaluate(()=>import("/Apps/Terry/TerryWin.js"));
+  await page.waitForFunction(()=>document.getElementById("terrySprite").dataset.format);
+  const terry=page.locator("#terryWin");
+  assert.equal(await terry.locator(":scope > .wdraw").count(),1);
+  await page.evaluate(async()=>{
+    (await import("/Adam/WinDraw.js")).WinDrawCfg({native:false});
+  });
+  assert.equal(await terry.locator(".wdraw").isVisible(),false,
+    "CSS mode hides the Terry frame bitmap as well as the OS frame bitmap");
+  assert.equal(await terry.locator("#terrySprite").isVisible(),true);
+  await page.evaluate(async()=>{
+    (await import("/Adam/WinDraw.js")).WinDrawCfg({native:true});
+  });
+  await page.waitForFunction(()=>document.body.classList.contains("native-chrome"));
+  const corner=await terry.locator(".wszcorner").boundingBox();
+  await page.mouse.move(corner.x+corner.width/2,corner.y+corner.height/2);
+  await page.mouse.down();
+  await page.mouse.move(corner.x+corner.width/2+24,corner.y+corner.height/2+16);
+  await page.mouse.up();
+  await page.waitForFunction(()=>{
+    const w=document.getElementById("terryWin"),c=w.querySelector(".wdraw"),
+      r=w.getBoundingClientRect(),b=c.getBoundingClientRect();
+    return c.width==Math.round(r.width) && c.height==Math.round(r.height) &&
+      Math.abs(r.x-b.x)<1 && Math.abs(r.y-b.y)<1;
+  });
+  assert.equal(await terry.locator(":scope > .wdraw").count(),1,
+    "switching modes and resizing reuse one native frame");
+  await terry.screenshot({path:root+"tmp/native-layout/WinDraw-Terry-native.png"});
   await page.locator("#settingsBtn").click();
   await page.locator("#settingsWin .wdraw").waitFor();
   await page.locator("#settingsClose").focus();
@@ -92,7 +124,7 @@ try {
   await popup.locator("#popupReturn").click().catch(function (error) {
     if (!popup.isClosed()) throw error;
   });
-  await page.screenshot({path:"/tmp/WinDraw-native.png"});
+  await page.screenshot({path:root+"tmp/native-layout/WinDraw-native.png"});
   const image=await page.locator("#godWin .wdraw").evaluate(function (c) {
     return c.toDataURL();
   });

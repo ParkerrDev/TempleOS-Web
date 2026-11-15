@@ -22,7 +22,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/PLAY 18 CASES HASH \d+ BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (tm_play_done!=1 || tm_play_cases!=18 || tm_play_hash!=3858873714) throw('Count');\n";
   for(const file of [...files,{name:'PLAYTST.HC',bytes:Buffer.from(check,'latin1')}]) {

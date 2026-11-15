@@ -8,7 +8,7 @@ import {ModulePackage} from './ModulePackage.mjs';
 assert(process.env.TEMPLEOS_WEB,'Set the frozen runtime path.');
 const web=resolve(process.env.TEMPLEOS_WEB),out=resolve(process.env.OUT||'/tmp/toom-module-workers'),
   source=!!process.env.SOURCE,hash=b=>createHash('sha256').update(b).digest('hex'),
-  {HemuBoot,ReadyWait,FramesWait,Sleep,TextRow}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/WorkerHost.mjs'))),
+  {HemuBoot,ReadyWait,FramesWait,Sleep,TextRow}=await import(pathToFileURL(resolve(web,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/WorkerHost.mjs'))),
   packageFiles=ModulePackage(process.env.MODULE,process.env.COMPARE?true:source),
   moduleFiles=process.env.COMPARE?ModulePackage(process.env.MODULE):null,
   files=[...(moduleFiles?(packageFiles.set('Toom.BIN',moduleFiles.get('Toom.BIN')),
@@ -16,10 +16,10 @@ const web=resolve(process.env.TEMPLEOS_WEB),out=resolve(process.env.OUT||'/tmp/t
   fileHashes=Object.fromEntries(files.map(f=>[f.path,hash(f.bytes)])),results=[],
   driverSha256=hash(readFileSync(new URL('module-worker.test.mjs',import.meta.url))),
   cores=process.env.CORES?[Number(process.env.CORES)]:[1,4],
-  runtimeNames=['hemu/Kernel/Jit.js','hemu/Kernel/HemuWorker.js','hemu/Kernel/HemuSmpWorker.js','hemu/Kernel/GuestExec.js',
-    'hemu/Kernel/GuestInput.js','hemu/Kernel/KeyQueue.js','hemu/Kernel/Test/WorkerHost.mjs','hemu/Kernel/Test/WorkerShim.mjs',
+  runtimeNames=['hemu/holyc-wasm/Apps/HEMU/Kernel/Jit.js','hemu/holyc-wasm/Apps/HEMU/Kernel/HemuWorker.js','hemu/holyc-wasm/Apps/HEMU/Kernel/HemuSmpWorker.js','hemu/holyc-wasm/Apps/HEMU/Kernel/GuestExec.js',
+    'hemu/holyc-wasm/Apps/HEMU/Kernel/GuestInput.js','hemu/holyc-wasm/Apps/HEMU/Kernel/KeyQueue.js','hemu/holyc-wasm/Apps/HEMU/Kernel/Test/WorkerHost.mjs','hemu/holyc-wasm/Apps/HEMU/Kernel/Test/WorkerShim.mjs',
     'hemu/live.bin.gz','hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
-    'hemu/Kernel/Stock.js','hemu/templeos-hd.qcow2.gz'],
+    'hemu/holyc-wasm/Apps/HEMU/Kernel/Stock.js','hemu/templeos-hd.qcow2.gz'],
   runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
 assert(cores.every(n=>n===1||n===4));mkdirSync(out,{recursive:true});
 for(const count of cores) {

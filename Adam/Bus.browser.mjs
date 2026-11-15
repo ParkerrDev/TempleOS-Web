@@ -4,13 +4,13 @@ import {createServer} from "node:http";
 import {once} from "node:events";
 import {chromium} from "playwright-core";
 import {ServeReq} from "../Misc/Server.mjs";
-import {DesktopServer} from "../hemu/Misc/Server.mjs";
-import {BrowserMachine,MachinePost,MachineReady} from "../hemu/Kernel/Test/BrowserMachine.mjs";
+import {DesktopServer} from "../hemu/holyc-wasm/Apps/HEMU/Misc/Server.mjs";
+import {BrowserMachine,MachinePost,MachineReady} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/BrowserMachine.mjs";
 
 const site=createServer(ServeReq).listen(0,"127.0.0.1");await once(site,"listening");
 const desktop=await DesktopServer({cores:4}),browser=await chromium.launch({
   executablePath:process.env.CHROMIUM||"/usr/bin/chromium",headless:true,args:["--no-sandbox"]}),
-  source=await readFile(new URL("../hemu/Kernel/Test/BusGuest.HC",import.meta.url),"latin1");
+  source=await readFile(new URL("../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/BusGuest.HC",import.meta.url),"latin1");
 try {
   for(const app of ["page","desktop"]) {
     const context=await browser.newContext({viewport:{width:1280,height:800}});

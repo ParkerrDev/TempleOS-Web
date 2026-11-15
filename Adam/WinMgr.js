@@ -15,6 +15,7 @@ const WINS={
   tsBtn:["tsWin","../Apps/Search/SearchWin.js"],
   chatBtn:["chatWin","../Apps/Chat/ChatWin.js"],
   settingsBtn:["settingsWin","../Apps/Settings/SettingsWin.js"],
+  cheatsheetBtn:["cheatsheetWin","../Apps/Help/CheatsheetWin.js"],
   mobileHelp:["guide","../Apps/Help/HelpWin.js"]};
 const workspace=new Map,restorers=new Map;
 let saved={},restoring=true,save_queued=false;
@@ -453,7 +454,7 @@ export function WinDress(w,opts={})
       rb.innerHTML='<span class="ico"><svg><use href="#i-'+
 	    (w.dataset.icon || "window")+'"/></svg></span> '+title;
       w._reopen=rb;
-      $("desktopMenu").append(rb);
+      $("menuActions").append(rb);
       x.addEventListener("click",Close);
       rb.addEventListener("click",Reopen);
     }

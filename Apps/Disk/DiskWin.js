@@ -2,9 +2,9 @@ import {WinAdd,WinRaise} from "../../Adam/WinMgr.js";
 import {$,dbg,engine,os_disk,OsReady,
   OsSessionSave} from "../../Adam/Os.js";
 import {BootFileSave} from "../../Adam/BootFile.js";
-import {SnapshotInspect} from "../../hemu/Kernel/Snapshot.js";
-import {StockIdentify,StockModuleCheck} from "../../hemu/Kernel/Stock.js";
-import {makeDisk} from "../../hemu/Kernel/QCow2.js";
+import {SnapshotInspect} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Snapshot.js";
+import {StockIdentify,StockModuleCheck} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Stock.js";
+import {makeDisk} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/QCow2.js";
 
 const CSS='    /* Disk & Save window */\n'+
   '    #diskWin { display:flex; flex-direction:column; width:min(560px,94vw); max-height:88vh; margin:0; padding:10px; }\n'+

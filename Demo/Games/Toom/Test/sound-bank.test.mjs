@@ -26,7 +26,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/SOUND BANK 218 CASES 24 FAULTS LAZY NAMES HEAP BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the frozen checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (tm_bank_done!=1 || tm_bank_cases!=218 || tm_bank_faults!=24) throw('Count');\n";
   for(const file of [...files,{name:'BANK.HC',bytes:Buffer.from(check,'latin1')}]) {

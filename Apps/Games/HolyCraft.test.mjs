@@ -1,12 +1,12 @@
-import {SnapshotRead,DiskRead} from "../../hemu/Kernel/Test/Fixtures.mjs";
+import {SnapshotRead,DiskRead} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/Fixtures.mjs";
 // Live HolyCraft input regression: node --max-old-space-size=3072 InputChk.mjs
 // Requires /tmp/live.bin and /tmp/templeos.raw, as described in README.md.
-import { compileHemu } from "../../hemu/Kernel/Compile.js";
-import { createHemuHost } from "../../hemu/Kernel/Host.js";
-import * as jit from "../../hemu/Kernel/Jit.js";
+import { compileHemu } from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Compile.js";
+import { createHemuHost } from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Host.js";
+import * as jit from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Jit.js";
 import assert from "node:assert/strict";
-import {createGuestInput} from "../../hemu/Kernel/GuestInput.js";
-import { createGuestExec } from "../../hemu/Kernel/GuestExec.js";
+import {createGuestInput} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/GuestInput.js";
+import { createGuestExec } from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/GuestExec.js";
 import { readFileSync } from "node:fs";
 
 const RAMSZ = 402653184;

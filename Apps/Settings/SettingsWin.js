@@ -1,11 +1,11 @@
 import {WinAdd,WinFocus,WinWorkspaceReset} from "../../Adam/WinMgr.js";
-import {$,OsCfg,OsCfgStatus,OsWinPassStatus} from "../../Adam/Os.js";
+import {$,OsCfg,OsCfgStatus,OsWinPassStatus,OsWinPassReturn} from "../../Adam/Os.js";
 import {WinDrawCfg} from "../../Adam/WinDraw.js";
 
 WinAdd(`
 #settingsWin { width:min(520px,94vw); margin:0; }
 #settingsBody { display:flex; flex-direction:column; gap:16px;
-  line-height:1.4; max-height:65dvh; overflow:auto; }
+  line-height:1.4; max-height:65dvh; overflow:auto; padding:3px; }
 #settingsBody select { font:inherit; padding:6px; background:var(--white);
   color:var(--blue); border:2px solid var(--blue); }
 #settingsBody input { width:18px; height:18px; vertical-align:middle; }
@@ -23,15 +23,16 @@ WinAdd(`
       <p>Draw browser window borders with HolyC and TempleOS's own font.
         This works independently of the emulated machine.</p>
       <label><input id="windowPassthrough" type="checkbox"> Window passthrough</label>
+      <button id="returnWindows">Return windows</button>
       <p>Use a mouse to drag a TempleOS window's title out of the screen onto the
-	browser desktop. Drag it back to return it. Menu, Help and God Tools
-	can be dragged into TempleOS as native documents. Settings stays here.
+	browser desktop. Drag it back to return it. Compatible browser tools
+	can also be dragged into TempleOS. Settings stays here.
 	Pausing returns windows so browser controls stay available.</p>
       <p>Drag a browser window beyond the page edge to open it in a browser
         popup. Close the popup or choose Return to desktop to bring it back.
         Your browser may ask you to allow popups.</p>
-      <p>Full-screen programs, captured-mouse programs and windows with
-        custom drawing stay on the TempleOS screen.</p>
+      <p>Return windows brings them back without turning passthrough off.
+        Video players and browser editors stay in the browser.</p>
       <p id="windowPassStatus" role="status"></p>
       <label><input id="fastGraphics" type="checkbox"> Web Optimization</label>
       <p>Uses drawing shortcuts for better performance.
@@ -101,6 +102,10 @@ addEventListener("osrestored",function (e) {
 $("resetWindows").addEventListener("click",function () {
   WinWorkspaceReset();
   Status({msg:"Window positions reset. Open tools stay open."});
+});
+$("returnWindows").addEventListener("click",async function () {
+  try {await OsWinPassReturn();}
+  catch (error) {Status({msg:error.message});}
 });
 addEventListener("winworkspaceerror",function (e) {Status({msg:e.detail});});
 

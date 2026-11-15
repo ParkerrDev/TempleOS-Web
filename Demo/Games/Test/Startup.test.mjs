@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {GAMES} from "../../../Apps/Games/GameCatalog.js";
-import {RuntimeInputs,root} from "./Evidence.mjs";
+import {compileHemu} from "../../../hemu/holyc-wasm/Apps/HEMU/Kernel/Compile.js";
+import {Hash,RuntimeInputs,root} from "./Evidence.mjs";
 import {GameFiles,StartInputs} from "./Install.mjs";
 
 //Demo/Games/Startup.json must describe the entries, files and runtime the site has
@@ -12,7 +13,7 @@ const record=JSON.parse(await readFile(new URL("Demo/Games/Startup.json",root)))
 assert.deepEqual(record.games.map(g=>g.name),GAMES.map(g=>g.name),stale("the Games entries"));
 assert.deepEqual(record.inputs,await StartInputs(),stale("the check"));
 const {engineSha256,...site}=record.site;
-assert.match(engineSha256,/^[0-9a-f]{64}$/);
+assert.equal(engineSha256,Hash(compileHemu().bytes),stale("the compiled engine"));
 assert.deepEqual(site,await RuntimeInputs(),stale("the site runtime"));
 const words=/^(running|returned|closed|never|except:.*|fault|timeout|harness-error)$/;
 for (const [i,entry] of record.games.entries()) {

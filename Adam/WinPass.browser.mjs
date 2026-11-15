@@ -26,7 +26,8 @@ try {
   assert.equal(await page.locator("#nativeDrawing").isChecked(),false);
   await page.locator("#settingsClose").click();
   await page.evaluate(async function () {
-    const {WinPass,WinPassDoc}=await import("/Adam/WinPass.js"),
+    const {WinPass}=await import("/Adam/WinPass.js"),
+      {GuiScene}=await import("/Adam/GuiBridge.js"),
       {pal32}=await import("/Adam/Os.js");
     window.passRequests=[];
     window.passInput=[];
@@ -41,8 +42,14 @@ try {
     window.pass=WinPass({canvas:document.getElementById("canvas"),pal:pal32,
       async Request(m) {
         window.passRequests.push(m);
+        if (m.op=="update" && window.passUpdateBlock) {
+          window.passUpdateBlock=false;
+          await new Promise(resolve=>window.passUpdateRelease=resolve);
+        }
         if (window.passReject==m.op)
           return {ok:false,msg:"Native operation rejected for this test."};
+        if (m.op=="close" && window.passCloseNotify)
+          window.pass.Receive({windows:[]});
         if (m.op=="detach") {
           window.passWin.detached=true;
           window.passWin.slot=0;
@@ -57,7 +64,7 @@ try {
       },Input:function (m) {window.passInput.push(m);},Status:function (msg) {
         window.passStatus=msg;
       }});
-    window.passDoc=WinPassDoc;
+    window.passDoc=GuiScene;
     document.getElementById("loadui").style.display="none";
     await window.pass.Enable(true);
     window.passEmit();
@@ -79,7 +86,17 @@ try {
     return [...c.getContext("2d").getImageData(20,20,1,1).data];
   }),[255,255,85,255],"detached view draws its indexed native pixels");
   let vr=await page.locator(".win-pass canvas").boundingBox();
+  for (const [x,y,cursor] of [[vr.width-2,vr.height-2,"nwse-resize"],
+      [2,vr.height-2,"nesw-resize"],[2,vr.height/2,"ew-resize"],
+      [vr.width/2,vr.height-2,"ns-resize"],[100*scale,4*scale,"move"]]) {
+    await page.mouse.move(vr.x+x,vr.y+y);
+    assert.equal(await page.locator(".win-pass canvas").evaluate(c=>getComputedStyle(c).cursor),cursor,
+      "native window edges retain visible cursor feedback");
+    assert.equal(await page.locator("#xcursor").evaluate(c=>getComputedStyle(c).visibility),"hidden");
+  }
   await page.mouse.click(vr.x+30*scale,vr.y+40*scale);
+  assert.equal(await page.locator("#xcursor").evaluate(c=>getComputedStyle(c).visibility),"visible",
+    "leaving a native border restores the custom pointer immediately");
   assert(await page.evaluate(function () {
     return window.passInput.some(function (m) {
       return m.slot==0 && m.x==150 && m.y==120 && m.buttons==1;
@@ -149,9 +166,28 @@ try {
     return window.passRequests.find(function (m) {return m.op=="host";});
   });
   assert.equal(host.host,"godWin");
-  assert.match(host.doc,/\$BT-X,"Word",LE=\d+\$/);
-  assert.equal(await page.locator("#godOverlay").isVisible(),false,
+  assert(host.gui.length>24,"generic resolved layout is sent as a binary native scene");
+  assert.equal(await page.locator("#godOverlay").evaluate(el=>getComputedStyle(el).opacity),"0",
     "native host hides the browser modal backdrop");
+  await page.evaluate(function () {
+    window.passUpdateBlock=true;
+    document.getElementById("godClear").textContent="ONE";
+  });
+  await page.waitForFunction(()=>!!window.passUpdateRelease);
+  await page.evaluate(()=>document.getElementById("godClear").textContent="TWO");
+  await page.waitForTimeout(150);
+  const updates=await page.evaluate(()=>window.passRequests.filter(m=>m.op=="update").length);
+  await page.evaluate(()=>window.passUpdateRelease());
+  await page.waitForFunction(n=>window.passRequests.filter(m=>m.op=="update").length>n,updates);
+  assert(await page.evaluate(()=>{
+    const gui=window.passRequests.filter(m=>m.op=="update").at(-1).gui;
+    return new TextDecoder().decode(gui).includes("TWO");
+  }),"the final mutation during an in-flight update reaches the guest");
+  await page.evaluate(async function () {window.passReject="close";await window.pass.Return();});
+  assert.equal(await page.locator("#godWin").evaluate(el=>el.classList.contains("win-pass-owned")),true,
+    "failed Return retains native ownership and action routing");
+  assert.match(await page.evaluate(()=>window.passStatus),/rejected/);
+  await page.evaluate(()=>window.passReject=null);
   await page.evaluate(function () {
     let button=document.getElementById("godClear");
     button.addEventListener("click",function () {window.passAction=true;});
@@ -162,7 +198,7 @@ try {
     window.pass.Receive({actions:[{slot:0,id}]});
   });
   assert.equal(await page.evaluate(function () {return window.passAction;}),true,
-    "native LE action calls the original browser button handler");
+    "native scene action calls the original browser button handler");
   assert(await page.evaluate(function () {
     return window.passRequests.filter(function (m) {return m.slot!==undefined;}).
       every(function (m) {return m.task==1234 && m.num==5;});
@@ -176,10 +212,31 @@ try {
   assert.equal(await page.locator("#godWin").isVisible(),true);
   assert.equal(await page.evaluate(function () {return window.passAction;}),false,
     "a reused native slot cannot activate the previous browser owner");
+  await page.locator("#godWin").evaluate(function (win,point) {
+    win.dispatchEvent(new CustomEvent("winmoved",{bubbles:true,detail:point}));
+  },{clientX:r.x+200*scale,clientY:r.y+120*scale});
+  await page.waitForFunction(()=>document.getElementById("godWin").classList.contains("win-pass-owned"));
+  await page.evaluate(function () {
+    window.passCloseNotify=true;
+    Object.assign(window.passWin,{x:120,y:80,slot:0,num:5,detached:false,host:"godWin"});
+    window.passEmit();
+  });
+  await page.mouse.move(start.x,start.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x,end.y);
+  await page.mouse.up();
+  await page.waitForFunction(()=>!document.getElementById("godWin").classList.contains("win-pass-owned"));
+  const returned=await page.locator("#godWin").boundingBox();
+  assert(Math.abs(returned.x-(end.x-48))<1 && Math.abs(returned.y-end.y)<1,
+    "drag-out follows the pointer when native close notification precedes its reply");
+  await page.evaluate(function () {return window.pass.Return();});
+  assert.match(await page.evaluate(()=>window.passStatus),/remains enabled/);
+  assert(!await page.evaluate(()=>window.passRequests.some(m=>m.op=="disable")),
+    "Return windows preserves the enabled preference");
   await page.evaluate(function () {return window.pass.Enable(false);});
   assert.equal(await page.locator("#godWin").isVisible(),true,
     "disable restores browser ownership and overlay state");
-  assert.equal(await page.locator("#winPassDock").isVisible(),false);
+  assert.equal(await page.locator("#winPassDock").count(),0);
   assert.equal(await page.evaluate(function () {
     return window.passDoc(document.getElementById("settingsWin"));
   }),null,"unsupported browser settings stay accessible outside");

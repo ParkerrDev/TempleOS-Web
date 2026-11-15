@@ -3,13 +3,15 @@ import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {chromium} from 'playwright-core';
 import {ServeReq} from '../../Misc/Server.mjs';
-import {BrowserMachine,MachinePost} from '../../hemu/Kernel/Test/BrowserMachine.mjs';
+import {BrowserMachine,MachinePost} from '../../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/BrowserMachine.mjs';
 const site=createServer(ServeReq).listen(0,'127.0.0.1');await once(site,'listening');
+let releaseDisk=()=>{};
 const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
 try {
  for(const cores of [1,4]) {
-  const context=await browser.newContext({viewport:{width:1280,height:900}});await BrowserMachine(context);
-  let releaseDisk;
+  const context=await browser.newContext({viewport:{width:1280,height:900}});
+  await context.addInitScript(()=>{window.SharedWorker=undefined;});
+  await BrowserMachine(context);
   const diskGate=new Promise(resolve=>releaseDisk=resolve),forbidden=[];
   await context.route("**/templeos-hd.qcow2.gz",async route=>{await diskGate;await route.fallback();});
   context.on("request",request=>{
@@ -25,7 +27,7 @@ try {
   await page.waitForFunction(()=>window.machine.workers.some(w=>w.machineCore===0));
   await MachinePost(page,{cmd:'input',x:8,y:470,buttons:0,keys:[]});
   await page.evaluate(async()=>{
-   const {FrameTop}=await import('/hemu/Kernel/FrameText.js');
+   const {FrameTop}=await import('/hemu/holyc-wasm/Apps/HEMU/Kernel/FrameText.js');
    window.cardText=()=>window.cardFrame?Array.from({length:60},(_,row)=>FrameTop(window.cardFrame.subarray(row*640*8),640)).join('\n'):'';
   });
   await page.waitForFunction(()=>window.cardText().includes('God on Tap!'),null,{timeout:45000}).catch(async e=>{console.log(await page.evaluate(()=>({events:window.machine.events.slice(-20),notice:document.getElementById('osNoticeText').textContent,text:window.cardText()})));throw e;});
@@ -49,4 +51,4 @@ try {
   console.log(cores+' cores: original splash graphic and V5.03 title, tour question, Shift-Esc close and one card after Restart pass.');
   await context.close();
  }
-} finally {await browser.close();site.closeAllConnections();site.close();}
+} finally {releaseDisk();await browser.close();site.closeAllConnections();site.close();}

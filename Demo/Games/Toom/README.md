@@ -723,7 +723,7 @@ checks using the original TempleOS compiler and file I/O under HEMU.
 `TEMPLEOS_WEB` remains the site checkout root. These harnesses import the
 machine from `hemu/Kernel/` and read built engines from `hemu/build/` beneath
 that root. HEMU owns the compiler mount at `hemu/holyc-wasm/`; build with
-`node hemu/Kernel/Build.mjs hemu/build` from the site root. `HOLYC_WASM`, used
+`node hemu/holyc-wasm/Apps/HEMU/Kernel/Build.mjs hemu/build` from the site root. `HOLYC_WASM`, used
 for original-TempleOS oracle runs, names the compiler checkout itself.
 The current stock capture already includes its display corrections and
 Welcome/tour tasks, so browser checks wait for machine readiness rather than

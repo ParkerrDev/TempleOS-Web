@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {GuestHarness} from "../hemu/Kernel/Test/GuestHarness.mjs";
+import {GuestHarness} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs";
 import {compileHolyC} from "../hemu/holyc-wasm/src/compiler.js";
 import {createHost} from "../hemu/holyc-wasm/src/runtime/host.js";
 

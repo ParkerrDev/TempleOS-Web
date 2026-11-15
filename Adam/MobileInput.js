@@ -7,7 +7,7 @@ export function MobileInput({frame,target})
     input=document.getElementById('mobInput'),
     keys=document.getElementById('keysbar').closest('.keyswin'),
     home=document.createComment('Keys window'),
-    canvas=frame.querySelector('canvas');
+    canvas=frame.querySelector('#canvas');
   keys.before(home);
   controls.append(input);
   let current=target(),host=frame,textTarget=null;

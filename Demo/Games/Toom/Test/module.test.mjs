@@ -79,7 +79,7 @@ const report={sourceSha256,headerSha256:hash(Buffer.from(header,'latin1')),fixtu
   build:{backend:built.backend,evidence:built.evidence},native:loaded,addresses,
   scope:'Native AOT module built from unchanged game files by original TempleOS, transferred to a fresh original TempleOS session and loaded at two addresses into separate tasks. Separate fixtures establish interactive host behavior.'};
 if(process.env.TEMPLEOS_WEB) {
-  const web=resolve(process.env.TEMPLEOS_WEB),{GuestHarness}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/GuestHarness.mjs'))),
+  const web=resolve(process.env.TEMPLEOS_WEB),{GuestHarness}=await import(pathToFileURL(resolve(web,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs'))),
     h=await GuestHarness({disk:true});
   for(const file of [...assets,{name:'TOOM.BIN',bytes:binary}]) {
     const id=h.gx.writeFile({path:`C:/ORACLE/${file.name}`,bytes:file.bytes});

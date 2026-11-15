@@ -28,17 +28,15 @@
     },
     "fixtureLoaderSha256": "136f1cb59fa0d3d8d60925683f0f49577eaafaa518df3462895e2ab4e0e09d15",
     "guestHarnessSha256": "09d91ac965ccc7fdfd3249100b0eb67a073c2ddd812edace9b75e32984126e37",
-    "machineRuntimeSha256": "05796a8916b017661d8fa35f9c2172ea0d502adc5807e2e1842bb7e5c680d3c2",
-    "siblings": [
-      "hemu https://github.com/ParkerrDev/HEMU 3588f0c805ca2a59538c142b3c9fa37a06382c1f"
-    ],
-    "compiler": "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm 300bef96e5ca8849f36071fb584efa11ee2316d9",
+    "machineRuntimeSha256": "0a5a3f53d040953cd405b9940fafacc18d97336ea032ee62605f436fb7b12796",
+    "compilerRuntimeSha256": "23643e17cb970fa4fab89cbfd78695cf620e914bb990515635aad24ceaf13022",
+    "diskModuleSha256": "8de5d38a430557a714608e0b6c5ec1938a3716d64df100d279850abd99a26fdf",
     "engineSha256": "138a19211ac1d8a4cde914ee7d2f1f7c307f454e92ea3ee31ba5eff1ca9d25c0"
   },
   "inputs": {
     "Demo/Games/Test/Start.HC": "2a33006accabad62f28559b584101a4c00e265601e15d549d4fa9afd0b5553b8",
     "Demo/Games/Test/Start.mjs": "b8b317305fb2a83a586f3dc1461875f6d9bce95766e02c435d263d6efadee833",
-    "Demo/Games/Test/Catalog.mjs": "e8818791ea03df24a244dcee436b2cacb9b3088bc75861af2a7aad185dc60654",
+    "Demo/Games/Test/Catalog.mjs": "b921aec486e6b205258c039043d8fd479c20e3833d793a94a4b99fb7c849edbd",
     "Demo/Games/Test/Install.mjs": "0cc8a92ad50347be2437cd4c29dfb8ffd7156d18c2c755ba2d6e41f1661f3751",
     "Apps/Games/GamePkgs.js": "28093d65b38a01f802addf9046011ebc8a5d2bcbdec517838aca31b1741ccd14",
     "Apps/Games/GameSrc.js": "7bdb6c52de215b0a2a4c19061a546d22c6e17e818b3b84de5b5b4a00801fe39f"

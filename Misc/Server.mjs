@@ -13,7 +13,7 @@ const ROOT=fileURLToPath(new URL("..",import.meta.url));
 //and the snapshots (which _redirects sends to the CDN when the build has
 //written it).
 const SERVED=new RegExp("^(index\\.html|robots\\.txt|sitemap\\.xml|_headers|_redirects|"+
-  "(Adam|Apps|Demo|hemu/Kernel|hemu/holyc-wasm/src)/.+|holyc-fmt/Fmt\\.js|"+
+  "(Adam|Apps|Demo|hemu/Kernel|hemu/holyc-wasm/(?:src|Apps/HEMU))/.+|holyc-fmt/Fmt\\.js|"+
   "build/(?:Gr|Search|Mp4|Mkv|GodBits|HolyCFmt|WinDraw)\\.wasm|"+
   "hemu/build/(?:hemu(?:-smp)?\\.(?:wasm|json)|disk\\.wasm)|"+
   "(holyc-fmt|holycraft)/[^/]+\\.HC|"+

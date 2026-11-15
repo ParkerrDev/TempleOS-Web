@@ -3,9 +3,9 @@ import {spawn} from "node:child_process";
 import {once} from "node:events";
 import {readFile,mkdir,unlink} from "node:fs/promises";
 import {chromium} from "playwright-core";
-import {SnapshotInspect} from "../../hemu/Kernel/Snapshot.js";
+import {SnapshotInspect} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Snapshot.js";
 import {gunzipSync} from "node:zlib";
-import {LegacySnapshot} from "../../hemu/Kernel/Test/LegacySnapshot.mjs";
+import {LegacySnapshot} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/LegacySnapshot.mjs";
 
 const root=new URL("../..",import.meta.url),
   server=spawn(process.execPath,["Misc/Server.mjs"],{cwd:root,
@@ -101,7 +101,7 @@ try {
       assert.equal(await page.locator("#ulSnap").isEnabled(),true);
       await page.evaluate(()=>window.stockImportAlive="same machine");
       const rawChoosing=page.waitForEvent("filechooser");await page.locator("#ulSnap").click();
-      await(await rawChoosing).setFiles(new URL("hemu/Kernel/Test/Fixtures/LegacySmp.ram.gz",root).pathname);
+      await(await rawChoosing).setFiles(new URL("hemu/holyc-wasm/Apps/HEMU/Kernel/Test/Fixtures/LegacySmp.ram.gz",root).pathname);
       await page.waitForFunction(()=>document.getElementById("diskStatus").textContent.includes("missing or mismatched CPU state"));
       assert.equal(await page.evaluate(()=>window.stockImportAlive),"same machine");
       assert.equal(await page.evaluate(async()=>(await import("/Adam/BootFile.js")).BootFileRead()),null);
@@ -144,7 +144,7 @@ try {
     assert.equal(saved.meta.version,cores===4&&!legacy?2:1);
     assert.equal(saved.meta.requiredBusProtocol,cores===4&&!legacy?1:undefined);
     if(legacy)assert.equal(saved.meta.engineHash,
-      JSON.parse(await readFile(new URL("hemu/Kernel/Test/Fixtures/LegacySmp.json",root),"utf8")).sha256);
+      JSON.parse(await readFile(new URL("hemu/holyc-wasm/Apps/HEMU/Kernel/Test/Fixtures/LegacySmp.json",root),"utf8")).sha256);
     assert.equal(await page.locator("#dlSnap").isEnabled(),true);
     const choosing=page.waitForEvent("filechooser");
     await page.locator("#ulSnap").click();

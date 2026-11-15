@@ -24,7 +24,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/HARDWARE GATE 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true,exports:['TmSpeakerGate'],extraSource:'\nI64 TmSpeakerGate(){return spk_on;}\n'});
   const check=source+"\nif (tm_song_done!=1 || tm_song_runs!=2) throw('Count');\n";
   const write=h.gx.writeFile({path:'C:/ORACLE/SONG.HC',bytes:Buffer.from(check,'latin1')});

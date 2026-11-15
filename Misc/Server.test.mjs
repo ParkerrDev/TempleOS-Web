@@ -8,7 +8,8 @@ const server=createServer(ServeReq).listen(0,"127.0.0.1");
 await once(server,"listening");
 const base="http://127.0.0.1:"+server.address().port;
 try {
-  for (const path of ["build/Search.wasm","hemu/build/disk.wasm"]) {
+  for (const path of ["build/Search.wasm","hemu/build/disk.wasm",
+      "hemu/holyc-wasm/Apps/HEMU/Kernel/JitCore.wasm"]) {
     const response=await fetch(base+"/"+path),
       bytes=new Uint8Array(await response.arrayBuffer());
     assert.equal(response.status,200,path+" must be served and published.");
@@ -16,7 +17,7 @@ try {
     assert.deepEqual(bytes,new Uint8Array(await readFile(new URL("../"+path,import.meta.url))));
     assert(WebAssembly.validate(bytes));
   }
-  for (const path of ["Apps/Search/Search.test.mjs","hemu/Kernel/Test/Disk.mjs"])
+  for (const path of ["Apps/Search/Search.test.mjs","hemu/holyc-wasm/Apps/HEMU/Kernel/Test/Disk.mjs"])
     assert.equal((await fetch(base+"/"+path)).status,404,"Test tooling stays outside the publication.");
-  console.log("Publication serves lazy HolyC search/disk modules with exact bytes and excludes test tools.");
+  console.log("Publication serves HolyC search/disk/JIT modules with exact bytes and excludes test tools.");
 } finally {server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}

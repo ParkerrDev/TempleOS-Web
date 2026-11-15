@@ -3,7 +3,7 @@ import {spawn} from "node:child_process";
 import {once} from "node:events";
 import {readFile,unlink} from "node:fs/promises";
 import {chromium} from "playwright-core";
-import {SnapshotInspect} from "../hemu/Kernel/Snapshot.js";
+import {SnapshotInspect} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Snapshot.js";
 
 const root=new URL("..",import.meta.url),
   server=spawn(process.execPath,["Misc/Server.mjs"],{cwd:root,

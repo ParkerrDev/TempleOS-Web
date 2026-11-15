@@ -56,7 +56,7 @@
           if (localStorage.getItem("tos-show-"+part)==="false")
             document.documentElement.classList.add("hide-"+part);
       } catch (e) {}
-      try {if (!self.SharedWorker) self.hemuEarly=new Worker("./hemu/Kernel/HemuWorker.js",{type:"module"});} catch (e) {}
+      try {if (!self.SharedWorker) self.hemuEarly=new Worker("./hemu/holyc-wasm/Apps/HEMU/Kernel/HemuWorker.js",{type:"module"});} catch (e) {}
     }
   </script>
   <!-- modules the page's scripts import: Misc/Preload.mjs -->
@@ -69,20 +69,21 @@
   <link rel="modulepreload" href="Adam/WinPointer.js" />
   <link rel="modulepreload" href="Adam/WinPopup.js" />
   <link rel="modulepreload" href="Adam/XSel.js" />
-  <link rel="modulepreload" href="hemu/Kernel/CoreBus.js" />
-  <link rel="modulepreload" href="hemu/Kernel/DiskStore.js" />
-  <link rel="modulepreload" href="hemu/Kernel/MachineShared.js" />
-  <link rel="modulepreload" href="hemu/Kernel/Snapshot.js" />
-  <link rel="modulepreload" href="hemu/Kernel/Speaker.js" />
-  <link rel="modulepreload" href="hemu/Kernel/Stock.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/CoreBus.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/DiskStore.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/MachineShared.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Snapshot.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Speaker.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Stock.js" />
   <link rel="modulepreload" href="Adam/TouchCtrls.js" />
-  <link rel="modulepreload" href="hemu/Kernel/GuestPatch.js" />
-  <link rel="modulepreload" href="hemu/Kernel/Machine.js" />
-  <link rel="modulepreload" href="hemu/Kernel/QCow2.js" />
-  <link rel="modulepreload" href="hemu/Kernel/Ram.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/GuestPatch.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Machine.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Paths.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/QCow2.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Ram.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/src/runtime/keyboard.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/src/runtime/palette.js" />
-  <link rel="modulepreload" href="hemu/Kernel/GuestRqsts.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/GuestRqsts.js" />
   <style>
     /* afterdavis theme: the TempleOS desktop look. */
     /* TempleOS system font: the real 322-glyph font the site has always used, laundered CLEAN via
@@ -113,6 +114,9 @@
         filter:brightness(0) invert(1); mix-blend-mode:difference; }
     body.xcursor #xcursor { display:block; }
     body.xcursor, body.xcursor * { cursor:none !important; }   /* the inverting arrow replaces the native cursor */
+    body.xcursor [data-native-cursor] { cursor:var(--native-cursor,auto) !important; }
+    body.xcursor video:fullscreen, body.xcursor video:fullscreen * { cursor:auto !important; }
+    body.xcursor video:-webkit-full-screen { cursor:auto !important; }
     html { height:100%; overflow:hidden; }
     body { height:100dvh; overflow:hidden; }
     body { background:var(--blue); color:#fff; font-size:12px; line-height:1.0; min-height:100vh; display:flex; flex-direction:column; }
@@ -190,8 +194,9 @@
     .col-left { display:flex; flex-direction:column; gap:16px; width:256px; flex:0 0 auto; }
     .col-right { display:flex; flex-direction:column; gap:16px; width:288px; flex:0 0 auto; }
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
-    .toolbar { display:flex; flex-direction:column; gap:5px; align-items:stretch; }
-    .toolbar button { font-size:11px; padding:0 6px; min-height:28px; }
+    .toolbar { display:flex; flex-direction:column; align-items:stretch; }
+    #menuActions { display:flex; flex-direction:column; gap:5px; min-height:0; overflow:auto; padding:2px; }
+    .toolbar button { flex:none; font-size:11px; padding:0 6px; min-height:28px; }
     .toolbar button .ico { display:inline-block; width:20px; height:20px; vertical-align:middle; }
     .ico svg { display:block; width:20px; height:20px; fill:currentColor; shape-rendering:crispEdges; }
     button, .tbtn, .ico { font-variant-emoji:text; }
@@ -200,7 +205,7 @@
     #osNotice { position:absolute; left:8px; right:8px; bottom:8px; z-index:35; display:flex; align-items:center; gap:8px; padding:8px; background:var(--white); color:var(--blue); border:3px double var(--blue); font-size:12px; }
     #osNotice[hidden] { display:none; }
     #osNotice button { width:auto; flex:none; }
-    canvas#canvas { display:block; height:clamp(300px, min(72vh, calc((100vw - 690px) * 3 / 4)), 600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
+    canvas#canvas { display:block; height:min(72vh, calc((100vw - 690px) * 3 / 4), 600px); width:auto; aspect-ratio:4/3; image-rendering:pixelated; background:#000; outline:none; cursor:none; touch-action:none; }
     /* fullscreen: black letterbox, centered 4:3 screen, window chrome hidden */
     #frame:fullscreen { display:flex; align-items:center; justify-content:center; background:#000; border:0; border-image:none; outline:0; margin:0; padding:0 !important; }
     #frame:fullscreen canvas#canvas { height:min(100vh, 75vw); width:auto; max-width:100vw; }
@@ -280,7 +285,7 @@
     .terrywin { padding:6px; text-align:center; }
     .terrywin #terryRandom { width:auto; min-height:30px; padding:4px 8px; margin:6px auto 0; text-align:center; }
     body.mouse-locked #xcursor { visibility:hidden !important; }
-    .terrywin canvas { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
+    #terrySprite { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
     .footer-heart { width:18px; height:16px; fill:var(--ltred); vertical-align:-3px; shape-rendering:crispEdges; }
     footer { text-align:center; padding:4px; font-size:12px; color:var(--ltgray); }
@@ -326,7 +331,7 @@
     @media (max-width:979.98px) { canvas#canvas { width:min(calc(100vw - 58px), 640px); height:auto; } }
     @media (max-width:979.98px) { header { max-width:none; } }
     @media (max-width:979.98px) { #topbar { font-size:12px; } }
-    @media (max-width:979.98px) { .terrywin canvas { height:120px; } }
+    @media (max-width:979.98px) { #terrySprite { height:120px; } }
     .wszr { cursor:ew-resize !important; }
     .wszb { cursor:ns-resize !important; }
     .wszcorner { right:calc(-1*var(--wcell)); bottom:calc(-1*var(--wcell)); width:var(--wcell); height:var(--wcell); cursor:nwse-resize !important; }
@@ -338,6 +343,15 @@
     @media (pointer:coarse) { #touchBtn, #keysbar [data-key^="Arrow"] { display:block; } body:not(.popup) .wc { touch-action:pan-y; } }
     @media (pointer:coarse) { #keysbar [data-mobile-first], #keysbar [data-key^="Arrow"] { order:-1; } }
     #guide { display:flex; flex-direction:column; min-height:220px; max-height:70dvh; }
+    @media (min-width:980px) and (pointer:fine) {
+      .desktop-row { flex:1; min-height:0; flex-wrap:nowrap; }
+      .col-left,.col-right { max-height:100%; min-height:0; }
+      #desktopMenu:not([data-floating]),#keysWin:not([data-floating]),#guide:not([data-floating]) { min-height:0; }
+      #keysWin { display:flex; flex-direction:column; }
+      #keysbar { min-height:0; overflow:auto; padding:2px; }
+      .terrywin { flex:none; }
+      footer { flex:none; }
+    }
     #helpBody { min-height:0; overflow:auto; flex:1; }
     #helpContext { color:var(--red); margin-bottom:8px; font-size:12px; }
     #helpBubble { border:2px solid var(--blue); padding:10px; line-height:1.4; min-height:100px; position:relative; }
@@ -361,7 +375,7 @@
       .desktop-row { gap:0; padding:0; }
       .col-left, .col-right { display:contents; }
       .col-center { width:100%; }
-      .toolbar { display:none; position:fixed; top:58px; left:12px; right:12px; width:auto; max-height:calc(100dvh - 140px); overflow-y:auto; margin:0; z-index:2000000 !important; }
+      .toolbar { display:none; position:fixed; top:58px; left:12px; right:12px; width:auto; max-height:calc(100dvh - 140px); margin:0; z-index:2000000 !important; }
       body.menu-open .toolbar { display:flex; }
       body.menu-open #menuShade { display:block; position:fixed; inset:0; z-index:1999999; background:repeating-conic-gradient(#000 0 25%, transparent 0 50%) 0 0 / 2px 2px; }
       #frame:not(.fsmode):not([data-floating]) { margin:4px 0; max-width:100%; padding:0; }
@@ -417,6 +431,7 @@
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M6 0h12v2h-12zM4 2h4v2h-4zM16 2h4v2h-4zM4 4h4v2h-4zM16 4h4v2h-4zM16 6h4v2h-4zM14 8h4v2h-4zM12 10h4v2h-4zM10 12h4v2h-4zM10 14h4v2h-4zM10 18h4v2h-4zM10 20h4v2h-4z"/></symbol>
   <symbol id="i-cross" viewBox="0 0 24 24"><path d="M16 6h6v8h-6v8H8v-8H2V6h6V2h8v4Zm-6 2H4v4h6v8h4v-8h6V8h-6V4h-4v4Z"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 2h16v2H4zM2 4h2v10H2zM20 4h2v10h-2zM8 14h12v2H8zM4 14h2v6H4zM6 16h2v2H6zM7 8h2v2H7zM11 8h2v2h-2zM15 8h2v2h-2z"/></symbol>
+  <symbol id="i-sheet" viewBox="0 0 24 24"><path d="M4 1h12l4 4v18H4V1Zm2 2v18h12V7h-4V3H6Zm10 1v1h1l-1-1ZM8 9h8v2H8V9Zm0 4h8v2H8v-2Zm0 4h6v2H8v-2Z"/></symbol>
 </svg>
 <div id="xcursor" aria-hidden="true"></div>
   <div id="topbar">
@@ -452,6 +467,7 @@
     <div class="col-left">
       <div id="desktopMenu" class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
+        <div id="menuActions">
         <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico"><svg><use href="#i-pause"/></svg></span> Pause</button>
         <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico"><svg><use href="#i-restart"/></svg></span> Restart</button>
         <button id="fsBtn" title="Show the OS fullscreen"><span class="ico"><svg><use href="#i-fullscreen"/></svg></span> Fullscreen</button>
@@ -459,6 +475,7 @@
         <button id="gamesBtn" title="Run games with HolyC-WASM or explicitly in TempleOS, and edit their source"><span class="ico"><svg><use href="#i-games"/></svg></span> Games</button>
         <button id="spritesBtn" title="Convert images, GIFs and video to TempleOS sprites"><span class="ico"><svg><use href="#i-sprite"/></svg></span> Sprite Studio</button>
         <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico"><svg><use href="#i-cross"/></svg></span> God Tools</button>
+        <button id="cheatsheetBtn" title="TempleOS commands and keyboard shortcuts"><span class="ico"><svg><use href="#i-sheet"/></svg></span> Cheatsheet</button>
         <button id="filesBtn" title="Browse TempleOS files, import, download and open in HolyC Editor"><span class="ico"><svg><use href="#i-folder"/></svg></span> Files</button>
         <button id="diskBtn" title="Save your session or import and export backups"><span class="ico"><svg><use href="#i-save"/></svg></span> Disk &amp; Save</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico"><svg><use href="#i-search"/></svg></span> Terry Search</button>
@@ -466,6 +483,7 @@
         <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico"><svg><use href="#i-mouse"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
         <button id="settingsBtn" title="Frame rate, keyboard repeat and other options"><span class="ico"><svg><use href="#i-settings"/></svg></span> Settings</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico"><svg><use href="#i-touch"/></svg></span> Touch controls</button>
+        </div>
       </div>
       <div id="keysWin" class="win keyswin" data-title="Keys" data-icon="keys"><span class="close">[X]</span><div id="keysbar">
         <button type="button" data-mobile-first>Esc</button>

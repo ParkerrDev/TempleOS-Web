@@ -4,7 +4,7 @@ import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {chromium} from 'playwright-core';
 import {ServeReq} from '../Misc/Server.mjs';
-import {BrowserMachine} from '../hemu/Kernel/Test/BrowserMachine.mjs';
+import {BrowserMachine} from '../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/BrowserMachine.mjs';
 
 const headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};
 const Wait=promise=>{let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Route was not requested')),30000);})]).finally(()=>clearTimeout(timer));};
@@ -24,7 +24,7 @@ try {
       // interception cannot order these worker-local transitions; keep this one
       // asserted fault-injection point instead of adding a production control.
       if(outcome==='early-disk-error') {
-        const source=await readFile(new URL('hemu/Kernel/HemuWorker.js',root),'utf8'),needle='gxFrames >= 3';
+        const source=await readFile(new URL('hemu/holyc-wasm/Apps/HEMU/Kernel/HemuWorker.js',root),'utf8'),needle='gxFrames >= 3';
         assert.equal(source.split(needle).length,2);
         await context.route('**/Kernel/HemuWorker.js',route=>route.fulfill({contentType:'text/javascript',headers,
           body:'let testProbe=false;addEventListener("message",e=>{if(e.data.cmd==="testProbe")testProbe=true;});\n'+

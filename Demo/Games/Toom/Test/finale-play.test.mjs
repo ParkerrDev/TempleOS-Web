@@ -31,7 +31,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/FINALE PLAY 21 CASES BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen built runtime.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true}),check=source+"\nif (!tm_final_play_done || tm_final_play_cases!=21) throw('Count');\n";
   for(const file of [...files,{name:'ENDPLAY.HC',bytes:Buffer.from(check,'latin1')}]) {
     const id=h.gx.writeFile({path:'C:/ORACLE/'+file.name,bytes:file.bytes});

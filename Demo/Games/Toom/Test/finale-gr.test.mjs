@@ -28,7 +28,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/FINALE GR 154 CASES 9856000 PIXELS BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen built runtime.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (!tm_final_gr_done || tm_final_gr_cases!=154 || tm_final_gr_pixels!=9856000) throw('Count');\n";
   for(const file of [...files,{name:'ENDGR.HC',bytes:Buffer.from(check,'latin1')}]) {

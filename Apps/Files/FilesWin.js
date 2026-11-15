@@ -108,7 +108,7 @@ function Size(bytes)
 function Controls()
 {
   const off=pending || !OsReady();
-  for (const button of $("filesWin").querySelectorAll(".files-bar button,.files-places button,#filesList button")) button.disabled=off;
+  for (const button of $("filesWin").querySelectorAll("button")) button.disabled=off;
   $("filesNew").disabled=pending;
   $("filesPath").disabled=off;
   $("filesBack").disabled=off || position==0;

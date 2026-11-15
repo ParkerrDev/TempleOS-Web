@@ -27,7 +27,7 @@ if(backend==='qemu') {
   result.hashes=[...out.matchAll(/SURFACE (\d+) (\d+)/g)].map((m,i)=>{assert.equal(Number(m[1]),i);return Number(m[2]);});
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   for(const file of files) {
     const id=h.gx.writeFile({path:`C:/ORACLE/${file.name}`,bytes:file.bytes});

@@ -20,7 +20,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/CLOCK 20 REAL CASES BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (tm_clock_done!=1 || tm_clock_cases!=20) throw('Count');\n";
   for(const file of [...files,{name:'CLOCK.HC',bytes:Buffer.from(check,'latin1')}]) {

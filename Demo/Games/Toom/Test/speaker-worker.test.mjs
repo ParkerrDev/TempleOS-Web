@@ -8,10 +8,10 @@ import {SpeakerRenderSource} from './SpeakerRenderSource.mjs';
 
 const web=resolve(process.env.TEMPLEOS_WEB||root),out=resolve(process.env.OUT||'/tmp/toom-audio-workers');
 mkdirSync(out,{recursive:true});
-const {HemuBoot,ReadyWait,FramesWait,TextRow}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/WorkerHost.mjs')));
+const {HemuBoot,ReadyWait,FramesWait,TextRow}=await import(pathToFileURL(resolve(web,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/WorkerHost.mjs')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const runtimeNames=['hemu/Kernel/Jit.js','hemu/Kernel/HemuWorker.js','hemu/Kernel/HemuSmpWorker.js','hemu/Kernel/GuestExec.js',
-  'hemu/Kernel/Test/WorkerHost.mjs','hemu/Kernel/Test/WorkerShim.mjs','hemu/live.bin.gz','hemu/live-smp.bin.gz',
+const runtimeNames=['hemu/holyc-wasm/Apps/HEMU/Kernel/Jit.js','hemu/holyc-wasm/Apps/HEMU/Kernel/HemuWorker.js','hemu/holyc-wasm/Apps/HEMU/Kernel/HemuSmpWorker.js','hemu/holyc-wasm/Apps/HEMU/Kernel/GuestExec.js',
+  'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/WorkerHost.mjs','hemu/holyc-wasm/Apps/HEMU/Kernel/Test/WorkerShim.mjs','hemu/live.bin.gz','hemu/live-smp.bin.gz',
   'hemu/templeos-hd.qcow2.gz'];
 const runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
 const cores=process.env.CORES?[Number(process.env.CORES)]:[1,4];

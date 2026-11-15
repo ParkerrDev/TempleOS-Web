@@ -5,14 +5,14 @@ import {createFrameBlitter,screenFit,PALETTE} from "./FrameBuf.js";
 import {createGuestFpsMeter} from "./GuestFps.js";
 import {KEY,KeyInput,KeyBar,KeyRoute} from "./Keyboard.js";
 import {MobileInput} from "./MobileInput.js";
-import {SnapshotInspect} from "../hemu/Kernel/Snapshot.js";
-import {StockInspect} from "../hemu/Kernel/Stock.js";
-import {BUS_VERSION} from "../hemu/Kernel/CoreBus.js";
-import {MachineShared} from "../hemu/Kernel/MachineShared.js";
-import {DiskStoreOpen} from "../hemu/Kernel/DiskStore.js";
+import {SnapshotInspect} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Snapshot.js";
+import {StockInspect} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Stock.js";
+import {BUS_VERSION} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/CoreBus.js";
+import {MachineShared} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/MachineShared.js";
+import {DiskStoreOpen} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/DiskStore.js";
 import {WinFind,WinDocuments} from "./WinMgr.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
-import {Speaker} from "../hemu/Kernel/Speaker.js";
+import {Speaker} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Speaker.js";
 import "./XSel.js";
 
 const $=WinFind;
@@ -428,11 +428,12 @@ $("touchBtn").addEventListener("click",function () {
     const rect=frame?.getBoundingClientRect();
     xc.style.transform=`translate(${e.clientX+(rect?.left||0)}px,${e.clientY+(rect?.top||0)}px)`;
     xc.style.visibility=e.target?.id==='canvas' ||
-      e.target?.closest('.wszr,.wszb,.wszcorner')?'hidden':'visible';
+      e.target?.closest('.wszr,.wszb,.wszcorner,[data-native-cursor]') ||
+      document.fullscreenElement?.matches('video')?'hidden':'visible';
   };
   window.__desktopCursor={enabled:xcOn,move:moveCursor,hide:hideCursor};
   if (xcOn) {
-    addEventListener('pointermove',e=>moveCursor(e),{capture:true,passive:true});
+    addEventListener('pointermove',e=>moveCursor(e),{passive:true});
     document.addEventListener('mouseleave',hideCursor);
     ViewOn('blur',hideCursor);
   }
@@ -592,6 +593,11 @@ export function OsWinPassStatus()
   return win_pass_msg;
 }
 
+export async function OsWinPassReturn()
+{
+  if (win_pass) await win_pass.Return();
+}
+
 async function WinPassApply()
 {//Neither passthrough code nor native guest code loads until selected.
   let on=os_cfg.pass && win_pass_ready && !paused && engine.owner!==false;
@@ -632,7 +638,6 @@ addEventListener("osstate",function (e) {
   win_pass_ready=e.detail.ready;
   WinPassApply();
 });
-addEventListener("winpassdisable",function () {OsCfg({pass:false});});
 
 // ---- engine: one worker, or the multi-core one below ----
 let importDisk = null;   // a disk image imported before the reload

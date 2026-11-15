@@ -1,6 +1,6 @@
 export function TouchControls(frame,mouse)
 {
-  let canvas=frame.querySelector("canvas"),joy=frame.querySelector("#joy"),
+  let canvas=frame.querySelector("#canvas"),joy=frame.querySelector("#joy"),
     knob=frame.querySelector("#joyk"),active=new Map(),buttons=new Map(),
     timers=new Set(),raf=0,
     dx=0,dy=0,last=0,x=0,y=0;

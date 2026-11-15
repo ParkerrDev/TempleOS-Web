@@ -19,7 +19,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/FLOOR LINKS 607 CASES BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to the checkout with built HEMU dependencies.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness();await h.Exec(source);
   const done=h.gx.varFind('tm_floor_links_done');assert(done);assert.equal(h.gx.rd64(done),1);
   assert.equal(h.gx.rd64(h.gx.varFind('tm_floor_links_cnt')),607);

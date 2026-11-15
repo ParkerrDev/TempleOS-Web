@@ -4,8 +4,8 @@ import {createServer} from "node:http";
 import {once} from "node:events";
 import {chromium} from "playwright-core";
 import {ServeReq} from "../Misc/Server.mjs";
-import {DesktopServer} from "../hemu/Misc/Server.mjs";
-import {BrowserMachine,MachineReady} from "../hemu/Kernel/Test/BrowserMachine.mjs";
+import {DesktopServer} from "../hemu/holyc-wasm/Apps/HEMU/Misc/Server.mjs";
+import {BrowserMachine,MachineReady} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/BrowserMachine.mjs";
 
 const root=new URL("..",import.meta.url),site=createServer(ServeReq).listen(0,"127.0.0.1");
 await once(site,"listening");

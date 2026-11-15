@@ -3,7 +3,7 @@ import {readFile,writeFile,mkdir} from "node:fs/promises";
 import {resolve} from "node:path";
 import {pathToFileURL} from "node:url";
 import {QemuRun} from "../../../hemu/holyc-wasm/tests/oracle/Qemu.mjs";
-import {GuestHarness} from "../../../hemu/Kernel/Test/GuestHarness.mjs";
+import {GuestHarness} from "../../../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs";
 import {GameInputs,Hash,root,GAME_CHECKS,GAME_RUNS} from "./Evidence.mjs";
 
 const args=process.argv.slice(2),

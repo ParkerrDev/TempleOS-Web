@@ -4,7 +4,7 @@ import {createServer} from "node:http";
 import {once} from "node:events";
 import {chromium} from "playwright-core";
 import {ServeReq} from "../../Misc/Server.mjs";
-import {BrowserMachine} from "../../hemu/Kernel/Test/BrowserMachine.mjs";
+import {BrowserMachine} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/BrowserMachine.mjs";
 import {GrNew} from "./Gr.js";
 
 const codec=await GrNew(await readFile(new URL("../../build/Gr.wasm",import.meta.url))),

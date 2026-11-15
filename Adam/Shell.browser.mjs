@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import {once} from "node:events";
+import {mkdirSync} from "node:fs";
 import {chromium} from "playwright-core";
 
 const root=new URL("../",import.meta.url).pathname,
   server=spawn(process.execPath,["Misc/Server.mjs"],{cwd:root,
     env:{...process.env,PORT:"8181"},stdio:["ignore","pipe","inherit"]});
 await once(server.stdout,"data");
+mkdirSync(root+"tmp/native-layout",{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM ||
   "/usr/bin/chromium",headless:true,args:["--no-sandbox"]});
 let contexts=[];
@@ -28,6 +30,31 @@ try {
     await page.waitForFunction(function () {
       return !document.documentElement.classList.contains("fontwait");
     });
+    if (!mobile) {
+      for (const [width,height] of [[980,700],[1280,600],[1280,800]]) {
+        await page.setViewportSize({width,height});
+        const layout=await page.evaluate(function () {
+          const footer=document.querySelector("footer").getBoundingClientRect(),
+            windows=["desktopMenu","keysWin","guide","terryWin"].map(id=>{
+              const r=document.getElementById(id).getBoundingClientRect();
+              return {id,left:r.left,right:r.right,bottom:r.bottom};
+            });
+          return {windows,footerBottom:footer.bottom,footerTop:footer.top,
+            width:document.body.scrollWidth,height:document.body.scrollHeight};
+        });
+        assert(layout.footerBottom<=height,"footer fits the desktop viewport");
+        assert(layout.width<=width && layout.height<=height,"desktop has no hidden page overflow");
+        for (const w of layout.windows)
+          assert(w.left>=0 && w.right<=width && w.bottom<=layout.footerTop,
+            w.id+" remains above the desktop footer at "+width+"x"+height);
+      }
+      await page.locator("#settingsBtn").scrollIntoViewIfNeeded();
+      assert(await page.locator("#menuActions").evaluate(e=>e.scrollTop>0),
+        "lower Menu actions remain reachable by scrolling their content");
+      assert.equal(await page.locator("#desktopMenu").evaluate(e=>getComputedStyle(e).overflow),"visible",
+        "Menu scrolling leaves its frame and title unclipped");
+      await page.screenshot({path:root+"tmp/native-layout/Shell-desktop.png"});
+    }
     //Display preferences work before the OS loads and survive a page reload.
     async function SettingsOpen() {
       if (await page.locator("#settingsWin").isVisible()) return;
@@ -36,6 +63,15 @@ try {
       await page.locator("#showHeader").waitFor();
     }
     await SettingsOpen();
+    const reset=await page.locator("#resetWindows").boundingBox(),
+      settings=await page.locator("#settingsBody").boundingBox();
+    assert(reset.y-2>=settings.y && reset.x-2>=settings.x,
+      "The reset button outline fits inside its scrolling container.");
+    await page.locator("#windowPassthrough").check();
+    await page.locator("#returnWindows").click();
+    assert.equal(await page.locator("#windowPassthrough").isChecked(),true,
+      "Returning windows keeps passthrough enabled.");
+    await page.locator("#windowPassthrough").uncheck();
     assert.equal(await page.locator("header").isVisible(),true);
     assert.equal(await page.locator("footer").isVisible(),true);
     const stageHeight=await page.locator("main.stage").evaluate(e=>e.clientHeight);
@@ -57,6 +93,13 @@ try {
     assert.equal(await page.locator("header").isVisible(),true);
     assert.equal(await page.locator("footer").isVisible(),true);
     await page.locator("#settingsClose").click();
+    if (mobile) await page.locator("#mobileMenu").click();
+    await page.locator("#cheatsheetBtn").click();
+    await page.locator("#cheatsheetWin").waitFor({state:"visible"});
+    assert((await page.locator("#cheatsheetWin").innerText()).includes('Ed("Hello.HC");'));
+    assert.equal(await page.locator(".cheatsheet-body").evaluate(el=>el.scrollWidth<=el.clientWidth),true);
+    await page.screenshot({path:root+"tmp/native-layout/cheatsheet-"+(mobile?"mobile":"desktop")+".png"});
+    await page.locator("#cheatsheetClose").click();
     assert.equal(await page.locator("#guide").isVisible(),!mobile);
     assert.equal(await page.locator("#terryWin").isVisible(),!mobile);
     assert.equal(await page.locator("#guide #terrySprite").count(),0);
@@ -82,7 +125,7 @@ try {
     await page.locator("#godOut article").waitFor();
     assert((await page.locator("#godOut article h3").innerText()).length>3);
     assert.equal(await page.locator("#godStatus").innerText(),"");
-    await page.screenshot({path:"/tmp/templeos-god-"+(mobile?"mobile":"desktop")+".png"});
+    await page.screenshot({path:root+"tmp/native-layout/god-"+(mobile?"mobile":"desktop")+".png"});
     await page.locator("#godClear").click();
     assert.equal(await page.locator("#godOut").innerText(),"");
     const bounds=await page.locator("#godWin").boundingBox();
@@ -148,7 +191,8 @@ try {
       assert.equal(await reopen.isVisible(),true,"a closed Help can be opened again");
       assert.equal(await reopen.locator("use").getAttribute("href"),"#i-help");
       assert.equal(await page.locator("#settingsBtn use").getAttribute("href"),"#i-settings");
-      const icons=await page.locator(".toolbar > button use").evaluateAll(u=>u.map(e=>e.getAttribute("href")));
+      const icons=await page.locator("#menuActions > button use").evaluateAll(u=>u.map(e=>e.getAttribute("href")));
+      assert(icons.length>0,"Menu actions are included in the icon check");
       assert.equal(icons.includes("#i-window"),false,"every Menu entry has its own icon");
       assert.equal(new Set(icons).size,icons.length,"no two Menu entries share an icon");
       await reopen.click();

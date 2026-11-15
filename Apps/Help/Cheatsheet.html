@@ -1,0 +1,61 @@
+<style>
+#cheatsheetWin { width:min(800px,94vw); max-height:84dvh; display:flex; flex-direction:column; }
+.cheatsheet-body { overflow:auto; min-height:0; padding:4px; color:var(--blue); line-height:1.4; }
+.cheatsheet-body h2 { font-size:14px; color:var(--red); margin:14px 0 8px; }
+.cheatsheet-body table { width:100%; border-collapse:collapse; }
+.cheatsheet-body td { padding:6px 8px; vertical-align:top; border-bottom:1px solid var(--ltgray); }
+.cheatsheet-body td:first-child { width:48%; }
+.cheatsheet-body code,.cheatsheet-body kbd { color:#000; font:inherit; overflow-wrap:anywhere; }
+.cheatsheet-body pre { padding:10px; white-space:pre-wrap; background:var(--blue); color:#fff; }
+.cheatsheet-body pre code { color:inherit; }
+</style>
+<div id="cheatsheetOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="TempleOS cheatsheet">
+  <div id="cheatsheetWin" class="win" data-title="TempleOS Cheatsheet">
+    <span id="cheatsheetClose" class="close" title="Close">[X]</span>
+    <div class="cheatsheet-body">
+      <p>Click the TempleOS screen before typing. Its command line runs HolyC; commands normally end with a semicolon.</p>
+      <h2>Keys worth knowing</h2>
+      <table><tbody>
+        <tr><td><kbd>F1</kbd></td><td>Open help.</td></tr>
+        <tr><td><kbd>Ctrl+M</kbd></td><td>Open the Personal Menu.</td></tr>
+        <tr><td><kbd>Ctrl+D</kbd></td><td>Open the TempleOS file manager.</td></tr>
+        <tr><td><kbd>F5</kbd> in the editor</td><td>Run the current file.</td></tr>
+        <tr><td><kbd>Esc</kbd> in the editor</td><td>Save and exit.</td></tr>
+        <tr><td><kbd>Shift+Esc</kbd></td><td>Abort and exit; discard editor changes.</td></tr>
+        <tr><td><kbd>Ctrl+T</kbd></td><td>Toggle plain text / DolDoc formatting.</td></tr>
+        <tr><td><kbd>Ctrl+R</kbd> in a document</td><td>Insert or edit a sprite.</td></tr>
+      </tbody></table>
+      <p>Browser Esc releases a captured mouse. Use the site's Keys strip to send Esc to TempleOS while captured.</p>
+      <h2>Files and folders</h2>
+      <table><tbody>
+        <tr><td><code>Dir;</code></td><td>List the current directory. Left-click a file to edit it; right-click to include/run it.</td></tr>
+        <tr><td><code>Cd("C:/Home");</code></td><td>Go to your home directory.</td></tr>
+        <tr><td><code>Cd("..");</code></td><td>Go up one directory.</td></tr>
+        <tr><td><code>DirMk("MyStuff");</code></td><td>Create a directory.</td></tr>
+        <tr><td><code>Ed("Hello.HC");</code></td><td>Create or edit a HolyC program.</td></tr>
+        <tr><td><code>Type("Hello.HC");</code></td><td>Print a file's contents.</td></tr>
+        <tr><td><code>Copy("Hello.HC","Backup.HC");</code></td><td>Copy a file. Choose a new destination name to keep existing files.</td></tr>
+        <tr><td><code>Move("Old.HC","New.HC");</code></td><td>Rename or move a file.</td></tr>
+      </tbody></table>
+      <h2>A first program</h2>
+      <p>Type <code>Ed("Hello.HC");</code>, enter this code, then press F5:</p>
+      <pre><code>U0 Hello()
+{
+  "Hello, TempleOS!\n";
+}
+
+Hello;</code></pre>
+      <p>After saving, run it again with <code>#include "Hello"</code>. HolyC compiles and executes the file immediately. Re-including a file reruns its top-level code.</p>
+      <h2>Explore</h2>
+      <table><tbody>
+        <tr><td><code>Ed("C:/Doc/Welcome.DD");</code></td><td>Terry's introduction and keyboard tips.</td></tr>
+        <tr><td><code>Ed("C:/Doc/HelpIndex.DD");</code></td><td>The built-in help index.</td></tr>
+        <tr><td><code>Cd("C:/Demo"); Dir;</code></td><td>Browse examples and games with their source.</td></tr>
+        <tr><td><code>GodWord;</code></td><td>Pick a word using TempleOS's God vocabulary.</td></tr>
+      </tbody></table>
+      <h2>On this website</h2>
+      <p>Files imports and downloads individual files. Disk &amp; Save exports a disk or a running-session snapshot. C: saves automatically in this browser; export a backup before clearing browser data.</p>
+      <p>Drag title bars to move windows and right/bottom edges to resize. Settings lets you reset their positions, choose native drawing, and enable passthrough. Return windows leaves passthrough enabled.</p>
+    </div>
+  </div>
+</div>

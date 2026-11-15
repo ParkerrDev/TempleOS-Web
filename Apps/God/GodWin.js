@@ -8,9 +8,9 @@ const CSS=`
 #godOut { flex:1; min-height:0; overflow:auto; background:var(--blue);
   color:var(--white); padding:10px 12px; overflow-wrap:anywhere; }
 #godOut .word { color:var(--yellow); margin-right:.6em; }
-#godOut article { margin-bottom:14px; }
+#godOut article { margin-bottom:14px; border-left:4px solid var(--yellow); padding:8px 12px; }
 #godOut h3 { color:var(--ltgreen); font-size:12px; margin-bottom:8px; }
-#godOut p { white-space:pre-wrap; line-height:1.3; }
+#godOut p { white-space:pre-wrap; font-size:16px; line-height:1; }
 #godBar { --action-width:110px; }
 #godStatus { min-height:2.4em; line-height:1.2; }
 #godNote { font-size:11px; line-height:1.3; }

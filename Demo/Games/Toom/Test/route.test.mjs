@@ -24,7 +24,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/ROUTE 212 CASES 36 FAULTS BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen built runtime.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   for(const f of [...files,{name:'ROUTE.HC',bytes:Buffer.from(source+"\nif (!tm_route_done) throw('Count');\n",'latin1')}]) {
     const id=h.gx.writeFile({path:'C:/ORACLE/'+f.name,bytes:f.bytes});

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {createHash} from "node:crypto";
-import {GuestHarness} from "../../hemu/Kernel/Test/GuestHarness.mjs";
-import {fat32List,fat32Read} from "../../hemu/Kernel/QCow2.js";
+import {GuestHarness} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs";
+import {fat32List,fat32Read} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/QCow2.js";
 
 const source=readFileSync(process.env.GOD_TOOLS_SOURCE||new URL("./Tools.HC",import.meta.url),"latin1");
 const h=await GuestHarness({disk:true,exports:["InjectKey"]}),{gx,ex,disk,base,Name}=h;

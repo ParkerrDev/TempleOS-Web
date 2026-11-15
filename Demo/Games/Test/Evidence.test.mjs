@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {GameInputs,Hash,root,GAME_CHECKS} from "./Evidence.mjs";
-import {compileHemu} from "../../../hemu/Kernel/Compile.js";
+import {compileHemu} from "../../../hemu/holyc-wasm/Apps/HEMU/Kernel/Compile.js";
 
 const evidence=JSON.parse(await readFile(new URL("Demo/Games/Test/Evidence.json",root))),
   inputs=await GameInputs();
@@ -14,4 +14,4 @@ assert.equal(evidence.engineSha256,Hash(compileHemu().bytes),"Compiled HEMU diff
 for (const [name,program] of Object.entries(evidence.programs))
   assert.equal(program.sourceSha256,Hash(await readFile(new URL("Demo/Games/"+name+".HC",root))),
     name+" source differs from its native game evidence.");
-console.log("Native game evidence: exact source, harness, compiler, host and HEMU revisions match.");
+console.log("Native game evidence: exact sources, harness, host runtime and compiled HEMU bytes match.");

@@ -2,94 +2,18 @@ import {WinFocus,WinRaise,WinMobile,WinOutside,WinPopup,WinPopupReturn,
   WinDocuments,WinFind} from "./WinMgr.js";
 import {PointerDrag} from "./WinPointer.js";
 
-const TOOLS={desktopMenu:{title:"Menu",body:[],buttons:":scope > button"},
-  guide:{title:"Help",body:["#helpContext","#helpLabel","#helpText"],
-    buttons:"#helpNext"},
-  godWin:{title:"God Tools",body:["#godOut","#godStatus","#godNote"],
-    buttons:"#godBar button"}};
-
-function TextEscape(text)
-{
-  return text.split("$").join("$$").replace(/[\x00-\x08\x0B-\x1F]/g,"");
-}
-
-function LabelEscape(text)
-{
-  return TextEscape(text).replace(/\\/g,"\\\\").replace(/"/g,'\\"');
-}
-
-function DocText(el)
-{
-  if (el?.id=="godOut")
-    return Array.from(el.children,function (entry) {
-      if (entry.tagName=="ARTICLE")
-        return Array.from(entry.children,function (part) {
-          return part.textContent.trim();
-        }).join("\n");
-      return entry.textContent.trim();
-    }).join("\n\n");
-  return el?.textContent.trim();
-}
-
-export function WinPassDoc(w,actions=new Map)
-{//Only these text documents and buttons have a native representation.
-  let spec=TOOLS[w.id],doc="",el,id,sel,text,live=new Map;
-  if (!spec || w.querySelector("video,audio,iframe,textarea,input,select,"+
-      "[contenteditable=true]"))
-    return null;
-  for (sel of spec.body) {
-    el=w.querySelector(sel);
-    text=DocText(el);
-    if (text)
-      doc+=TextEscape(text.slice(-16000))+"\n\n";
-  }
-  for (el of w.querySelectorAll(spec.buttons)) {
-    if (!el.hidden && el.style.display!="none") {
-      el.dataset.passControl="button";
-      id=actions.get(el);
-      if (!id) {
-        id=actions.size+2;
-        actions.set(el,id);
-      }
-      text=el.textContent.trim().replace(/\s+/g," ");
-      if (el.disabled)
-        doc+="["+TextEscape(text)+"]\n\n";
-      else {
-        //BT defaults to X, which exits before LE. These controls stay live.
-        doc+='$BT-X,"'+LabelEscape(text)+'",LE='+id+'$\n\n';
-        live.set(id,el);
-      }
-    }
-  }
-  doc+='\n$BT-X,"Return to browser",LE=1$\n';
-  return {title:spec.title,doc,actions:live};
-}
+import {GuiScene} from "./GuiBridge.js";
 
 export function WinPass({canvas,pal,Request,Input,Status})
-{//Native task surfaces and explicit DolDoc proxies share guest identities.
+{//Native task surfaces and browser scenes share guest identities.
   let enabled=false,revision=0,windows=[],views=new Map,hosts=new Map,
-    drag=null,dock=document.createElement("div"),
+    drag=null,
     style=document.createElement("style");
   style.textContent=".win-pass{position:fixed;line-height:0;touch-action:none}"+
     ".win-pass canvas{display:block;image-rendering:pixelated;outline:0;"+
     "touch-action:none}.win-pass.active{outline:1px solid var(--yellow)}"+
-    "#winPassDock{position:fixed;right:8px;bottom:8px;z-index:2147483600;"+
-    "display:flex;gap:8px;background:var(--white);padding:8px;"+
-    "border:2px solid var(--blue)}#winPassDock[hidden]{display:none}"+
-    "#winPassDock button{width:auto}.win-pass-owned{display:none!important}";
+    ".win-pass-owned{opacity:0!important;pointer-events:none!important}";
   document.head.append(style);
-  dock.id="winPassDock";
-  dock.hidden=true;
-  dock.setAttribute("aria-label","Window passthrough controls");
-  dock.innerHTML='<button data-pass="return">Return windows</button>'+
-    '<button data-pass="settings">Settings</button>';
-  document.body.append(dock);
-  dock.addEventListener("click",function (e) {
-    if (e.target.dataset.pass=="settings")
-      WinFind("settingsBtn").click();
-    if (e.target.dataset.pass=="return")
-      dispatchEvent(new CustomEvent("winpassdisable"));
-  });
 
   async function Send(op,args={})
   {
@@ -127,18 +51,21 @@ export function WinPass({canvas,pal,Request,Input,Status})
   function HostHide(host)
   {
     host.el.classList.add("win-pass-owned");
+    host.el.setAttribute("aria-hidden","true");
     if (host.overlay) {
       host.overlay.classList.add("win-pass-owned");
       host.overlay.setAttribute("aria-modal","false");
     }
   }
 
-  function HostRestore(host,point=null)
+  function HostRestore(host,point=host.return_point || null)
   {
     if (host.timer)
       clearTimeout(host.timer);
     host.watch.disconnect();
+    if (host.animation) cancelAnimationFrame(host.animation);
     host.el.classList.remove("win-pass-owned");
+    host.el.removeAttribute("aria-hidden");
     if (host.overlay) {
       host.overlay.classList.remove("win-pass-owned");
       host.overlay.classList.add("free");
@@ -161,42 +88,54 @@ export function WinPass({canvas,pal,Request,Input,Status})
 
   async function HostReturn(host,point=null)
   {
-    hosts.delete(host.slot);
-    HostRestore(host,point);
-    await Send("close",{slot:host.slot,task:host.task,num:host.num});
+    host.return_point=point;
+    const res=await Send("close",{slot:host.slot,task:host.task,num:host.num});
+    host.return_point=null;
+    if (!res?.ok) return false;
+    if (hosts.get(host.slot)==host) {
+      hosts.delete(host.slot);
+      HostRestore(host,point);
+    }
+    return true;
   }
 
   async function HostUpdate(host)
   {
-    let doc=WinPassDoc(host.el,host.ids),res;
-    if (!enabled || !hosts.has(host.slot))
-      return;
-    if (!doc || host.el.style.display=="none" ||
-        host.overlay && !host.overlay.classList.contains("open")) {
-      await HostReturn(host);
-      return;
-    }
-    host.actions=doc.actions;
-    if (doc.doc!=host.doc) {
-      host.doc=doc.doc;
-      res=await Send("update",{slot:host.slot,task:host.task,num:host.num,
-        doc:doc.doc});
-      if (!res?.ok && hosts.has(host.slot)) {
+    if (!enabled || hosts.get(host.slot)!=host) return;
+    if (host.pending) {host.dirty=true;return;}
+    host.pending=true;host.dirty=false;
+    try {
+      const scene=GuiScene(host.el,host.ids);
+      if (!scene || host.el.style.display=="none" ||
+          host.overlay && !host.overlay.classList.contains("open")) {
         await HostReturn(host);
+        return;
       }
+      host.actions=scene.actions;host.scroll=scene.scroll;
+      if (host.gui.length==scene.gui.length && host.gui.every((b,i)=>b==scene.gui[i])) return;
+      host.gui=scene.gui;
+      const res=await Send("update",{slot:host.slot,task:host.task,num:host.num,
+        gui:scene.gui});
+      if (!res?.ok && hosts.has(host.slot)) await HostReturn(host);
+    } catch (error) {
+      Status(error.message);
+      await HostReturn(host);
+    } finally {
+      host.pending=false;
+      if (host.dirty) queueMicrotask(function () {HostUpdate(host);});
     }
   }
 
   async function HostNew(w,e)
   {
-    let ids=new Map,doc=WinPassDoc(w,ids),r=w.getBoundingClientRect(),
-      pos=Position(e),rev=revision,overlay=w.closest(".overlay"),host,res;
+    let ids=new Map,doc;
+    try {doc=GuiScene(w,ids);} catch (error) {Status(error.message);return;}
+    let pos=Position(e),rev=revision,overlay=w.closest(".overlay"),host,res;
     if (!doc || w.dataset.passPending)
       return;
     w.dataset.passPending="1";
-    res=await Send("host",{host:w.id,title:doc.title,doc:doc.doc,
-      cols:Math.min(76,Math.max(20,Math.floor(r.width/12)-2)),
-      rows:Math.min(54,Math.max(6,Math.floor(r.height/12)-2)),
+    res=await Send("host",{host:w.id,title:doc.title,gui:doc.gui,
+      cols:doc.cols,rows:doc.rows,
       x:Math.max(0,pos.x-48),y:Math.max(0,pos.y-8)});
     delete w.dataset.passPending;
     if (!res?.ok)
@@ -206,8 +145,10 @@ export function WinPass({canvas,pal,Request,Input,Status})
       return;
     }
     host={slot:res.slot,task:res.task,num:res.num,el:w,overlay,
-      ids,doc:doc.doc,actions:doc.actions,timer:0,seen:false};
-    host.watch=new MutationObserver(function () {
+      ids,gui:doc.gui,actions:doc.actions,scroll:doc.scroll,timer:0,seen:false,pending:false,animation:0};
+    host.watch=new MutationObserver(function (records) {
+      if (records.every(record=>(record.target.nodeType==1?record.target:record.target.parentElement).
+          closest(".wc,.wbar,.wvert,.wcorn,.wszcorner,.wszr,.wszb"))) return;
       clearTimeout(host.timer);
       host.timer=setTimeout(function () {HostUpdate(host);},100);
     });
@@ -216,9 +157,18 @@ export function WinPass({canvas,pal,Request,Input,Status})
       attributeFilter:["disabled","hidden","class","style"]});
     hosts.set(res.slot,host);
     HostHide(host);
+    if (doc.animated) {
+      let last=0;
+      function Frame(now) {
+        if (!hosts.has(host.slot)) return;
+        if (now-last>=1000/15) {last=now;HostUpdate(host);}
+        host.animation=requestAnimationFrame(Frame);
+      }
+      host.animation=requestAnimationFrame(Frame);
+    }
     Input({focus:true,slot:-1});
     canvas.focus({preventScroll:true});
-    Status(doc.title+" is now a native TempleOS document.");
+    Status(doc.title+" is now a TempleOS window.");
   }
 
   function ViewDel(id)
@@ -324,9 +274,17 @@ export function WinPass({canvas,pal,Request,Input,Status})
     WinRaise(el);
     cv.addEventListener("pointerdown",function (e) {ViewDown(view,e);});
     cv.addEventListener("pointermove",function (e) {
+      const r=cv.getBoundingClientRect(),w=view.win,
+        x=(e.clientX-r.left)*w.w/r.width,y=(e.clientY-r.top)*w.h/r.height,
+        edge=x<8 || x>=w.w-8,bottom=y>=w.h-8,
+        cursor=edge && bottom?(x<8?"nesw-resize":"nwse-resize"):
+          edge?"ew-resize":bottom?"ns-resize":y<8 && x>=48 && x<w.w-24?"move":"";
+      cv.toggleAttribute("data-native-cursor",!!cursor);
+      cv.style.setProperty("--native-cursor",cursor || "auto");
       if (e.buttons && cv.hasPointerCapture(e.pointerId) || !e.buttons)
         ViewMouse(view,e);
     });
+    cv.addEventListener("pointerleave",()=>cv.removeAttribute("data-native-cursor"));
     function Up(e)
     {
       if (cv.hasPointerCapture(e.pointerId)) {
@@ -375,8 +333,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
     state.pending=true;
     Input({buttons:0,slot:-1});
     if (host) {
-      state.host=host;
-      await HostReturn(host,state.last);
+      if (await HostReturn(host,state.last)) state.host=host;
       return;
     }
     res=await Send("detach",{task:w.task,num:w.num});
@@ -499,7 +456,16 @@ export function WinPass({canvas,pal,Request,Input,Status})
       if (host) {
         if (action.id==1)
           HostReturn(host);
-        else {
+        else if (action.id>=0x100000) {
+          const kind=action.id&15;
+          el=host.scroll.get(Math.floor((action.id-0x100000)/16));
+          if (el) {
+            if (kind==5) el.scrollTop=0;
+            else if (kind==6) el.scrollTop=el.scrollHeight;
+            else el.scrollTop+=(kind%2? -1:1)*(kind>2?el.clientHeight*.9:48);
+            HostUpdate(host);
+          }
+        } else {
           el=host.actions.get(action.id);
           if (el && el.isConnected && !el.disabled)
             el.click();
@@ -520,19 +486,18 @@ export function WinPass({canvas,pal,Request,Input,Status})
     for (id of views.keys())
       ViewDel(id);
     windows=[];
-    dock.hidden=!on;
     res=await Send(on?"enable":"disable");
     if (rev==revision) {
       enabled=on && !!res?.ok;
       if (on && res?.ok)
         Status("Drag a native title out of the screen, "+
-          "or Menu, Help or God Tools in.");
+          "or a supported browser window in.");
     }
     return enabled;
   }
 
   document.addEventListener("winmoved",function (e) {
-    if (enabled && Inside(e.detail) && TOOLS[e.target.id])
+    if (enabled && Inside(e.detail))
       HostNew(e.target,e.detail);
   });
   document.addEventListener("winfocus",function (e) {
@@ -559,5 +524,19 @@ export function WinPass({canvas,pal,Request,Input,Status})
       drag.ended=drag.cancel=true;
     drag=null;
   });
-  return {Enable,Receive};
+  async function Return()
+  {
+    revision++;
+    drag=null;
+    Input({buttons:0,slot:-1});
+    let ok=true;
+    for (const host of [...hosts.values()]) ok=await HostReturn(host) && ok;
+    for (const view of [...views.values()]) {
+      const w=view.win,res=await Send("attach",{slot:w.slot,task:w.task,num:w.num,x:w.x,y:w.y});
+      if (res?.ok) ViewDel(Identity(w));
+      else ok=false;
+    }
+    if (ok) Status("Windows returned. Passthrough remains enabled.");
+  }
+  return {Enable,Receive,Return};
 }

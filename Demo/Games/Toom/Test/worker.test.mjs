@@ -8,7 +8,7 @@ import {FreedoomRead,root} from './Assets.mjs';
 import {ToomReader,ToomSources} from './Package.mjs';
 
 const web=resolve(process.env.TEMPLEOS_WEB||root);
-const {HemuBoot,ReadyWait,FramesWait,Sleep,TextRow}=await import(pathToFileURL(resolve(web,'hemu/Kernel/Test/WorkerHost.mjs')));
+const {HemuBoot,ReadyWait,FramesWait,Sleep,TextRow}=await import(pathToFileURL(resolve(web,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/WorkerHost.mjs')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const game=resolve(process.env.GAME_DIR||resolve(root,'Demo/Games/Toom'));
 const finale=!!process.env.FINALE,progression=!!process.env.PROGRESSION;
@@ -24,11 +24,11 @@ const probe=readFileSync(resolve(root,'Demo/Games/Toom/Test/Worker.HC'),'latin1'
   (startup?'\n'+readFileSync(new URL('StartupWorker.HC',import.meta.url),'latin1'):'');
 const out=resolve(process.env.OUT||'/tmp/toom-workers');mkdirSync(out,{recursive:true});
 const fileHashes=Object.fromEntries(files.map(f=>[f.path,hash(f.bytes)]));
-const runtimeNames=['hemu/Kernel/Jit.js','hemu/Kernel/HemuWorker.js','hemu/Kernel/HemuSmpWorker.js',
-  'hemu/Kernel/GuestExec.js','hemu/Kernel/GuestInput.js','hemu/Kernel/KeyQueue.js',
-  'hemu/Kernel/Test/WorkerHost.mjs','hemu/Kernel/Test/WorkerShim.mjs','hemu/live.bin.gz',
+const runtimeNames=['hemu/holyc-wasm/Apps/HEMU/Kernel/Jit.js','hemu/holyc-wasm/Apps/HEMU/Kernel/HemuWorker.js','hemu/holyc-wasm/Apps/HEMU/Kernel/HemuSmpWorker.js',
+  'hemu/holyc-wasm/Apps/HEMU/Kernel/GuestExec.js','hemu/holyc-wasm/Apps/HEMU/Kernel/GuestInput.js','hemu/holyc-wasm/Apps/HEMU/Kernel/KeyQueue.js',
+  'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/WorkerHost.mjs','hemu/holyc-wasm/Apps/HEMU/Kernel/Test/WorkerShim.mjs','hemu/live.bin.gz',
   'hemu/live-smp.bin.gz','hemu/stock.json','hemu/stock.disk','hemu/stock-smp.disk',
-  'hemu/Kernel/Stock.js','hemu/templeos-hd.qcow2.gz'];
+  'hemu/holyc-wasm/Apps/HEMU/Kernel/Stock.js','hemu/templeos-hd.qcow2.gz'];
 const runtimeHashes=Object.fromEntries(runtimeNames.map(n=>[n,hash(readFileSync(resolve(web,n)))]));
 const results=[],cores=process.env.CORES?[Number(process.env.CORES)]:[1,4];
 assert(cores.every(n=>n===1||n===4));
@@ -96,7 +96,7 @@ for(const count of cores) {
         h.Post({cmd:'exportDisk'});
         const saved=await Wait(m=>m.cmd==='exportResult'&&m.kind==='disk',60000);
         assert(saved.ok,saved.msg);
-        const {makeDisk,fat32Read}=await import(pathToFileURL(resolve(web,'hemu/Kernel/QCow2.js')));
+        const {makeDisk,fat32Read}=await import(pathToFileURL(resolve(web,'hemu/holyc-wasm/Apps/HEMU/Kernel/QCow2.js')));
         const bytes=Buffer.from(fat32Read(await makeDisk(gunzipSync(saved.buf)),'TOOM','STARTUP.BIN'));
         assert.equal(bytes.length,256*8);
         writeFileSync(resolve(out,`startup-${count}.bin`),bytes);

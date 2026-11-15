@@ -23,7 +23,7 @@ if(backend==='qemu') {
   assert.match(result.results[0].out,/FINALE ALLOC 187 CASES 181 FAULTS BAD 0/);
 } else {
   assert(process.env.TEMPLEOS_WEB,'Set TEMPLEOS_WEB to a frozen built runtime.');
-  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/Kernel/Test/GuestHarness.mjs')));
+  const {GuestHarness}=await import(pathToFileURL(resolve(process.env.TEMPLEOS_WEB,'hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs')));
   const h=await GuestHarness({disk:true});
   const check=source+"\nif (!tm_final_alloc_done || tm_final_alloc_cases!=187 || tm_final_alloc_faults!=181) throw('Count');\n";
   for(const file of [...files,{name:'ENDALLOC.HC',bytes:Buffer.from(check,'latin1')}]) {
