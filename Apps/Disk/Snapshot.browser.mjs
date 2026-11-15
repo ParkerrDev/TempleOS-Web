@@ -166,15 +166,17 @@ try {
     assert.equal(await page.locator("#biosRepeat").isChecked(),true);
     assert.equal(await page.evaluate(async()=>(await import("/Adam/BootFile.js")).BootFileRead()),null);
     await page.locator("#settingsClose").click();
-    const restored_count=await page.evaluate(()=>window.guestEvents.filter(m=>m.cmd=="restored").length);
+    const restart_after=await page.evaluate(()=>window.guestEvents.length);
     await page.locator("#restartBtn").click();
-    await page.waitForFunction(n=>window.guestEvents.filter(m=>m.cmd=="restored").length>n,
-      restored_count,{timeout:60000});
-    assert.match(await page.locator("#pauseBtn").innerText(),/Play/);
+    await page.waitForFunction(n=>window.guestEvents.slice(n).some(m=>m.cmd==="guestReady" && m.ok) &&
+      window.guestEvents.slice(n).some(m=>m.cmd==="captureState" && m.ready),restart_after,{timeout:60000});
+    assert(!await page.evaluate(n=>window.guestEvents.slice(n).some(m=>m.cmd==="restored"),restart_after),
+      "Restart boots the prepared desktop rather than the imported snapshot");
+    assert.match(await page.locator("#pauseBtn").innerText(),/Pause/);
     assert.deepEqual(errors,[]);
     await context.close();
     await unlink(path);
-    console.log((legacy?"Legacy ":"")+cores+"-core browser snapshot: export/import/reload/restart restores exact RGBA, pause and settings.");
+    console.log((legacy?"Legacy ":"")+cores+"-core browser snapshot: import restores exact RGBA, pause and settings; Restart boots the prepared desktop.");
   }
 } catch (e) {
   if (page && !page.isClosed()) {

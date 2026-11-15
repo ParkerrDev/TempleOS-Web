@@ -78,6 +78,23 @@ try {
       assert.deepEqual(errors,[]);
       const diskEvents=await page.evaluate(()=>window.machine.events.filter(m=>m.cmd==='diskInfo'));
       assert.equal(diskEvents.length,3,'obsolete download publishes no success or failure over the imported disk');
+      const after=await page.evaluate(()=>window.machine.events.length),
+        replacement=bytes.map(v=>v^255);
+      await page.evaluate(replacement=>{
+        const worker=window.machine.workers.findLast(w=>w.machineCore===0&&!w.machineTerminated);
+        worker.postMessage({cmd:'exportDisk',id:'before-replace'});
+        worker.postMessage({cmd:'importDisk',bytes:replacement});
+      },replacement);
+      await page.waitForFunction(after=>window.machine.events.slice(after).some(m=>m.cmd==='diskInfo'),after);
+      const order=await page.evaluate(after=>window.machine.events.slice(after).filter(m=>
+        m.cmd==='exportResult'||m.cmd==='diskInfo').map(m=>m.cmd),after);
+      assert.deepEqual(order,['exportResult','diskInfo'],'Disk replacement and export retire in request order');
+      const before=await page.evaluate(after=>[...new Uint8Array(window.machine.events.slice(after).find(m=>m.cmd==='exportResult').buf)],after);
+      assert.deepEqual([...gunzipSync(Uint8Array.from(before))],bytes,'Export retains the disk from before replacement');
+      const next=await Request(page,{cmd:'exportDisk'},'exportResult');
+      assert(next.ok,next.msg);
+      assert.deepEqual([...gunzipSync(Uint8Array.from(next.buf))],replacement);
+
       console.log(`${cores}-core disk import survives ${outcome} default load; failed imports preserve loading and installed disks.`);
     } finally {releaseDisk();await context.close();}
   }

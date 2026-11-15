@@ -62,8 +62,9 @@ try {
         assert.equal(await page.locator(pause).isDisabled(),true);
         if(app==="page") {
           await page.locator("#osNotice").waitFor({state:"visible"});
-          await page.locator("#diskBtn").click();await page.locator("#dlSnap").click();
-          await page.waitForFunction(()=>document.getElementById("diskStatus").textContent.includes("coordination failed"));
+          await page.locator("#diskBtn").click();
+          assert.equal(await page.locator("#dlSnap").isDisabled(),true,
+            "A failed RAM bus cannot offer a resumable snapshot");
           await page.locator("#diskClose").click();
         } else assert.equal(await page.locator("#save").isDisabled(),true);
         await MachinePost(page,{cmd:"exportSnapshot"});

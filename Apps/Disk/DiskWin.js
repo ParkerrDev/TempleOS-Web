@@ -175,7 +175,8 @@ $("saveSession").addEventListener("click",async function SessionSave() {
   try {
     let result=await OsSessionSave();
     if (!result.ok) throw new Error(result.msg);
-    Say("Session saved in this browser.");
+    Say(result.savedAt?"Session saved in this browser.":
+      "C: changed during capture. Your files are saved. Save the session again.");
   } catch (error) {
     Say("Session save failed: "+error.message);
   } finally {

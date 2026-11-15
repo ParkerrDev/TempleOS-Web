@@ -17,14 +17,16 @@ try {
    disk.writeInto(2,1,new Uint8Array(512).fill(9),0);
    await store.Flush();
    const restored=await store.Load(),a=new Uint8Array(1024);restored.readInto(1,2,a,0);
-   await store.SessionSave(new Uint8Array([1,2,3]).buffer);
+   const revision=await store.Flush();
+   await store.SessionSave(new Uint8Array([1,2,3]).buffer,revision);
    const saved=await store.SessionRead(),putSession=IDBObjectStore.prototype.put;
    IDBObjectStore.prototype.put=function(value,key){const request=putSession.call(this,value,key);if(key==='session')request.addEventListener('success',()=>this.transaction.abort());return request;};
-   let sessionRejected=false;try{await store.SessionSave(new Uint8Array([4,5,6]).buffer);}catch{sessionRejected=true;}
+   let sessionRejected=false;try{await store.SessionSave(new Uint8Array([4,5,6]).buffer,revision);}catch{sessionRejected=true;}
    IDBObjectStore.prototype.put=putSession;
    const retained=await store.SessionRead();
    disk.writeInto(3,1,new Uint8Array(512).fill(5),0);await store.Flush();
-   const invalidated=await store.SessionRead();
+   const stale=await store.SessionSave(new Uint8Array([7,8,9]).buffer,revision),
+     invalidated=await store.SessionRead();
    const replacement=await makeDisk(new Uint8Array(1024).fill(3));await store.Attach(replacement);
    const replaced=await store.Load(),b=new Uint8Array(1024);replaced.readInto(0,2,b,0);
    const put=IDBObjectStore.prototype.put;
@@ -40,9 +42,10 @@ try {
    await blocked.Attach(old,true);
    let blockedSave=false;try{await blocked.SessionSave(new Uint8Array([7]).buffer);}catch{blockedSave=true;}
    blocked.Close();
-   return {session:[...new Uint8Array(saved.bytes)],retained:[...new Uint8Array(retained.bytes)],sessionRejected,invalidated,first:[...a],replacement:[...b],kept:[...c],rejected,error:events.at(-1),waitMs,readOnly:[...readOnly],blockedSave,blockedError:blockedEvents.at(-1),staleCode};
+   return {stale,session:[...new Uint8Array(saved.bytes)],retained:[...new Uint8Array(retained.bytes)],sessionRejected,invalidated,first:[...a],replacement:[...b],kept:[...c],rejected,error:events.at(-1),waitMs,readOnly:[...readOnly],blockedSave,blockedError:blockedEvents.at(-1),staleCode};
  });
  assert.deepEqual(result.session,[1,2,3]);assert.deepEqual(result.retained,[1,2,3]);
+ assert.equal(result.stale,null,"Old RAM cannot acquire a newer disk revision at commit");
  assert.equal(result.sessionRejected,true);assert.equal(result.invalidated,null);
  assert.deepEqual(result.first,[...new Uint8Array(512).fill(7),...new Uint8Array(512).fill(9)]);
  assert(result.replacement.every(x=>x===3));assert(result.kept.every(x=>x===3));

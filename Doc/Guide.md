@@ -31,7 +31,7 @@ and native Take Tour question.
 - **Disk & Save** - save the session or import/export a whole snapshot or disk.
 - **Help → Cheatsheet** - browse common TempleOS commands, editor shortcuts and a first HolyC program.
 - Tabs share one live TempleOS machine. The host tab owns its four CPU workers; a shared worker routes frames and requests. This keeps all tabs on the same filesystem.
-- C: saves after writes. Full sessions save after input settles outside gameplay and when the page hides. **Save session** creates an explicit checkpoint. Closing or refreshing the host tab restores the last completed checkpoint; a crash or immediate close can lose newer RAM changes. Newer saved files are never replaced by an older checkpoint.
+- C: saves after writes. Full sessions save after input settles outside gameplay and when the page hides. Only the checkpoint copy briefly stops the CPUs; compression and storage leave the OS responsive. A checkpoint whose disk changed during compression is discarded and saved again after activity settles. **Save session** creates an explicit checkpoint. Closing or refreshing the host tab restores the last completed checkpoint; a crash or immediate close can lose newer RAM changes. Newer saved files are never replaced by an older checkpoint.
 - Website windows remember their positions and open state. Settings can reset their positions. Desktop windows can move into browser popups; mobile windows stay in the page so scrolling works.
 - **✞ God Tools** - God's words and Bible passages on the page itself, picked in the timing-bit
   order of Adam/God and seeded by the browser, and Terry's God Song and God Doodle opened in TempleOS.
@@ -362,7 +362,7 @@ and still exports portable disk and machine backups. Opening it requests
 persistent browser storage where supported. Clearing site data, private browsing
 or browser eviction can remove local saves; export a backup for safekeeping.
 
-Checks: `node Apps/Disk/AutoSave.browser.mjs` exercises actual guest file writes,
+Checks: `node Apps/Disk/Checkpoint.browser.mjs` covers frame/input progress during compression, concurrent writes, automatic follow-up saves and visibility changes. `node Apps/Disk/AutoSave.browser.mjs` exercises actual guest file writes,
 restart, tab close/reopen and multiple tabs with one and four cores;
 `node Apps/Disk/Storage.browser.mjs` checks exact sector restoration, replacement
 and transaction failure.
