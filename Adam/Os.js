@@ -641,7 +641,12 @@ const diskMsg = (m) => {
 };
 const osRequest=(message,transfer=[])=>engine.Request(message,transfer);
 const listOSDir=dir=>osRequest({cmd:"listDir",dir});
-const writeOSFile = (path, bytes) => osRequest({cmd:"osWrite",path,name:path.split("/").pop(),run:false,bytes},[bytes]);
+async function writeOSFile(path,bytes)
+{
+  if (paused)
+    return {ok:false,msg:"Resume TempleOS before saving files."};
+  return osRequest({cmd:"osWrite",path,name:path.split("/").pop(),run:false,bytes},[bytes]);
+}
 const uploadToHome = (name, text, run) => {
   const bytes = new TextEncoder().encode(text).buffer;
   return osRequest({cmd:"osWrite",name,path:"C:/Home/"+name,run:!!run,bytes},[bytes]);

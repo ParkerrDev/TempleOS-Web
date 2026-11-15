@@ -18,6 +18,8 @@ button:disabled { color:#555; background:#eee; cursor:default; }
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
 input[type=number],select { min-width:0; padding:3px 4px; border:1px solid #000; border-radius:0; background:#fff; }
 input[type=number] { width:72px; }
+.disk-save { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.disk-save input { flex:1; min-width:100px; width:150px; border:1px solid #000; padding:5px; }
 select { width:100%; }
 .pick { display:block; color:var(--blue); margin-bottom:6px; }
 input[type=file] { display:block; width:100%; min-width:0; border:1px solid #000; background:#fff; font-size:0; }

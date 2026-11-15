@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://templeosweb.netlify.app/sitemap.xml

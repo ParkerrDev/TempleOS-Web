@@ -42,7 +42,9 @@
     </div>
     <div class="transport"><button id="play" disabled type="button">Play</button><label for="frame">Frame</label><input id="frame" type="range" min="0" max="0" value="0" disabled><output id="frameLabel">0 / 0</output><output id="playbackRate" aria-label="Playback frame rate" aria-live="off"></output></div>
     <p id="status" role="status" aria-live="polite">Open a file to begin.</p>
-    <div class="exports" aria-label="Download sprite"><button id="gr" disabled>Save frame .GR</button><button id="png" disabled>Save PNG sheet</button><button id="gif" disabled>Save GIF</button><button id="package" disabled>Save TempleOS package</button></div>
+    <div class="disk-save"><label for="diskName">C:/Home/</label><input id="diskName" type="text" value="Sprite.GR" maxlength="37" aria-label="TempleOS sprite filename"><button id="diskSave" disabled>Save to TempleOS</button></div>
+    <p class="help">Saves this frame. Replaces the same filename.</p>
+    <div class="exports" aria-label="Download sprite"><button id="gr" disabled>Download frame .GR</button><button id="png" disabled>Download PNG sheet</button><button id="gif" disabled>Download GIF</button><button id="package" disabled>Download package</button></div>
     <details><summary>Use your sprite in TempleOS</summary><p>The package includes every frame as a .GR file and Play.HC. Extract it into a folder on your TempleOS disk, then include Play.HC. Press a key to stop playback.</p><pre>CDC *dc=GRRead("Frame000.GR");
 U8 *sprite=DC2Sprite(dc);
 Sprite(,100,100,sprite);

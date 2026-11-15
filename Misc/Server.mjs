@@ -11,7 +11,7 @@ const ROOT=fileURLToPath(new URL("..",import.meta.url));
 //build, and from the mounted repos the compiler, the HolyC the site compiles
 //and the snapshots (which _redirects sends to the CDN when the build has
 //written it).
-const SERVED=new RegExp("^(index\\.html|_headers|_redirects|"+
+const SERVED=new RegExp("^(index\\.html|robots\\.txt|sitemap\\.xml|_headers|_redirects|"+
   "(Adam|Apps|Demo|hemu/Kernel|hemu/holyc-wasm/src)/.+|holyc-fmt/Fmt\\.js|"+
   "build/(?:Gr|Query|Mp4|Mkv|GodBits|HolyCFmt)\\.wasm|"+
   "hemu/build/hemu(?:-smp)?\\.(?:wasm|json)|"+
@@ -22,7 +22,7 @@ const SERVED=new RegExp("^(index\\.html|_headers|_redirects|"+
 //beside it.
 const NOT_SERVED=/\.(mjs|pyc?|sh|c|md|toml)$|(^|\/)Test\//;
 const MIME={".html":"text/html; charset=UTF-8",
-  ".js":"application/javascript; charset=UTF-8",
+  ".js":"application/javascript; charset=UTF-8",".xml":"application/xml; charset=UTF-8",
   ".css":"text/css; charset=UTF-8",".txt":"text/plain; charset=UTF-8",
   ".json":"application/json",".wasm":"application/wasm",".png":"image/png",
   ".svg":"image/svg+xml",".jpg":"image/jpeg",".ttf":"font/ttf",

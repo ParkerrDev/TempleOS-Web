@@ -6,33 +6,33 @@
   "fixtures": {
     "snapshot": {
       "gzip": true,
-      "sha256": "1dff353072a1faf85bf4f6729d59de65a2cf2ce2eca9b84aa75ec911ee6fd1d4"
+      "sha256": "8205727ce5ebd3c48c2f8e76dbc23c263184f68dcf5ce528ccba28ae06ebfad9"
     },
     "disk": {
       "gzip": true,
       "sha256": "ca12b5604c2f1d9fe83a7f910ce131f0bf074e1d33f24aa68fd4fad34198d148"
     },
     "capture": {
-      "ramSha256": "13a5623669137edabaf72d7b9154875f2a0725a107f5a0e36ee910e832c87f5f",
-      "registerSha256": "7a99dfd660fca92a177a9c9c7deb5801bbc07743369066df352c9053f0adcce7",
-      "diskSha256": "7116c60e067124f38bcccd529b159f0aea60cccdc0107b06af362e942e71eb7e",
-      "overlaySha256": "c7d3a2c416248f071d00bc3f34589eca3ffb5bbdd6190593cb0d27a1171a1eab"
+      "ramSha256": "9770d1d61b9f497ffd6043b22593fd92af5ee7a6f1f8eb9921901b57a6f549d7",
+      "registerSha256": "dd03700ac460da7cdf19349d0ccf5e4603f722f077f43d6df18b6af87a22ae81",
+      "diskSha256": "852e8df321832ee182d7053a15b7e850863d09e1a6d0a19c6acc12349d7e7f48",
+      "overlaySha256": "d31a498440b852158c3a3070e86c233d9f2e7fc3981511f16e0ef4c049601df2"
     }
   },
   "fixtureLoaderSha256": "b61d98bce6cfc8c963979f43b56c714872b9e3bc7c67453b78e348a9b6ad0b83",
   "guestHarnessSha256": "a15db5b9cd7b47dfe9db8f1f23c5d1278685be6837daf098ab350340e7814dad",
   "machineRuntimeSha256": "d2d24a9c9838d0043d9f787859bbf84edbeeb31db8232584394ec9f19f2b6c2d",
   "siblings": [
-    "hemu https://github.com/ParkerrDev/HEMU 3eeeb7db6a37099e70e50fac6c746e892dce69dd"
+    "hemu https://github.com/ParkerrDev/HEMU 91b6b54239f7561f70fc6cee443002fdc6955b80"
   ],
   "compiler": "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm 42e2bad802f6a028ce4dcacc154aeedc4a12aa16",
-  "engineSha256": "eae570fc0e7a4ddfc443bbd7fb7f8db7e43eac900af18f37e0a97009f68b0f6e",
+  "engineSha256": "543810ba31fe55c5f78da519ea3973b69b97df9c4a1f3cd1f734c740f2316337",
   "backend": {
     "engine": "qemu",
     "accelerator": "kvm",
     "version": "QEMU emulator version 11.1.2"
   },
-  "oracle": "qemu-i6oucnuq",
+  "oracle": "qemu-nikwtqmi",
   "programs": {
     "Babel": {
       "sourceSha256": "605df9a7f7c5cf48213f77727734778830039185daa0ccb60f44ca64e3ae0953",

@@ -17,16 +17,27 @@ let source = null, frames = [], originals = [], previews = [], size = {width:160
 let player = null, ff = null, busy = false, cancelled = false;
 let cancelMapping = null,gr_codec=null,videoAbort=null;
 let rateStart=0,rateFrames=0;
+let disk_write=null,disk_ready=false,disk_busy=false;
+function DiskEnabled()
+{
+  $('diskSave').disabled=!frames.length || !disk_ready || disk_busy;
+}
+addEventListener('studio-disk',function (e) {
+  disk_write=e.detail.write;
+  disk_ready=e.detail.ready;
+  DiskEnabled();
+});
 for (const color of PALETTE) { const s=document.createElement('span'); s.style.background=`rgb(${color})`; s.title=color.join(', '); $('palette').append(s); }
 function status(s) { $('status').textContent=s; }
 function playbackStop() { player?.stop(); $('play').textContent='Play';$('playbackRate').textContent=''; }
 addEventListener('studio-close', playbackStop);
-function exportsEnabled(yes) { for(const id of ['gr','png','gif','package','frame','play']) $(id).disabled=!yes; }
+function exportsEnabled(yes) { for(const id of ['gr','png','gif','package','frame','play']) $(id).disabled=!yes;DiskEnabled(); }
 function clearResult() { playbackStop(); player=null;frames=[]; originals=[];previews=[]; exportsEnabled(false); $('frameLabel').textContent='0 / 0'; }
 function selectFile(file) {
   if (busy || !file) return;
   if (file.size > 100*1024*1024) { status('Choose a file smaller than 100 MB.'); return; }
   source=file; clearResult(); $('filename').textContent=file.name; $('convert').disabled=false; status('Ready to convert.');
+  $('diskName').value=(file.name.replace(/\.[^.]*$/,'').replace(/[^A-Za-z0-9_-]/g,'_').slice(0,34)||'Sprite')+'.GR';
 }
 $('file').onchange=e=>selectFile(e.target.files[0]);
 $('file').disabled=false;
@@ -148,6 +159,29 @@ $('controls').onsubmit=async e=>{
 };
 function download(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 $('gr').onclick=()=>download(gr_codec.encodeGR(frames[Number($('frame').value)],size.width,size.height),'Sprite.GR','application/octet-stream');
+$('diskSave').onclick=async function ()
+{
+  let name=$('diskName').value.trim(),path,bytes,res;
+  if (!frames.length || !disk_ready || disk_busy) return;
+  if (!/\.gr$/i.test(name)) name+='.GR';
+  if (name.length>37 || !/^[A-Za-z0-9_-][A-Za-z0-9_. -]*\.gr$/i.test(name)) {
+    status('Use a .GR filename up to 37 characters: letters, numbers, spaces, dots, _ or -.');
+    return;
+  }
+  path='C:/Home/'+name;
+  disk_busy=true;DiskEnabled();
+  status('Saving '+path+'…');
+  try {
+    bytes=gr_codec.encodeGR(frames[Number($('frame').value)],size.width,size.height);
+    res=await disk_write(path,bytes.slice().buffer);
+    if (!res.ok) throw new Error(res.msg);
+    status('Saved '+path);
+  } catch (e) {
+    status('Save failed: '+e.message);
+  } finally {
+    disk_busy=false;DiskEnabled();
+  }
+};
 $('gif').onclick=()=>download(gr_codec.encodeGIF(frames,size.width,size.height,delayMs),'Sprite.gif','image/gif');
 let player_source;
 $('package').onclick=async()=>{
