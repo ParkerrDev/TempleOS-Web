@@ -20,6 +20,6 @@ const paths={
 
 export function Icon(name)
 {
-  return '<svg class="action-icon" viewBox="0 0 16 16" width="24" height="24" '+
+  return '<svg class="action-icon" viewBox="0 0 16 16" width="20" height="20" '+
     'aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">'+paths[name]+'</svg>';
 }

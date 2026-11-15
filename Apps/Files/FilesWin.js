@@ -4,15 +4,13 @@ import {Icon} from "../../Adam/Icons.js";
 
 WinAdd(`
   #filesWin { display:flex; flex-direction:column; gap:8px; width:min(820px,94vw); height:min(620px,82vh); padding:10px; margin:0; }
-  .files-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  #filesWin button { width:auto; }
-  #filesWin input { font:inherit; min-width:0; padding:6px; border:2px solid var(--blue); background:#fff; color:#000; }
+  #filesWin input { font:inherit; min-width:0; height:var(--ctlh); padding:3px 6px; border:2px solid var(--blue); background:#fff; color:#000; }
   #filesPath { flex:1; }
-  #filesFilter { width:18ch; margin-left:auto; }
+  #filesFilter { width:100%; }
   .files-body { display:flex; flex:1; min-height:0; border:2px solid var(--blue); }
   .files-places { display:flex; flex-direction:column; gap:6px; width:140px; flex:none; padding:8px; border-right:2px solid var(--blue); }
   .files-places h3 { color:var(--blue); font:inherit; margin:0 0 6px; }
-  #filesWin .files-places button { width:100%; }
+  .files-places button { display:flex; align-items:center; gap:6px; }
   .files-places button[aria-current] { background:var(--blue); color:#fff; }
   .files-main { display:flex; flex:1; min-width:0; flex-direction:column; background:#fff; }
   .files-columns,.files-entry { display:grid; grid-template-columns:minmax(0,1fr) 90px 80px; gap:8px; align-items:center; }
@@ -36,25 +34,24 @@ WinAdd(`
     .files-places .action-icon { display:none; }
     .files-columns,.files-entry { grid-template-columns:minmax(0,1fr) 65px; }
     .files-type { display:none; }
-    #filesFilter { width:100%; margin:0; }
   }
 `, `<div id="filesOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Files">
   <div class="win" id="filesWin" data-title="Files">
     <span class="close" id="filesClose" title="Close">[X]</span>
-    <form id="filesLocation" class="files-bar">
+    <form id="filesLocation" class="action-bar">
       <button id="filesBack" type="button" class="icon-button" title="Back" aria-label="Back">${Icon("back")}</button>
       <button id="filesForward" type="button" class="icon-button" title="Forward" aria-label="Forward">${Icon("forward")}</button>
       <button id="filesUp" type="button" class="icon-button" title="Parent folder" aria-label="Parent folder">${Icon("up")}</button>
       <input id="filesPath" aria-label="Folder path" value="C:/" spellcheck="false" autocomplete="off">
       <button id="filesRefresh" type="button" class="icon-button" title="Refresh folder" aria-label="Refresh folder">${Icon("refresh")}</button>
     </form>
-    <div class="files-bar">
-      <button id="filesNew" type="button">${Icon("file")} New program</button>
+    <div class="action-grid">
+      <button id="filesNew" type="button" title="New HolyC program" aria-label="New program">${Icon("file")} New</button>
       <button id="filesImport" type="button">${Icon("upload")} Import</button>
       <button id="filesOpen" type="button">${Icon("edit")} <span>Edit</span></button>
       <button id="filesDownload" type="button">${Icon("download")} Download</button>
-      <input id="filesFilter" type="search" placeholder="Filter files" aria-label="Filter files">
     </div>
+    <input id="filesFilter" type="search" placeholder="Filter files" aria-label="Filter files">
     <div class="files-body">
       <nav class="files-places" aria-label="Places"><h3>Places</h3>
         <button data-path="C:/" title="TempleOS C: drive">${Icon("folder")} C:</button>

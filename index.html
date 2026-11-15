@@ -100,7 +100,7 @@
     /* The 16 colors, the guest's own (PALETTE in Adam/FrameBuf.js, Adam/Gr/GrPalette.HC). */
     :root { --black:#000000; --blue:#0000AA; --green:#00AA00; --cyan:#00AAAA; --red:#AA0000; --purple:#AA00AA;
             --brown:#AA5500; --ltgray:#AAAAAA; --dkgray:#555555; --ltblue:#5555FF; --ltgreen:#55FF55;
-            --ltcyan:#55FFFF; --ltred:#FF5555; --ltpurple:#FF55FF; --yellow:#FFFF55; --white:#FFFFFF; --ctlh:26px; }
+            --ltcyan:#55FFFF; --ltred:#FF5555; --ltpurple:#FF55FF; --yellow:#FFFF55; --white:#FFFFFF; }
     * { margin:0; padding:0; box-sizing:border-box; font-family:'TempleOS','dos_vga',"Courier New",monospace; cursor:url('Adam/Cursor.png'),auto;
         -webkit-font-smoothing:none; font-smooth:never; text-rendering:optimizeSpeed; }
     /* The mouse is the real TempleOS pointer: the Cursor.png arrow is reconstructed pixel-for-pixel
@@ -192,14 +192,9 @@
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; gap:5px; align-items:stretch; }
     .toolbar button { font-size:11px; padding:0 6px; min-height:28px; }
-    /* 24px is the size the icons are drawn at: one grid unit to one pixel on a standard screen */
-    .toolbar button .ico { display:inline-block; width:24px; height:24px; vertical-align:middle; }
-    .ico svg { display:block; width:24px; height:24px; fill:currentColor; shape-rendering:crispEdges; }
+    .toolbar button .ico { display:inline-block; width:20px; height:20px; vertical-align:middle; }
+    .ico svg { display:block; width:20px; height:20px; fill:currentColor; shape-rendering:crispEdges; }
     button, .tbtn, .ico { font-variant-emoji:text; }
-    button { font-family:'TempleOS','dos_vga',monospace; font-size:12px; color:#000; background:#fff;
-             border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
-    button:hover:not(:disabled) { color:#fff; background:#000; }
-    button:disabled { color:var(--ltgray); }
 
     #frame { padding:5px; }
     #osNotice { position:absolute; left:8px; right:8px; bottom:8px; z-index:35; display:flex; align-items:center; gap:8px; padding:8px; background:var(--white); color:var(--blue); border:3px double var(--blue); font-size:12px; }
@@ -253,7 +248,7 @@
 
     /* on-screen function/modifier keys - works on desktop and mobile; modifiers latch (✱) */
     #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; }
-    #keysbar button { width:auto; font-size:12px; padding:2px 5px; text-align:center; }
+    #keysbar button { width:auto; min-height:0; font-size:12px; padding:2px 5px; text-align:center; }
     #keysbar [data-key^="Arrow"] { display:none; }
     .keyswin.input-docked { position:absolute !important; left:0 !important; right:0 !important; top:auto !important; bottom:calc(env(safe-area-inset-bottom,0px) + var(--keyboard-inset, 0px)); width:auto !important; height:auto !important; margin:0; padding:4px; z-index:10 !important; }
     .keyswin.input-docked > :not(#keysbar) { display:none; }

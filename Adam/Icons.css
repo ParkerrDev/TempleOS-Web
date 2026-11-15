@@ -1,4 +1,16 @@
-.action-icon { display:inline-block; width:24px; height:24px; vertical-align:middle; flex:none; pointer-events:none; }
-button.icon-button { display:inline-flex; align-items:center; justify-content:center; width:36px; min-width:36px; min-height:34px; padding:3px; }
+:root { --ctlh:30px; }
+button { box-sizing:border-box; border-radius:0; font-family:'TempleOS','dos_vga',monospace; font-size:12px; line-height:1;
+  color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; min-height:var(--ctlh);
+  padding:3px 8px; text-align:left; width:100%; white-space:nowrap; }
+button:hover:not(:disabled) { color:#fff; background:#000; }
+button:disabled { color:var(--ltgray,#AAA); }
+.action-icon { display:inline-block; width:20px; height:20px; vertical-align:middle; flex:none; pointer-events:none; }
+.action-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.action-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--action-width,144px)),1fr)); gap:8px; width:100%; }
+.action-bar > button,.action-grid > button,button.action-button,button.icon-button {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px; width:auto; min-height:var(--ctlh); padding:3px 8px; text-align:center; }
+.action-grid > button { width:100%; }
+button.icon-button { width:var(--ctlh); min-width:var(--ctlh); height:var(--ctlh); padding:3px; }
+button[hidden] { display:none; }
 button:focus-visible { outline:2px solid #000; outline-offset:2px; box-shadow:0 0 0 4px var(--yellow,#FFFF55); }
-@media (pointer:coarse) { button.icon-button { min-width:42px; min-height:42px; } }
+@media (pointer:coarse) { :root { --ctlh:40px; } }

@@ -6,7 +6,7 @@
 .clip-times label { display:flex; flex-direction:column; gap:4px; }
 .clip-times input { font:inherit; color:#000; background:#FFF; border:2px solid #0000AA;
   padding:4px; width:10ch; }
-.clip-panel button { width:auto; padding:6px; font:inherit; }
+.clip-panel button { width:auto; }
 .clip-panel a { color:inherit; text-decoration:underline; }
 .clip-status { min-height:1.3em; }
 .vidwin { padding:6px; }
@@ -15,9 +15,7 @@
 .video-media { min-height:0; background:#000; }
 .video-media video { display:block; width:100%; max-height:62vh; background:#000; }
 .video-media video[hidden],.clip-panel[hidden] { display:none; }
-.video-toolbar { display:flex; gap:4px; padding-top:6px; }
-.video-toolbar button { width:36px; min-height:34px; padding:3px; display:grid; place-items:center; }
-.video-toolbar .video-transcript { width:auto; display:flex; align-items:center; gap:5px; }
+.video-toolbar { gap:6px; padding:6px 2px 2px; }
 .video-copy { width:auto; align-self:start; margin-top:8px; }
 .video-copy[hidden] { display:none; }
 .video-toolbar button:last-child { margin-left:auto; }

@@ -30,7 +30,7 @@ export function VideoPlayer(video,seconds=0,play=true,Changed=function () {},Tra
     bar=document.createElement("div"),status=document.createElement("p"),v,
     clip=null,clip_open=false,closed=false,token=0,blob=null,buttons={},list=null,offset=0,conversion=null,alternate=null,convert_button=null;
   element.className="video-player";media.className="video-media";
-  bar.className="video-toolbar";status.className="video-status";
+  bar.className="video-toolbar action-bar";status.className="video-status";
   status.setAttribute("role","status");
   for (let [key,label] of [["previous","Previous video"],["next","Next video"],
       ["random","Random video"],["clip","Clip controls"]]) {

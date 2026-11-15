@@ -14,8 +14,6 @@ const CSS='    /* Disk & Save window */\n'+
   '    .disk-sec h3 { color:var(--red); font-size:12px; font-weight:normal; margin-bottom:3px; }\n'+
   '    .disk-sec p { color:var(--blue); font-size:12px; line-height:1.0; margin-bottom:6px; }\n'+
   '    .disk-sec kbd { background:var(--blue); color:#fff; padding:0 4px; }\n'+
-  '    .disk-row { display:flex; gap:8px; flex-wrap:wrap; }\n'+
-  '    .disk-row button { width:auto; }\n'+
   '    #diskStatus { color:var(--red); font-size:12px; min-height:1.4em; padding:6px 2px 0; }\n';
 const HTML='  <div id="diskOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Disk and Save">\n'+
   '    <div class="win" id="diskWin" data-title="Disk &amp; Save">\n'+
@@ -26,7 +24,7 @@ const HTML='  <div id="diskOverlay" class="overlay" role="dialog" aria-modal="tr
   '          <p>C: saves automatically. Session checkpoints save when idle; use Save session before leaving. Clearing site data removes these saves; export a backup to keep a separate copy.</p>\n'+
   '          <p id="diskSaveStatus" role="status">Waiting for TempleOS…</p>\n'+
   '          <p>A <b>snapshot</b> saves the running machine, its C: disk and settings together. Import it to resume that session. A <b>disk image</b> saves the C: drive by itself.</p>\n'+
-  '          <div class="disk-row">\n'+
+  '          <div class="action-bar">\n'+
   '            <button id="saveSession">Save session</button>\n'+
   '            <button id="dlSnap">↑ Export snapshot</button>\n'+
   '            <button id="dlDisk">↑ Export C: disk</button>\n'+
@@ -35,7 +33,7 @@ const HTML='  <div id="diskOverlay" class="overlay" role="dialog" aria-modal="tr
   '        <div class="disk-sec">\n'+
   '          <h3>Load / import</h3>\n'+
   '          <p>Boot from a snapshot you exported before, or mount a custom / previously-saved C: disk image (raw or qcow2, optionally gzipped). Importing reloads the page.</p>\n'+
-  '          <div class="disk-row">\n'+
+  '          <div class="action-bar">\n'+
   '            <button id="ulSnap">↓ Import snapshot</button>\n'+
   '            <button id="ulDisk">↓ Import C: disk</button>\n'+
   '          </div>\n'+

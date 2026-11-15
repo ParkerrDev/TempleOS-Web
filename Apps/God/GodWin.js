@@ -11,8 +11,7 @@ const CSS=`
 #godOut article { margin-bottom:14px; }
 #godOut h3 { color:var(--ltgreen); font-size:12px; margin-bottom:8px; }
 #godOut p { white-space:pre-wrap; line-height:1.3; }
-#godBar { display:flex; gap:8px; flex-wrap:wrap; }
-#godBar button { width:auto; min-height:32px; }
+#godBar { --action-width:110px; }
 #godStatus { min-height:2.4em; line-height:1.2; }
 #godNote { font-size:11px; line-height:1.3; }
 `;
@@ -23,11 +22,11 @@ const HTML=`
     <span class="close" id="godClose">[X]</span>
     <div id="godOut" aria-label="Words and Bible passages"></div>
     <div id="godStatus" role="status"></div>
-    <div id="godBar">
+    <div id="godBar" class="action-grid">
       <button id="godWord" data-action="word">Word</button>
       <button id="godPassage" data-action="passage">Passage</button>
-      <button id="godSong" data-action="song">Song in TempleOS</button>
-      <button id="godDoodle" data-action="doodle">Doodle in TempleOS</button>
+      <button id="godSong" data-action="song" title="Open Song in TempleOS">Song</button>
+      <button id="godDoodle" data-action="doodle" title="Open Doodle in TempleOS">Doodle</button>
       <button id="godClear">Clear</button>
     </div>
     <p id="godNote">Words and passages use the timing-bit order from

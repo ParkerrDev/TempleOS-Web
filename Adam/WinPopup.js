@@ -110,7 +110,7 @@ export function WinPopup(w)
   if (WinMobile(w) || leaving)
     return null;
   popup=window.open("","_blank","popup,width="+Math.max(320,Math.round(r.width))+
-    ",height="+Math.max(160,Math.round(r.height)+36));
+    ",height="+Math.max(160,Math.round(r.height)+44));
   if (!popup) {
     WinBringBack(w);
     PopupBlocked(w);
@@ -122,13 +122,16 @@ export function WinPopup(w)
   base=doc.createElement("base");
   base.href=document.baseURI;
   doc.head.append(base);
-  for (el of document.querySelectorAll("style,link[rel=stylesheet]"))
-    doc.head.append(el.cloneNode(true));
+  for (const sheet of document.styleSheets) {
+    style=doc.createElement("style");
+    style.textContent=Array.from(sheet.cssRules,rule=>rule.cssText).join("\n");
+    doc.head.append(style);
+  }
   style=doc.createElement("style");
   style.textContent="html,body{height:100%;min-height:0;overflow:hidden}"+
-    "body{padding:36px 0 0!important;display:block!important}"+
+    "body{padding:calc(var(--ctlh) + 14px) 0 0!important;display:block!important}"+
     "#popupReturn{position:fixed;inset:4px 4px auto;z-index:2147483647;"+
-    "width:calc(100% - 8px);height:26px;padding:2px 8px}"+
+    "width:calc(100% - 8px);height:var(--ctlh)}"+
     ".overlay{position:static!important;display:block!important;"+
     "padding:0!important;background:none!important;height:100%;pointer-events:auto}"+
     ".ovfree{display:none!important}body>.win,body>#frame,.overlay>.win{"+

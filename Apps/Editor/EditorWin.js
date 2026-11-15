@@ -7,17 +7,13 @@ import {os_game,OsFileWrite} from "../../Adam/Os.js";
 import {setupGameViews} from "../Games/GameView.js";
 
 const CSS='    #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }\n'+
-  '    .ed-bar { display:flex; flex-wrap:wrap; gap:7px; align-items:center; flex:0 0 auto; }\n'+
-  '    .ed-bar button { display:inline-flex; align-items:center; gap:5px; }\n'+
-  '    #editorWin .ed-bar button { width:auto; text-align:center; min-height:34px; }\n'+
+  '    .ed-bar { flex:0 0 auto; }\n'+
   '    #editorWin select { width:auto; max-width:300px; height:var(--ctlh); font-size:12px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:4px 6px; }\n'+
   '    #editorWin #status { margin-left:auto; color:var(--blue); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:42%; }\n'+
   '    .ed-body { flex:1 1 auto; min-height:0; display:flex; gap:6px; }\n'+
   '    .ed-pane { flex:1 1 0; min-width:0; display:flex; flex-direction:column; border:3px double var(--blue); background:#fff; }\n'+
   '    .ed-h { flex:0 0 auto; background:var(--blue); color:#fff; padding:2px 7px; font-size:12px; letter-spacing:0; }\n'+
   '    .ed-screenhead { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px; }\n'+
-  '    .ed-screenhead button { display:inline-flex; align-items:center; gap:5px; width:auto; padding:3px 6px; font-size:11px; }\n'+
-  '    .preview-actions { display:flex; flex-wrap:wrap; gap:7px; }\n'+
   '    .ed-editwrap { position:relative; flex:1 1 auto; min-height:0; overflow:hidden; background:#fff; }\n'+
   '    #editorHL, #editor { position:absolute; inset:0; margin:0; border:0; padding:6px 8px; box-sizing:border-box;\n'+
   '        font-family:\'TempleOS\',\'dos_vga\',monospace; font-size:12px; line-height:1.0; letter-spacing:0; tab-size:8; white-space:pre; overflow:auto; }\n'+
@@ -48,7 +44,7 @@ const CSS='    #editorWin { display:flex; flex-direction:column; gap:6px; width:
   '    #gameFile, #gameRestore, #gameDraft { display:none; }\n'+
   '    #editorOverlay.gameproject #gameBack, #editorOverlay.gameproject #gameRun, #editorOverlay.gameproject #gameStop, #editorOverlay.gameproject #gameToDisk,\n'+
   '    #editorOverlay.gameproject #gameTitle, #editorOverlay.gameproject #gameFile, #editorOverlay.gameproject #gameRestore,\n'+
-  '    #editorOverlay.gameproject #gameDraft { display:inline-block; }\n'+
+  '    #editorOverlay.gameproject #gameDraft { display:inline-flex; }\n'+
   '    #editorOverlay.gameproject #demoSelect, #editorOverlay.gameproject #runBtn, #editorOverlay.gameproject #edToDisk { display:none; }\n'+
   '    #editorOverlay.gameproject .ed-pane { min-height:0; }\n'+
   '    #gamePreviewStatus { display:none; }\n'+
@@ -61,14 +57,12 @@ const CSS='    #editorWin { display:flex; flex-direction:column; gap:6px; width:
   '    @media (max-width:979.98px) { #editorOverlay.gameproject .ed-pane:last-child { flex:1 0 480px; } }\n'+
   '    #gameDraft { font-size:11px; padding:4px; color:var(--blue); }\n'+
   '    #gameFile { max-width:100% !important; width:100% !important; }\n'+
-  '    #gameWinBar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:8px; }\n'+
-  '    #gameWinBar button { width:auto; }\n'+
+  '    #gameWinBar { margin-bottom:8px; }\n'+
   '    #gameWinStatus { font-size:12px; max-width:640px; }\n'+
   '    .gamewin-screen { background:#000; display:flex; justify-content:center; align-items:center; padding:4px; }\n'+
   '    #gameWin { display:flex; flex-direction:column; width:min(1040px,94vw); height:min(88vh,850px); margin:0; padding:8px; }\n'+
   '    #gameWinSlot { flex:1 1 auto; min-height:0; }\n'+
   '    #gameWinBar { flex:0 0 auto; }\n'+
-  '    #gameWinBar button { display:inline-flex; align-items:center; gap:5px; }\n'+
   '    #gameWinStatus { flex:1 1 240px; overflow-wrap:anywhere; }\n'+
   '    .ed-screenwrap, #gameWinSlot { container-type:size; }\n'+
   '    #editorWin #screen, #editorOverlay.gameproject #editorWin #screen, #gameWinOverlay #screen {\n'+
@@ -96,7 +90,7 @@ const CSS='    #editorWin { display:flex; flex-direction:column; gap:6px; width:
 const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="HolyC to WebAssembly editor">\n'+
   '    <div class="win" id="editorWin" data-title="HolyC → WebAssembly Editor">\n'+
   '      <span class="close" id="editorClose" title="Close editor">[X]</span>\n'+
-  '      <div class="ed-bar">\n'+
+  '      <div class="ed-bar action-bar">\n'+
   '        <button id="gameBack" title="Back to the games list">← Games</button>\n'+
   '        <button id="gameRun" title="Run the latest edits in the preview">' + Icon('play') + ' Run</button>\n'+
   '        <button id="gameStop" title="Stop the game preview" disabled>' + Icon('stop') + ' Stop</button>\n'+
@@ -122,7 +116,7 @@ const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="
   '          <div class="ed-editwrap"><pre id="editorHL" aria-hidden="true"></pre><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea></div>\n'+
   '        </section>\n'+
   '        <section class="ed-pane" id="editorPreview">\n'+
-  '          <div class="ed-h ed-screenhead"><span>Screen - 640×480, 16-color</span><div class="preview-actions"><button id="gameCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this preview; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="previewFullscreen" type="button" title="Show the game preview fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen game</span></button></div></div>\n'+
+  '          <div class="ed-h ed-screenhead"><span>Screen - 640×480, 16-color</span><div class="action-bar"><button id="gameCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this preview; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="previewFullscreen" type="button" title="Show the game preview fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen game</span></button></div></div>\n'+
   '          <div id="gamePreviewStatus" role="status"></div>\n'+
   '          <div class="ed-screenwrap"><canvas id="screen" width="640" height="480" tabindex="0"></canvas></div>\n'+
   '          <div class="ed-h">Console</div>\n'+
@@ -135,7 +129,7 @@ const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="
   '  <div id="gameWinOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Game">\n'+
   '    <div class="win" id="gameWin" data-title="Game">\n'+
   '      <span class="close" id="gameWinClose" title="Close">[X]</span>\n'+
-  '      <div id="gameWinBar"><button id="gameWinRun" type="button">Run</button><button id="gameWinEdit">Edit source</button><button id="gameWinCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this game; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="gameFullscreen" type="button" title="Show this game fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen</span></button><span id="gameWinStatus" role="status"></span></div>\n'+
+  '      <div id="gameWinBar" class="action-bar"><button id="gameWinRun" type="button">Run</button><button id="gameWinEdit">Edit source</button><button id="gameWinCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this game; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="gameFullscreen" type="button" title="Show this game fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen</span></button><span id="gameWinStatus" role="status"></span></div>\n'+
   '      <div class="gamewin-screen" id="gameWinSlot"></div>\n'+
   '    </div>\n'+
   '  </div>\n';

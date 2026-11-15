@@ -82,6 +82,7 @@ try {
     await page.locator("#godOut article").waitFor();
     assert((await page.locator("#godOut article h3").innerText()).length>3);
     assert.equal(await page.locator("#godStatus").innerText(),"");
+    await page.screenshot({path:"/tmp/templeos-god-"+(mobile?"mobile":"desktop")+".png"});
     await page.locator("#godClear").click();
     assert.equal(await page.locator("#godOut").innerText(),"");
     const bounds=await page.locator("#godWin").boundingBox();

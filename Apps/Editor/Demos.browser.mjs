@@ -144,12 +144,18 @@ try {
   assert.match(await page.locator("#editor").inputValue(),/U0 MyProgram\(\)/);
   assert.equal(await page.evaluate(()=>new Uint8Array(__holycEditor.FileBytes()).includes(0)),false,
     "New program has no binary records from the previous document");
-  const popupWait=page.waitForEvent("popup"),title=await page.locator("#editorWin .wtitle").boundingBox();
+  const controlStyle=button=>{
+    const style=getComputedStyle(button);
+    return [style.height,style.borderRadius,style.padding,style.display];
+  },runStyle=await page.locator("#runBtn").evaluate(controlStyle),
+    popupWait=page.waitForEvent("popup"),title=await page.locator("#editorWin .wtitle").boundingBox();
   await page.mouse.move(title.x+80,title.y+6);
   await page.mouse.down();
   await page.mouse.move(1295,140,{steps:8});
   await page.mouse.up();
   const popup=await popupWait;
+  assert.deepEqual(await popup.locator("#runBtn").evaluate(controlStyle),runStyle,
+    "Detached windows retain the desktop's external control styles.");
   assert((await popup.locator("#editor").boundingBox()).height>100,
     "the editor keeps its flex layout inside the popup");
   assert((await popup.locator("#screen").boundingBox()).width>100);

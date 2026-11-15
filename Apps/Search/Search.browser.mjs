@@ -157,6 +157,7 @@ async function SearchFeatures(page,context,mobile)
     'Terry Search: "\"an idiot admires complexity\" in:transcript" - top 1 of 1 matching passages\n\n'+passage);
   await page.locator("#tsOut .ts-x").click();
   await page.locator("#tsCpTr").waitFor();
+  await page.screenshot({path:new URL("transcript-"+(mobile?"mobile":"desktop")+".png",dir).pathname});
   assert.deepEqual(await page.locator("#tsOut .ts-line").allTextContents(),
     videos[0].s.map(([s,t])=>" [0:"+s+"]"+t));
   const transcript=videos[0].t+" (2016-03-01) - Terry A. Davis\n"+archive+"\n\n"+

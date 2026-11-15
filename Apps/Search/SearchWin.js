@@ -13,20 +13,17 @@ const CSS='    /* Terry transcript search window */\n'+
   '    #tsQwrap { position:relative; flex:1 1 auto; min-width:0; display:flex; }\n'+
   '    #tsQ { width:100%; min-width:0; height:var(--ctlh); font-family:\'TempleOS\',\'dos_vga\',monospace; font-size:12px; color:#000; background:#fff;\n'+
   '           border:2px solid #fff; outline:2px solid #000; padding:4px 36px 4px 8px; }\n'+
-  '    #tsCopyAll { min-height:34px; display:inline-flex; gap:6px; align-items:center; }\n'+
   '    #tsQ::-webkit-search-cancel-button { -webkit-appearance:none; appearance:none; display:none; }   /* the browser\'s emoji-ish ✕ */\n'+
-  '    #tsClear { position:absolute; right:3px; top:50%; transform:translateY(-50%); width:auto; border:0; outline:0;\n'+
+  '    #tsClear { position:absolute; right:3px; top:50%; transform:translateY(-50%); width:auto; min-height:0; border:0; outline:0;\n'+
   '               background:transparent; color:var(--blue); font-family:inherit; font-size:12px; line-height:1; padding:3px 8px; }\n'+
   '    #tsClear:hover { color:#fff; background:var(--red); }\n'+
   '    #tsQ:placeholder-shown + #tsClear { display:none; }   /* only show when there\'s something to clear */\n'+
   '    #tsCtl { display:flex; gap:10px; align-items:center; flex:0 0 auto; flex-wrap:wrap; }\n'+
-  '    .ts-seg { display:flex; }\n'+
-  '    .ts-seg button { width:auto; height:var(--ctlh); font-size:12px; padding:2px 10px; background:#fff; color:var(--blue); border:2px solid var(--blue); }\n'+
-  '    .ts-seg button + button { border-left:0; }\n'+
+  '    .ts-seg button { width:auto; color:var(--blue); }\n'+
   '    .ts-seg button.on { background:var(--blue); color:#fff; }\n'+
   '    #tsCtl select { font-family:inherit; height:var(--ctlh); font-size:12px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:2px 6px; }\n'+
   '    #tsYearWrap { position:relative; }\n'+
-  '    #tsYearBtn { width:auto; height:var(--ctlh); font-size:12px; padding:2px 10px; }\n'+
+  '    #tsYearBtn { width:auto; }\n'+
   '    #tsYearPanel { display:none; position:absolute; left:0; top:calc(100% + 4px); z-index:6; background:#fff;\n'+
   '                   border:3px double var(--blue); padding:6px 12px; min-width:130px; max-height:280px; overflow:auto; }\n'+
   '    #tsYearPanel.open { display:block; }\n'+
@@ -34,26 +31,24 @@ const CSS='    /* Terry transcript search window */\n'+
   '    #tsYearPanel input { position:absolute; opacity:0; pointer-events:none; }   /* the [ ]/[X] text IS the checkbox (TempleOS style) */\n'+
   '    #tsYearPanel .cb::before { content:"[ ]"; white-space:pre; }\n'+
   '    #tsYearPanel input:checked + .cb::before { content:"[X]"; }\n'+
-  '    #tsYearPanel button { width:100%; margin-top:5px; font-size:12px; padding:1px 6px; }\n'+
+  '    #tsYearPanel button { margin-top:5px; }\n'+
   '    .ts-sec { color:#fff; font-size:12px; padding:2px 2px 5px; }\n'+
   '    #tsMore { width:100%; margin-top:2px; }\n'+
   '    #tsStatus { flex:0 0 auto; color:var(--blue); font-size:12px; padding:0 2px; min-height:1.3em; }\n'+
   '    #tsOut { flex:1 1 auto; min-height:0; overflow:auto; background:var(--blue); padding:6px; }\n'+
-  '    #tsWin button { width:auto; font-size:12px; padding:2px 8px; }\n'+
   '    .ts-hit { display:block; background:#fff; margin:0 0 6px; padding:5px 8px; border:2px solid #fff; }\n'+
   '    .ts-hit:hover { border-color:var(--yellow); }\n'+
   '    .ts-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }\n'+
   '    .ts-t { flex:1 1 180px; color:var(--red); font-weight:bold; font-size:12px; text-decoration:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\n'+
   '    .ts-t:hover { text-decoration:underline; }\n'+
   '    .ts-m { color:var(--blue); font-size:12px; white-space:nowrap; }\n'+
-  '    .ts-act { margin-left:auto; display:flex; gap:4px; flex:0 0 auto; }\n'+
-  '    #tsWin .icon-button { padding:3px; width:36px; min-height:34px; color:var(--blue); }\n'+
+  '    .ts-act { margin-left:auto; display:flex; gap:6px; flex:0 0 auto; }\n'+
+  '    #tsWin .icon-button { color:var(--blue); }\n'+
   '    #tsWin .icon-button:hover { color:#fff; }\n'+
-  '    @media (pointer:coarse) { #tsWin .icon-button { min-width:42px; min-height:42px; } }\n'+
   '    .ts-x { display:block; color:#000; font-size:12px; line-height:1.0; margin-top:2px; word-break:break-word; text-decoration:none; }\n'+
   '    .ts-x b { color:#fff; background:var(--red); font-weight:normal; padding:0 1px; }\n'+
   '    .ts-none { color:#fff; font-size:12px; padding:8px; }\n'+
-  '    .ts-trh { display:flex; gap:6px; align-items:center; flex-wrap:wrap; position:sticky; top:-6px; background:var(--blue); padding:6px 0; z-index:1; }\n'+
+  '    .ts-trh { display:flex; flex-direction:column; gap:8px; align-items:start; position:sticky; top:-6px; background:var(--blue); padding:6px 2px; z-index:1; }\n'+
   '    .ts-trh a { color:var(--yellow); font-size:12px; }\n'+
   '    .ts-line { background:#fff; color:#000; font-size:12px; line-height:1.0; padding:2px 8px; word-break:break-word; }\n'+
   '    .ts-line .ts-ts { color:var(--red); text-decoration:underline; margin-right:6px; }\n'+
@@ -69,9 +64,9 @@ const HTML='  <div id="tsOverlay" class="overlay" role="dialog" aria-modal="true
   '      <div id="tsBar"><span id="tsQwrap"><input id="tsQ" type="search" placeholder="search Terry\'s transcripts… (typos OK)"\n'+
   '        title="Google-style: &quot;exact phrase&quot; · -exclude · terry OR dave · date:2012-2014 · in:titles · since:/until:"\n'+
   '        autocomplete="off" autocapitalize="off" spellcheck="false" /><button id="tsClear" title="clear the search">X</button></span>\n'+
-  '        <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">' + Icon('copy') + ' Copy results</button></div>\n'+
+  '        <button id="tsCopyAll" class="action-button" title="Copy all shown results (quote + video + timestamp + link)">' + Icon('copy') + ' Copy results</button></div>\n'+
   '      <div id="tsCtl">\n'+
-  '        <span class="ts-seg" title="what to search">\n'+
+  '        <span class="ts-seg action-bar" title="what to search">\n'+
   '          <button data-sc="all" class="on">All</button><button data-sc="title">Titles</button><button data-sc="text">Transcript</button>\n'+
   '        </span>\n'+
   '        <select id="tsMode" title="result order">\n'+
@@ -177,9 +172,10 @@ let curTrF = null;                                     // file path shown in the
 const renderTranscript = (v) => {
   curTrF = v.f;
   st.textContent = `${v.t} - full transcript, ${v.s.length} passages${v.n ? ", " + hms(v.n) : ""}`;
-  out.innerHTML = `<div class="ts-trh"><button id="tsBack">← results</button>` +
+  out.innerHTML = `<div class="ts-trh"><div class="action-grid"><button id="tsBack">${Icon("back")} Results</button>` +
     `<button id="tsPlHere" title="play this video in a window - the [h:mm:ss] timestamps below seek it">${Icon("play")} Play</button>` +
-    `<button id="tsCpTr">${Icon("copy")} Copy transcript</button><button id="tsDlTr">↓ .txt</button>` +
+    `<button id="tsCpTr" title="Copy transcript" aria-label="Copy transcript">${Icon("copy")} Copy</button>` +
+    `<button id="tsDlTr" title="Download transcript as .txt" aria-label="Download transcript as .txt">${Icon("download")} .txt</button></div>` +
     `<a href="${url(v, 0)}" target="_blank" rel="noopener">${v.p ? "watch on archive.org" : "open in the mini-player"}</a></div>` +
     v.s.map(([sec, text]) => `<div class="ts-line"><button class="ts-clip-line icon-button" aria-label="Export clip from this timestamp" data-s="${sec}" title="Export a clip from this timestamp">${Icon("clip")}</button> <a class="ts-ts" data-s="${sec}" href="${url(v, sec)}" target="_blank" rel="noopener">[${hms(sec)}]</a>${esc(text)}</div>`).join("");
   out.scrollTop = 0;
