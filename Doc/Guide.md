@@ -53,8 +53,9 @@ loader. [HEMU's runtime documentation](https://github.com/ParkerrDev/HEMU/blob/m
 machine boundary, build, checks and supported behavior.
 
 HEMU executes guest instructions through an interpreter and an **x86-64 → WASM
-block JIT** (`hemu/Kernel/Jit.js`). **Fast graphics** is on by default for smoother
-games. It replaces selected stock drawing routines with HolyC implementations.
+block JIT** (`hemu/Kernel/Jit.js`). **Software drawing acceleration** is on by default
+for smoother games. It replaces selected stock drawing routines with HolyC
+implementations running on the CPU.
 Turn it off in Settings to execute the original drawing instructions. The change
 applies immediately and the choice is remembered on this browser. Both modes use
 the same engine and instruction-level JIT optimizations.
@@ -62,9 +63,9 @@ the same engine and instruction-level JIT optimizations.
 Acceleration checks the complete original code ranges, including helpers it
 bypasses. Edited routines and unsupported inputs fall back to guest execution.
 Polygon assembly, transforms and callbacks run as guest code in both modes;
-fast mode accelerates triangle filling and depth spans. Fast graphics changes
-instruction counts and timing, so it is not a claim of instruction-for-instruction
-fidelity.
+fast mode accelerates triangle filling and depth spans. Software drawing
+acceleration changes instruction counts and timing, so it is not a claim of
+instruction-for-instruction fidelity.
 
 Full machine saves retain their engine and graphics mode. Older embedded engines
 without the switch require Restart to use the current engine; Restart keeps saved

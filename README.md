@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Doc/Brand.svg" alt="TempleOS-Web — TempleOS font, sword and scales" width="960">
+  <img src="Doc/Brand.svg" alt="TempleOS-Web: TempleOS font, sword and scales" width="960">
 </p>
 
 # TempleOS-Web

@@ -16,9 +16,9 @@ WinAdd(`
     <div id="settingsBody">
       <label><input id="showHeader" type="checkbox"> Show header introduction</label>
       <label><input id="showFooter" type="checkbox"> Show footer credits</label>
-      <label><input id="fastGraphics" type="checkbox"> Fast graphics</label>
-      <p>Accelerates TempleOS drawing for smoother games. Turn off to run
-        the original drawing routines. Changes apply immediately.</p>
+      <label><input id="fastGraphics" type="checkbox"> Software drawing acceleration</label>
+      <p>Uses CPU-based replacements for selected TempleOS drawing routines.
+        Turn off to execute the original instructions. Changes apply immediately.</p>
       <label for="frameRate">TempleOS refresh rate</label>
       <select id="frameRate">
         <option value="0">Uncapped</option>
