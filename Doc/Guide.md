@@ -53,7 +53,7 @@ loader. [HEMU's runtime documentation](https://github.com/ParkerrDev/HEMU/blob/m
 machine boundary, build, checks and supported behavior.
 
 HEMU executes guest instructions through an interpreter and an **x86-64 → WASM
-block JIT** (`hemu/Kernel/Jit.js`). **Software drawing acceleration** is on by default
+block JIT** (`hemu/Kernel/Jit.js`). **Web Optimization** is on by default
 for smoother games. It replaces selected stock drawing routines with HolyC
 implementations running on the CPU.
 Turn it off in Settings to execute the original drawing instructions. The change
