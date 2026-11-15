@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {sourceDocument,sourceString} from '../Editor/Source.js';
 import * as protocol from '../../hemu/holyc-wasm/src/runtime/protocol.js';
+import {Icon} from "../../Adam/Icons.js";
 import {KEY,KeyBytes,KeyInput} from '../../Adam/Keyboard.js';
 
 const nodes=new Map(),workers=[],windowEvents=new EventTarget();
@@ -45,7 +46,7 @@ class Worker {
   terminate(){}
 }
 const context=vm.createContext({
-  ...protocol,KEY,KeyBytes,KeyInput,WinFind:id=>document.getElementById(id),document,console,URL,Event,Worker,Int32Array,Uint8Array,SharedArrayBuffer,Atomics,
+  ...protocol,KEY,KeyBytes,KeyInput,Icon,WinFind:id=>document.getElementById(id),document,console,URL,Event,Worker,Int32Array,Uint8Array,SharedArrayBuffer,Atomics,
   DEMOS:[],sourceDocument,sourceString,TextEncoder,TextDecoder,fetch:async()=>new Response('// test source'),PointerEvent:true,crossOriginIsolated:true,performance,
   Speaker:class {resume(){} tone(){}},Framebuffer:class {present(){}},
   addEventListener:windowEvents.addEventListener.bind(windowEvents),

@@ -10,6 +10,7 @@ const WINS={
   gamesBtn:["gamesWin","../Apps/Games/GamesWin.js"],
   spritesBtn:["spritesWin","../Apps/Sprites/SpritesWin.js"],
   godBtn:["godWin","../Apps/God/GodWin.js"],
+  filesBtn:["filesWin","../Apps/Files/FilesWin.js"],
   diskBtn:["diskWin","../Apps/Disk/DiskWin.js"],
   tsBtn:["tsWin","../Apps/Search/SearchWin.js"],
   chatBtn:["chatWin","../Apps/Chat/ChatWin.js"],
@@ -604,3 +605,6 @@ document.querySelector(".toolbar .close").addEventListener("click",
 $("mobileFull").addEventListener("click",function () {$("fsBtn").click();});
 
 WinWorkspaceRestore();
+
+const transcript=new URL(location.href).searchParams.get("transcript");
+if (transcript) import("../Apps/Search/SearchWin.js").then(module=>module.OpenTranscript(transcript)).catch(console.error);

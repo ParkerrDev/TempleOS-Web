@@ -1,13 +1,15 @@
 //The HolyC editor: HolyC compiled to WebAssembly and run in a worker
 //(Apps/Editor/App.js, loaded on first open), and the window games run in, which
 //shares the editor's screen and runner.
+import {Icon} from "../../Adam/Icons.js";
 import {WinAdd,WinRaise,WinFind} from "../../Adam/WinMgr.js";
 import {os_game,OsFileWrite} from "../../Adam/Os.js";
 import {setupGameViews} from "../Games/GameView.js";
 
 const CSS='    #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }\n'+
   '    .ed-bar { display:flex; flex-wrap:wrap; gap:7px; align-items:center; flex:0 0 auto; }\n'+
-  '    #editorWin .ed-bar button { width:auto; text-align:center; height:var(--ctlh); }\n'+
+  '    .ed-bar button { display:inline-flex; align-items:center; gap:5px; }\n'+
+  '    #editorWin .ed-bar button { width:auto; text-align:center; min-height:34px; }\n'+
   '    #editorWin select { width:auto; max-width:300px; height:var(--ctlh); font-size:12px; color:#000; background:#fff; border:2px solid #fff; outline:2px solid #000; padding:4px 6px; }\n'+
   '    #editorWin #status { margin-left:auto; color:var(--blue); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:42%; }\n'+
   '    .ed-body { flex:1 1 auto; min-height:0; display:flex; gap:6px; }\n'+
@@ -96,18 +98,19 @@ const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="
   '      <span class="close" id="editorClose" title="Close editor">[X]</span>\n'+
   '      <div class="ed-bar">\n'+
   '        <button id="gameBack" title="Back to the games list">← Games</button>\n'+
-  '        <button id="gameRun" title="Run the latest edits in the preview">▶ Run</button>\n'+
-  '        <button id="gameStop" title="Stop the game preview" disabled>■ Stop</button>\n'+
+  '        <button id="gameRun" title="Run the latest edits in the preview">' + Icon('play') + ' Run</button>\n'+
+  '        <button id="gameStop" title="Stop the game preview" disabled>' + Icon('stop') + ' Stop</button>\n'+
   '        <button id="gameToDisk" title="Install this project\'s edited source and run it in TempleOS">▤ Run in TempleOS</button>\n'+
   '        <span id="gameTitle"></span>\n'+
   '        <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">- pick a demo / game -</option></select>\n'+
   '        <button id="edNew" title="Start a new HolyC program">New program</button>\n'+
-  '        <button id="runBtn">▶ Run</button>\n'+
+  '        <button id="runBtn">' + Icon('play') + ' Run</button>\n'+
   '        <button id="editorFullscreen" type="button" title="Show the editor fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen editor</span></button>\n'+
   '        <button id="edFmt" title="Lay the code out the way Terry\'s own tools did (HolyC-fmt, a formatter written in HolyC, run in your browser)">⊹ Format</button>\n'+
-  '        <button id="edSave" title="Download the source as a .HC file">↓ Save</button>\n'+
-  '        <button id="edOpen" title="Open a .HC file from your computer">↥ Open</button>\n'+
-  '        <button id="edToDisk" title="Write the source to /Home on the C: drive so TempleOS can run it">➜ To C:/Home</button>\n'+
+  '        <button id="edSave" title="Download the source as a .HC file">'+Icon('download')+' Download</button>\n'+
+  '        <button id="edFiles" title="Browse files on the TempleOS C: drive">' + Icon('folder') + ' Files</button>\n'+
+  '        <button id="edOpen" title="Open a .HC file from your computer">'+Icon('upload')+' Import</button>\n'+
+  '        <button id="edToDisk" title="Save this file to the TempleOS C: drive">Save to C:</button>\n'+
   '        <button id="gameRestore" title="Restore the original source for the selected file">↻ Restore file</button>\n'+
   '        <span id="status">ready</span>\n'+
   '      </div>\n'+
@@ -145,7 +148,7 @@ const ov = WinFind("editorOverlay");
 const closeBtn = WinFind("editorClose");
 // shared, memoized loader for the HolyC runtime (Apps/Editor/App.js) - used by the editor AND
 // the Games launcher (which drives the same compile+worker+canvas+input machinery).
-let appPromise=null,draft=null,draft_loading=false;
+let appPromise=null,draft=null,draft_loading=false,save_directory="C:/Home/";
 const STARTER='U0 MyProgram()\n{\n  "Hello, TempleOS!\\n";\n}\n\nMyProgram;\n';
 const loadEditorApp = () => {
   if (!appPromise) appPromise = import("./App.js")
@@ -194,7 +197,8 @@ function DraftRestore()
       bytes=Uint8Array.from(atob(draft.bytes),function Byte(ch) {
 	return ch.charCodeAt(0);
       });
-      os_game.ed.FileLoad(bytes,draft.name || "MyProgram.HC");
+      save_directory=draft.directory || "C:/Home/";
+      os_game.ed.FileLoad(bytes,draft.name || "MyProgram.HC",false,draft.path || null);
       if (typeof draft.text=="string") {
 	ta.value=draft.text;
 	ta.dispatchEvent(new Event("input"));
@@ -219,7 +223,7 @@ function DraftSave()
     bytes=new Uint8Array(os_game.ed.FileBytes());
     for (i=0;i<bytes.length;i+=8192)
       text+=String.fromCharCode(...bytes.subarray(i,i+8192));
-    draft={name:os_game.ed.FileName(),bytes:btoa(text)};
+    draft={name:os_game.ed.FileName(),bytes:btoa(text),path:os_game.ed.file.path,directory:save_directory};
   } catch (error) {
     if (!draft)
       draft={name:"MyProgram.HC",bytes:btoa(STARTER)};
@@ -234,15 +238,39 @@ function DraftSave()
   }
 }
 
-WinFind("edNew").addEventListener("click",async function NewProgram() {
+export async function EdNew(directory="C:/Home/")
+{
+  open();
   await loadEditorApp();
   ed_game.leave?.();
   ov.classList.remove("gamemode","gameproject");
   os_game.ed.stop();
+  save_directory=directory;
   WinFind("demoSelect").value="";
   os_game.ed.FileLoad(new TextEncoder().encode(STARTER),"MyProgram.HC");
   ta.focus();
-  setStatus("New MyProgram.HC — edit and Run.");
+  setStatus("New program. Save to "+directory+" when ready.");
+}
+
+export async function EdFileOpen(bytes,path)
+{
+  open();
+  await loadEditorApp();
+  ed_game.leave?.();
+  ov.classList.remove("gamemode","gameproject");
+  os_game.ed.stop();
+  save_directory=path.slice(0,path.lastIndexOf("/")+1);
+  WinFind("demoSelect").value="";
+  os_game.ed.FileLoad(bytes,path.split("/").pop(),false,path);
+  ta.focus();
+  setStatus(path);
+}
+WinFind("edNew").addEventListener("click",()=>EdNew().catch(error=>setStatus(error.message)));
+WinFind("edFiles").addEventListener("click",async function () {
+  try {
+    const path=os_game.ed?.file.path,folder=path?path.slice(0,path.lastIndexOf("/")+1):save_directory;
+    await (await import("../Files/FilesWin.js")).Open(folder);
+  } catch (error) {setStatus(error.message);}
 });
 
 
@@ -274,15 +302,25 @@ WinFind("edOpen").addEventListener("click", () => {
   };
   i.click();
 });
-WinFind("edToDisk").addEventListener("click",async()=>{
-  const name=prompt("Write to C:/Home as:",curName());
-  if (!name) return;
+WinFind("edToDisk").addEventListener("click",async function () {
+  const file=os_game.ed?.file,path=file?.path || prompt("Save to TempleOS:",save_directory+curName());
+  if (!path) return;
+  const button=WinFind("edToDisk");
+  button.disabled=true;
   try {
-    const bytes=ed_game.file?await ed_game.file.bytes():os_game.ed.FileBytes();
-    setStatus("writing "+name+" to C:/Home…");
-    const result=await OsFileWrite("C:/Home/"+name,bytes);
-    setStatus(result.ok?"wrote "+name+" to C:/Home":result.msg);
+    if (!path.startsWith("C:/") || path.slice(3).split("/").some(name=>!name || name=="." || name==".." ||
+      name.length>37 || /[\x00-\x1F\\:\u0100-\uFFFF]/.test(name)))
+      throw new Error("Use a C:/ folder and file name, with at most 37 characters per name.");
+    const bytes=os_game.ed.FileBytes();
+    setStatus("Saving "+path+"…");
+    const result=await OsFileWrite(path,bytes);
+    if (!result.ok) throw new Error(result.msg);
+    file.path=path;file.name=path.split("/").pop();
+    if (os_game.ed.file==file) DraftSave();
+    setStatus("Saved "+path);
+    dispatchEvent(new CustomEvent("osfilewrite",{detail:{path}}));
   } catch (error) {setStatus(error.message);}
+  finally {button.disabled=false;}
 });
 // Format: reformat the editor source with holyc-fmt (the HolyC formatter, run in-browser)
 const fmtBtn = WinFind("edFmt");

@@ -20,12 +20,16 @@ const CTX={
     "Word picks from the vocabulary. Passage reads a section of the King James Bible.",
     "Inside TempleOS, F7 prints a God word. GodDoodle lets you supply timing by pressing Space.",
     "Doodle runs on the OS screen. Supply timing with Space until it finishes, then press Esc to accept and save the drawing in C:/Home."]},
+  filesWin:{name:"Files",tips:[
+    "Select a file, then Edit or Download. Double-click a folder to open it.",
+    "Drop files into a folder to import them. New program opens HolyC Editor and saves here.",
+    "Files opened in HolyC Editor save back to their original location on C:."]},
   diskWin:{name:"Disk & Save",tips:[
     "A snapshot keeps the running machine. A disk export keeps the files on its disk.",
     "Keep an exported copy outside the browser. Browser storage can be cleared."]},
   tsWin:{name:"Terry Search",tips:[
     "Search the transcript and open a result at its timestamp. Copy passage keeps the text and its source link.",
-    "Clip opens start and end times for a downloadable video section. You can adjust them before exporting.",
+    "The scissors open start and end times for a downloadable video section. You can adjust them before exporting.",
     "Transcript text is automatically recognized speech. Check the video before quoting it."]},
   chatWin:{name:"Chat",tips:[
     "The menu and tab count unread messages. Mute in Chat silences those notifications.",
@@ -37,7 +41,7 @@ const CTX={
     "TempleOS uses a fixed 16-color palette. Preview the converted sprite before exporting it."]}
 };
 const MENU={gamesBtn:"gamesWin",editorBtn:"editorWin",godBtn:"godWin",
-  diskBtn:"diskWin",tsBtn:"tsWin",chatBtn:"chatWin",spritesBtn:"spriteStudio",settingsBtn:"settingsWin"};
+  filesBtn:"filesWin",diskBtn:"diskWin",tsBtn:"tsWin",chatBtn:"chatWin",spritesBtn:"spriteStudio",settingsBtn:"settingsWin"};
 let win=WinFind("guide"),ctx=CTX.frame,idx=0,game=null;
 
 function Visible()

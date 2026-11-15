@@ -1,0 +1,4 @@
+.action-icon { display:inline-block; width:24px; height:24px; vertical-align:middle; flex:none; pointer-events:none; }
+button.icon-button { display:inline-flex; align-items:center; justify-content:center; width:36px; min-width:36px; min-height:34px; padding:3px; }
+button:focus-visible { outline:2px solid #000; outline-offset:2px; box-shadow:0 0 0 4px var(--yellow,#FFFF55); }
+@media (pointer:coarse) { button.icon-button { min-width:42px; min-height:42px; } }

@@ -17,6 +17,8 @@ try {
     const context=await browser.newContext({viewport:{width:1280,height:800}});
     let releaseBoot=()=>{},releaseDisk=()=>{};
     try {
+      //This harness intercepts the dedicated worker; shared sessions are checked separately.
+      await context.addInitScript(()=>{window.SharedWorker=undefined;});
       await BrowserMachine(context);
       // Hold the guest probe to reproduce disk failure before API readiness. Network
       // interception cannot order these worker-local transitions; keep this one
@@ -100,10 +102,10 @@ try {
         assert.deepEqual(await page.evaluate(()=>window.guestSent.map(m=>m.cmd)),['osLaunch']);
         assert.equal(await page.evaluate(()=>window.guestBytes.byteLength),8);
         if(outcome==='ready') {
-          await page.locator('#diskBtn').click();
-          await page.locator('#lsHome').click();
-          assert.equal(await page.locator('#lsHome').isDisabled(),true);
-          assert.equal(await page.locator('#diskStatus').textContent(),'Reading /Home…');
+          await page.locator('#filesBtn').click();
+          await page.locator('#filesWin').waitFor({state:'visible'});
+          assert.equal(await page.locator('#filesRefresh').isDisabled(),true);
+          assert.equal(await page.locator('#filesStatus').textContent(),'Reading folder…');
         }
         await Wait(diskWait);releaseDisk();
         await page.waitForFunction(()=>window.guestResults.file);
@@ -112,9 +114,9 @@ try {
         assert.deepEqual(result.sent.map(m=>m.cmd),outcome==='ready'?['osLaunch','osWrite']:['osLaunch']);
         assert.equal(result.bytes,outcome==='ready'?0:8);
         if(outcome==='ready') {
-          await page.waitForFunction(()=>/entries in \/Home$/.test(document.getElementById('diskStatus').textContent));
-          assert(await page.locator('#homeList li').count()>0,'A loaded stock /Home is not empty.');
-          assert.equal(await page.locator('#lsHome').isEnabled(),true);
+          await page.waitForFunction(()=>/items$/.test(document.getElementById('filesStatus').textContent));
+          assert(await page.locator('#filesList li').count()>0,'The loaded C: root is not empty.');
+          assert.equal(await page.locator('#filesRefresh').isEnabled(),true);
         }
         if(outcome==='early-disk-error') {
           assert.equal(await page.evaluate(()=>window.machine.events.find(m=>m.cmd==='guestReady').diskPending),false);

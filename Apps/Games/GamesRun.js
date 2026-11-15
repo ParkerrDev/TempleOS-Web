@@ -1,3 +1,4 @@
+import {Icon} from "../../Adam/Icons.js";
 import {gameProject,gameProgram} from './GameSrc.js';
 import {GAMES} from './GameCatalog.js';
 import {WinFind,WinRaise,WinRestore,WinTitle} from '../../Adam/WinMgr.js';
@@ -129,11 +130,11 @@ async function runInBrowser(g,{inEditor=false,start=true}={}) {
   const slot=inEditor?WinFind('editorWin').querySelector('.ed-screenwrap'):WinFind('gameWinSlot'),status=runnerStatus();
   if(inEditor){
     WinFind('gameStop').disabled=false;
-    WinFind('gameRun').textContent='↻ Run again';
+    WinFind('gameRun').innerHTML=Icon('play')+' Run again';
   }else{
     win._restore={kind:'game',data:{key:GameKey(g)}};
     WinTitle(win,g.name);
-    WinFind('gameWinRun').textContent=start?'Run again':'Run';
+    WinFind('gameWinRun').innerHTML=Icon('play')+(start?' Run again':' Run');
     overlay.classList.add('open');WinRaise(overlay);
   }
   status.textContent=start?'Compiling with HolyC-WASM...':'Ready. Run starts a new game.';
@@ -169,7 +170,7 @@ function closeGameWin({keepFullscreen=false}={}) {
   const output=WinFind('console'),outputHome=WinFind('editorWin').querySelector('.ed-pane:last-child');
   if(output&&outputHome&&output.parentNode!==outputHome)outputHome.append(output);
   WinFind('gameStop').disabled=true;
-  WinFind('gameRun').textContent='▶ Run';
+  WinFind('gameRun').innerHTML=Icon('play')+' Run';
   runnerTarget=null;
   updatePreviewMouse();
   if(!keepFullscreen)WinFind('gameWinOverlay').classList.remove('open','free');

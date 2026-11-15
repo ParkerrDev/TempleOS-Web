@@ -16,7 +16,10 @@
 .video-media video { display:block; width:100%; max-height:62vh; background:#000; }
 .video-media video[hidden],.clip-panel[hidden] { display:none; }
 .video-toolbar { display:flex; gap:4px; padding-top:6px; }
-.video-toolbar button { width:30px; height:26px; padding:3px; display:grid; place-items:center; }
+.video-toolbar button { width:36px; min-height:34px; padding:3px; display:grid; place-items:center; }
+.video-toolbar .video-transcript { width:auto; display:flex; align-items:center; gap:5px; }
+.video-copy { width:auto; align-self:start; margin-top:8px; }
+.video-copy[hidden] { display:none; }
 .video-toolbar button:last-child { margin-left:auto; }
 .video-toolbar button[aria-expanded="true"] { background:var(--blue,#0000AA); color:#FFF; }
 .video-toolbar button:disabled { opacity:0.35; }

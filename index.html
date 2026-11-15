@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>TempleOS Online: HolyC, HolyCraft &amp; TOOM in Your Browser</title>
+  <title>TempleOS in your browser</title>
   <meta name="description" content="Run TempleOS in your browser with Holy Emulator (HEMU), an x86-64 emulator built in HolyC. Play HolyCraft and TOOM online, write HolyC, and explore Terry Davis's OS." />
   <link rel="canonical" href="https://templeosweb.netlify.app/" />
   <meta property="og:type" content="website" />
@@ -27,13 +27,14 @@
     "name":"TempleOS-Web",
     "alternateName":["TempleOS Online","Temple OS in the browser"],
     "url":"https://templeosweb.netlify.app/",
-    "description":"TempleOS V5.03 in your browser with Holy Emulator (HEMU), an x86-64 emulator written in HolyC and compiled to WebAssembly. Play HolyCraft and TOOM, write HolyC, and explore Terry A. Davis's operating system.",
+    "description":"TempleOS V5.03 in your browser with Holy Emulator (HEMU), an x86-64 emulator for the web. Play HolyCraft and TOOM, write HolyC, and explore Terry A. Davis's operating system.",
     "keywords":["TempleOS","Temple OS","HolyC","HolyCraft","TOOM online","Holy Emulator","HEMU","WebAssembly","Terry A. Davis"],
     "sameAs":"https://github.com/ParkerrDev/TempleOS-Web",
     "inLanguage":"en",
     "isAccessibleForFree":true
   }
   </script>
+  <link rel="stylesheet" href="Adam/Icons.css">
   <link rel="icon" href="Adam/Logo128x152.jpg" type="image/jpeg" />
   <link rel="apple-touch-icon" href="Adam/Logo128x152.jpg" />
   <!-- the snapshot, disk, games and Terry Search are redirected to this CDN (Misc/Cdn/OffloadRedirects.mjs):
@@ -194,7 +195,7 @@
     /* 24px is the size the icons are drawn at: one grid unit to one pixel on a standard screen */
     .toolbar button .ico { display:inline-block; width:24px; height:24px; vertical-align:middle; }
     .ico svg { display:block; width:24px; height:24px; fill:currentColor; shape-rendering:crispEdges; }
-    button, .tbtn, #homeList li, .ico { font-variant-emoji:text; }
+    button, .tbtn, .ico { font-variant-emoji:text; }
     button { font-family:'TempleOS','dos_vga',monospace; font-size:12px; color:#000; background:#fff;
              border:2px solid #fff; outline:2px solid #000; padding:5px 7px; text-align:left; width:100%; white-space:nowrap; }
     button:hover:not(:disabled) { color:#fff; background:#000; }
@@ -282,7 +283,7 @@
     #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
     .keyswin { padding:8px 6px 6px; }
     .terrywin { padding:6px; text-align:center; }
-    .terrywin #terryRandom { width:30px;height:26px;padding:3px;margin:6px auto 0;display:grid;place-items:center; }
+    .terrywin #terryRandom { width:auto; min-height:30px; padding:4px 8px; margin:6px auto 0; text-align:center; }
     body.mouse-locked #xcursor { visibility:hidden !important; }
     .terrywin canvas { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
@@ -409,6 +410,7 @@
   <symbol id="i-code" viewBox="0 0 24 24"><path d="M11 18H9v-4h2v4Zm-4-1H5v-2h2v2Zm12-2v2h-2v-2h2ZM5 15H3v-2h2v2Zm16 0h-2v-2h2v2Zm-8-1h-2v-4h2v4ZM3 13H1v-2h2v2Zm20 0h-2v-2h2v2ZM5 11H3V9h2v2Zm16 0h-2V9h2v2Zm-6-1h-2V6h2v4ZM7 9H5V7h2v2Zm12 0h-2V7h2v2Z"/></symbol>
   <symbol id="i-games" viewBox="0 0 24 24"><path d="M4 4h16v2H4zm0 14h16v2H4zM2 4h2v16H2zm18 0h2v16h-2zM8 9h2v6H8z M6 11h6v2H6zm8-2h2v2h-2zm2 4h2v2h-2z"/></symbol>
   <symbol id="i-sprite" viewBox="0 0 24 24"><path d="M2 2h20v2H2zm0 18h20v2H2zM2 4h2v16H2zm18 0h2v16h-2zm-4 8h2v2h-2zm-2 2h2v2h-2zm4 0h2v2h-2zm-8 0h2v2h-2zm2 2h2v2h-2zm2 2h2v2h-2z M20 16h2v2h-2zM8 16h2v2H8zm-2 2h2v2H6zM8 6h2v2H8zM6 8h2v2H6zm2 2h2v2H8zm2-2h2v2h-2z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M2 4h8v2h12v14H2V4Zm2 2v12h16V8H8V6H4Z"/></symbol>
   <symbol id="i-save" viewBox="0 0 24 24"><path d="M16 20V14H8V20H16ZM12 10H6V6H12V10ZM20 6H18V4H20V6ZM20 20V6H22V22H2V2H18V4H4V20H6V12H18V20H20Z"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><path d="M22 22h-2v-2h2v2Zm-2-2h-2v-2h2v2Zm-6-2H6v-2h8v2Zm4 0h-2v-2h2v2ZM6 16H4v-2h2v2Zm10 0h-2v-2h2v2ZM4 14H2V6h2v8Zm14 0h-2V6h2v8ZM6 6H4V4h2v2Zm10 0h-2V4h2v2Zm-2-2H6V2h8v2Z"/></symbol>
   <symbol id="i-mouse" viewBox="0 0 24 24"><path d="M8 2h8v2H8zm0 20h8v-2H8zM6 4h2v2H6zm0 16h2v-2H6zM16 4h2v2h-2zm0 16h2v-2h-2zM4 6h2v12H4zm14 0h2v12h-2zm-7 0h2v4h-2z"/></symbol>
@@ -439,9 +441,8 @@
     <div class="htxt">
       <h1>TempleOS in your browser</h1>
       <p>Powered by <a href="https://github.com/ParkerrDev/HEMU">Holy Emulator (HEMU)</a>,
-         an x86-64 emulator written in HolyC and compiled to WebAssembly.
+         an x86-64 emulator for the web.
          <a href="https://github.com/ParkerrDev/TempleOS-Web">TempleOS-Web source →</a></p>
-      <p>Play HolyCraft and TOOM online. Write HolyC.</p>
     </div>
   </header>
 
@@ -463,7 +464,8 @@
         <button id="gamesBtn" title="Run games with HolyC-WASM or explicitly in TempleOS, and edit their source"><span class="ico"><svg><use href="#i-games"/></svg></span> Games</button>
         <button id="spritesBtn" title="Convert images, GIFs and video to TempleOS sprites"><span class="ico"><svg><use href="#i-sprite"/></svg></span> Sprite Studio</button>
         <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico"><svg><use href="#i-cross"/></svg></span> God Tools</button>
-        <button id="diskBtn" title="Save/load your progress: snapshots, disk images, file upload"><span class="ico"><svg><use href="#i-save"/></svg></span> Disk &amp; Save</button>
+        <button id="filesBtn" title="Browse TempleOS files, import, download and open in HolyC Editor"><span class="ico"><svg><use href="#i-folder"/></svg></span> Files</button>
+        <button id="diskBtn" title="Save your session or import and export backups"><span class="ico"><svg><use href="#i-save"/></svg></span> Disk &amp; Save</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico"><svg><use href="#i-search"/></svg></span> Terry Search</button>
         <button id="chatBtn" title="Talk with everyone else on the site right now"><span class="ico"><svg><use href="#i-chat"/></svg></span> Chat<span id="chatUnread"></span></button>
         <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico"><svg><use href="#i-mouse"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
@@ -525,7 +527,7 @@
           <button id="helpNext" type="button">Next tip</button>
         </div>
       </div>
-      <div id="terryWin" class="win terrywin" data-title="Terry" data-icon="terry"><span class="close">[X]</span><canvas id="terrySprite" width="128" height="176" role="button" tabindex="0" aria-label="Terry A. Davis, animated TempleOS sprite"></canvas><button id="terryRandom" type="button" title="Play a random Terry video" aria-label="Play a random Terry video"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4h2l8 8h2M2 12h2l8-8h2M11 1l3 3-3 3M11 9l3 3-3 3"/></svg></button></div>
+      <div id="terryWin" class="win terrywin" data-title="Terry" data-icon="terry"><span class="close">[X]</span><canvas id="terrySprite" width="128" height="176" role="button" tabindex="0" aria-label="Terry A. Davis, animated TempleOS sprite"></canvas><button id="terryRandom" type="button" title="Play a random Terry video">Random video</button></div>
     </div>
   </div>
 

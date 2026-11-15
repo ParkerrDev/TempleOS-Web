@@ -20,13 +20,14 @@ and native Take Tour question.
 - **Ctrl+M** opens the personal menu - click a game sprite (Varoom, BlackDiamond, …) to play.
 - **↻ Restart** reloads the stock desktop while preserving your saved C: drive.
 - **⌨ HolyC Editor** - write & run TempleOS HolyC compiled *natively* to WASM (no emulation).
-  Save/open `.HC` files, or write your source straight into `C:/Home` for the OS to run.
+  Import or download source files. Files opened from C: save back to their original location. New programs let you choose a C: path.
 - **Games** - every game has Run in Browser, Run in TempleOS and Edit source. Browser play
   uses HolyC-WASM exclusively, including editor previews. Unsupported native APIs are
   reported as compilation errors; only Run in TempleOS invokes the emulator. The main desktop pauses during browser play and resumes on close.
   Edit source keeps the code and playable preview together, with Run again to apply edits.
 - **⏸ Pause** - freeze and resume the OS (guest time stops too).
-- **💾 Disk & Save** - browse C:, drop files into a directory, download individual files, or export/import a whole snapshot or disk. New editor programs can be sent straight to C:/Home.
+- **Files** - browse C: in its own window, with places, back/up navigation, a path bar, filtering and file sizes. Select a file to edit or download it; drop files into the current folder to import them. New program opens HolyC Editor with this folder as its save destination.
+- **Disk & Save** - save the session or import/export a whole snapshot or disk.
 - Tabs share one live TempleOS machine. The host tab owns its four CPU workers; a shared worker routes frames and requests. This keeps all tabs on the same filesystem.
 - C: saves after writes. Full sessions save after input settles outside gameplay and when the page hides. **Save session** creates an explicit checkpoint. Closing or refreshing the host tab restores the last completed checkpoint; a crash or immediate close can lose newer RAM changes. Newer saved files are never replaced by an older checkpoint.
 - Website windows remember their positions and open state. Settings can reset their positions. Desktop windows can move into browser popups; mobile windows stay in the page so scrolling works.
@@ -37,10 +38,13 @@ and native Take Tour question.
 - On phones: an on‑screen joystick + L/R mouse buttons + a keyboard summon button appear,
   and the function/modifier key bar works by touch.
 
+Terry Search favors browser formats (MP4, WebM and Ogg video) before other formats, retaining the selected relevance or date order within each group. The player offers a playable copy when the catalog matches a source video ID or an identical full transcript of over 500 characters, with durations within two seconds. Matching titles alone are not enough. `node Apps/Search/VideoListMk.mjs` regenerates these links from the transcript corpus. The player keeps the requested timestamp when switching copies; conversion remains available for originals without a matching copy. Transcript opens the current recording in Terry Search, including after video navigation. Watching alone does not load transcripts.
+
 ### URL options
 | URL | What it does |
 |-----|--------------|
 | `/` | Prepared desktop, with four cores when shared memory is available |
+| `/?transcript=PATH` | Open the transcript for an archive video path |
 | `/?single` | Use the single-core engine in a worker |
 | `/?b=N` | Pin the guest instruction budget per frame (debug) |
 

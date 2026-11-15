@@ -2,6 +2,7 @@
 //built by TranscriptsMk.mjs; Search.HC scores them in a worker.
 //Each hit links to its video on archive.org at the hit's time, and any
 //passage, the shown results or a whole transcript can be copied.
+import {Icon} from "../../Adam/Icons.js";
 import {WinAdd,WinRaise} from "../../Adam/WinMgr.js";
 import {$} from "../../Adam/Os.js";
 import {ArchiveWatch} from "./Archive.js";
@@ -12,7 +13,7 @@ const CSS='    /* Terry transcript search window */\n'+
   '    #tsQwrap { position:relative; flex:1 1 auto; min-width:0; display:flex; }\n'+
   '    #tsQ { width:100%; min-width:0; height:var(--ctlh); font-family:\'TempleOS\',\'dos_vga\',monospace; font-size:12px; color:#000; background:#fff;\n'+
   '           border:2px solid #fff; outline:2px solid #000; padding:4px 36px 4px 8px; }\n'+
-  '    #tsCopyAll { height:var(--ctlh); }\n'+
+  '    #tsCopyAll { min-height:34px; display:inline-flex; gap:6px; align-items:center; }\n'+
   '    #tsQ::-webkit-search-cancel-button { -webkit-appearance:none; appearance:none; display:none; }   /* the browser\'s emoji-ish ✕ */\n'+
   '    #tsClear { position:absolute; right:3px; top:50%; transform:translateY(-50%); width:auto; border:0; outline:0;\n'+
   '               background:transparent; color:var(--blue); font-family:inherit; font-size:12px; line-height:1; padding:3px 8px; }\n'+
@@ -41,12 +42,14 @@ const CSS='    /* Terry transcript search window */\n'+
   '    #tsWin button { width:auto; font-size:12px; padding:2px 8px; }\n'+
   '    .ts-hit { display:block; background:#fff; margin:0 0 6px; padding:5px 8px; border:2px solid #fff; }\n'+
   '    .ts-hit:hover { border-color:var(--yellow); }\n'+
-  '    .ts-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; }\n'+
+  '    .ts-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }\n'+
   '    .ts-t { flex:1 1 180px; color:var(--red); font-weight:bold; font-size:12px; text-decoration:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\n'+
   '    .ts-t:hover { text-decoration:underline; }\n'+
   '    .ts-m { color:var(--blue); font-size:12px; white-space:nowrap; }\n'+
   '    .ts-act { margin-left:auto; display:flex; gap:4px; flex:0 0 auto; }\n'+
-  '    .ts-act button { padding:0 6px; line-height:1.0; }\n'+
+  '    #tsWin .icon-button { padding:3px; width:36px; min-height:34px; color:var(--blue); }\n'+
+  '    #tsWin .icon-button:hover { color:#fff; }\n'+
+  '    @media (pointer:coarse) { #tsWin .icon-button { min-width:42px; min-height:42px; } }\n'+
   '    .ts-x { display:block; color:#000; font-size:12px; line-height:1.0; margin-top:2px; word-break:break-word; text-decoration:none; }\n'+
   '    .ts-x b { color:#fff; background:var(--red); font-weight:normal; padding:0 1px; }\n'+
   '    .ts-none { color:#fff; font-size:12px; padding:8px; }\n'+
@@ -66,7 +69,7 @@ const HTML='  <div id="tsOverlay" class="overlay" role="dialog" aria-modal="true
   '      <div id="tsBar"><span id="tsQwrap"><input id="tsQ" type="search" placeholder="search Terry\'s transcripts… (typos OK)"\n'+
   '        title="Google-style: &quot;exact phrase&quot; · -exclude · terry OR dave · date:2012-2014 · in:titles · since:/until:"\n'+
   '        autocomplete="off" autocapitalize="off" spellcheck="false" /><button id="tsClear" title="clear the search">X</button></span>\n'+
-  '        <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">⧉ Copy results</button></div>\n'+
+  '        <button id="tsCopyAll" title="Copy all shown results (quote + video + timestamp + link)">' + Icon('copy') + ' Copy results</button></div>\n'+
   '      <div id="tsCtl">\n'+
   '        <span class="ts-seg" title="what to search">\n'+
   '          <button data-sc="all" class="on">All</button><button data-sc="title">Titles</button><button data-sc="text">Transcript</button>\n'+
@@ -90,6 +93,7 @@ const HTML='  <div id="tsOverlay" class="overlay" role="dialog" aria-modal="true
 WinAdd(CSS,HTML);
 
 const ov = $("tsOverlay"), out = $("tsOut"), q = $("tsQ"), st = $("tsStatus");
+let search_ready=false,pending_video=null;
 let w = null, qid = 0, vid = 0, deb = null, lastHits = [], lastTerms = [], lastTotal = 0;
 let sortBy="rel";
 let lastVids = [], browseTotal = 0, lastMsg = null, lastView = null;
@@ -118,8 +122,8 @@ const copy = async (text, btn) => {
   try { await navigator.clipboard.writeText(text); }
   catch { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
     document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch {} ta.remove(); }
-  if (btn) { const old = btn.textContent; btn.textContent = "✓ copied"; btn.disabled = true;
-    setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 900); } };
+  if (btn) { const old = btn.innerHTML; btn.innerHTML=Icon("check")+(btn.classList.contains("icon-button")?"":" Copied"); btn.disabled = true;
+    setTimeout(() => { btn.innerHTML = old; btn.disabled = false; }, 900); } };
 const hitText = (h) => `“${h.text}”\n- Terry A. Davis, ${h.t} (${h.d}), at ${hms(h.sec)}\n${url(h, h.sec)}`;
 const vidText = (v) => `${v.t} (${v.d})${v.n ? " · " + hms(v.n) : ""} - Terry A. Davis\n${url(v)}`;
 // a VIDEO card (browse mode + title matches): same chrome as a passage card, teaser instead of a quote
@@ -127,16 +131,16 @@ const vidCard = (v, j) =>
   `<div class="ts-hit ts-vidcard" data-v="${j}">` +
     `<div class="ts-row"><a class="ts-t" href="${url(v, 0)}" target="_blank" rel="noopener" title="${v.p ? "watch on archive.org" : "archive.org never web-encoded this original - opens our player page"}">${esc(v.t)}</a>` +
     `<span class="ts-m">${esc(v.d)}${v.n ? " · " + hms(v.n) : ""} · ${v.k} passages</span>` +
-    `<span class="ts-act"><button class="ts-pl" data-v="${j}" title="play in a window">▶</button>` +
-    `<button class="ts-clip" data-v="${j}" title="Export a video section">Clip</button>` +
-    `<button class="ts-cp" data-v="${j}" title="copy title + link">⧉</button></span></div>` +
+    `<span class="ts-act"><button class="ts-pl icon-button" aria-label="Play video" data-v="${j}" title="play in a window">${Icon("play")}</button>` +
+    `<button class="ts-clip icon-button" aria-label="Export clip" data-v="${j}" title="Export a video section">${Icon("clip")}</button>` +
+    `<button class="ts-cp icon-button" aria-label="Copy text and link" data-v="${j}" title="copy title + link">${Icon("copy")}</button></span></div>` +
     (v.x ? `<span class="ts-x" title="click to expand the full transcript">${esc(v.x)}…</span>` : "") + `</div>`;
 const renderBrowse = () => {
   lastHits = []; lastView = renderBrowse;
   out.innerHTML = lastVids.map((v, j) => vidCard(v, j)).join("") +
     (lastVids.length < browseTotal ? `<button id="tsMore">↓ more (${(browseTotal - lastVids.length).toLocaleString()} older videos)</button>` : "");
   const mb = $("tsMore"); if (mb) mb.addEventListener("click", () => { qid++; w.postMessage({ type: "browse", id: qid, sort: sortBy, offset: lastVids.length }); });
-  st.textContent = `${browseTotal.toLocaleString()} videos · ${sortBy === "old" ? "oldest" : "newest"} first - type to search, ▶ plays, click a card for the transcript`;
+  st.textContent = `${browseTotal.toLocaleString()} videos · playable formats first · ${sortBy === "old" ? "oldest" : "newest"} first - type to search, or open a card for its transcript`;
 };
 const render = (m) => {
   if (m.note=="loading") return;
@@ -154,9 +158,9 @@ const render = (m) => {
     `<div class="ts-hit" data-i="${i}">` +
       `<div class="ts-row"><a class="ts-t" href="${url(h, h.sec)}" target="_blank" rel="noopener" title="${h.p ? `watch on archive.org at ${hms(h.sec)}` : `archive.org never web-encoded this original - plays in our mini-player at ${hms(h.sec)}`}">${esc(h.t)}</a>` +
       `<span class="ts-m">${esc(h.d)} · ▶ ${hms(h.sec)}${h.n ? " / " + hms(h.n) : ""}</span>` +
-      `<span class="ts-act"><button class="ts-pl" data-i="${i}" title="play in a window, from ${hms(h.sec)}">▶</button>` +
-      `<button class="ts-clip" data-i="${i}" title="Export this passage as a video clip">Clip</button>` +
-      `<button class="ts-cp" data-i="${i}" title="copy this passage (with video + timestamp + link)">⧉</button></span></div>` +
+      `<span class="ts-act"><button class="ts-pl icon-button" aria-label="Play video" data-i="${i}" title="play in a window, from ${hms(h.sec)}">${Icon("play")}</button>` +
+      `<button class="ts-clip icon-button" aria-label="Export clip" data-i="${i}" title="Export this passage as a video clip">${Icon("clip")}</button>` +
+      `<button class="ts-cp icon-button" aria-label="Copy text and link" data-i="${i}" title="copy this passage (with video + timestamp + link)">${Icon("copy")}</button></span></div>` +
       `<span class="ts-x" title="click to expand the full transcript">${hi(h.text, m.terms)}</span></div>`).join("");
   out.innerHTML = html ||
     (q.value.trim() ? `<div class="ts-none">no matches - typos are OK, but he may never have said it</div>` : "");
@@ -164,7 +168,7 @@ const render = (m) => {
   if (m.dateOnly) bits.push(`${m.vtotal} video${m.vtotal === 1 ? "" : "s"} in range`);
   else { if (m.scope !== "title") bits.push(`${m.total} matching passages`);
          if (m.vtotal) bits.push(`${m.vtotal} matching title${m.vtotal === 1 ? "" : "s"}`); }
-  if (m.hits.length || lastVids.length) st.textContent = bits.join(" · ") + " - ▶ plays in a window, ⧉ copies, click a card for the full transcript";
+  if (m.hits.length || lastVids.length) st.textContent = bits.join(" · ") + " - open a card for the full transcript";
 };
 // full-transcript view for one video: back / copy-all / download .txt / watch, then every passage
 const transcriptText = (v) => `${v.t} (${v.d}) - Terry A. Davis\n${url(v)}\n\n` +
@@ -174,10 +178,10 @@ const renderTranscript = (v) => {
   curTrF = v.f;
   st.textContent = `${v.t} - full transcript, ${v.s.length} passages${v.n ? ", " + hms(v.n) : ""}`;
   out.innerHTML = `<div class="ts-trh"><button id="tsBack">← results</button>` +
-    `<button id="tsPlHere" title="play this video in a window - the [h:mm:ss] timestamps below seek it">▶ Play</button>` +
-    `<button id="tsCpTr">⧉ Copy transcript</button><button id="tsDlTr">↓ .txt</button>` +
+    `<button id="tsPlHere" title="play this video in a window - the [h:mm:ss] timestamps below seek it">${Icon("play")} Play</button>` +
+    `<button id="tsCpTr">${Icon("copy")} Copy transcript</button><button id="tsDlTr">↓ .txt</button>` +
     `<a href="${url(v, 0)}" target="_blank" rel="noopener">${v.p ? "watch on archive.org" : "open in the mini-player"}</a></div>` +
-    v.s.map(([sec, text]) => `<div class="ts-line"><button class="ts-clip-line" data-s="${sec}" title="Export a clip from this timestamp">Clip</button> <a class="ts-ts" data-s="${sec}" href="${url(v, sec)}" target="_blank" rel="noopener">[${hms(sec)}]</a>${esc(text)}</div>`).join("");
+    v.s.map(([sec, text]) => `<div class="ts-line"><button class="ts-clip-line icon-button" aria-label="Export clip from this timestamp" data-s="${sec}" title="Export a clip from this timestamp">${Icon("clip")}</button> <a class="ts-ts" data-s="${sec}" href="${url(v, sec)}" target="_blank" rel="noopener">[${hms(sec)}]</a>${esc(text)}</div>`).join("");
   out.scrollTop = 0;
   for (const button of out.querySelectorAll(".ts-clip-line"))
     button.addEventListener("click",function () {
@@ -186,7 +190,7 @@ const renderTranscript = (v) => {
   $("tsPlHere").addEventListener("click", () => {
     if (!seekOpenWindow(v.f, v.s[0] ? v.s[0][0] : 0)) openVideoWindow(v, v.s[0] ? v.s[0][0] : 0); });
   $("tsBack").addEventListener("click", () => { curTrF = null; if (lastView) lastView(); });
-  $("tsCpTr").addEventListener("click", (e) => copy(transcriptText(v), e.target));
+  $("tsCpTr").addEventListener("click", (e) => copy(transcriptText(v), e.currentTarget));
   $("tsDlTr").addEventListener("click", () => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([transcriptText(v)], { type: "text/plain" }));
@@ -219,10 +223,10 @@ out.addEventListener("click", (e) => {
 $("tsCopyAll").addEventListener("click", (e) => {
   const qq = q.value.trim();
   if (lastHits.length) copy(`Terry Search: "${qq}" - top ${lastHits.length} of ${lastTotal} matching passages\n\n` +
-    lastHits.map(hitText).join("\n\n"), e.target);
+    lastHits.map(hitText).join("\n\n"), e.currentTarget);
   else if (lastVids.length) copy((qq ? `Terry Search: "${qq}" - ${lastVids.length} videos\n\n`
-    : `Terry A. Davis archive - ${lastVids.length} of ${browseTotal} videos\n\n`) + lastVids.map(vidText).join("\n"), e.target); });
-const ask = () => { if (!w) return; qid++;
+    : `Terry A. Davis archive - ${lastVids.length} of ${browseTotal} videos\n\n`) + lastVids.map(vidText).join("\n"), e.currentTarget); });
+const ask = () => { if (!w) return; pending_video=null;qid++;
   const qq = q.value.trim();
   if (!qq) w.postMessage({ type: "browse", id: qid, sort: sortBy, offset: 0 });
   else w.postMessage({ type: "query", q: qq, id: qid, sort: sortBy }); };   // everything else rides IN the query (Google-style operators)
@@ -281,7 +285,9 @@ const init = () => { if (w) return;
     if (m.type === "progress") st.textContent = `loading transcripts… ${m.loaded}/${m.total} shards · ${m.videos} videos`;
     else if (m.type === "ready") { st.textContent = `${m.videos.toLocaleString()} videos · ${m.chunks.toLocaleString()} passages · ${m.words.toLocaleString()} distinct words - type to search`;
       if (m.years) yearFill(m.years);
-      syncFromQuery();ask(); }                                         // empty query -> browse: the LATEST videos show by default
+      search_ready=true;syncFromQuery();
+      if (pending_video) w.postMessage({type:"video",id:vid,f:pending_video});
+      else ask(); }                                         // empty query -> browse: the LATEST videos show by default
     else if (m.type=="parsed" && m.id==parse_id && m.text==q.value) showControls(m.parsed);
     else if (m.type=="edited" && pending_edit?.id==m.id) {
       const reply=pending_edit;pending_edit=null;reply.resolve(m);
@@ -301,17 +307,29 @@ const init = () => { if (w) return;
     }
     else if (m.type === "results" && m.id === qid) render(m);
     else if (m.type === "browse" && m.id === qid) { browseTotal = m.total; lastVids = m.offset ? lastVids.concat(m.vids) : m.vids; renderBrowse(); }
-    else if (m.type === "video" && m.id === vid && m.video) renderTranscript(m.video); };
+    else if (m.type === "video" && m.id === vid) {
+      pending_video=null;
+      if (m.video) renderTranscript(m.video);
+      else st.textContent="No transcript is available for this video.";
+    } };
   w.onerror=function (event) {
     pending_edit?.reject(new Error(event.message || "Search worker stopped."));
-    pending_edit=null;w.terminate();w=null;
+    pending_edit=null;w.terminate();w=null;search_ready=false;
     st.textContent="Search stopped. Close and reopen this window to retry.";
   };
   w.postMessage({type:"load",base:"./Transcripts/"});syncFromQuery(); };
-q.addEventListener("input", () => { qid++;syncFromQuery(); clearTimeout(deb); deb = setTimeout(ask, 250); });
+q.addEventListener("input", () => { pending_video=null;vid++;qid++;syncFromQuery(); clearTimeout(deb); deb = setTimeout(ask, 250); });
 $("tsClear").addEventListener("click", () => { q.value = ""; syncFromQuery(); ask(); q.focus(); });
 $("tsHelp").addEventListener("click", () => $("tsHelp").classList.toggle("open"));   // tap support (hover covers desktop)
 ov.addEventListener("pointerdown", (e) => { if (e.target === ov) ov.classList.remove("open"); });
-const open = () => { ov.classList.add("open"); WinRaise(ov); init(); setTimeout(() => q.focus(), 50); };
+const open = (focus=true) => { ov.classList.add("open"); WinRaise(ov); init(); if (focus) setTimeout(() => q.focus(), 50); };
 $("tsClose").addEventListener("click", () => ov.classList.remove("open", "free"));
 export {open as Open};
+
+export function OpenTranscript(file)
+{
+  clearTimeout(deb);open(false);pending_video=file;vid++;qid++;
+  out.replaceChildren();
+  st.textContent="Loading this video's transcript…";
+  if (search_ready) w.postMessage({type:"video",id:vid,f:file});
+}

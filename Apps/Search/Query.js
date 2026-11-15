@@ -1,4 +1,5 @@
 import {createHost} from "../../hemu/holyc-wasm/src/runtime/host.js";
+import {ArchivePlayable} from "./Archive.js";
 
 export async function QueryProgram(bytes)
 {
@@ -41,15 +42,15 @@ export async function QueryProgram(bytes)
     return result;
   }
   Parse.load=function (videos) {
-    const order=videos.map((_,i)=>i).sort((a,b)=>(videos[b].d+videos[b].t).
-      localeCompare(videos[a].d+videos[a].t)),ranks=[];
+    const order=videos.map((_,i)=>i).sort((a,b)=>Number(ArchivePlayable(videos[b]))-Number(ArchivePlayable(videos[a])) ||
+      (videos[b].d+videos[b].t).localeCompare(videos[a].d+videos[a].t)),ranks=[];
     order.forEach((id,rank)=>ranks[id]=rank);
     let chunk=0;
     try {
       fn.SearchCorpusNew(BigInt(videos.length),BigInt(videos.reduce((n,v)=>n+v.s.length,0)));
       videos.forEach((v,id)=>{
         Texts([v.d,v.t.toLowerCase()],(date,title)=>
-          fn.SearchVideoSet(BigInt(id),date,title,BigInt(ranks[id])));
+          fn.SearchVideoSet(BigInt(id),date,title,BigInt(ranks[id]),BigInt(ArchivePlayable(v))));
         v.s.forEach(([sec,text],index)=>Texts([text.toLowerCase()],ptr=>
           fn.SearchChunkSet(BigInt(chunk++),BigInt(id),BigInt(index),ptr)));
       });

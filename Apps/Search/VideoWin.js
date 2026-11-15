@@ -20,7 +20,10 @@ export function VideoOpen(video,seconds=0,play=true,id)
     if (win.isConnected) WinTitle(win,win.dataset.title);
     if (win.isConnected) WinWorkspaceSave();
   }
-  player=VideoPlayer(video,seconds,play,Changed);win.append(x,player.element);
+  player=VideoPlayer(video,seconds,play,Changed,async function (current) {
+    const {OpenTranscript}=await import("./SearchWin.js");
+    OpenTranscript(current.transcript || current.f);
+  });win.append(x,player.element);
   win.dataset.floating="1";win.style.position="fixed";
   win.style.width="min(560px, 92vw)";
   win.style.left=Math.max(8,innerWidth/2-280+cascade*30)+"px";

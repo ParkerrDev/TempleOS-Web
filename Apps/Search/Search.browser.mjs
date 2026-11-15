@@ -146,6 +146,8 @@ async function SearchFeatures(page,context,mobile)
     passage='“'+videos[0].s[0][1]+'”\n- Terry A. Davis, '+videos[0].t+
       ' (2016-03-01), at 0:12\n'+archive+'?start=10';
   assert.equal(await page.locator("#tsOut .ts-t").getAttribute("href"),archive+"?start=10");
+  assert.equal(await page.locator("#tsOut .ts-cp svg").count(),1);
+  assert.equal(await page.locator("#tsOut .ts-clip").innerText(),"");
   await page.locator("#tsOut .ts-cp").click();
   await page.waitForFunction(()=>document.querySelector("#tsOut .ts-cp").disabled);
   assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),passage);
@@ -156,7 +158,7 @@ async function SearchFeatures(page,context,mobile)
   await page.locator("#tsOut .ts-x").click();
   await page.locator("#tsCpTr").waitFor();
   assert.deepEqual(await page.locator("#tsOut .ts-line").allTextContents(),
-    videos[0].s.map(([s,t])=>"Clip [0:"+s+"]"+t));
+    videos[0].s.map(([s,t])=>" [0:"+s+"]"+t));
   const transcript=videos[0].t+" (2016-03-01) - Terry A. Davis\n"+archive+"\n\n"+
     videos[0].s.map(([s,t])=>"[0:"+s+"] "+t).join("\n");
   await page.locator("#tsCpTr").click();
@@ -224,10 +226,10 @@ async function SearchFeatures(page,context,mobile)
   assert.deepEqual(await page.locator("#tsOut .ts-t").allTextContents(),[videos[2].t,videos[1].t]);
   await browse();
   const titles=()=>page.locator("#tsOut .ts-t").allTextContents();
-  assert.deepEqual(await titles(),[videos[2].t,videos[1].t,videos[0].t]);
+  assert.deepEqual(await titles(),[videos[2].t,videos[0].t,videos[1].t]);
   await page.locator("#tsMode").selectOption("old");
   await page.waitForFunction(()=>document.getElementById("tsStatus").textContent.includes("oldest first"));
-  assert.deepEqual(await titles(),videos.map(v=>v.t));
+  assert.deepEqual(await titles(),[videos[0].t,videos[2].t,videos[1].t]);
   await page.locator("#tsOverlay .ovfree").click();
   assert.equal(await page.locator("#tsOverlay").evaluate(e=>e.classList.contains("free") &&
     getComputedStyle(e).pointerEvents=="none"),true);

@@ -1,3 +1,4 @@
+import {Icon} from "../../Adam/Icons.js";
 import {ArchiveFile} from "./Archive.js";
 import {ClipPanel} from "./Clip/Panel.js";
 
@@ -21,23 +22,13 @@ export function VideoRandom(videos,current)
   return videos[next];
 }
 
-const ICONS={
-  previous:'<path d="M4 3v10M13 3l-7 5 7 5z"/>',
-  next:'<path d="M12 3v10M3 3l7 5-7 5z"/>',
-  random:'<path d="M2 4h2l8 8h2M2 12h2l8-8h2M11 1l3 3-3 3M11 9l3 3-3 3"/>',
-  clip:'<circle cx="4" cy="4" r="2"/><circle cx="4" cy="12" r="2"/><path d="M6 5l8 8M6 11l8-8"/>'
-};
-export function VideoIcon(name)
-{
-  return '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" '+
-    'fill="none" stroke="currentColor" stroke-width="2">'+ICONS[name]+'</svg>';
-}
-
-export function VideoPlayer(video,seconds=0,play=true,Changed=function () {})
+export function VideoPlayer(video,seconds=0,play=true,Changed=function () {},Transcript=function (video) {
+  location.href=new URL("../../?transcript="+encodeURIComponent(video.transcript || video.f),import.meta.url);
+})
 {
   let element=document.createElement("section"),media=document.createElement("div"),
     bar=document.createElement("div"),status=document.createElement("p"),v,
-    clip=null,clip_open=false,closed=false,token=0,blob=null,buttons={},list=null,offset=0,conversion=null;
+    clip=null,clip_open=false,closed=false,token=0,blob=null,buttons={},list=null,offset=0,conversion=null,alternate=null,convert_button=null;
   element.className="video-player";media.className="video-media";
   bar.className="video-toolbar";status.className="video-status";
   status.setAttribute("role","status");
@@ -45,14 +36,21 @@ export function VideoPlayer(video,seconds=0,play=true,Changed=function () {})
       ["random","Random video"],["clip","Clip controls"]]) {
     let button=document.createElement("button");
     button.type="button";button.title=label;button.setAttribute("aria-label",label);
-    button.innerHTML=VideoIcon(key);buttons[key]=button;bar.append(button);
+    button.className="icon-button";button.innerHTML=Icon(key);buttons[key]=button;bar.append(button);
     button.addEventListener("click",function () {
       if (key=="clip") ShowClip(!clip_open);
       else Navigate(key);
     });
   }
   buttons.clip.setAttribute("aria-expanded","false");
-  element.append(media,bar,status);
+  const transcript=document.createElement("button"),copy=document.createElement("button");
+  transcript.type="button";transcript.className="video-transcript";
+  transcript.innerHTML=Icon("file")+" Transcript";transcript.title="Open this video's transcript";
+  transcript.onclick=()=>Promise.resolve(Transcript(video)).catch(error=>{status.textContent=error.message;});
+  bar.insertBefore(transcript,buttons.clip);
+  copy.type="button";copy.className="video-copy";copy.hidden=true;
+  copy.onclick=()=>{if (alternate) Load({...alternate,transcript:video.transcript || video.f},State().seconds,true);};
+  element.append(media,bar,copy,status);
   function State()
   {
     let at=seconds;
@@ -93,10 +91,15 @@ export function VideoPlayer(video,seconds=0,play=true,Changed=function () {})
     buttons.previous.disabled=!list || index<=0;
     buttons.next.disabled=!list || index<0 || index>=list.length-1;
     buttons.random.disabled=!list?.length;
+    const original=list?.find(entry=>entry.f==video.f);
+    alternate=list?.find(entry=>entry.f==original?.a) || null;
+    copy.hidden=!alternate;
+    if (alternate) copy.innerHTML=Icon("play")+" Play "+alternate.f.split(".").pop().toUpperCase()+" copy";
+    if (convert_button) convert_button.hidden=!!alternate;
   }
   function Load(next,at=0,autoplay=true)
   {
-    Stop();video=next;seconds=at;offset=0;clip_open=false;
+    Stop();video=next;seconds=at;offset=0;clip_open=false;convert_button=null;
     buttons.clip.setAttribute("aria-expanded","false");
     status.textContent="";media.replaceChildren();
     v=document.createElement("video");v.controls=true;v.autoplay=autoplay;
@@ -143,6 +146,7 @@ export function VideoPlayer(video,seconds=0,play=true,Changed=function () {})
     v.onerror=null;v.hidden=true;box.className="video-error";
     box.append("This browser cannot play this original. ");
     button.type="button";button.textContent="Convert and play";
+    convert_button=button;button.hidden=!!alternate;
     button.onclick=function () {Convert(Math.max(0,seconds-5),box,button);};
     link.href=ArchiveFile(video.f);link.textContent="Download original";
     link.target="_blank";link.rel="noopener";box.append(button," ",link);

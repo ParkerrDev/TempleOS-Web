@@ -40,6 +40,15 @@ assert.equal(Parse.run("compiler").hits.length,60);
 assert.equal(Parse.run("compiler").total,80);
 assert.equal(Parse.run("compiler in:titles").vids.length,60);
 assert.equal(Parse.run("compiler in:titles").vtotal,80);
+const mediaVideos=[
+  {f:"same.mkv",t:"Same",d:"2018",s:[[0,"same"]]},
+  {f:"same.mp4",t:"Same",d:"2017",s:[[0,"same"]]}
+];
+Parse.load(mediaVideos);
+const mediaExpected=["same","2017-2018"].flatMap(q=>["rel","new","old"].map(sort=>Parse.run(q,sort)));
+for (const result of mediaExpected) assert.deepEqual(result.vids,[1,0],"Playable copies precede unsupported originals for every sort");
+assert.deepEqual([Parse.browse(0,false),Parse.browse(1,false)],[1,0]);
+assert.deepEqual([Parse.browse(0,true),Parse.browse(1,true)],[1,0]);
 Parse.load([]);assert.equal(Parse.run("compiler").total,0);
 console.log("HolyC search: fuzzy/exact/OR/exclusion/date/ranking/Unicode queries, hit limits and corpus replacement pass.");
 
@@ -57,7 +66,7 @@ function Ownership()
 {
   let out=0n;
   try {
-    fn.SearchCorpusNew(1n,1n);fn.SearchVideoSet(0n,input,input+5n,0n);
+    fn.SearchCorpusNew(1n,1n);fn.SearchVideoSet(0n,input,input+5n,0n,0n);
     fn.SearchChunkSet(0n,0n,0n,input+14n);
     out=fn.SearchBegin(input+42n);fn.Free(out);out=0n;
     out=fn.SearchRun(0n);
@@ -95,14 +104,23 @@ if (process.argv.includes("--native")) {
     for (let sort=0;sort<3;sort++)
       code+='result=SearchRun('+sort+');"%s\\n",result;Free(result);\n';
   }
+  code+='SearchCorpusNew(2,2);\n';
+  mediaVideos.forEach((v,i)=>{
+    code+='SearchVideoSet('+i+','+quote(v.d)+','+quote(v.t.toLowerCase())+','+(1-i)+','+i+');\n';
+    code+='SearchChunkSet('+i+','+i+',0,"same");\n';
+  });
+  for (const q of ["same","2017-2018"]) {
+    code+='result=SearchBegin('+quote(q)+');Free(result);\n';
+    for (let sort=0;sort<3;sort++) code+='result=SearchRun('+sort+');"%s\\n",result;Free(result);\n';
+  }
   code+='SearchCorpusDel;\n';
   const result=await QemuRun([code],{timeout:60});
   if (result.results[0].except) console.error(result);
   assert.equal(result.results[0].except,"");
   const native=Buffer.from(result.results[0].out,"latin1").toString("utf8").trim().split("\n").map(JSON.parse);
-  assert.deepEqual(native,expected.map(({scope,...rest})=>rest));
+  assert.deepEqual(native,[...expected,...mediaExpected].map(({scope,...rest})=>rest));
   const dir=new URL("../../tmp/search/",import.meta.url);
   await mkdir(dir,{recursive:true});
   await writeFile(new URL("engine-native.json",dir),JSON.stringify(result,null,2)+"\n");
-  console.log("Native V5.03 QEMU search ranking matches all 39 queries: "+result.evidence);
+  console.log("Native V5.03 QEMU search ranking matches all 45 queries: "+result.evidence);
 }

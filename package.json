@@ -21,7 +21,7 @@
     "test:search": "node Apps/Search/Query.test.mjs && node Apps/Search/QueryMemory.test.mjs && node Apps/Search/Search.test.mjs && node Apps/Search/Search.browser.mjs && node Apps/Search/Video.browser.mjs && node Apps/Search/Convert.browser.mjs",
     "test:sprites": "node Apps/Sprites/Alloc.test.mjs && node Apps/Sprites/Color.test.mjs && node Apps/Sprites/Gr.test.mjs && node Apps/Sprites/Play.test.mjs && node Apps/Sprites/SpriteCodec.test.mjs && node Apps/Sprites/Sprites.browser.mjs && node Apps/Sprites/VideoFrames.browser.mjs && node Apps/Sprites/Disk.browser.mjs",
     "test:lighthouse": "node Misc/Lighthouse/Chk.mjs",
-    "test:disk": "node Apps/Disk/Storage.browser.mjs && node Apps/Disk/AutoSave.browser.mjs && node Apps/Disk/DiskImport.browser.mjs && node Apps/Disk/Session.browser.mjs && node Apps/Disk/Files.browser.mjs",
+    "test:disk": "node Apps/Disk/Storage.browser.mjs && node Apps/Disk/AutoSave.browser.mjs && node Apps/Disk/DiskImport.browser.mjs && node Apps/Disk/Session.browser.mjs && node Apps/Files/Files.browser.mjs",
     "test:welcome": "node Apps/Help/Welcome.browser.mjs",
     "build": "node hemu/Kernel/Build.mjs hemu/build && node Misc/AppsBuild.mjs && node Misc/Preload.mjs"
   },

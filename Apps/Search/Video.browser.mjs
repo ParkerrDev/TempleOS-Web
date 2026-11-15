@@ -1,3 +1,4 @@
+import {gzipSync} from "node:zlib";
 import assert from "node:assert/strict";
 import {createServer} from "node:http";
 import {once} from "node:events";
@@ -17,9 +18,10 @@ const origin="http://127.0.0.1:"+server.address().port,
   browser=await chromium.launch({executablePath:process.env.CHROMIUM ||
     "/usr/bin/chromium",headless:true,args:["--no-sandbox"]}),
   bytes=await readFile(fixture),
-  videos=[{f:"videos/2017/2017-03-01T12:00:00+00:00 - Z first.mp4",t:"Z first",d:"2017-03-01"},
+  videos=[{f:"videos/2017/2017-03-01T12:00:00+00:00 - Z first.mkv",t:"Z first",d:"2017-03-01"},
     {f:"videos/2017/2017-03-01T13:00:00+00:00 - A second.mp4",t:"A second",d:"2017-03-01"},
     {f:"videos/2017/2017-03-02T12:00:00+00:00 - Last.mp4",t:"Last",d:"2017-03-02"}];
+videos[0].a=videos[1].f;
 try {
   for (const mobile of [false,true]) {
     const context=await browser.newContext({viewport:mobile?
@@ -30,16 +32,24 @@ try {
       if (request.url().includes("/Transcripts/")) shards.push(request.url());
     });
     await context.route("**/Apps/Search/Videos.json",route=>route.fulfill({json:videos}));
+    await context.route("**/Apps/Search/Transcripts/**",route=>route.fulfill(
+      route.request().url().endsWith("manifest.json")?{json:{shards:[{f:"test.json.gz"}]}}:
+      {body:gzipSync(JSON.stringify(videos.map(v=>({...v,s:[[0,"Transcript for "+v.f]]}))))}));
     await context.route("**/hemu/*.gz",route=>route.abort());
     await context.route("https://templeosweb-chat.parkerrhunt.workers.dev/**",route=>route.abort());
-    await context.route("https://archive.org/download/**",route=>route.fulfill({body:bytes,
+    await context.route("https://archive.org/download/**",route=>route.fulfill(route.request().url().endsWith(".mkv")?{status:415}:{body:bytes,
       contentType:"video/mp4",headers:{"Cross-Origin-Resource-Policy":"cross-origin"}}));
-    const params=new URLSearchParams({f:videos[0].f,n:videos[0].t});
+    const params=new URLSearchParams({f:videos[0].f,n:videos[0].t,t:"12"});
     await page.goto(origin+"/Apps/Search/Player.html?"+params);
     await page.getByRole("button",{name:"Next video",exact:true}).waitFor();
     await page.waitForFunction(()=>!document.querySelector('[aria-label="Next video"]').disabled);
     assert.equal(await page.getByRole("button",{name:"Previous video",exact:true}).isDisabled(),true);
     assert.equal(await page.locator(".clip-panel").count(),0);
+    await page.getByRole("button",{name:"Play MP4 copy",exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector("video").readyState>=2 && document.querySelector("video").currentTime>=12);
+    assert.equal(new URL(page.url()).searchParams.get("f"),videos[1].f,"matching copy preserves the requested timestamp");
+    await page.goto(origin+"/Apps/Search/Player.html?"+params);
+    await page.waitForFunction(()=>!document.querySelector('[aria-label="Next video"]').disabled);
     await page.getByRole("button",{name:"Next video",exact:true}).click();
     assert.equal(await page.locator("#title").innerText(),"A second");
     await page.getByRole("button",{name:"Next video",exact:true}).click();
@@ -57,9 +67,14 @@ try {
     assert.deepEqual(shards,[],"Watching/navigation never loads transcript text");
     await mkdir(new URL("../../tmp/search/",import.meta.url),{recursive:true});
     await page.screenshot({path:new URL("../../tmp/search/player-"+(mobile?"mobile":"desktop")+".png",import.meta.url).pathname});
+    const playing=new URL(page.url()).searchParams.get("f");
+    await page.getByRole("button",{name:"Transcript",exact:true}).click();
+    await page.waitForFunction(()=>document.querySelectorAll("#tsOut .ts-line").length==1);
+    assert((await page.locator("#tsOut").innerText()).includes("Transcript for "+playing));
+    await page.locator("#tsClose").click();
     if (!mobile) {
       await page.goto(origin+"/?single");
-      await page.getByRole("button",{name:"Play a random Terry video",exact:true}).click();
+      await page.getByRole("button",{name:"Random video",exact:true}).click();
       await page.locator(".vidwin video").waitFor();
       assert.equal(await page.locator(".vidwin .clip-panel").count(),0);
       const title=await page.locator(".vidwin").getAttribute("data-win-title");
@@ -73,11 +88,17 @@ try {
       await page.locator('.vidwin [aria-label="Clip controls"]').click();
       await mkdir(new URL("../../tmp/search/",import.meta.url),{recursive:true});
       await page.screenshot({path:new URL("../../tmp/search/video-controls.png",import.meta.url).pathname});
+      const current=await page.locator(".vidwin video").getAttribute("src");
+      const file=decodeURIComponent(new URL(current).pathname.split("/TerryADavis_TempleOS_Archive/")[1].split("#")[0]);
+      await page.locator(".vidwin .video-transcript").click();
+      await page.waitForFunction(()=>document.querySelectorAll("#tsOut .ts-line").length==1);
+      assert((await page.locator("#tsOut").innerText()).includes("Transcript for "+file));
+      await page.locator("#tsClose").click();
       await page.locator(".vidwin .close").click();
       await page.reload();
       assert.equal(await page.locator(".vidwin").count(),0,"Closed videos stay closed after reload");
     }
     assert.deepEqual(errors,[]);await context.close();
   }
-  console.log("Video browser: opt-in clips, chronology, bounds, random, Terry launch and reload restore passed on desktop/mobile.");
+  console.log("Video browser: playable copies with timestamp preservation, lazy current-video transcripts, clips, chronology, random and restore passed on desktop/mobile.");
 } finally {await browser.close();await new Promise(resolve=>server.close(resolve));}

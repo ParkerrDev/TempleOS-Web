@@ -1,5 +1,10 @@
 const ITEM="TerryADavis_TempleOS_Archive";
 
+export function ArchivePlayable(video)
+{
+  return /\.(mp4|webm|ogv)$/i.test(video.f || "");
+}
+
 export function ArchiveFile(file)
 {
   return "https://archive.org/download/"+ITEM+"/"+

@@ -14,7 +14,7 @@ class CSearchVideo
 {
   U8 *date,*title;
   I64 rank,hits[3];
-  Bool match;
+  Bool match,playable;
   F64 scores[3];
 };
 
@@ -41,7 +41,7 @@ CSearchVideo *search_videos=NULL;
 CSearchChunk *search_chunks=NULL;
 CSearchWord **search_hash=NULL,*search_words[25],*search_tails[25];
 I64 search_video_cnt=0,search_chunk_cnt=0,search_word_cnt=0;
-I64 *search_order=NULL,search_sort=0;
+I64 *search_order=NULL,search_sort=0,search_playable_cnt=0;
 CSearchQuery *search_query=NULL;
 CSearchMatch **search_matches=NULL;
 MemSet(search_words,0,sizeof(search_words));
@@ -89,7 +89,7 @@ public U0 SearchCorpusDel()
   }
   Free(search_videos);Free(search_chunks);Free(search_hash);Free(search_order);
   search_videos=NULL;search_chunks=NULL;search_hash=NULL;search_order=NULL;
-  search_video_cnt=search_chunk_cnt=search_word_cnt=0;
+  search_video_cnt=search_chunk_cnt=search_word_cnt=search_playable_cnt=0;
 }
 
 public U0 SearchCorpusNew(I64 videos,I64 chunks)
@@ -104,7 +104,7 @@ public U0 SearchCorpusNew(I64 videos,I64 chunks)
   search_hash=CAlloc(SEARCH_HASH_NUM*sizeof(CSearchWord *));
 }
 
-public U0 SearchVideoSet(I64 id,U8 *date,U8 *title,I64 rank)
+public U0 SearchVideoSet(I64 id,U8 *date,U8 *title,I64 rank,Bool playable=FALSE)
 {//The browser supplies Unicode lowercase and its locale collation rank.
   CSearchVideo *v;
   if (!(0<=id<search_video_cnt) || !(0<=rank<search_video_cnt))
@@ -112,6 +112,7 @@ public U0 SearchVideoSet(I64 id,U8 *date,U8 *title,I64 rank)
   v=&search_videos[id];
   Free(v->date);v->date=NULL;Free(v->title);v->title=NULL;
   v->date=SearchCopy(date);v->title=SearchCopy(title);v->rank=rank;
+  search_playable_cnt+=playable-v->playable;v->playable=playable;
   search_order[rank]=id;
 }
 
@@ -361,6 +362,8 @@ Bool SearchHitBefore(CSearchHit *a,CSearchHit *b,Bool title)
 {
   I64 va=a->id,vb=b->id,c;
   if (!title) {va=search_chunks[va].video;vb=search_chunks[vb].video;}
+  if (search_videos[va].playable!=search_videos[vb].playable)
+    return search_videos[va].playable;
   c=StrCmp(search_videos[va].date,search_videos[vb].date);
   if (search_sort && c) {
     if (search_sort==1) return c>0;
@@ -388,6 +391,16 @@ U0 SearchNum(CSearchQuery *out,I64 num)
 {
   U8 buf[32];
   StrPrint(buf,"%d",num);SearchText(out,buf);
+}
+
+public I64 SearchBrowse(I64 index,Bool oldest=FALSE)
+{
+  if (!(0<=index<search_video_cnt)) return -1;
+  if (oldest) {
+    if (index<search_playable_cnt) index=search_playable_cnt-1-index;
+    else index=search_video_cnt+search_playable_cnt-1-index;
+  }
+  return search_order[index];
 }
 
 public U8 *SearchRun(I64 sort)
@@ -421,9 +434,7 @@ public U8 *SearchRun(I64 sort)
   }
   if (date_only && dates) {
     for (i=0;i<search_video_cnt;i++) {
-      j=i;
-      if (sort==2) j=search_video_cnt-1-i;
-      j=search_order[j];
+      j=SearchBrowse(i,sort==2);
       if (search_videos[j].match) {
 	if (vtotal<SEARCH_HIT_NUM) {
 	  if (vtotal) SearchOut(&out,',');
@@ -487,11 +498,4 @@ public U8 *SearchRun(I64 sort)
   if (date_only && dates) SearchText(&out,",\"dateOnly\":true");
   SearchOut(&out,'}');
   return out.out;
-}
-
-public I64 SearchBrowse(I64 index,Bool oldest=FALSE)
-{
-  if (!(0<=index<search_video_cnt)) return -1;
-  if (oldest) index=search_video_cnt-1-index;
-  return search_order[index];
 }

@@ -1,6 +1,7 @@
 // App.js - main-thread controller for the in-browser HolyC IDE.
 // Spawns the worker, wires keyboard/mouse into the control SAB, drains the
 // sound ring into WebAudio, and shows console output.
+import {Icon} from "../../Adam/Icons.js";
 import {WinFind} from "../../Adam/WinPopup.js";
 import { Speaker } from "../../hemu/holyc-wasm/src/runtime/sound.js";
 import {
@@ -44,13 +45,13 @@ for (const group of DEMOS) {
   demoSel.appendChild(og);
 }
 
-let demoRequest=0,documentSource=sourceDocument(new Uint8Array()),documentName="MyProgram.HC";
+let demoRequest=0,documentSource=sourceDocument(new Uint8Array());
 editor.addEventListener("input",function () {demoRequest++;});
-function FileLoad(bytes,name,utf8=false)
+function FileLoad(bytes,name,utf8=false,path=null)
 {
   demoRequest++;
   documentSource=sourceDocument(bytes,utf8);
-  documentName=name;
+  window.__holycEditor.file={name,path};
   editor.value=documentSource.original;
   editor.dispatchEvent(new Event("input"));
 }
@@ -310,7 +311,7 @@ function stop() {
   running = false;nativeKeys=false;
   mouseStateChanged();
   speaker.tone(0);
-  $("runBtn").textContent = "▶ Run";
+  $("runBtn").innerHTML = Icon("play")+" Run";
 }
 
 async function run(source,project={}) {
@@ -366,7 +367,7 @@ async function run(source,project={}) {
 
   running = true;
   mouseStateChanged();
-  $("runBtn").textContent = "■ Stop";
+  $("runBtn").innerHTML = Icon("stop")+" Stop";
   setStatus("running…");
   worker.onerror=event=>{
     if(worker!==startedWorker)return;
@@ -403,7 +404,7 @@ if (!self.crossOriginIsolated) {
   setStatus("ready");
 }
 
-window.__holycEditor = { FileLoad,FileBytes,FileName:()=>documentName,run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null,
+window.__holycEditor = { FileLoad,FileBytes,file:{name:"MyProgram.HC",path:null},FileName:()=>window.__holycEditor.file.name,run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null,
   inputCanvas:()=>running?curCanvas:null,
   touchMouse:{
     position:()=>ctrl?[Atomics.load(ctrl,CTRL.MS_X),Atomics.load(ctrl,CTRL.MS_Y)]:[320,240],
