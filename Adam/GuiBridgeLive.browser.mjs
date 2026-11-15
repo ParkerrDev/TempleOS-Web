@@ -262,6 +262,7 @@ try {
   await page.screenshot({path:"tmp/gui/native-files.png"});
   await Button("filesWin","#filesNew");
   await page.waitForFunction(()=>document.getElementById("editorWin")?.classList.contains("win-pass-owned"),null,{timeout:30000});
+  await page.waitForFunction(()=>window.__holycEditor?.FileLoad && !document.getElementById("editor").disabled);
   await page.evaluate(()=>window.__holycEditor.FileLoad(Uint8Array.of(34,233,34,59),"Encoding.HC"));
   await page.waitForTimeout(350);
   await Accept("editorWin","#editor","Escape");
