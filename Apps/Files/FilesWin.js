@@ -1,4 +1,4 @@
-import {WinAdd,WinRaise,WinFind as $} from "../../Adam/WinMgr.js";
+import {WinAdd,WinRaise,WinOrigin,WinRoute,WinDialog,WinFind as $} from "../../Adam/WinMgr.js";
 import {OsReady,OsDirList,OsFileRead,OsFileWrite} from "../../Adam/Os.js";
 import {Icon} from "../../Adam/Icons.js";
 
@@ -194,6 +194,7 @@ function Navigate(path,step=0)
 
 function Activate(file=selected)
 {
+  const origin=WinOrigin();
   if (!file) return;
   if (file.dir) return Navigate(directory+file.name+"/");
   if (!Editable(file)) return Download(file);
@@ -201,7 +202,7 @@ function Activate(file=selected)
     const path=directory+file.name,result=await OsFileRead(path);
     if (!result.ok) throw new Error(result.msg);
     const {EdFileOpen}=await import("../Editor/EditorWin.js");
-    await EdFileOpen(result.bytes,path);
+    await EdFileOpen(result.bytes,path,origin);
     Say("Opened "+file.name+" in HolyC Editor.");
   });
 }
@@ -221,6 +222,7 @@ function Download(file=selected)
 
 function Upload(files)
 {
+  const origin=WinOrigin();
   return Work("Choose files to import…",async function () {
     if (!files) files=await new Promise(function (resolve) {
       const input=document.createElement("input");input.type="file";input.multiple=true;
@@ -229,7 +231,7 @@ function Upload(files)
     let count=0;
     for (const file of files) {
       NameCheck(file.name);
-      if (entries.some(entry=>entry.name==file.name) && !confirm("Replace "+file.name+" in "+directory+"?")) continue;
+      if (entries.some(entry=>entry.name==file.name) && !await WinDialog("Replace "+file.name+" in "+directory+"?",undefined,origin)) continue;
       Say("Importing "+file.name+"…");
       const result=await OsFileWrite(directory+file.name,await file.arrayBuffer());
       if (!result.ok) throw new Error(result.msg);
@@ -250,7 +252,8 @@ $("filesDownload").addEventListener("click",()=>Download());
 $("filesOpen").addEventListener("click",()=>Activate());
 $("filesFilter").addEventListener("input",Render);
 $("filesNew").addEventListener("click",async function () {
-  try {await (await import("../Editor/EditorWin.js")).EdNew(directory);}
+  const origin=WinOrigin($("filesNew"));
+  try {await (await import("../Editor/EditorWin.js")).EdNew(directory,origin);}
   catch (error) {Say(error.message);}
 });
 for (const button of $("filesWin").querySelectorAll("[data-path]"))
@@ -284,9 +287,10 @@ function Close() {overlay.classList.remove("open","free");}
 $("filesClose").addEventListener("click",Close);
 overlay.addEventListener("pointerdown",e=>{if (e.target==overlay) Close();});
 
-export function Open(path=directory)
+export function Open(path=directory,origin=WinOrigin())
 {
   overlay.classList.add("open");WinRaise(overlay);Controls();
+  WinRoute($("filesWin"),origin);
   if (OsReady()) return Navigate(path);
   try {directory=Path(path);} catch (error) {Say(error.message);return;}
   $("filesPath").value=directory;

@@ -1,8 +1,8 @@
 import {WinFocus,WinRaise,WinMobile,WinOutside,WinPopup,WinPopupReturn,
-  WinDocuments,WinFind} from "./WinMgr.js";
+  WinDocuments,WinFind,WinDialog,WinOrigin} from "./WinMgr.js";
 import {PointerDrag} from "./WinPointer.js";
 
-import {GuiScene} from "./GuiBridge.js";
+import {GuiScene,GuiCompatible,GuiHoverStyles} from "./GuiBridge.js";
 
 export function WinPass({canvas,pal,Request,Input,Status})
 {//Native task surfaces and browser scenes share guest identities.
@@ -51,7 +51,6 @@ export function WinPass({canvas,pal,Request,Input,Status})
   function HostHide(host)
   {
     host.el.classList.add("win-pass-owned");
-    host.el.setAttribute("aria-hidden","true");
     if (host.overlay) {
       host.overlay.classList.add("win-pass-owned");
       host.overlay.setAttribute("aria-modal","false");
@@ -64,6 +63,12 @@ export function WinPass({canvas,pal,Request,Input,Status})
       clearTimeout(host.timer);
     host.watch.disconnect();
     if (host.animation) cancelAnimationFrame(host.animation);
+    host.el.removeEventListener("guiupdate",host.changed);
+    for (const type of ["input","change","scroll","select","focusin","focusout"])
+      host.el.removeEventListener(type,host.changed,true);
+    for (const el of host.el.querySelectorAll(".gui-hover,.gui-press"))
+      el.classList.remove("gui-hover","gui-press");
+    host.el.style.width=host.layout.width;host.el.style.height=host.layout.height;
     host.el.classList.remove("win-pass-owned");
     host.el.removeAttribute("aria-hidden");
     if (host.overlay) {
@@ -88,10 +93,11 @@ export function WinPass({canvas,pal,Request,Input,Status})
 
   async function HostReturn(host,point=null)
   {
+    host.returning=true;
     host.return_point=point;
     const res=await Send("close",{slot:host.slot,task:host.task,num:host.num});
     host.return_point=null;
-    if (!res?.ok) return false;
+    if (!res?.ok) {host.returning=false;return false;}
     if (hosts.get(host.slot)==host) {
       hosts.delete(host.slot);
       HostRestore(host,point);
@@ -106,12 +112,12 @@ export function WinPass({canvas,pal,Request,Input,Status})
     host.pending=true;host.dirty=false;
     try {
       const scene=GuiScene(host.el,host.ids);
-      if (!scene || host.el.style.display=="none" ||
+      if (!scene || !host.el.isConnected || host.el.style.display=="none" ||
           host.overlay && !host.overlay.classList.contains("open")) {
         await HostReturn(host);
         return;
       }
-      host.actions=scene.actions;host.scroll=scene.scroll;
+      host.scene=scene;host.actions=scene.actions;host.scroll=scene.scroll;
       if (host.gui.length==scene.gui.length && host.gui.every((b,i)=>b==scene.gui[i])) return;
       host.gui=scene.gui;
       const res=await Send("update",{slot:host.slot,task:host.task,num:host.num,
@@ -128,8 +134,18 @@ export function WinPass({canvas,pal,Request,Input,Status})
 
   async function HostNew(w,e)
   {
-    let ids=new Map,doc;
-    try {doc=GuiScene(w,ids);} catch (error) {Status(error.message);return;}
+    if (!GuiCompatible(w)) {Status("Video Player and Sprite Studio stay in the browser.");return;}
+    for (const host of hosts.values())
+      if (host.el==w) {Send("focus",{slot:host.slot,task:host.task,num:host.num});return;}
+    if (w.dataset.passPending) return;
+    GuiHoverStyles();
+    const layout={width:w.style.width,height:w.style.height};
+    w.style.width=Math.min(w.offsetWidth,936+w.offsetWidth-w.clientWidth)+"px";
+    w.style.height=Math.min(w.offsetHeight,696+w.offsetHeight-w.clientHeight)+"px";
+    let ids=new WeakMap,doc;
+    try {doc=GuiScene(w,ids);} catch (error) {
+      w.style.width=layout.width;w.style.height=layout.height;Status(error.message);return;
+    }
     let pos=Position(e),rev=revision,overlay=w.closest(".overlay"),host,res;
     if (!doc || w.dataset.passPending)
       return;
@@ -138,37 +154,149 @@ export function WinPass({canvas,pal,Request,Input,Status})
       cols:doc.cols,rows:doc.rows,
       x:Math.max(0,pos.x-48),y:Math.max(0,pos.y-8)});
     delete w.dataset.passPending;
-    if (!res?.ok)
-      return;
-    if (rev!=revision || !enabled) {
-      await Send("close",{slot:res.slot,task:res.task,num:res.num});
+    if (!res?.ok) {
+      w.style.width=layout.width;w.style.height=layout.height;
       return;
     }
-    host={slot:res.slot,task:res.task,num:res.num,el:w,overlay,
+    if (rev!=revision || !enabled || !w.isConnected || w.style.display=="none" ||
+        overlay && !overlay.classList.contains("open")) {
+      await Send("close",{slot:res.slot,task:res.task,num:res.num});
+      w.style.width=layout.width;w.style.height=layout.height;
+      return;
+    }
+    host={slot:res.slot,task:res.task,num:res.num,el:w,overlay,layout,scene:doc,
       ids,gui:doc.gui,actions:doc.actions,scroll:doc.scroll,timer:0,seen:false,pending:false,animation:0};
+    host.changed=function () {
+      clearTimeout(host.timer);host.timer=setTimeout(function () {HostUpdate(host);},16);
+    };
     host.watch=new MutationObserver(function (records) {
       if (records.every(record=>(record.target.nodeType==1?record.target:record.target.parentElement).
           closest(".wc,.wbar,.wvert,.wcorn,.wszcorner,.wszr,.wszb"))) return;
-      clearTimeout(host.timer);
-      host.timer=setTimeout(function () {HostUpdate(host);},100);
+      host.changed();
     });
     host.watch.observe(overlay || w,{subtree:true,childList:true,
       characterData:true,attributes:true,
-      attributeFilter:["disabled","hidden","class","style"]});
+      attributeFilter:["disabled","hidden","class","style","aria-selected","aria-pressed","aria-current","checked","value"]});
+    host.el.addEventListener("guiupdate",host.changed);
+    for (const type of ["input","change","scroll","select","focusin","focusout"])
+      host.el.addEventListener(type,host.changed,true);
     hosts.set(res.slot,host);
     HostHide(host);
-    if (doc.animated) {
+    {
       let last=0;
       function Frame(now) {
         if (!hosts.has(host.slot)) return;
-        if (now-last>=1000/15) {last=now;HostUpdate(host);}
+        if (now-last>=(host.scene.animated?1000/30:250)) {last=now;HostUpdate(host);}
         host.animation=requestAnimationFrame(Frame);
       }
       host.animation=requestAnimationFrame(Frame);
     }
     Input({focus:true,slot:-1});
-    canvas.focus({preventScroll:true});
+    if (w.contains(w.ownerDocument.activeElement)) HostFocus(host,w.ownerDocument.activeElement);
+    else canvas.focus({preventScroll:true});
     Status(doc.title+" is now a TempleOS window.");
+  }
+
+  function HostFocus(host,el)
+  {
+    if (!el || el.disabled) return;
+    el.focus({preventScroll:true});
+    host.changed();
+  }
+
+  function HostPoint(host,action)
+  {
+    const r=host.el.getBoundingClientRect(),control=host.scene.controls.get(action.id),
+      x=action.x??(control?control.x+control.w/2:0),y=action.y??(control?control.y+control.h/2:0);
+    return {clientX:r.left+host.el.clientLeft+x/host.scene.scale,
+      clientY:r.top+host.el.clientTop+y/host.scene.scale,
+      movementX:host.pointer?(x-host.pointer.x)/host.scene.scale:0,
+      movementY:host.pointer?(y-host.pointer.y)/host.scene.scale:0,
+      bubbles:true,cancelable:true,button:0,buttons:host.pressed?1:0};
+  }
+
+  function HostSelect(host,control,action,extend=false)
+  {
+    if (!control?.lines || control.el.selectionStart===null) return;
+    const {el,lines,x,y,top,left}=control,
+      row=Math.max(0,Math.min(lines.length-1,top+Math.floor((action.y-y)/8))),
+      col=Math.max(0,left+Math.round((action.x-x)/8)),line=lines[row],
+      pos=line.cells[col]?.pos??line.end;
+    if (!extend) host.anchor=pos;
+    el.setSelectionRange(Math.min(host.anchor,pos),Math.max(host.anchor,pos),pos<host.anchor?"backward":"forward");
+    host.changed();
+  }
+
+  async function HostAction(host,action)
+  {
+    let el=host.actions.get(action.id),control=host.scene.controls.get(action.id);
+    const point=HostPoint(host,action),kind=action.kind || 0;
+    if (kind==1 || kind==3) host.pointer={x:action.x,y:action.y};
+    if (kind==3) {
+      const hovered=new Set;
+      for (const region of host.scene.regions)
+        if (region.x<=action.x && action.x<region.x+region.w && region.y<=action.y && action.y<region.y+region.h)
+          for (let node=region.el;node && node!=host.el;node=node.parentElement) hovered.add(node);
+      for (const node of host.hovered || []) if (!hovered.has(node)) {
+        node.classList.remove("gui-hover");node.dispatchEvent(new MouseEvent("mouseleave",point));
+      }
+      for (const node of hovered) if (!host.hovered?.has(node)) {
+        node.classList.add("gui-hover");node.dispatchEvent(new MouseEvent("mouseenter",point));
+      }
+      host.hovered=hovered;
+      if (host.pressed) {
+        el=host.pressed;
+        const id=host.ids.get(el);HostSelect(host,host.scene.controls.get(id),action,true);
+      }
+      el?.dispatchEvent(new PointerEvent("pointermove",{...point,pointerId:1,pointerType:"mouse"}));
+      el?.dispatchEvent(new MouseEvent("mousemove",point));
+      host.changed();return;
+    }
+    if (kind==2) {
+      const pressed=host.pressed;
+      host.pressed=null;
+      pressed?.classList.remove("gui-press");
+      (el || pressed)?.dispatchEvent(new PointerEvent("pointerup",{...point,buttons:0,pointerId:1,pointerType:"mouse"}));
+      (el || pressed)?.dispatchEvent(new MouseEvent("mouseup",{...point,buttons:0}));
+      host.changed();return;
+    }
+    if (!el?.isConnected || el.disabled) return;
+    if (kind==1) {
+      host.pressed=el;el.classList.add("gui-press");
+      el.dispatchEvent(new PointerEvent("pointerdown",{...point,buttons:1,pointerId:1,pointerType:"mouse"}));
+      el.dispatchEvent(new MouseEvent("mousedown",{...point,buttons:1}));
+      HostFocus(host,el);HostSelect(host,control,action);return;
+    }
+    if (kind==4) {HostFocus(host,el);return;}
+    HostFocus(host,el);
+    if (el.tagName=="SELECT") {
+      const choice=await WinDialog(el.getAttribute("aria-label") || el.title || "Choose an option",undefined,
+        WinOrigin(el),[...el.options].map(option=>({label:option.textContent,disabled:option.disabled})));
+      if (choice!==null && el.isConnected && !el.disabled) {
+        el.selectedIndex=choice;
+        el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));
+      }
+      HostFocus(host,el);
+    } else if (el.matches('input[type=range]')) {
+      const min=Number(el.min || 0),max=Number(el.max || 100),step=Number(el.step || 1);
+      el.value=String(min+Math.round(Math.max(0,Math.min(1,(action.x-control.x)/control.w))*(max-min)/step)*step);
+      el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));
+    } else {
+      const now=performance.now(),dbl=host.last_click?.el==el && now-host.last_click.time<500;
+      host.last_click={el,time:now};
+      el.dispatchEvent(new MouseEvent("click",{...point,buttons:0,detail:dbl?2:1}));
+      if (dbl) {
+        el.dispatchEvent(new MouseEvent("dblclick",{...point,detail:2}));
+        if (control?.lines && el.selectionStart==el.selectionEnd) {
+          const pos=el.selectionStart,value=el.value;
+          let start=pos,end=pos;
+          while (start>0 && /\w/.test(value[start-1])) start--;
+          while (end<value.length && /\w/.test(value[end])) end++;
+          el.setSelectionRange(start,end);
+        }
+      }
+    }
+    host.changed();
   }
 
   function ViewDel(id)
@@ -432,8 +560,17 @@ export function WinPass({canvas,pal,Request,Input,Status})
       for (w of windows) {
         id=Identity(w);
         host=hosts.get(w.slot);
-        if (host && host.task==w.task && host.num==w.num)
+        if (host && host.task==w.task && host.num==w.num) {
           host.seen=true;
+          if (host.size && (host.size.w!=w.w || host.size.h!=w.h ||
+              Math.abs(host.el.clientWidth*host.scene.scale-w.w+16)>7 ||
+              Math.abs(host.el.clientHeight*host.scene.scale-w.h+16)>7)) {
+            host.el.style.width=(w.w-16)/host.scene.scale+host.el.offsetWidth-host.el.clientWidth+"px";
+            host.el.style.height=(w.h-16)/host.scene.scale+host.el.offsetHeight-host.el.clientHeight+"px";
+            host.changed();
+          }
+          host.size={w:w.w,h:w.h};
+        }
         if (w.detached && !host) {
           seen.add(id);
           view=views.get(id) || ViewNew(w);
@@ -449,6 +586,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
         })) {
           hosts.delete(host.slot);
           HostRestore(host);
+          if (!host.returning) host.el.querySelector(".close")?.click();
         }
     }
     for (action of msg.actions || []) {
@@ -466,9 +604,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
             HostUpdate(host);
           }
         } else {
-          el=host.actions.get(action.id);
-          if (el && el.isConnected && !el.disabled)
-            el.click();
+          HostAction(host,action).catch(error=>Status(error.message));
         }
       }
     }
@@ -500,6 +636,39 @@ export function WinPass({canvas,pal,Request,Input,Status})
     if (enabled && Inside(e.detail))
       HostNew(e.target,e.detail);
   });
+  document.addEventListener("winlaunch",function (e) {
+    if (!enabled) return;
+    const w=e.detail.win;
+    if (!GuiCompatible(w)) return;
+    const r=canvas.getBoundingClientRect(),parent=[...hosts.values()].find(host=>host.el.id==e.detail.origin.id),
+      native=windows.find(win=>win.slot==parent?.slot);
+    HostNew(w,{clientX:r.left+((native?.x || 100)+80)*r.width/640,
+      clientY:r.top+((native?.y || 60)+32)*r.height/480});
+  });
+  document.addEventListener("winmaximize",function (e) {
+    const host=[...hosts.values()].find(host=>host.el==e.target),win=windows.find(win=>win.slot==host?.slot);
+    if (!host || !win) return;
+    let size=host.normal;
+    if (size) host.normal=null;
+    else {host.normal={cols:(win.w-16)/8,rows:(win.h-16)/8,x:win.x,y:win.y};size={cols:78,rows:58,x:0,y:0};}
+    Send("size",{slot:host.slot,task:host.task,num:host.num,...size});
+  });
+  document.addEventListener("keydown",function (e) {
+    if (e.defaultPrevented) return;
+    const host=[...hosts.values()].find(host=>host.el.contains(e.target));
+    if (!host) return;
+    if (e.key=="Tab") {
+      e.preventDefault();
+      const items=[...host.el.querySelectorAll("button,input,textarea,select,a[href],summary,[tabindex]")].filter(el=>
+        !el.disabled && el.tabIndex>=0 && el.getClientRects().length && getComputedStyle(el).visibility!="hidden" && !el.closest(".wc")),
+        i=items.indexOf(e.target),step=e.shiftKey?-1:1,el=items[(i+step+items.length)%items.length];
+      HostFocus(host,el);el?.scrollIntoView({block:"nearest",inline:"nearest"});
+    } else if (e.key=="Escape") {
+      e.preventDefault();host.el.querySelector(".close")?.click();
+    } else if (e.target.tagName=="SELECT" && ["Enter"," "].includes(e.key)) {
+      e.preventDefault();HostAction(host,{id:host.ids.get(e.target)}).catch(error=>Status(error.message));
+    }
+  });
   document.addEventListener("winfocus",function (e) {
     let host;
     for (host of hosts.values())
@@ -508,6 +677,39 @@ export function WinPass({canvas,pal,Request,Input,Status})
         Send("focus",{slot:host.slot,task:host.task,num:host.num});
       }
   });
+  function HostAt(e)
+  {
+    const point=Position(e);
+    for (const win of windows.slice().reverse())
+      if (!win.detached && win.x<=point.x && point.x<win.x+win.w && win.y<=point.y && point.y<win.y+win.h) {
+        const host=hosts.get(win.slot);
+        if (!host || point.x<win.x+8 || point.x>=win.x+win.w-8 || point.y<win.y+8 || point.y>=win.y+win.h-8) return;
+        return {host,x:point.x-win.x-8,y:point.y-win.y-8};
+      }
+  }
+  canvas._winAt=e=>HostAt(e)?.host.el;
+  canvas.addEventListener("pointermove",function (e) {
+    const at=HostAt(e);
+    let cursor="";
+    if (at) for (const c of at.host.scene.controls.values())
+      if (c.x<=at.x && at.x<c.x+c.w && c.y<=at.y && at.y<c.y+c.h)
+        cursor=c.el.matches("textarea,input:not([type=checkbox]):not([type=range])")?"text":"pointer";
+    canvas.toggleAttribute("data-native-cursor",!!cursor);
+    canvas.style.setProperty("--native-cursor",cursor || "auto");
+  });
+  canvas.addEventListener("pointerleave",function () {
+    canvas.removeAttribute("data-native-cursor");
+    for (const host of hosts.values()) HostAction(host,{kind:3,x:-1000,y:-1000});
+  });
+  for (const type of ["dragover","dragleave","drop"])
+    canvas.addEventListener(type,function (e) {
+      const at=HostAt(e);
+      if (!at || !e.dataTransfer.types.includes("Files")) return;
+      const region=at.host.scene.regions.findLast(c=>c.x<=at.x && at.x<c.x+c.w && c.y<=at.y && at.y<c.y+c.h);
+      if (!region) return;
+      const event=new DragEvent(type,{...HostPoint(at.host,at),dataTransfer:e.dataTransfer});
+      if (!region.el.dispatchEvent(event)) e.preventDefault();
+    });
   canvas.addEventListener("pointerdown",GuestDown);
   canvas.addEventListener("pointermove",GuestMove);
   canvas.addEventListener("pointerup",GuestUp);

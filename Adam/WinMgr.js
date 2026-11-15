@@ -229,6 +229,53 @@ export function WinRaise(el)
   el.style.zIndex=++z_top;
 }
 
+export function WinOrigin(el=document.activeElement)
+{//Capture before awaiting a load; later focus changes cannot reroute it.
+  return {native:!!el?.closest?.(".win-pass-owned"),id:el?.closest?.(".win")?.id};
+}
+
+export function WinRoute(w,origin)
+{
+  if (origin?.native)
+    document.dispatchEvent(new CustomEvent("winlaunch",{detail:{win:w,origin}}));
+}
+
+export function WinDialog(message,value,origin=WinOrigin(),choices=null)
+{//Site prompts and select menus use the same window and native routing.
+  return new Promise(function (Resolve) {
+    const w=document.createElement("div"),form=document.createElement("form"),
+      text=document.createElement("p"),close=document.createElement("button"),
+      input=document.createElement("input"),bar=document.createElement("div");
+    w.className="win";w.id="dialog-"+crypto.randomUUID();w.dataset.title=choices?"Choose":"TempleOS";
+    w.style.cssText="position:fixed;left:calc(50% - 180px);top:20%;width:360px;max-height:60vh;padding:12px";
+    close.className="close";close.textContent="[X]";w.append(close);
+    text.textContent=message;form.append(text);form.style.cssText="display:flex;flex-direction:column;gap:12px;max-height:50vh;overflow:auto";
+    function Done(result) {w.remove();Resolve(result);}
+    if (choices) {
+      for (const [i,option] of [...choices].entries()) {
+        const button=document.createElement("button");button.type="button";
+        button.textContent=option.label;button.disabled=option.disabled;
+        button.addEventListener("click",function () {Done(i);});form.append(button);
+      }
+    } else {
+      if (value!==undefined) {
+        input.value=value;input.setAttribute("aria-label",message);
+        input.style.cssText="font:inherit;padding:6px;width:100%";form.append(input);
+      }
+      bar.className="action-bar";
+      const ok=document.createElement("button"),cancel=document.createElement("button");
+      ok.textContent="OK";cancel.textContent="Cancel";cancel.type="button";
+      cancel.addEventListener("click",function () {Done(null);});bar.append(ok,cancel);form.append(bar);
+      form.addEventListener("submit",function (e) {e.preventDefault();Done(value===undefined?true:input.value);});
+    }
+    w.addEventListener("keydown",function (e) {if (e.key=="Escape") {e.preventDefault();Done(null);}});
+    w.append(form);document.body.append(w);
+    WinDress(w,{onClose:function () {Done(null);}});WinFocus(w);
+    if (value!==undefined) {input.focus({preventScroll:true});input.select();}
+    WinRoute(w,origin);
+  });
+}
+
 export function WinFocus(w)
 {
   let a,doc;
@@ -388,7 +435,7 @@ function WinMenu()
 
 function WinDown(e)
 {
-  WinFocus(e.currentTarget);
+  WinFocus(e.target._winAt?.(e) || e.currentTarget);
 }
 
 export function WinTitle(w,title)
@@ -528,6 +575,7 @@ function LoadingClose()
 }
 async function WinOpen(id)
 {
+  const origin=WinOrigin();
   if (!$("winLoadingOverlay")) {
     WinAdd('#winLoading { width:min(420px,92vw); }',
       '<div id="winLoadingOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Opening window">'+
@@ -542,6 +590,7 @@ async function WinOpen(id)
   $("winLoadingText").textContent="Opening "+$(id).textContent.trim()+"…";
   $("winLoadingOverlay").classList.add("open");
   WinFocus($("winLoading"));
+  WinRoute($("winLoading"),origin);
   MenuShow(false);
   try {
     const m=await import(WINS[id][1]);
@@ -549,6 +598,7 @@ async function WinOpen(id)
     $("winLoadingOverlay").classList.remove("open");
     m.Open();
     WinApply($(WINS[id][0]));
+    WinRoute($(WINS[id][0]),origin);
     document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id}}));
   } catch(e) {
     if(request===opening)$("winLoadingText").textContent="Could not open this window. Close and try again.";

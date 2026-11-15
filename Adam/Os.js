@@ -271,10 +271,14 @@ DocOn('mousemove',e=>{
     notifyInput();
   }
 });
-DocOn('mousedown',e=>{if(releasesFocus(e.target)||!keepsFocus(e.target))setFocused(false);},true);
+DocOn('mousedown',e=>{
+  if(e.target?.closest?.('.win-pass-owned'))return;
+  if(releasesFocus(e.target)||!keepsFocus(e.target))setFocused(false);
+},true);
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('wheel',e=>{if(!focused)return;wheelZ+=e.deltaY>0?1:-1;e.preventDefault();notifyInput();},{passive:false});
 const keysToOS=e=>{
+  if(e?.target?.closest?.('.win-pass-owned'))return false;
   if(e?.target?.closest?.('textarea,input,select,button,[role=button],[contenteditable=true]'))return false;
   if((e?.target?.ownerDocument || document).querySelector('.overlay.open:not(.free):not(.win-pass-owned)'))return false;
   return focused||document.body.classList.contains('touch');

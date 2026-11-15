@@ -76,8 +76,10 @@ try {
   assert.equal(await page.locator('#filesPath').inputValue(),'C:/Home/');
   await page.locator('#filesNew').click();
   await page.waitForFunction(()=>window.__holycEditor.file.path==null);
-  page.once('dialog',dialog=>{assert.equal(dialog.defaultValue(),'C:/Home/MyProgram.HC');dialog.accept('C:/Home/Created.HC');});
   await page.locator('#edToDisk').click();
+  const prompt=page.locator('[id^="dialog-"] input');
+  assert.equal(await prompt.inputValue(),'C:/Home/MyProgram.HC');
+  await prompt.fill('C:/Home/Created.HC');await prompt.press('Enter');
   await page.waitForFunction(()=>document.getElementById('status').textContent=='Saved C:/Home/Created.HC');
   assert.equal(await page.evaluate(()=>__holycEditor.FileName()),'Created.HC');
   await page.locator('#edFiles').click();

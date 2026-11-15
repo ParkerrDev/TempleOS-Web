@@ -1,7 +1,7 @@
 import {Icon} from "../../Adam/Icons.js";
 import {gameProject,gameProgram} from './GameSrc.js';
 import {GAMES} from './GameCatalog.js';
-import {WinFind,WinRaise,WinRestore,WinTitle} from '../../Adam/WinMgr.js';
+import {WinFind,WinRaise,WinRestore,WinTitle,WinOrigin,WinRoute} from '../../Adam/WinMgr.js';
 import {HelpGame} from '../Help/HelpWin.js';
 import {os_game,OsCaptureSet,OsFileWrite,OsGen,OsHold,OsInputRelease,OsInputReset,OsLaunch} from '../../Adam/Os.js';
 import {EdLoad,EdDraftRestore,ed_game,ed_view} from '../Editor/EditorWin.js';
@@ -48,10 +48,10 @@ ed_game.leave=()=>{
   ovE.classList.remove('gameproject');
   WinFind('editorRuntimeInfo').textContent='Click the screen for keyboard, mouse and sound. Direct HolyC to WebAssembly.';
 };
-async function editGame(g){
+async function editGame(g,{origin=WinOrigin()}={}){
   const request=++editorRequest;
   closeGameWin();closeGames();OsInputRelease();
-  ovE.classList.add('open');WinRaise(ovE);setStatus('Loading '+g.name+' source...');
+  ovE.classList.add('open');WinRaise(ovE);WinRoute(WinFind('editorWin'),origin);setStatus('Loading '+g.name+' source...');
   try{
     await EdLoad();
     if(request!==editorRequest||!ovE.classList.contains('open'))return;
@@ -117,7 +117,7 @@ os_game.mouse={
   },
   isMouseCaptured:()=>!!previewMouse()?.isMouseCaptured(),
 };
-async function runInBrowser(g,{inEditor=false,start=true}={}) {
+async function runInBrowser(g,{inEditor=false,start=true,origin=WinOrigin()}={}) {
   ed_game.cancel();
   const view=WinFind(inEditor?'editorWin':'gameWin');
   closeGameWin({keepFullscreen:ed_view.isWithin(view)});const token=launchToken;curGame=g;closeGames();
@@ -125,7 +125,7 @@ async function runInBrowser(g,{inEditor=false,start=true}={}) {
   runnerTarget=inEditor?'editor':'window';
   if(!inEditor)ovE.classList.remove('open','free');
   OsInputRelease();
-  if(start)releaseDesktop=OsHold();
+  if(start&&!origin.native&&!view.classList.contains('win-pass-owned'))releaseDesktop=OsHold();
   const overlay=WinFind('gameWinOverlay'),win=WinFind('gameWin');
   const slot=inEditor?WinFind('editorWin').querySelector('.ed-screenwrap'):WinFind('gameWinSlot'),status=runnerStatus();
   if(inEditor){
@@ -135,7 +135,7 @@ async function runInBrowser(g,{inEditor=false,start=true}={}) {
     win._restore={kind:'game',data:{key:GameKey(g)}};
     WinTitle(win,g.name);
     WinFind('gameWinRun').innerHTML=Icon('play')+(start?' Run again':' Run');
-    overlay.classList.add('open');WinRaise(overlay);
+    overlay.classList.add('open');WinRaise(overlay);WinRoute(win,origin);
   }
   status.textContent=start?'Compiling with HolyC-WASM...':'Ready. Run starts a new game.';
   try{

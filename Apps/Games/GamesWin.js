@@ -1,7 +1,7 @@
 import {gameCredits} from './GameCredits.js';
 import {GAMES} from './GameCatalog.js';
 export {GAMES} from './GameCatalog.js';
-import {WinAdd,WinRaise} from '../../Adam/WinMgr.js';
+import {WinAdd,WinRaise,WinOrigin} from '../../Adam/WinMgr.js';
 import {OsInputRelease} from '../../Adam/Os.js';
 const CSS='    /* ---- Games launcher ---- */\n'+
   '    .gm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; padding:6px 2px; }\n'+
@@ -150,9 +150,9 @@ gmSearch.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (gmSe
 let loading;
 async function Run(action,game,button)
 {
-  const label=button.textContent;
+  const label=button.textContent,origin=WinOrigin(button);
   button.disabled=true;button.textContent="Opening…";
-  try {await (await import("./GamesRun.js"))[action](game);}
+  try {await (await import("./GamesRun.js"))[action](game,{origin});}
   catch(e) {document.getElementById("gmLoading").hidden=false;document.getElementById("gmLoading").textContent="Could not open game: "+e.message;}
   finally {button.disabled=false;button.textContent=label;}
 }

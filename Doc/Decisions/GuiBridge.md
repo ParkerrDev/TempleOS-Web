@@ -7,7 +7,7 @@ The browser owns HTML/CSS layout and web actions. TempleOS owns native task wind
   - Menu, Help and God Tools have separate hardcoded body/button selectors; Terry and future documents cannot participate.
   - CSS layout, colors, images and button positions are discarded by the text conversion.
   - Canvas frames change without DOM mutations, so a document observer alone cannot synchronize animation.
-- Preserve browser layout while native ownership is active; serialize text, rectangular backgrounds/borders, buttons, canvas/image pixels and links. Reject controls with browser-only editing/media semantics.
+- Preserve browser layout while native ownership is active; serialize text, rectangular backgrounds/borders, buttons, canvas/image pixels and links. Keep editing in the existing browser controls and relay native pointer events. Video Player and Sprite Studio remain browser windows.
   - display:none destroys the layout needed for conversion and stops Terry's existing visibility-driven player.
   - Native click targets must call their originating DOM controls and retain stable IDs across updates.
 - Return current windows independently of the enabled preference.
@@ -16,7 +16,7 @@ The browser owns HTML/CSS layout and web actions. TempleOS owns native task wind
 - Use the same native surface coordinates for pointer forwarding and resize/move cursors.
   - Detached task canvases forward mouse input without indicating which border is resizable.
 
-Scope: resolved HTML/CSS presentation, not a complete standalone HTML parser/browser. Native text remains TempleOS's 8x8 font and colors remain its sixteen-color palette. Unsupported media, editable fields, transforms and embedded browsers stay in the web interface. Existing native task capture remains unchanged.
+Scope: resolved HTML/CSS presentation, not a complete standalone HTML parser/browser. Native text remains TempleOS's 8x8 font and colors remain its sixteen-color palette. Editable fields and selects retain their DOM behavior. SVGs are resolved and quantized through the HolyC sprite codec. Only Video Player and Sprite Studio are excluded among the site tools; browser file pickers and permissions remain browser operations. Existing native task capture remains unchanged.
 
 Validation corrections:
 - Use the existing HolyC sprite codec for palette quantization; browser glue only reads resolved layout and canvas pixels.
@@ -27,3 +27,12 @@ Validation corrections:
 - Retain a dirty update while a scene is in flight, then send the latest layout. Static tools cannot rely on Terry's animation timer to retry.
 - Saved machines containing the older native structure receive explicit Restart guidance before field offsets are accessed.
 - Scroll containers retain native keyboard/wheel actions and clipping. Native clicks, animation, the Random video action, cheatsheet page/end scrolling and Return were exercised against the running guest.
+
+Expanded controls and routing:
+- Native pointer press, release and movement carry control identity and coordinates. The task requests immediate mouse messages so TempleOS does not merge two presses into a delayed double-click message.
+- Browser input handlers ignore relayed native mouse events when deciding whether to reset OS input. Otherwise a press on a native field moved the guest pointer to the center before release.
+- Browser window focus resolves the native tool under the canvas pointer before notifying context-sensitive tools. Focusing the canvas first changed Help's text and moved its buttons during a click.
+- A full-size scene covers the desktop callback. Attach its renderer before resizing, then perform the bridge's visibility step from that renderer too. Otherwise the bridge can shut down between window creation and scene allocation. Plain DolDoc windows retain their normal drawing and capture path.
+- Window jobs queue on Adam with internal/background ownership, so file reads and native focus requests do not reject each other as concurrent user programs.
+- Launch origin is captured before asynchronous loads, then passed explicitly to child tools and the shared save/select dialog. It does not depend on later focus.
+- Live tests cover Chat with a local mocked socket, file imports and double-clicks, editor typing/run/save, native dropdowns, Menu and Help child launches, settings, search hover, game preview, disk checkpoints, and the existing Terry/God/cheatsheet flows. No test messages are sent to the public chat.

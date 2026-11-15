@@ -15,6 +15,8 @@ const paths={
   download:'<path d="M8 1v9M4 6l4 4 4-4M2 11v4h12v-4"/>',
   upload:'<path d="M8 11V2M4 6l4-4 4 4M2 11v4h12v-4"/>',
   edit:'<path d="M2 11v3h3L14 5l-3-3zM9 4l3 3"/>',
+  fullscreen:'<path d="M6 2H2v4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>',
+  format:'<path d="M2 3h12M6 7h8M6 11h8M2 15h12M1 6l3 3-3 3"/>',
   check:'<path d="M2 8l4 4L14 3"/>'
 };
 

@@ -76,7 +76,7 @@ const HTML='  <div id="tsOverlay" class="overlay" role="dialog" aria-modal="true
   '        </select>\n'+
   '        <span id="tsYearWrap"><button id="tsYearBtn" title="filter by year - picking years adds date: filters to your search">year ▾</button>\n'+
   '          <div id="tsYearPanel"></div></span>\n'+
-  '        <span id="tsHelp">[?]\n'+
+  '        <span id="tsHelp" role="button" tabindex="0" aria-label="Search help">[?]\n'+
   '          <div id="tsHelpPop">Whisper transcripts of the <a href="https://archive.org/details/TerryADavis_TempleOS_Archive" target="_blank" rel="noopener">TerryADavis_TempleOS_Archive</a> - click any result to watch that video at that moment.<br><br>\n'+
   '          Google-style: "exact phrase" · -exclude · terry OR dave · date:2012-2014,2017 · in:titles · since:2017-06 until:2017-11-19</div>\n'+
   '        </span>\n'+
@@ -316,6 +316,7 @@ const init = () => { if (w) return;
   w.postMessage({type:"load",base:"./Transcripts/"});syncFromQuery(); };
 q.addEventListener("input", () => { pending_video=null;vid++;qid++;syncFromQuery(); clearTimeout(deb); deb = setTimeout(ask, 250); });
 $("tsClear").addEventListener("click", () => { q.value = ""; syncFromQuery(); ask(); q.focus(); });
+$("tsHelp").addEventListener("keydown",e=>{if(e.key=="Enter" || e.key==" "){e.preventDefault();$("tsHelp").click();}});
 $("tsHelp").addEventListener("click", () => $("tsHelp").classList.toggle("open"));   // tap support (hover covers desktop)
 ov.addEventListener("pointerdown", (e) => { if (e.target === ov) ov.classList.remove("open"); });
 const open = (focus=true) => { ov.classList.add("open"); WinRaise(ov); init(); if (focus) setTimeout(() => q.focus(), 50); };

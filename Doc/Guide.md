@@ -107,23 +107,33 @@ screen edge to move its live window onto the page. Drag its title back over the
 screen to return it. Its task, document, keyboard, mouse and scroll controls still
 run inside TempleOS.
 
-Browser windows can move the other way, including Terry, Menu, Help, the
-cheatsheet and God Tools. A shared converter reads their resolved HTML/CSS layout
-and sends rectangles, text, palette images, canvas frames and button/link targets
-to a real TempleOS task. Native HolyC draws that scene with `GrRect`, `GrPrint`
-and `GrBlot`. Clicking native controls calls the original browser actions, so
-Terry's Random video button opens the browser player. Scrollable content responds
-to the mouse wheel, arrow keys, Page Up/Down and Home/End. Dragging the native
-title outside returns the original browser window. **Return windows** in Settings
-returns current windows while leaving passthrough enabled.
+Every site tool except Video Player and Sprite Studio can move into TempleOS,
+including Chat, HolyC Editor, Files, Disk & Save, Terry Search, Settings, Games,
+God Tools, Help, the cheatsheet, Menu and Terry. A shared converter reads the
+resolved HTML/CSS layout. Native HolyC draws its text, rectangles and indexed
+images with `GrPrint`, `GrRect` and `GrBlot`. SVG icons become palette bitmaps,
+including icons that refer to shared SVG symbols.
 
-The converter uses TempleOS's 8x8 font and sixteen-color palette. It supports
-rectangular CSS layout and clipping, not every CSS effect: transformed elements,
-editable fields, video/audio and embedded browsers remain on the page. SVG icon
-art, gradients, shadows and rounded corners are not reproduced. Icon-only buttons
-use their accessible labels, shortened to fit. Native window
-frames replace browser frame decorations; they are not included in the scene.
-Settings, editors, Sprite Studio, file pickers and media tools remain browser tools.
+The original browser controllers still own editing, clipboard, forms, storage
+and network requests. Native mouse events carry the target and coordinates back
+to those controls. Text fields retain selection and keyboard editing; checkboxes,
+dropdowns, double-clicks, hover states, nested scroll areas and canvases work in
+the native window. The browser editor's existing syntax colors are retained.
+Native resize reflows the layout, and game/editor fullscreen controls maximize
+the native window. Closing it closes its browser tool. Dragging the native title
+outside returns that same tool to the page. **Return windows** leaves passthrough
+enabled.
+
+Compatible tools opened from a native tool stay inside TempleOS, including
+Files → Editor, Editor → Files, game launchers, dropdown menus and save/replace
+dialogs. Video Player and Sprite Studio remain on the page. Picking files from
+your computer, downloads and browser permission dialogs still use browser APIs.
+
+The converter uses TempleOS's 8×8 font and sixteen colors. It translates this
+site's resolved DOM, rather than supplying a standalone browser in the guest.
+Rectangular layouts, clipping and positioned overlays are supported; CSS shadows,
+gradients, rounded corners and arbitrary transformed graphics are not reproduced.
+Native frames replace the web decorations instead of drawing both.
 
 Guest capture supports bordered documents and their native sprites and scrollbars.
 Arbitrary custom drawing callbacks, persistent desktop graphics, fullscreen programs

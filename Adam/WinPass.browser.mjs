@@ -190,15 +190,21 @@ try {
   await page.evaluate(()=>window.passReject=null);
   await page.evaluate(function () {
     let button=document.getElementById("godClear");
-    button.addEventListener("click",function () {window.passAction=true;});
+    button.addEventListener("click",function (e) {
+      window.passAction=true;window.passClick={x:e.clientX,y:e.clientY};
+    });
     let doc=window.passDoc(document.getElementById("godWin")),id;
     for (let [n,el] of doc.actions)
       if (el==button)
         id=n;
-    window.pass.Receive({actions:[{slot:0,id}]});
+    const c=doc.controls.get(id),r=button.getBoundingClientRect();
+    window.passClickExpected={x:r.left+r.width/2,y:r.top+r.height/2};
+    window.pass.Receive({actions:[{slot:0,id,x:c.x+c.w/2,y:c.y+c.h/2}]});
   });
   assert.equal(await page.evaluate(function () {return window.passAction;}),true,
     "native scene action calls the original browser button handler");
+  assert(await page.evaluate(()=>Math.abs(passClick.x-passClickExpected.x)<3 &&
+    Math.abs(passClick.y-passClickExpected.y)<3),"native clicks retain the DOM pointer position");
   assert(await page.evaluate(function () {
     return window.passRequests.filter(function (m) {return m.slot!==undefined;}).
       every(function (m) {return m.task==1234 && m.num==5;});
@@ -209,7 +215,9 @@ try {
     window.pass.Receive({windows:[{...window.passWin,slot:0,num:6,host:null}],
       actions:[{slot:0,id:6}]});
   });
-  assert.equal(await page.locator("#godWin").isVisible(),true);
+  assert.equal(await page.locator("#godWin").isVisible(),false,"closing a native owner closes its browser application");
+  await page.locator("#godBtn").click();
+  await page.locator("#godWin").waitFor();
   assert.equal(await page.evaluate(function () {return window.passAction;}),false,
     "a reused native slot cannot activate the previous browser owner");
   await page.locator("#godWin").evaluate(function (win,point) {
@@ -238,8 +246,8 @@ try {
     "disable restores browser ownership and overlay state");
   assert.equal(await page.locator("#winPassDock").count(),0);
   assert.equal(await page.evaluate(function () {
-    return window.passDoc(document.getElementById("settingsWin"));
-  }),null,"unsupported browser settings stay accessible outside");
+    return !!window.passDoc(document.getElementById("settingsWin"));
+  }),true,"settings controls use the shared native scene converter");
   await page.evaluate(async function () {
     await window.pass.Enable(true);
     window.passWin.detached=true;

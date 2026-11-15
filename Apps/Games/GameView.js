@@ -29,6 +29,8 @@ export function setupGameViews({release:releaseMouse,raise}){
     }
   }
   function toggle(target){
+    const native=target.closest('.win-pass-owned');
+    if(native){native.dispatchEvent(new Event('winmaximize',{bubbles:true}));return;}
     if(active===target){exit();return;}
     release();
     if(active)exit();

@@ -3,12 +3,13 @@ import {spawn} from "node:child_process";
 import {once} from "node:events";
 import {readFile,mkdir} from "node:fs/promises";
 await mkdir("tmp/gui",{recursive:true});
+import {gzipSync} from "node:zlib";
 import {chromium} from "playwright-core";
 
-const root=new URL("..",import.meta.url),
-  server=spawn(process.execPath,["Misc/Server.mjs"],{cwd:root,
+const root=new URL("..",import.meta.url),base=process.env.GUI_URL || "http://localhost:8195/",
+  server=process.env.GUI_URL?null:spawn(process.execPath,["Misc/Server.mjs"],{cwd:root,
     env:{...process.env,PORT:"8195"},stdio:["ignore","pipe","inherit"]});
-await once(server.stdout,"data");
+if (server) await once(server.stdout,"data");
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM ||
   "/usr/bin/chromium",headless:true,args:["--no-sandbox"]});
 let page;
@@ -21,6 +22,17 @@ try {
   });
   await context.route("https://templeosweb-*.workers.dev/**",
     function (route) {route.abort();});
+  const sent=[];
+  await context.routeWebSocket(/templeosweb-presence\./,()=>{});
+  await context.routeWebSocket(/templeosweb-chat\./,ws=>{
+    ws.send(JSON.stringify({t:"hello",tag:"test",people:1,log:[]}));
+    ws.onMessage(message=>{if(message=="ping")ws.send("pong");else sent.push(JSON.parse(message));});
+  });
+  await context.route("**/Apps/Search/Transcripts/**",route=>{
+    if (route.request().url().endsWith("manifest.json")) return route.fulfill({json:{shards:[{f:"fixture.json.gz"}]}});
+    return route.fulfill({contentType:"application/gzip",body:gzipSync(JSON.stringify([
+      {t:"Native search fixture",d:"2017-01-01",f:"videos/fixture.mp4",n:60,s:[[1,"HolyC compiler inside TempleOS"]]}]))});
+  });
   await context.addInitScript(function () {
     localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
     window.passEvents=[];window.passRequests=[];window.passWindows=[];
@@ -42,6 +54,7 @@ try {
         this.port.addEventListener("message",function (e) {
           const m=e.data;
           if (m.cmd=="windows") {
+            if(m.enabled===false)window.passEvents.push(m);
             window.passWindows=m.windows;
             window.passActions.push(...m.actions);
             for (const w of m.windows)
@@ -60,12 +73,13 @@ try {
     {f:"videos/fixture.mp4",t:"Native Terry action",d:"2017-01-01"}]}));
   await context.route("https://archive.org/download/**",route=>route.abort());
   page=await context.newPage();
+  page.on("crash",()=>console.error("PAGE CRASH"));
   const errors=[];
   page.on("pageerror",function (e) {errors.push(e.message);});
   let query="?single";
   if (process.env.WINPASS_SMP)
     query="";
-  await page.goto("http://localhost:8195/"+query,{waitUntil:"load"});
+  await page.goto(new URL(query,base).href,{waitUntil:"load"});
   await page.waitForFunction(function () {
     return window.passEvents.some(function (e) {return e.cmd=="guestReady" && e.ok;});
   },null,{timeout:60000});
@@ -84,6 +98,8 @@ try {
   const r=await page.locator("#canvas").boundingBox(),scale=r.width/640;
   async function Transfer(id)
   {
+
+    const r=await page.locator("#canvas").boundingBox(),scale=r.width/640;
     await page.locator("#"+id).waitFor();
     await page.evaluate(async function (id) {
       const {WinFocus}=await import("/Adam/WinMgr.js");WinFocus(document.getElementById(id));
@@ -93,9 +109,11 @@ try {
     await page.mouse.down();await page.mouse.move(r.x+220*scale,r.y+100*scale,{steps:15});await page.mouse.up();
     await page.waitForFunction(id=>document.getElementById(id).classList.contains("win-pass-owned"),id,{timeout:30000});
     await page.waitForFunction(id=>window.passWindows.some(w=>w.host==id),id,{timeout:30000});
+    await page.waitForTimeout(350);
   }
-  async function Button(id,selector)
+  async function Point(id,selector)
   {
+    await page.waitForFunction(id=>window.passWindows.some(w=>w.host==id),id,{timeout:30000});
     const point=await page.evaluate(async function ({id,selector}) {
       const {GuiScene}=await import("/Adam/GuiBridge.js"),scene=GuiScene(document.getElementById(id)),
         target=document.querySelector(selector),action=[...scene.actions].find(([,el])=>el==target)?.[0],
@@ -106,8 +124,28 @@ try {
             y:w.y+8+v.getInt32(at+8,true)+v.getInt32(at+16,true)/2,id:action};
     },{id,selector});
     assert(point,"native action rectangle exists for "+selector);
-    await page.mouse.click(r.x+point.x*scale,r.y+point.y*scale,{delay:150});
-    await page.waitForFunction(id=>window.passActions.some(a=>a.id==id),point.id);
+    const rect=await page.locator("#canvas").boundingBox();
+    return {x:rect.x+point.x*rect.width/640,y:rect.y+point.y*rect.height/480};
+  }
+  async function Button(id,selector)
+  {
+    const point=await Point(id,selector);
+    await page.mouse.click(point.x,point.y,{delay:150});
+    await page.waitForTimeout(350);
+  }
+  async function ReturnAll()
+  {
+    await page.evaluate(async()=>{const m=await import("/Adam/Os.js");await m.OsWinPassReturn();});
+    await page.waitForFunction(()=>!document.querySelector(".win-pass-owned"));
+    await page.evaluate(async()=>{const m=await import("/Adam/WinMgr.js");m.WinWorkspaceReset();});
+  }
+  async function Type(id,selector,value)
+  {
+
+    await Button(id,selector);
+    await page.waitForFunction(selector=>document.activeElement==document.querySelector(selector),selector);
+    await page.keyboard.press("Control+a");await page.keyboard.type(value);
+    assert.equal(await page.locator(selector).inputValue(),value);
   }
   await Transfer("terryWin");
   await page.waitForFunction(()=>window.passRequests.filter(m=>m.op=="update" && m.gui).length>=2);
@@ -128,7 +166,9 @@ try {
   await page.waitForFunction(()=>!document.querySelector(".win-pass-owned"));
   assert.equal(await page.locator("#windowPassthrough").isChecked(),true);
   await page.locator("#settingsClose").click();
-  await page.locator("#cheatsheetBtn").click();await Transfer("cheatsheetWin");
+  await page.locator("#terryWin .close").click();
+  await Transfer("guide");await Button("guide","#cheatsheetBtn");
+  await page.waitForFunction(()=>document.getElementById("cheatsheetWin")?.classList.contains("win-pass-owned"),null,{timeout:30000});
   const before=await page.locator(".cheatsheet-body").evaluate(el=>el.scrollTop);
   await page.keyboard.press("PageDown");
   await page.waitForFunction(before=>document.querySelector(".cheatsheet-body").scrollTop>before,before);
@@ -138,7 +178,8 @@ try {
   await page.screenshot({path:"tmp/gui/native-cheatsheet.png"});
   await page.locator("#settingsBtn").click();await page.locator("#returnWindows").click();
   await page.waitForFunction(()=>!document.querySelector(".win-pass-owned"));
-  await page.locator("#settingsClose").click();await page.locator("#cheatsheetClose").click();
+  await page.locator("#cheatsheetClose").click();await page.locator("#settingsClose").click();
+  await page.locator("#guide .close").click();
   await page.locator("#godBtn").click();await Transfer("godWin");
   await Button("godWin","#godWord");
   await page.waitForFunction(()=>!!document.querySelector("#godOut .word"));
@@ -146,15 +187,110 @@ try {
   await page.waitForFunction(()=>!document.querySelector(".win-pass-owned"));
   assert.equal(await page.locator("#windowPassthrough").isChecked(),true);
   assert.equal(await page.locator("#winPassDock").count(),0);
+  await page.locator("#settingsClose").click();
+  await page.locator("#godClose").click();
+  await page.locator("#chatBtn").click();await Transfer("chatWin");
+  await Type("chatWin","#chatNick","Bridge test");
+  await Type("chatWin","#chatText","Native input fixture");
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(()=>document.getElementById("chatText").value=="");
+  assert(sent.some(m=>m.text=="Native input fixture"),"native form submits to the local mocked chat socket");
+  await ReturnAll();await page.locator("#chatClose").click();
+
+  await page.locator("#filesBtn").click();
+  await page.waitForFunction(()=>document.getElementById("filesPath")?.disabled===false);
+  await Transfer("filesWin");
+  await Type("filesWin","#filesPath","C:/Home/");await page.keyboard.press("Enter");
+  await page.waitForFunction(()=>document.getElementById("filesStatus").textContent.includes("items"));
+  const chooser=page.waitForEvent("filechooser");
+  await Button("filesWin","#filesImport");
+  await (await chooser).setFiles({name:"NativeImport.HC",mimeType:"text/plain",buffer:Buffer.from('"Imported";')});
+  await page.waitForFunction(()=>document.getElementById("filesStatus").textContent.includes("Imported 1"),null,{timeout:30000});
+  const drop=await page.evaluateHandle(()=>{const data=new DataTransfer;data.items.add(new File(['"Dropped";'],"NativeDrop.HC",{type:"text/plain"}));return data;});
+  const filewin=await page.evaluate(()=>window.passWindows.find(w=>w.host=="filesWin")),rect=await page.locator("#canvas").boundingBox();
+  await page.locator("#canvas").dispatchEvent("drop",{dataTransfer:drop,clientX:rect.x+(filewin.x+filewin.w/2)*rect.width/640,clientY:rect.y+(filewin.y+filewin.h/2)*rect.height/480});
+  await page.waitForFunction(()=>!!document.querySelector('#filesList button[data-name="NativeDrop.HC"]'),null,{timeout:30000});
+  const icons=await page.evaluate(async()=>{
+    const {GuiScene}=await import("/Adam/GuiBridge.js"),s=GuiScene(document.getElementById("filesWin")),v=new DataView(s.gui.buffer);let images=0;
+    for(let at=24;at<s.gui.length;at+=32+v.getInt32(at+28,true))if(v.getInt32(at,true)==3)images++;
+    return images;
+  });
+  assert(icons>=5,"file and toolbar SVG icons become real indexed image commands");
+  await page.screenshot({path:"tmp/gui/native-files.png"});
+  await Button("filesWin","#filesNew");
+  await page.waitForFunction(()=>document.getElementById("editorWin")?.classList.contains("win-pass-owned"),null,{timeout:30000});
+  await Type("editorWin","#editor",'"Native editor";');
+  await page.keyboard.press("End");await page.keyboard.press("Enter");await page.keyboard.type('"Second line";');
+  assert.equal(await page.locator("#editor").inputValue(),'"Native editor";\n"Second line";');
+  await page.waitForTimeout(500);await page.screenshot({path:"tmp/gui/native-editor.png"});
+  await Button("editorWin","#runBtn");
+  await page.waitForFunction(()=>document.getElementById("console").textContent.includes("Native editor"),null,{timeout:30000});
+  await Button("editorWin","#edToDisk");
+  await page.waitForFunction(()=>!!document.querySelector('[id^="dialog-"].win-pass-owned'));
+  let dialog=await page.locator('[id^="dialog-"].win-pass-owned').getAttribute("id");
+  await Type(dialog,'#'+dialog+' input',"C:/Home/GuiBridgeTest.HC");await page.keyboard.press("Enter");
+  await page.waitForFunction(()=>document.getElementById("status").textContent=="Saved C:/Home/GuiBridgeTest.HC",null,{timeout:30000});
+  const bytes=await page.evaluate(async()=>Array.from(new Uint8Array((await (await import("/Adam/Os.js")).OsFileRead("C:/Home/GuiBridgeTest.HC")).bytes)));
+  assert.match(new TextDecoder().decode(new Uint8Array(bytes)),/Native editor/);
+  await Button("editorWin","#edFiles");
+  await page.waitForFunction(()=>document.getElementById("filesWin").classList.contains("win-pass-owned"));
+  await Type("filesWin","#filesFilter","GuiBridgeTest");
+  await page.waitForFunction(()=>document.querySelectorAll("#filesList button").length==1);
+  let point=await Point("filesWin","#filesList button");
+  await page.mouse.dblclick(point.x,point.y,{delay:120});
+  await page.waitForFunction(()=>document.getElementById("status").textContent=="C:/Home/GuiBridgeTest.HC",null,{timeout:30000});
+  await ReturnAll();await page.locator("#editorClose").click();await page.locator("#filesClose").click();
+
+  await Transfer("desktopMenu");await Button("desktopMenu","#settingsBtn");
+  await page.waitForFunction(()=>document.getElementById("settingsWin").classList.contains("win-pass-owned"),null,{timeout:30000});
+  await Button("settingsWin","#showHeader");
+  await page.waitForFunction(()=>document.documentElement.classList.contains("hide-header"));
+  await Button("settingsWin","#showHeader");
+  await page.waitForFunction(()=>!document.documentElement.classList.contains("hide-header"));
+  await Button("settingsWin","#windowScale");
+  await page.waitForFunction(()=>!!document.querySelector('[id^="dialog-"].win-pass-owned'));
+  dialog=await page.locator('[id^="dialog-"].win-pass-owned').getAttribute("id");
+  await Button(dialog,'#'+dialog+' form button:nth-of-type(1)');
+  await page.waitForFunction(()=>document.getElementById("windowScale").value=="1");
+  await ReturnAll();await page.locator("#settingsClose").click();
+
+  await page.locator("#tsBtn").click();
+  await page.waitForFunction(()=>document.querySelectorAll("#tsOut .ts-hit").length==1);
+  await Transfer("tsWin");await Type("tsWin","#tsQ","HolyC");
+  await page.waitForFunction(()=>document.querySelectorAll("#tsOut .ts-hit").length==1);
+  point=await Point("tsWin","#tsHelp");await page.mouse.move(point.x,point.y);
+  await page.waitForFunction(()=>getComputedStyle(document.getElementById("tsHelpPop")).display!="none");
+  await page.screenshot({path:"tmp/gui/native-search.png"});
+  await ReturnAll();await page.locator("#tsClose").click();
+
+  await page.locator("#gamesBtn").click();await Transfer("gamesWin");
+  await Type("gamesWin","#gmSearch","Babel");
+  await page.waitForFunction(()=>document.querySelectorAll(".gm-card:not(.gm-hide)").length==1,null,{timeout:30000});
+  await Button("gamesWin",".gm-card:not(.gm-hide) .gm-play");
+  await page.waitForFunction(()=>document.getElementById("gameWin").classList.contains("win-pass-owned"),null,{timeout:30000});
+  await page.waitForFunction(()=>window.__holycEditor?.isRunning(),null,{timeout:30000});
+  await Button("gameWin","#screen");await page.keyboard.press("Enter");
+  await page.waitForTimeout(500);
+  await page.screenshot({path:"tmp/gui/native-game.png"});
+  assert.equal(await page.locator("#gameWin").evaluate(el=>el.classList.contains("win-pass-owned")),true);
+  await ReturnAll();await page.locator("#gameWinClose").click();
+  await page.evaluate(()=>document.getElementById("gamesOverlay").classList.remove("open"));
+  await page.locator("#diskBtn").click();await Transfer("diskWin");
+  await Button("diskWin","#saveSession");
+  await page.waitForFunction(()=>/Session saved|C: changed/.test(document.getElementById("diskStatus").textContent),null,{timeout:60000});
+  await ReturnAll();await page.locator("#diskClose").click();
+  await page.locator("#settingsBtn").click();
   await page.locator("#windowPassthrough").uncheck();
   assert.deepEqual(errors,[]);
-  console.log("PASS live GUI bridge: Terry native animation and Random video action, cheatsheet native scrolling, God Tools action, Return preserves passthrough");
+  console.log("PASS live GUI bridge: all compatible tools, native editing/save dialogs, SVG icons, double-clicks, hover, settings, child routing and browser game canvas; Return preserves passthrough");
 } catch (error) {
   if (page) {
-    console.error(await page.evaluate(()=>({events:window.passEvents.slice(-8),actions:window.passActions,
+    console.error(error);
+    console.error(await page.evaluate(()=>({events:window.passEvents.slice(-8),actions:window.passActions.slice(-20),
       status:document.getElementById("windowPassStatus")?.textContent,
-      windows:window.passWindows.map(({buf,...w})=>w)})));
+      requests:window.passRequests.filter(m=>m.cmd=="windows").slice(-15).map(({gui,...m})=>m),
+      windows:window.passWindows.map(({buf,...w})=>w)})).catch(e=>({error:e.message})));
     await page.screenshot({path:"tmp/gui/native-error.png"});
   }
   throw error;
-} finally {await browser.close();server.kill();}
+} finally {await browser.close();server?.kill();}

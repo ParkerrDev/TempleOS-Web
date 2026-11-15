@@ -2,7 +2,7 @@
 //(Apps/Editor/App.js, loaded on first open), and the window games run in, which
 //shares the editor's screen and runner.
 import {Icon} from "../../Adam/Icons.js";
-import {WinAdd,WinRaise,WinFind} from "../../Adam/WinMgr.js";
+import {WinAdd,WinRaise,WinFind,WinOrigin,WinRoute,WinDialog} from "../../Adam/WinMgr.js";
 import {os_game,OsFileWrite} from "../../Adam/Os.js";
 import {setupGameViews} from "../Games/GameView.js";
 
@@ -88,7 +88,7 @@ const CSS='    #editorWin { display:flex; flex-direction:column; gap:6px; width:
   '    @media (max-width:979.98px) { #editorWin { height:94vh; } }\n'+
   '    @media (max-width:979.98px) { #editorWin #screen { height:min(100cqh,calc(100cqw * 3 / 4)); } }\n';
 const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="HolyC to WebAssembly editor">\n'+
-  '    <div class="win" id="editorWin" data-title="HolyC → WebAssembly Editor">\n'+
+  '    <div class="win" id="editorWin" data-title="HolyC Editor">\n'+
   '      <span class="close" id="editorClose" title="Close editor">[X]</span>\n'+
   '      <div class="ed-bar action-bar">\n'+
   '        <button id="gameBack" title="Back to the games list">← Games</button>\n'+
@@ -99,8 +99,8 @@ const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="
   '        <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">- pick a demo / game -</option></select>\n'+
   '        <button id="edNew" title="Start a new HolyC program">New program</button>\n'+
   '        <button id="runBtn">' + Icon('play') + ' Run</button>\n'+
-  '        <button id="editorFullscreen" type="button" title="Show the editor fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen editor</span></button>\n'+
-  '        <button id="edFmt" title="Lay the code out the way Terry\'s own tools did (HolyC-fmt, a formatter written in HolyC, run in your browser)">⊹ Format</button>\n'+
+  '        <button id="editorFullscreen" type="button" title="Show the editor fullscreen" aria-pressed="false">' + Icon('fullscreen') + ' <span>Fullscreen editor</span></button>\n'+
+  '        <button id="edFmt" title="Lay the code out the way Terry\'s own tools did (HolyC-fmt, a formatter written in HolyC, run in your browser)">' + Icon('format') + ' Format</button>\n'+
   '        <button id="edSave" title="Download the source as a .HC file">'+Icon('download')+' Download</button>\n'+
   '        <button id="edFiles" title="Browse files on the TempleOS C: drive">' + Icon('folder') + ' Files</button>\n'+
   '        <button id="edOpen" title="Open a .HC file from your computer">'+Icon('upload')+' Import</button>\n'+
@@ -116,7 +116,7 @@ const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="
   '          <div class="ed-editwrap"><pre id="editorHL" aria-hidden="true"></pre><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea></div>\n'+
   '        </section>\n'+
   '        <section class="ed-pane" id="editorPreview">\n'+
-  '          <div class="ed-h ed-screenhead"><span>Screen - 640×480, 16-color</span><div class="action-bar"><button id="gameCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this preview; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="previewFullscreen" type="button" title="Show the game preview fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen game</span></button></div></div>\n'+
+  '          <div class="ed-h ed-screenhead"><span>Screen - 640×480, 16-color</span><div class="action-bar"><button id="gameCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this preview; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="previewFullscreen" type="button" title="Show the game preview fullscreen" aria-pressed="false">' + Icon('fullscreen') + ' <span>Fullscreen game</span></button></div></div>\n'+
   '          <div id="gamePreviewStatus" role="status"></div>\n'+
   '          <div class="ed-screenwrap"><canvas id="screen" width="640" height="480" tabindex="0"></canvas></div>\n'+
   '          <div class="ed-h">Console</div>\n'+
@@ -129,7 +129,7 @@ const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="
   '  <div id="gameWinOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Game">\n'+
   '    <div class="win" id="gameWin" data-title="Game">\n'+
   '      <span class="close" id="gameWinClose" title="Close">[X]</span>\n'+
-  '      <div id="gameWinBar" class="action-bar"><button id="gameWinRun" type="button">Run</button><button id="gameWinEdit">Edit source</button><button id="gameWinCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this game; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="gameFullscreen" type="button" title="Show this game fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen</span></button><span id="gameWinStatus" role="status"></span></div>\n'+
+  '      <div id="gameWinBar" class="action-bar"><button id="gameWinRun" type="button">Run</button><button id="gameWinEdit">Edit source</button><button id="gameWinCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this game; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="gameFullscreen" type="button" title="Show this game fullscreen" aria-pressed="false">' + Icon('fullscreen') + ' <span>Fullscreen</span></button><span id="gameWinStatus" role="status"></span></div>\n'+
   '      <div class="gamewin-screen" id="gameWinSlot"></div>\n'+
   '    </div>\n'+
   '  </div>\n';
@@ -157,11 +157,12 @@ const loadEditorApp = () => {
     .catch((e) => { appPromise = null; const s = WinFind("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); throw e; });
   return appPromise;
 };
-function open() {
+function open(origin=WinOrigin()) {
   ed_game.prepare?.();
   ov.classList.add("open");
   ov.classList.remove("gamemode");
   WinRaise(ov);
+  WinRoute(WinFind("editorWin"),origin);
   loadEditorApp().catch(console.error);
 }
 function close() {
@@ -180,6 +181,7 @@ WinFind("gameBack").addEventListener("click", () => {
   if (os_game.ed) os_game.ed.stop();
   ov.classList.remove("open", "free", "gamemode");
   WinFind("gamesOverlay").classList.add("open");
+  WinRoute(WinFind("gamesWin"),WinOrigin(WinFind("gameBack")));
 });
 
 function DraftRestore()
@@ -232,9 +234,9 @@ function DraftSave()
   }
 }
 
-export async function EdNew(directory="C:/Home/")
+export async function EdNew(directory="C:/Home/",origin=WinOrigin())
 {
-  open();
+  open(origin);
   await loadEditorApp();
   ed_game.leave?.();
   ov.classList.remove("gamemode","gameproject");
@@ -246,9 +248,9 @@ export async function EdNew(directory="C:/Home/")
   setStatus("New program. Save to "+directory+" when ready.");
 }
 
-export async function EdFileOpen(bytes,path)
+export async function EdFileOpen(bytes,path,origin=WinOrigin())
 {
-  open();
+  open(origin);
   await loadEditorApp();
   ed_game.leave?.();
   ov.classList.remove("gamemode","gameproject");
@@ -261,9 +263,10 @@ export async function EdFileOpen(bytes,path)
 }
 WinFind("edNew").addEventListener("click",()=>EdNew().catch(error=>setStatus(error.message)));
 WinFind("edFiles").addEventListener("click",async function () {
+  const origin=WinOrigin(WinFind("edFiles"));
   try {
     const path=os_game.ed?.file.path,folder=path?path.slice(0,path.lastIndexOf("/")+1):save_directory;
-    await (await import("../Files/FilesWin.js")).Open(folder);
+    await (await import("../Files/FilesWin.js")).Open(folder,origin);
   } catch (error) {setStatus(error.message);}
 });
 
@@ -297,7 +300,7 @@ WinFind("edOpen").addEventListener("click", () => {
   i.click();
 });
 WinFind("edToDisk").addEventListener("click",async function () {
-  const file=os_game.ed?.file,path=file?.path || prompt("Save to TempleOS:",save_directory+curName());
+  const file=os_game.ed?.file,path=file?.path || await WinDialog("Save to TempleOS:",save_directory+curName());
   if (!path) return;
   const button=WinFind("edToDisk");
   button.disabled=true;

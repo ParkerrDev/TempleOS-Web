@@ -86,7 +86,7 @@ function WinDrawOne(w,time)
     height=Math.round(rect.height/cfg.scale),canvas=w._draw,
     title=w.dataset.winTitle || "",mem,ptr,stride,src,dst,i,x,y,color,held=0;
   if (width<24 || height<24 || !w.getClientRects().length ||
-      w.classList.contains("fsmode"))
+      w.classList.contains("fsmode") || w.classList.contains("win-pass-owned"))
     return;
   if (width>4096 || height>4096)
     throw new RangeError("Native window drawing supports up to 4096 pixels per side.");

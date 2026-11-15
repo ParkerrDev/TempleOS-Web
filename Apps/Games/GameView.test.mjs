@@ -6,7 +6,7 @@ class Node extends EventTarget{
   constructor(id){super();this.id=id;this.ownerDocument=document;this.attributes={};this.lastElementChild={textContent:''};this.classes=new Set();this.classList={add:v=>this.classes.add(v),remove:v=>this.classes.delete(v),contains:v=>this.classes.has(v)};}
   setAttribute(k,v){this.attributes[k]=v;}
   querySelector(){return {focus(){}};}
-  closest(){return this;}
+  closest(selector){return selector==='.win-pass-owned'?(this.classes.has('win-pass-owned')?this:null):this;}
   contains(node){return this===node||this.id==='editorWin'&&node?.id==='editorPreview';}
   requestFullscreen(){document.fullscreenElement=this;document.dispatchEvent(new Event('fullscreenchange'));return Promise.resolve();}
 }
@@ -38,4 +38,10 @@ node('gameWin').requestFullscreen=()=>new Promise(resolve=>{complete=()=>{docume
 click('gameFullscreen');click('gameFullscreen');complete();await Promise.resolve();
 assert.equal(document.fullscreenElement,null,'a late fullscreen request cannot reopen a closed view');
 assert(releases>0);
+let native=0;
+node('gameWin').classList.add('win-pass-owned');
+node('gameWin').addEventListener('winmaximize',()=>native++);
+click('gameFullscreen');
+assert.equal(native,1,'native game fullscreen requests a guest maximize');
+assert.equal(document.fullscreenElement,null,'native maximize does not open browser fullscreen');
 console.log('Game views: game/editor/preview fullscreen, browser Escape, fallback, focus cleanup and cancelled requests passed.');

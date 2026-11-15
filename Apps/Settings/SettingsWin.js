@@ -35,13 +35,13 @@ WinAdd(`
       <button id="returnWindows">Return windows</button>
       <p>Use a mouse to drag a TempleOS window's title out of the screen onto the
 	browser desktop. Drag it back to return it. Compatible browser tools
-	can also be dragged into TempleOS. Settings stays here.
+	can also be dragged into TempleOS. Tools opened from a native window stay there.
 	Pausing returns windows so browser controls stay available.</p>
       <p>Drag a browser window beyond the page edge to open it in a browser
         popup. Close the popup or choose Return to desktop to bring it back.
         Your browser may ask you to allow popups.</p>
       <p>Return windows brings them back without turning passthrough off.
-        Video players and browser editors stay in the browser.</p>
+        Video Player and Sprite Studio stay in the browser.</p>
       <p id="windowPassStatus" role="status"></p>
       <label><input id="fastGraphics" type="checkbox"> Web Optimization</label>
       <p>Uses drawing shortcuts for better performance.

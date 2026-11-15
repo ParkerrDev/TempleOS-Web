@@ -221,11 +221,11 @@ try {
   const host=await page.evaluate(function () {
     return window.passWindows.find(function (w) {return w.host=="godWin";});
   });
-  await page.waitForFunction(function (task) {return window.passFind("Word",task);},
-    host.task,{timeout:10000});
-  const word=await page.evaluate(function (task) {
-    return window.passFind("Word",task);
-  },host.task);
+  const word=await page.evaluate(async function (host) {
+    const {GuiScene}=await import("/Adam/GuiBridge.js"),scene=GuiScene(document.getElementById("godWin")),
+      c=[...scene.controls.values()].find(c=>c.el.id=="godWord");
+    return {x:host.x+8+c.x+c.w/2,y:host.y+8+c.y+c.h/2};
+  },host);
   await page.mouse.click(r.x+word.x*scale,r.y+word.y*scale,{delay:120});
   let actionWorked=false;
   try {
@@ -236,9 +236,8 @@ try {
       return window.passActions.some(function (a) {return a.id==2;});
     }),"native BT hit dispatches original God Tools handler");
     const wordText=await page.locator("#godOut .word").first().textContent();
-    await page.waitForFunction(function (word) {
-      return window.passText().includes(word);
-    },wordText,{timeout:10000});
+    await page.waitForFunction(word=>window.passRequests.some(m=>m.op=="update" && m.gui &&
+      new TextDecoder().decode(m.gui).includes(word)),wordText);
     actionWorked=true;
     console.log("Native button -> browser God action -> native document update passed");
   } catch (e) {
