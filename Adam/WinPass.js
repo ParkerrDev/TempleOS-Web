@@ -1,6 +1,6 @@
 import {WinFocus,WinRaise,WinMobile,WinOutside,WinPopup,WinPopupReturn,
   WinDocuments,WinFind,WinAction} from "./WinMgr.js";
-import {OsFullscreenExit,osMouse} from "./Os.js";
+import {OsFullscreenExit,OsOnlyMode,osMouse} from "./Os.js";
 import {KEY} from "./Keyboard.js";
 import {PointerDrag} from "./WinPointer.js";
 
@@ -163,7 +163,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
       w.style.width=layout.width;w.style.height=layout.height;
       return;
     }
-    if (rev!=revision || !enabled || !w.isConnected || w.style.display=="none" ||
+    if (rev!=revision || !enabled || e.only && !OsOnlyMode() || !w.isConnected || w.style.display=="none" ||
         overlay && !overlay.classList.contains("open")) {
       await Send("close",{slot:res.slot,task:res.task,num:res.num});
       w.style.width=layout.width;w.style.height=layout.height;
@@ -487,7 +487,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
   function GuestDown(e)
   {
     let point,w,r=canvas.getBoundingClientRect(),state;
-    if (!enabled || e.button || e.pointerType=="touch" || WinMobile(canvas) ||
+    if (!enabled || OsOnlyMode() || e.button || e.pointerType=="touch" || WinMobile(canvas) ||
         canvas.ownerDocument.pointerLockElement)
       return;
     point=Position(e);
@@ -593,8 +593,9 @@ export function WinPass({canvas,pal,Request,Input,Status})
     for (action of msg.actions || []) {
       host=hosts.get(action.slot);
       if (host) {
-        if (action.id==1)
-          HostReturn(host);
+        if (action.id==1) {
+          if (!OsOnlyMode()) HostReturn(host);
+        }
         else if (action.id>=0x100000) {
           const kind=action.id&15;
           el=host.scroll.get(Math.floor((action.id-0x100000)/16));
@@ -670,7 +671,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
     if (!enabled) return;
     const w=e.detail.win;
     if (!GuiCompatible(w)) {await OsFullscreenExit();WinFocus(w);return;}
-    const r=canvas.getBoundingClientRect(),parent=[...hosts.values()].find(host=>host.el.id==e.detail.origin.id),
+    const r=canvas.getBoundingClientRect(),parent=[...hosts.values()].find(host=>host.el.id==e.detail.origin?.id),
       native=windows.find(win=>win.slot==parent?.slot);
     HostNew(w,{clientX:r.left+((native?.x || 100)+80)*r.width/640,
       clientY:r.top+((native?.y || 60)+32)*r.height/480});
@@ -692,7 +693,11 @@ export function WinPass({canvas,pal,Request,Input,Status})
       if (host.el.id==e.detail.id) {
         HostHide(host);
         Send("focus",{slot:host.slot,task:host.task,num:host.num});
+        return;
       }
+    const w=WinFind(e.detail.id);
+    if (enabled && OsOnlyMode() && w?.matches(".win:not(.win-pass)") && GuiCompatible(w))
+      BringInside(w);
   });
   function HostAt(e)
   {
@@ -744,5 +749,28 @@ export function WinPass({canvas,pal,Request,Input,Status})
     }
     if (ok) Status("Windows returned. Passthrough remains enabled.");
   }
-  return {Enable,Receive,Return};
+
+  async function BringInside(w)
+  {
+    if (!enabled || !OsOnlyMode() || w.id=="frame" || w.classList.contains("input-docked") ||
+        w.classList.contains("win-pass-owned") || !GuiCompatible(w) ||
+        w.closest(".overlay:not(.open)") || w.style.display=="none" || !w.getClientRects().length) return;
+    WinPopupReturn(w);
+    const r=canvas.getBoundingClientRect(),n=w.id=="desktopMenu"?0:hosts.size%8+1;
+    await HostNew(w,{clientX:r.left+(48+n*32)*r.width/640,
+      clientY:r.top+(8+n*24)*r.height/480,only:true});
+  }
+
+  async function AllInside()
+  {
+    for (const view of [...views.values()]) {
+      if (!enabled || !OsOnlyMode()) return;
+      const w=view.win,res=await Send("attach",{slot:w.slot,task:w.task,num:w.num,x:w.x,y:w.y});
+      if (res?.ok) ViewDel(Identity(w));
+    }
+    const list=WinDocuments().flatMap(doc=>[...doc.querySelectorAll(".win:not(.win-pass)")]);
+    for (const w of list.filter(w=>w.id!="desktopMenu")) await BringInside(w);
+    await BringInside(WinFind("desktopMenu"));
+  }
+  return {Enable,Receive,Return,AllInside};
 }

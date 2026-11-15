@@ -237,7 +237,7 @@ export function WinOrigin(el)
     return action_origin;
   if (!el)
     el=document.activeElement;
-  return {native:!!el?.closest?.(".win-pass-owned"),id:el?.closest?.(".win")?.id};
+  return {native:document.body.classList.contains("os-only") || !!el?.closest?.(".win-pass-owned"),id:el?.closest?.(".win")?.id};
 }
 
 export function WinAction(el,Run)
@@ -253,7 +253,7 @@ export function WinAction(el,Run)
 
 export function WinRoute(w,origin)
 {
-  if (origin?.native)
+  if (origin?.native || document.body.classList.contains("os-only"))
     document.dispatchEvent(new CustomEvent("winlaunch",{detail:{win:w,origin}}));
 }
 

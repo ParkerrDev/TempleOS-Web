@@ -10,7 +10,7 @@ import {StockInspect} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Stock.js";
 import {BUS_VERSION} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/CoreBus.js";
 import {MachineShared} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/MachineShared.js";
 import {DiskStoreOpen} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/DiskStore.js";
-import {WinFind,WinDocuments} from "./WinMgr.js";
+import {WinFind,WinDocuments,WinPopupReturn} from "./WinMgr.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
 import {Speaker} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Speaker.js";
 import "./XSel.js";
@@ -151,7 +151,8 @@ setInterval(updateFps,500);
 let msX = 320, msY = 240, msB = 0, wheelZ = 0;
 let win_slot=-1,win_task=0,win_num=0,win_pass=null,win_pass_load=null,
   win_pass_ready=false,
-  win_pass_state=false,win_pass_msg="Window passthrough is off.";
+  win_pass_state=false,win_pass_msg="Window passthrough is off.",
+  win_pass_change=Promise.resolve(),os_only=false;
 const keyq = [];
 let keysUp=false,pasteGen=0;
 const keyboard=KeyInput(function (bytes) {
@@ -388,6 +389,10 @@ function FullscreenShow(on)
 
 export async function OsFullscreenExit()
 {//Browser-only tools must leave the OS fullscreen subtree to become visible.
+  if (os_only) {
+    await OnlySet(false);
+    return;
+  }
   let doc=fullscreen_frame.ownerDocument,el=doc.fullscreenElement || doc.webkitFullscreenElement;
   if (el==fullscreen_frame)
     await (doc.exitFullscreen || doc.webkitExitFullscreen).call(doc);
@@ -403,7 +408,7 @@ async function FullscreenToggle()
   let frame=fullscreen_frame,doc=frame.ownerDocument,
     el=doc.fullscreenElement || doc.webkitFullscreenElement,
     Request=frame.requestFullscreen || frame.webkitRequestFullscreen;
-  if (el || fullscreen_fake) {
+  if (el || fullscreen_fake && !os_only) {
     await OsFullscreenExit();
     return;
   }
@@ -444,6 +449,7 @@ async function FullscreenChanged()
 }
 
 $("fsBtn").addEventListener("click",FullscreenToggle);
+$("onlyBtn").addEventListener("click",function () {OnlySet(!os_only);});
 $("fsExit").addEventListener("click",OsFullscreenExit);
 DocOn("fullscreenchange",FullscreenChanged);
 DocOn("webkitfullscreenchange",FullscreenChanged);
@@ -649,12 +655,62 @@ export function OsWinPassStatus()
 
 export async function OsWinPassReturn()
 {
+  if (os_only) return;
   if (win_pass) await win_pass.Return();
 }
 
-async function WinPassApply()
+export function OsOnlyMode()
+{
+  return os_only;
+}
+
+function OnlyButtons()
+{
+  $("onlyBtn").disabled=!win_pass_ready || paused || engine.owner===false;
+  $("onlyBtn").setAttribute("aria-pressed",String(os_only));
+  $("onlyLabel").textContent=os_only?"Exit TempleOS Only Mode":"TempleOS Only Mode";
+  $("fsExit").title=os_only?"Exit TempleOS Only Mode":"Exit fullscreen";
+  $("fsExit").setAttribute("aria-label",$("fsExit").title);
+  dispatchEvent(new Event("osonlymode"));
+}
+
+async function OnlySet(on)
+{
+  if (on==os_only || on && (!win_pass_ready || paused || engine.owner===false)) return;
+  os_only=on;
+  document.body.classList.toggle("os-only",on);
+  OnlyButtons();
+  if (on) {
+    WinPopupReturn(fullscreen_frame);
+    $("desktopMenu").style.display="";
+    fullscreen_fake=true;
+    document.body.classList.add("fakefs");
+    FullscreenShow(true);
+    canvas.focus({preventScroll:true});
+    await WinPassApply();
+    if (os_only && !win_pass_state) {
+      const msg=win_pass_msg;
+      await OnlySet(false);
+      OsNotice(msg);
+    }
+  } else {
+    osMouse.releaseMouse();
+    await OsFullscreenExit();
+    await win_pass?.Return();
+    await WinPassApply();
+  }
+}
+
+function WinPassApply()
+{
+  win_pass_change=win_pass_change.then(WinPassUpdate);
+  return win_pass_change;
+}
+
+async function WinPassUpdate()
 {//Neither passthrough code nor native guest code loads until selected.
-  let on=os_cfg.pass && win_pass_ready && !paused && engine.owner!==false;
+  let on=(os_cfg.pass || os_only) && win_pass_ready && !paused && engine.owner!==false;
+  OnlyButtons();
   if (!on) {
     win_pass_msg="Window passthrough is off.";
     if (os_cfg.pass) {
@@ -680,12 +736,12 @@ async function WinPassApply()
           detail:{msg:win_pass_msg}}));
       });
     await win_pass_load;
-    on=os_cfg.pass && win_pass_ready && !paused && engine.owner!==false;
+    on=(os_cfg.pass || os_only) && win_pass_ready && !paused && engine.owner!==false;
   }
   if (win_pass && on!=win_pass_state) {
-    win_pass_state=on;
-    await win_pass.Enable(on);
+    win_pass_state=await win_pass.Enable(on);
   }
+  if (win_pass_state && os_only) await win_pass.AllInside();
 }
 
 addEventListener("osstate",function (e) {
@@ -735,7 +791,7 @@ function EngineMessage(m)
   if (m.cmd==="bootNeeded") {
     OsBoot().catch(engineFail);
   } else if (m.cmd==="owner") {
-    if (!m.value) releaseOSInput();
+    if (!m.value) {releaseOSInput();OnlySet(false);}
     WinPassApply();
     dispatchEvent(new CustomEvent("osownership",{detail:{owner:m.value}}));
   } else if (m.cmd==="restarting" || m.cmd==="starting") {
@@ -770,7 +826,7 @@ async function bootEngine(restart=false)
 let paused = false, pauseRevision = 0, osFault=false;
 const pauseBtn = $("pauseBtn");
 const pauseShow = () => { pauseBtn.innerHTML = '<span class="ico"><svg><use href="#i-' + (paused ? "play" : "pause") + '"/></svg></span> ' + (paused ? "Play" : "Pause"); };
-const setPaused = value => { if (osFault && !value) return; paused = value; speaker.Pause(paused); fpsMeter.setPaused(paused); updateFps(); engine.post({ cmd: "pause", value: paused }); pauseShow(); WinPassApply(); };
+const setPaused = value => { if (osFault && !value) return; if (value) OnlySet(false); paused = value; speaker.Pause(paused); fpsMeter.setPaused(paused); updateFps(); engine.post({ cmd: "pause", value: paused }); pauseShow(); WinPassApply(); };
 pauseBtn.addEventListener("click", () => { ++pauseRevision; setPaused(!paused); });
 const holdOSForGame = () => {
   const previous=paused, revision=pauseRevision;setPaused(true);

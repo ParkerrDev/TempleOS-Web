@@ -245,6 +245,11 @@
     #frame.fsx-mid #fsExit { left:50%; transform:translateX(-50%); }
     body.touch #fsExit { font-size:18px; padding:6px 11px; }   /* bigger tap target on phones */
     body.touch #frame.fsmode #fsExit { display:block; }   /* touch only: desktop fullscreen confines the mouse to the OS (Esc exits) */
+    body.os-only #frame { width:100vw !important; height:100dvh !important; }
+    body.os-only #frame #fsExit { display:block; }
+    body.os-only:not(.touch) #fsExit { left:auto; right:8px; }
+    body.os-only #desktopMenu { display:flex; }
+    body.os-only #loadui { display:flex; }
     #loadui { position:absolute; inset:5px; display:flex; flex-direction:column; align-items:center; justify-content:center;
               gap:12px; padding:18px; background:#000; color:#fff; text-align:center; z-index:3; }
     #ldtext { font-size:12px; width:100%; max-width:560px; line-height:1.0; min-height:2.4em; }   /* a fixed box: new text never moves it */
@@ -472,6 +477,7 @@
         <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico"><svg><use href="#i-pause"/></svg></span> Pause</button>
         <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico"><svg><use href="#i-restart"/></svg></span> Restart</button>
         <button id="fsBtn" title="Show the OS fullscreen"><span class="ico"><svg><use href="#i-fullscreen"/></svg></span> Fullscreen</button>
+        <button id="onlyBtn" title="Move open tools into TempleOS and fill the browser" aria-pressed="false" disabled><span class="ico"><svg><use href="#i-fullscreen"/></svg></span> <span id="onlyLabel">TempleOS Only Mode</span></button>
         <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly - no emulation, native speed"><span class="ico"><svg><use href="#i-code"/></svg></span> HolyC Editor</button>
         <button id="gamesBtn" title="Run games with HolyC-WASM or explicitly in TempleOS, and edit their source"><span class="ico"><svg><use href="#i-games"/></svg></span> Games</button>
         <button id="spritesBtn" title="Convert images, GIFs and video to TempleOS sprites"><span class="ico"><svg><use href="#i-sprite"/></svg></span> Sprite Studio</button>

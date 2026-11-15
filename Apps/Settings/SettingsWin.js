@@ -1,5 +1,5 @@
 import {WinAdd,WinFocus,WinWorkspaceReset} from "../../Adam/WinMgr.js";
-import {$,OsCfg,OsCfgStatus,OsWinPassStatus,OsWinPassReturn} from "../../Adam/Os.js";
+import {$,OsCfg,OsCfgStatus,OsWinPassStatus,OsWinPassReturn,OsOnlyMode} from "../../Adam/Os.js";
 import {WinDrawCfg} from "../../Adam/WinDraw.js";
 
 WinAdd(`
@@ -33,6 +33,7 @@ WinAdd(`
       <p>Resize borders, titles and scroll handles.</p>
       <label><input id="windowPassthrough" type="checkbox"> Window passthrough</label>
       <button id="returnWindows">Return windows</button>
+      <p id="onlyModeHint" hidden>Exit TempleOS Only Mode to return windows or turn passthrough off.</p>
       <p>Use a mouse to drag a TempleOS window's title out of the screen onto the
 	browser desktop. Drag it back to return it. Compatible browser tools
 	can also be dragged into TempleOS. Tools opened from a native window stay there.
@@ -80,7 +81,7 @@ export function Open()
   $("fastGraphics").checked=cfg.fast;
   $("nativeDrawing").checked=WinDrawCfg().native;
   $("windowScale").value=String(WinDrawCfg().scale);
-  $("windowPassthrough").checked=cfg.pass;
+  OnlyModeShow();
   $("windowPassStatus").textContent=OsWinPassStatus();
   $("settingsOverlay").classList.add("open");
   $("settingsOverlay").setAttribute("aria-modal","true");
@@ -101,9 +102,18 @@ addEventListener("windrawsettings",function (e) {
 });
 addEventListener("windrawerror",function (e) {Status({msg:e.detail});});
 addEventListener("winpasssettings",function (e) {
-  $("windowPassthrough").checked=OsCfg().pass;
+  OnlyModeShow();
   $("windowPassStatus").textContent=e.detail.msg;
 });
+function OnlyModeShow()
+{
+  const on=OsOnlyMode();
+  $("windowPassthrough").checked=on || OsCfg().pass;
+  $("windowPassthrough").disabled=on;
+  $("returnWindows").disabled=on;
+  $("onlyModeHint").hidden=!on;
+}
+addEventListener("osonlymode",OnlyModeShow);
 addEventListener("osrestored",function (e) {
   $("frameRate").value=String(e.detail.rate);
   $("biosRepeat").checked=e.detail.repeat;

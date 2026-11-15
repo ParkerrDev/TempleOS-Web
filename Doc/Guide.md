@@ -144,6 +144,14 @@ further dragging. Old saved engines require Restart to enable passthrough. Accep
 before refreshing: restored browser-backed windows reopen from their accepted values,
 not from unfinished editor dialogs.
 
+**TempleOS Only Mode** in Menu fills the browser viewport and moves open
+compatible tools and detached windows into TempleOS. New tools open there too,
+and windows cannot be dragged out while the mode is active. Use the Menu's
+exit button or the corner [X] to return to the site. Restart keeps the mode;
+pausing or opening Video Player or Sprite Studio leaves it so those browser
+controls remain reachable. The mode lasts for this visit and does not change
+your usual passthrough preference.
+
 Both window options are off initially and remembered independently of Web
 Optimization. Detached documents use isolated native pixel buffers. HEMU stops
 the other CPUs during that bounded drawing transaction and restores the shared
