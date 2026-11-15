@@ -61,7 +61,7 @@
     },
     {
       "name": "TOOM",
-      "filesSha256": "b8558a8c218c79ab832dcc57180207a1a2e31234988e9d51dac18c4f55753357",
+      "filesSha256": "c0c8b86984bae46bc9b3b02dc6049714e609a3f9be0cf90b4f044684090bfb32",
       "real": {
         "run": "running",
         "quit": "esc",

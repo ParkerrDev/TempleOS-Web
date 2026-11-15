@@ -4,9 +4,9 @@ export function gameCredits(game) {
   const extra=EXTRA_GAMES.find(g=>g.packageId===game.packageId);
   if(extra)return extra.credit;
   if(game.packageId==='toom')return {
-    author:'ParkerrDev',authorUrl:'https://github.com/ParkerrDev',
-    source:'https://github.com/ParkerrDev/TempleOS-Web/tree/master/Demo/Games/Toom',
-    note:'HolyC game created for TempleOS-Web. Game rules from id Software\'s GPL DOOM source; maps, art and sounds from Freedoom.',
+    author:'Austin Sierra',authorUrl:'https://github.com/austings',
+    source:'https://github.com/Church-of-Templeos/TOOM',
+    note:'TOOM was originally created by Austin Sierra (aichrist). This TempleOS-Web version is a new HolyC implementation, using id Software\'s GPL DOOM rules and Freedoom\'s maps, art and sounds.',
   };
   if(TERRY_DEMOS.some(name=>game.packageId==='tinker-'+name))return {
     author:'Terry A. Davis',authorUrl:'https://templeos.org/',

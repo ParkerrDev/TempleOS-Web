@@ -1,8 +1,8 @@
 # Game provenance
 
 The catalog contains 66 entries: 47 games and interactive demos by Terry A. Davis,
-8 games or adaptations by TheTinkerer, 5 HolyC games by Austin Sierra, and the site's
-HolyCraft, TOOM, Snake, Babel, Volley and FNAF. The featured entries are HolyCraft,
+8 games or adaptations by TheTinkerer, 6 games originally by Austin Sierra,
+and the site's HolyCraft, Snake, Babel, Volley and FNAF. The featured entries are HolyCraft,
 TOOM, Babel, Volley and Snake.
 
 Authorship is explicit in `GameLib.js` and `GameCredits.js`. Distributing a
@@ -15,12 +15,13 @@ installed file's checksum, including any compatibility adapter.
 | --- | --- | --- |
 | Terry A. Davis | All 31 entries in Demo/Games; AfterEgypt, Chess, KeepAway, Span, Strut, Titanium, ToTheFront, Vocabulary, X-Caliber; B17, Coach, DiningStars, Flappy, MissileDefense, Rocks, Pilgrims | Compared current TinkerOS files with the official TempleOS ISO and Supplemental 1 at [templeos.org](https://templeos.org/Downloads/). Supplemental 2 and 3 contain hymns. |
 | TheTinkerer | Castle Frankenstein 2, Cube, GlowUFOs, Oregon Trail 1975, Scorch, SpyHunt, Sudoku, Tetris | [TinkerOS source and history](https://github.com/tinkeros/TinkerOS), plus the author's CF2, cube, OT1975, SpyHunt and Sudoku repositories. |
-| Austin Sierra | MarioClone, Malicious Testimonies, Ezekiel, Lord of Hosts, Solomon's Temple | [Author repositories](https://github.com/austings) and [GamesMirror discs](https://github.com/austings/GamesMirror). |
+| Austin Sierra (aichrist) | TOOM, MarioClone, Malicious Testimonies, Ezekiel, Lord of Hosts, Solomon's Temple | [Original TOOM](https://github.com/Church-of-Templeos/TOOM), [author repositories](https://github.com/austings) and [GamesMirror discs](https://github.com/austings/GamesMirror). |
 
 CF2 builds on Terry's Castle Frankenstein, and SpyHunt builds on Terry's Titanium;
 both descriptions credit that ancestry. Oregon Trail credits the MECC original and
-Don Rawitsch's 1975 revisions. Tetris credits Alexey Pajitnov. TOOM, the site's own
-HolyC game in `Toom/`, carries id Software's GPL notice for the game rules it takes from
+Don Rawitsch's 1975 revisions. Tetris credits Alexey Pajitnov. TOOM was originally
+created by Austin Sierra (aichrist). The site's new HolyC implementation in `Toom/`
+carries id Software's GPL notice for the game rules it takes from
 DOOM's source and Freedoom 0.13.0's license and credits for its maps, art and sounds
 (`upstream/Freedoom/`, the files of the official release). MarioClone credits Nintendo's original characters
 and game. Pilgrims retains its US Geological Survey map credit. Other component

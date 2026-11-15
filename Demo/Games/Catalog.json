@@ -1145,8 +1145,8 @@
         },
         {
           "url": "Demo/Games/Toom/NOTICE",
-          "bytes": 8034,
-          "sha256": "a6cbde9c031037edc6528224f3c7fe0ee1b82f860895da59a21f3fc240dd048e",
+          "bytes": 8153,
+          "sha256": "76f5d984d2ccf2c8349f1feec6ca2bacb10f4906adc93cb66b9bcaf52ffc08dc",
           "path": "C:/Home/TOOM/NOTICE"
         },
         {
@@ -1174,10 +1174,10 @@
         "bytes": 28795076
       },
       "credit": {
-        "author": "ParkerrDev",
-        "authorUrl": "https://github.com/ParkerrDev",
-        "source": "https://github.com/ParkerrDev/TempleOS-Web/tree/master/Demo/Games/Toom",
-        "note": "HolyC game created for TempleOS-Web. Game rules from id Software's GPL DOOM source; maps, art and sounds from Freedoom."
+        "author": "Austin Sierra",
+        "authorUrl": "https://github.com/austings",
+        "source": "https://github.com/Church-of-Templeos/TOOM",
+        "note": "TOOM was originally created by Austin Sierra (aichrist). This TempleOS-Web version is a new HolyC implementation, using id Software's GPL DOOM rules and Freedoom's maps, art and sounds."
       }
     },
     {

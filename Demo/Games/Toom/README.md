@@ -1,10 +1,14 @@
 # TOOM
 
-A DOOM engine written in HolyC for TempleOS V5.03, with Freedoom 0.13.0's
-first episode. It is the TOOM of the Games window: `Demo/Games/Toom/Test/Package.mjs`
+TOOM was originally created by **Austin Sierra (aichrist)**. The original
+project is [Church-of-Templeos/TOOM](https://github.com/Church-of-Templeos/TOOM).
+
+This site's version is a new DOOM engine written in HolyC for TempleOS V5.03,
+with Freedoom 0.13.0's first episode. It is the TOOM of the Games window:
+`Demo/Games/Toom/Test/Package.mjs`
 installs this directory and Freedoom (`../upstream/Freedoom`) into
 `C:/Home/TOOM`, and `Run.HC` compiles it and starts E1M1. It replaces the
-earlier port of Church-of-Templeos/TOOM, which is no longer shipped.
+earlier port of Austin's TOOM, which is no longer shipped.
 
 Arrows or WASD move and turn; comma and period strafe, Alt turns the arrows
 into strafing, Shift runs, Ctrl fires, Space uses, and 1 to 8 select weapons.

@@ -489,8 +489,8 @@
     },
     {
       "name": "TOOM",
-      "author": "ParkerrDev",
-      "source": "https://github.com/ParkerrDev/TempleOS-Web/tree/master/Demo/Games/Toom",
+      "author": "Austin Sierra",
+      "source": "https://github.com/Church-of-Templeos/TOOM",
       "freedoom": {
         "url": "https://github.com/freedoom/freedoom/releases/download/v0.13.0/freedoom-0.13.0.zip",
         "archiveSha256": "3f9b264f3e3ce503b4fb7f6bdcb1f419d93c7b546f4df3e874dd878db9688f59",

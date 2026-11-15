@@ -36,7 +36,7 @@ const castle=packages.find(p=>p.name==='CastleFrankenstein');
 castle.entry='C:/Home/Games/TinkerOS/BrowserCastle.HC';castle.files.push({...castleFile,path:castle.entry});
 packages.push({id:'tinker-Stadium',name:'Stadium',entry:'C:/Home/Games/TinkerOS/Stadium/Stadium.HC',files:hashes.filter(f=>f.url.includes('/Stadium/')).map(f=>({...f,path:'C:/Home/Games/TinkerOS/'+f.url.split('/TinkerOS/')[1]})),upstream:'TinkerOS',revision:revisions.tinker});
 await save(resolve(tinker,'LICENSE'),'TinkerOS/LICENSE');
-// TOOM is this site's own HolyC game with Freedoom (Demo/Games/Toom/Test/Package.mjs).
+// Package the site's TOOM implementation with Freedoom.
 packages.push(ToomPackage());
 await syncLibrary({tinker,save,packages});
 for(const pkg of packages)pkg.credit=gameCredits({name:pkg.name,packageId:pkg.id});

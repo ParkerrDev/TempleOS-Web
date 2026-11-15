@@ -160,7 +160,7 @@ The [declaudify tool](https://github.com/ParkerrDev/declaudify) audited all five
 
 ## Native TOOM follow-up
 
-Validated locally on 2026-11-12. The Games window's TOOM is now this site's own HolyC game in Demo/Games/Toom, not the port pinned above. It installs as 80 files (29,265,906 bytes) into C:/Home/TOOM through the same verified installer as every other package, with the unmodified Freedoom 0.13.0 Phase 1 IWAD, its COPYING.txt and CREDITS.txt from Demo/Games/Upstream/Freedoom. `node Demo/Games/Toom/Test/Assets.mjs` downloads the release ZIP and checks all three files against it.
+Validated locally on 2026-11-12. The Games window's TOOM now uses this site's new HolyC implementation in Demo/Games/Toom, replacing the port pinned above. TOOM was originally created by Austin Sierra (aichrist). It installs as 80 files (29,265,906 bytes) into C:/Home/TOOM through the same verified installer as every other package, with the unmodified Freedoom 0.13.0 Phase 1 IWAD, its COPYING.txt and CREDITS.txt from Demo/Games/Upstream/Freedoom. `node Demo/Games/Toom/Test/Assets.mjs` downloads the release ZIP and checks all three files against it.
 
 | Check | Result |
 |---|---|
