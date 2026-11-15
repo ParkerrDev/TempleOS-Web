@@ -462,7 +462,7 @@ ViewOn("keydown",SoundStart);
 const isMobileDev=self.hemuBoot.mobile;
 let useSMP=self.hemuBoot.smp;
 const DISK_DELAY=isMobileDev?2500:0;   //phones keep the disk out of the boot's memory peak
-let snapshotInfo=null,bootFile=null,resumeSession=false;
+let snapshotInfo=null,bootFile=null,resumeSession=false,sessionRevision=null;
 
 // ---- downloads the compressed RAM snapshot, the four-core one when useSMP ----
 let gzBytes;
@@ -498,7 +498,7 @@ async function restartOS() {
     ld.style.display = "";
     setLoad("restarting TempleOS…", 0);
     if (!stockBoot || !gzBytes) gzBytes = await downloadSnapshot();
-    snapshotInfo=null;resumeSession=false;stockBoot=true;
+    snapshotInfo=null;resumeSession=false;sessionRevision=null;stockBoot=true;
     if(await bootEngine(true)) {
       resetPause();fpsMeter.reset();updateFps();started=false;framed=false;
     }
@@ -661,8 +661,12 @@ function singleCore(why,generation=osGen) {   // multi-core failed before its fi
     gzBytes=b;bootEngine();
   }).catch(e=>{if(generation===osGen)engineFail(e.message);});
 }
-function EngineError({msg,retained,started,cores})
+function EngineError({msg,retained,started,cores,code})
 {
+  if (code==="SESSION_STALE") {
+    if (resumeSession) restartOS();
+    return;
+  }
   if(retained)engineFault(msg);
   else if(!started&&cores===4&&stockBoot)singleCore(msg);
   else engineFail(msg);
@@ -696,7 +700,7 @@ async function bootEngine(restart=false)
 {
   notifyInput=()=>engine.post(inputMessage());
   const boot={gz:gzBytes,cores:useSMP?4:1,saved:snapshotInfo,fixedB:FIXED_B,
-    diskBytes:importDisk,diskDelay:DISK_DELAY,...os_cfg};
+    diskBytes:importDisk,diskDelay:DISK_DELAY,sessionRevision,...os_cfg};
   importDisk=null;
   const ready=await (restart?engine.Restart(boot):engine.Start(boot,resumeSession));
   if(ready) {speaker.Stop();speaker.Pause(snapshotInfo?.meta.paused??(restart?false:paused));framed=false;}
@@ -815,7 +819,7 @@ async function OsBoot()
     let store=await DiskStoreOpen(function () {},true);
     try {
       const session=await store?.SessionRead();
-      if (session) {snap=session.bytes;resumeSession=true;}
+      if (session) {snap=session.bytes;resumeSession=true;sessionRevision=session.revision;}
     } catch (e) {dbg("Session restore unavailable: "+e.message,true);}
     finally {store?.Close();}
   }

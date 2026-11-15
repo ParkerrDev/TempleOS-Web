@@ -45,9 +45,29 @@ async function Open()
     };
   });
 }
-async function Page(cores)
+async function Page(cores,stale=false)
 {
   let page=await context.newPage();
+  if (stale) await page.addInitScript(function () {
+    const Base=SharedWorker;
+    window.SharedWorker=class extends Base {
+      constructor(...args) {
+        super(...args);
+        if (!String(args[0]).includes("MachineHub.js")) return;
+        const send=this.port.postMessage.bind(this.port);
+        this.port.postMessage=function (m,...transfer) {
+          if (m.op!=="start" || !m.value.boot.sessionRevision) return send(m,...transfer);
+          this.postMessage=send;
+          const open=indexedDB.open("templeos-C",1);
+          open.onsuccess=function () {
+            const db=open.result,tx=db.transaction("disk","readwrite");
+            tx.objectStore("disk").put(crypto.randomUUID(),"revision");
+            tx.oncomplete=function () {db.close();send(m,...transfer);};
+          };
+        };
+      }
+    };
+  });
   page.on("pageerror",e=>errors.push(e.message));
   page.on("console",m=>{if(m.text().includes("failed")) console.log("browser",m.text());});
   await page.goto(url+(cores===1?"/?single":"/?smp"));
@@ -88,9 +108,24 @@ async function Close()
 }
 try {
   for (let cores of [1,4]) {
-    Stage(cores,"Booting and checking two-tab shared RAM/files");
+    Stage(cores,"Starting beside an older tab that still owns C:");
     await Open();
+    const legacy=await context.newPage();
+    await legacy.goto(url+"/robots.txt");
+    await legacy.evaluate(()=>new Promise(resolve=>{
+      navigator.locks.request("templeos-C",()=>{
+        resolve();return new Promise(release=>window.releaseLegacyDisk=release);
+      });
+    }));
     let page=await Page(cores);
+    assert(await page.evaluate(()=>sessionEvents.some(m=>m.cmd==="diskSave" &&
+      m.state==="error" && /Close it and Restart/.test(m.msg))),"A legacy writer reports read-only storage without preventing boot.");
+    await legacy.close();
+    await page.evaluate(()=>window.sessionEvents=[]);
+    await page.locator("#restartBtn").click();
+    await page.waitForFunction(()=>sessionOs.OsReady() && sessionOs.engine.capture.ready &&
+      sessionEvents.some(m=>m.cmd==="diskSave" && m.state==="saved"),null,{timeout:90000});
+    Stage(cores,"Storage ownership recovered; checking two-tab shared RAM/files");
     await Request(page,{cmd:"osExec",target:"adam",src:"I64 WebSessionProbe=123456;"});
     let second=await Page(cores);
     await Request(second,{cmd:"osExec",target:"adam",src:'if (WebSessionProbe!=123456) throw(\'Session\');'});
@@ -123,6 +158,13 @@ try {
     assert.equal(await page.locator("#pauseBtn").textContent()," Play");
     await page.locator("#pauseBtn").click();
     await Request(page,{cmd:"osExec",target:"adam",src:'if (WebSessionProbe!=123456) throw(\'Session\');'});
+    assert.equal(await Read(page,"Shared.HC"),'"Changed from second tab";\n');
+    Stage(cores,"Changing the disk revision after the page selected a saved session");
+    await Request(page,{cmd:"saveSession"});
+    await Close();await Open();page=await Page(cores,true);
+    assert(await page.evaluate(()=>sessionEvents.some(m=>m.cmd==="machineError" &&
+      m.error.code==="SESSION_STALE")),"The worker detects the disk change before resuming old RAM.");
+    assert(!await page.evaluate(()=>sessionEvents.some(m=>m.cmd==="restored")),"Stale RAM is replaced with the prepared desktop.");
     assert.equal(await Read(page,"Shared.HC"),'"Changed from second tab";\n');
     Stage(cores,"Restarting TempleOS and checking saved files");
     await page.evaluate(()=>window.sessionEvents=[]);

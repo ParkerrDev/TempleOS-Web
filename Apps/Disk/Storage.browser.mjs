@@ -33,12 +33,23 @@ try {
    let rejected=false;try{await store.Flush();}catch{rejected=true;}
    IDBObjectStore.prototype.put=put;
    const kept=await store.Load(),c=new Uint8Array(512);kept.readInto(0,1,c,0);
-   return {session:[...new Uint8Array(saved.bytes)],retained:[...new Uint8Array(retained.bytes)],sessionRejected,invalidated,first:[...a],replacement:[...b],kept:[...c],rejected,error:events.at(-1)};
+   const blockedEvents=[],waitStarted=performance.now(),blocked=await DiskStoreOpen(m=>blockedEvents.push(m),false,true),waitMs=performance.now()-waitStarted;
+   if(!blocked)throw Error('A lock held by an older tab must still allow reading saved C:');
+   const old=await blocked.Load(),readOnly=new Uint8Array(512);old.readInto(0,1,readOnly,0);
+   let staleCode;try{await blocked.Load(saved.revision);}catch(e){staleCode=e.code;}
+   await blocked.Attach(old,true);
+   let blockedSave=false;try{await blocked.SessionSave(new Uint8Array([7]).buffer);}catch{blockedSave=true;}
+   blocked.Close();
+   return {session:[...new Uint8Array(saved.bytes)],retained:[...new Uint8Array(retained.bytes)],sessionRejected,invalidated,first:[...a],replacement:[...b],kept:[...c],rejected,error:events.at(-1),waitMs,readOnly:[...readOnly],blockedSave,blockedError:blockedEvents.at(-1),staleCode};
  });
  assert.deepEqual(result.session,[1,2,3]);assert.deepEqual(result.retained,[1,2,3]);
  assert.equal(result.sessionRejected,true);assert.equal(result.invalidated,null);
  assert.deepEqual(result.first,[...new Uint8Array(512).fill(7),...new Uint8Array(512).fill(9)]);
  assert(result.replacement.every(x=>x===3));assert(result.kept.every(x=>x===3));
  assert.equal(result.rejected,true);assert.equal(result.error.state,'error');
+ assert(result.waitMs<8000,'Storage wait finishes before the ten-second machine startup deadline');
+ assert(result.readOnly.every(x=>x===3));assert.equal(result.blockedSave,true);
+ assert.match(result.blockedError.msg,/Close it and Restart/);
+ assert.equal(result.staleCode,'SESSION_STALE','Disk revision is rechecked atomically with the sectors after lock acquisition');
  console.log('Sector writes restore exactly; disk replacement removes old sectors; failed transactions preserve the last disk/session save; disk revision invalidates stale session.');
 } finally {await browser.close();site.closeAllConnections();site.close();}
