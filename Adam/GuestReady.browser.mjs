@@ -18,6 +18,9 @@ try {
     let releaseBoot=()=>{},releaseDisk=()=>{};
     try {
       await BrowserMachine(context);
+      // Hold the guest probe to reproduce disk failure before API readiness. Network
+      // interception cannot order these worker-local transitions; keep this one
+      // asserted fault-injection point instead of adding a production control.
       if(outcome==='early-disk-error') {
         const source=await readFile(new URL('hemu/Kernel/HemuWorker.js',root),'utf8'),needle='gxFrames >= 3';
         assert.equal(source.split(needle).length,2);

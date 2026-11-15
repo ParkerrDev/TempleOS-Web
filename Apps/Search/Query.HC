@@ -351,19 +351,90 @@ U0 SearchQueryDel(CSearchQuery *q)
   Free(q->toks);Free(q->out);Free(q);
 }
 
-public U8 *SearchQuery(U8 *src)
-{//Returns owned JSON. Both the search and its filter controls read this parse.
+CSearchQuery *SearchQueryNew(U8 *src)
+{
   I64 len=StrLen(src);
   CSearchQuery *q;
-  U8 *res;
   if (len>8192) throw('QueryLen');
-  q=CAlloc(sizeof(CSearchQuery));
-  q->src=src;q->from=q->to="";
+  q=CAlloc(sizeof(CSearchQuery));q->src=src;q->from=q->to="";
   try {
     q->toks=CAlloc((len+1)*sizeof(CSearchTok));
     q->out_size=len*18+16384;
     q->out=MAlloc(q->out_size);q->out[0]=0;
-    SearchScan(q);SearchResult(q);
+    SearchScan(q);
+  } catch
+    SearchQueryDel(q);
+  return q;
+}
+
+public U8 *SearchQuery(U8 *src)
+{//Returns owned JSON. Both the search and its filter controls read this parse.
+  CSearchQuery *q=SearchQueryNew(src);
+  U8 *res;
+  try {
+    SearchResult(q);res=q->out;q->out=NULL;
+  } catch
+    SearchQueryDel(q);
+  SearchQueryDel(q);
+  return res;
+}
+
+U0 SearchKeep(CSearchQuery *q,I64 kind)
+{
+  I64 i=0,at=0,start,end=0,space;
+  CSearchTok *t;
+  while (q->src[at]) {
+    while (i<q->cnt && q->toks[i].end<=at) i++;
+    if (i<q->cnt) {
+      t=&q->toks[i];
+      if (at==t->start && t->kind==kind) {
+	at=t->end;goto keep_next;
+      }
+    }
+    SearchOut(q,q->src[at++]);
+keep_next:
+  }
+  start=at=0;
+  while (space=SearchSpace(q->out+start)) start+=space;
+  at=start;
+  while (q->out[at]) {
+    if (space=SearchSpace(q->out+at)) at+=space;
+    else end=++at;
+  }
+  q->out_len=MaxI64(0,end-start);
+  MemCpy(q->out,q->out+start,q->out_len);q->out[q->out_len]=0;
+}
+
+public U8 *SearchEdit(U8 *src,I64 mode,I64 value,Bool selected=FALSE)
+{//Rewrite only unquoted scope/year tokens, compacting three or more years.
+  CSearchQuery *q;
+  I64 i,j,kind=SQ_YEAR;
+  Bool comma=FALSE;
+  U8 *res,buf[32];
+  if (!(0<=mode<=1) || !mode && !(0<=value<=2) ||
+      mode && value && !(1900<=value<=2099)) throw('Filter');
+  q=SearchQueryNew(src);
+  try {
+    if (!mode) kind=SQ_SCOPE;
+    SearchKeep(q,kind);
+    if (!mode) {
+      if (value==1) SearchText(q," in:titles");
+      else if (value==2) SearchText(q," in:transcript");
+    } else {
+      if (!value) MemSet(q->years,0,200);
+      else q->years[value-1900]=selected;
+      for (i=0;i<200;i++)
+	if (q->years[i]) {
+	  j=i;
+	  while (j<199 && q->years[j+1]) j++;
+	  if (!comma) SearchText(q," date:");
+	  else SearchOut(q,',');
+	  if (j-i>=2) StrPrint(buf,"%d-%d",1900+i,1900+j);
+	  else if (j==i+1) StrPrint(buf,"%d,%d",1900+i,1900+j);
+	  else StrPrint(buf,"%d",1900+i);
+	  SearchText(q,buf);comma=TRUE;i=j;
+	}
+    }
     res=q->out;q->out=NULL;
   } catch
     SearchQueryDel(q);

@@ -3,7 +3,7 @@ import {readFile,writeFile,mkdir} from "node:fs/promises";
 import {QueryProgram,QueryEdit} from "./Query.js";
 
 const source=await readFile(new URL("Query.HC",import.meta.url),"utf8"),
-  Parse=await QueryProgram(await readFile(new URL("../../build/Query.wasm",import.meta.url))),
+  Parse=await QueryProgram(await readFile(new URL("../../build/Search.wasm",import.meta.url))),
   cases=[
     ["",{scope:"all",groups:[],phrases:[],notWords:[],notPhrases:[],
       dateAny:[],dateFrom:"",dateTo:"",years:[],withoutScope:"",withoutYears:""}],

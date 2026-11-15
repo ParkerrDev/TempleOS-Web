@@ -97,7 +97,7 @@ for(const count of cores) {
         const saved=await Wait(m=>m.cmd==='exportResult'&&m.kind==='disk',60000);
         assert(saved.ok,saved.msg);
         const {makeDisk,fat32Read}=await import(pathToFileURL(resolve(web,'hemu/Kernel/QCow2.js')));
-        const bytes=Buffer.from(fat32Read(makeDisk(gunzipSync(saved.buf)),'TOOM','STARTUP.BIN'));
+        const bytes=Buffer.from(fat32Read(await makeDisk(gunzipSync(saved.buf)),'TOOM','STARTUP.BIN'));
         assert.equal(bytes.length,256*8);
         writeFileSync(resolve(out,`startup-${count}.bin`),bytes);
         const start=bytes.readDoubleLE(0);assert(start>0);

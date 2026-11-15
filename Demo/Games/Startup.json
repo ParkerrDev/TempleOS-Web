@@ -26,13 +26,13 @@
         "overlaySha256": "d31a498440b852158c3a3070e86c233d9f2e7fc3981511f16e0ef4c049601df2"
       }
     },
-    "fixtureLoaderSha256": "b61d98bce6cfc8c963979f43b56c714872b9e3bc7c67453b78e348a9b6ad0b83",
-    "guestHarnessSha256": "a15db5b9cd7b47dfe9db8f1f23c5d1278685be6837daf098ab350340e7814dad",
-    "machineRuntimeSha256": "91b9e8e9bae8a1a3af71f9da5a4f5bad43bbe8c2b06b397a68471ba24f921237",
+    "fixtureLoaderSha256": "136f1cb59fa0d3d8d60925683f0f49577eaafaa518df3462895e2ab4e0e09d15",
+    "guestHarnessSha256": "09d91ac965ccc7fdfd3249100b0eb67a073c2ddd812edace9b75e32984126e37",
+    "machineRuntimeSha256": "1b004dbdfd0dc498b3ddc8575a962da8dfc817651fe6f03be9f63401b11055a1",
     "siblings": [
-      "hemu https://github.com/ParkerrDev/HEMU aba3ecf0aa6881ef65c38f75f0f4c59bec3293c5"
+      "hemu https://github.com/ParkerrDev/HEMU ff507634b3497ec4772195a3e002ed1eb4cdb600"
     ],
-    "compiler": "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm 42e2bad802f6a028ce4dcacc154aeedc4a12aa16",
+    "compiler": "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm 844f6a68b7d394db0f9d436b0181d0618b81c97b",
     "engineSha256": "86982d9a2fa3ddcc7b8c0632e463481014e6e6d30ca9eead900d662c446efb13"
   },
   "inputs": {

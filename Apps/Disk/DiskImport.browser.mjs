@@ -31,6 +31,10 @@ try {
     let releaseDisk=()=>{},fetches=0;
     try {
       await BrowserMachine(context);
+      // These assertions need the scheduled load and obsolete completion to occur
+      // at exact worker-local boundaries. Network routes cover active fetches;
+      // this asserted test instrumentation covers the timer-before-fetch race
+      // without exposing a production debug command.
       let source=Replace(worker,'StockDiskAside,StockInflate}', 'StockDiskAside as diskLoad,StockInflate}');
       source+='\nasync function StockDiskAside(...args) {try{return await diskLoad(...args);}finally{setTimeout(()=>postMessage({cmd:"testDiskSettled"}),0);}}\n';
       if(outcome==='scheduled') {

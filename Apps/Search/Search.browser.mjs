@@ -100,7 +100,7 @@ try {
   let release,started;
   const gate=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>started=resolve);
   await context.route("**/hemu/*.gz",route=>route.abort());
-  await context.route("**/build/Query.wasm",async route=>{started();await gate;await route.continue();});
+  await context.route("**/build/Search.wasm",async route=>{started();await gate;await route.continue();});
   await context.route("**/Apps/Search/Transcripts/**",route=>route.fulfill({status:503,body:"offline"}));
   await page.goto(origin);
   await page.locator("#tsBtn").click();

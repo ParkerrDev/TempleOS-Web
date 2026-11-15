@@ -53,7 +53,7 @@ loader. [HEMU's runtime documentation](https://github.com/ParkerrDev/HEMU/blob/m
 machine boundary, build, checks and supported behavior.
 
 HEMU executes guest instructions through an interpreter and an **x86-64 → WASM
-block JIT** (`hemu/Kernel/Jit.js`). **Web Optimization** is on by default
+block JIT** written in HolyC (`hemu/Kernel/JitCore.HC`). **Web Optimization** is on by default
 for smoother games. It replaces selected stock drawing routines with HolyC
 implementations running on the CPU.
 Turn it off in Settings to execute the original drawing instructions. The change
@@ -155,8 +155,8 @@ the fixed app programs with `Misc/AppsBuild.mjs`, generates module preloads,
 runs the fast checks, and builds HEMU. It then writes CDN redirects and publishes
 the served files with `node Misc/Server.mjs Site`.
 
-The fixed HolyC programs are the sprite codec (`Gr.HC`), search parser
-(`Query.HC`), MP4 and MKV planners, God Tools' timing-bit queue (`GodBits.HC`),
+The fixed HolyC programs are the sprite codec (`Gr.HC`), transcript search
+(`Search.HC` and `Query.HC`), MP4 and MKV planners, God Tools' timing-bit queue (`GodBits.HC`),
 HolyC-fmt and the optional window renderer (`WinDraw.HC`). Their WASM is built once into `build/`; using these features
 loads it directly. Editable programs and games still need the compiler at run
 time.
@@ -215,7 +215,7 @@ is served from localhost itself.
 | `Demo/Games/` | the HolyC games and their catalog, the packages from elsewhere (`Upstream/`), TOOM (`Toom/`), and the tools and records that check them (`Test/`) |
 | `Doc/` | the validation record |
 | `Misc/` | the server and publisher (`Server.mjs`), the fast tests (`Test.sh`), Netlify's build, the text check, Lighthouse, and `Cdn/`, the Cloudflare Worker that serves the heavy files from R2 (`Files.js`, its list `Offload.js`, `wrangler.toml`) |
-| `build/` | gitignored fixed app programs: `Gr.wasm`, `Query.wasm`, `Mp4.wasm`, `Mkv.wasm`, `GodBits.wasm`, `HolyCFmt.wasm` |
+| `build/` | gitignored fixed app programs: `Gr.wasm`, `Search.wasm`, `Mp4.wasm`, `Mkv.wasm`, `GodBits.wasm`, `HolyCFmt.wasm` |
 | `hemu/`, `holyc-fmt/`, `holycraft/` | the sibling repos, cloned at build time (gitignored); HEMU contains the shared compiler mount |
 
 A test sits beside what it tests: `Name.test.mjs` runs under node and `Name.browser.mjs` drives a

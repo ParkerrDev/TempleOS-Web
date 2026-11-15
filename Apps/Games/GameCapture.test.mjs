@@ -12,7 +12,12 @@ const document=new EventTarget();
 const container={replaceChild(next){nodes.set(next.id,next);}};
 const flush=()=>new Promise(resolve=>queueMicrotask(resolve));
 class Node extends EventTarget {
-  constructor(id=''){super();this.id=id;this.parentNode=container;this.value='';this.textContent='';this.style={};}
+  constructor(id=''){
+    super();this.id=id;this.parentNode=container;this.value='';this.textContent='';this.style={};
+    const classes=new Set();
+    this.classList={contains:name=>classes.has(name),add:(...names)=>names.forEach(name=>classes.add(name)),
+      remove:(...names)=>names.forEach(name=>classes.delete(name))};
+  }
   appendChild(child){return child;}
   cloneNode(){return new Node(this.id);}
   focus(){document.activeElement=this;}
@@ -101,13 +106,14 @@ api.stop();await flush();
 console.log('Native capture: manual and automatic input modes, 2D motion, Escape/key release, sticky hybrid, explicit recapture, stop and replacement canvas passed.');
 
 // Exercise the actual editor controls against the same native controller.
-const games=readFileSync(new URL('./GamesRun.js',import.meta.url),'utf8');
-const router=games.slice(games.indexOf('const previewCapture='),games.indexOf('async function runInBrowser('));
-context.previewOverlay={classList:{contains:()=>false}};
+const gamesPath=new URL('./GamesRun.js',import.meta.url);
+const games=readFileSync(gamesPath,'utf8').replace(/^import[\s\S]*?;\n/gm,'').replace(/^export \{[^}]*\};?$/gm,'');
+context.previewOverlay=document.getElementById('editorOverlay');
 context.os_game={get ed(){return context.__holycEditor;},mouse:null};
-new vm.Script('let runnerTarget=null;const ovE=previewOverlay;'+router).runInContext(context);
+context.ed_game={};context.ed_view={};
+new vm.Script('(function(){'+games+'})()',{filename:gamesPath.pathname}).runInContext(context);
 assert.equal(context.os_game.mouse.toggle(),false,'inactive previews leave desktop capture alone');
-vm.runInContext("runnerTarget='editor';",context);
+context.previewOverlay.classList.add('open');
 assert.equal(context.os_game.mouse.toggle(),true,'loading previews cannot fall through to desktop capture');
 await api.runIn(document.getElementById('screen'),'editor capture probe');
 const captureButton=document.getElementById('gameCapture');

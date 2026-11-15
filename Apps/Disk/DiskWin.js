@@ -70,7 +70,8 @@ function Busy(kind=null)
 {
   pending=kind;
   for (let id of actions)
-    $(id).disabled=!!pending || !OsReady();
+    $(id).disabled=!!pending || !OsReady() ||
+      (id=="dlSnap" || id=="dlDisk") && !engine.capture.ready;
   for (let id of imports)
     $(id).disabled=!!pending;
 }
@@ -122,6 +123,9 @@ os_disk.msg=function (m)
       Download(m.buf,"templeos-C-"+stamp+".img.gz","application/gzip");
       Say("C: disk exported.");
     }
+  } else if (m.cmd=="captureState") {
+    Busy(pending);
+    if (!pending) Say(m.msg);
   } else if (m.cmd=="guestResult" &&
       ["failed","error"].includes(m.state) && m.op=="launch")
     Say("Launch failed: "+m.msg);
@@ -129,7 +133,7 @@ os_disk.msg=function (m)
 
 function Export(kind)
 {
-  if (!OsReady() || pending) return;
+  if (!OsReady() || !engine.capture.ready || pending) return;
   Busy(kind);
   Say("Saving "+kind+"…");
   try {
@@ -162,7 +166,7 @@ async function Import(kind)
       }
     } else {
       bytes=await DiskBytes(file);
-      makeDisk(new Uint8Array(bytes));
+      await makeDisk(new Uint8Array(bytes));
     }
     Say("Storing "+kind+"…");
     await BootFileSave(kind,bytes);
@@ -219,7 +223,7 @@ $("lsHome").addEventListener("click",async function () {
   }
 });
 addEventListener("osstate",function (e) {
-  Busy();
+  Busy(e.detail.ready?pending:null);
   if (!e.detail.ready)
     Say(e.detail.msg);
 });
@@ -230,8 +234,8 @@ export function Open()
   ov.classList.add("open");
   WinRaise(ov);
   Busy(pending);
-  if (!OsReady())
-    Say("Start TempleOS to export or access its disk.");
+  if (!engine.capture.ready)
+    Say(engine.capture.msg);
 }
 
 function Close()

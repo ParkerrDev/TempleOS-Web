@@ -1,5 +1,5 @@
 //Terry Search: a fuzzy search over every transcribed video. The shards are
-//built by build-transcripts.mjs and TranSearch.js scores them in a worker.
+//built by TranscriptsMk.mjs; Search.HC scores them in a worker.
 //Each hit links to its video on archive.org at the hit's time, and any
 //passage, the shown results or a whole transcript can be copied.
 import {WinAdd,WinDress,WinFocus,WinRaise} from "../../Adam/WinMgr.js";

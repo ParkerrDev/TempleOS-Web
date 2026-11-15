@@ -13,8 +13,8 @@ const ROOT=fileURLToPath(new URL("..",import.meta.url));
 //written it).
 const SERVED=new RegExp("^(index\\.html|robots\\.txt|sitemap\\.xml|_headers|_redirects|"+
   "(Adam|Apps|Demo|hemu/Kernel|hemu/holyc-wasm/src)/.+|holyc-fmt/Fmt\\.js|"+
-  "build/(?:Gr|Query|Mp4|Mkv|GodBits|HolyCFmt|WinDraw)\\.wasm|"+
-  "hemu/build/hemu(?:-smp)?\\.(?:wasm|json)|"+
+  "build/(?:Gr|Search|Mp4|Mkv|GodBits|HolyCFmt|WinDraw)\\.wasm|"+
+  "hemu/build/(?:hemu(?:-smp)?\\.(?:wasm|json)|disk\\.wasm)|"+
   "(holyc-fmt|holycraft)/[^/]+\\.HC|"+
   "hemu/(?:[^/]+\\.gz|stock(?:-smp)?\\.disk|stock\\.json))$");
 //Not for visitors, by what a file is: a test, a tool or a note by its suffix,

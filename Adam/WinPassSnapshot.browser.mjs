@@ -24,7 +24,7 @@ try {
       function (route) {route.abort();});
     await context.routeWebSocket(/templeosweb-.*\.workers\.dev/,
       function (socket) {socket.close();});
-    await context.addInitScript(function () {
+    await context.addInitScript(function (cores) {
       if (!localStorage.getItem("tos-settings"))
         localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
       window.passEvents=[];window.passWindows=[];window.passRequests=[];
@@ -34,6 +34,8 @@ try {
           super(...args);
           this.addEventListener("message",function (e) {
             const m=e.data;
+            if (cores==4 && m.cmd=="guestReady" && m.ok && !m.restored)
+              this.postMessage({cmd:"pause",value:true});
             if (m.cmd=="windows")
               window.passWindows=m.windows.map(function (w) {
                 const {buf,...info}=w;return info;
@@ -49,10 +51,15 @@ try {
         postMessage(m,...args) {
           if (m.cmd=="windows" || m.cmd=="exportSnapshot")
             window.passRequests.push(m);
+          if (m.cmd=="exportSnapshot" && window.failExport) {
+            window.failExport=false;
+            queueMicrotask(()=>this.onerror({message:"Worker lost during export"}));
+            return;
+          }
           return super.postMessage(m,...args);
         }
       };
-    });
+    },cores);
     page=await context.newPage();
     const errors=[];
     page.on("pageerror",function (e) {errors.push(e.message);});
@@ -64,6 +71,25 @@ try {
       return window.passEvents.some(function (m) {return m.cmd=="guestReady" && m.ok;}) &&
         window.passEvents.some(function (m) {return m.cmd=="diskInfo" && m.ok;});
     },null,{timeout:60000});
+    if (cores==4) {
+      await page.waitForFunction(function () {
+        return window.passEvents.some(function (m) {return m.cmd=="paused" && m.value;});
+      });
+      assert(!await page.evaluate(function () {
+        return window.passEvents.some(function (m) {return m.cmd=="smpReady";});
+      }),"pause reaches the real worker before AP release");
+      await page.locator("#diskBtn").click();
+      assert.equal(await page.locator("#dlSnap").isDisabled(),true);
+      assert.equal(await page.locator("#dlDisk").isDisabled(),true);
+      await page.waitForFunction(function () {
+        return document.getElementById("diskStatus").textContent.includes("Resume TempleOS");
+      });
+      await page.locator("#diskClose").click();
+      await page.locator("#pauseBtn").click();
+      await page.waitForFunction(function () {
+        return window.passEvents.some(function (m) {return m.cmd=="captureState" && m.ready;});
+      },null,{timeout:30000});
+    }
     await page.locator("#settingsBtn").click();
     await page.locator("#windowPassthrough").check();
     await page.locator("#settingsClose").click();
@@ -160,6 +186,27 @@ try {
     await page.mouse.up();
     await page.locator(".win-pass canvas").waitFor({timeout:30000});
     assert.deepEqual(errors,[]);
+    if (cores==1) {
+      await page.locator("#diskBtn").click();
+      assert.equal(await page.locator("#dlSnap").isDisabled(),false);
+      assert.equal(await page.evaluate(function () {
+        document.getElementById("restartBtn").click();
+        return document.getElementById("dlSnap").disabled;
+      }),true,"restart disables export synchronously, before the old worker is replaced");
+      await page.waitForFunction(async function () {
+        const os=await import("/Adam/Os.js");
+        return os.OsReady() && os.engine.capture.ready;
+      },null,{timeout:60000});
+      await page.evaluate(function () {window.failExport=true;});
+      await page.locator("#dlSnap").click();
+      await page.waitForFunction(function () {
+        return document.getElementById("osNoticeText").textContent.includes("main worker was lost");
+      });
+      assert.equal(await page.locator("#ulSnap").isDisabled(),false,
+        "worker loss releases pending export so a backup can be imported");
+      assert.equal(await page.locator("#ulDisk").isDisabled(),false);
+      assert.equal(await page.locator("#dlSnap").isDisabled(),true);
+    }
     await context.close();
     await unlink(path);
     console.log(cores+"-core active-window snapshot: export, restore, proxy cleanup, "+

@@ -10,14 +10,14 @@ try {
  const page=await browser.newPage();await page.goto('http://127.0.0.1:'+site.address().port+'/test');
  const result=await page.evaluate(async()=>{
    const {DiskStoreOpen}=await import('/hemu/Kernel/DiskStore.js'),{makeDisk}=await import('/hemu/Kernel/QCow2.js');
-   const events=[],store=await DiskStoreOpen(m=>events.push(m)),disk=makeDisk(new Uint8Array(2048));
+   const events=[],store=await DiskStoreOpen(m=>events.push(m)),disk=await makeDisk(new Uint8Array(2048));
    await store.Attach(disk);
    disk.writeInto(1,1,new Uint8Array(512).fill(7),0);
    await Promise.resolve();
    disk.writeInto(2,1,new Uint8Array(512).fill(9),0);
    await store.Flush();
    const restored=await store.Load(),a=new Uint8Array(1024);restored.readInto(1,2,a,0);
-   const replacement=makeDisk(new Uint8Array(1024).fill(3));await store.Attach(replacement);
+   const replacement=await makeDisk(new Uint8Array(1024).fill(3));await store.Attach(replacement);
    const replaced=await store.Load(),b=new Uint8Array(1024);replaced.readInto(0,2,b,0);
    const put=IDBObjectStore.prototype.put;
    IDBObjectStore.prototype.put=function(value,key){if(typeof key==='number')throw new DOMException('Storage full','QuotaExceededError');return put.call(this,value,key);};

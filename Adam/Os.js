@@ -96,7 +96,7 @@ function blit(idx, w, h, immutable = false, stats = null) {
 let started=false,framed=false;
 export function OsReady()
 {
-  return started;
+  return started && !restarting;
 }
 function firstFrame()
 {
@@ -481,7 +481,11 @@ async function restartOS() {
       resetPause();fpsMeter.reset();updateFps();started=false;framed=false;
     }
   } catch (e) { setLoad("restart failed: " + (e.message || e)); dbg("restart failed: " + (e.message || e), true); }
-  finally { restarting = false; }
+  finally {
+    restarting=false;
+    if (started && framed)
+      dispatchEvent(new CustomEvent("osstate",{detail:{ready:true}}));
+  }
 }
 $("restartBtn").addEventListener("click", restartOS);
 
