@@ -1,15 +1,15 @@
 {
   "format": 1,
-  "runtimeSha256": "0edaa6e18d7e5cdafd701c8fed92009f88d47791665cf984aa63442eb8bb9f55",
+  "runtimeSha256": "4f6a8e6eaef7b3fa4196277642b7627493e0ea3c34fbffc1c1ed66667a0ec2b5",
   "programs": {
     "HolyCraft.HC": {
       "name": "HolyCraft",
-      "sourceSha256": "019734ed0220d9ad548c1a6f24560d8a7f8e513ec861f54f4c93ec1544a59136",
+      "sourceSha256": "5f78a93f277823eaa1ffbee92e44740e2cd23e9316b937eed009b73c7f56e05d",
       "compile": true,
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "ab49d04714cc36640a99b968d06bac3ff42a8560b3e2e924aeb3f900546e50b2"
+      "wasmSha256": "32aaee04532e5f23aa0b22769cceace3d195b57ba9ee85f002fb6984ee12f889"
     },
     "toom": {
       "name": "TOOM",
@@ -22,30 +22,30 @@
     },
     "Babel.HC": {
       "name": "Babel",
-      "sourceSha256": "c1c0a2c14c3c18a973f9f55a19643811bd8d932ef2a8dd2e29a3d1391f52349b",
+      "sourceSha256": "4ac502f357cfd24da04a5dc4e598fbcf33c3d8de6d4a973b1f4b4212c258235c",
       "compile": true,
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "3365703cab67721b91308fe61ab21d8f8f3532d7cbbcef9f387b5ef698710ea9"
+      "wasmSha256": "6541a5a23494f19d5b90b0b49cc2dfbedb0d96c15dafff552252b86aabcab61f"
     },
     "Volley.HC": {
       "name": "Volley",
-      "sourceSha256": "1a90fc2e900b9a87afe479854879b34324f327fdd3b0bc491736ff1ec2d149fe",
+      "sourceSha256": "a56a8ee5032f32d5dddbd3d9a86eec3115e16274ea86ef555796eafcf9986c76",
       "compile": true,
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "3c3c752ddbc4acd67565aa82f4fde1071d0772bcfd50bd24c13b11854b7cf5ce"
+      "wasmSha256": "7d7ef3770e27af10fb533a3e85d1caf2f8ee437272d19a80c2a2a36a8dec8ba5"
     },
     "Snake.HC": {
       "name": "Snake",
-      "sourceSha256": "6f2bf1de66293ca3d6ee4c8b5b829105acb776fd4d3c756c772550150885705e",
+      "sourceSha256": "d9a64ee266f765713e3b1e1ce55bab82eb93c3f15bc37f56aefa9e1ee675222b",
       "compile": true,
       "browserStartup": true,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "07663e95e57967687aa5ef5f6c8df5bb0a6927710dabada7efefff0a7e36a778"
+      "wasmSha256": "d206ea85de2d871c886a991691e700bfbbf7494c2d710f6901a31231521e9721"
     },
     "FNAF.HC": {
       "name": "FNAF",
@@ -171,7 +171,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "f3c19a728e27b91c53889df7f1ca435776ccdecac508ee79f67f170df2f178d4"
+      "wasmSha256": "930a17e04c05218adb68dddcd8eb5197405d4456bebef5622b27b37c3df8fccb"
     },
     "tinker-Whap": {
       "name": "Whap",
@@ -225,7 +225,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "error": "C:/Home/Games/TinkerOS/Zing.HC:97: Undefined identifier or untyped call: MsSet"
+      "error": "C:/Home/Games/TinkerOS/Zing.HC:143: Undefined identifier or untyped call: MenuPush"
     },
     "tinker-ZoneOut": {
       "name": "ZoneOut",
@@ -279,7 +279,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "a6da927181c0a6408f6b560169ceeeec58fce39e30c150ff5c25783ee16eefce"
+      "wasmSha256": "635ec224169e24888b2091b6db86cc36a85c0e0adc295fc7feb045d91c8ac69f"
     },
     "tinker-RainDrops": {
       "name": "RainDrops",
@@ -306,7 +306,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "37979fc44de4f3d1c055ab74443a0e81f06038b190833d91e7888fc104222c8a"
+      "wasmSha256": "ebc6dbefbf0c3ee0afda74c0ee3b05ef259a5bd2cbfae448be5cb7dd382ed45a"
     },
     "tinker-CharDemo": {
       "name": "CharDemo",
@@ -324,7 +324,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "cc497b63d92f099d40fb2590bb2f2893518c47ba9fdec2bfa2b7872073055f42"
+      "wasmSha256": "61f2ab25dd8b9de54f1ef7638baaaa113c49f788b3d6930d1688f999fceb8086"
     },
     "tinker-Stadium": {
       "name": "Stadium",
@@ -495,7 +495,7 @@
       "browserStartup": false,
       "gameplay": "unverified",
       "templeos": "unverified",
-      "wasmSha256": "b71486a61be236ac26365342b3861c6c8713683d763c6c97341faf43c3a26d2d"
+      "wasmSha256": "bb61d58372578dca3df7081e0180cc782c95faaa353e704c42c940bb029341a1"
     },
     "library-Coach": {
       "name": "Coach",

@@ -1,6 +1,7 @@
 import {readFile,writeFile,mkdir} from "node:fs/promises";
 import {execFileSync} from "node:child_process";
 import {RangeSource} from "../Range.js";
+import {ArchiveRange} from "../../Archive.js";
 import {Mp4Clip} from "../Mp4.js";
 import {MkvClip} from "../Mkv.js";
 
@@ -8,13 +9,13 @@ const format=process.argv[2] || "mp4";
 if (!["mp4","mkv","webm"].includes(format)) throw new Error("Use mp4, mkv or webm.");
 const files=JSON.parse(await readFile(new URL("../../../../Misc/Cdn/ArchiveLst.json",import.meta.url))),
   item="TerryADavis_TempleOS_Archive",path=files[item].find(f=>f.endsWith("."+format)),
-  url="https://archive.org/download/"+item+"/"+path,
+  url=ArchiveRange(decodeURIComponent(path)),
   requests=[],Fetch=globalThis.fetch;
 globalThis.fetch=async function (url,options) {
   if (url instanceof URL && url.protocol=="file:")
     return new Response(await readFile(url));
   const response=await Fetch(url,options);
-  requests.push({url:String(url),range:options?.headers?.Range,status:response.status,
+  requests.push({url:String(url),range:new URL(url).searchParams.get("range"),status:response.status,
     contentRange:response.headers.get("Content-Range"),etag:response.headers.get("ETag")});
   return response;
 };

@@ -30,6 +30,7 @@ try {
     });
     //Display preferences work before the OS loads and survive a page reload.
     async function SettingsOpen() {
+      if (await page.locator("#settingsWin").isVisible()) return;
       if (mobile) await page.locator("#mobileMenu").click();
       await page.locator("#settingsBtn").click();
       await page.locator("#showHeader").waitFor();
@@ -85,9 +86,9 @@ try {
     assert.equal(await page.locator("#godOut").innerText(),"");
     const bounds=await page.locator("#godWin").boundingBox();
     assert(bounds.x>=0 && bounds.x+bounds.width<=await page.evaluate(()=>innerWidth));
-    //Content may scroll, border gestures must not be stolen by browser panning.
+    //Phone titles pan normally; desktop borders own their drag gestures.
     assert.equal(await page.locator("#godWin .wbar").evaluate(
-      e=>getComputedStyle(e).touchAction),"none");
+      e=>getComputedStyle(e).touchAction),mobile?"pan-y":"none");
     assert.equal(await page.locator("#godOut").evaluate(
       e=>getComputedStyle(e).touchAction),"auto");
     if (mobile) {
@@ -99,7 +100,7 @@ try {
         touchPoints:[{x:x+24,y:y-48}]});
       await cdp.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
       const moved=await page.locator("#godWin").boundingBox();
-      assert(Math.abs(moved.y-(bounds.y-48))<2,"touch drags the tool title");
+      assert(Math.abs(moved.y-bounds.y)<2,"touch does not drag the tool title");
       //Make a long document, then swipe its content through browser touch input.
       await page.locator("#godOut").evaluate(e=>{e.textContent="line\n".repeat(500);e.style.whiteSpace="pre";});
       const r=await page.locator("#godOut").boundingBox();
@@ -403,7 +404,7 @@ try {
     await context.close();
   }
   console.log("Browser shell: desktop/mobile buttons, chunked passages, touch "+
-    "drag versus scroll, resize, held keys, touch cancellation, contextual tips, landscape, "+
+    "title panning, content scrolling, resize, held keys, touch cancellation, contextual tips, landscape, "+
     "strict editor rejection and native CDC display passed.");
 } finally {
   await browser.close();

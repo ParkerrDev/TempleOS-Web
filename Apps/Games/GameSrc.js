@@ -6,6 +6,10 @@ const editable=path=>/\.(HC|HH)$/i.test(path);
 // HolyCraft is its own repo (ParkerrDev/HolyCraft), cloned into ./holycraft at build time.
 const SITE_GAMES={'HolyCraft.HC':'holycraft/HolyCraft.HC','Snake.HC':'Demo/Games/Snake.HC','Babel.HC':'Demo/Games/Babel.HC','Volley.HC':'Demo/Games/Volley.HC','FNAF.HC':'Demo/Games/FNAF.HC'};
 
+export function gameProgram(source) {
+  return '#define TOS_NATIVE 1\n'+source;
+}
+
 export async function gameProject(game) {
   const id=game.packageId || game.file;
   if(!projects.has(id))projects.set(id,loadProject(game,id).catch(e=>{projects.delete(id);throw e;}));
@@ -77,7 +81,9 @@ async function loadProject(game,id) {
         const raw=drafts.get(file.path) ?? (game.packageId?await gameFile(file):(await open(file.path)).encode((await open(file.path)).original));
         files.push({path:file.path,source:sourceString(raw,!game.packageId)});
       }
-      return {source:files.find(file=>file.path===pkg.entry).source,filename:pkg.entry,files,nativeGame:true};
+      let source=files.find(file=>file.path===pkg.entry).source;
+      if(!game.packageId && !game.install && !game.disk)source=gameProgram(source);
+      return {source,filename:pkg.entry,files,nativeGame:true};
     },
   };
 }

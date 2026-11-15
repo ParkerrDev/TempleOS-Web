@@ -1,25 +1,23 @@
-import {gameProject} from './GameSrc.js';
-
-
-
-import {WinRaise,WinTitle} from '../../Adam/WinMgr.js';
+import {gameProject,gameProgram} from './GameSrc.js';
+import {GAMES} from './GameCatalog.js';
+import {WinFind,WinRaise,WinRestore,WinTitle} from '../../Adam/WinMgr.js';
 import {HelpGame} from '../Help/HelpWin.js';
 import {os_game,OsCaptureSet,OsFileWrite,OsGen,OsHold,OsInputRelease,OsInputReset,OsLaunch} from '../../Adam/Os.js';
-import {EdLoad,ed_game,ed_view} from '../Editor/EditorWin.js';
+import {EdLoad,EdDraftRestore,ed_game,ed_view} from '../Editor/EditorWin.js';
 
 import {Close as closeGames,QuitNote} from "./GamesWin.js";
 let packageLaunchBusy=false;
-const ovE=document.getElementById("editorOverlay");
+const ovE=WinFind("editorOverlay");
 async function gameSrc(g) {
   const project=await gameProject(g);
   return (await project.open(project.entry)).text;
 }
 let curGame = null;
 const setStatus = (s) => {
-  document.getElementById("status").textContent=s;
+  WinFind("status").textContent=s;
 };
 let editorGame=null,editorProject=null,editorPath=null,editorLoading=false,editorToken=0,editorRequest=0;
-const editor=document.getElementById('editor'),fileSelect=document.getElementById('gameFile'),draft=document.getElementById('gameDraft');
+const editor=WinFind('editor'),fileSelect=WinFind('gameFile'),draft=WinFind('gameDraft');
 editor.addEventListener('input',()=>{
   if(!editorProject||editorLoading)return;
   const saved=editorProject.change(editorPath,editor.value);
@@ -36,11 +34,19 @@ async function selectSource(path){
   }finally{if(token===editorToken){editorLoading=false;editor.disabled=false;fileSelect.disabled=false;}}
 }
 fileSelect.addEventListener('change',()=>selectSource(fileSelect.value).catch(e=>setStatus(e.message)));
-document.getElementById('gameRestore').addEventListener('click',async()=>{
+WinFind('gameRestore').addEventListener('click',async()=>{
   try{await editorProject.reset(editorPath);await selectSource(editorPath);draft.textContent='Original source restored.';}
   catch(e){setStatus(e.message);}
 });
-ed_game.leave=()=>{ed_game.stop?.();++editorToken;editorGame=editorProject=editorPath=null;editorLoading=false;editor.disabled=false;ed_game.file=null;ovE.classList.remove('gameproject');document.getElementById('editorRuntimeInfo').textContent='Click the screen for keyboard, mouse and sound. Direct HolyC to WebAssembly.';};
+ed_game.leave=()=>{
+  const project=editorProject;
+  ed_game.stop?.();++editorToken;
+  editorGame=editorProject=editorPath=null;editorLoading=false;
+  editor.disabled=fileSelect.disabled=false;ed_game.file=null;
+  if(project)EdDraftRestore();
+  ovE.classList.remove('gameproject');
+  WinFind('editorRuntimeInfo').textContent='Click the screen for keyboard, mouse and sound. Direct HolyC to WebAssembly.';
+};
 async function editGame(g){
   const request=++editorRequest;
   closeGameWin();closeGames();OsInputRelease();
@@ -56,27 +62,37 @@ async function editGame(g){
       const option=document.createElement('option');option.value=file.path;
       option.textContent=file.path.replace(/^C:\/Home\//,'');return option;
     }));
-    document.getElementById('gameTitle').textContent=g.name;
-    document.getElementById('gameRun').title='Run the latest edits in the preview. Run again to restart with new edits.';
+    WinFind('gameTitle').textContent=g.name;
+    WinFind('gameRun').title='Run the latest edits in the preview. Run again to restart with new edits.';
     ovE.classList.add('gameproject');
-    document.getElementById('editorRuntimeInfo').textContent='Edit, Run and play here. Capture mouse above the preview; Esc returns to hybrid mode. Run again to apply edits.';
-    document.getElementById('gamePreviewStatus').textContent='Ready. Preview compiles with HolyC-WASM.';
-    const screen=document.getElementById('screen');screen.getContext('2d').clearRect(0,0,screen.width,screen.height);
-    document.getElementById('console').textContent='';
+    WinFind('editorRuntimeInfo').textContent='Edit, Run and play here. Capture mouse above the preview; Esc returns to hybrid mode. Run again to apply edits.';
+    WinFind('gamePreviewStatus').textContent='Ready. Preview compiles with HolyC-WASM.';
+    const screen=WinFind('screen');screen.getContext('2d').clearRect(0,0,screen.width,screen.height);
+    WinFind('console').textContent='';
     ed_game.file={filename:()=>(editorPath||project.entry).split('/').pop(),bytes:()=>project.bytes(editorPath||project.entry)};
     await selectSource(project.entry);setStatus(g.name+' source');
   }catch(e){setStatus('Could not open source: '+e.message);}
 }
 ed_game.cancel=()=>{++editorRequest;++editorToken;editorLoading=false;editor.disabled=false;fileSelect.disabled=false;};
-document.getElementById('gameRun').addEventListener('click',()=>{if(editorGame&&!editorLoading)runInBrowser(editorGame,{inEditor:true});});
-document.getElementById('gameStop').addEventListener('click',()=>{closeGameWin();document.getElementById('gamePreviewStatus').textContent='Stopped. Edit the source and Run to try again.';});
-document.getElementById('gameToDisk').addEventListener('click',()=>{if(editorGame)runInTempleOS(editorGame);});
-document.getElementById('gameWinEdit').addEventListener('click',()=>{if(curGame)editGame(curGame);});
+WinFind('gameRun').addEventListener('click',()=>{if(editorGame&&!editorLoading)runInBrowser(editorGame,{inEditor:true});});
+WinFind('gameStop').addEventListener('click',()=>{closeGameWin();WinFind('gamePreviewStatus').textContent='Stopped. Edit the source and Run to try again.';});
+WinFind('gameToDisk').addEventListener('click',()=>{if(editorGame)runInTempleOS(editorGame);});
+WinFind('gameWinEdit').addEventListener('click',()=>{if(curGame)editGame(curGame);});
+WinFind('gameWinRun').addEventListener('click',()=>{if(curGame)runInBrowser(curGame);});
+
+function GameKey(game)
+{
+  return game.packageId || game.file || [game.group,game.folder,game.entry].join('/');
+}
+WinRestore('game',async function ({key}) {
+  const game=GAMES.find(game=>GameKey(game)===key);
+  if (game) await runInBrowser(game,{start:false});
+});
 
 
 let releaseDesktop=null,nativeStatus=null,launchToken=0,runnerTarget=null;
-const runnerStatus=()=>document.getElementById(runnerTarget==='editor'?'gamePreviewStatus':'gameWinStatus');
-const previewCapture=[document.getElementById('gameCapture'),document.getElementById('gameWinCapture')];
+const runnerStatus=()=>WinFind(runnerTarget==='editor'?'gamePreviewStatus':'gameWinStatus');
+const previewCapture=[WinFind('gameCapture'),WinFind('gameWinCapture')];
 const previewMouse=()=>os_game.ed;
 function updatePreviewMouse(){
   const mouse=previewMouse(),captured=!!mouse?.isMouseCaptured();
@@ -100,38 +116,41 @@ os_game.mouse={
   },
   isMouseCaptured:()=>!!previewMouse()?.isMouseCaptured(),
 };
-async function runInBrowser(g,{inEditor=false}={}) {
+async function runInBrowser(g,{inEditor=false,start=true}={}) {
   ed_game.cancel();
-  const view=document.getElementById(inEditor?'editorWin':'gameWin');
+  const view=WinFind(inEditor?'editorWin':'gameWin');
   closeGameWin({keepFullscreen:ed_view.isWithin(view)});const token=launchToken;curGame=g;closeGames();
   HelpGame(g);
   runnerTarget=inEditor?'editor':'window';
   if(!inEditor)ovE.classList.remove('open','free');
   OsInputRelease();
-  releaseDesktop=OsHold();
-  const overlay=document.getElementById('gameWinOverlay'),win=document.getElementById('gameWin');
-  const slot=inEditor?document.querySelector('#editorWin .ed-screenwrap'):document.getElementById('gameWinSlot'),status=runnerStatus();
+  if(start)releaseDesktop=OsHold();
+  const overlay=WinFind('gameWinOverlay'),win=WinFind('gameWin');
+  const slot=inEditor?WinFind('editorWin').querySelector('.ed-screenwrap'):WinFind('gameWinSlot'),status=runnerStatus();
   if(inEditor){
-    document.getElementById('gameStop').disabled=false;
-    document.getElementById('gameRun').textContent='↻ Run again';
+    WinFind('gameStop').disabled=false;
+    WinFind('gameRun').textContent='↻ Run again';
   }else{
+    win._restore={kind:'game',data:{key:GameKey(g)}};
     WinTitle(win,g.name);
+    WinFind('gameWinRun').textContent=start?'Run again':'Run';
     overlay.classList.add('open');WinRaise(overlay);
   }
-  status.textContent='Compiling with HolyC-WASM...';
+  status.textContent=start?'Compiling with HolyC-WASM...':'Ready. Run starts a new game.';
   try{
-    const project=await (await gameProject(g)).native();
+    const project=start?await (await gameProject(g)).native():null;
     await EdLoad();
     if(token!==launchToken)return;
     if(!inEditor)ed_game.leave();
-    const screen=document.getElementById('screen');slot.append(screen);
-    if(!inEditor)win.append(document.getElementById('console'));
-    const sourceStatus=document.getElementById('status');
+    const screen=WinFind('screen');slot.append(screen);
+    if(!inEditor)win.append(WinFind('console'));
+    if(!start){updatePreviewMouse();return;}
+    const sourceStatus=WinFind('status');
     nativeStatus=new MutationObserver(()=>{status.textContent='HolyC-WASM: '+sourceStatus.textContent;});
     nativeStatus.observe(sourceStatus,{childList:true,characterData:true,subtree:true});
     const {source,...options}=project;
-    await os_game.ed.runIn(screen,source,{...options,preserveEditor:inEditor});
-    document.getElementById('screen').focus();
+    await os_game.ed.runIn(screen,source,options);
+    WinFind('screen').focus();
   }catch(e){if(token!==launchToken)return;status.textContent='HolyC-WASM could not run this game: '+e.message;releaseDesktop?.();releaseDesktop=null;}
 }
 
@@ -139,32 +158,32 @@ function closeGameWin({keepFullscreen=false}={}) {
   HelpGame(null);
   ++launchToken;
   if(!keepFullscreen){
-    ed_view.exitWithin(document.getElementById('gameWin'));
-    ed_view.exitWithin(document.getElementById('editorWin'));
+    ed_view.exitWithin(WinFind('gameWin'));
+    ed_view.exitWithin(WinFind('editorWin'));
   }
   if(previewMouse()?.isMouseCaptured())previewMouse().releaseMouse();
   nativeStatus?.disconnect();nativeStatus=null;
   os_game.ed?.stop();
-  const screen=document.getElementById('screen'),home=document.querySelector('#editorWin .ed-screenwrap');
+  const screen=WinFind('screen'),home=WinFind('editorWin').querySelector('.ed-screenwrap');
   if(screen&&home&&screen.parentNode!==home)home.append(screen);
-  const output=document.getElementById('console'),outputHome=document.querySelector('#editorWin .ed-pane:last-child');
+  const output=WinFind('console'),outputHome=WinFind('editorWin').querySelector('.ed-pane:last-child');
   if(output&&outputHome&&output.parentNode!==outputHome)outputHome.append(output);
-  document.getElementById('gameStop').disabled=true;
-  document.getElementById('gameRun').textContent='▶ Run';
+  WinFind('gameStop').disabled=true;
+  WinFind('gameRun').textContent='▶ Run';
   runnerTarget=null;
   updatePreviewMouse();
-  if(!keepFullscreen)document.getElementById('gameWinOverlay').classList.remove('open','free');
+  if(!keepFullscreen)WinFind('gameWinOverlay').classList.remove('open','free');
   releaseDesktop?.();releaseDesktop=null;
 }
 ed_game.stop=()=>{if(runnerTarget==='editor')closeGameWin();};
 ed_game.prepare=()=>{if(runnerTarget!=='editor')closeGameWin();};
-document.getElementById('gameWinClose').addEventListener('click',closeGameWin);
-document.getElementById('gameWinOverlay').addEventListener('mousedown',e=>{if(e.target.id==='gameWinOverlay')closeGameWin();});
+WinFind('gameWinClose').addEventListener('click',closeGameWin);
+WinFind('gameWinOverlay').addEventListener('mousedown',e=>{if(e.target.id==='gameWinOverlay')closeGameWin();});
 
 // a small TempleOS-styled toast - the game loop rewrites #status every second,
 // so the "how to run it" instruction needs its own durable, dismissable home.
 function toast(html, ms = 11000) {
-  let t = document.getElementById("gmToast");
+  let t = WinFind("gmToast");
   if (!t) {
     t = document.createElement("div"); t.id = "gmToast";
     t.style.cssText = "position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:99999;"
@@ -177,7 +196,7 @@ function toast(html, ms = 11000) {
     const body = document.createElement("div"); body.id = "gmToastBody";
     t.appendChild(x); t.appendChild(body); document.body.appendChild(t);
   }
-  document.getElementById("gmToastBody").innerHTML = html;
+  WinFind("gmToastBody").innerHTML = html;
   clearTimeout(t._timer); t._timer = setTimeout(() => t.remove(), ms);
 }
 
@@ -220,7 +239,7 @@ async function runInTempleOS(g,suppliedOverrides=null) {
     opts = { path:g.install,name:g.name };
   } else {
     const raw = await gameSrc(g);
-    opts = { src: "#define TOS_NATIVE 1\n" + raw, name: g.name };
+    opts = { src: gameProgram(raw), name: g.name };
   }
   current();
   toast("Loading <b>" + g.name + "</b> in TempleOS…", 60000);

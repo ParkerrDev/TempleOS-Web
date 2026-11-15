@@ -30,12 +30,14 @@
     const fail = (m) => { const e = document.getElementById("err"); e.textContent = m; e.style.display = "block"; document.getElementById("screen").style.display = "none"; };
     const game = new URLSearchParams(location.search).get("game") || "HolyCraft.HC";
     document.title = game.replace(/\.HC$/i, "");
-    let src = "";
     try {
       if(['HolyCraft.HC','Snake.HC','Babel.HC','Volley.HC'].includes(game)){
         const {gameProject}=await import('./GameSrc.js');
-        const project=await gameProject({file:game,name:game.replace(/\.HC$/i,'')});
-        src=(await project.open(project.entry)).text;
+        const project=await (await gameProject({file:game,name:game.replace(/\.HC$/i,'')})).native();
+        await import("../Editor/App.js");
+        const {source,...options}=project;
+        await window.__holycEditor.runIn(document.getElementById("screen"),source,options);
+        document.getElementById("screen").focus();
       }else{
         const {gameCatalog}=await import('./GamePkgs.js');
         const pkg=(await gameCatalog()).packages.find(p=>p.id===game||p.name===game.replace(/\.HC$/i,''));
@@ -43,20 +45,6 @@
         location.replace('../../?gameSession='+encodeURIComponent(pkg.id));
       }
     } catch (e) { fail("Couldn't load " + game + ": " + e.message); }
-    if (src) {
-      try { await import("../Editor/App.js"); } catch (e) { fail("Failed to load the HolyC runtime: " + e.message); }
-      const ed = document.getElementById("editor");
-      const t0 = Date.now();
-      (function go() {                                   // App.js exposes window.__holycEditor when ready
-        if (window.__holycEditor) {
-          ed.value = src; ed.dispatchEvent(new Event("input"));   // set OUR game source (overriding App.js's default demo)
-          if (window.__holycEditor.isRunning()) window.__holycEditor.stop();
-          window.__holycEditor.run();                              // run() captures editor.value synchronously
-          document.getElementById("screen").focus();
-        } else if (Date.now() - t0 < 8000) setTimeout(go, 60);
-        else fail("The HolyC runtime didn't start (SharedArrayBuffer may be unavailable in this browser).");
-      })();
-    }
   </script>
 </body>
 </html>

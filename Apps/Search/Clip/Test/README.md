@@ -27,10 +27,13 @@ conversion fallback remains for formats outside these native parsers; removing
 it before replacing those formats would remove existing functionality.
 
 `Range.js` rejects ignored ranges, changing ETags/lengths, truncated and excess
-bodies before accepting them. Reads are capped at the CDN route's 16 MiB limit.
+bodies before accepting them. Reads are capped at the CDN route's 16 MiB limit. The request URL carries
+`?range=first-last`: the worker forwards that validated range upstream, so a
+cache fill that removes the browser's Range header cannot turn it into a whole-file request.
 The CDN archive route is allowlisted from the transcript index. It must be
 deployed before the new Search UI can read live archive bytes in a browser;
-local browser tests intercept it with a real fixture response.
+local browser tests intercept it with a real fixture response. The network checks
+use the deployed CDN contract, not archive.org directly.
 
 Checks (Node, ffmpeg/ffprobe and Chromium installed):
 
@@ -41,6 +44,7 @@ HOLYC_WASM=/path/to/HolyC-wasm node Apps/Search/Clip/Test/MkvNative.mjs
 node Apps/Search/Clip/Test/Archive.mjs
 node Apps/Search/Clip/Test/Archive.mjs mkv
 node Apps/Search/Clip/Test/Archive.mjs webm
+node Apps/Search/Clip/Test/Live.browser.mjs
 ```
 
 The archive commands read real videos over HTTP; they are optional network
@@ -87,3 +91,10 @@ exception and produce the same valid clip hashes. Parser catches mark the
 exception handled and return only after leaving the catch. Allocation checks
 cover all three MP4 and fourteen Matroska failure positions, repeated metadata
 replacement and finishing, full cleanup and successful retries.
+
+Playback conversion has a separate cancellable owner from native clip export.
+`node Apps/Search/Convert.browser.mjs` runs the real vendored FFmpeg worker,
+checks that a closed player aborts its streamed HTTP input, a navigated player
+terminates encoding, and a cancelled queued request never stops another player.
+Every conversion terminates its worker after returning or failing; a per-page
+browser lock bounds the page to one active conversion without polling.

@@ -1,3 +1,4 @@
+import {WinDocuments} from "./WinPopup.js";
 import {PALETTE} from "../hemu/holyc-wasm/src/runtime/palette.js";
 
 let cfg={native:false},core=null,loading=null,frame=0,last=0;
@@ -18,7 +19,8 @@ export function WinDrawCfg(change)
   else {
     cancelAnimationFrame(frame);
     frame=0;
-    document.body.classList.remove("native-chrome");
+    for (let doc of WinDocuments())
+      doc.body.classList.remove("native-chrome");
   }
   return {...cfg};
 }
@@ -44,7 +46,8 @@ async function WinDrawStart()
       loading=WinDrawLoad();
     core=await loading;
     if (cfg.native && !frame) {
-      document.body.classList.add("native-chrome");
+      for (let doc of WinDocuments())
+        doc.body.classList.add("native-chrome");
       frame=requestAnimationFrame(WinDrawFrame);
     }
   } catch (error) {
@@ -141,9 +144,10 @@ function WinDrawFrame(time)
   try {
     if (time-last>=1000/30) {
       last=time;
-      for (let w of document.querySelectorAll(".win,#frame"))
-	if (w._sv && w._sh)
-	  WinDrawOne(w,tick);
+      for (let doc of WinDocuments())
+        for (let w of doc.querySelectorAll(".win,#frame"))
+          if (w._sv && w._sh)
+            WinDrawOne(w,tick);
     }
   } catch (error) {
     WinDrawCfg({native:false});

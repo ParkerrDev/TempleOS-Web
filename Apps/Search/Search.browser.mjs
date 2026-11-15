@@ -205,16 +205,16 @@ async function SearchFeatures(page,context,mobile)
   await context.route("https://archive.org/download/**/c.mp4",route=>route.fulfill({status:404}));
   await query('"god tools" in:transcript',[videos[2].s[0][1]]);
   await page.locator("#tsOut .ts-pl").click();
-  await page.locator(".vidwin .ts-verr .ts-conv").waitFor();
-  assert.equal(await page.locator(".vidwin .ts-verr a").getAttribute("href"),
+  await page.locator(".vidwin .video-error button").waitFor();
+  assert.equal(await page.locator(".vidwin .video-error a").getAttribute("href"),
     "https://archive.org/download/TerryADavis_TempleOS_Archive/c.mp4");
   await page.locator(".vidwin .close").click();
   assert.equal(await page.locator(".vidwin").count(),0);
   const player=await context.newPage();
   await player.goto(mini.href);
-  await player.waitForFunction(()=>document.getElementById("v").readyState>=2 &&
-    document.getElementById("v").currentTime>=18);
-  assert.equal(await player.locator("#title").innerText(),"Linux OR Windows - from 0:18");
+  await player.waitForFunction(()=>document.querySelector(".video-player video").readyState>=2 &&
+    document.querySelector(".video-player video").currentTime>=18);
+  assert.equal(await player.locator("#title").innerText(),"Linux OR Windows");
   assert.equal(await player.locator("#dl").getAttribute("href"),
     "https://archive.org/download/TerryADavis_TempleOS_Archive/videos/Linux%20%2B%20Windows.mkv");
   await player.close();

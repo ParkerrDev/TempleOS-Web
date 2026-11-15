@@ -9,6 +9,7 @@
 // ~250-char windows so a search hit carries enough context to read.
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
 import { gzipSync } from "node:zlib";
+import {VideoListWrite} from "./VideoListMk.mjs";
 import { join, basename } from "node:path";
 
 const SRC = process.argv[2] || "TerryADavis-archive-transcriber/output/transcripts";
@@ -99,3 +100,5 @@ writeFileSync(join(OUT, "manifest.json"), JSON.stringify({
   built: new Date().toISOString().slice(0, 10),
 }));
 console.log(`${shards.length} shards: ${(rawTotal / 1e6).toFixed(1)} MB raw -> ${(gzTotal / 1e6).toFixed(1)} MB gz in ${OUT}/`);
+
+VideoListWrite();

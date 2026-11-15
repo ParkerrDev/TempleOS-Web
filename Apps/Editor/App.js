@@ -1,6 +1,7 @@
 // App.js - main-thread controller for the in-browser HolyC IDE.
 // Spawns the worker, wires keyboard/mouse into the control SAB, drains the
 // sound ring into WebAudio, and shows console output.
+import {WinFind} from "../../Adam/WinPopup.js";
 import { Speaker } from "../../hemu/holyc-wasm/src/runtime/sound.js";
 import {
   CTRL, KB_BASE, KB_RING, SND_BASE, SND_RING, SND_TONE, SND_NOTE, KEY_STATE_BASE, makeControlSAB, keyPacketPush, keyPacketReset,
@@ -10,7 +11,7 @@ import { DEMOS } from "./Demos.js";
 import {sourceDocument,sourceString} from "./Source.js";
 import { Framebuffer } from "../../hemu/holyc-wasm/src/runtime/graphics.js";
 
-const $ = (id) => document.getElementById(id);
+const $=WinFind;
 const editor = $("editor");
 const consoleEl = $("console");
 const canvas = $("screen");
@@ -132,11 +133,11 @@ function keyToChar(e) {
 }
 
 let captureWanted=false, manualCapture=false, hybridMouse=false, wasMouseLocked=false, hybridTracking=false;
-const isMouseCaptured=()=>document.pointerLockElement===curCanvas;
+const isMouseCaptured=()=>curCanvas.ownerDocument.pointerLockElement===curCanvas;
 const mouseStateChanged=()=>window.dispatchEvent(new Event('game-mouse-change'));
 const scanKeys={KeyW:0x11,KeyA:0x1e,KeyS:0x1f,KeyD:0x20,KeyR:0x13,KeyF:0x21,KeyJ:0x24,KeyL:0x26,KeyI:0x17,KeyK:0x25,KeyP:0x19,Space:0x39,
   ArrowUp:0x48,ArrowLeft:0x4b,ArrowRight:0x4d,ArrowDown:0x50};   // TempleOS merged scan codes
-const hasInputFocus=()=>document.activeElement===curCanvas || document.pointerLockElement===curCanvas;
+const hasInputFocus=()=>curCanvas.ownerDocument.activeElement===curCanvas || curCanvas.ownerDocument.pointerLockElement===curCanvas;
 function releaseInput(){
   hybridTracking=false;
   clearNative();legacyInput.reset();
@@ -148,46 +149,56 @@ function releaseInput(){
   Atomics.store(ctrl,CTRL.MS_PRESSED,0);Atomics.add(ctrl,CTRL.INPUT_RESET,1);
   Atomics.store(ctrl,CTRL.MS_X,320);Atomics.store(ctrl,CTRL.MS_Y,240);
 }
-addEventListener('keydown',e=>{
-  if(!running||!hasInputFocus())return;
-  if(e.code==='Escape'&&isMouseCaptured()){releaseMouse();return;}
-  if(nativeKeys){
-    const key=KEY[e.code];
-    if(key!==undefined){
-      if(!nativeInput.down(e.code,key) && e.repeat)sendNative(KeyBytes(key,true));
-      e.preventDefault();
+function InputWindow(win)
+{
+  const doc=win.document;
+  win.addEventListener('keydown',e=>{
+    if(!running||!hasInputFocus())return;
+    if(e.code==='Escape'&&isMouseCaptured()){releaseMouse();return;}
+    if(nativeKeys){
+      const key=KEY[e.code];
+      if(key!==undefined){
+        if(!nativeInput.down(e.code,key) && e.repeat)sendNative(KeyBytes(key,true));
+        e.preventDefault();
+      }
+      return;
     }
-    return;
-  }
-  const sc=KEY[e.code];if(sc!==undefined){legacyInput.down(e.code,sc&127);e.preventDefault();}
-  const c=keyToChar(e);if(c){if(!e.repeat || scanKeys[e.code]===undefined)pushKey(c);e.preventDefault();}
-});
-addEventListener('keyup',e=>{nativeInput.up(e.code);legacyInput.up(e.code);});
-addEventListener('blur',()=>{releaseInput();if(document.pointerLockElement===curCanvas)document.exitPointerLock();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseInput();if(document.pointerLockElement===curCanvas)document.exitPointerLock();}});
-document.addEventListener('pointerlockchange',()=>{
-  const locked=document.pointerLockElement===curCanvas;
-  if(wasMouseLocked&&!locked){hybridMouse=true;manualCapture=false;}
-  wasMouseLocked=locked;releaseInput();
-  document.body.classList.toggle('mouse-locked',!!document.pointerLockElement);
-  mouseStateChanged();
-});
-document.addEventListener('pointerdown',e=>{if(e.target!==curCanvas&&!e.target?.closest?.('#keysbar,#touchui'))releaseInput();},true);
-document.addEventListener('mousemove',e=>{
-  if(!running)return;
-  if(document.pointerLockElement!==curCanvas){
-    if(!captureWanted||!hybridMouse||!hasInputFocus()||e.target!==curCanvas){hybridTracking=false;return;}
-    const r=curCanvas.getBoundingClientRect();
-    if(e.clientX<r.left||e.clientX>=r.right||e.clientY<r.top||e.clientY>=r.bottom){hybridTracking=false;return;}
-    if(!hybridTracking){hybridTracking=true;return;}
-  }
-  Atomics.add(ctrl,CTRL.MS_DX,Math.round(e.movementX));Atomics.add(ctrl,CTRL.MS_DY,Math.round(e.movementY));
-  if(isMouseCaptured()&&!captureWanted){
-    const r=curCanvas.getBoundingClientRect();
-    Atomics.store(ctrl,CTRL.MS_X,Math.max(0,Math.min(639,Atomics.load(ctrl,CTRL.MS_X)+Math.round(e.movementX*640/r.width))));
-    Atomics.store(ctrl,CTRL.MS_Y,Math.max(0,Math.min(479,Atomics.load(ctrl,CTRL.MS_Y)+Math.round(e.movementY*480/r.height))));
-  }
-});
+    const sc=KEY[e.code];if(sc!==undefined){legacyInput.down(e.code,sc&127);e.preventDefault();}
+    const c=keyToChar(e);if(c){if(!e.repeat || scanKeys[e.code]===undefined)pushKey(c);e.preventDefault();}
+  });
+  win.addEventListener('keyup',e=>{nativeInput.up(e.code);legacyInput.up(e.code);});
+  win.addEventListener('blur',()=>{releaseInput();if(curCanvas.ownerDocument.pointerLockElement===curCanvas)curCanvas.ownerDocument.exitPointerLock();});
+  doc.addEventListener('visibilitychange',()=>{if(doc.hidden){releaseInput();if(curCanvas.ownerDocument.pointerLockElement===curCanvas)curCanvas.ownerDocument.exitPointerLock();}});
+  doc.addEventListener('pointerlockchange',()=>{
+    const locked=curCanvas.ownerDocument.pointerLockElement===curCanvas;
+    if(wasMouseLocked&&!locked){hybridMouse=true;manualCapture=false;}
+    wasMouseLocked=locked;releaseInput();
+    curCanvas.ownerDocument.body.classList.toggle('mouse-locked',!!curCanvas.ownerDocument.pointerLockElement);
+    mouseStateChanged();
+  });
+  doc.addEventListener('pointerdown',e=>{if(e.target!==curCanvas&&!e.target?.closest?.('#keysbar,#touchui'))releaseInput();},true);
+  doc.addEventListener('mousemove',e=>{
+    if(!running)return;
+    if(curCanvas.ownerDocument.pointerLockElement!==curCanvas){
+      if(!captureWanted||!hybridMouse||!hasInputFocus()||e.target!==curCanvas){hybridTracking=false;return;}
+      const r=curCanvas.getBoundingClientRect();
+      if(e.clientX<r.left||e.clientX>=r.right||e.clientY<r.top||e.clientY>=r.bottom){hybridTracking=false;return;}
+      if(!hybridTracking){hybridTracking=true;return;}
+    }
+    Atomics.add(ctrl,CTRL.MS_DX,Math.round(e.movementX));Atomics.add(ctrl,CTRL.MS_DY,Math.round(e.movementY));
+    if(isMouseCaptured()&&!captureWanted){
+      const r=curCanvas.getBoundingClientRect();
+      Atomics.store(ctrl,CTRL.MS_X,Math.max(0,Math.min(639,Atomics.load(ctrl,CTRL.MS_X)+Math.round(e.movementX*640/r.width))));
+      Atomics.store(ctrl,CTRL.MS_Y,Math.max(0,Math.min(479,Atomics.load(ctrl,CTRL.MS_Y)+Math.round(e.movementY*480/r.height))));
+    }
+  });
+
+  doc.addEventListener('mouseup',e=>{
+    if(e.button===0||e.button===2)setButton(e.button===2?CTRL.MS_RB:CTRL.MS_LB,false);
+  },true);
+}
+InputWindow(window);
+addEventListener('winpopup',event=>InputWindow(event.detail.window));
 
 // ---- pointer (mouse + touch + pen) -> control SAB ----
 // One handler set, reused for the canvas (it gets swapped on each Run, so we
@@ -225,7 +236,7 @@ function captureMouse({automatic=false}={}) {
 }
 function releaseMouse() {
   hybridMouse=true;manualCapture=false;releaseInput();
-  if(isMouseCaptured())document.exitPointerLock();
+  if(isMouseCaptured())curCanvas.ownerDocument.exitPointerLock();
 }
 function attachInput(target) {
   target.addEventListener("blur",event=>{if(target===curCanvas&&!isMouseCaptured()&&!event.relatedTarget?.closest?.("#touchui"))releaseInput();});
@@ -246,7 +257,7 @@ function attachInput(target) {
     target.addEventListener("pointermove", (e) => { setMousePos(target, e.clientX, e.clientY); });
     target.addEventListener("pointerdown", (e) => {
       if(e.pointerType==='mouse'||!running||target!==curCanvas)return;
-      if(!document.pointerLockElement)try{target.setPointerCapture?.(e.pointerId);}catch{}
+      if(!curCanvas.ownerDocument.pointerLockElement)try{target.setPointerCapture?.(e.pointerId);}catch{}
       setMousePos(target, e.clientX, e.clientY);
       setButton(e.button === 2 ? CTRL.MS_RB : CTRL.MS_LB, true);
       speaker.resume();
@@ -271,10 +282,6 @@ function attachInput(target) {
   target.addEventListener("contextmenu", (e) => e.preventDefault());
   target.style.touchAction = "none"; // stop the page scrolling/zooming on canvas touches
 }
-// Release even when an uncaptured press is dragged outside the canvas.
-document.addEventListener('mouseup',e=>{
-  if(e.button===0||e.button===2)setButton(e.button===2?CTRL.MS_RB:CTRL.MS_LB,false);
-},true);
 attachInput(canvas);
 
 // ---- sound pump: drain worker's SND ring into WebAudio ----
@@ -296,7 +303,7 @@ function pumpSound() {
 // ---- run / stop ----
 function stop() {
   cancelAnimationFrame(rafId);rafId=0;
-  releaseInput();captureWanted=false;manualCapture=false;if(document.pointerLockElement===curCanvas)document.exitPointerLock();
+  releaseInput();captureWanted=false;manualCapture=false;if(curCanvas.ownerDocument.pointerLockElement===curCanvas)curCanvas.ownerDocument.exitPointerLock();
   if (ctrl) { Atomics.store(ctrl, CTRL.RUNNING, 0); Atomics.notify(ctrl, CTRL.SLEEP_FUTEX); }
   if (worker) { worker.terminate(); worker = null; }
   if (sndTimer) { clearInterval(sndTimer); sndTimer = null; }
@@ -320,22 +327,19 @@ async function run(source,project={}) {
   Atomics.store(ctrl, CTRL.MS_X, 320);
   Atomics.store(ctrl, CTRL.MS_Y, 240);
 
-  // Shared framebuffer: the worker draws into it (even while blocked in a
-  // synchronous program loop); the MAIN thread presents it via rAF, because a
-  // blocked worker never composites its own canvas. NO OffscreenCanvas transfer.
+  //A synchronous HolyC program blocks its worker; the page presents its completed frames.
   const fbSAB = new SharedArrayBuffer(640 * 480),paletteSAB=new SharedArrayBuffer(256*4);
   const fresh = curCanvas.cloneNode(false);
   curCanvas.parentNode.replaceChild(fresh, curCanvas);
   curCanvas = fresh;
   reattachCanvas(fresh);
   mainFb = new Framebuffer(fresh.getContext("2d"), 640, 480, SCALE, new Uint8Array(fbSAB),new Uint32Array(paletteSAB));
-  // The worker already signals frame boundaries. Reading that sequence avoids a
-  // full-frame hash on every browser refresh, and skips uploads while it sleeps.
+  const sequence=ctrl.subarray(CTRL.FRAME,CTRL.FRAME+1);
   let lastFrame=0,rateFrames=0,rateStart=performance.now();
   const present = () => {
     if (!running) return;
     const frame=Atomics.load(ctrl,CTRL.FRAME)>>>0;
-    if(frame!==lastFrame){mainFb.present();rateFrames++;lastFrame=frame;}
+    if(frame!==lastFrame && mainFb.present(sequence)){rateFrames++;lastFrame=frame;}
     const now = performance.now();
     if(now-rateStart>=1000){window.__nativeFps=Math.round(rateFrames*1000/(now-rateStart));setStatus('running · '+window.__nativeFps+' fps (native)');rateFrames=0;rateStart=now;}
     rafId = requestAnimationFrame(present);
@@ -352,12 +356,12 @@ async function run(source,project={}) {
     else if(m.type === 'inputMode'){
       captureWanted=!!m.capture;releaseInput();
       if(captureWanted)setStatus(hybridMouse?'Hybrid mouse. Use Capture mouse or Shift+click to capture again.':'Click the screen to capture the mouse. Esc releases.');
-      else if(!manualCapture&&isMouseCaptured())document.exitPointerLock();
+      else if(!manualCapture&&isMouseCaptured())curCanvas.ownerDocument.exitPointerLock();
     }
     else if (m.type === "text") appendConsole(m.text);
     else if (m.type === "compiled") setStatus(`compiled ${m.size} bytes` + (m.warnings && m.warnings.length ? `, ${m.warnings.length} warnings` : ""));
-    else if (m.type === "done") { if (mainFb) mainFb.present(); setStatus("done"); stop(); }  // present the FINAL frame (fast finite demos finish before the first rAF)
-    else if (m.type === "error") { if (mainFb) mainFb.present(); appendConsole("\n[error] " + m.error + "\n"); setStatus(m.nativeGame?'HolyC-WASM could not run this source. See Console for the native compatibility error.':'error'); stop(); }
+    else if (m.type === "done") { if (mainFb) mainFb.present(sequence); setStatus("done"); stop(); }
+    else if (m.type === "error") { if (mainFb) mainFb.present(sequence); appendConsole("\n[error] " + m.error + "\n"); setStatus(m.nativeGame?'HolyC-WASM could not run this source. See Console for the native compatibility error.':'error'); stop(); }
   };
 
   running = true;
@@ -386,12 +390,9 @@ $("runBtn").addEventListener("click", () => { if (!running) curCanvas = $("scree
 
 // Run a source snapshot in the game popup or editor preview. Keeping the textarea
 // separate lets the user edit another file or prepare the next run while playing.
-function runIn(canvasEl, source, {preserveEditor=false,...project}={}) {
+function runIn(canvasEl, source, project={}) {
   if (running) stop();
   curCanvas = canvasEl;
-  if(!preserveEditor){
-    FileLoad(new TextEncoder().encode(source),"MyProgram.HC",true);
-  }
   return run(source,project);
 }
 $("stopBtn")?.addEventListener("click", stop);  // optional second button; the overlay uses just runBtn
@@ -402,14 +403,6 @@ if (!self.crossOriginIsolated) {
   setStatus("ready");
 }
 
-// load a default GRAPHICS demo so the editor opens with something to run.
-{
-  const def = "Demos/Graphics/Lines.HC";
-  demoSel.value = def;
-  await loadDemo(def);
-}
-// Expose run/stop so the host page (the overlay opener) can drive the editor:
-// run the default demo when the window opens, stop it when the window closes.
 window.__holycEditor = { FileLoad,FileBytes,FileName:()=>documentName,run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null,
   inputCanvas:()=>running?curCanvas:null,
   touchMouse:{

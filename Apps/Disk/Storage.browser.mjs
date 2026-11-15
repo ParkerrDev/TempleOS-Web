@@ -17,6 +17,14 @@ try {
    disk.writeInto(2,1,new Uint8Array(512).fill(9),0);
    await store.Flush();
    const restored=await store.Load(),a=new Uint8Array(1024);restored.readInto(1,2,a,0);
+   await store.SessionSave(new Uint8Array([1,2,3]).buffer);
+   const saved=await store.SessionRead(),putSession=IDBObjectStore.prototype.put;
+   IDBObjectStore.prototype.put=function(value,key){const request=putSession.call(this,value,key);if(key==='session')request.addEventListener('success',()=>this.transaction.abort());return request;};
+   let sessionRejected=false;try{await store.SessionSave(new Uint8Array([4,5,6]).buffer);}catch{sessionRejected=true;}
+   IDBObjectStore.prototype.put=putSession;
+   const retained=await store.SessionRead();
+   disk.writeInto(3,1,new Uint8Array(512).fill(5),0);await store.Flush();
+   const invalidated=await store.SessionRead();
    const replacement=await makeDisk(new Uint8Array(1024).fill(3));await store.Attach(replacement);
    const replaced=await store.Load(),b=new Uint8Array(1024);replaced.readInto(0,2,b,0);
    const put=IDBObjectStore.prototype.put;
@@ -25,10 +33,12 @@ try {
    let rejected=false;try{await store.Flush();}catch{rejected=true;}
    IDBObjectStore.prototype.put=put;
    const kept=await store.Load(),c=new Uint8Array(512);kept.readInto(0,1,c,0);
-   return {first:[...a],replacement:[...b],kept:[...c],rejected,error:events.at(-1)};
+   return {session:[...new Uint8Array(saved.bytes)],retained:[...new Uint8Array(retained.bytes)],sessionRejected,invalidated,first:[...a],replacement:[...b],kept:[...c],rejected,error:events.at(-1)};
  });
+ assert.deepEqual(result.session,[1,2,3]);assert.deepEqual(result.retained,[1,2,3]);
+ assert.equal(result.sessionRejected,true);assert.equal(result.invalidated,null);
  assert.deepEqual(result.first,[...new Uint8Array(512).fill(7),...new Uint8Array(512).fill(9)]);
  assert(result.replacement.every(x=>x===3));assert(result.kept.every(x=>x===3));
  assert.equal(result.rejected,true);assert.equal(result.error.state,'error');
- console.log('Sector writes restore exactly; disk replacement removes old sectors; failed transaction preserves last save and reports failure.');
+ console.log('Sector writes restore exactly; disk replacement removes old sectors; failed transactions preserve the last disk/session save; disk revision invalidates stale session.');
 } finally {await browser.close();site.closeAllConnections();site.close();}

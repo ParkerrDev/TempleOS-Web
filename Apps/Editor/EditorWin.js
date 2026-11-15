@@ -1,7 +1,7 @@
 //The HolyC editor: HolyC compiled to WebAssembly and run in a worker
 //(Apps/Editor/App.js, loaded on first open), and the window games run in, which
 //shares the editor's screen and runner.
-import {WinAdd,WinRaise} from "../../Adam/WinMgr.js";
+import {WinAdd,WinRaise,WinFind} from "../../Adam/WinMgr.js";
 import {os_game,OsFileWrite} from "../../Adam/Os.js";
 import {setupGameViews} from "../Games/GameView.js";
 
@@ -101,6 +101,7 @@ const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="
   '        <button id="gameToDisk" title="Install this project\'s edited source and run it in TempleOS">▤ Run in TempleOS</button>\n'+
   '        <span id="gameTitle"></span>\n'+
   '        <select id="demoSelect" title="Pick a TempleOS HolyC demo or game"><option value="">- pick a demo / game -</option></select>\n'+
+  '        <button id="edNew" title="Start a new HolyC program">New program</button>\n'+
   '        <button id="runBtn">▶ Run</button>\n'+
   '        <button id="editorFullscreen" type="button" title="Show the editor fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen editor</span></button>\n'+
   '        <button id="edFmt" title="Lay the code out the way Terry\'s own tools did (HolyC-fmt, a formatter written in HolyC, run in your browser)">⊹ Format</button>\n'+
@@ -112,7 +113,7 @@ const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="
   '      </div>\n'+
   '      <div class="ed-body">\n'+
   '        <section class="ed-pane">\n'+
-  '          <div class="ed-h">HolyC source</div>\n'+
+  '          <div class="ed-h">HolyC source <span id="draftStatus" role="status"></span></div>\n'+
   '          <select id="gameFile" aria-label="Game source file"></select>\n'+
   '          <span id="gameDraft" role="status"></span>\n'+
   '          <div class="ed-editwrap"><pre id="editorHL" aria-hidden="true"></pre><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea></div>\n'+
@@ -131,7 +132,7 @@ const HTML='  <div id="editorOverlay" class="overlay" role="dialog" aria-modal="
   '  <div id="gameWinOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Game">\n'+
   '    <div class="win" id="gameWin" data-title="Game">\n'+
   '      <span class="close" id="gameWinClose" title="Close">[X]</span>\n'+
-  '      <div id="gameWinBar"><button id="gameWinEdit">Edit source</button><button id="gameWinCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this game; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="gameFullscreen" type="button" title="Show this game fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen</span></button><span id="gameWinStatus" role="status"></span></div>\n'+
+  '      <div id="gameWinBar"><button id="gameWinRun" type="button">Run</button><button id="gameWinEdit">Edit source</button><button id="gameWinCapture" type="button" disabled aria-pressed="false" title="Capture the mouse in this game; Esc returns to hybrid mode"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 1h4v1h2v2h1v8h-1v2h-2v1H6v-1H4v-2H3V4h1V2h2ZM8 1v5M3 6h10"/></svg><span>Capture mouse</span></button><button id="gameFullscreen" type="button" title="Show this game fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> <span>Fullscreen</span></button><span id="gameWinStatus" role="status"></span></div>\n'+
   '      <div class="gamewin-screen" id="gameWinSlot"></div>\n'+
   '    </div>\n'+
   '  </div>\n';
@@ -140,15 +141,23 @@ WinAdd(CSS,HTML);
 export const ed_game = { leave: null, stop: null, prepare: null, cancel: null, file: null };   // GamesWin.js fills these
 export const ed_view = setupGameViews({ release: () => os_game.ed?.releaseMouse(), raise: WinRaise });
 
-const ov = document.getElementById("editorOverlay");
-const closeBtn = document.getElementById("editorClose");
+const ov = WinFind("editorOverlay");
+const closeBtn = WinFind("editorClose");
 // shared, memoized loader for the HolyC runtime (Apps/Editor/App.js) - used by the editor AND
 // the Games launcher (which drives the same compile+worker+canvas+input machinery).
-let appPromise = null, ranDefault = false;
+let appPromise=null,draft=null,draft_loading=false;
+const STARTER='U0 MyProgram()\n{\n  "Hello, TempleOS!\\n";\n}\n\nMyProgram;\n';
 const loadEditorApp = () => {
   if (!appPromise) appPromise = import("./App.js")
-    .then(() => { os_game.ed = window.__holycEditor; })   // Apps/Editor/App.js publishes itself there
-    .catch((e) => { appPromise = null; const s = document.getElementById("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); throw e; });
+    .then(() => {
+      os_game.ed=window.__holycEditor;
+      try {
+	draft=JSON.parse(sessionStorage.getItem("templeos.editor") ||
+	  localStorage.getItem("templeos.editor"));
+      } catch (error) {draft=null;}
+      DraftRestore();
+    })
+    .catch((e) => { appPromise = null; const s = WinFind("status"); if (s) s.textContent = "editor failed to load: " + e.message; console.error("HolyC editor load failed", e); throw e; });
   return appPromise;
 };
 function open() {
@@ -156,12 +165,10 @@ function open() {
   ov.classList.add("open");
   ov.classList.remove("gamemode");
   WinRaise(ov);
-  loadEditorApp().then(() => {
-    if (!ranDefault && !ed_game.file) { ranDefault = true; if (os_game.ed && !os_game.ed.isRunning() && document.getElementById("editor").value) os_game.ed.run(); }
-  }).catch(() => {});
+  loadEditorApp().catch(console.error);
 }
 function close() {
-  ed_view.exitWithin(document.getElementById('editorWin'));
+  ed_view.exitWithin(WinFind('editorWin'));
   ed_game.cancel?.();
   ed_game.stop?.();
   ov.classList.remove("open", "free", "gamemode");
@@ -169,27 +176,89 @@ function close() {
 }
 closeBtn.addEventListener("click", close);
 ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(); });
-document.getElementById("gameBack").addEventListener("click", () => {
-  ed_view.exitWithin(document.getElementById('editorWin'));
+WinFind("gameBack").addEventListener("click", () => {
+  ed_view.exitWithin(WinFind('editorWin'));
   ed_game.cancel?.();
   ed_game.stop?.();
   if (os_game.ed) os_game.ed.stop();
   ov.classList.remove("open", "free", "gamemode");
-  document.getElementById("gamesOverlay").classList.add("open");
+  WinFind("gamesOverlay").classList.add("open");
 });
 
-// ---- editor Save (.HC download) / Open (.HC upload) / To C:/Home ----
-const ta = document.getElementById("editor");
-const setStatus = (s) => { const st = document.getElementById("status"); if (st) st.textContent = s; };
+function DraftRestore()
+{
+  let bytes;
+  draft_loading=true;
+  try {
+    if (draft && typeof draft.bytes=="string") {
+      bytes=Uint8Array.from(atob(draft.bytes),function Byte(ch) {
+	return ch.charCodeAt(0);
+      });
+      os_game.ed.FileLoad(bytes,draft.name || "MyProgram.HC");
+      if (typeof draft.text=="string") {
+	ta.value=draft.text;
+	ta.dispatchEvent(new Event("input"));
+      }
+      WinFind("draftStatus").textContent="— draft restored";
+    } else
+      os_game.ed.FileLoad(new TextEncoder().encode(STARTER),"MyProgram.HC");
+  } catch (error) {
+    os_game.ed.FileLoad(new TextEncoder().encode(STARTER),"MyProgram.HC");
+    WinFind("draftStatus").textContent="— could not restore draft";
+  } finally {
+    draft_loading=false;
+  }
+}
+
+function DraftSave()
+{
+  let bytes,text="",i;
+  if (!os_game.ed || ed_game.file || draft_loading)
+    return;
+  try {
+    bytes=new Uint8Array(os_game.ed.FileBytes());
+    for (i=0;i<bytes.length;i+=8192)
+      text+=String.fromCharCode(...bytes.subarray(i,i+8192));
+    draft={name:os_game.ed.FileName(),bytes:btoa(text)};
+  } catch (error) {
+    if (!draft)
+      draft={name:"MyProgram.HC",bytes:btoa(STARTER)};
+    draft.text=ta.value;
+  }
+  try {
+    sessionStorage.setItem("templeos.editor",JSON.stringify(draft));
+    localStorage.setItem("templeos.editor",JSON.stringify(draft));
+    WinFind("draftStatus").textContent="— draft saved";
+  } catch (error) {
+    WinFind("draftStatus").textContent="— draft could not be saved; download a copy";
+  }
+}
+
+WinFind("edNew").addEventListener("click",async function NewProgram() {
+  await loadEditorApp();
+  ed_game.leave?.();
+  ov.classList.remove("gamemode","gameproject");
+  os_game.ed.stop();
+  WinFind("demoSelect").value="";
+  os_game.ed.FileLoad(new TextEncoder().encode(STARTER),"MyProgram.HC");
+  ta.focus();
+  setStatus("New MyProgram.HC — edit and Run.");
+});
+
+
+const ta = WinFind("editor");
+ta.addEventListener("input",DraftSave);
+addEventListener("pagehide",DraftSave);
+const setStatus = (s) => { const st = WinFind("status"); if (st) st.textContent = s; };
 const curName=()=>ed_game.file?ed_game.file.filename():os_game.ed?.FileName()||"MyProgram.HC";
-document.getElementById("edSave").addEventListener("click", async () => {
+WinFind("edSave").addEventListener("click", async () => {
   const name=curName();
   let source; try{source=ed_game.file?await ed_game.file.bytes():os_game.ed.FileBytes();}
   catch(e){setStatus(e.message);return;}
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([source], { type: "application/octet-stream" }));
   a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); setStatus("saved " + a.download);
 });
-document.getElementById("edOpen").addEventListener("click", () => {
+WinFind("edOpen").addEventListener("click", () => {
   const i = document.createElement("input"); i.type = "file"; i.accept = ".HC,.hc,.txt,text/plain";
   i.onchange=async()=>{
     const file=i.files[0];
@@ -198,14 +267,14 @@ document.getElementById("edOpen").addEventListener("click", () => {
       const bytes=await file.arrayBuffer();
       await loadEditorApp();
       ed_game.leave?.();
-      document.getElementById("demoSelect").value="";
+      WinFind("demoSelect").value="";
       os_game.ed.FileLoad(bytes,file.name);
       setStatus("opened "+file.name);
     } catch (error) {setStatus(error.message);}
   };
   i.click();
 });
-document.getElementById("edToDisk").addEventListener("click",async()=>{
+WinFind("edToDisk").addEventListener("click",async()=>{
   const name=prompt("Write to C:/Home as:",curName());
   if (!name) return;
   try {
@@ -216,7 +285,7 @@ document.getElementById("edToDisk").addEventListener("click",async()=>{
   } catch (error) {setStatus(error.message);}
 });
 // Format: reformat the editor source with holyc-fmt (the HolyC formatter, run in-browser)
-const fmtBtn = document.getElementById("edFmt");
+const fmtBtn = WinFind("edFmt");
 fmtBtn.addEventListener("click", async () => {
   if (fmtBtn.disabled) return;
   const src = ta.value;
@@ -234,8 +303,8 @@ fmtBtn.addEventListener("click", async () => {
 
 // ---- lightweight HolyC syntax highlighter for the editor ----
 (function () {
-  const ta = document.getElementById("editor");
-  const hl = document.getElementById("editorHL");
+  const ta = WinFind("editor");
+  const hl = WinFind("editorHL");
   const wrap = ta && ta.closest(".ed-editwrap");
   if (!ta || !hl || !wrap) return;
   const KW = new Set("if else while for do switch case default break continue return goto sizeof try catch throw class union public extern _extern import _import reg noreg interrupt haserrcode lastclass start end asm offset argpop noargpop".split(" "));
@@ -269,4 +338,4 @@ fmtBtn.addEventListener("click", async () => {
   update();
 })();
 
-export {open as Open, loadEditorApp as EdLoad};
+export {open as Open,loadEditorApp as EdLoad,DraftRestore as EdDraftRestore};

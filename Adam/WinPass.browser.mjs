@@ -85,6 +85,27 @@ try {
       return m.slot==0 && m.x==150 && m.y==120 && m.buttons==1;
     });
   }),"detached clicks retain guest-global coordinates and target slot");
+  const popupWait=page.waitForEvent("popup");
+  await page.mouse.move(vr.x+100*scale,vr.y+4*scale);
+  await page.mouse.down();
+  await page.mouse.move(1455,180,{steps:10});
+  await page.mouse.up();
+  const popup=await popupWait,pc=popup.locator(".win-pass canvas");
+  assert.deepEqual(await pc.evaluate(function (c) {
+    return [...c.getContext("2d").getImageData(20,20,1,1).data];
+  }),[255,255,85,255],"native popup retains the live task canvas");
+  const pr=await pc.boundingBox();
+  await popup.mouse.click(pr.x+30*scale,pr.y+40*scale);
+  assert(await page.evaluate(function () {
+    return window.passInput.some(function (m) {
+      return m.slot==0 && m.task==1234 && m.num==5 && m.buttons==1;
+    });
+  }),"popup input retains the native task lifetime");
+  await popup.locator("#popupReturn").click().catch(function (error) {
+    if (!popup.isClosed()) throw error;
+  });
+  await page.locator(".win-pass canvas").waitFor();
+  vr=await page.locator(".win-pass canvas").boundingBox();
   await page.mouse.move(vr.x+100*scale,vr.y+4*scale);
   await page.mouse.down();
   await page.mouse.move(r.x+250*scale,r.y+150*scale,{steps:10});

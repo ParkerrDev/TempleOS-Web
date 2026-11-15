@@ -1,4 +1,4 @@
-import {WinAdd,WinFocus} from "../../Adam/WinMgr.js";
+import {WinAdd,WinFocus,WinWorkspaceReset} from "../../Adam/WinMgr.js";
 import {$,OsCfg,OsCfgStatus,OsWinPassStatus} from "../../Adam/Os.js";
 import {WinDrawCfg} from "../../Adam/WinDraw.js";
 
@@ -15,6 +15,8 @@ WinAdd(`
   <div id="settingsWin" class="win" data-title="Settings">
     <span id="settingsClose" class="close">[X]</span>
     <div id="settingsBody">
+      <button id="resetWindows">Reset window positions</button>
+      <p>Restore the default desktop layout. Open tools stay open.</p>
       <label><input id="showHeader" type="checkbox"> Show header introduction</label>
       <label><input id="showFooter" type="checkbox"> Show footer credits</label>
       <label><input id="nativeDrawing" type="checkbox"> Native window drawing</label>
@@ -25,6 +27,9 @@ WinAdd(`
 	browser desktop. Drag it back to return it. Menu, Help and God Tools
 	can be dragged into TempleOS as native documents. Settings stays here.
 	Pausing returns windows so browser controls stay available.</p>
+      <p>Drag a browser window beyond the page edge to open it in a browser
+        popup. Close the popup or choose Return to desktop to bring it back.
+        Your browser may ask you to allow popups.</p>
       <p>Full-screen programs, captured-mouse programs and windows with
         custom drawing stay on the TempleOS screen.</p>
       <p id="windowPassStatus" role="status"></p>
@@ -92,6 +97,12 @@ addEventListener("osrestored",function (e) {
   $("biosRepeat").checked=e.detail.repeat;
   $("fastGraphics").checked=e.detail.fast;
 });
+
+$("resetWindows").addEventListener("click",function () {
+  WinWorkspaceReset();
+  Status({msg:"Window positions reset. Open tools stay open."});
+});
+addEventListener("winworkspaceerror",function (e) {Status({msg:e.detail});});
 
 $("frameRate").addEventListener("change",function (e) {
   OsCfg({rate:Number(e.target.value)});

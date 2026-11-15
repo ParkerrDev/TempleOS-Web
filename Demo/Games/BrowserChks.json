@@ -1,22 +1,22 @@
 {
   "format": 1,
-  "compilerSha256": "0edaa6e18d7e5cdafd701c8fed92009f88d47791665cf984aa63442eb8bb9f55",
-  "runnerSha256": "c8ea3e8ba40b64869516e2caeddd956a47054e1991c5efe184a69424727f3eeb",
+  "compilerSha256": "4f6a8e6eaef7b3fa4196277642b7627493e0ea3c34fbffc1c1ed66667a0ec2b5",
+  "runnerSha256": "1f28f4a800c99f7bbfddb55d10dd4a0db0470772c0a7a5cef16d83d9120278b3",
   "programs": {
     "HolyCraft.HC": {
-      "sourceSha256": "019734ed0220d9ad548c1a6f24560d8a7f8e513ec861f54f4c93ec1544a59136",
+      "sourceSha256": "5f78a93f277823eaa1ffbee92e44740e2cd23e9316b937eed009b73c7f56e05d",
       "startup": true
     },
     "Babel.HC": {
-      "sourceSha256": "c1c0a2c14c3c18a973f9f55a19643811bd8d932ef2a8dd2e29a3d1391f52349b",
+      "sourceSha256": "4ac502f357cfd24da04a5dc4e598fbcf33c3d8de6d4a973b1f4b4212c258235c",
       "startup": true
     },
     "Volley.HC": {
-      "sourceSha256": "1a90fc2e900b9a87afe479854879b34324f327fdd3b0bc491736ff1ec2d149fe",
+      "sourceSha256": "a56a8ee5032f32d5dddbd3d9a86eec3115e16274ea86ef555796eafcf9986c76",
       "startup": true
     },
     "Snake.HC": {
-      "sourceSha256": "6f2bf1de66293ca3d6ee4c8b5b829105acb776fd4d3c756c772550150885705e",
+      "sourceSha256": "d9a64ee266f765713e3b1e1ce55bab82eb93c3f15bc37f56aefa9e1ee675222b",
       "startup": true
     }
   }

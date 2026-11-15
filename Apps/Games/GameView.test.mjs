@@ -3,7 +3,7 @@ import {setupGameViews} from './GameView.js';
 
 const document=new EventTarget(),nodes=new Map();let releases=0;
 class Node extends EventTarget{
-  constructor(id){super();this.id=id;this.attributes={};this.lastElementChild={textContent:''};this.classes=new Set();this.classList={add:v=>this.classes.add(v),remove:v=>this.classes.delete(v),contains:v=>this.classes.has(v)};}
+  constructor(id){super();this.id=id;this.ownerDocument=document;this.attributes={};this.lastElementChild={textContent:''};this.classes=new Set();this.classList={add:v=>this.classes.add(v),remove:v=>this.classes.delete(v),contains:v=>this.classes.has(v)};}
   setAttribute(k,v){this.attributes[k]=v;}
   querySelector(){return {focus(){}};}
   closest(){return this;}
@@ -16,6 +16,7 @@ document.exitFullscreen=()=>{document.fullscreenElement=null;document.dispatchEv
 globalThis.document=document;
 const window=new EventTarget();
 globalThis.dispatchEvent=window.dispatchEvent.bind(window);
+globalThis.addEventListener=window.addEventListener.bind(window);
 const views=setupGameViews({release(){releases++;},raise(){}}),node=id=>document.getElementById(id),click=id=>node(id).dispatchEvent(new Event('click'));
 for(const [button,target] of [['gameFullscreen','gameWin'],['editorFullscreen','editorWin'],['previewFullscreen','editorPreview']]){
   click(button);assert.equal(document.fullscreenElement,node(target));

@@ -31,11 +31,12 @@ try {
     await context.addInitScript(function () {
       localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
       window.guestEvents=[];
-      const Base=window.Worker;
-      window.Worker=class extends Base {
+      const Base=window.SharedWorker;
+      window.SharedWorker=class extends Base {
         constructor(...args) {
           super(...args);
-          this.addEventListener("message",function (e) {
+          if (!String(args[0]).includes("MachineHub.js")) return;
+          this.port.addEventListener("message",function (e) {
             if (!["frame","progress","snd","log"].includes(e.data.cmd))
               window.guestEvents.push(e.data);
           });
@@ -157,6 +158,9 @@ try {
       Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",e.getContext("2d").
         getImageData(0,0,e.width,e.height).data)),v=>v.toString(16).padStart(2,"0")).join("")),before_pixels,
       "a paused restore presents exactly the same complete image");
+    assert.equal(await page.locator("#diskOverlay").evaluate(el=>el.classList.contains("open")),true,
+      "The importing Disk window is restored with the workspace");
+    await page.locator("#diskClose").click();
     await page.locator("#settingsBtn").click();
     assert.equal(await page.locator("#frameRate").inputValue(),"120");
     assert.equal(await page.locator("#biosRepeat").isChecked(),true);

@@ -74,6 +74,24 @@ try {
   await page.mouse.up();
   assert.equal(await page.evaluate(function () {return window.moves.length;}),1,
     "a canceled drag is not a window drop");
+  const popupWait=page.waitForEvent("popup"),
+    popupBar=await page.locator("#godWin .wtitle").boundingBox();
+  await page.mouse.move(popupBar.x+60,popupBar.y+4);
+  await page.mouse.down();
+  await page.mouse.move(1295,160,{steps:8});
+  await page.mouse.up();
+  const popup=await popupWait;
+  await popup.waitForFunction(function () {
+    const w=document.getElementById("godWin");
+    return document.body.classList.contains("native-chrome") &&
+      w.querySelector(".wdraw").width==Math.round(w.getBoundingClientRect().width);
+  });
+  assert.equal(await popup.locator("#godWin .wdraw").isVisible(),true,
+    "optional HolyC drawing follows the live window into its popup");
+  await popup.screenshot({path:"/home/aphunt/Dev/GitHub/TempleOS/untangle/evidence/2026-11-15-workspace/Window-native-chrome-popup.png"});
+  await popup.locator("#popupReturn").click().catch(function (error) {
+    if (!popup.isClosed()) throw error;
+  });
   await page.screenshot({path:"/tmp/WinDraw-native.png"});
   const image=await page.locator("#godWin .wdraw").evaluate(function (c) {
     return c.toDataURL();

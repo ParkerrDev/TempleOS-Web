@@ -1,7 +1,204 @@
 import {PointerDrag} from "./WinPointer.js";
+import {WinDocuments,WinFind,WinMobile,WinOutside,WinPopup,WinPopupReturn} from "./WinPopup.js";
+export {WinDocuments,WinFind,WinMobile,WinOutside,WinPopup,WinPopupReturn} from "./WinPopup.js";
 import "./WinDraw.js";
-const $=(id)=>document.getElementById(id);
-let z_top=1000; //one stack for every window, overlay and video window
+const $=WinFind;
+let z_top=1000;
+
+const WINS={
+  editorBtn:["editorWin","../Apps/Editor/EditorWin.js"],
+  gamesBtn:["gamesWin","../Apps/Games/GamesWin.js"],
+  spritesBtn:["spritesWin","../Apps/Sprites/SpritesWin.js"],
+  godBtn:["godWin","../Apps/God/GodWin.js"],
+  diskBtn:["diskWin","../Apps/Disk/DiskWin.js"],
+  tsBtn:["tsWin","../Apps/Search/SearchWin.js"],
+  chatBtn:["chatWin","../Apps/Chat/ChatWin.js"],
+  settingsBtn:["settingsWin","../Apps/Settings/SettingsWin.js"],
+  mobileHelp:["guide","../Apps/Help/HelpWin.js"]};
+const workspace=new Map,restorers=new Map;
+let saved={},restoring=true,save_queued=false;
+try {
+  saved=JSON.parse(sessionStorage.getItem("templeos.workspace") ||
+    localStorage.getItem("templeos.workspace")) || {};
+} catch (error) {
+  saved={};
+}
+if (typeof saved!="object" || Array.isArray(saved))
+  saved={};
+
+export function WinWorkspaceSave()
+{
+  let id,entry,w,record,overlay,style;
+  if (restoring)
+    return;
+  for ([id,entry] of workspace) {
+    w=entry.w;
+    if (!w.isConnected && w._restore) {
+      workspace.delete(id);
+      delete saved[id];
+    } else {
+      record=saved[id] || {};
+      overlay=w.closest(".overlay");
+      record.open=w.isConnected && w.style.display!="none" &&
+	(!overlay || overlay.classList.contains("open")) &&
+	(!WinMobile(w) || getComputedStyle(w).display!="none" ||
+	w.classList.contains("win-pass-owned"));
+      record.free=!!overlay?.classList.contains("free");
+      record.restore=w._restore;
+      if (!w.dataset.popup && !w.classList.contains("fsmode") && !WinMobile(w)) {
+	style=w.style;
+	record.rect=null;
+	if (w.dataset.floating)
+	record.rect={left:style.left,top:style.top,width:style.width,
+	  height:style.height,sized:!!w.dataset.sized,flow:!!w._ph};
+      }
+      saved[id]=record;
+    }
+  }
+  try {
+    sessionStorage.setItem("templeos.workspace",JSON.stringify(saved));
+    localStorage.setItem("templeos.workspace",JSON.stringify(saved));
+  } catch (error) {
+    dispatchEvent(new CustomEvent("winworkspaceerror",{detail:
+      "Window layout changed for this visit; browser storage is unavailable."}));
+  }
+}
+
+function WinSaveSoon()
+{
+  if (!save_queued) {
+    save_queued=true;
+    queueMicrotask(function () {
+      save_queued=false;
+      WinWorkspaceSave();
+    });
+  }
+}
+
+function WinApply(w)
+{
+  let record=saved[w?.id],rect=record?.rect;
+  if (!w || !rect || WinMobile(w) || w.dataset.popup)
+    return;
+  if (rect.flow)
+    WinFloat(w);
+  w.dataset.floating="1";
+  w.style.position="fixed";
+  w.style.margin="0";
+  w.style.width=rect.width || "";
+  w.style.height=rect.height || "";
+  w.style.left=Clamp(parseFloat(rect.left) || 0,48-w.offsetWidth,innerWidth-48)+"px";
+  w.style.top=Clamp(parseFloat(rect.top) || 0,0,innerHeight-24)+"px";
+  if (rect.sized)
+    w.dataset.sized="1";
+  w.dispatchEvent(new Event("winsize"));
+}
+
+function WinRemember(w,restore)
+{
+  let observer,record=saved[w.id];
+  if (!w.id || w.id=="winLoading")
+    return;
+  w._restore=restore;
+  workspace.set(w.id,{w,style:w.style.cssText});
+  queueMicrotask(function () {
+    let overlay=w.closest(".overlay");
+    WinApply(w);
+    if (record && !overlay && !restore) {
+      w.style.display="none";
+      if (record.open)
+	w.style.display="";
+      if (w._reopen) {
+	w._reopen.style.display="";
+	if (record.open)
+	  w._reopen.style.display="none";
+      }
+    }
+    observer=new MutationObserver(WinSaveSoon);
+    observer.observe(w,{attributes:true,attributeFilter:["class","style"]});
+    if (overlay)
+      observer.observe(overlay,{attributes:true,attributeFilter:["class"]});
+    WinSaveSoon();
+  });
+}
+
+export function WinRestore(kind,Open)
+{
+  restorers.set(kind,Open);
+}
+
+export function WinWorkspaceReset()
+{
+  let entry,w,id,display;
+  for ([id,entry] of workspace) {
+    w=entry.w;
+    WinPopupReturn(w);
+    display=w.style.display;
+    w.style.cssText=entry.style;
+    w.style.display=display;
+    delete w.dataset.floating;
+    delete w.dataset.sized;
+    if (w._ph) {
+      w._ph.remove();
+      w._ph=null;
+    }
+    if (saved[id])
+      saved[id].rect=null;
+    w.dispatchEvent(new Event("winsize"));
+  }
+  WinWorkspaceSave();
+}
+
+async function WinWorkspaceRestore()
+{
+  let id,spec,record,module,Open;
+  try {
+    await import("../Apps/Help/HelpWin.js");
+    for (id in WINS) {
+      spec=WINS[id];
+      record=saved[spec[0]];
+      if (record?.open && (id!="mobileHelp" || WinMobile())) {
+	module=await import(spec[1]);
+	await module.Open();
+	WinApply($(spec[0]));
+	if (record.free) {
+	  $(spec[0]).closest(".overlay")?.classList.add("free");
+	  $(spec[0]).closest(".overlay")?.setAttribute("aria-modal","false");
+	}
+      }
+    }
+    if (Object.values(saved).some(function (record) {
+      return record?.open && record.restore?.kind=="video";
+    }))
+      await import("../Apps/Search/VideoWin.js");
+    if (Object.values(saved).some(function HasSavedGame(record) {
+      return record?.open && record.restore?.kind=="game";
+    }))
+      await import("../Apps/Games/GamesRun.js");
+    for (id in saved) {
+      record=saved[id];
+      Open=restorers.get(record?.restore?.kind);
+      if (record?.open && Open) {
+	await Open(record.restore.data,id);
+	WinApply($(id));
+	if (record.free) {
+	  $(id)?.closest(".overlay")?.classList.add("free");
+	  $(id)?.closest(".overlay")?.setAttribute("aria-modal","false");
+	}
+      }
+    }
+  } catch (error) {
+    console.error("Could not restore a browser window",error);
+  } finally {
+    restoring=false;
+    WinWorkspaceSave();
+    dispatchEvent(new Event("winworkspaceready"));
+  }
+}
+
+addEventListener("pagehide",WinWorkspaceSave);
+addEventListener("winpopupreturn",WinSaveSoon);
+new MutationObserver(WinSaveSoon).observe(document.body,{childList:true});
 
 function Clamp(n,lo,hi)
 {
@@ -14,7 +211,7 @@ function Snap(n,cell)
 }
 
 function Frac(pos,range)
-{//pos as a percentage of range, 0 when nothing scrolls
+{
   if (range<1)
     return 0;
   return 100*pos/range;
@@ -31,15 +228,17 @@ export function WinRaise(el)
 }
 
 export function WinFocus(w)
-{//Gives w the double border and the top of the stack. A window in an
-//overlay raises its overlay.
-  let a;
-  for (a of document.querySelectorAll(".win.active,#frame.active"))
-    a.classList.remove("active");
+{
+  let a,doc;
+  for (doc of WinDocuments())
+    for (a of doc.querySelectorAll(".win.active,#frame.active"))
+      a.classList.remove("active");
   w.classList.add("active");
   WinRaise(w.closest(".overlay") || w);
-  w.dispatchEvent(new CustomEvent("winfocus",{bubbles:true,
+  document.dispatchEvent(new CustomEvent("winfocus",{
     detail:{id:w.id}}));
+  if (w.dataset.popup)
+    w.ownerDocument.defaultView.focus();
 }
 
 function WinClose(w)
@@ -52,8 +251,7 @@ function WinClose(w)
 }
 
 function WinFloat(w)
-{//Takes w out of the page's flow where it stands, leaving a placeholder
-//its size, so it can move and change size.
+{
   let r=w.getBoundingClientRect(),ph;
   if (w.dataset.floating)
     return;
@@ -77,7 +275,9 @@ function BorderDown(e)
 {//A press on the border, taken as WinMgr.HC takes one: the top row and the
 //left column move the window, the bottom row sizes its height, the right
 //column its width, and the bottom right corner both.
-  if (e.currentTarget.classList.contains("fsmode"))
+  if (e.currentTarget.classList.contains("fsmode") ||
+      WinMobile(e.currentTarget) || e.pointerType=="touch" ||
+      e.currentTarget.dataset.popup)
     return;
   let w=e.currentTarget,t=e.target,r=w.getBoundingClientRect(),x,y,
     width,height,moved=false,cell=w.clientLeft,move=t.closest(".wbar,.wvert") ||
@@ -94,18 +294,23 @@ function BorderDown(e)
       w.style.top=Clamp(y+dy,0,innerHeight-2*cell)+"px";
     } else {
       if (sx)
-        w.style.width=Math.max(width+dx,12*cell)+"px";
+	w.style.width=Math.max(width+dx,12*cell)+"px";
       if (sy)
-        w.style.height=Math.max(height+dy,5*cell)+"px";
+	w.style.height=Math.max(height+dy,5*cell)+"px";
       w.dataset.sized="1";
       w.dispatchEvent(new Event("winsize"));
     }
   }
   function End(ev)
   {
-    if (moved && ev?.type=="pointerup")
-      w.dispatchEvent(new CustomEvent("winmoved",{bubbles:true,
-        detail:{clientX:ev.clientX,clientY:ev.clientY}}));
+    if (moved && ev?.type=="pointerup") {
+      if (WinOutside(ev,w))
+	WinPopup(w);
+      else
+	w.dispatchEvent(new CustomEvent("winmoved",{bubbles:true,
+	  detail:{clientX:ev.clientX,clientY:ev.clientY}}));
+    }
+    WinWorkspaceSave();
   }
   if (e.button || t.closest(".wmenu,.close,.wsv,.wsh") || !move && !sx && !sy)
     return;
@@ -118,7 +323,7 @@ function BorderDown(e)
 }
 
 function WinDoc(w)
-{//What scrolls in w: what scrolled last, or else the first thing that can.
+{
   let el;
   if (w._doc && w.contains(w._doc))
     return w._doc;
@@ -163,7 +368,7 @@ function BoxDown(e)
   {
     b.classList.remove("on");
   }
-  if (e.button)
+  if (e.button || WinMobile(w) || e.pointerType=="touch")
     return;
   b.classList.add("on");
   Move(e);
@@ -173,7 +378,7 @@ function BoxDown(e)
 function WinMenu()
 {//MENU brings up the Menu, as Ctrl+M brings up TempleOS's. (The screen's
 //own MENU sends the guest Ctrl+M: Os.js.)
-  let m=document.querySelector(".toolbar");
+  let m=$("desktopMenu");
   MenuShow(true);
   WinFocus(m);
   m.scrollIntoView({block:"nearest"});
@@ -206,11 +411,7 @@ function Chrome(w,cls)
 }
 
 export function WinDress(w,opts={})
-{//Puts TempleOS's chrome on w: the top row with MENU, the title and [X],
-//the desc down the left column, the two scroll boxes, and the handles on
-//the right and bottom edges. opts.onClose is what [X] does in place of
-//hiding w; with opts.menuReopen a closed window leaves a button in the
-//Menu that opens it again.
+{
   let bar=Chrome(w,"wbar"),x=w.querySelector(":scope > .close"),
     title=w.dataset.title,rb;
   function Close()
@@ -239,7 +440,11 @@ export function WinDress(w,opts={})
     ButtonDress(x,"Close "+title);
     bar.append(x);
     if (opts.onClose)
-      x.addEventListener("click",opts.onClose);
+      x.addEventListener("click",function () {
+	WinPopupReturn(w);
+	opts.onClose();
+	WinWorkspaceSave();
+      });
     else if (opts.menuReopen) {
       rb=document.createElement("button");
       rb.style.display="none";
@@ -247,7 +452,7 @@ export function WinDress(w,opts={})
       rb.innerHTML='<span class="ico"><svg><use href="#i-'+
 	    (w.dataset.icon || "window")+'"/></svg></span> '+title;
       w._reopen=rb;
-      document.querySelector(".toolbar").append(rb);
+      $("desktopMenu").append(rb);
       x.addEventListener("click",Close);
       rb.addEventListener("click",Reopen);
     }
@@ -259,6 +464,7 @@ export function WinDress(w,opts={})
   w.addEventListener("scroll",WinScrolled,true);
   w._sv.addEventListener("pointerdown",BoxDown);
   w._sh.addEventListener("pointerdown",BoxDown);
+  WinRemember(w,opts.restore);
   return w;
 }
 
@@ -284,8 +490,7 @@ for (const w of document.querySelectorAll("[data-title]"))
 WinFocus($("frame"));
 
 function OvFree(ov)
-{//The [X] at the screen's corner sends the dark backdrop away, and the
-//window joins the desktop.
+{
   let b=document.createElement("button");
   function Free()
   {
@@ -301,7 +506,7 @@ function OvFree(ov)
 }
 
 export function WinAdd(css,html)
-{//Puts a window's style in the head and its markup in the page, dressed.
+{
   let st=document.createElement("style"),box=document.createElement("div"),el;
   st.textContent=css;
   document.head.appendChild(st);
@@ -313,11 +518,6 @@ export function WinAdd(css,html)
   document.body.append(...box.children);
 }
 
-const WINS={editorBtn:"../Apps/Editor/EditorWin.js",gamesBtn:"../Apps/Games/GamesWin.js",
-  spritesBtn:"../Apps/Sprites/SpritesWin.js",godBtn:"../Apps/God/GodWin.js",diskBtn:"../Apps/Disk/DiskWin.js",
-  tsBtn:"../Apps/Search/SearchWin.js",chatBtn:"../Apps/Chat/ChatWin.js",
-  settingsBtn:"../Apps/Settings/SettingsWin.js",mobileHelp:"../Apps/Help/HelpWin.js"};
-
 let opening=0;
 function LoadingClose()
 {
@@ -325,7 +525,7 @@ function LoadingClose()
   $("winLoadingOverlay").classList.remove("open");
 }
 async function WinOpen(id)
-{//Give feedback before requesting a window's modules.
+{
   if (!$("winLoadingOverlay")) {
     WinAdd('#winLoading { width:min(420px,92vw); }',
       '<div id="winLoadingOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Opening window">'+
@@ -342,10 +542,11 @@ async function WinOpen(id)
   WinFocus($("winLoading"));
   MenuShow(false);
   try {
-    const m=await import(WINS[id]);
+    const m=await import(WINS[id][1]);
     if(request!==opening)return;
     $("winLoadingOverlay").classList.remove("open");
     m.Open();
+    WinApply($(WINS[id][0]));
     document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id}}));
   } catch(e) {
     if(request===opening)$("winLoadingText").textContent="Could not open this window. Close and try again.";
@@ -369,13 +570,25 @@ addEventListener("osstate",DesktopExtras);
 for (const id in WINS)
   $(id).addEventListener("click",MenuClick);
 
+const random=$("terryRandom");
+random.addEventListener("click",async function () {
+  random.disabled=true;
+  try {
+    const {VideoRandomOpen}=await import("../Apps/Search/VideoWin.js");
+    await VideoRandomOpen();
+    random.title="Play a random Terry video";
+  } catch (error) {
+    random.title=error.message;
+  } finally {random.disabled=false;}
+});
+
 
 function MenuShow(open)
 {
   document.body.classList.toggle("menu-open",open);
   $("mobileMenu").setAttribute("aria-expanded",String(open));
   if (open)
-    document.querySelector(".toolbar").style.display="";
+    $("desktopMenu").style.display="";
 }
 
 $("mobileMenu").addEventListener("click",function () {
@@ -385,9 +598,9 @@ $("menuShade").addEventListener("click",function () {MenuShow(false);});
 document.querySelector(".toolbar .close").addEventListener("click",
   function () {
     MenuShow(false);
-    if (!matchMedia("(max-width:980px)").matches)
-      document.querySelector(".toolbar").style.display="none";
+    if (!WinMobile())
+      $("desktopMenu").style.display="none";
   });
 $("mobileFull").addEventListener("click",function () {$("fsBtn").click();});
 
-import("../Apps/Help/HelpWin.js").catch(console.error);
+WinWorkspaceRestore();

@@ -41,19 +41,21 @@
   <link rel="preconnect" href="https://templeosweb-files.parkerrhunt.workers.dev" crossorigin />
   <script>
     {
+      let saved=false;
+      try {saved=!!localStorage.getItem("tos-session-saved");} catch {}
       const mobile=navigator.maxTouchPoints>1 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent),
         smp=crossOriginIsolated && !/[?&](single|nosmp)\b/.test(location.search) &&
           (/[?&]smp\b/.test(location.search) || !mobile),
         stock="./hemu/",abort=new AbortController(),
-        response=fetch(stock+(smp?"live-smp.bin.gz":"live.bin.gz"),{signal:abort.signal,priority:"high"});
-      response.catch(function () {});
+        response=saved?null:fetch(stock+(smp?"live-smp.bin.gz":"live.bin.gz"),{signal:abort.signal,priority:"high"});
+      response?.catch(function () {});
       self.hemuBoot={mobile,smp,abort,response};
       try {
         for (const part of ["header","footer"])
           if (localStorage.getItem("tos-show-"+part)==="false")
             document.documentElement.classList.add("hide-"+part);
       } catch (e) {}
-      try {self.hemuEarly=new Worker("./hemu/Kernel/HemuWorker.js",{type:"module"});} catch (e) {}
+      try {if (!self.SharedWorker) self.hemuEarly=new Worker("./hemu/Kernel/HemuWorker.js",{type:"module"});} catch (e) {}
     }
   </script>
   <!-- modules the page's scripts import: Misc/Preload.mjs -->
@@ -64,19 +66,22 @@
   <link rel="modulepreload" href="Adam/MobileInput.js" />
   <link rel="modulepreload" href="Adam/WinDraw.js" />
   <link rel="modulepreload" href="Adam/WinPointer.js" />
+  <link rel="modulepreload" href="Adam/WinPopup.js" />
   <link rel="modulepreload" href="Adam/XSel.js" />
   <link rel="modulepreload" href="hemu/Kernel/CoreBus.js" />
-  <link rel="modulepreload" href="hemu/Kernel/Machine.js" />
+  <link rel="modulepreload" href="hemu/Kernel/DiskStore.js" />
+  <link rel="modulepreload" href="hemu/Kernel/MachineShared.js" />
   <link rel="modulepreload" href="hemu/Kernel/Snapshot.js" />
   <link rel="modulepreload" href="hemu/Kernel/Speaker.js" />
   <link rel="modulepreload" href="hemu/Kernel/Stock.js" />
   <link rel="modulepreload" href="Adam/TouchCtrls.js" />
   <link rel="modulepreload" href="hemu/Kernel/GuestPatch.js" />
-  <link rel="modulepreload" href="hemu/Kernel/GuestRqsts.js" />
+  <link rel="modulepreload" href="hemu/Kernel/Machine.js" />
   <link rel="modulepreload" href="hemu/Kernel/QCow2.js" />
   <link rel="modulepreload" href="hemu/Kernel/Ram.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/src/runtime/keyboard.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/src/runtime/palette.js" />
+  <link rel="modulepreload" href="hemu/Kernel/GuestRqsts.js" />
   <style>
     /* afterdavis theme: the TempleOS desktop look. */
     /* TempleOS system font: the real 322-glyph font the site has always used, laundered CLEAN via
@@ -107,7 +112,8 @@
         filter:brightness(0) invert(1); mix-blend-mode:difference; }
     body.xcursor #xcursor { display:block; }
     body.xcursor, body.xcursor * { cursor:none !important; }   /* the inverting arrow replaces the native cursor */
-    html { overflow-y:auto; }
+    html { height:100%; overflow:hidden; }
+    body { height:100dvh; overflow:hidden; }
     body { background:var(--blue); color:#fff; font-size:12px; line-height:1.0; min-height:100vh; display:flex; flex-direction:column; }
     ::selection { background:#000; color:var(--yellow); }
     a { color:var(--yellow); }
@@ -174,6 +180,8 @@
     .native-chrome .wbar > .close { font-size:8px; line-height:8px; padding:0; border:0; min-height:0; }
     .native-chrome .wtitle > span { animation:none; }
     .native-chrome .wsv, .native-chrome .wsh { background:transparent; border:0; }
+    #winPopupNotice { position:fixed; left:12px; right:12px; bottom:12px; z-index:2147483646; display:flex; align-items:center; gap:12px; padding:12px; background:var(--white); color:var(--blue); border:3px double var(--blue); }
+    #winPopupNotice button { width:auto; }
     .win-ph { visibility:hidden; }   /* keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
@@ -274,6 +282,7 @@
     #guide b { color:var(--red); } #guide kbd { background:var(--blue); color:#fff; padding:0 5px; }
     .keyswin { padding:8px 6px 6px; }
     .terrywin { padding:6px; text-align:center; }
+    .terrywin #terryRandom { width:30px;height:26px;padding:3px;margin:6px auto 0;display:grid;place-items:center; }
     body.mouse-locked #xcursor { visibility:hidden !important; }
     .terrywin canvas { display:block; height:176px; width:auto; margin:0 auto; image-rendering:pixelated; }
 
@@ -330,7 +339,7 @@
     body.xcursor .wszcorner { cursor:nwse-resize !important; }
     .wmenu:focus-visible, .close:focus-visible { outline:1px solid var(--red); outline-offset:-1px; }
     #touchBtn, #mobileBar, #menuShade { display:none; }
-    @media (pointer:coarse) { #touchBtn, #keysbar [data-key^="Arrow"] { display:block; } }
+    @media (pointer:coarse) { #touchBtn, #keysbar [data-key^="Arrow"] { display:block; } body:not(.popup) .wc { touch-action:pan-y; } }
     @media (pointer:coarse) { #keysbar [data-mobile-first], #keysbar [data-key^="Arrow"] { order:-1; } }
     #guide { display:flex; flex-direction:column; min-height:220px; max-height:70dvh; }
     #helpBody { min-height:0; overflow:auto; flex:1; }
@@ -340,12 +349,16 @@
     #helpNext { width:auto; margin:8px 2px; max-width:calc(100% - 4px); }
     @media (prefers-reduced-motion:reduce) { .wtitle > span, .wmenu { animation:none; } }
     @media (max-width:979.98px) {
-      body { padding-bottom:68px; }
+      html { height:auto; overflow-y:auto; overflow-x:hidden; }
+      body { height:auto; min-height:100dvh; overflow:visible; padding-bottom:68px; }
+      body:not(.popup) .wc { touch-action:pan-y; }
+      body:not(.popup) .win[data-floating], body:not(.popup) #frame[data-floating]:not(.fsmode) { position:relative !important; left:auto !important; top:auto !important; width:calc(100vw - 24px) !important; height:auto !important; margin:4px auto !important; }
+      .win-ph { display:none; }
       header { width:100%; padding:4px 10px; }
       header .logo, header p { display:none; }
       header h1 { font-size:11px; }
       #topbar { padding:2px 6px; }
-      #tb-key, #tb-date, #tb-time, #topbar .status > span:nth-child(4) { display:none; }
+      #tb-key, #tb-date, #tb-time, #tb-engine { display:none; }
       #mobileBar { display:flex; position:sticky; top:0; z-index:900; gap:6px; padding:5px 8px; background:var(--blue); }
       #mobileBar button { width:auto; min-height:30px; text-align:center; flex:1; }
       main.stage { justify-content:flex-start; }
@@ -411,10 +424,11 @@
 <div id="xcursor" aria-hidden="true"></div>
   <div id="topbar">
     <div class="status">
+      <span id="tb-build" title="Site build">build development</span>
       <span id="tb-date">…</span>
       <span id="tb-time">…</span>
       <span id="tb-fps">FPS: …</span>
-      <span>Engine: <span class="y">HEMU</span></span>
+      <span id="tb-engine">Engine: <span class="y">HEMU</span></span>
       <span id="tb-people" class="off" title="People on this site right now, including you">Visitors: <span class="y"></span></span>
     </div>
     <p id="tb-key">click the screen to use the OS</p>
@@ -456,7 +470,7 @@
         <button id="settingsBtn" title="Frame rate, keyboard repeat and other options"><span class="ico"><svg><use href="#i-settings"/></svg></span> Settings</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico"><svg><use href="#i-touch"/></svg></span> Touch controls</button>
       </div>
-      <div class="win keyswin" data-title="Keys" data-icon="keys"><span class="close">[X]</span><div id="keysbar">
+      <div id="keysWin" class="win keyswin" data-title="Keys" data-icon="keys"><span class="close">[X]</span><div id="keysbar">
         <button type="button" data-mobile-first>Esc</button>
         <button type="button" data-key="ArrowLeft" aria-label="Left arrow">←</button><button type="button" data-key="ArrowRight" aria-label="Right arrow">→</button>
         <button type="button" data-key="ArrowUp" aria-label="Up arrow">↑</button><button type="button" data-key="ArrowDown" aria-label="Down arrow">↓</button>
@@ -511,7 +525,7 @@
           <button id="helpNext" type="button">Next tip</button>
         </div>
       </div>
-      <div id="terryWin" class="win terrywin" data-title="Terry" data-icon="terry"><span class="close">[X]</span><canvas id="terrySprite" width="128" height="176" role="button" tabindex="0" aria-label="Terry A. Davis, animated TempleOS sprite"></canvas></div>
+      <div id="terryWin" class="win terrywin" data-title="Terry" data-icon="terry"><span class="close">[X]</span><canvas id="terrySprite" width="128" height="176" role="button" tabindex="0" aria-label="Terry A. Davis, animated TempleOS sprite"></canvas><button id="terryRandom" type="button" title="Play a random Terry video" aria-label="Play a random Terry video"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4h2l8 8h2M2 12h2l8-8h2M11 1l3 3-3 3M11 9l3 3-3 3"/></svg></button></div>
     </div>
   </div>
 

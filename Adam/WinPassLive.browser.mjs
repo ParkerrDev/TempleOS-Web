@@ -24,11 +24,21 @@ try {
     localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
     window.passEvents=[];window.passRequests=[];window.passWindows=[];
     window.passBuffers={};window.passFrames=0;window.passActions=[];
-    const Base=window.Worker;
-    window.Worker=class extends Base {
+    const Base=window.SharedWorker;
+    window.SharedWorker=class extends Base {
       constructor(...args) {
         super(...args);
-        this.addEventListener("message",function (e) {
+        if (!String(args[0]).includes("MachineHub.js")) return;
+        const Send=this.port.postMessage.bind(this.port);
+        this.port.postMessage=function (envelope,...args) {
+          const m=envelope.value;
+          if (["post","request"].includes(envelope.op) &&
+              (m.cmd=="windows" || m.cmd=="input" &&
+                (m.keys.length || m.wheel || m.b)))
+            window.passRequests.push(m);
+          return Send(envelope,...args);
+        };
+        this.port.addEventListener("message",function (e) {
           const m=e.data;
           if (m.cmd=="windows") {
             window.passWindows=m.windows;
@@ -42,11 +52,6 @@ try {
           } else if (["guestReady","fileResult","settings","paused","error"].includes(m.cmd))
             window.passEvents.push(m);
         });
-      }
-      postMessage(m,...args) {
-        if (m.cmd=="windows" || m.cmd=="input" && (m.keys.length || m.wheel || m.b))
-          window.passRequests.push(m);
-        return super.postMessage(m,...args);
       }
     };
   });
@@ -152,7 +157,8 @@ try {
   assert(await page.evaluate(function () {
     return window.passRequests.some(function (m) {return m.op=="detach";});
   }));
-  const native=page.locator(".win-pass canvas"),vr=await native.boundingBox();
+  const native=page.locator(".win-pass canvas");
+  let vr=await native.boundingBox();
   await page.mouse.click(vr.x+50*scale,vr.y+50*scale);
   await page.keyboard.type("abc");
   await page.keyboard.press("Backspace");
@@ -169,6 +175,31 @@ try {
       return m.cmd=="input" && m.winSlot>=0 && m.wheel;
     });
   });
+  const popupWait=page.waitForEvent("popup");
+  await page.mouse.move(vr.x+vr.width/2,vr.y+4*scale);
+  await page.mouse.down();
+  await page.mouse.move(1455,180,{steps:15});
+  await page.mouse.up();
+  const popup=await popupWait,pc=popup.locator(".win-pass canvas"),
+    pr=await pc.boundingBox();
+  await page.evaluate(function () {window.passRequests=[];});
+  await popup.mouse.click(pr.x+50*scale,pr.y+50*scale);
+  await popup.keyboard.type("abc");
+  await popup.keyboard.press("Backspace");
+  await popup.keyboard.press("Backspace");
+  await popup.keyboard.press("Backspace");
+  await page.waitForFunction(function (task) {
+    return window.passRequests.some(function (m) {
+      return m.cmd=="input" && m.winTask==task && m.winSlot>=0 && m.keys.length;
+    });
+  },w.task);
+  await popup.screenshot({path:"/home/aphunt/Dev/GitHub/TempleOS/untangle/evidence/2026-11-15-workspace/Window-native-popup.png"});
+  await popup.locator("#popupReturn").click().catch(function (error) {
+    if (!popup.isClosed()) throw error;
+  });
+  await native.waitFor();
+  vr=await native.boundingBox();
+  console.log("Native popup retains task ownership, pixels and keyboard input");
   await page.mouse.move(vr.x+vr.width/2,vr.y+4*scale);
   await page.mouse.down();
   await page.mouse.move(r.x+300*scale,r.y+140*scale,{steps:15});

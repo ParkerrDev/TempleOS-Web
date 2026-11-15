@@ -5,13 +5,13 @@ export function RangeSource(url,Status)
   let total=null,etag=null,downloaded=0;
   async function Read(pos,size)
   {
-    let parts=[],count=0,response,match,tag,part,last,reader,at,item,expected;
+    let parts=[],count=0,response,match,tag,part,last,reader,at,item,expected,request;
     while (count<size) {
       last=pos+Math.min(size-count,RANGE_SIZE)-1;
       if (total!=null) last=Math.min(last,total-1);
       if (last<pos) throw new Error("Media range is outside the file.");
-      response=await fetch(url,{headers:{Range:"bytes="+pos+"-"+last},
-        signal:AbortSignal.timeout(30000)});
+      request=new URL(url);request.searchParams.set("range",pos+"-"+last);
+      response=await fetch(request,{signal:AbortSignal.timeout(30000)});
       match=/^bytes (\d+)-(\d+)\/(\d+)$/.exec(
         response.headers.get("Content-Range"));
       if (response.status!=206 || !match || Number(match[1])!=pos ||

@@ -15,7 +15,7 @@
 //from archive.org, which sends no CORS headers, so a page can read a video's
 //index and some of its frames without downloading it whole. <path> is
 //encoded a segment at a time by encodeURIComponent, as the page's links are.
-//GET needs one "Range: bytes=<first>-<last>" of at most RANGE_MAX bytes; HEAD
+//GET needs ?range=<first>-<last> of at most RANGE_MAX bytes; HEAD
 //gives the length.
 //  deploy: cd Misc/Cdn && npx wrangler deploy
 import LST from "./ArchiveLst.json" with {type:"json"};
@@ -24,9 +24,9 @@ import {OFFLOAD} from "./Offload.js";
 const TYPES={wasm:"application/wasm",json:"application/json"};
 const CORS={"Access-Control-Allow-Origin":"*",
 	"Cross-Origin-Resource-Policy":"cross-origin"};
-const RANGE_MAX=16777216; //The largest moov box listed is 42 MB: 3 requests.
+const RANGE_MAX=16777216;
 const ARCHIVE_HEADERS=["Content-Type","Content-Length","Content-Range","ETag",
-	"Last-Modified"];
+  "Last-Modified"];
 
 function Fail(status,text)
 {
@@ -109,8 +109,11 @@ async function FileFetch(req,env,repo,commit,path)
 
 function ArchiveRange(req)
 {//The one closed range a GET must send, or null.
-  let first,last,m=/^bytes=(\d{1,15})-(\d{1,15})$/.exec(
-	req.headers.get("Range"));
+  let first,last,m,query=new URL(req.url).searchParams.get("range"),
+    range=req.headers.get("Range");
+  //Already-open players still send the original header-only requests.
+  if (query!=null) range="bytes="+query;
+  m=/^bytes=(\d{1,15})-(\d{1,15})$/.exec(range);
   if (!m)
     return null;
   first=Number(m[1]);
@@ -139,11 +142,12 @@ async function ArchiveFetch(req,item,path)
     return Fail(404,"not found");
   if (req.method=="GET") {
     if (!range)
-      return Fail(400,"send one Range: bytes=<first>-<last>, at most "+
+      return Fail(400,"send ?range=<first>-<last>, at most "+
 	    RANGE_MAX+" bytes");
     init.headers.Range=range;
   }
   try {
+    init.signal=AbortSignal.timeout(25000);
     src=await fetch("https://archive.org/download/"+item+"/"+path,init);
   } catch {
     return Fail(502,"archive.org unreachable");

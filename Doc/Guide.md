@@ -14,7 +14,7 @@ and native Take Tour question.
 
 ## Try it
 
-- The desktop resumes automatically from a prepared RAM/register/disk capture.
+- The desktop restores a saved session when its disk revision still matches. Otherwise it starts from the prepared RAM/register capture with the newest saved C:.
 - **Click the screen** for keyboard and mouse input. **Esc** releases mouse capture;
   use the Keys window's Esc button to send Escape to a captured game.
 - **Ctrl+M** opens the personal menu - click a game sprite (Varoom, BlackDiamond, …) to play.
@@ -26,10 +26,10 @@ and native Take Tour question.
   reported as compilation errors; only Run in TempleOS invokes the emulator. The main desktop pauses during browser play and resumes on close.
   Edit source keeps the code and playable preview together, with Run again to apply edits.
 - **⏸ Pause** - freeze and resume the OS (guest time stops too).
-- **💾 Disk & Save** - export a **snapshot** (the whole running OS - reload it later to resume
-  exactly where you were) or your **C: disk image** (including files you saved in TempleOS);
-  import either one back; or upload any file straight into `C:/Home`. This is how you save your
-  progress, share programs/games, or boot a custom/modified TempleOS disk.
+- **💾 Disk & Save** - browse C:, drop files into a directory, download individual files, or export/import a whole snapshot or disk. New editor programs can be sent straight to C:/Home.
+- Tabs share one live TempleOS machine. The host tab owns its four CPU workers; a shared worker routes frames and requests. This keeps all tabs on the same filesystem.
+- C: saves after writes. Full sessions save after input settles outside gameplay and when the page hides. **Save session** creates an explicit checkpoint. Closing or refreshing the host tab restores the last completed checkpoint; a crash or immediate close can lose newer RAM changes. Newer saved files are never replaced by an older checkpoint.
+- Website windows remember their positions and open state. Settings can reset their positions. Desktop windows can move into browser popups; mobile windows stay in the page so scrolling works.
 - **✞ God Tools** - God's words and Bible passages on the page itself, picked in the timing-bit
   order of Adam/God and seeded by the browser, and Terry's God Song and God Doodle opened in TempleOS.
 - **Chat** - talk with everyone else on the site. It opens in the corner without darkening the
@@ -105,7 +105,7 @@ Custom drawing callbacks, persistent desktop graphics, fullscreen programs and
 captured-mouse programs stay on the TempleOS screen. Settings, editors, Sprite
 Studio, file pickers and media tools stay on the page. Pausing or disabling
 passthrough returns windows to their original environment; resuming enables
-dragging again. Restart and snapshot restore also return windows before further
+dragging again. Restart and snapshot restore also return native windows before further
 dragging. Old saved engines require Restart to enable passthrough.
 
 Both window options are off initially and remembered independently of Web
@@ -281,6 +281,12 @@ Browser games open in a larger window and scale the 640x480 canvas to fit while 
 
 Browser play and editor previews compile the game entry and its included HolyC files directly with HolyC-WASM in a Web Worker. Drafts are frozen across all files before a run. No game iframe, guest kernel or guest disk is created. Unknown native APIs and parser errors stop the run with an explanation in Console. HolyC-wasm supplies SettingsPush/SettingsPop and a draw task through its prelude; AutoComplete returns false because the browser runtime has no autocomplete task. The compiler also owns scan-code conversion and held-key ownership; the site routes DOM input to the active program. Browser compilation currently passes for HolyCraft, Snake, Babel, Volley, TicTacToe, Collision, ElephantWalk, Digits and B17. The first four also pass recorded worker-startup, advancing-frame and stop checks. The other five stay on Run in TempleOS until their browser runs are checked. The launcher requires both compilation and startup evidence; changing the program, compiler or browser runner invalidates that evidence. Startup does not establish input response or full gameplay parity. Run in TempleOS stays available for every package that passes the startup check below. Run `node Demo/Games/NativeGamesAudit.mjs` to check the current compiler against the complete catalog. Successful compilation alone does not establish playability. The separate [native game checks](../Demo/Games/Test/README.md) verify input, rendering and repeated-launch cleanup in original TempleOS and HEMU; every entry is also launched in original TempleOS V5.03 under QEMU and in HEMU, and Run in TempleOS is enabled only for those that start and quit the same way in both (`Demo/Games/Startup.json`); that is not gameplay proof.
 
+Browser `GetTSC` reads a monotonic virtual timestamp sampled by a small worker,
+avoiding a browser-clock query for each randomized pixel. Its resolution follows
+browser timers and can become coarser in the background; `tS`, sleep and task
+deadlines still read fresh time. The random-number recurrence and seeded mode
+are unchanged. If the clock worker is unavailable, timestamp reads use fresh time.
+
 The editor's runner (`hemu/holyc-wasm/src/runtime/worker.js`) supports opt-in relative mouse input through the HolyC globals `I64 BrowserMouseCapture`, `I64 BrowserMouseDX`, `I64 BrowserMouseDY`, and `U8 BrowserKeys[128]`. Set capture to 1 while the game needs it and to 0 when returning to menus. The worker accumulates mouse deltas until the program consumes and clears them, and copies held movement keys by set-1 scancode. Capture requires a click on the game canvas; Esc releases it. HolyCraft exercises this protocol in `Apps/Games/HolyCraft.test.mjs`.
 
 `node Apps/Games/GameSrc.test.mjs` checks all 304 source files, byte preservation for the 64 files with embedded sprites, draft persistence, edited installations, restoration, partial-write recovery and OS restarts.
@@ -324,8 +330,9 @@ The Keys window routes presses to the active HolyC preview or TempleOS. Each rel
 C: is saved in this browser with IndexedDB and restored on the next visit.
 The worker batches changed sectors after each guest turn; Restart waits for the
 last transaction to commit. Importing a disk or snapshot replaces the saved C:.
-Only one tab writes the saved drive at a time. Other tabs show that their changes
-are not saved. The Disk & Save window shows saving, saved and storage errors,
+Tabs share the same running machine and saved drive. If shared workers are
+unavailable, only one independent tab can save the drive; other tabs show that
+their changes are not saved. The Disk & Save window shows saving, saved and storage errors,
 and still exports portable disk and machine backups. Opening it requests
 persistent browser storage where supported. Clearing site data, private browsing
 or browser eviction can remove local saves; export a backup for safekeeping.

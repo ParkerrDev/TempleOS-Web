@@ -1,4 +1,5 @@
-import {WinFocus,WinRaise} from "./WinMgr.js";
+import {WinFocus,WinRaise,WinMobile,WinOutside,WinPopup,WinPopupReturn,
+  WinDocuments,WinFind} from "./WinMgr.js";
 import {PointerDrag} from "./WinPointer.js";
 
 const TOOLS={desktopMenu:{title:"Menu",body:[],buttons:":scope > button"},
@@ -85,7 +86,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
   document.body.append(dock);
   dock.addEventListener("click",function (e) {
     if (e.target.dataset.pass=="settings")
-      document.getElementById("settingsBtn").click();
+      WinFind("settingsBtn").click();
     if (e.target.dataset.pass=="return")
       dispatchEvent(new CustomEvent("winpassdisable"));
   });
@@ -106,7 +107,8 @@ export function WinPass({canvas,pal,Request,Input,Status})
   function Inside(e)
   {
     let r=canvas.getBoundingClientRect();
-    return e.clientX>=r.left && e.clientX<r.right &&
+    return (!e.target || e.target.ownerDocument==canvas.ownerDocument) &&
+      e.clientX>=r.left && e.clientX<r.right &&
       e.clientY>=r.top && e.clientY<r.bottom;
   }
 
@@ -223,12 +225,13 @@ export function WinPass({canvas,pal,Request,Input,Status})
   {
     let view=views.get(id);
     if (view) {
-      if (view.el.contains(document.activeElement)) {
+      if (view.el.contains(view.el.ownerDocument.activeElement)) {
         Input({buttons:0,slot:-1});
         canvas.focus({preventScroll:true});
         if (enabled)
           WinFocus(canvas.closest("#frame"));
       }
+      WinPopupReturn(view.el);
       view.el.remove();
       views.delete(id);
     }
@@ -236,9 +239,10 @@ export function WinPass({canvas,pal,Request,Input,Status})
 
   function ViewFocus(view)
   {
-    let el;
-    for (el of document.querySelectorAll(".win-pass.active"))
-      el.classList.remove("active");
+    let el,doc;
+    for (doc of WinDocuments())
+      for (el of doc.querySelectorAll(".win-pass.active"))
+        el.classList.remove("active");
     WinFocus(view.el);
     view.canvas.focus({preventScroll:true});
     Input({focus:true,slot:view.win.slot,task:view.win.task,num:view.win.num});
@@ -271,7 +275,10 @@ export function WinPass({canvas,pal,Request,Input,Status})
     async function End(ev)
     {
       let pos,res;
-      if (enabled && moved && ev?.type=="pointerup" && Inside(ev)) {
+      if (enabled && moved && ev?.type=="pointerup" && WinOutside(ev,view.el)) {
+        WinPopup(view.el);
+        Input({buttons:0,slot:-1});
+      } else if (enabled && moved && ev?.type=="pointerup" && Inside(ev)) {
         last=ev;
         pos=Position(last);
         res=await Send("attach",{slot:w.slot,task:w.task,num:w.num,
@@ -286,7 +293,8 @@ export function WinPass({canvas,pal,Request,Input,Status})
     if (!enabled)
       return;
     ViewFocus(view);
-    if (!e.button && y<8 && x>=48 && x<w.w-24)
+    if (!e.button && !WinMobile(view.el) && e.pointerType!="touch" &&
+        !view.el.dataset.popup && y<8 && x>=48 && x<w.w-24)
       PointerDrag(e,Move,End);
     else {
       ViewMouse(view,e,e.buttons);
@@ -329,6 +337,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
     cv.addEventListener("pointerup",Up);
     cv.addEventListener("pointercancel",Up);
     cv.addEventListener("lostpointercapture",function () {Input({buttons:0});});
+    el.addEventListener("winpopupblur",function () {Input({buttons:0,slot:-1});});
     cv.addEventListener("contextmenu",function (e) {e.preventDefault();});
     cv.addEventListener("wheel",function (e) {
       ViewMouse(view,e);
@@ -392,8 +401,8 @@ export function WinPass({canvas,pal,Request,Input,Status})
   function GuestDown(e)
   {
     let point,w,r=canvas.getBoundingClientRect(),state;
-    if (!enabled || e.button || e.pointerType=="touch" ||
-        document.pointerLockElement)
+    if (!enabled || e.button || e.pointerType=="touch" || WinMobile(canvas) ||
+        canvas.ownerDocument.pointerLockElement)
       return;
     point=Position(e);
     for (w of windows.slice().reverse()) {
@@ -438,7 +447,9 @@ export function WinPass({canvas,pal,Request,Input,Status})
     Input({buttons:0});
     if (canvas.hasPointerCapture(e.pointerId))
       canvas.releasePointerCapture(e.pointerId);
-    if (state.view && e.type!="pointercancel" && Inside(e)) {
+    if (state.view && e.type!="pointercancel" && WinOutside(e,state.view.el))
+      WinPopup(state.view.el);
+    else if (state.view && e.type!="pointercancel" && Inside(e)) {
       pos=Position(e);
       res=await Send("attach",{slot:state.view.win.slot,
         task:state.view.win.task,num:state.view.win.num,

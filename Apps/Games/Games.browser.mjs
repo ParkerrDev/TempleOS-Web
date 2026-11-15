@@ -61,7 +61,7 @@ try{
  await gate.unroute('**/Demo/Games/Compatibility.json');
  await gate.route('**/Demo/Games/Compatibility.json',route=>route.fulfill({status:503,body:'unavailable'}));
  await gate.reload({waitUntil:'load'});
- await gate.locator('#gamesBtn').click();
+ await gate.locator('#gamesOverlay.open').waitFor({state:'visible'});
  await button('Babel').waitFor({state:'attached'});
  assert(await button('Babel').isDisabled(),'Missing evidence must not enable browser launch.');
  await gate.close();

@@ -1,4 +1,4 @@
-import {WinFocus} from "../../Adam/WinMgr.js";
+import {WinFocus,WinFind} from "../../Adam/WinMgr.js";
 
 const CTX={
   frame:{name:"TempleOS",tips:[
@@ -38,7 +38,7 @@ const CTX={
 };
 const MENU={gamesBtn:"gamesWin",editorBtn:"editorWin",godBtn:"godWin",
   diskBtn:"diskWin",tsBtn:"tsWin",chatBtn:"chatWin",spritesBtn:"spriteStudio",settingsBtn:"settingsWin"};
-let win=document.getElementById("guide"),ctx=CTX.frame,idx=0,game=null;
+let win=WinFind("guide"),ctx=CTX.frame,idx=0,game=null;
 
 function Visible()
 {
@@ -47,11 +47,11 @@ function Visible()
 
 function Show()
 {
-  document.getElementById("helpContext").textContent=ctx.name;
-  document.getElementById("helpLabel").textContent="Tip "+(idx+1)+
+  WinFind("helpContext").textContent=ctx.name;
+  WinFind("helpLabel").textContent="Tip "+(idx+1)+
     " of "+ctx.tips.length;
-  document.getElementById("helpText").textContent=ctx.tips[idx];
-  document.getElementById("helpNext").hidden=ctx.tips.length<2;
+  WinFind("helpText").textContent=ctx.tips[idx];
+  WinFind("helpNext").hidden=ctx.tips.length<2;
 }
 
 function Context(id)
@@ -96,7 +96,7 @@ win.querySelector(".close").addEventListener("click",function () {
   win.classList.remove("help-open");
   win.style.display="none";
 });
-document.getElementById("helpNext").addEventListener("click",Next);
+WinFind("helpNext").addEventListener("click",Next);
 document.addEventListener("winfocus",function (e) {Context(e.detail.id);});
 document.addEventListener("helpcontext",function (e) {Context(e.detail.id);});
 setInterval(function () {

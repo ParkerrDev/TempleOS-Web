@@ -8,12 +8,36 @@ import {MobileInput} from "./MobileInput.js";
 import {SnapshotInspect} from "../hemu/Kernel/Snapshot.js";
 import {StockInspect} from "../hemu/Kernel/Stock.js";
 import {BUS_VERSION} from "../hemu/Kernel/CoreBus.js";
-import {Machine} from "../hemu/Kernel/Machine.js";
+import {MachineShared} from "../hemu/Kernel/MachineShared.js";
+import {DiskStoreOpen} from "../hemu/Kernel/DiskStore.js";
+import {WinFind,WinDocuments} from "./WinMgr.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
 import {Speaker} from "../hemu/Kernel/Speaker.js";
 import "./XSel.js";
 
-const $ = (id) => document.getElementById(id);
+const $=WinFind;
+const docEvents=[],viewEvents=[];
+function DocOn(type,Listener,options)
+{
+  docEvents.push([type,Listener,options]);
+  document.addEventListener(type,Listener,options);
+}
+function ViewOn(type,Listener,options)
+{
+  viewEvents.push([type,Listener,options]);
+  addEventListener(type,Listener,options);
+}
+addEventListener("winpopup",function (e) {
+  let view=e.detail.window;
+  for (let args of docEvents) view.document.addEventListener(...args);
+  for (let args of viewEvents) view.addEventListener(...args);
+  view.addEventListener("resize",fitScreen);
+  view.addEventListener("pointerdown",function () {engine.Claim?.();},true);
+});
+function LockedDoc()
+{
+  return WinDocuments().find(doc=>doc.pointerLockElement);
+}
 const dbg = (s, err) => (err ? console.warn : console.log)("[hemu] " + s);
 dbg("hemu host starting…");
 addEventListener("error", (e) => dbg("JS: " + e.message, true));
@@ -153,13 +177,13 @@ $("frame").querySelector(".wmenu").addEventListener("click",FrameMenu);
 // recentering works without an off-center host position fighting the game.
 let focused=false, mouseDX=0, mouseDY=0, resetInput=false;
 let guestCapture=false, explicitCapture=false, hybridMouse=false, wasMouseLocked=false, hybridTracking=false;
-const locked=()=>document.pointerLockElement===canvas;
+const locked=()=>canvas.ownerDocument.pointerLockElement===canvas;
 const captureWanted=()=>!hybridMouse && (guestCapture || explicitCapture);
 const relativeMouse=()=>locked() || (hybridMouse && guestCapture);
 const btnBit=e=>e.button===0?1:e.button===2?2:0;
 const captureButton=$('captureBtn'), captureLabel=$('captureLabel');
 const updateFocusText=()=>{
-  const captured=!!document.pointerLockElement||!!os_game.mouse?.isMouseCaptured();
+  const captured=!!LockedDoc()||!!os_game.mouse?.isMouseCaptured();
   captureLabel.textContent=captured?'Release mouse':'Capture mouse';
   captureButton.setAttribute('aria-pressed',String(captured));
   document.body.classList.toggle('mouse-locked',captured);
@@ -174,13 +198,13 @@ const releaseHeld=()=>{
 const setFocused=on=>{if(focused && !on)releaseHeld();focused=on;updateFocusText();};
 const releaseOSInput=()=>{
   setFocused(false);releaseHeld();
-  if(locked())document.exitPointerLock();
+  if(locked())LockedDoc()?.exitPointerLock();
 };
-const setGameCapture=on=>{explicitCapture=!!on;releaseHeld();if(!captureWanted()&&locked())document.exitPointerLock();updateFocusText();};
+const setGameCapture=on=>{explicitCapture=!!on;releaseHeld();if(!captureWanted()&&locked())LockedDoc()?.exitPointerLock();updateFocusText();};
 const guestInputMode=state=>{
   guestCapture=!!state.capture;
   if(!state.game && os_game.active){os_game.active=false;explicitCapture=false;releaseHeld();}
-  if(!captureWanted()&&locked())document.exitPointerLock();
+  if(!captureWanted()&&locked())LockedDoc()?.exitPointerLock();
   updateFocusText();
 };
 const requestCapture=()=>{
@@ -191,7 +215,7 @@ const requestCapture=()=>{
 };
 const osMouse={
   captureMouse:()=>{hybridMouse=false;explicitCapture=true;requestCapture();return true;},
-  releaseMouse:()=>{hybridMouse=true;explicitCapture=false;releaseHeld();if(locked())document.exitPointerLock();},
+  releaseMouse:()=>{hybridMouse=true;explicitCapture=false;releaseHeld();if(locked())LockedDoc()?.exitPointerLock();},
   isMouseCaptured:locked,
   isRunning:()=>true,
 };
@@ -199,23 +223,23 @@ dispatchEvent(new Event('game-mouse-change'));
 addEventListener('game-mouse-change',updateFocusText);
 captureButton.addEventListener('click',()=>{
   if(os_game.mouse?.toggle())return;
-  if(document.pointerLockElement){
+  if(LockedDoc()){
     hybridMouse=true;explicitCapture=false;
-    os_game.ed?.releaseMouse?.();document.exitPointerLock();return;
+    os_game.ed?.releaseMouse?.();LockedDoc()?.exitPointerLock();return;
   }
   if(os_game.ed?.captureMouse?.())return;
   osMouse.captureMouse();
 });
-document.addEventListener('pointerlockchange',()=>{
+DocOn('pointerlockchange',()=>{
   // Releasing capture is a user preference, not another request to capture.
   // Guest hints and focus changes cannot undo it; the Capture button can.
   if(wasMouseLocked && !locked()){hybridMouse=true;explicitCapture=false;}
   wasMouseLocked=locked();
   releaseHeld();focused=locked();
-  document.body.classList.toggle('mouse-locked',!!document.pointerLockElement);updateFocusText();
+  document.body.classList.toggle('mouse-locked',!!LockedDoc());updateFocusText();
   dispatchEvent(new Event('game-mouse-change'));
 });
-document.addEventListener('pointerlockerror',()=>{tbKey.textContent='Mouse capture unavailable. Click the screen to retry.';});
+DocOn('pointerlockerror',()=>{tbKey.textContent='Mouse capture unavailable. Click the screen to retry.';});
 const overCanvas=e=>{const r=canvas.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom?r:null;};
 const mapAbs=(e,r)=>{msX=Math.max(0,Math.min(639,Math.round((e.clientX-r.left)/r.width*640)));msY=Math.max(0,Math.min(479,Math.round((e.clientY-r.top)/r.height*480)));};
 const keepsFocus=t=>t&&(t.closest('#frame')||t.closest('.win-pass')||t.closest('.keyswin')||t.closest('#keysbar')||(t.tagName==='BUTTON'&&t.closest('.toolbar')));
@@ -230,8 +254,8 @@ $("frame").addEventListener('mousedown',e=>{
   if(!relativeMouse())mapAbs(e,canvas.getBoundingClientRect());
   msB|=btnBit(e);notifyInput();
 });
-document.addEventListener('mouseup',e=>{if(msB){msB&=~btnBit(e);notifyInput();}});
-document.addEventListener('mousemove',e=>{
+DocOn('mouseup',e=>{if(msB){msB&=~btnBit(e);notifyInput();}});
+DocOn('mousemove',e=>{
   if(document.body.classList.contains('touch'))return;
   if(locked()){mouseDX+=e.movementX;mouseDY+=e.movementY;notifyInput();return;}
   if(captureWanted())return; // A released mouse cannot steer a waiting game.
@@ -247,30 +271,30 @@ document.addEventListener('mousemove',e=>{
     notifyInput();
   }
 });
-document.addEventListener('mousedown',e=>{if(releasesFocus(e.target)||!keepsFocus(e.target))setFocused(false);},true);
+DocOn('mousedown',e=>{if(releasesFocus(e.target)||!keepsFocus(e.target))setFocused(false);},true);
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('wheel',e=>{if(!focused)return;wheelZ+=e.deltaY>0?1:-1;e.preventDefault();notifyInput();},{passive:false});
 const keysToOS=e=>{
   if(e?.target?.closest?.('textarea,input,select,button,[role=button],[contenteditable=true]'))return false;
-  if(document.querySelector('.overlay.open:not(.free):not(.win-pass-owned)'))return false;
+  if((e?.target?.ownerDocument || document).querySelector('.overlay.open:not(.free):not(.win-pass-owned)'))return false;
   return focused||document.body.classList.contains('touch');
 };
-addEventListener('keydown',e=>{
+ViewOn('keydown',e=>{
   if(!keysToOS(e))return;
   if((e.ctrlKey||e.metaKey)&&e.code==='KeyV')return;
   if(e.code==='Escape'){
-    if(locked()){hybridMouse=true;explicitCapture=false;document.exitPointerLock();releaseHeld();return;}
+    if(locked()){hybridMouse=true;explicitCapture=false;LockedDoc()?.exitPointerLock();releaseHeld();return;}
     if(!e.repeat)keyboard.tap(KEY.Escape);e.preventDefault();return;
   }
   if(e.ctrlKey&&e.code==='BracketLeft'){if(!e.repeat)keyboard.tap(KEY.Escape);e.preventDefault();return;}
   const sc=KEY[e.code];if(sc!==undefined){if(!e.repeat)keyboard.down(e.code,sc);e.preventDefault();}
 });
-addEventListener('keyup',e=>{
+ViewOn('keyup',e=>{
   if(KEY[e.code]===undefined||e.code==='Escape')return;
   keyboard.up(e.code);
   if(keysToOS(e))e.preventDefault();
 });
-addEventListener('blur',releaseOSInput);
+ViewOn('blur',releaseOSInput);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseOSInput();});
 setInterval(()=>{if(os_game.active)notifyInput();},250);
 const inputMessage=()=>{
@@ -299,7 +323,7 @@ async function pasteToOS(text)
     pasting=false;
   }
 }
-addEventListener("paste",function (e) {
+ViewOn("paste",function (e) {
   if (!keysToOS(e))
     return;
   let text=e.clipboardData?.getData("text");
@@ -345,8 +369,8 @@ addEventListener("paste",function (e) {
   };
   const fauxOn = () => { fake = true; document.body.classList.add("fakefs"); fsUi(true); scrollTo(0, 0); };
   const fauxOff = () => { fake = false; document.body.classList.remove("fakefs"); fsUi(false); };
-  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
-  const fsExitReal = () => (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  const fsEl = () => frame.ownerDocument.fullscreenElement || frame.ownerDocument.webkitFullscreenElement;
+  const fsExitReal = () => (frame.ownerDocument.exitFullscreen || frame.ownerDocument.webkitExitFullscreen).call(frame.ownerDocument);
   $("fsBtn").addEventListener("click", () => {
     if (fsEl()) { fsExitReal(); return; }
     if (fake) { fauxOff(); return; }
@@ -359,15 +383,15 @@ addEventListener("paste",function (e) {
     else fauxOff();
   });
   const onFsChange = async () => {
-    const el = document.fullscreenElement || document.webkitFullscreenElement;
+    const el = frame.ownerDocument.fullscreenElement || frame.ownerDocument.webkitFullscreenElement;
     if (el === frame) {
       fsUi(true);
       try { await navigator.keyboard?.lock?.(); dbg("keyboard locked (Esc stays in the OS)"); } catch {}
       if (!document.body.classList.contains("touch")) setFocused(true);
     } else if (!fake) { fsUi(false); try { navigator.keyboard?.unlock?.(); } catch {} }
   };
-  document.addEventListener("fullscreenchange", onFsChange);
-  document.addEventListener("webkitfullscreenchange", onFsChange);
+  DocOn("fullscreenchange", onFsChange);
+  DocOn("webkitfullscreenchange", onFsChange);
   vv?.addEventListener("resize", layoutFs);          // keyboard open/close, URL-bar show/hide
   vv?.addEventListener("scroll", layoutFs);
   addEventListener("orientationchange", () => setTimeout(layoutFs, 80));
@@ -410,7 +434,7 @@ $("touchBtn").addEventListener("click",function () {
   if (xcOn) {
     addEventListener('pointermove',e=>moveCursor(e),{capture:true,passive:true});
     document.addEventListener('mouseleave',hideCursor);
-    addEventListener('blur',hideCursor);
+    ViewOn('blur',hideCursor);
   }
 }
 const touchMouse={
@@ -418,7 +442,7 @@ const touchMouse={
   move(x,y) {mouseDX+=x-msX;mouseDY+=y-msY;msX=x;msY=y;notifyInput();},
   buttons(mask) {msB=mask;notifyInput();},
 };
-document.addEventListener('pointerdown',e=>{
+DocOn('pointerdown',e=>{
   if(e.target===canvas){win_slot=-1;win_task=win_num=0;setFocused(true);}
   else if(e.target===os_game.ed?.inputCanvas())setFocused(false);
 },true);
@@ -430,15 +454,15 @@ MobileInput({frame:$("frame"),target:()=>{
 
 const speaker=Speaker();
 function SoundStart() {speaker.Resume().catch(error=>dbg("speaker: "+error.message,true));}
-addEventListener("pointerdown",SoundStart);
-addEventListener("keydown",SoundStart);
+ViewOn("pointerdown",SoundStart);
+ViewOn("keydown",SoundStart);
 
 //Desktop uses four guest CPUs. Only a stock boot failure can fall back to one;
 //running faults retain their stopped machine until restart.
 const isMobileDev=self.hemuBoot.mobile;
 let useSMP=self.hemuBoot.smp;
 const DISK_DELAY=isMobileDev?2500:0;   //phones keep the disk out of the boot's memory peak
-let snapshotInfo=null,bootFile=null;
+let snapshotInfo=null,bootFile=null,resumeSession=false;
 
 // ---- downloads the compressed RAM snapshot, the four-core one when useSMP ----
 let gzBytes;
@@ -450,7 +474,7 @@ async function downloadSnapshot(smp=useSMP,generation=osGen) {
   const early=self.hemuBoot;
   self.hemuBoot=null;
   if (early && early.smp!=smp) early.abort.abort();
-  const gz=await (early?.smp==smp?early.response:
+  const gz=await (early?.smp==smp && early.response?early.response:
     fetch(smp?"./hemu/live-smp.bin.gz":"./hemu/live.bin.gz",{priority:"high"}));
   if (!gz.ok) { progress("failed to fetch snapshot (" + gz.status + ")"); throw new Error("snapshot fetch"); }
   const total = +gz.headers.get("content-length") || 10300000;   // hemu/live.bin.gz
@@ -461,9 +485,6 @@ async function downloadSnapshot(smp=useSMP,generation=osGen) {
   return buf;
 }
 
-// ↻ Restart: reload the OS in place - tear down the running engine and re-boot it from the
-// snapshot WITHOUT reloading the page, so the user's other windows (videos, search, God Tools)
-// are left exactly as they are. C: is committed before stopping the worker.
 let restarting = false, osGen = 0;
 async function restartOS() {
   if (restarting) return; restarting = true;
@@ -476,7 +497,8 @@ async function restartOS() {
     releaseOSInput();guestCapture=false;explicitCapture=false;os_game.active=false;keyq.length=0;updateFocusText();
     ld.style.display = "";
     setLoad("restarting TempleOS…", 0);
-    if (!gzBytes) gzBytes = await downloadSnapshot();  // phones free the snapshot after boot - re-fetch
+    if (!stockBoot || !gzBytes) gzBytes = await downloadSnapshot();
+    snapshotInfo=null;resumeSession=false;stockBoot=true;
     if(await bootEngine(true)) {
       resetPause();fpsMeter.reset();updateFps();started=false;framed=false;
     }
@@ -490,7 +512,7 @@ async function restartOS() {
 $("restartBtn").addEventListener("click", restartOS);
 
 // the running engine, for the Disk window and the guest requests
-const engine=Machine({message:EngineMessage,error:EngineError,earlyWorker:self.hemuEarly});
+const engine=MachineShared({message:EngineMessage,error:EngineError,earlyWorker:self.hemuEarly});
 self.hemuEarly=null;
 const os_cfg=CfgRead();
 let cfg_status={ready:false,ok:true,msg:"Settings apply when TempleOS starts."};
@@ -572,7 +594,7 @@ export function OsWinPassStatus()
 
 async function WinPassApply()
 {//Neither passthrough code nor native guest code loads until selected.
-  let on=os_cfg.pass && win_pass_ready && !paused;
+  let on=os_cfg.pass && win_pass_ready && !paused && engine.owner!==false;
   if (!on) {
     win_pass_msg="Window passthrough is off.";
     if (os_cfg.pass) {
@@ -598,7 +620,7 @@ async function WinPassApply()
           detail:{msg:win_pass_msg}}));
       });
     await win_pass_load;
-    on=os_cfg.pass && win_pass_ready && !paused;
+    on=os_cfg.pass && win_pass_ready && !paused && engine.owner!==false;
   }
   if (win_pass && on!=win_pass_state) {
     win_pass_state=on;
@@ -647,7 +669,19 @@ function EngineError({msg,retained,started,cores})
 }
 function EngineMessage(m)
 {
-  if(m.cmd==="frame") {
+  if (m.cmd==="bootNeeded") {
+    OsBoot().catch(engineFail);
+  } else if (m.cmd==="owner") {
+    if (!m.value) releaseOSInput();
+    WinPassApply();
+    dispatchEvent(new CustomEvent("osownership",{detail:{owner:m.value}}));
+  } else if (m.cmd==="restarting" || m.cmd==="starting") {
+    if ((started || framed) && !restarting) osGen++;
+    started=framed=false;
+    ld.style.display="";setLoad("Restoring TempleOS…",0);
+    resetPause();releaseOSInput();
+    dispatchEvent(new CustomEvent("osstate",{detail:{ready:false}}));
+  } else if(m.cmd==="frame") {
     if(!framed&&stockBoot&&engine.kind==="worker"&&document.body.classList.contains("touch"))gzBytes=null;
     blit(new Uint8Array(m.buf),m.w,m.h,true,m);firstFrame();
   } else if(m.cmd==="snd")speaker.Tone(m.f,m.ns);
@@ -664,7 +698,7 @@ async function bootEngine(restart=false)
   const boot={gz:gzBytes,cores:useSMP?4:1,saved:snapshotInfo,fixedB:FIXED_B,
     diskBytes:importDisk,diskDelay:DISK_DELAY,...os_cfg};
   importDisk=null;
-  const ready=await (restart?engine.Restart(boot):engine.Start(boot));
+  const ready=await (restart?engine.Restart(boot):engine.Start(boot,resumeSession));
   if(ready) {speaker.Stop();speaker.Pause(snapshotInfo?.meta.paused??(restart?false:paused));framed=false;}
   return ready;
 }
@@ -683,6 +717,13 @@ const resetPause = () => { ++pauseRevision; paused = false; osFault=false; pause
 
 // ---- requests to the guest, matched to their replies by id; the Disk window shows the rest ----
 const diskMsg = (m) => {
+  if (m.cmd=="sessionSave") {
+    if (m.state=="saved") {
+      try {localStorage.setItem("tos-session-saved",String(m.savedAt));} catch {}
+    }
+    dispatchEvent(new CustomEvent("sessionsave",{detail:m}));
+    if (m.state=="error") OsNotice(m.msg);
+  }
   if (m.cmd=="diskSave") {
     os_disk.save=m;
     dispatchEvent(new CustomEvent("disksave",{detail:m}));
@@ -691,6 +732,7 @@ const diskMsg = (m) => {
   }
   if (m.cmd==="paused") {
     if(osFault&&!m.value)return;
+    if (paused!==m.value) pauseRevision++;
     paused=m.value;
     speaker.Pause(paused);
     fpsMeter.setPaused(paused);
@@ -726,6 +768,8 @@ const diskMsg = (m) => {
 };
 const osRequest=(message,transfer=[])=>engine.Request(message,transfer);
 const listOSDir=dir=>osRequest({cmd:"listDir",dir});
+export function OsFileRead(path) {return osRequest({cmd:"readFile",path});}
+export function OsSessionSave() {return osRequest({cmd:"saveSession"});}
 async function writeOSFile(path,bytes)
 {
   if (paused)
@@ -740,7 +784,7 @@ const launchInOS = (opts) => osRequest({cmd:"osLaunch",...opts});
 
 
 // ---- topbar: last key pressed (focus-state text is owned by setFocused) ----
-addEventListener("keydown", (e) => {
+ViewOn("keydown", (e) => {
   if (focused) return;
   let k = e.key; if (k === " ") k = "SPACE"; else if (k === "Meta") k = "WINDOWS"; else if (k.length === 1) k = k.toUpperCase();
   tbKey.textContent = k;
@@ -759,14 +803,30 @@ async function OsBoot()
   if(generation!==osGen) {
     return;
   }
-  snap=file?.snapshot;disk=file?.disk;
+  const attached=await engine.Connect?.();
+  notifyInput=()=>engine.post(inputMessage());
+  engine.Visible?.(!document.hidden);
+  if (attached && !attached.boot && !file && !boot_query.get("disk")) {
+    self.hemuBoot?.abort.abort();self.hemuBoot=null;
+    useSMP=attached.cores===4;
+    return;
+  }
+  if (!file && !boot_query.get("disk")) {
+    let store=await DiskStoreOpen(function () {},true);
+    try {
+      const session=await store?.SessionRead();
+      if (session) {snap=session.bytes;resumeSession=true;}
+    } catch (e) {dbg("Session restore unavailable: "+e.message,true);}
+    finally {store?.Close();}
+  }
+  snap=snap || file?.snapshot;disk=file?.disk;
   if (file?.kind=="snapshot")snap=file.bytes;
   else if (file?.kind=="disk")disk=file.bytes;
   if (!snap && !disk && boot_query.get("disk"))
     disk=await UrlDiskRead(boot_query.get("disk"));
   if (snap) {
     self.hemuBoot?.abort.abort();self.hemuBoot=null;
-    setLoad("Checking imported snapshot…",40);
+    setLoad(resumeSession?"Restoring saved session…":"Checking imported snapshot…",40);
     info=await SnapshotInspect(snap,{busProtocol:BUS_VERSION});
     if(generation!==osGen)return;
     if(!info)smp=(await StockInspect(snap)).cores===4;
@@ -779,7 +839,7 @@ async function OsBoot()
     }
     if(smp&&!self.crossOriginIsolated)throw new Error("This captured RAM needs shared memory for its four CPUs.");
     bytes=snap;
-    setLoad("loading imported snapshot…",50);
+    setLoad(resumeSession?"Loading saved session…":"Loading imported snapshot…",50);
   } else {
     engine.Warm(smp?4:1);
     bytes=await downloadSnapshot(smp);
@@ -788,7 +848,7 @@ async function OsBoot()
     return;
   }
   bootFile=file;importDisk=disk;snapshotInfo=info;stockBoot=!snap;useSMP=smp;gzBytes=bytes;
-  bootEngine();
+  await bootEngine(!!attached && !attached.boot);
   if (boot_query.get("run"))
     UrlRun(boot_query.get("run"),generation);
 }
@@ -821,7 +881,21 @@ function OsGen()
 
 const firstBoot=osGen;
 OsBoot().catch(error=>{if(firstBoot===osGen)engineFail(error);});
-addEventListener("pagehide",e=>{if(!e.persisted)engine.Stop();});
+addEventListener("pointerdown",function () {engine.Claim?.();},true);
+addEventListener("focus",function () {engine.Claim?.();});
+document.addEventListener("visibilitychange",function () {
+  engine.Visible?.(!document.hidden);
+  if (!document.hidden) engine.Claim?.();
+});
+addEventListener("pagehide",function (e) {
+  if (engine.Detach) {
+    if (e.persisted) engine.Visible(false);
+    else engine.Detach();
+  } else if (!e.persisted) engine.Stop();
+});
+addEventListener("pageshow",function (e) {
+  if (e.persisted) {engine.Visible?.(true);engine.Claim?.();}
+});
 export {$,dbg,engine,pal32,OsGen,releaseOSInput as OsInputRelease,releaseHeld as OsInputReset,
   setGameCapture as OsCaptureSet,holdOSForGame as OsHold,writeOSFile as OsFileWrite,listOSDir as OsDirList,
   uploadToHome as OsHomeWrite,launchInOS as OsLaunch};

@@ -28,14 +28,38 @@ try {
       if (!localStorage.getItem("tos-settings"))
         localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
       window.passEvents=[];window.passWindows=[];window.passRequests=[];
-      const Base=window.Worker;
-      window.Worker=class extends Base {
+      const WorkerBase=window.Worker,SharedBase=window.SharedWorker;
+      window.Worker=class extends WorkerBase {
         constructor(...args) {
           super(...args);
           this.addEventListener("message",function (e) {
             const m=e.data;
             if (cores==4 && m.cmd=="guestReady" && m.ok && !m.restored)
               this.postMessage({cmd:"pause",value:true});
+          });
+        }
+        postMessage(m,...args) {
+          if (m.cmd=="exportSnapshot" && window.failExport) {
+            window.failExport=false;
+            queueMicrotask(()=>this.onerror({message:"Worker lost during export"}));
+            return;
+          }
+          return super.postMessage(m,...args);
+        }
+      };
+      window.SharedWorker=class extends SharedBase {
+        constructor(...args) {
+          super(...args);
+          if (!String(args[0]).includes("MachineHub.js")) return;
+          const Send=this.port.postMessage.bind(this.port);
+          this.port.postMessage=function (envelope,...args) {
+            const m=envelope.value;
+            if (["post","request"].includes(envelope.op) &&
+                (m.cmd=="windows" || m.cmd=="exportSnapshot"))
+              window.passRequests.push(m);
+            return Send(envelope,...args);
+          };
+          this.port.addEventListener("message",function ({data:m}) {
             if (m.cmd=="windows")
               window.passWindows=m.windows.map(function (w) {
                 const {buf,...info}=w;return info;
@@ -48,22 +72,12 @@ try {
             }
           });
         }
-        postMessage(m,...args) {
-          if (m.cmd=="windows" || m.cmd=="exportSnapshot")
-            window.passRequests.push(m);
-          if (m.cmd=="exportSnapshot" && window.failExport) {
-            window.failExport=false;
-            queueMicrotask(()=>this.onerror({message:"Worker lost during export"}));
-            return;
-          }
-          return super.postMessage(m,...args);
-        }
       };
     },cores);
     page=await context.newPage();
     const errors=[];
     page.on("pageerror",function (e) {errors.push(e.message);});
-    let query="";
+    let query="?smp";
     if (cores==1)
       query="?single";
     await page.goto("http://localhost:8198/"+query,{waitUntil:"load"});
@@ -81,9 +95,10 @@ try {
       await page.locator("#diskBtn").click();
       assert.equal(await page.locator("#dlSnap").isDisabled(),true);
       assert.equal(await page.locator("#dlDisk").isDisabled(),true);
-      await page.waitForFunction(function () {
-        return document.getElementById("diskStatus").textContent.includes("Resume TempleOS");
-      });
+      assert.match(await page.evaluate(async function () {
+        const os=await import("/Adam/Os.js");
+        return os.engine.capture.msg;
+      }),/Resume TempleOS/,"the AP capture barrier explains why export is disabled");
       await page.locator("#diskClose").click();
       await page.locator("#pauseBtn").click();
       await page.waitForFunction(function () {
@@ -163,6 +178,10 @@ try {
     assert.equal(await page.evaluate(async function () {
       return (await import("/Adam/BootFile.js")).BootFileRead();
     }),null,"successful restore consumes the saved boot file");
+    await page.locator("#diskClose").click();
+    assert.equal(await page.locator("#godWin").isVisible(),true,
+      "the restored browser tool remains open after native ownership cleanup");
+    await page.locator("#godClose").click();
     await page.locator("#settingsBtn").click();
     assert.equal(await page.locator("#windowPassthrough").isChecked(),true,
       "browser passthrough preference survives snapshot reload");

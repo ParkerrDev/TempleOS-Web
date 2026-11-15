@@ -16,8 +16,9 @@ try {
   const ranges=[],errors=[];
   let range_mode="normal";
   await context.route("https://archive.org/**",route=>route.fulfill({body:bytes,contentType:content_type}));
-  await context.route("https://templeosweb-files.parkerrhunt.workers.dev/archive/**",async function (route) {
-    const range=route.request().headers().range,m=/bytes=(\d+)-(\d+)/.exec(range);
+  await context.route("**/archive/**",async function (route) {
+    const query=new URL(route.request().url()).searchParams.get("range"),
+      range="bytes="+query,m=/bytes=(\d+)-(\d+)/.exec(range);
     assert(m,"clip reads use closed byte ranges");
     const first=Number(m[1]),last=Math.min(Number(m[2]),bytes.length-1);
     ranges.push([first,last]);
@@ -33,9 +34,12 @@ try {
       "Content-Range":"bytes "+first+"-"+last+"/"+bytes.length,ETag:'"fixture"'},
       body:bytes.subarray(first,last+1)});
   });
-  page=await context.newPage();
+  page=await context.newPage();page.setDefaultTimeout(30000);
   page.on("pageerror",e=>errors.push(e.message));
   await page.goto("http://localhost:8184/Apps/Search/Player.html?f=videos/test.mp4&t=7.15&n=Clip%20check");
+  assert.equal(await page.locator(".clip-panel").count(),0,"Viewing does not load clip controls");
+  await page.getByRole("button",{name:"Clip controls",exact:true}).click();
+  await page.getByLabel("Clip start",{exact:true}).fill("0:07.15");
   await page.getByLabel("Clip end").fill("0:10.65");
   const downloading=page.waitForEvent("download");
   await page.getByRole("button",{name:"Export clip",exact:true}).click();
@@ -64,6 +68,8 @@ try {
     bytes=await readFile(new URL("tmp/clip/source."+ext,root));
     content_type=ext=="webm"?"video/webm":"video/x-matroska";
     await page.goto("http://localhost:8184/Apps/Search/Player.html?f=videos/test."+ext+"&t=7.15&n=Clip%20check");
+    await page.getByRole("button",{name:"Clip controls",exact:true}).click();
+    await page.getByLabel("Clip start",{exact:true}).fill("0:07.15");
     await page.getByLabel("Clip end").fill("0:10.65");
     const pending=page.waitForEvent("download");
     await page.getByRole("button",{name:"Export clip",exact:true}).click();

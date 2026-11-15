@@ -1,63 +1,72 @@
-// Convert.js - shared in-browser video converter (ffmpeg.wasm, vendored, single-thread: no
-// cross-origin isolation needed). Used by the Terry Search video windows (SearchWin.js) and the
-// standalone player page (Player.html). The input bytes come from archive.org's /cors/ endpoint -
-// their /download/ nodes send no CORS so fetch() can't read those, but /cors/ serves full files
-// with CORS (verified live; Range is ignored there).
-//
-// One ffmpeg instance + one cached input file per page; conversions are serialized (a second
-// request waits). Unsupported formats re-encode a `win`-second window from `start` (x264
-// ultrafast 480p + aac - ~4x realtime on the 2007 640x480 screen captures); .mkv/.mov first try
-// a stream-copy remux (instant h264/aac mp4, the Firefox/Safari case).
+//Archive.org's /cors/ endpoint allows reads but ignores byte ranges.
+const CORSBASE="https://archive.org/cors/TerryADavis_TempleOS_Archive/",
+  CONVERT_LOCK="terry-convert-"+crypto.randomUUID();
 
-const CORSBASE = "https://archive.org/cors/TerryADavis_TempleOS_Archive/";
-let ff = null, curF = null, busy = false;
-
-export async function convertVideo({ f, start = 0, win = 600, onStatus = () => {} }) {
-  while (busy) { onStatus("waiting for another conversion to finish…"); await new Promise((r) => setTimeout(r, 500)); }
-  busy = true;
-  try {
-    if (!ff) {
-      onStatus("loading converter (32 MB, one-time)…");
-      const { FFmpeg } = await import("./FFmpeg/ffmpeg/index.js");
-      ff = new FFmpeg();
-      await ff.load({ coreURL: new URL("./FFmpeg/core/ffmpeg-core.js", import.meta.url).href,
-                      wasmURL: new URL("./FFmpeg/core/ffmpeg-core.wasm", import.meta.url).href });
+export async function convertVideo({f,start=0,win=600,onStatus=function () {},
+    signal=new AbortController().signal})
+{
+  signal.throwIfAborted();
+  const {FFmpeg}=await import("./FFmpeg/ffmpeg/index.js");
+  signal.throwIfAborted();
+  onStatus("Waiting for converter…");
+  return navigator.locks.request(CONVERT_LOCK,{signal},async function () {
+    let ff=new FFmpeg(),reader=null,parts=[],got=0,at=0,all,out,result,
+      full=false,ext=f.split(".").pop().toLowerCase();
+    function Cancel()
+    {
+      ff.terminate();
     }
-    if (curF !== f) {
-      if (curF !== null) { try { await ff.deleteFile("in"); } catch {} }
-      curF = null;
-      const resp = await fetch(CORSBASE + f.split("/").map(encodeURIComponent).join("/"));
-      if (!resp.ok) throw new Error("archive.org fetch failed (" + resp.status + ")");
-      const total = Number(resp.headers.get("content-length")) || 0;
-      if (total > 400e6) throw new Error("file too large to convert in-browser (" + (total / 1e6 | 0) + " MB > 400 MB)");
-      const rd = resp.body.getReader(), parts = []; let got = 0;
-      for (;;) { const { done, value } = await rd.read(); if (done) break;
-        parts.push(value); got += value.length;
-        onStatus("downloading video… " + (total ? Math.round(got * 100 / total) + "%" : (got / 1e6 | 0) + " MB")); }
-      const all = new Uint8Array(got); let o = 0; for (const p of parts) { all.set(p, o); o += p.length; }
-      await ff.writeFile("in", all);
-      curF = f;
+    function Progress({time})
+    {
+      onStatus("Converting… "+Math.min(100,Math.round((time || 0)/1e6*100/win))+"%");
     }
-    try { await ff.deleteFile("out.mp4"); } catch {}
-    const ext = (f.split(".").pop() || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-    const prog = ({ time }) => onStatus("converting… " + Math.min(100, Math.round((time || 0) / 1e6 * 100 / win)) + "%");
-    ff.on("progress", prog);
-    let full = false;
+    signal.addEventListener("abort",Cancel,{once:true});
     try {
-      if ((ext === "mkv" || ext === "mov") && start === 0) {       // fast path: no re-encode
-        onStatus("remuxing (no re-encode)…");
-        full = (await ff.exec(["-i", "in", "-c", "copy", "-movflags", "faststart", "out.mp4"])) === 0;
+      onStatus("Loading converter…");
+      await ff.load({coreURL:new URL("./FFmpeg/core/ffmpeg-core.js",import.meta.url).href,
+	wasmURL:new URL("./FFmpeg/core/ffmpeg-core.wasm",import.meta.url).href});
+      signal.throwIfAborted();
+      let response=await fetch(CORSBASE+f.split("/").map(encodeURIComponent).join("/"),{signal}),
+	total=Number(response.headers.get("content-length")) || 0;
+      if (!response.ok || total>400e6) {
+	await response.body?.cancel();
+	if (!response.ok) throw new Error("Archive.org fetch failed ("+response.status+").");
+	throw new Error("File exceeds the 400 MB conversion limit.");
+      }
+      reader=response.body.getReader();
+      while (true) {
+	let {done,value}=await reader.read();
+	if (done) break;
+	got+=value.length;
+	if (got>400e6) throw new Error("File exceeds the 400 MB conversion limit.");
+	parts.push(value);
+	onStatus("Downloading video… "+(got/1e6).toFixed(1)+" MB");
+      }
+      all=new Uint8Array(got);
+      for (let part of parts) {all.set(part,at);at+=part.length;}
+      parts=[];
+      await ff.writeFile("in",all);
+      ff.on("progress",Progress);
+      if ((ext=="mkv" || ext=="mov") && !start) {
+	onStatus("Remuxing without re-encoding…");
+	full=await ff.exec(["-i","in","-c","copy","-movflags","faststart","out.mp4"])==0;
       }
       if (!full) {
-        onStatus("converting… 0%");
-        const rc = await ff.exec(["-ss", String(start), "-i", "in", "-t", String(win),
-          "-vf", "scale=-2:480", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-          "-c:a", "aac", "-b:a", "96k", "-movflags", "faststart", "out.mp4"]);
-        if (rc !== 0) throw new Error("conversion failed (ffmpeg rc " + rc + ")");
+	onStatus("Converting… 0%");
+	result=await ff.exec(["-ss",String(start),"-i","in","-t",String(win),
+	  "-vf","scale=-2:480","-c:v","libx264","-preset","ultrafast","-crf","28",
+	  "-c:a","aac","-b:a","96k","-movflags","faststart","out.mp4"]);
+	if (result) throw new Error("Conversion failed (ffmpeg rc "+result+").");
       }
-    } finally { ff.off("progress", prog); }
-    const out = await ff.readFile("out.mp4");
-    onStatus("");
-    return { blobUrl: URL.createObjectURL(new Blob([out.buffer], { type: "video/mp4" })), windowed: !full, start, win };
-  } finally { busy = false; }
+      out=await ff.readFile("out.mp4");signal.throwIfAborted();onStatus("");
+      return {blobUrl:URL.createObjectURL(new Blob([out.buffer],{type:"video/mp4"})),
+	windowed:!full,start,win};
+    } catch (error) {
+      signal.throwIfAborted();throw error;
+    } finally {
+      signal.removeEventListener("abort",Cancel);
+      ff.terminate();
+      if (reader) await reader.cancel().catch(function () {});
+    }
+  });
 }

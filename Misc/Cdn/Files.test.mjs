@@ -148,6 +148,9 @@ async function Ask(env,url,init)
 {//The Worker's answer, and what it fetched to give it.
   let res;
   asked=[];
+  if (url.includes("/archive/") && init?.headers?.Range) {
+    url=new URL(url);url.searchParams.set("range",init.headers.Range.replace(/^bytes=/,""));
+  }
   res=await WORKER.fetch(new Request(url,init),env);
   return [res,asked];
 }
@@ -212,6 +215,11 @@ const WORKER=(await import("./Files.js")).default;
 
 {
   let res,up,range,path,env={},url=FILES+"archive/"+ITEM+"/"+VIDEO;
+  res=await WORKER.fetch(new Request(url+"?range=10-19"),env);
+  assert.equal(res.status,206,"Range URL survives intermediaries that omit the header");
+  assert.equal(res.headers.get("Content-Range"),"bytes 10-19/"+SIZE);
+  res=await WORKER.fetch(new Request(url,{headers:{Range:"bytes=10-19"}}),env);
+  assert.equal(res.status,206,"Already-open players can still send header-only ranges");
   [res,up]=await Ask(env,url,{headers:{Range:"bytes=10-19",Cookie:"c=1",
 	Authorization:"Bearer x",Origin:"https://a.test"}});
   assert.equal(res.status,206,"One range of a listed video is passed on");

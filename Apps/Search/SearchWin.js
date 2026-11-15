@@ -2,14 +2,10 @@
 //built by TranscriptsMk.mjs; Search.HC scores them in a worker.
 //Each hit links to its video on archive.org at the hit's time, and any
 //passage, the shown results or a whole transcript can be copied.
-import {WinAdd,WinDress,WinFocus,WinRaise} from "../../Adam/WinMgr.js";
+import {WinAdd,WinRaise} from "../../Adam/WinMgr.js";
 import {$} from "../../Adam/Os.js";
-import {ArchiveFile,ArchiveWatch} from "./Archive.js";
-import {ClipPanel} from "./Clip/Panel.js";
-const clip_style=document.createElement("link");
-clip_style.rel="stylesheet";clip_style.href=new URL("./Clip/Panel.css",import.meta.url);
-document.head.append(clip_style);
-
+import {ArchiveWatch} from "./Archive.js";
+import {VideoOpen,VideoSeek} from "./VideoWin.js";
 const CSS='    /* Terry transcript search window */\n'+
   '    #tsWin { display:flex; flex-direction:column; gap:8px; width:min(860px,94vw); height:min(82vh,720px); margin:0; padding:10px; }\n'+
   '    #tsBar { display:flex; gap:8px; align-items:center; flex:0 0 auto; }\n'+
@@ -59,17 +55,6 @@ const CSS='    /* Terry transcript search window */\n'+
   '    .ts-line { background:#fff; color:#000; font-size:12px; line-height:1.0; padding:2px 8px; word-break:break-word; }\n'+
   '    .ts-line .ts-ts { color:var(--red); text-decoration:underline; margin-right:6px; }\n'+
   '    .ts-line .ts-ts:hover { color:#fff; background:var(--red); }\n'+
-  '    /* floating video windows (▶ in Terry Search): real TempleOS chrome via dress(); many at once */\n'+
-  '    .vidwin { padding:6px; }\n'+
-  '    .vidwin video { display:block; width:100%; max-height:62vh; background:#000; }\n'+
-  '    .vidwin .ts-verr { background:#000; }\n'+
-  '    .ts-verr { color:#fff; padding:12px; font-size:12px; line-height:1.0; }\n'+
-  '    .ts-verr a { color:var(--yellow); }\n'+
-  '    .ts-verr button, .ts-convbar button { width:auto; font-size:12px; padding:2px 10px; }\n'+
-  '    .ts-convst { color:var(--yellow); min-height:1.3em; margin-top:8px; }\n'+
-  '    .ts-convdone video { display:block; width:100%; max-height:62vh; background:#000; }\n'+
-  '    .ts-convbar { display:flex; gap:10px; align-items:center; background:#000; color:#fff; font-size:12px; padding:4px 8px; }\n'+
-  '    .ts-convbar span:last-child { color:var(--yellow); }\n'+
   '    /* [?] hover help: attribution + the operator cheatsheet, only when you ask for it */\n'+
   '    #tsHelp { margin-left:auto; position:relative; color:var(--blue); font-size:12px; padding:2px 4px; user-select:none; }\n'+
   '    #tsHelpPop { display:none; position:absolute; right:0; top:calc(100% + 4px); z-index:7; width:min(430px, 80vw);\n'+
@@ -112,90 +97,16 @@ const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">"
 const hms = (s) => { s = Math.max(0, s | 0); const h = (s / 3600) | 0, m = ((s % 3600) / 60) | 0, ss = s % 60;
   return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(ss).padStart(2, "0"); };
 const url=(h,sec)=>ArchiveWatch(h,sec==null?null:Math.max(0,sec-2));
-// ---- VIDEO WINDOWS: each ▶ opens the video in its own draggable TempleOS window (real
-//      chrome via WinDress); any number can play at once. They stack in their own
-//      z tier ABOVE the search overlay, persist after it closes, and [X] destroys them.
-//      Streams the original from archive.org. COEP is credentialless (_headers), which lets a
-//      cross-origin <video> through without CORS; .mkv plays in Chromium-family browsers, and
-//      what a browser cannot decode offers a conversion or a download. ----
-const dl=(h,sec)=>ArchiveFile(h.f)+(sec?"#t="+Math.max(0,sec-2):"");
-let vidN = 0;
-const vidWins = new Set();
-const openVideoWindow = (h, sec, play=true) => {
-  const w = document.createElement("div");
-  w.className = "win vidwin";
-  w.dataset.title = `${h.t} · ${h.d}`;
-  const x = document.createElement("span"); x.className = "close"; x.textContent = "[X]";
-  const v = document.createElement("video");
-  v.controls=true;v.autoplay=play;v.playsInline=true;v.preload=play?"metadata":"none";
-  v.src = dl(h, sec);
-  const t0 = Math.max(0, (sec || 0) - 2);
-  v.addEventListener("loadedmetadata", () => { if (t0 && Math.abs(v.currentTime - t0) > 2) { try { v.currentTime = t0; } catch {} } });
-  v.addEventListener("error", () => {
-    const ext = (h.f.split(".").pop() || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-    const er = document.createElement("div"); er.className = "ts-verr";
-    er.innerHTML = `this browser can't decode the .${ext} original (archive.org never web-encoded it).<br>` +
-      `<button class="ts-conv">▶ Convert &amp; play here</button> - in-browser ffmpeg, nothing uploaded - ` +
-      `or <a href="${dl(h)}" download>download</a> for VLC/mpv (moment: ${hms(sec || 0)}).` +
-      `<div class="ts-convst"></div>`;
-    v.replaceWith(er);
-    const stl = er.querySelector(".ts-convst"), go = er.querySelector(".ts-conv");
-    // convert a window from the searched moment and play it RIGHT IN THIS WINDOW
-    const doConvert = async (startSec) => {
-      const { convertVideo } = await import("./Convert.js");
-      const r = await convertVideo({ f: h.f, start: startSec, win: 600,
-        onStatus: (m) => { stl.textContent = m; } });
-      const nv = document.createElement("video");
-      nv.controls = true; nv.autoplay = true; nv.playsInline = true; nv.src = r.blobUrl;
-      const off = Math.max(0, (sec || 0) - r.start);
-      nv.addEventListener("loadedmetadata", () => { if (off > 1 && off < (nv.duration || 1e9)) { try { nv.currentTime = off; } catch {} } }, { once: true });
-      const box = document.createElement("div");
-      box.appendChild(nv);
-      if (r.windowed) {
-        const bar = document.createElement("div"); bar.className = "ts-convbar";
-        const lbl = document.createElement("span"); lbl.textContent = `converted ${hms(r.start)} to ${hms(r.start + r.win)}`;
-        const nx = document.createElement("button"); nx.textContent = `⏭ next ${r.win >= 120 ? Math.round(r.win / 60) + " min" : r.win + " s"}`;
-        const nst = document.createElement("span");
-        nx.addEventListener("click", () => { nx.disabled = true;
-          doConvert(r.start + r.win).catch((e) => { nst.textContent = "✗ " + e.message; nx.disabled = false; }); });
-        bar.append(lbl, nx, nst); box.appendChild(bar);
-      }
-      const cur = w.querySelector("video, .ts-verr, .ts-convdone");
-      box.className = "ts-convdone";
-      if (cur && cur.parentNode) { const old = w.querySelector("video"); if (old && old.src.startsWith("blob:")) URL.revokeObjectURL(old.src); cur.replaceWith(box); }
-      w._tsVideo = nv;                                   // transcript [h:mm:ss] seeking targets the new video
-    };
-    go.addEventListener("click", () => { go.disabled = true;
-      doConvert(Math.max(0, (sec || 0) - 5)).catch((e) => { stl.textContent = "✗ " + e.message; go.disabled = false; }); });
-  });
-  const clip=ClipPanel(h,Math.max(0,(sec || 0)-2),(sec || 0)+20);
-  w.append(x,v,clip.element);
-  document.body.appendChild(w);
-  const n = vidN++ % 7;
-  w.dataset.floating = "1";
-  w.style.position = "fixed";
-  w.style.width = "min(560px, 92vw)";
-  w.style.left = Math.max(8, innerWidth / 2 - 280 + n * 30) + "px";
-  w.style.top = (84 + n * 28) + "px";
-  w._tsF = h.f; w._tsVideo = v;
-  vidWins.add(w);
-  const destroy = () => { clip.Close(); const vv = w.querySelector("video") || v;
-    try { vv.pause(); if (vv.src && vv.src.startsWith("blob:")) URL.revokeObjectURL(vv.src); vv.removeAttribute("src"); vv.load(); } catch {}
-    w.remove(); vidWins.delete(w); };
-  WinDress(w, { onClose: destroy });
-  WinFocus(w);
-  return w;
-};
-// a transcript [h:mm:ss] click seeks an open window of that same video (raising it)
-const seekOpenWindow = (f, sec) => {
-  for (const w of vidWins) if (w._tsF === f && w.isConnected) {
-    const v = w._tsVideo; if (!v || !v.src) continue;
-    v.currentTime = Math.max(0, sec - 2); v.play().catch(() => {});
-    WinFocus(w);
-    return true;
-  }
-  return false;
-};
+function openVideoWindow(video,seconds,play=true)
+{
+  let result=VideoOpen(video,Math.max(0,seconds-2),play);
+  if (!play) result.player.ShowClip(true);
+  return result.win;
+}
+function seekOpenWindow(file,seconds)
+{
+  return VideoSeek(file,Math.max(0,seconds-2));
+}
 // highlight matched terms (longest first; sentinel chars so replacements can't corrupt the HTML)
 const hi = (text, terms) => { let h = esc(text);
   for (const term of [...new Set(terms || [])].sort((a, b) => b.length - a.length).slice(0, 12)) {

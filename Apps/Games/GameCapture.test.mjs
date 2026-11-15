@@ -13,7 +13,7 @@ const container={replaceChild(next){nodes.set(next.id,next);}};
 const flush=()=>new Promise(resolve=>queueMicrotask(resolve));
 class Node extends EventTarget {
   constructor(id=''){
-    super();this.id=id;this.parentNode=container;this.value='';this.textContent='';this.style={};
+    super();this.id=id;this.ownerDocument=document;this.parentNode=container;this.value='';this.textContent='';this.style={};
     const classes=new Set();
     this.classList={contains:name=>classes.has(name),add:(...names)=>names.forEach(name=>classes.add(name)),
       remove:(...names)=>names.forEach(name=>classes.delete(name))};
@@ -45,7 +45,7 @@ class Worker {
   terminate(){}
 }
 const context=vm.createContext({
-  ...protocol,KEY,KeyBytes,KeyInput,document,console,URL,Event,Worker,Int32Array,Uint8Array,SharedArrayBuffer,Atomics,
+  ...protocol,KEY,KeyBytes,KeyInput,WinFind:id=>document.getElementById(id),document,console,URL,Event,Worker,Int32Array,Uint8Array,SharedArrayBuffer,Atomics,
   DEMOS:[],sourceDocument,sourceString,TextEncoder,TextDecoder,fetch:async()=>new Response('// test source'),PointerEvent:true,crossOriginIsolated:true,performance,
   Speaker:class {resume(){} tone(){}},Framebuffer:class {present(){}},
   addEventListener:windowEvents.addEventListener.bind(windowEvents),
@@ -110,7 +110,7 @@ const gamesPath=new URL('./GamesRun.js',import.meta.url);
 const games=readFileSync(gamesPath,'utf8').replace(/^import[\s\S]*?;\n/gm,'').replace(/^export \{[^}]*\};?$/gm,'');
 context.previewOverlay=document.getElementById('editorOverlay');
 context.os_game={get ed(){return context.__holycEditor;},mouse:null};
-context.ed_game={};context.ed_view={};
+context.ed_game={};context.ed_view={};context.WinRestore=()=>{};
 new vm.Script('(function(){'+games+'})()',{filename:gamesPath.pathname}).runInContext(context);
 assert.equal(context.os_game.mouse.toggle(),false,'inactive previews leave desktop capture alone');
 context.previewOverlay.classList.add('open');

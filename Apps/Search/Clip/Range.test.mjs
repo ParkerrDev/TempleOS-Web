@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import {RangeSource} from "./Range.js";
 
 let requests=[],mode="normal",total=33554440;
-globalThis.fetch=async function (url,options) {
-  let [first,last]=options.headers.Range.match(/\d+/g).map(Number),headers,body;
+globalThis.fetch=async function (url) {
+  let [first,last]=new URL(url).searchParams.get("range").split("-").map(Number),headers,body;
   requests.push([first,last]);last=Math.min(last,total-1);
   if (mode=="ignored") return new Response("full file",{status:200});
   headers={"Content-Range":"bytes "+first+"-"+last+"/"+total,

@@ -1,6 +1,7 @@
 //The site as Netlify serves it. "node Misc/Server.mjs" serves the repo on PORT
 //(8080) with _headers and _redirects applied. "node Misc/Server.mjs Site" copies
 //the files Netlify publishes into Site/, as Misc/NetlifyBuild.sh does.
+import {execFileSync} from "node:child_process";
 import {createServer} from "node:http";
 import {cpSync,existsSync,readdirSync,readFileSync,statSync,writeFileSync} from "node:fs";
 import {dirname,extname,join,normalize,resolve} from "node:path";
@@ -28,6 +29,16 @@ const MIME={".html":"text/html; charset=UTF-8",
   ".svg":"image/svg+xml",".jpg":"image/jpeg",".ttf":"font/ttf",
   ".woff2":"font/woff2",".gif":"image/gif",".mp3":"audio/mpeg",
   ".webp":"image/webp",".mp4":"video/mp4",".webm":"video/webm"};
+let BUILD=process.env.COMMIT_REF;
+if (!/^[a-f0-9]{40}$/.test(BUILD || "")) {
+  try {BUILD=execFileSync("git",["rev-parse","HEAD"],{cwd:ROOT,encoding:"utf8"}).trim();}
+  catch {BUILD="development";}
+}
+function BuildMark(html)
+{
+  return html.replace('<span id="tb-build" title="Site build">build development</span>',
+    '<span id="tb-build" title="Site build '+BUILD+'">build '+BUILD.slice(0,8)+'</span>');
+}
 const CACHE_DFT="public,max-age=0,must-revalidate";//Netlify's own
 
 function PatRegExp(pat)
@@ -113,7 +124,7 @@ function Publish(dir)
   const pin=readFileSync(join(ROOT,"Siblings.txt"),"utf8").split("\n").find(line=>line.startsWith("hemu ")).split(" ")[2],
     page=resolve(ROOT,dir,"index.html"),html=readFileSync(page,"utf8");
   if (!/^[a-f0-9]{40}$/.test(pin)) throw Error("Missing HEMU publication pin");
-  writeFileSync(page,html.replace('stock="./hemu/"',
+  writeFileSync(page,BuildMark(html).replace('stock="./hemu/"',
     'stock="https://templeosweb-files.parkerrhunt.workers.dev/HEMU/'+pin+'/"'));
   console.log("Published "+cnt+" files to "+dir+"/");
 }
@@ -147,7 +158,7 @@ function Serve(req,res)
     return;
   }
   h["Content-Type"]=MIME[extname(rel)] || "application/octet-stream";
-  res.writeHead(200,h).end(readFileSync(join(ROOT,rel)));
+  res.writeHead(200,h).end(rel==="index.html"?BuildMark(readFileSync(join(ROOT,rel),"utf8")):readFileSync(join(ROOT,rel)));
 }
 
 export function ServeReq(req,res)

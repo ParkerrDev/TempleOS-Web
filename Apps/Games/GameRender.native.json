@@ -1,0 +1,10 @@
+{
+  "sourceSha256": "b39cef444c5ee0efe5e9c98b45a8fa208a856e88055ed401cdb8df817f9d2522",
+  "backend": {
+    "engine": "qemu",
+    "accelerator": "kvm",
+    "version": "QEMU emulator version 11.1.2"
+  },
+  "output": "766B83549C349CD3\n4FF901ACA051D6CA\nBE464E9D084E4323\n",
+  "except": ""
+}
