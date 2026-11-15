@@ -1,6 +1,5 @@
 //The Terry window's sprite: TempleOS GR frames, gzipped, each decoded only
 //when it is drawn (decoding all of them first held the page for a second).
-import {toRGBA} from "../Sprites/SpriteCodec.js";
 import {GrLoad} from "../Sprites/Gr.js";
 import {createSpritePlayer} from "../Sprites/SpritePlayer.js";
 
@@ -9,7 +8,7 @@ export async function playTerrySprite(canvas)
 //for the largest frame (as index.html sizes it), so nothing moves.
   let res=await fetch(new URL("./TerrySprites.gr.gz",import.meta.url)),
     bytes,len,clips,clip,frames,i,offset,player,w=0,h=0,last_w=0,last_h=0;
-  const seq=[],{decodeGR}=await GrLoad(),ctx=canvas.getContext("2d");
+  const seq=[],{decodeGR,toRGBA}=await GrLoad(),ctx=canvas.getContext("2d");
   if (!res.ok)
     throw new Error("Cannot load Terry sprites.");
   bytes=new Uint8Array(await new Response(res.body.pipeThrough(

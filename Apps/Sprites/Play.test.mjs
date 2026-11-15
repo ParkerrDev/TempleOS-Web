@@ -11,7 +11,7 @@ const source=await readFile(SPRITE_PLAYER,"utf8"),
   dir=new URL("../../tmp/sprites/",import.meta.url);
 await mkdir(dir,{recursive:true});
 const path=new URL("player.zip",dir).pathname;
-await writeFile(path,spritePackage(encoded,3,1,100,source));
+await writeFile(path,spritePackage(codec,encoded,3,1,100,source));
 const files=JSON.parse(execFileSync("python3",["-c",
   "import sys,zipfile,json,base64; z=zipfile.ZipFile(sys.argv[1]); print(json.dumps({n:base64.b64encode(z.read(n)).decode() for n in z.namelist()}))",path],{encoding:"utf8"}));
 for (let i=0;i<frames.length;i++)

@@ -16,6 +16,9 @@ WinAdd(`
     <div id="settingsBody">
       <label><input id="showHeader" type="checkbox"> Show header introduction</label>
       <label><input id="showFooter" type="checkbox"> Show footer credits</label>
+      <label><input id="fastGraphics" type="checkbox"> Fast graphics</label>
+      <p>Accelerates TempleOS drawing for smoother games. Turn off to run
+        the original drawing routines. Changes apply immediately.</p>
       <label for="frameRate">TempleOS refresh rate</label>
       <select id="frameRate">
         <option value="0">Uncapped</option>
@@ -47,6 +50,7 @@ export function Open()
   $("showFooter").checked=!document.documentElement.classList.contains("hide-footer");
   $("frameRate").value=String(cfg.rate);
   $("biosRepeat").checked=cfg.repeat;
+  $("fastGraphics").checked=cfg.fast;
   $("settingsOverlay").classList.add("open");
   $("settingsOverlay").setAttribute("aria-modal","true");
   WinFocus($("settingsWin"));
@@ -56,11 +60,14 @@ export function Open()
 function Status(state)
 {
   $("settingsStatus").textContent=state.msg || "Settings applied.";
+  if(typeof state.fast==="boolean")
+    $("fastGraphics").checked=state.fast;
 }
 addEventListener("ossettings",function (e) {Status(e.detail);});
 addEventListener("osrestored",function (e) {
   $("frameRate").value=String(e.detail.rate);
   $("biosRepeat").checked=e.detail.repeat;
+  $("fastGraphics").checked=e.detail.fast;
 });
 
 $("frameRate").addEventListener("change",function (e) {
@@ -68,6 +75,9 @@ $("frameRate").addEventListener("change",function (e) {
 });
 $("biosRepeat").addEventListener("change",function (e) {
   OsCfg({repeat:e.target.checked});
+});
+$("fastGraphics").addEventListener("change",function (e) {
+  OsCfg({fast:e.target.checked});
 });
 $("settingsClose").addEventListener("click",Close);
 $("settingsOverlay").addEventListener("pointerdown",function (e) {

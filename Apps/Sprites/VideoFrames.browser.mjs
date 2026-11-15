@@ -5,10 +5,11 @@ import {createServer} from "node:http";
 import {once} from "node:events";
 import {chromium} from "playwright-core";
 import {ServeReq} from "../../Misc/Server.mjs";
-import {encodeGIF} from "./SpriteCodec.js";
+import {GrNew} from "./Gr.js";
 
 const root=new URL("../../",import.meta.url),dir=new URL("tmp/sprites/",root);
 await mkdir(dir,{recursive:true});
+const {encodeGIF}=await GrNew(await readFile(new URL("build/Gr.wasm",root)));
 const raw=new Uint8Array(64*32*3*10);
 for (let frame=0;frame<10;frame++)
   for (let pixel=0;pixel<64*32;pixel++)

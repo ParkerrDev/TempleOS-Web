@@ -44,8 +44,12 @@ assert.equal(at,bundle.length);
 console.log("Native GR: dimensions, padding, palette, malformed files and "+count+" exact Terry frames pass.");
 
 if (process.argv.includes("--native")) {
+  const sources={};
+  for (const name of ["Color","Formats","Noise"])
+    sources[name]=await readFile(new URL(name+".HC",import.meta.url),"utf8");
+  const expand=text=>text.replace(/#include "([^"]+)"/g,(_,name)=>expand(sources[name]));
   const {QemuRun}=await import("../../hemu/holyc-wasm/tests/oracle/Qemu.mjs"),
-    code=source+String.raw`
+    code=expand(source)+String.raw`
 U0 SpriteNativeCheck(U8 *name,I64 width,I64 height)
 {
   I64 size,loaded,w,h,out_size,x,y;

@@ -2,9 +2,8 @@
 import {execFileSync} from 'node:child_process';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {gzipSync} from 'node:zlib';
-import {quantize} from '../Sprites/SpriteCodec.js';
 import {GrNew} from '../Sprites/Gr.js';
-const {encodeGR}=await GrNew(readFileSync(new URL('../../build/Gr.wasm',import.meta.url)));
+const {encodeGR,quantize}=await GrNew(readFileSync(new URL('../../build/Gr.wasm',import.meta.url)));
 const clips=[];
 for(const name of ['terrydancing','terry']) {
   const file=new URL(`../../Misc/TerryGifs/${name}.gif`,import.meta.url);

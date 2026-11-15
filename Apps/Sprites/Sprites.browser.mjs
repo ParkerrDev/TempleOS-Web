@@ -6,12 +6,11 @@ import {once} from "node:events";
 import {chromium} from "playwright-core";
 import {ServeReq} from "../../Misc/Server.mjs";
 import {GrNew} from "./Gr.js";
-import {toRGBA} from "./SpriteCodec.js";
 
 const root=new URL("../../",import.meta.url),tmp=new URL("tmp/sprites/",root),
   codec=await GrNew(await readFile(new URL("build/Gr.wasm",root))),
   pixels=Uint8Array.from({length:17*3},(_,i)=>i%17==16?255:i%16),
-  gr=codec.encodeGR(pixels,17,3),rgba=toRGBA(pixels,17,3),
+  gr=codec.encodeGR(pixels,17,3),rgba=codec.toRGBA(pixels,17,3),
   animation=await readFile(new URL("Apps/Terry/TerrySprites.gr.gz",root)),
   player=await readFile(new URL("Apps/Sprites/Play.HC",root),"utf8"),
   server=createServer(ServeReq).listen(0,"127.0.0.1");

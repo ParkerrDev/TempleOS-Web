@@ -53,21 +53,28 @@ loader. [HEMU's runtime documentation](https://github.com/ParkerrDev/HEMU/blob/m
 machine boundary, build, checks and supported behavior.
 
 HEMU executes guest instructions through an interpreter and an **x86-64 → WASM
-block JIT** (`hemu/Kernel/Jit.js`). TempleOS's own graphics functions execute
-through those paths; HEMU does not replace named drawing functions with its
-own implementations. The engine runs in workers so it does not block the page.
+block JIT** (`hemu/Kernel/Jit.js`). **Fast graphics** is on by default for smoother
+games. It replaces selected stock drawing routines with HolyC implementations.
+Turn it off in Settings to execute the original drawing instructions. The change
+applies immediately and the choice is remembered on this browser. Both modes use
+the same engine and instruction-level JIT optimizations.
 
-Imported full machine saves include their original engine; an older save may
-therefore retain its old drawing replacements. Restart uses the current engine
-while keeping saved C: files, rather than preserving the old running RAM state.
+Acceleration checks the complete original code ranges, including helpers it
+bypasses. Edited routines and unsupported inputs fall back to guest execution.
+Polygon assembly, transforms and callbacks run as guest code in both modes;
+fast mode accelerates triangle filling and depth spans. Fast graphics changes
+instruction counts and timing, so it is not a claim of instruction-for-instruction
+fidelity.
 
-Removing those replacements does not establish complete PC or cycle accuracy.
-The current machine still resumes prepared snapshots, observes completed frames
-through TempleOS's symbols, integrates mouse state with the guest, and applies
-requested display-rate settings. These boundaries are documented in HEMU.
-The guest clock follows host elapsed time; achievable rendering speed depends
-on the workload and host. Input timing reaches the emulated clock, without a
-claim that its entropy or timing matches physical hardware.
+Full machine saves retain their engine and graphics mode. Older embedded engines
+without the switch require Restart to use the current engine; Restart keeps saved
+C: files and reloads the desktop instead of preserving running RAM.
+
+Neither mode establishes complete PC or cycle accuracy. The machine resumes
+prepared snapshots, observes completed frames through TempleOS symbols, integrates
+mouse state, and applies requested display-rate settings. The guest clock follows
+host elapsed time; rendering speed depends on the workload and host. Input timing
+reaches that clock without a claim that its entropy matches physical hardware.
 
 The top FPS counter reads the digits painted in the last completed TempleOS
 frame. A covered label is unknown; repeated frames cannot invent new samples.
@@ -222,7 +229,7 @@ same compiler and runtime.
 
 ## Sprite Studio and current game packages
 
-Open Sprite Studio from the desktop menu to convert PNG/JPEG/WebP images, GIFs, or video clips to the TempleOS palette. It stays closed on arrival, including visits through old `/#sprites` links. It opens in a draggable desktop window and keeps the current conversion when closed and reopened. Exports include transparent .GR frames, a PNG sheet, an animated GIF, and a ZIP with .GR frames and Play.HC. Clips default to 25 fps, with options up to 50 fps, 600 frames and 20 million pixels. Conversion runs locally: videos use the browser decoder and bounded canvas frame extraction; GIFs and browsers without video-frame callbacks still use the vendored FFmpeg, and palette mapping runs in a separate worker. Supported browsers do not download the 31 MB FFmpeg module for video conversion. The editor visibly credits greg0-4's PNG2GR for the conversion inspiration and format reference. The uncompressed standard-palette .GR reader and writer are shared HolyC in `Apps/Sprites/Gr.HC`, compiled for Sprite Studio and the Terry player. Native QEMU checks compare them with TempleOS's own `DCLoad` and `DCSave`; `npm run test:sprites` checks the browser preview, downloads, MP4/WebM frame selection, cancellation and cleanup (Python and FFmpeg are needed for its independent fixtures). Exported `Play.HC` restores native window settings and cleans up images on exit or load failure; `node Apps/Sprites/Play.test.mjs --native` verifies the actual package in TempleOS under QEMU.
+Open Sprite Studio from the desktop menu to convert PNG/JPEG/WebP images, GIFs, or video clips to the TempleOS palette. It stays closed on arrival, including visits through old `/#sprites` links. It opens in a draggable desktop window and keeps the current conversion when closed and reopened. Exports include transparent .GR frames, a PNG sheet, an animated GIF, and a ZIP with .GR frames and Play.HC. Clips default to 25 fps, with options up to 50 fps, 600 frames and 20 million pixels. Conversion runs locally: videos use the browser decoder and bounded canvas frame extraction; GIFs and browsers without video-frame callbacks still use the vendored FFmpeg, and palette mapping runs in a separate worker. Supported browsers do not download the 31 MB FFmpeg module for video conversion. The editor visibly credits greg0-4's PNG2GR for the conversion inspiration and format reference. Palette quantization, smoothing, diffusion, RGBA conversion, GIF encoding and stored ZIP/CRC encoding run in the same HolyC codec as the standard-palette .GR reader and writer (`Apps/Sprites/Gr.HC`). Sprite Studio and the Terry player share its compiled WASM; JavaScript handles browser input, buffers and downloads. `node Apps/Sprites/Color.test.mjs --native` compares 297 pre-port outputs with both WASM and original TempleOS. Native GR checks compare GR files with TempleOS's own `DCLoad` and `DCSave`; `npm run test:sprites` checks the browser preview, downloads, MP4/WebM frame selection, cancellation and cleanup (Python and FFmpeg are needed for its independent fixtures). Exported `Play.HC` restores native window settings and cleans up images on exit or load failure; `node Apps/Sprites/Play.test.mjs --native` verifies the actual package in TempleOS under QEMU.
 
 Natural shading is the default. It fits the unmodified source color with up to three nearby-hue entries from the stock palette, balancing display-RGB error against the contrast of the resulting pattern. There is no saturation boost or penalty for choosing gray. A fixed blue-noise mask keeps the same pattern across animation frames. Local source smoothing removes isolated compression flecks, with exact palette artwork and transparency preserved. Dither strength defaults to 35%; lower values reduce texture and 0% selects solid colors. Reconvert after changing it. The mask is reproducible with `node Apps/Sprites/SpriteNoiseMk.mjs`. Error diffusion and nearest-color matching remain selectable. Playback caches ImageData and uses elapsed time to recover after late frames; GIF exports distribute fractional delays across frames to preserve the clip duration.
 

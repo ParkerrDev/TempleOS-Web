@@ -21,7 +21,8 @@ try {
   await context.route("https://templeosweb-*.workers.dev/**",
     function (route) {route.abort();});
   await context.addInitScript(function () {
-    localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
+    if (!localStorage.getItem("tos-settings"))
+      localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
     window.guestEvents=[];
     window.guestKeys=[];
     const Base=window.Worker;
@@ -37,6 +38,13 @@ try {
         });
       }
       postMessage(m,...args) {
+        if(m.cmd==="set"&&window.rejectGraphicsChange) {
+          window.rejectGraphicsChange=false;
+          const actual=window.guestEvents.filter(e=>e.cmd==="settings").at(-1);
+          queueMicrotask(()=>this.dispatchEvent(new MessageEvent("message",{
+            data:{...actual,ok:false,msg:"The CPUs could not pause for a graphics change."}})));
+          return;
+        }
         if (m.cmd=="input")
           window.guestKeys.push(...m.keys);
         return super.postMessage(m,...args);
@@ -52,6 +60,30 @@ try {
   await page.waitForFunction(()=>window.guestEvents.some(m=>
     m.cmd=="guestReady" && m.ok),null,{timeout:30000});
   assert.equal(await page.locator("#osNotice").isVisible(),false);
+  await page.locator("#settingsBtn").click();
+  assert.equal(await page.locator("#fastGraphics").isChecked(),true);
+  await page.locator("#fastGraphics").uncheck();
+  await page.waitForFunction(()=>window.guestEvents.some(m=>
+    m.cmd=="settings" && m.ok && m.fast===false));
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("tos-settings")).fast),false);
+  await page.reload({waitUntil:"load"});
+  await page.waitForFunction(()=>window.guestEvents.some(m=>
+    m.cmd=="guestReady" && m.ok),null,{timeout:30000});
+  assert.equal(await page.evaluate(()=>window.guestEvents.filter(m=>m.cmd==="settings").at(-1).fast),false);
+  await page.locator("#settingsBtn").click();
+  assert.equal(await page.locator("#fastGraphics").isChecked(),false);
+  await page.evaluate(()=>window.rejectGraphicsChange=true);
+  await page.locator("#fastGraphics").click();
+  await page.waitForFunction(()=>window.guestEvents.filter(m=>m.cmd==="settings").at(-1).ok===false);
+  assert.equal(await page.locator("#fastGraphics").isChecked(),false);
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("tos-settings")).fast),false);
+  await page.locator("#settingsClose").click();
+  await page.locator("#settingsBtn").click();
+  assert.equal(await page.locator("#fastGraphics").isChecked(),false);
+  await page.locator("#fastGraphics").check();
+  await page.waitForFunction(()=>window.guestEvents.some(m=>
+    m.cmd=="settings" && m.ok && m.fast===true));
+  await page.locator("#settingsClose").click();
   await page.evaluate(async function () {
     const {FONT}=await import("/hemu/holyc-wasm/src/runtime/font.js");
     window.guestText=function (ox=0,oy=0) {

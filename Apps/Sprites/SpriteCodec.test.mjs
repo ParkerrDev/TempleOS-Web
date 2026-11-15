@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
-import {PALETTE,quantize,toRGBA,encodeGIF,MAX_FRAMES,spritePackage,SPRITE_PLAYER} from './SpriteCodec.js';
+import {PALETTE,MAX_FRAMES,spritePackage,SPRITE_PLAYER} from './SpriteCodec.js';
 import {GrNew} from './Gr.js';
-const {encodeGR,decodeGR}=await GrNew(readFileSync(new URL('../../build/Gr.wasm',import.meta.url)));
+const codec=await GrNew(readFileSync(new URL('../../build/Gr.wasm',import.meta.url)));
+const {encodeGR,decodeGR,quantize,toRGBA,encodeGIF}=codec;
 const width=17,height=3, pixels=Uint8Array.from({length:width*height},(_,i)=>i%17===16?255:i%16);
 const rgba=toRGBA(pixels,width,height);
 assert.deepEqual(quantize(rgba,width,height),pixels);
@@ -39,6 +40,7 @@ for(const rgb of [[75,55,43],[210,167,143],[128,128,128],[40,52,60],[200,211,220
 }
 assert.throws(()=>quantize(solid([128,128,128]),64,64,'stable',128,{strength:101}),/strength/);
 assert.throws(()=>quantize(solid([128,128,128]),64,64,'stable',128,{strength:NaN}),/strength/);
+assert.throws(()=>quantize(solid([128,128,128]),64,64,'stable',128,{strength:"35"}),/strength/);
 assert.deepEqual(quantize(rgba,width,height,'stable',128,{strength:100}),pixels,'Dithering must preserve existing palette artwork');
 for(const rgb of [[35,48,70],[46,61,85]]) {
  const mapped=quantize(solid(rgb),64,64,'stable'),mean=meanRGB(mapped);
@@ -70,6 +72,8 @@ for(const [dx,dy] of [[4,0],[0,4],[4,4]]) {
  assert(changed/compared>0.3,'Dithering must not repeat a visible four-pixel grid');
 }
 const timed=encodeGIF(Array.from({length:30},()=>new Uint8Array([6])),1,1,1000/30);
+for(const delay of [NaN,Infinity,"40",0,19,655351])
+ assert.throws(()=>encodeGIF([Uint8Array.of(6)],1,1,delay),/frame delay/);
 let pos=13+32*3,totalTicks=0,frameCount=0;
 while(timed[pos]!==59) {
  const block=timed[pos++];
@@ -85,6 +89,6 @@ if(process.argv[2]){
  const path=process.argv[2];writeFileSync(path+'.GR',gr);writeFileSync(path+'.rgba',rgba);
  const reversed=Uint8Array.from(pixels,(_,i)=>pixels[pixels.length-i-1]);
  writeFileSync(path+'.gif',encodeGIF([pixels,reversed],width,height,100));
- writeFileSync(path+'.zip',spritePackage([pixels,reversed].map(f=>encodeGR(f,width,height)),width,height,100,readFileSync(SPRITE_PLAYER,"utf8")));
+ writeFileSync(path+'.zip',spritePackage(codec,[pixels,reversed].map(f=>encodeGR(f,width,height)),width,height,100,readFileSync(SPRITE_PLAYER,"utf8")));
 }
 console.log('Sprite codec: palette, unboosted warm/cool tones, zero-strength solid colors, stable dithering, local smoothing, alpha, GR round-trip, GIF timing and frame limits passed.');

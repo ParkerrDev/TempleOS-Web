@@ -488,13 +488,15 @@ let stockBoot=true;
 
 function CfgRead()
 {
-  let cfg={rate:0,repeat:false},saved;
+  let cfg={rate:0,repeat:false,fast:true},saved;
   try {
     saved=JSON.parse(localStorage.getItem("tos-settings"));
     if ([0,30,60,120].includes(saved?.rate))
       cfg.rate=saved.rate;
     if (typeof saved?.repeat=="boolean")
       cfg.repeat=saved.repeat;
+    if (typeof saved?.fast=="boolean")
+      cfg.fast=saved.fast;
   } catch (e) {
     //Blocked storage leaves settings at their defaults.
   }
@@ -508,6 +510,8 @@ export function OsCfg(change)
       os_cfg.rate=change.rate;
     if (typeof change.repeat=="boolean")
       os_cfg.repeat=change.repeat;
+    if (typeof change.fast=="boolean")
+      os_cfg.fast=change.fast;
     engine.post({cmd:"set",...os_cfg});
     cfg_status={ready:false,ok:true,msg:"Applying settings…"};
     dispatchEvent(new CustomEvent("ossettings",{detail:cfg_status}));
@@ -614,11 +618,20 @@ const diskMsg = (m) => {
     if ([0,30,60,120].includes(cfg_status.rate))
       os_cfg.rate=cfg_status.rate;
     os_cfg.repeat=cfg_status.repeat;
+    if (typeof cfg_status.fast==="boolean")
+      os_cfg.fast=cfg_status.fast;
     dispatchEvent(new CustomEvent("osrestored",{detail:{...os_cfg}}));
     return;
   }
   if (m.cmd==="settings") {
     cfg_status={...m,ready:true};
+    if(typeof m.fast==="boolean") {
+      os_cfg.fast=m.fast;
+      if(!m.ok) {
+        try {localStorage.setItem("tos-settings",JSON.stringify(os_cfg));}
+        catch {dbg("Settings work for this visit; browser storage is unavailable.");}
+      }
+    }
     dispatchEvent(new CustomEvent("ossettings",{detail:cfg_status}));
     return;
   }

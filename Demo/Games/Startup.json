@@ -28,12 +28,12 @@
     },
     "fixtureLoaderSha256": "b61d98bce6cfc8c963979f43b56c714872b9e3bc7c67453b78e348a9b6ad0b83",
     "guestHarnessSha256": "a15db5b9cd7b47dfe9db8f1f23c5d1278685be6837daf098ab350340e7814dad",
-    "machineRuntimeSha256": "f89f5f3a28d4a89439f18b34e8a45961889d39ed6e0318dbef55568ed4e32720",
+    "machineRuntimeSha256": "d2d24a9c9838d0043d9f787859bbf84edbeeb31db8232584394ec9f19f2b6c2d",
     "siblings": [
-      "hemu https://github.com/ParkerrDev/HEMU d53a3f154d22dfd9f29d3c94dcd9ecf080e60795"
+      "hemu https://github.com/ParkerrDev/HEMU 3eeeb7db6a37099e70e50fac6c746e892dce69dd"
     ],
-    "compiler": "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm 27496218ff1beb91345a7ca9b1987d1d3c1dfce6",
-    "engineSha256": "c040bff72788173418356a72281b6670d8edd69d9cc0a724a1ff9665f47571a7"
+    "compiler": "holyc-wasm https://github.com/ParkerrDev/HolyC-wasm 42e2bad802f6a028ce4dcacc154aeedc4a12aa16",
+    "engineSha256": "eae570fc0e7a4ddfc443bbd7fb7f8db7e43eac900af18f37e0a97009f68b0f6e"
   },
   "inputs": {
     "Demo/Games/Test/Start.HC": "2a33006accabad62f28559b584101a4c00e265601e15d549d4fa9afd0b5553b8",

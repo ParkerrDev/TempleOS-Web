@@ -1,4 +1,4 @@
-import { PALETTE, MAX_PIXELS, MAX_FRAMES, toRGBA, encodeGIF, spritePackage, SPRITE_PLAYER } from './SpriteCodec.js';
+import { PALETTE, MAX_PIXELS, MAX_FRAMES, spritePackage, SPRITE_PLAYER } from './SpriteCodec.js';
 import {createSpritePlayer} from './SpritePlayer.js';
 import {GrLoad} from './Gr.js';
 import {FrameSize,VideoFrames,VideoDimensions} from './Frames.js';
@@ -102,7 +102,7 @@ $('controls').onsubmit=async e=>{
     if(isGR){
       if (source.size>gr_codec.maxSize) throw new Error("Sprite data exceeds the maximum GR size.");
       const gr=gr_codec.decodeGR(new Uint8Array(await source.arrayBuffer()));
-      size={width:gr.width,height:gr.height};raw=[toRGBA(gr.indices,gr.width,gr.height)];
+      size={width:gr.width,height:gr.height};raw=[gr_codec.toRGBA(gr.indices,gr.width,gr.height)];
     }
     else if(isVideo && HTMLVideoElement.prototype.requestVideoFrameCallback) {
       videoAbort=new AbortController();
@@ -148,7 +148,7 @@ $('controls').onsubmit=async e=>{
 };
 function download(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 $('gr').onclick=()=>download(gr_codec.encodeGR(frames[Number($('frame').value)],size.width,size.height),'Sprite.GR','application/octet-stream');
-$('gif').onclick=()=>download(encodeGIF(frames,size.width,size.height,delayMs),'Sprite.gif','image/gif');
+$('gif').onclick=()=>download(gr_codec.encodeGIF(frames,size.width,size.height,delayMs),'Sprite.gif','image/gif');
 let player_source;
 $('package').onclick=async()=>{
   const selected=frames,{width,height}=size,delay=delayMs;
@@ -160,12 +160,12 @@ $('package').onclick=async()=>{
     })().catch(error=>{player_source=null;throw error;});
     const program=await player_source,
       files=selected.map(frame=>gr_codec.encodeGR(frame,width,height));
-    download(spritePackage(files,width,height,delay,program),'TempleOS-Sprite.zip','application/zip');
+    download(spritePackage(gr_codec,files,width,height,delay,program),'TempleOS-Sprite.zip','application/zip');
   } catch (error) {status(error.message);}
 };
 $('png').onclick=()=>{
   const cols=Math.min(frames.length,Math.max(1,Math.floor(2048/size.width))),rows=Math.ceil(frames.length/cols);
   const canvas=document.createElement('canvas');canvas.width=cols*size.width;canvas.height=rows*size.height;const ctx=canvas.getContext('2d');
-  frames.forEach((f,i)=>ctx.putImageData(new ImageData(toRGBA(f,size.width,size.height),size.width,size.height),(i%cols)*size.width,Math.floor(i/cols)*size.height));
+  frames.forEach((f,i)=>ctx.putImageData(new ImageData(gr_codec.toRGBA(f,size.width,size.height),size.width,size.height),(i%cols)*size.width,Math.floor(i/cols)*size.height));
   canvas.toBlob(blob=>{if(blob)download(blob,'Sprite-sheet.png','image/png');else status('PNG export failed. Try a smaller clip.');},'image/png');
 };

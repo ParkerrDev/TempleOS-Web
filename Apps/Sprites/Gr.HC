@@ -1,3 +1,4 @@
+//GR format investigation was informed by greg0-4's PNG2GR.
 U8 *sprite_gr_error=NULL;
 
 public U8 *SpriteGrError()
@@ -81,3 +82,6 @@ public U8 *SpriteGrRead(U8 *src,I64 size,I64 *_width,I64 *_height)
   *_width=width;*_height=height;
   return res;
 }
+
+#include "Color"
+#include "Formats"
