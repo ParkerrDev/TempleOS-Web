@@ -4,7 +4,7 @@ export function PointerDrag(e,Move,End)
 {//One captured pointer owns a border gesture until release or cancellation.
   let el=e.currentTarget,id=e.pointerId,win=el.ownerDocument.defaultView,
     done=false;
-  function Finish()
+  function Finish(ev)
   {
     if (done)
       return;
@@ -18,7 +18,7 @@ export function PointerDrag(e,Move,End)
       el.releasePointerCapture(id);
     cancel=null;
     if (End)
-      End();
+      End(ev);
   }
   function Moved(ev)
   {
@@ -28,7 +28,7 @@ export function PointerDrag(e,Move,End)
   function Released(ev)
   {
     if (ev.pointerId==id)
-      Finish();
+      Finish(ev);
   }
   if (cancel)
     cancel();

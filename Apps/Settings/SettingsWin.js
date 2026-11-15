@@ -1,5 +1,6 @@
 import {WinAdd,WinFocus} from "../../Adam/WinMgr.js";
-import {$,OsCfg,OsCfgStatus} from "../../Adam/Os.js";
+import {$,OsCfg,OsCfgStatus,OsWinPassStatus} from "../../Adam/Os.js";
+import {WinDrawCfg} from "../../Adam/WinDraw.js";
 
 WinAdd(`
 #settingsWin { width:min(520px,94vw); margin:0; }
@@ -16,9 +17,20 @@ WinAdd(`
     <div id="settingsBody">
       <label><input id="showHeader" type="checkbox"> Show header introduction</label>
       <label><input id="showFooter" type="checkbox"> Show footer credits</label>
+      <label><input id="nativeDrawing" type="checkbox"> Native window drawing</label>
+      <p>Draw browser window borders with HolyC and TempleOS's own font.
+        This works independently of the emulated machine.</p>
+      <label><input id="windowPassthrough" type="checkbox"> Window passthrough</label>
+      <p>Use a mouse to drag a TempleOS window's title out of the screen onto the
+	browser desktop. Drag it back to return it. Menu, Help and God Tools
+	can be dragged into TempleOS as native documents. Settings stays here.
+	Pausing returns windows so browser controls stay available.</p>
+      <p>Full-screen programs, captured-mouse programs and windows with
+        custom drawing stay on the TempleOS screen.</p>
+      <p id="windowPassStatus" role="status"></p>
       <label><input id="fastGraphics" type="checkbox"> Web Optimization</label>
       <p>Uses drawing shortcuts for better performance.
-        Turn off to run TempleOS's original drawing code.</p>
+	Turn off to run TempleOS's original drawing code.</p>
       <label for="frameRate">TempleOS refresh rate</label>
       <select id="frameRate">
         <option value="0">Uncapped</option>
@@ -51,6 +63,9 @@ export function Open()
   $("frameRate").value=String(cfg.rate);
   $("biosRepeat").checked=cfg.repeat;
   $("fastGraphics").checked=cfg.fast;
+  $("nativeDrawing").checked=WinDrawCfg().native;
+  $("windowPassthrough").checked=cfg.pass;
+  $("windowPassStatus").textContent=OsWinPassStatus();
   $("settingsOverlay").classList.add("open");
   $("settingsOverlay").setAttribute("aria-modal","true");
   WinFocus($("settingsWin"));
@@ -64,6 +79,14 @@ function Status(state)
     $("fastGraphics").checked=state.fast;
 }
 addEventListener("ossettings",function (e) {Status(e.detail);});
+addEventListener("windrawsettings",function (e) {
+  $("nativeDrawing").checked=e.detail.native;
+});
+addEventListener("windrawerror",function (e) {Status({msg:e.detail});});
+addEventListener("winpasssettings",function (e) {
+  $("windowPassthrough").checked=OsCfg().pass;
+  $("windowPassStatus").textContent=e.detail.msg;
+});
 addEventListener("osrestored",function (e) {
   $("frameRate").value=String(e.detail.rate);
   $("biosRepeat").checked=e.detail.repeat;
@@ -78,6 +101,12 @@ $("biosRepeat").addEventListener("change",function (e) {
 });
 $("fastGraphics").addEventListener("change",function (e) {
   OsCfg({fast:e.target.checked});
+});
+$("nativeDrawing").addEventListener("change",function (e) {
+  WinDrawCfg({native:e.target.checked});
+});
+$("windowPassthrough").addEventListener("change",function (e) {
+  OsCfg({pass:e.target.checked});
 });
 $("settingsClose").addEventListener("click",Close);
 $("settingsOverlay").addEventListener("pointerdown",function (e) {

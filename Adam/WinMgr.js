@@ -1,6 +1,6 @@
 import {PointerDrag} from "./WinPointer.js";
+import "./WinDraw.js";
 const $=(id)=>document.getElementById(id);
-const CELL=12; //a text cell: the site's 12px text is the 8x8 font at 1.5x
 let z_top=1000; //one stack for every window, overlay and video window
 
 function Clamp(n,lo,hi)
@@ -8,9 +8,9 @@ function Clamp(n,lo,hi)
   return Math.min(Math.max(n,lo),hi);
 }
 
-function Snap(n)
+function Snap(n,cell)
 {//Windows move and change size in whole text cells, as TempleOS's do.
-  return Math.round(n/CELL)*CELL;
+  return Math.round(n/cell)*cell;
 }
 
 function Frac(pos,range)
@@ -80,24 +80,32 @@ function BorderDown(e)
   if (e.currentTarget.classList.contains("fsmode"))
     return;
   let w=e.currentTarget,t=e.target,r=w.getBoundingClientRect(),x,y,
-    width,height,move=t.closest(".wbar,.wvert") ||
-      t==w && (e.clientY<r.top+CELL || e.clientX<r.left+CELL),
+    width,height,moved=false,cell=w.clientLeft,move=t.closest(".wbar,.wvert") ||
+      t==w && (e.clientY<r.top+cell || e.clientX<r.left+cell),
     sy=t.classList.contains("wszb") || t.classList.contains("wszcorner"),
     sx=t.classList.contains("wszr") || t.classList.contains("wszcorner");
   function Move(ev)
   {
-    let dx=Snap(ev.clientX-e.clientX),dy=Snap(ev.clientY-e.clientY);
+    let dx=Snap(ev.clientX-e.clientX,cell),
+      dy=Snap(ev.clientY-e.clientY,cell);
     if (move) {
-      w.style.left=Clamp(x+dx,4*CELL-width,innerWidth-4*CELL)+"px";
-      w.style.top=Clamp(y+dy,0,innerHeight-2*CELL)+"px";
+      if (dx || dy) moved=true;
+      w.style.left=Clamp(x+dx,4*cell-width,innerWidth-4*cell)+"px";
+      w.style.top=Clamp(y+dy,0,innerHeight-2*cell)+"px";
     } else {
       if (sx)
-        w.style.width=Math.max(width+dx,12*CELL)+"px";
+        w.style.width=Math.max(width+dx,12*cell)+"px";
       if (sy)
-        w.style.height=Math.max(height+dy,5*CELL)+"px";
+        w.style.height=Math.max(height+dy,5*cell)+"px";
       w.dataset.sized="1";
       w.dispatchEvent(new Event("winsize"));
     }
+  }
+  function End(ev)
+  {
+    if (moved && ev?.type=="pointerup")
+      w.dispatchEvent(new CustomEvent("winmoved",{bubbles:true,
+        detail:{clientX:ev.clientX,clientY:ev.clientY}}));
   }
   if (e.button || t.closest(".wmenu,.close,.wsv,.wsh") || !move && !sx && !sy)
     return;
@@ -106,7 +114,7 @@ function BorderDown(e)
   y=parseFloat(w.style.top);
   width=w.offsetWidth;
   height=w.offsetHeight;
-  PointerDrag(e,Move);
+  PointerDrag(e,Move,End);
 }
 
 function WinDoc(w)
@@ -130,9 +138,9 @@ function WinScrolled(e)
     return;
   w._doc=el;
   w._sh.style.left="calc("+Frac(el.scrollLeft,el.scrollWidth-el.clientWidth)+
-    "% - 6px)";
+    "% - var(--wcell)/2)";
   w._sv.style.top="calc("+Frac(el.scrollTop,el.scrollHeight-el.clientHeight)+
-    "% - 6px)";
+    "% - var(--wcell)/2)";
 }
 
 function BoxDown(e)
@@ -183,6 +191,7 @@ export function WinTitle(w,title)
 //DocBorderLstDraw puts a document's desc.
   let unit=title+"...",n=Math.ceil(15/unit.length)+1,
     s=w.querySelector(".wtitle > span");
+  w.dataset.winTitle=title;
   s.textContent=unit.repeat(2*n);
   s.style.animationDuration=n*unit.length/8+"s";
   w.querySelector(".wvert > span").textContent=title.split(" ")[0].slice(0,8);

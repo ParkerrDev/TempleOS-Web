@@ -82,6 +82,37 @@ frame. A covered label is unknown; repeated frames cannot invent new samples.
 Pausing retains the frozen frame's label. Direct-WASM editor previews use their
 own worker's frame sequence for a separate FPS label.
 
+### Window settings
+
+**Native window drawing** draws browser window frames with a small HolyC/WASM
+renderer using TempleOS's font, `TextBorder` and `DrawWinScroll`. Titles and
+controls use the native 8x8 grid. Turn it off for the existing browser styling.
+The renderer loads only when selected and works before boot and while paused.
+Browser content and accessible controls remain HTML; this does not turn a web
+form into a TempleOS application. Native task addresses and editor status are
+omitted from browser frames. The reference check compares focused and unfocused
+borders, moving titles and scrollbar states with original V5.03 drawing.
+
+**Window passthrough** lets you use a mouse to drag a compatible title bar across the
+screen edge to move that live window onto the page. Drag its title back over the
+screen to return it. Its task, document, keyboard, mouse and scroll controls still
+run inside TempleOS. Menu, Help and God Tools can move the other way: dragging
+them onto the screen creates actual native DolDoc windows whose buttons invoke
+the same browser actions. Their Return to browser button restores the web tool.
+
+Passthrough supports bordered documents and their native sprites and scrollbars.
+Custom drawing callbacks, persistent desktop graphics, fullscreen programs and
+captured-mouse programs stay on the TempleOS screen. Settings, editors, Sprite
+Studio, file pickers and media tools stay on the page. Pausing or disabling
+passthrough returns windows to their original environment; resuming enables
+dragging again. Restart and snapshot restore also return windows before further
+dragging. Old saved engines require Restart to enable passthrough.
+
+Both window options are off initially and remembered independently of Web
+Optimization. Detached documents use isolated native pixel buffers. HEMU stops
+the other CPUs during that bounded drawing transaction and restores the shared
+drawing state before they resume.
+
 The screen is always a whole number of device pixels per 8x8 character cell, so one letter has one
 shape everywhere. `FrameBuf.js` scales each frame itself with integer maths and hands the browser
 only whole-number zooms: at a scale like 1.25, `image-rendering:pixelated` puts some GPU sample
@@ -124,9 +155,9 @@ the fixed app programs with `Misc/AppsBuild.mjs`, generates module preloads,
 runs the fast checks, and builds HEMU. It then writes CDN redirects and publishes
 the served files with `node Misc/Server.mjs Site`.
 
-The six fixed HolyC programs are the sprite codec (`Gr.HC`), search parser
+The fixed HolyC programs are the sprite codec (`Gr.HC`), search parser
 (`Query.HC`), MP4 and MKV planners, God Tools' timing-bit queue (`GodBits.HC`),
-and HolyC-fmt. Their WASM is built once into `build/`; using these features
+HolyC-fmt and the optional window renderer (`WinDraw.HC`). Their WASM is built once into `build/`; using these features
 loads it directly. Editable programs and games still need the compiler at run
 time.
 

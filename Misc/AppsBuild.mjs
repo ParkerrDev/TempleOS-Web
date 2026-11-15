@@ -5,6 +5,7 @@ import {compileHolyC} from "../hemu/holyc-wasm/src/compiler.js";
 
 const root=new URL("../",import.meta.url),programs=[
   ["holyc-fmt/HolyCFmt.HC",FMT_EXPORTS],
+  ["Adam/WinDraw.HC",["WinDraw","WinDrawTitle","WinDrawStride"]],
   ["Apps/Sprites/Gr.HC",["SpriteGrRead","SpriteGrWrite","SpriteGrError",
     "SpriteGrMax","SpriteQuantize","SpriteRGBA","SpriteGif","SpriteZip",
     "MAlloc","Free","StrLen"]],

@@ -62,6 +62,7 @@
   <link rel="modulepreload" href="Adam/GuestFps.js" />
   <link rel="modulepreload" href="Adam/Keyboard.js" />
   <link rel="modulepreload" href="Adam/MobileInput.js" />
+  <link rel="modulepreload" href="Adam/WinDraw.js" />
   <link rel="modulepreload" href="Adam/WinPointer.js" />
   <link rel="modulepreload" href="Adam/XSel.js" />
   <link rel="modulepreload" href="hemu/Kernel/CoreBus.js" />
@@ -135,35 +136,44 @@
     /* A TempleOS window (TextBorder, Adam/Gr/GrTextBase.HC): a text cell of BLUE border round a WHITE
        text area, drawn with the font's chars 2 to 13 (Kernel/FontStd.HC), double on the focused window.
        The site's 12px text is the 8x8 font at 1.5x, so a cell is 12px. */
-    .win, #frame { position:relative; background:var(--white); color:var(--blue); margin:3px 5px; overflow:visible;
-                   border:12px solid transparent; border-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' shape-rendering='crispEdges' fill='%230000AA'%3E%3Cpath d='M3 4h18v1H3zM3 20h18v1H3zM3 5h2v15H3zM19 5h2v15h-2z'/%3E%3C/svg%3E") 12 / 12px; }
+    .win, #frame { --wcell:12px; position:relative; background:var(--white); color:var(--blue); margin:3px 5px; overflow:visible;
+                   border:var(--wcell) solid transparent; border-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' shape-rendering='crispEdges' fill='%230000AA'%3E%3Cpath d='M3 4h18v1H3zM3 20h18v1H3zM3 5h2v15H3zM19 5h2v15h-2z'/%3E%3C/svg%3E") 12 / 12px; }
     .win.active, #frame.active { border-image-source:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' shape-rendering='crispEdges' fill='%230000AA'%3E%3Cpath d='M2 2h21v1H2zM2 20h21v1H2zM2 3h2v17H2zM21 3h2v17h-2zM5 4h15v1H5zM5 18h15v1H5zM5 5h2v13H5zM18 5h2v13h-2z'/%3E%3C/svg%3E"); }
     .win { padding:.7em; }
-    .wc { position:absolute; z-index:2; font-size:12px; line-height:12px; user-select:none; touch-action:none; }
+    .wc { position:absolute; z-index:2; font-size:var(--wcell); line-height:var(--wcell); user-select:none; touch-action:none; }
     /* the top row (DocBorderNew, Adam/DolDoc/DocTerm.HC): MENU blinking at the left, the title inverted
        in the middle 15 columns, scrolling, and [X] at the right */
-    .wbar { top:-12px; left:0; right:0; height:12px; display:flex; justify-content:space-between; overflow:hidden; }
+    .wbar { top:calc(-1*var(--wcell)); left:0; right:0; height:var(--wcell); display:flex; justify-content:space-between; overflow:hidden; }
     .wmenu, .wbar > .close { position:relative; z-index:1; background:var(--white); color:var(--blue); }
     .wmenu { animation:menuBlink .4s step-start infinite; }   /* Blink at 2.5 Hz, Kernel/KMisc.HC */
     @keyframes menuBlink { 50% { background:var(--blue); color:var(--white); } }
-    .wtitle { position:absolute; left:calc(50% - 90px); width:180px; overflow:hidden; white-space:pre;
+    .wtitle { position:absolute; left:calc(50% - 7.5*var(--wcell)); width:calc(15*var(--wcell)); overflow:hidden; white-space:pre;
               background:var(--blue); color:var(--white); }
     .wtitle > span { display:inline-block; animation:wscroll linear infinite; }
     @keyframes wscroll { to { transform:translateX(-50%); } }
     /* the left column: the document's desc, upright (DocBorderLstDraw, Adam/DolDoc/DocRecalcLib.HC) */
-    .wvert { top:0; bottom:0; left:-12px; width:12px; overflow:hidden; writing-mode:vertical-rl; text-orientation:upright; }
+    .wvert { top:0; bottom:0; left:calc(-1*var(--wcell)); width:var(--wcell); overflow:hidden; writing-mode:vertical-rl; text-orientation:upright; }
     .wvert > span { background:var(--white); }
     .win > .close, #frame > .close { position:absolute; visibility:hidden; }   /* until WinMgr puts it in the bar */
     /* the scroll boxes (Adam/Ctrls/CtrlsA.HC): 8x8 YELLOW round 4x4 BLUE, the two swapped while held.
        At the start of the document they straddle the top right and bottom left corners. */
-    .wsv, .wsh { z-index:3; width:12px; height:12px; background:var(--blue); border:3px solid var(--yellow); }
+    .wsv, .wsh { z-index:3; width:var(--wcell); height:var(--wcell); background:var(--blue); border:calc(var(--wcell)/4) solid var(--yellow); }
     .wsv.on, .wsh.on { background:var(--yellow); border-color:var(--blue); }
-    .wsv { top:-6px; right:-12px; } .wsh { bottom:-12px; left:-6px; }
+    .wsv { top:calc(var(--wcell)/-2); right:calc(-1*var(--wcell)); } .wsh { bottom:calc(-1*var(--wcell)); left:calc(var(--wcell)/-2); }
     /* the right column sizes the width, the bottom row the height, their corner both */
-    .wszr { top:0; bottom:0; right:-12px; width:12px; }
-    .wszb { left:0; right:-12px; bottom:-12px; height:12px; }
+    .wszr { top:0; bottom:0; right:calc(-1*var(--wcell)); width:var(--wcell); }
+    .wszb { left:0; right:calc(-1*var(--wcell)); bottom:calc(-1*var(--wcell)); height:var(--wcell); }
     .win *, #frame * { scrollbar-width:none; }   /* the scroll boxes stand for the scroll bars */
     .win ::-webkit-scrollbar, #frame ::-webkit-scrollbar { display:none; }
+    /* Native chrome retains the same DOM controls and geometry. */
+    .native-chrome .win, .native-chrome #frame { --wcell:8px; border-image:none; }
+    .wdraw { display:none; pointer-events:none; }
+    .native-chrome .wdraw { display:block; left:-8px; top:-8px; z-index:2; image-rendering:pixelated; }
+    .native-chrome .wmenu, .native-chrome .wtitle, .native-chrome .wvert > span,
+    .native-chrome .wbar > .close { color:transparent; background:transparent; animation:none; }
+    .native-chrome .wbar > .close { font-size:8px; line-height:8px; padding:0; border:0; min-height:0; }
+    .native-chrome .wtitle > span { animation:none; }
+    .native-chrome .wsv, .native-chrome .wsh { background:transparent; border:0; }
     .win-ph { visibility:hidden; }   /* keeps the layout while a window floats */
 
     main.stage { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly; }
@@ -314,7 +324,7 @@
     @media (max-width:979.98px) { .terrywin canvas { height:120px; } }
     .wszr { cursor:ew-resize !important; }
     .wszb { cursor:ns-resize !important; }
-    .wszcorner { right:-12px; bottom:-12px; width:12px; height:12px; cursor:nwse-resize !important; }
+    .wszcorner { right:calc(-1*var(--wcell)); bottom:calc(-1*var(--wcell)); width:var(--wcell); height:var(--wcell); cursor:nwse-resize !important; }
     body.xcursor .wszr { cursor:ew-resize !important; }
     body.xcursor .wszb { cursor:ns-resize !important; }
     body.xcursor .wszcorner { cursor:nwse-resize !important; }

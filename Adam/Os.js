@@ -125,6 +125,9 @@ setInterval(updateFps,500);
 
 // ---- input: a host-owned cursor + a set-1 scancode queue, pulled by Snapshot.HC each frame ----
 let msX = 320, msY = 240, msB = 0, wheelZ = 0;
+let win_slot=-1,win_task=0,win_num=0,win_pass=null,win_pass_load=null,
+  win_pass_ready=false,
+  win_pass_state=false,win_pass_msg="Window passthrough is off.";
 const keyq = [];
 let keysUp=false,pasteGen=0;
 const keyboard=KeyInput(function (bytes) {
@@ -165,6 +168,7 @@ const updateFocusText=()=>{
 const releaseHeld=()=>{
   pasteGen++;keyboard.reset();resetKeyBar();keysUp=true;
   dispatchEvent(new Event('os-input-reset'));
+  win_slot=-1;win_task=win_num=0;
   msB=0;mouseDX=mouseDY=0;hybridTracking=false;msX=320;msY=240;resetInput=true;notifyInput();
 };
 const setFocused=on=>{if(focused && !on)releaseHeld();focused=on;updateFocusText();};
@@ -214,12 +218,13 @@ document.addEventListener('pointerlockchange',()=>{
 document.addEventListener('pointerlockerror',()=>{tbKey.textContent='Mouse capture unavailable. Click the screen to retry.';});
 const overCanvas=e=>{const r=canvas.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom?r:null;};
 const mapAbs=(e,r)=>{msX=Math.max(0,Math.min(639,Math.round((e.clientX-r.left)/r.width*640)));msY=Math.max(0,Math.min(479,Math.round((e.clientY-r.top)/r.height*480)));};
-const keepsFocus=t=>t&&(t.closest('#frame')||t.closest('.keyswin')||t.closest('#keysbar')||(t.tagName==='BUTTON'&&t.closest('.toolbar')));
+const keepsFocus=t=>t&&(t.closest('#frame')||t.closest('.win-pass')||t.closest('.keyswin')||t.closest('#keysbar')||(t.tagName==='BUTTON'&&t.closest('.toolbar')));
 const releasesFocus=t=>t&&(t.tagName==='TEXTAREA'||t.tagName==='INPUT'||t.tagName==='SELECT'||t.closest('.overlay'));
 $("frame").addEventListener('mousedown',e=>{
   if(e.target!==canvas && (e.target!==e.currentTarget ||
     !e.currentTarget.classList.contains('fsmode')))return;
   if(document.body.classList.contains('touch'))return;
+  win_slot=-1;win_task=win_num=0;
   e.preventDefault();canvas.focus({preventScroll:true});setFocused(true);
   if(captureWanted()&&!locked()){requestCapture();return;} // Capture click must not fire a weapon.
   if(!relativeMouse())mapAbs(e,canvas.getBoundingClientRect());
@@ -232,6 +237,7 @@ document.addEventListener('mousemove',e=>{
   if(captureWanted())return; // A released mouse cannot steer a waiting game.
   if(e.target!==canvas){hybridTracking=false;return;}
   const r=overCanvas(e);if(r){
+    win_slot=-1;win_task=win_num=0;
     if(relativeMouse()){
       if(!focused){hybridTracking=false;return;}
       if(hybridTracking){mouseDX+=e.movementX;mouseDY+=e.movementY;}
@@ -246,7 +252,7 @@ canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('wheel',e=>{if(!focused)return;wheelZ+=e.deltaY>0?1:-1;e.preventDefault();notifyInput();},{passive:false});
 const keysToOS=e=>{
   if(e?.target?.closest?.('textarea,input,select,button,[role=button],[contenteditable=true]'))return false;
-  if(document.querySelector('.overlay.open:not(.free)'))return false;
+  if(document.querySelector('.overlay.open:not(.free):not(.win-pass-owned)'))return false;
   return focused||document.body.classList.contains('touch');
 };
 addEventListener('keydown',e=>{
@@ -268,7 +274,7 @@ addEventListener('blur',releaseOSInput);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseOSInput();});
 setInterval(()=>{if(os_game.active)notifyInput();},250);
 const inputMessage=()=>{
-  const message={cmd:'input',x:msX,y:msY,b:msB,wheel:wheelZ,keys:keyq.splice(0),held:keyboard.held(),keysUp,relative:relativeMouse(),dx:mouseDX,dy:mouseDY,reset:resetInput};
+  const message={cmd:'input',x:msX,y:msY,b:msB,wheel:wheelZ,keys:keyq.splice(0),held:keyboard.held(),keysUp,relative:win_slot<0 && relativeMouse(),dx:mouseDX,dy:mouseDY,reset:resetInput,winSlot:win_slot,winTask:win_task,winNum:win_num};
   mouseDX=mouseDY=0;resetInput=keysUp=false;return message;
 };
 
@@ -413,7 +419,7 @@ const touchMouse={
   buttons(mask) {msB=mask;notifyInput();},
 };
 document.addEventListener('pointerdown',e=>{
-  if(e.target===canvas)setFocused(true);
+  if(e.target===canvas){win_slot=-1;win_task=win_num=0;setFocused(true);}
   else if(e.target===os_game.ed?.inputCanvas())setFocused(false);
 },true);
 MobileInput({frame:$("frame"),target:()=>{
@@ -488,7 +494,7 @@ let stockBoot=true;
 
 function CfgRead()
 {
-  let cfg={rate:0,repeat:false,fast:true},saved;
+  let cfg={rate:0,repeat:false,fast:true,pass:false},saved;
   try {
     saved=JSON.parse(localStorage.getItem("tos-settings"));
     if ([0,30,60,120].includes(saved?.rate))
@@ -497,6 +503,8 @@ function CfgRead()
       cfg.repeat=saved.repeat;
     if (typeof saved?.fast=="boolean")
       cfg.fast=saved.fast;
+    if (typeof saved?.pass=="boolean")
+      cfg.pass=saved.pass;
   } catch (e) {
     //Blocked storage leaves settings at their defaults.
   }
@@ -512,6 +520,10 @@ export function OsCfg(change)
       os_cfg.repeat=change.repeat;
     if (typeof change.fast=="boolean")
       os_cfg.fast=change.fast;
+    if (typeof change.pass=="boolean") {
+      os_cfg.pass=change.pass;
+      WinPassApply();
+    }
     engine.post({cmd:"set",...os_cfg});
     cfg_status={ready:false,ok:true,msg:"Applying settings…"};
     dispatchEvent(new CustomEvent("ossettings",{detail:cfg_status}));
@@ -528,6 +540,73 @@ export function OsCfgStatus()
 {
   return {...cfg_status};
 }
+
+function WinPassInput(state)
+{//Detached windows keep the same keyboard and button state as the screen.
+  if (state.focus)
+    setFocused(true);
+  if (state.slot!==undefined) {
+    win_slot=state.slot;
+    win_task=state.task || 0;
+    win_num=state.num || 0;
+  }
+  if (state.x!==undefined) {
+    msX=state.x;
+    msY=state.y;
+  }
+  if (state.buttons!==undefined)
+    msB=state.buttons;
+  if (state.wheel)
+    wheelZ+=state.wheel;
+  notifyInput();
+}
+
+export function OsWinPassStatus()
+{
+  return win_pass_msg;
+}
+
+async function WinPassApply()
+{//Neither passthrough code nor native guest code loads until selected.
+  let on=os_cfg.pass && win_pass_ready && !paused;
+  if (!on) {
+    win_pass_msg="Window passthrough is off.";
+    if (os_cfg.pass) {
+      win_pass_msg="Window passthrough starts when TempleOS is ready.";
+      if (paused)
+        win_pass_msg="Windows returned while TempleOS is paused.";
+    }
+    dispatchEvent(new CustomEvent("winpasssettings",{
+      detail:{msg:win_pass_msg}}));
+  }
+  if (on && !win_pass) {
+    if (!win_pass_load)
+      win_pass_load=import("./WinPass.js").then(function (m) {
+        win_pass=m.WinPass({canvas,pal:pal32,Request:engine.Request,
+          Input:WinPassInput,Status:function (msg) {
+            win_pass_msg=msg;
+            dispatchEvent(new CustomEvent("winpasssettings",{detail:{msg}}));
+          }});
+      }).catch(function (e) {
+        win_pass_load=null;
+        win_pass_msg="Window passthrough could not load: "+e.message;
+        dispatchEvent(new CustomEvent("winpasssettings",{
+          detail:{msg:win_pass_msg}}));
+      });
+    await win_pass_load;
+    on=os_cfg.pass && win_pass_ready && !paused;
+  }
+  if (win_pass && on!=win_pass_state) {
+    win_pass_state=on;
+    await win_pass.Enable(on);
+  }
+}
+
+addEventListener("osstate",function (e) {
+  win_pass_ready=e.detail.ready;
+  WinPassApply();
+});
+addEventListener("winpassdisable",function () {OsCfg({pass:false});});
 
 // ---- engine: one worker, or the multi-core one below ----
 let importDisk = null;   // a disk image imported before the reload
@@ -570,6 +649,7 @@ function EngineMessage(m)
   } else if(m.cmd==="snd")speaker.Tone(m.f,m.ns);
   else if(m.cmd==="progress"){setLoad(m.text,m.pct);dbg(m.text);}
   else if(m.cmd==="palette")updatePalette(m.index,m.rgb);
+  else if(m.cmd==="windows")win_pass?.Receive(m);
   else if(m.cmd==="smpReady")dbg("SMP: "+m.ncore+" cores running in parallel");
   else if(m.cmd==="log")dbg(m.msg);
   else diskMsg(m);
@@ -589,7 +669,7 @@ async function bootEngine(restart=false)
 let paused = false, pauseRevision = 0, osFault=false;
 const pauseBtn = $("pauseBtn");
 const pauseShow = () => { pauseBtn.innerHTML = '<span class="ico"><svg><use href="#i-' + (paused ? "play" : "pause") + '"/></svg></span> ' + (paused ? "Play" : "Pause"); };
-const setPaused = value => { if (osFault && !value) return; paused = value; speaker.Pause(paused); fpsMeter.setPaused(paused); updateFps(); engine.post({ cmd: "pause", value: paused }); pauseShow(); };
+const setPaused = value => { if (osFault && !value) return; paused = value; speaker.Pause(paused); fpsMeter.setPaused(paused); updateFps(); engine.post({ cmd: "pause", value: paused }); pauseShow(); WinPassApply(); };
 pauseBtn.addEventListener("click", () => { ++pauseRevision; setPaused(!paused); });
 const holdOSForGame = () => {
   const previous=paused, revision=pauseRevision;setPaused(true);
@@ -612,6 +692,7 @@ const diskMsg = (m) => {
     fpsMeter.setPaused(paused);
     updateFps();
     pauseShow();
+    WinPassApply();
     return;
   }
   if (m.cmd==="restored") {
