@@ -15,13 +15,16 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM ||
 let page;
 try {
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
-  await context.route("**/hemu/*.gz",async function (route) {
+  if (!process.env.GUI_URL) await context.route("**/hemu/*.gz",async function (route) {
     const name=new URL(route.request().url()).pathname.split("/").pop();
     await route.fulfill({body:await readFile(new URL("hemu/"+name,root)),
       contentType:"application/gzip"});
   });
   await context.route("https://templeosweb-*.workers.dev/**",
-    function (route) {route.abort();});
+    function (route) {
+      if (new URL(route.request().url()).hostname.startsWith("templeosweb-files.")) route.continue();
+      else route.abort();
+    });
   const sent=[];
   await context.routeWebSocket(/templeosweb-presence\./,()=>{});
   await context.routeWebSocket(/templeosweb-chat\./,ws=>{
