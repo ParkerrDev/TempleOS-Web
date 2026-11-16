@@ -32,10 +32,16 @@ try {
   });
   page=await context.newPage();page.on("pageerror",e=>errors.push(e.message));
   await page.goto(new URL(process.env.WINPASS_SMP?"":"?single",base).href,{waitUntil:"load"});
-  await page.waitForFunction(()=>!document.getElementById("onlyBtn").disabled,null,{timeout:60000});
+  await page.waitForFunction(async()=>(await import("/Adam/Os.js")).OsOnlyReady(),null,{timeout:60000});
+  assert.equal(await page.locator("#desktopMenu #onlyBtn").count(),0,"Only Mode belongs in Settings");
   async function Button(host,selector)
   {
-    await page.waitForFunction(host=>nativeWindows.some(w=>w.host==host),host);
+    await page.waitForFunction(host=>document.getElementById(host)?.classList.contains("win-pass-owned") && nativeWindows.some(w=>w.host==host),host);
+    await page.evaluate(async host=>{
+      const w=nativeWindows.find(w=>w.host==host),{engine}=await import("/Adam/Os.js");
+      const res=await engine.Request({cmd:"windows",op:"focus",slot:w.slot,task:w.task,num:w.num});
+      if (!res.ok) throw Error(res.msg);
+    },host);
     const point=await page.evaluate(async({host,selector})=>{
       const {GuiScene}=await import("/Adam/GuiBridge.js"),scene=GuiScene(document.getElementById(host)),
         target=document.querySelector(selector),id=[...scene.actions].find(([,el])=>el==target)?.[0],
@@ -51,7 +57,8 @@ try {
   }
   if (mobile) {
     await page.locator("#mobileMenu").click();
-    await page.locator("#onlyBtn").tap();
+    await page.locator("#settingsBtn").tap();
+    await page.locator("#settingsWin #onlyBtn").tap();
     await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="desktopMenu"),null,{timeout:60000});
     const frame=await page.locator("#frame").boundingBox();
     assert.deepEqual([frame.x,frame.y,frame.width,frame.height],[0,0,390,844]);
@@ -80,6 +87,8 @@ try {
   const popup=page.waitForEvent("popup");
   await page.evaluate(async()=>{const {WinPopup}=await import("/Adam/WinMgr.js");WinPopup(document.getElementById("filesWin"));});
   const filesPopup=await popup;
+  await page.locator("#settingsBtn").click();
+  await page.locator("#settingsOverlay").evaluate(el=>el.classList.add("free"));
   const openBefore=await page.evaluate(async()=>{
     const {WinDocuments}=await import("/Adam/WinMgr.js");
     return WinDocuments().flatMap(doc=>[...doc.querySelectorAll(".win:not(.win-pass)")]).filter(w=>
@@ -96,6 +105,12 @@ try {
   const frame=await page.locator("#frame").boundingBox();
   assert.deepEqual([frame.x,frame.y,frame.width,frame.height],[0,0,1440,1000],"TempleOS fills the browser viewport");
   assert(await page.locator("#fsExit").isVisible(),"a reachable exit remains when native Menu is closed");
+  await Button("settingsWin","#onlyBtn");
+  await page.waitForFunction(()=>!document.body.classList.contains("os-only") && !document.querySelector(".win-pass-owned"));
+  await page.locator("#settingsBtn").click();
+  await page.locator("#settingsWin #onlyBtn").click();
+  await page.waitForFunction(ids=>document.body.classList.contains("os-only") && ids.every(id=>
+    document.getElementById(id)?.classList.contains("win-pass-owned") && nativeWindows.some(w=>w.host==id)),openBefore);
 
   await Button("desktopMenu","#settingsBtn");
   await page.waitForFunction(()=>document.getElementById("settingsWin")?.classList.contains("win-pass-owned"));
@@ -117,7 +132,8 @@ try {
   assert.equal(await page.evaluate(()=>document.body.classList.contains("fakefs")),false);
   assert.equal(await page.evaluate(()=>!!document.fullscreenElement),false);
   await page.evaluate(()=>document.getElementById("settingsClose").click());
-  await page.locator("#onlyBtn").click();
+  await page.locator("#settingsBtn").click();
+  await page.locator("#settingsWin #onlyBtn").click();
   await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="desktopMenu"));
   await Button("desktopMenu","#spritesBtn");
   await page.waitForFunction(()=>!document.body.classList.contains("os-only") && document.getElementById("spritesWin")?.getBoundingClientRect().width>0);

@@ -114,11 +114,11 @@ resolved HTML/CSS layout. Native HolyC draws its text, rectangles and indexed
 images with `GrPrint`, `GrRect` and `GrBlot`. SVG icons become palette bitmaps,
 including icons that refer to shared SVG symbols.
 
-TempleOS handles pointer hits and keyboard navigation in guest tasks. Clicking a text
-field opens its native document editor; Enter accepts a single-line field and
-Escape cancels it. Multiline fields use TempleOS's Escape to accept and
-Shift-Escape to cancel. Dropdowns use native list pickers. The browser receives
-accepted values and actions for services such as chat, file access and compilation;
+TempleOS handles pointer hits and keyboard navigation in guest tasks. Text fields
+edit inline using TempleOS documents, including their cursor and selection.
+Enter submits a single-line field and inserts a newline in a multiline field.
+Dropdowns use native list pickers. The browser receives edited values and actions
+for services such as chat, file access and compilation;
 it never focuses an invisible HTML field for native typing. HolyC source keeps
 its original CP437 bytes. Other Unicode text uses `\u{...}` escapes in the native
 editor when the character is outside TempleOS's font.
@@ -140,13 +140,11 @@ and captured-mouse programs stay on the TempleOS screen. The bridge's own scene
 tasks return to their browser owner instead of entering guest capture. Pausing or
 disabling passthrough returns windows to their original environment; resuming enables
 dragging again. Restart and snapshot restore also return native windows before
-further dragging. Old saved engines require Restart to enable passthrough. Accept native text edits
-before refreshing: restored browser-backed windows reopen from their accepted values,
-not from unfinished editor dialogs.
+further dragging. Old saved engines require Restart to enable passthrough.
 
-**TempleOS Only Mode** in Menu fills the browser viewport and moves open
+**TempleOS Only Mode** in Settings fills the browser viewport and moves open
 compatible tools and detached windows into TempleOS. New tools open there too,
-and windows cannot be dragged out while the mode is active. Use the Menu's
+and windows cannot be dragged out while the mode is active. Use Settings'
 exit button or the corner [X] to return to the site. Restart keeps the mode;
 pausing or opening Video Player or Sprite Studio leaves it so those browser
 controls remain reachable. The mode lasts for this visit and does not change
@@ -381,7 +379,13 @@ and still exports portable disk and machine backups. Opening it requests
 persistent browser storage where supported. Clearing site data, private browsing
 or browser eviction can remove local saves; export a backup for safekeeping.
 
+Deleting this site's saved data resets C:, the saved machine, window positions,
+settings and editor drafts on refresh. Open tabs stop using the deleted machine
+and must be refreshed. Clearing only cached downloads preserves these saves.
+
 Checks: `node Apps/Disk/Checkpoint.browser.mjs` covers frame/input progress during compression, concurrent writes, automatic follow-up saves and visibility changes. `node Apps/Disk/AutoSave.browser.mjs` exercises actual guest file writes,
 restart, tab close/reopen and multiple tabs with one and four cores;
 `node Apps/Disk/Storage.browser.mjs` checks exact sector restoration, replacement
-and transaction failure.
+and transaction failure. `node Apps/Disk/StorageClear.browser.mjs` checks deletion
+and immediate refresh with saved RAM, C: files and surviving tabs;
+`node Adam/StorageClear.browser.mjs` checks layouts and drafts, including pending saves.

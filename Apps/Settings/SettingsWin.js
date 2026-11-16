@@ -1,5 +1,5 @@
 import {WinAdd,WinFocus,WinWorkspaceReset} from "../../Adam/WinMgr.js";
-import {$,OsCfg,OsCfgStatus,OsWinPassStatus,OsWinPassReturn,OsOnlyMode} from "../../Adam/Os.js";
+import {$,OsCfg,OsCfgStatus,OsWinPassStatus,OsWinPassReturn,OsOnlyMode,OsOnlyReady} from "../../Adam/Os.js";
 import {WinDrawCfg} from "../../Adam/WinDraw.js";
 
 WinAdd(`
@@ -15,6 +15,7 @@ WinAdd(`
   <div id="settingsWin" class="win" data-title="Settings">
     <span id="settingsClose" class="close">[X]</span>
     <div id="settingsBody">
+      <button id="onlyBtn" title="Move open tools into TempleOS and fill the browser" aria-pressed="false" disabled>TempleOS Only Mode</button>
       <button id="resetWindows">Reset window positions</button>
       <p>Restore the default desktop layout. Open tools stay open.</p>
       <label><input id="showHeader" type="checkbox"> Show header introduction</label>
@@ -73,14 +74,14 @@ function Close()
 
 export function Open()
 {
-  let cfg=OsCfg();
+  let cfg=OsCfg(),draw=WinDrawCfg();
   $("showHeader").checked=!document.documentElement.classList.contains("hide-header");
   $("showFooter").checked=!document.documentElement.classList.contains("hide-footer");
   $("frameRate").value=String(cfg.rate);
   $("biosRepeat").checked=cfg.repeat;
   $("fastGraphics").checked=cfg.fast;
-  $("nativeDrawing").checked=WinDrawCfg().native;
-  $("windowScale").value=String(WinDrawCfg().scale);
+  $("nativeDrawing").checked=draw.native;
+  $("windowScale").value=String(draw.scale);
   OnlyModeShow();
   $("windowPassStatus").textContent=OsWinPassStatus();
   $("settingsOverlay").classList.add("open");
@@ -108,6 +109,9 @@ addEventListener("winpasssettings",function (e) {
 function OnlyModeShow()
 {
   const on=OsOnlyMode();
+  $("onlyBtn").disabled=!OsOnlyReady();
+  $("onlyBtn").setAttribute("aria-pressed",String(on));
+  $("onlyBtn").textContent=on?"Exit TempleOS Only Mode":"TempleOS Only Mode";
   $("windowPassthrough").checked=on || OsCfg().pass;
   $("windowPassthrough").disabled=on;
   $("returnWindows").disabled=on;
@@ -120,6 +124,7 @@ addEventListener("osrestored",function (e) {
   $("fastGraphics").checked=e.detail.fast;
 });
 
+$("onlyBtn").addEventListener("click",function () {OsOnlyMode(!OsOnlyMode());});
 $("resetWindows").addEventListener("click",function () {
   WinWorkspaceReset();
   Status({msg:"Window positions reset. Open tools stay open."});

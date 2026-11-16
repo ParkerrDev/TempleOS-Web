@@ -142,15 +142,18 @@ const ov = WinFind("editorOverlay");
 const closeBtn = WinFind("editorClose");
 // shared, memoized loader for the HolyC runtime (Apps/Editor/App.js) - used by the editor AND
 // the Games launcher (which drives the same compile+worker+canvas+input machinery).
-let appPromise=null,draft=null,draft_loading=false,save_directory="C:/Home/";
+let appPromise=null,draft=null,draft_loading=false,draft_stored=false,draft_deleted=false,
+  save_directory="C:/Home/";
 const STARTER='U0 MyProgram()\n{\n  "Hello, TempleOS!\\n";\n}\n\nMyProgram;\n';
 const loadEditorApp = () => {
   if (!appPromise) appPromise = import("./App.js")
     .then(() => {
       os_game.ed=window.__holycEditor;
       try {
-	draft=JSON.parse(sessionStorage.getItem("templeos.editor") ||
-	  localStorage.getItem("templeos.editor"));
+	const local=localStorage.getItem("templeos.editor");
+	draft_stored=local!==null;
+	if (local===null) sessionStorage.removeItem("templeos.editor");
+	else draft=JSON.parse(sessionStorage.getItem("templeos.editor") || local);
       } catch (error) {draft=null;}
       DraftRestore();
     })
@@ -213,7 +216,7 @@ function DraftRestore()
 function DraftSave()
 {
   let bytes,text="",i;
-  if (!os_game.ed || ed_game.file || draft_loading)
+  if (!os_game.ed || ed_game.file || draft_loading || draft_deleted)
     return;
   try {
     bytes=new Uint8Array(os_game.ed.FileBytes());
@@ -226,8 +229,12 @@ function DraftSave()
     draft.text=ta.value;
   }
   try {
-    sessionStorage.setItem("templeos.editor",JSON.stringify(draft));
+    if (draft_stored && localStorage.getItem("templeos.editor")===null) {
+      draft_deleted=true;sessionStorage.removeItem("templeos.editor");return;
+    }
     localStorage.setItem("templeos.editor",JSON.stringify(draft));
+    draft_stored=true;
+    sessionStorage.setItem("templeos.editor",JSON.stringify(draft));
     WinFind("draftStatus").textContent="— draft saved";
   } catch (error) {
     WinFind("draftStatus").textContent="— draft could not be saved; download a copy";
@@ -273,7 +280,12 @@ WinFind("edFiles").addEventListener("click",async function () {
 
 const ta = WinFind("editor");
 ta.addEventListener("input",DraftSave);
-addEventListener("pagehide",DraftSave);
+addEventListener("storage",function (e) {
+  if (e.storageArea==localStorage && e.newValue===null &&
+      (e.key===null || e.key=="templeos.editor")) {
+    draft_deleted=true;sessionStorage.removeItem("templeos.editor");
+  }
+});
 const setStatus = (s) => { const st = WinFind("status"); if (st) st.textContent = s; };
 const curName=()=>ed_game.file?ed_game.file.filename():os_game.ed?.FileName()||"MyProgram.HC";
 WinFind("edSave").addEventListener("click", async () => {
@@ -329,7 +341,8 @@ fmtBtn.addEventListener("click", async () => {
   try {
     const { formatHolyC } = await import("./HolyFmt.js");
     const out = await formatHolyC(src, { indent: 2, tabs: true });   // Terry's layout: 2 a level, S2T tabs
-    if (ta.value !== src) setStatus("Source changed. Format again to use your latest edits.");
+    if (draft_deleted) setStatus("Browser data was deleted. Refresh this page.");
+    else if (ta.value !== src) setStatus("Source changed. Format again to use your latest edits.");
     else if (out !== src) { ta.value = out; ta.dispatchEvent(new Event("input")); setStatus("formatted ✓"); }
     else setStatus("already formatted ✓");
   } catch (e) { setStatus("format error: " + e.message); }

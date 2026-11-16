@@ -2,12 +2,38 @@
 
 The browser owns HTML/CSS layout and web actions. TempleOS owns native task windows, drawing, input and lifetime. A compact scene transports resolved layout rather than implementing a second CSS engine.
 
+Inline editing correction:
+- Keep a native CDoc in the existing task, using DocPutKey and DocRecalc for text, caret and selection. Supply an inner text rectangle with the field descriptor. Select lists retain their native picker.
+  - Opening a DocEd popup for each field interrupts chat, search and program editing and hides their surrounding controls.
+  - Browser field geometry and native editing geometry must travel together rather than relying on a popup's default size.
+- Give each browser field an epoch for external value replacement. Native value events carry that epoch; mirroring them does not change it. Reload a native document only when the epoch changes.
+  - Scene refreshes otherwise overwrite characters still being typed with earlier echoed values.
+  - Ignoring all refreshes leaves submit clears and loaded files invisible to an active editor.
+- Keep field geometry on the native text grid, and keep the editing viewport separate from task window controls. Clear native documents with DocRst, and release document locks when their owner ends.
+  - Independent rounding can erase a compact field's only text row or leave passive glyphs behind the editor.
+  - Window commands must not mutate a field's rendering viewport or traverse copied task control lists.
+  - DocClear inserts a literal DolDoc command into a plain-text document; it cannot reset an input after submission.
+  - A killed editor can leave an Adam-owned document locked during window cleanup.
+- Settings owns its lazily loaded Only Mode control; the OS module owns mode and availability. Retain the corner exit control.
+  - Startup code currently expects the button to exist in the eagerly loaded Menu.
+- Verify Settings through actual native actions and guest input response, including fullscreen and native decoration scales.
+  - Receiving frame messages alone cannot establish that the guest is responsive.
+- Publish native windows after their task finishes initialization.
+  - DocTermNew assigns put_doc before creating the border, menu and scroll controls. Waiting for that pointer allowed host updates to race unfinished setup. A native regression yields at that boundary and requires complete window/input state before publication.
+- Treat deletion of durable browser data as authoritative over in-memory and per-tab copies.
+  - Window unload, popup return and queued saves recreated deleted layouts from memory.
+  - Editor input already saves the draft; a second unload save and an unfinished formatter recreated deleted drafts.
+  - A surviving tab must not overwrite a fresh page's default layout after site-data deletion.
+- Retire the shared machine coordinator when the browser clears site data, stop its hosts and require a refresh.
+  - Chromium can leave a shared worker alive in the deleted storage bucket. Its host lock monitor then detaches a new page even while that page holds the corresponding lock in the new bucket.
+  - Pending boot failures must respect the existing generation guard so they cannot overwrite the deletion notice or restart a retired machine.
+
 - Replace the per-window DolDoc allowlist with one scene converter and native scene renderer.
   - WinPassDoc knows God Tools DOM IDs and manually reformats its articles.
   - Menu, Help and God Tools have separate hardcoded body/button selectors; Terry and future documents cannot participate.
   - CSS layout, colors, images and button positions are discarded by the text conversion.
   - Canvas frames change without DOM mutations, so a document observer alone cannot synchronize animation.
-- Preserve browser layout while native ownership is active; serialize text, rectangular backgrounds/borders, buttons, canvas/image pixels and links. Use native editing tasks and relay accepted values and actions to browser services. Video Player and Sprite Studio remain browser windows.
+- Preserve browser layout while native ownership is active; serialize text, rectangular backgrounds/borders, buttons, canvas/image pixels and links. Use native documents within the existing task and relay edited values and actions to browser services. Video Player and Sprite Studio remain browser windows.
   - display:none destroys the layout needed for conversion and stops Terry's existing visibility-driven player.
   - Native click targets must call their originating DOM controls and retain stable IDs across updates.
 - Return current windows independently of the enabled preference.
@@ -16,7 +42,7 @@ The browser owns HTML/CSS layout and web actions. TempleOS owns native task wind
 - Use the same native surface coordinates for pointer forwarding and resize/move cursors.
   - Detached task canvases forward mouse input without indicating which border is resizable.
 
-Scope: resolved HTML/CSS presentation, not a complete standalone HTML parser/browser. Native text remains TempleOS's 8x8 font and colors remain its sixteen-color palette. Editable fields use native DocEd tasks; selects use native list pickers. SVGs are resolved and quantized through the HolyC sprite codec. Only Video Player and Sprite Studio are excluded among the site tools; browser file pickers and permissions remain browser operations. Existing native task capture remains unchanged.
+Scope: resolved HTML/CSS presentation, not a complete standalone HTML parser/browser. Native text remains TempleOS's 8x8 font and colors remain its sixteen-color palette. Editable fields use retained native documents inline; selects use native list pickers. SVGs are resolved and quantized through the HolyC sprite codec. Only Video Player and Sprite Studio are excluded among the site tools; browser file pickers and permissions remain browser operations. Existing native task capture remains unchanged.
 
 Validation corrections:
 - Use the existing HolyC sprite codec for palette quantization; browser glue only reads resolved layout and canvas pixels.
@@ -43,7 +69,7 @@ Chat launch and input follow-up:
 - Keep native tool ownership explicit across focus changes, and verify ordinary short clicks and typing through the same route users take.
 
 Native input correction:
-- Use TempleOS document editing and list pickers for input. A clicked text field opens a real native editing task, single-line Enter accepts, Escape cancels; multiline editing uses DocEd's Escape/save and Shift-Escape/cancel convention. The browser receives values and actions only. This preserves the current resolved layout without inventing another HolyC text editor.
+- Use TempleOS document editing and list pickers for input. A clicked text field uses a retained document inside its native task; Enter submits single-line fields and adds a newline to multiline fields. The browser receives values and actions only. This preserves the current resolved layout without inventing another HolyC text editor.
   - HostFocus depends on focusing invisible HTML outside the fullscreen subtree.
   - HostSelect duplicates cursor, selection, and word selection in JavaScript.
   - DOM key navigation and browser hover cursors compete with guest focus and DrawMs.

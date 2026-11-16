@@ -449,7 +449,6 @@ async function FullscreenChanged()
 }
 
 $("fsBtn").addEventListener("click",FullscreenToggle);
-$("onlyBtn").addEventListener("click",function () {OnlySet(!os_only);});
 $("fsExit").addEventListener("click",OsFullscreenExit);
 DocOn("fullscreenchange",FullscreenChanged);
 DocOn("webkitfullscreenchange",FullscreenChanged);
@@ -659,16 +658,18 @@ export async function OsWinPassReturn()
   if (win_pass) await win_pass.Return();
 }
 
-export function OsOnlyMode()
+export function OsOnlyMode(on)
 {
-  return os_only;
+  return on===undefined?os_only:OnlySet(!!on);
+}
+
+export function OsOnlyReady()
+{
+  return win_pass_ready && !paused && engine.owner!==false;
 }
 
 function OnlyButtons()
 {
-  $("onlyBtn").disabled=!win_pass_ready || paused || engine.owner===false;
-  $("onlyBtn").setAttribute("aria-pressed",String(os_only));
-  $("onlyLabel").textContent=os_only?"Exit TempleOS Only Mode":"TempleOS Only Mode";
   $("fsExit").title=os_only?"Exit TempleOS Only Mode":"Exit fullscreen";
   $("fsExit").setAttribute("aria-label",$("fsExit").title);
   dispatchEvent(new Event("osonlymode"));
@@ -773,23 +774,30 @@ function singleCore(why,generation=osGen) {   // multi-core failed before its fi
   useSMP = false;
   downloadSnapshot().then(b => {
     if(generation!==osGen)return;
-    gzBytes=b;bootEngine();
+    gzBytes=b;return bootEngine();
   }).catch(e=>{if(generation===osGen)engineFail(e.message);});
 }
-function EngineError({msg,retained,started,cores,code})
+function EngineError({msg,retained,started:wasStarted,cores,code})
 {
+  if (code==="STORAGE_CLEARED") {
+    osGen++;speaker.Stop();started=framed=false;
+    ld.style.display="";setLoad(msg,0);
+    dispatchEvent(new CustomEvent("osstate",{detail:{ready:false,msg}}));
+    return;
+  }
   if (code==="SESSION_STALE") {
     if (resumeSession) restartOS();
     return;
   }
   if(retained)engineFault(msg);
-  else if(!started&&cores===4&&stockBoot)singleCore(msg);
+  else if(!wasStarted&&cores===4&&stockBoot)singleCore(msg);
   else engineFail(msg);
 }
 function EngineMessage(m)
 {
   if (m.cmd==="bootNeeded") {
-    OsBoot().catch(engineFail);
+    const generation=osGen;
+    OsBoot().catch(error=>{if(generation===osGen)engineFail(error);});
   } else if (m.cmd==="owner") {
     if (!m.value) {releaseOSInput();OnlySet(false);}
     WinPassApply();

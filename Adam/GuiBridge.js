@@ -2,7 +2,7 @@ import {GrLoad} from "../Apps/Sprites/Gr.js";
 import {CharByte,Identifier} from "../hemu/holyc-wasm/src/encoding.js";
 
 const LIMIT=1048576,CHROME=".wdraw,.wc,.wbar,.wvert,.wcorn,.wszcorner,.wszr,.wszb,.close",
-  codec=await GrLoad(),colors=new Map,icons=new Map,bitmaps=new WeakMap;
+  codec=await GrLoad(),colors=new Map,icons=new Map,bitmaps=new WeakMap,fields=new WeakMap;
 const glyphs="☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼";
 const unicodeBytes=new Map(Array.from({length:128},(_,i)=>[Identifier(String.fromCharCode(i+128)),i+128]));
 function Bytes(text,raw=false)
@@ -33,6 +33,17 @@ export function GuiValue(value,raw)
     const n=parseInt(hex,16);
     return n<=0x10FFFF?String.fromCodePoint(n):match;
   });
+}
+
+export function GuiFieldState(el)
+{//Backend replacements advance the epoch; native input only mirrors its value.
+  let state=fields.get(el);
+  if (!state) {
+    state={value:el.value,epoch:0};fields.set(el,state);
+  } else if (state.value!=el.value) {
+    state.value=el.value;state.epoch++;
+  }
+  return state;
 }
 
 function SvgImage(el,win)
@@ -179,11 +190,15 @@ export function GuiScene(win,ids=new WeakMap)
   {//Values are presentation; TempleOS owns editing and selection.
     const id=Action(el,b),
       color=CssColor(style.color)==255?0:CssColor(style.color),
-      x=b.x+Math.round((parseFloat(style.paddingLeft)+el.clientLeft)*scale),
-      y=b.y+Math.round((parseFloat(style.paddingTop)+el.clientTop)*scale),
-      cols=Math.max(1,Math.floor((b.w-(parseFloat(style.paddingLeft)+parseFloat(style.paddingRight))*scale)/8)),
+      right=Math.floor(Math.min(b.x+b.w,clip.x+clip.w)/8)*8,
+      bottom=Math.floor(Math.min(b.y+b.h,clip.y+clip.h)/8)*8,
+      x=Math.max(Math.ceil(Math.max(b.x,clip.x)/8)*8,Math.min(right-8,
+        Math.round((b.x+(parseFloat(style.paddingLeft)+el.clientLeft)*scale)/8)*8)),
+      y=Math.max(Math.ceil(Math.max(b.y,clip.y)/8)*8,Math.min(bottom-8,
+        Math.round((b.y+(parseFloat(style.paddingTop)+el.clientTop)*scale)/8)*8)),
+      cols=Math.min((right-x)/8,Math.max(1,Math.floor((right-x-parseFloat(style.paddingRight)*scale)/8))),
       top=Math.floor(el.scrollTop*scale/8),left=Math.floor(el.scrollLeft*scale/8),
-      rows=Math.max(1,Math.floor((b.h-(parseFloat(style.paddingTop)+parseFloat(style.paddingBottom))*scale)/8));
+      rows=Math.min((bottom-y)/8,Math.max(1,Math.floor((bottom-y-parseFloat(style.paddingBottom)*scale)/8)));
     let value=el.value || "";
     if (id && !el.readOnly && !el.matches('input[type=checkbox],input[type=radio],input[type=file]')) {
       const kind=el.tagName=="SELECT"?3:el.tagName=="TEXTAREA"?2:1,
@@ -191,7 +206,13 @@ export function GuiScene(win,ids=new WeakMap)
         options=el.tagName=="SELECT"?[...el.options].map(o=>(o.disabled?"0":"1")+o.textContent):[],
         payload=Bytes([title,FieldText(value,el.hasAttribute("data-cp437")),...options,""].join("\0"),el.hasAttribute("data-cp437"));
       Command(6,kind,el.maxLength>0?Math.min(65536,el.maxLength*(el.hasAttribute("data-cp437")?1:10)):65536,
-        kind==1?1:0,0,0,id,payload);
+        kind==1?1:0,GuiFieldState(el).epoch,0,id,payload);
+      if (kind!=3) {
+        let bg=CssColor(style.backgroundColor),parent=el.parentElement;
+        while (bg==255 && parent) {bg=CssColor(getComputedStyle(parent).backgroundColor);parent=parent.parentElement;}
+        if (bg==255) bg=15;
+        if (cols>0 && rows>0) Command(9,x,y,cols*8,rows*8,bg<<4|color,id);
+      }
     }
     if (el.tagName=="TEXTAREA" && CssColor(style.color)==255)
       Command(1,b.x,b.y,b.w,b.h,15);

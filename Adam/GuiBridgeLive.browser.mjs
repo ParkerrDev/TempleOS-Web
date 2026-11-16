@@ -124,6 +124,7 @@ try {
   async function Point(id,selector)
   {
     await page.waitForFunction(id=>window.passWindows.some(w=>w.host==id),id,{timeout:30000});
+    await page.waitForFunction(selector=>{const el=document.querySelector(selector);return el && !el.disabled;},selector);
     const point=await page.evaluate(async function ({id,selector}) {
       const {GuiScene}=await import("/Adam/GuiBridge.js"),scene=GuiScene(document.getElementById(id)),
         target=document.querySelector(selector),action=[...scene.actions].find(([,el])=>el==target)?.[0],
@@ -153,15 +154,19 @@ try {
   {
     const before=await page.evaluate(()=>window.passWindows.map(w=>w.num));
     await Button(id,selector);
-    await page.waitForFunction(before=>window.passWindows.some(w=>!before.includes(w.num) && !w.host),before);
+    assert.equal(await page.evaluate(before=>window.passWindows.some(w=>!before.includes(w.num) && !w.host),before),false,
+      "text editing stays in the existing native window");
+    const count=await page.evaluate(()=>passActions.length);
     await page.keyboard.press(key);
-    await page.waitForFunction(before=>!window.passWindows.some(w=>!before.includes(w.num) && !w.host),before);
+    if (key=="Enter") await page.waitForFunction(count=>passActions.slice(count).some(a=>a.kind==6),count);
+    await page.waitForTimeout(200);
   }
   async function Type(id,selector,value)
   {
     const before=await page.evaluate(()=>window.passWindows.map(w=>w.num));
     await Button(id,selector);
-    await page.waitForFunction(before=>window.passWindows.some(w=>!before.includes(w.num) && !w.host),before);
+    assert.equal(await page.evaluate(before=>window.passWindows.some(w=>!before.includes(w.num) && !w.host),before),false,
+      "inline editing must not create another native window");
     assert.equal(await page.evaluate(()=>document.activeElement.id),"canvas",
       "native editing keeps browser focus on the OS surface");
     await page.keyboard.press("Home");
@@ -174,11 +179,15 @@ try {
         await page.keyboard.down("Shift");await page.keyboard.type(shifted[ch] || ch.toLowerCase());await page.keyboard.up("Shift");
       } else await page.keyboard.type(ch);
     }
-    await page.waitForTimeout(200);
+    await page.waitForFunction(({selector,value})=>document.querySelector(selector).value==value,{selector,value});
     await page.screenshot({path:"tmp/gui/native-input.png"});
     const multiline=await page.locator(selector).evaluate(el=>el.tagName=="TEXTAREA");
-    await page.keyboard.press(multiline?"Escape":"Enter");
-    await page.waitForFunction(before=>!window.passWindows.some(w=>!before.includes(w.num) && !w.host),before);
+    assert.equal(await page.evaluate(before=>window.passWindows.some(w=>!before.includes(w.num) && !w.host),before),false);
+    if (!multiline) {
+      const count=await page.evaluate(()=>passActions.length);
+      await page.keyboard.press("Enter");
+      await page.waitForFunction(count=>passActions.slice(count).some(a=>a.kind==6),count);
+    }
   }
   await Transfer("desktopMenu");
   const menuChat=await Point("desktopMenu","#chatBtn");
@@ -193,6 +202,11 @@ try {
   await Type("chatWin","#chatText","Native input fixture");
   await page.waitForFunction(()=>document.getElementById("chatText").value=="");
   assert(sent.some(m=>m.text=="Native input fixture"),"native form submits to the local mocked chat socket");
+  await page.keyboard.type("after submit");
+  await page.waitForFunction(()=>document.getElementById("chatText").value=="after submit");
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(()=>document.getElementById("chatText").value=="");
+  assert(sent.some(m=>m.text=="after submit"),"submit clears the retained native document and keeps its focus for the next message");
   await page.evaluate(()=>document.exitFullscreen());
   await ReturnAll();await page.locator("#chatClose").click();
 

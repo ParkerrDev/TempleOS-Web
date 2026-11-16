@@ -4,7 +4,7 @@ import {OsFullscreenExit,OsOnlyMode,osMouse} from "./Os.js";
 import {KEY} from "./Keyboard.js";
 import {PointerDrag} from "./WinPointer.js";
 
-import {GuiScene,GuiCompatible,GuiHoverStyles,GuiValue} from "./GuiBridge.js";
+import {GuiScene,GuiCompatible,GuiHoverStyles,GuiValue,GuiFieldState} from "./GuiBridge.js";
 
 export function WinPass({canvas,pal,Request,Input,Status})
 {//Native task surfaces and browser scenes share guest identities.
@@ -273,21 +273,22 @@ export function WinPass({canvas,pal,Request,Input,Status})
         el.dispatchEvent(new KeyboardEvent(kind==9?"keydown":"keyup",{code,key:action.arg1==10?"Enter":key,
           ctrlKey:!!(action.arg2&1024),shiftKey:!!(action.arg2&512),altKey:!!(action.arg2&2048),bubbles:true,cancelable:true}));
       } else if (kind==5) {
-        host.accepted=0;
+        const state=GuiFieldState(el);
+        if (action.x!=state.epoch) return;
         if (el.tagName=="SELECT") el.selectedIndex=Number(action.value);
         else {
           const value=GuiValue(action.value,el.hasAttribute("data-cp437"));
           if (el.maxLength>0 && value.length>el.maxLength) {
+            state.epoch++;
             Status("This field accepts at most "+el.maxLength+" characters.");return;
           }
           el.value=value;
         }
-        host.accepted=action.id;
+        state.value=el.value;
         el.dispatchEvent(new Event("input",{bubbles:true}));
         el.dispatchEvent(new Event("change",{bubbles:true}));
       } else if (kind==6) {
-        if (host.accepted!=action.id) return;
-        host.accepted=0;
+        if (action.x!=GuiFieldState(el).epoch) return;
         el.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",code:"Enter",bubbles:true,cancelable:true}));
         el.form?.requestSubmit();
       } else {

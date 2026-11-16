@@ -17,11 +17,13 @@ const WINS={
   settingsBtn:["settingsWin","../Apps/Settings/SettingsWin.js"],
   cheatsheetBtn:["cheatsheetWin","../Apps/Help/CheatsheetWin.js"],
   mobileHelp:["guide","../Apps/Help/HelpWin.js"]};
-const workspace=new Map,restorers=new Map;
-let saved={},restoring=true,save_queued=false;
+const WORKSPACE="templeos.workspace",workspace=new Map,restorers=new Map;
+let saved={},restoring=true,save_queued=false,stored=false,deleted=false;
 try {
-  saved=JSON.parse(sessionStorage.getItem("templeos.workspace") ||
-    localStorage.getItem("templeos.workspace")) || {};
+  const local=localStorage.getItem(WORKSPACE);
+  stored=local!==null;
+  if (stored) saved=JSON.parse(sessionStorage.getItem(WORKSPACE) || local) || {};
+  else sessionStorage.removeItem(WORKSPACE);
 } catch (error) {
   saved={};
 }
@@ -31,35 +33,39 @@ if (typeof saved!="object" || Array.isArray(saved))
 export function WinWorkspaceSave()
 {
   let id,entry,w,record,overlay,style;
-  if (restoring)
+  if (restoring || deleted)
     return;
-  for ([id,entry] of workspace) {
-    w=entry.w;
-    if (!w.isConnected && w._restore) {
-      workspace.delete(id);
-      delete saved[id];
-    } else {
-      record=saved[id] || {};
-      overlay=w.closest(".overlay");
-      record.open=w.isConnected && w.style.display!="none" &&
-	(!overlay || overlay.classList.contains("open")) &&
-	(!WinMobile(w) || getComputedStyle(w).display!="none" ||
-	w.classList.contains("win-pass-owned"));
-      record.free=!!overlay?.classList.contains("free");
-      record.restore=w._restore;
-      if (!w.dataset.popup && !w.classList.contains("fsmode") && !WinMobile(w)) {
-	style=w.style;
-	record.rect=null;
-	if (w.dataset.floating)
-	record.rect={left:style.left,top:style.top,width:style.width,
-	  height:style.height,sized:!!w.dataset.sized,flow:!!w._ph};
-      }
-      saved[id]=record;
-    }
-  }
   try {
-    sessionStorage.setItem("templeos.workspace",JSON.stringify(saved));
-    localStorage.setItem("templeos.workspace",JSON.stringify(saved));
+    if (stored && localStorage.getItem(WORKSPACE)===null) {
+      deleted=true;sessionStorage.removeItem(WORKSPACE);return;
+    }
+    for ([id,entry] of workspace) {
+      w=entry.w;
+      if (!w.isConnected && w._restore) {
+	workspace.delete(id);
+	delete saved[id];
+      } else {
+	record=saved[id] || {};
+	overlay=w.closest(".overlay");
+	record.open=w.isConnected && w.style.display!="none" &&
+	  (!overlay || overlay.classList.contains("open")) &&
+	  (!WinMobile(w) || getComputedStyle(w).display!="none" ||
+	  w.classList.contains("win-pass-owned"));
+	record.free=!!overlay?.classList.contains("free");
+	record.restore=w._restore;
+	if (!w.dataset.popup && !w.classList.contains("fsmode") && !WinMobile(w)) {
+	  style=w.style;
+	  record.rect=null;
+	  if (w.dataset.floating)
+	    record.rect={left:style.left,top:style.top,width:style.width,
+	      height:style.height,sized:!!w.dataset.sized,flow:!!w._ph};
+	}
+	saved[id]=record;
+      }
+    }
+    localStorage.setItem(WORKSPACE,JSON.stringify(saved));
+    stored=true;
+    sessionStorage.setItem(WORKSPACE,JSON.stringify(saved));
   } catch (error) {
     dispatchEvent(new CustomEvent("winworkspaceerror",{detail:
       "Window layout changed for this visit; browser storage is unavailable."}));
@@ -198,6 +204,12 @@ async function WinWorkspaceRestore()
   }
 }
 
+addEventListener("storage",function (e) {
+  if (e.storageArea==localStorage && e.newValue===null &&
+      (e.key===null || e.key==WORKSPACE)) {
+    deleted=true;sessionStorage.removeItem(WORKSPACE);
+  }
+});
 addEventListener("pagehide",WinWorkspaceSave);
 addEventListener("winpopupreturn",WinSaveSoon);
 new MutationObserver(WinSaveSoon).observe(document.body,{childList:true});
