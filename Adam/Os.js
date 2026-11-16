@@ -10,7 +10,7 @@ import {StockInspect} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Stock.js";
 import {BUS_VERSION} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/CoreBus.js";
 import {MachineShared} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/MachineShared.js";
 import {DiskStoreOpen} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/DiskStore.js";
-import {WinFind,WinDocuments,WinPopupReturn} from "./WinMgr.js";
+import {WinFind,WinDocuments,WinPopup,WinPopupHold} from "./WinMgr.js";
 import {BootFileRead,BootFileClear} from "./BootFile.js";
 import {Speaker} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Speaker.js";
 import "./XSel.js";
@@ -32,7 +32,7 @@ addEventListener("winpopup",function (e) {
   for (let args of docEvents) view.document.addEventListener(...args);
   for (let args of viewEvents) view.addEventListener(...args);
   view.addEventListener("resize",fitScreen);
-  view.addEventListener("pointerdown",function () {engine.Claim?.();},true);
+  if (engine.Claim) view.addEventListener("pointerdown",engine.Claim,true);
 });
 function LockedDoc()
 {
@@ -152,7 +152,7 @@ let msX = 320, msY = 240, msB = 0, wheelZ = 0;
 let win_slot=-1,win_task=0,win_num=0,win_pass=null,win_pass_load=null,
   win_pass_ready=false,
   win_pass_state=false,win_pass_msg="Window passthrough is off.",
-  win_pass_change=Promise.resolve(),os_only=false;
+  win_pass_change=Promise.resolve(),os_only=false,only_popup=null;
 const keyq = [];
 let keysUp=false,pasteGen=0;
 const keyboard=KeyInput(function (bytes) {
@@ -682,7 +682,7 @@ async function OnlySet(on)
   document.body.classList.toggle("os-only",on);
   OnlyButtons();
   if (on) {
-    WinPopupReturn(fullscreen_frame);
+    only_popup=WinPopupHold(fullscreen_frame);
     $("desktopMenu").style.display="";
     fullscreen_fake=true;
     document.body.classList.add("fakefs");
@@ -697,8 +697,9 @@ async function OnlySet(on)
   } else {
     osMouse.releaseMouse();
     await OsFullscreenExit();
-    await win_pass?.Return();
+    await win_pass?.OnlyRestore();
     await WinPassApply();
+    if (only_popup) {WinPopup(fullscreen_frame,only_popup);only_popup=null;}
   }
 }
 

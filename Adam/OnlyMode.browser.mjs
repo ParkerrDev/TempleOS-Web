@@ -70,6 +70,7 @@ try {
     assert.deepEqual(errors,[]);
     console.log("PASS touch TempleOS Only Mode: viewport, native Menu and Settings, docked input, tap exit.");
   } else {
+  let nativeBefore;
   if (process.env.WINPASS_SMP) {
     await page.evaluate(async()=>{(await import("/Adam/Os.js")).OsCfg({pass:true});});
     await page.waitForFunction(()=>nativeWindows.some(w=>w.title.includes("Welcome")));
@@ -79,11 +80,17 @@ try {
       if (!res.ok) throw Error(res.msg);
     });
     await page.locator(".win-pass").waitFor();
+    await page.locator(".win-pass").evaluate(w=>{w.style.left="925px";w.style.top="300px";});
+    nativeBefore=await page.locator(".win-pass").boundingBox();
   }
   await page.locator("#filesBtn").click();await page.locator("#filesWin").waitFor();
   await page.locator("#filesOverlay").evaluate(el=>el.classList.add("free"));
   await page.locator("#chatBtn").click();await page.locator("#chatWin").waitFor();
   await page.locator("#chatOverlay").evaluate(el=>el.classList.add("free"));
+  await page.locator("#chatWin").evaluate(w=>{
+    w.dataset.floating="1";
+    Object.assign(w.style,{position:"fixed",left:"410px",top:"128px",width:"400px",height:"360px",margin:"0"});
+  });
   const popup=page.waitForEvent("popup");
   await page.evaluate(async()=>{const {WinPopup}=await import("/Adam/WinMgr.js");WinPopup(document.getElementById("filesWin"));});
   const filesPopup=await popup;
@@ -94,11 +101,16 @@ try {
     return WinDocuments().flatMap(doc=>[...doc.querySelectorAll(".win:not(.win-pass)")]).filter(w=>
       w.id!="frame" && !w.closest(".overlay:not(.open)") && w.getClientRects().length).map(w=>w.id);
   });
+  const layoutBefore=await page.evaluate(ids=>Object.fromEntries(ids.filter(id=>id!="filesWin").map(id=>{
+    const w=document.getElementById(id),r=w.getBoundingClientRect();
+    return [id,{x:r.x,y:r.y,width:r.width,height:r.height}];
+  })),openBefore);
   await page.locator("#fsBtn").click();
   await page.waitForFunction(()=>document.fullscreenElement?.id=="frame");
   await page.evaluate(()=>document.getElementById("onlyBtn").click());
   await page.waitForFunction(()=>["desktopMenu","filesWin","chatWin"].every(id=>document.getElementById(id)?.classList.contains("win-pass-owned")),null,{timeout:60000});
-  assert(filesPopup.isClosed(),"pop-out tools return to the page before native transfer");
+  assert(!filesPopup.isClosed(),"the popup remains available for restoration without another popup request");
+  assert.equal(await filesPopup.locator("#filesWin").count(),0,"the actual tool moves into TempleOS");
   await page.waitForFunction(ids=>ids.every(id=>document.getElementById(id)?.classList.contains("win-pass-owned")),openBefore);
   assert.equal(await page.locator(".win-pass").count(),0,"detached guest windows return inside too");
   assert.equal(await page.evaluate(async()=>(await import("/Adam/Os.js")).OsCfg().pass),!!process.env.WINPASS_SMP,"mode does not overwrite the passthrough preference");
@@ -107,6 +119,40 @@ try {
   assert(await page.locator("#fsExit").isVisible(),"a reachable exit remains when native Menu is closed");
   await Button("settingsWin","#onlyBtn");
   await page.waitForFunction(()=>!document.body.classList.contains("os-only") && !document.querySelector(".win-pass-owned"));
+  if (process.env.WINPASS_SMP) {
+    await page.locator(".win-pass").waitFor();
+    assert.deepEqual(await page.locator(".win-pass").boundingBox(),nativeBefore,
+      "the previously detached native window returns to its original position and scale");
+  }
+  await filesPopup.locator("#filesWin").waitFor();
+  assert.equal(await page.locator("#filesWin").count(),0,"Files returns to its original popup");
+  assert.deepEqual(await page.evaluate(ids=>Object.fromEntries(ids.map(id=>{
+    const r=document.getElementById(id).getBoundingClientRect();
+    return [id,{x:r.x,y:r.y,width:r.width,height:r.height}];
+  })),Object.keys(layoutBefore)),layoutBefore,"exiting restores the browser window layout");
+  if (process.env.WINPASS_SMP) {
+    const detachedPopup=page.waitForEvent("popup");
+    await page.evaluate(async()=>{
+      (await import("/Adam/WinMgr.js")).WinPopup(document.querySelector(".win-pass"));
+    });
+    const nativePopup=await detachedPopup;
+    await page.evaluate(()=>{
+      const r=document.getElementById("canvas").getBoundingClientRect();
+      document.getElementById("chatWin").dispatchEvent(new CustomEvent("winmoved",{bubbles:true,
+        detail:{clientX:r.left+100,clientY:r.top+80}}));
+    });
+    await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="chatWin"));
+    await page.locator("#onlyBtn").click();
+    await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="desktopMenu"));
+    await page.locator("#fsExit").click();
+    await filesPopup.locator("#filesWin").waitFor();
+    await nativePopup.locator(".win-pass").waitFor();
+    assert(await page.locator("#chatWin").evaluate(w=>w.classList.contains("win-pass-owned")),
+      "a tool already inside TempleOS stays there on exit");
+    await nativePopup.locator("#popupReturn").click().catch(error=>{if(!nativePopup.isClosed())throw error;});
+    await page.evaluate(async()=>await (await import("/Adam/Os.js")).OsWinPassReturn());
+    await page.waitForFunction(()=>!document.querySelector(".win-pass-owned"));
+  }
   await page.locator("#settingsBtn").click();
   await page.locator("#settingsWin #onlyBtn").click();
   await page.waitForFunction(ids=>document.body.classList.contains("os-only") && ids.every(id=>
@@ -144,8 +190,23 @@ try {
   await page.waitForFunction(()=>!document.body.classList.contains("os-only") && document.getElementById("onlyBtn").disabled);
   assert(await page.locator("#pauseBtn").isVisible(),"paused OS leaves its resume control reachable");
   await page.locator("#pauseBtn").click();
+  await page.waitForFunction(()=>!document.getElementById("onlyBtn").disabled);
+  const frameOpening=page.waitForEvent("popup");
+  await page.evaluate(async()=>{
+    (await import("/Adam/WinMgr.js")).WinPopup(document.getElementById("frame"));
+  });
+  const framePopup=await frameOpening;
+  await page.locator("#onlyBtn").click();
+  await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="desktopMenu"));
+  await page.setViewportSize({width:900,height:844});
+  await page.locator("#fsExit").click();
+  await framePopup.locator("#frame").waitFor();
+  await page.locator("#onlyBtn").click();
+  await page.waitForFunction(()=>document.getElementById("frame")?.classList.contains("fsmode"));
+  await page.reload();
+  assert(framePopup.isClosed() && filesPopup.isClosed(),"refresh closes held popup shells");
   assert.deepEqual(errors,[]);
-  console.log("PASS TempleOS Only Mode: viewport, popup transfer, native launches, confinement, restart, exit, incompatible tool and pause recovery.");
+  console.log("PASS TempleOS Only Mode: viewport, browser layout, native placement, popup restoration, launches, confinement, restart, exit, incompatible tool and pause recovery.");
   }
 } catch(error) {
   if(page){await mkdir("tmp/gui",{recursive:true});await page.screenshot({path:"tmp/gui/only-mode-error.png"});console.error(await page.evaluate(()=>({windows:nativeWindows,status:document.getElementById("windowPassStatus")?.textContent,body:document.body.className})));}

@@ -39,6 +39,9 @@ Inline editing correction:
 - Return current windows independently of the enabled preference.
   - The floating dock and Return action currently dispatch the disable event.
   - Disabling and restoring ownership are conflated even though return should leave future transfers enabled.
+- Only Mode records the previous window placement and restores that placement on exit.
+  - Returning every window moves previously detached native windows inside and previously native tools outside.
+  - Closing popups loses their browser position and makes restoration depend on permission to open another popup. Keep their shells available and reuse them, releasing popup listeners between transfers and closing held shells on page unload.
 - Use the same native surface coordinates for pointer forwarding and resize/move cursors.
   - Detached task canvases forward mouse input without indicating which border is resizable.
 

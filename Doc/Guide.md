@@ -145,7 +145,10 @@ further dragging. Old saved engines require Restart to enable passthrough.
 **TempleOS Only Mode** in Settings fills the browser viewport and moves open
 compatible tools and detached windows into TempleOS. New tools open there too,
 and windows cannot be dragged out while the mode is active. Use Settings'
-exit button or the corner [X] to return to the site. Restart keeps the mode;
+exit button or the corner [X] to return to the site. Exiting restores the previous
+browser positions and popups, including native windows that were dragged out.
+Tools already inside TempleOS stay there. Existing popups wait for their tools
+to return. Restart keeps the mode;
 pausing or opening Video Player or Sprite Studio leaves it so those browser
 controls remain reachable. The mode lasts for this visit and does not change
 your usual passthrough preference.

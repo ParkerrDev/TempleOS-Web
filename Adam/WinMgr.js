@@ -1,6 +1,6 @@
 import {PointerDrag} from "./WinPointer.js";
 import {WinDocuments,WinFind,WinMobile,WinOutside,WinPopup,WinPopupReturn} from "./WinPopup.js";
-export {WinDocuments,WinFind,WinMobile,WinOutside,WinPopup,WinPopupReturn} from "./WinPopup.js";
+export {WinDocuments,WinFind,WinMobile,WinOutside,WinPopup,WinPopupReturn,WinPopupHold} from "./WinPopup.js";
 import "./WinDraw.js";
 const $=WinFind;
 let z_top=1000;

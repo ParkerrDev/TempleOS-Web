@@ -1,4 +1,4 @@
-const popups=new Map;
+const popups=new Map,held=new Set;
 let leaving=false,notice=null;
 
 export function WinDocuments()
@@ -49,6 +49,7 @@ export function WinPopupReturn(w,close=true)
     return;
   popups.delete(w);
   clearInterval(entry.timer);
+  entry.events.abort();
   root=entry.root;
   if (entry.marker.isConnected) {
     entry.marker.replaceWith(root);
@@ -59,6 +60,17 @@ export function WinPopupReturn(w,close=true)
   if (close && !entry.popup.closed)
     entry.popup.close();
   dispatchEvent(new CustomEvent("winpopupreturn",{detail:{element:w}}));
+  return entry.popup;
+}
+
+export function WinPopupHold(w)
+{//Keep the browser window available while its tool runs inside TempleOS.
+  const popup=WinPopupReturn(w,false);
+  if (popup && !popup.closed) {
+    held.add(popup);
+    popup.document.body.textContent="Inside TempleOS Only Mode. Exit the mode to restore this window.";
+  }
+  return popup;
 }
 
 function PopupBlocked(w)
@@ -91,11 +103,12 @@ function PopupBlocked(w)
   document.body.append(notice);
 }
 
-export function WinPopup(w)
+export function WinPopup(w,reuse=null)
 {//Move the live DOM; its canvas, controls and task identity stay the same.
   let r=w.getBoundingClientRect(),root=w.closest(".overlay") || w,
     entry=popups.get(w),display=getComputedStyle(w).display,
     popup,doc,base,style,button,el,marker;
+  held.delete(reuse);
   if (!w.isConnected) {
     if (notice) {
       notice.remove();
@@ -107,9 +120,10 @@ export function WinPopup(w)
     entry.popup.focus();
     return entry.popup;
   }
-  if (WinMobile(w) || leaving)
+  if (!reuse && WinMobile(w) || leaving)
     return null;
-  popup=window.open("","_blank","popup,width="+Math.max(320,Math.round(r.width))+
+  if (reuse?.closed) return null;
+  popup=reuse || window.open("","_blank","popup,width="+Math.max(320,Math.round(r.width))+
     ",height="+Math.max(160,Math.round(r.height)+44));
   if (!popup) {
     WinBringBack(w);
@@ -117,6 +131,7 @@ export function WinPopup(w)
     return null;
   }
   doc=popup.document;
+  doc.head.replaceChildren();doc.body.replaceChildren();
   doc.title=w.dataset.winTitle ||
     w.querySelector("canvas")?.getAttribute("aria-label") || "TempleOS window";
   base=doc.createElement("base");
@@ -157,14 +172,15 @@ export function WinPopup(w)
   doc.body.append(button);
   marker=document.createComment("Window in browser popup");
   root.before(marker);
-  entry={popup,root,marker,timer:0};
+  entry={popup,root,marker,timer:0,events:new AbortController};
   popups.set(w,entry);
   w.dataset.popup="1";
   doc.body.append(root);
-  popup.addEventListener("pagehide",function PopupUnloaded() {WinPopupReturn(w,false);});
+  popup.addEventListener("pagehide",function PopupUnloaded() {WinPopupReturn(w,false);},
+    {signal:entry.events.signal});
   popup.addEventListener("blur",function PopupBlur() {
     w.dispatchEvent(new Event("winpopupblur"));
-  });
+  },{signal:entry.events.signal});
   entry.timer=setInterval(function PopupWatch() {
     if (popup.closed)
       WinPopupReturn(w,false);
@@ -182,4 +198,6 @@ addEventListener("pagehide",function DesktopUnloaded() {
   leaving=true;
   for (let w of popups.keys())
     WinPopupReturn(w);
+  for (const popup of held) popup.close();
+  held.clear();
 });

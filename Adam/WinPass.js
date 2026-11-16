@@ -1,4 +1,4 @@
-import {WinFocus,WinRaise,WinMobile,WinOutside,WinPopup,WinPopupReturn,
+import {WinFocus,WinRaise,WinMobile,WinOutside,WinPopup,WinPopupReturn,WinPopupHold,
   WinDocuments,WinFind,WinAction} from "./WinMgr.js";
 import {OsFullscreenExit,OsOnlyMode,osMouse} from "./Os.js";
 import {KEY} from "./Keyboard.js";
@@ -9,7 +9,7 @@ import {GuiScene,GuiCompatible,GuiHoverStyles,GuiValue,GuiFieldState} from "./Gu
 export function WinPass({canvas,pal,Request,Input,Status})
 {//Native task surfaces and browser scenes share guest identities.
   let enabled=false,revision=0,windows=[],views=new Map,hosts=new Map,
-    drag=null,
+    drag=null,only=null,
     style=document.createElement("style");
   style.textContent=".win-pass{position:fixed;line-height:0;touch-action:none}"+
     ".win-pass canvas{display:block;image-rendering:pixelated;outline:0;"+
@@ -756,14 +756,29 @@ export function WinPass({canvas,pal,Request,Input,Status})
     if (!enabled || !OsOnlyMode() || w.id=="frame" || w.classList.contains("input-docked") ||
         w.classList.contains("win-pass-owned") || !GuiCompatible(w) ||
         w.closest(".overlay:not(.open)") || w.style.display=="none" || !w.getClientRects().length) return;
-    WinPopupReturn(w);
+    OnlySave();
+    const popup=WinPopupHold(w);
+    if (popup) only.popups.set(w,popup);
     const r=canvas.getBoundingClientRect(),n=w.id=="desktopMenu"?0:hosts.size%8+1;
     await HostNew(w,{clientX:r.left+(48+n*32)*r.width/640,
       clientY:r.top+(8+n*24)*r.height/480,only:true});
   }
 
+  function OnlySave()
+  {
+    if (!only) {
+      only={hosts:new Set([...hosts.values()].map(host=>host.el)),views:[],popups:new Map};
+      for (const view of views.values()) {
+        const saved={win:view.win,left:view.el.style.left,top:view.el.style.top,scale:view.scale};
+        saved.popup=WinPopupHold(view.el);
+        only.views.push(saved);
+      }
+    }
+  }
+
   async function AllInside()
   {
+    OnlySave();
     for (const view of [...views.values()]) {
       if (!enabled || !OsOnlyMode()) return;
       const w=view.win,res=await Send("attach",{slot:w.slot,task:w.task,num:w.num,x:w.x,y:w.y});
@@ -773,5 +788,34 @@ export function WinPass({canvas,pal,Request,Input,Status})
     for (const w of list.filter(w=>w.id!="desktopMenu")) await BringInside(w);
     await BringInside(WinFind("desktopMenu"));
   }
-  return {Enable,Receive,Return,AllInside};
+
+  async function OnlyRestore()
+  {
+    const saved=only;
+    if (!saved) return;
+    only=null;revision++;drag=null;
+    Input({buttons:0,slot:-1});
+    for (const host of [...hosts.values()])
+      if (!saved.hosts.has(host.el)) await HostReturn(host);
+    for (const old of saved.views) {
+      const w=windows.find(w=>Identity(w)==Identity(old.win));
+      if (enabled && w) {
+        const res=await Send("detach",{task:w.task,num:w.num});
+        if (res?.ok) {
+          const view=views.get(Identity(w)) || ViewNew({...w,slot:res.slot,detached:true});
+          view.scale=old.scale;
+          view.el.style.left=old.left;view.el.style.top=old.top;
+          view.canvas.style.width=w.w*view.scale+"px";
+          view.canvas.style.height=w.h*view.scale+"px";
+          if (old.popup) WinPopup(view.el,old.popup);
+        } else old.popup?.close();
+      } else old.popup?.close();
+    }
+    for (const [w,popup] of saved.popups) {
+      if (w.isConnected && w.style.display!="none" && !w.closest(".overlay:not(.open)"))
+        WinPopup(w,popup);
+      else popup.close();
+    }
+  }
+  return {Enable,Receive,Return,AllInside,OnlyRestore};
 }
