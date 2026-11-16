@@ -45,8 +45,9 @@ try {
     const page=await context.newPage();page.on("pageerror",error=>errors.push(error.message));
     await page.goto(new URL(process.env.WINPASS_SMP?"?smp":"?single",base).href);
     await page.evaluate(async()=>window.os=await import("/Adam/Os.js"));
-    await page.waitForFunction(()=>os.OsOnlyReady(),null,{timeout:60000});
+    await page.waitForFunction(()=>os.OsOnlyReady() && os.engine.capture.ready,null,{timeout:60000});
     await page.locator("#settingsBtn").click();
+    await page.locator("#onlyBtn").waitFor();
     if (fullscreen) {
       await page.evaluate(()=>document.getElementById("fsBtn").click());
       await page.waitForFunction(()=>document.fullscreenElement?.id==="frame");
@@ -79,31 +80,27 @@ try {
         throw Error("Native Menu control is not visible: "+selector);
       },selector);
     }
-    async function Cursor()
+    async function Guest(src)
     {
-      return page.evaluate(async()=>{
-        const res=await os.engine.Request({cmd:"osExec",target:"adam",
-          src:'FileWrite("C:/Home/CaptureCursor.BIN",&ms.pos.x,16);'});
-        if (!res.ok) throw Error(res.msg);
-        const file=await os.OsFileRead("C:/Home/CaptureCursor.BIN");
-        if (!file.ok) throw Error(file.msg);
-        const view=new DataView(file.bytes);
-        return {x:Number(view.getBigInt64(0,true)),y:Number(view.getBigInt64(8,true))};
-      });
+      return page.evaluate(src=>os.engine.Request({cmd:"osExec",target:"adam",src}),src);
     }
     await FocusMenu();
     let physical=await Point("#captureBtn");
     await page.mouse.click(physical.clientX,physical.clientY);
     await page.waitForFunction(()=>document.pointerLockElement?.id==="canvas");
+    const reset=await Guest("MsSet(320,240);");
+    assert(reset.ok,reset.msg);
+    let cursor={x:320,y:240};
     async function Move(selector)
     {
-      const target=await Point(selector),before=await Cursor(),frame=await page.evaluate(()=>framesSeen);
-      physical.clientX+=target.x-before.x;physical.clientY+=target.y-before.y;
+      const target=await Point(selector),frame=await page.evaluate(()=>framesSeen);
+      physical.clientX+=target.x-cursor.x;physical.clientY+=target.y-cursor.y;
       await page.mouse.move(physical.clientX,physical.clientY);
       await page.waitForFunction(frame=>framesSeen>=frame+20,frame);
-      const actual=await Cursor();
-      assert.deepEqual(actual,{x:target.x,y:target.y},"captured cursor stays over "+selector+
+      const actual=await Guest("if (ms.pos.x!="+target.x+" || ms.pos.y!="+target.y+") throw('Cursor');");
+      assert(actual.ok,"captured cursor stays over "+selector+": "+actual.msg+
         "; motion trace: "+JSON.stringify(await page.evaluate(()=>motionInputs.slice(-8))));
+      cursor=target;
       assert(await page.locator(selector).evaluate(el=>el.classList.contains("gui-hover")),"native hover reaches "+selector);
     }
     await Move("#settingsBtn");
