@@ -16,7 +16,8 @@ try {
     if (!process.env.GUI_URL) await context.route("**/hemu/*.gz",async route=>route.fulfill({
       body:await readFile(new URL("../hemu/"+new URL(route.request().url()).pathname.split("/").pop(),import.meta.url)),
       contentType:"application/gzip"}));
-    await context.route("https://templeosweb-*.workers.dev/**",route=>route.abort());
+    await context.route("https://templeosweb-*.workers.dev/**",route=>
+      new URL(route.request().url()).hostname.startsWith("templeosweb-files.")?route.continue():route.abort());
     await context.routeWebSocket(/templeosweb-/,()=>{});
     await context.addInitScript(function () {
       localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false,pass:false}));
