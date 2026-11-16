@@ -116,6 +116,12 @@ export function WinPass({canvas,pal,Request,Input,Status})
     if (host.pending) {host.dirty=true;return;}
     host.pending=true;host.dirty=false;
     try {
+      const closable=host.el.id!="desktopMenu" || !OsOnlyMode();
+      if (host.closable!=closable) {
+        const res=await Send("closable",{slot:host.slot,task:host.task,num:host.num,on:closable});
+        if (!res?.ok) return;
+        host.closable=closable;
+      }
       const scene=GuiScene(host.el,host.ids);
       if (!scene || !host.el.isConnected || host.el.style.display=="none" ||
           host.overlay && !host.overlay.classList.contains("open")) {
@@ -151,11 +157,12 @@ export function WinPass({canvas,pal,Request,Input,Status})
     try {doc=GuiScene(w,ids);} catch (error) {
       w.style.width=layout.width;w.style.height=layout.height;Status(error.message);return;
     }
-    let pos=Position(e),rev=revision,overlay=w.closest(".overlay"),host,res;
+    let pos=Position(e),rev=revision,overlay=w.closest(".overlay"),host,res,
+      closable=w.id!="desktopMenu" || !OsOnlyMode();
     if (!doc || w.dataset.passPending)
       return;
     w.dataset.passPending="1";
-    res=await Send("host",{host:w.id,title:doc.title,gui:doc.gui,
+    res=await Send("host",{host:w.id,title:doc.title,gui:doc.gui,closable,
       cols:doc.cols,rows:doc.rows,
       x:Math.max(0,pos.x-48),y:Math.max(0,pos.y-8)});
     delete w.dataset.passPending;
@@ -170,7 +177,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
       return;
     }
     host={slot:res.slot,task:res.task,num:res.num,el:w,overlay,layout,scene:doc,
-      ids,gui:doc.gui,actions:doc.actions,scroll:doc.scroll,timer:0,seen:false,pending:false,animation:0};
+      ids,gui:doc.gui,actions:doc.actions,scroll:doc.scroll,closable,timer:0,seen:false,pending:false,animation:0};
     host.changed=function () {
       clearTimeout(host.timer);host.timer=setTimeout(function () {HostUpdate(host);},16);
     };
@@ -779,6 +786,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
   async function AllInside()
   {
     OnlySave();
+    for (const host of hosts.values()) await HostUpdate(host);
     for (const view of [...views.values()]) {
       if (!enabled || !OsOnlyMode()) return;
       const w=view.win,res=await Send("attach",{slot:w.slot,task:w.task,num:w.num,x:w.x,y:w.y});
@@ -797,6 +805,7 @@ export function WinPass({canvas,pal,Request,Input,Status})
     Input({buttons:0,slot:-1});
     for (const host of [...hosts.values()])
       if (!saved.hosts.has(host.el)) await HostReturn(host);
+      else await HostUpdate(host);
     for (const old of saved.views) {
       const w=windows.find(w=>Identity(w)==Identity(old.win));
       if (enabled && w) {

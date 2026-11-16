@@ -19,13 +19,14 @@ try {
   await context.routeWebSocket(/templeosweb-chat\./,ws=>ws.send(JSON.stringify({t:"hello",tag:"test",people:1,log:[]})));
   await context.addInitScript(function () {
     localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false,pass:false}));
-    window.nativeWindows=[];
+    window.nativeWindows=[];window.framesSeen=0;
     const Base=window.SharedWorker;
     window.SharedWorker=class extends Base {
       constructor(...args) {
         super(...args);
         if (String(args[0]).includes("MachineHub.js")) this.port.addEventListener("message",function (e) {
           if (e.data.cmd=="windows") window.nativeWindows=e.data.windows;
+          if (e.data.cmd=="frame") window.framesSeen++;
         });
       }
     };
@@ -55,6 +56,23 @@ try {
     if (mobile) await page.touchscreen.tap(point.x,point.y);
     else await page.mouse.click(point.x,point.y);
   }
+  async function MenuClose(protectedMenu=true)
+  {
+    const before=await page.evaluate(async()=>{
+      const w=nativeWindows.find(w=>w.host=="desktopMenu"),{engine}=await import("/Adam/Os.js");
+      (await import("/Adam/WinMgr.js")).WinFocus(document.getElementById("frame"));
+      const res=await engine.Request({cmd:"windows",op:"focus",slot:w.slot,task:w.task,num:w.num});
+      if (!res.ok) throw Error(res.msg);
+      const r=document.getElementById("canvas").getBoundingClientRect();
+      return {...w,x:r.x+(w.x+w.w-20)*r.width/640,y:r.y+(w.y+4)*r.height/480};
+    });
+    if (mobile) await page.touchscreen.tap(before.x,before.y);
+    else await page.mouse.click(before.x,before.y);
+    const frame=await page.evaluate(()=>framesSeen);
+    await page.waitForFunction(frame=>framesSeen>=frame+15,frame);
+    assert.equal(await page.evaluate(w=>nativeWindows.some(n=>n.host=="desktopMenu" && n.task==w.task && n.num==w.num),before),
+      protectedMenu,"Menu's native close policy follows Only Mode");
+  }
   if (mobile) {
     await page.locator("#mobileMenu").click();
     await page.locator("#settingsBtn").tap();
@@ -62,6 +80,7 @@ try {
     await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="desktopMenu"),null,{timeout:60000});
     const frame=await page.locator("#frame").boundingBox();
     assert.deepEqual([frame.x,frame.y,frame.width,frame.height],[0,0,390,844]);
+    await MenuClose();
     await Button("desktopMenu","#settingsBtn");
     await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="settingsWin"));
     assert.equal(await page.locator("#keysWin").evaluate(el=>el.classList.contains("input-docked")),true,"touch keyboard remains reachable on the OS input surface");
@@ -116,7 +135,8 @@ try {
   assert.equal(await page.evaluate(async()=>(await import("/Adam/Os.js")).OsCfg().pass),!!process.env.WINPASS_SMP,"mode does not overwrite the passthrough preference");
   const frame=await page.locator("#frame").boundingBox();
   assert.deepEqual([frame.x,frame.y,frame.width,frame.height],[0,0,1440,1000],"TempleOS fills the browser viewport");
-  assert(await page.locator("#fsExit").isVisible(),"a reachable exit remains when native Menu is closed");
+  assert(await page.locator("#fsExit").isVisible(),"the mode exit remains reachable");
+  await MenuClose();
   await Button("settingsWin","#onlyBtn");
   await page.waitForFunction(()=>!document.body.classList.contains("os-only") && !document.querySelector(".win-pass-owned"));
   if (process.env.WINPASS_SMP) {
@@ -138,20 +158,26 @@ try {
     const nativePopup=await detachedPopup;
     await page.evaluate(()=>{
       const r=document.getElementById("canvas").getBoundingClientRect();
-      document.getElementById("chatWin").dispatchEvent(new CustomEvent("winmoved",{bubbles:true,
-        detail:{clientX:r.left+100,clientY:r.top+80}}));
+      for (const id of ["chatWin","desktopMenu"])
+        document.getElementById(id).dispatchEvent(new CustomEvent("winmoved",{bubbles:true,
+          detail:{clientX:r.left+100,clientY:r.top+80}}));
     });
-    await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="chatWin"));
+    await page.waitForFunction(()=>["chatWin","desktopMenu"].every(id=>nativeWindows.some(w=>w.host==id)));
     await page.locator("#onlyBtn").click();
-    await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="desktopMenu"));
+    await page.waitForFunction(ids=>document.body.classList.contains("os-only") && ids.every(id=>
+      document.getElementById(id)?.classList.contains("win-pass-owned") && nativeWindows.some(w=>w.host==id)),openBefore);
+    await MenuClose();
     await page.locator("#fsExit").click();
+    await page.waitForFunction(()=>!document.body.classList.contains("os-only"));
     await filesPopup.locator("#filesWin").waitFor();
     await nativePopup.locator(".win-pass").waitFor();
     assert(await page.locator("#chatWin").evaluate(w=>w.classList.contains("win-pass-owned")),
       "a tool already inside TempleOS stays there on exit");
+    await MenuClose(false);
     await nativePopup.locator("#popupReturn").click().catch(error=>{if(!nativePopup.isClosed())throw error;});
     await page.evaluate(async()=>await (await import("/Adam/Os.js")).OsWinPassReturn());
     await page.waitForFunction(()=>!document.querySelector(".win-pass-owned"));
+    await page.evaluate(()=>document.getElementById("mobileMenu").click());
   }
   await page.locator("#settingsBtn").click();
   await page.locator("#settingsWin #onlyBtn").click();

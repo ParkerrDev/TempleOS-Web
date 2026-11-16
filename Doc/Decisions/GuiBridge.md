@@ -42,6 +42,7 @@ Inline editing correction:
 - Only Mode records the previous window placement and restores that placement on exit.
   - Returning every window moves previously detached native windows inside and previously native tools outside.
   - Closing popups loses their browser position and makes restoration depend on permission to open another popup. Keep their shells available and reuse them, releasing popup listeners between transfers and closing held shells on page unload.
+- Only Mode keeps Menu open through a native close policy. Its DolDoc close control is hidden and its guest task ignores Escape; leaving the mode restores the previous Menu's close behavior.
 - Use the same native surface coordinates for pointer forwarding and resize/move cursors.
   - Detached task canvases forward mouse input without indicating which border is resizable.
 
