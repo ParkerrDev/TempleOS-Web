@@ -262,9 +262,9 @@ $("frame").addEventListener('mousedown',e=>{
 DocOn('mouseup',e=>{if(msB){msB&=~btnBit(e);notifyInput();}});
 DocOn('mousemove',e=>{
   if(document.body.classList.contains('touch'))return;
+  if(e.target!==canvas){hybridTracking=false;return;}
   if(locked()){mouseDX+=e.movementX;mouseDY+=e.movementY;notifyInput();return;}
   if(captureWanted())return; // A released mouse cannot steer a waiting game.
-  if(e.target!==canvas){hybridTracking=false;return;}
   const r=overCanvas(e);if(r){
     win_slot=-1;win_task=win_num=0;
     if(relativeMouse()){

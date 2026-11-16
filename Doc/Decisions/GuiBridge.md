@@ -72,6 +72,9 @@ Chat launch and input follow-up:
 - Keep native tool ownership explicit across focus changes, and verify ordinary short clicks and typing through the same route users take.
 
 Native input correction:
+- Accept mouse motion only from the OS screen, before choosing captured or hybrid input.
+  - Native controls emit browser hover events for their web behavior. The captured path treated those events as device motion and fed the guest's own movement back into the OS, pushing the cursor away from Menu buttons.
+  - The browser regression uses real pointer lock and reads TempleOS's cursor coordinates, then checks stable hover, native clicks, Release mouse and Escape in Only Mode and fullscreen.
 - Use TempleOS document editing and list pickers for input. A clicked text field uses a retained document inside its native task; Enter submits single-line fields and adds a newline to multiline fields. The browser receives values and actions only. This preserves the current resolved layout without inventing another HolyC text editor.
   - HostFocus depends on focusing invisible HTML outside the fullscreen subtree.
   - HostSelect duplicates cursor, selection, and word selection in JavaScript.
