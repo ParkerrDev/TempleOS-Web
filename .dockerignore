@@ -1,0 +1,16 @@
+# Keep the image lean: don't copy VCS history or build-time artifacts. The
+# sibling repos and build outputs are recreated inside the image.
+.git
+node_modules
+hemu
+holyc-fmt
+holycraft
+build
+Site
+_redirects
+tmp
+reference
+TerryADavis-archive-transcriber
+.wrangler
+__pycache__
+.DS_Store

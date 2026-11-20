@@ -1,0 +1,26 @@
+# TempleOS-Web, self-hosted: the node app behind Caddy (self-signed HTTPS).
+#
+#   ./gen-cert.sh                 # once, creates ./certs
+#   docker compose up -d --build  # build + start
+#
+# The site is then at https://<this-server>:49311/  (browser will warn that
+# the certificate is self-signed — expected; click through).
+
+services:
+  app:
+    build: .
+    image: templeos-web
+    restart: unless-stopped
+    environment:
+      - PORT=8080
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      # Random high port -> Caddy's HTTPS (443). Change the left side to avoid
+      # clashing with your other sites.
+      - "49311:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/etc/caddy/certs:ro
