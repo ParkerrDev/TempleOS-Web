@@ -72,6 +72,24 @@ Open **http://localhost:8080**. The server sets the isolation headers needed by 
 ---
 
 <details>
+<summary><b>Self-host with Docker</b></summary>
+
+<br>
+
+On a Docker host, from a fresh checkout:
+
+```sh
+./gen-cert.sh              # self-signed certificate, ~100-year validity
+docker compose up -d --build
+```
+
+Open `https://<server>:49311/` — the browser warns that the certificate is self-signed. The Dockerfile clones the pinned sibling repos and runs the build (tests skipped), and Caddy serves the result over HTTPS on port 49311; change that port in `docker-compose.yml` to avoid clashing with other sites.
+
+</details>
+
+---
+
+<details>
 <summary><b>Credits and related projects</b></summary>
 
 <br>
