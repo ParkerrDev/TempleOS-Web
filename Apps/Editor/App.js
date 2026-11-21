@@ -1,4 +1,3 @@
-import {osMouse} from "../../Adam/Os.js";
 // App.js - main-thread controller for the in-browser HolyC IDE.
 // Spawns the worker, wires keyboard/mouse into the control SAB, drains the
 // sound ring into WebAudio, and shows console output.
@@ -138,7 +137,10 @@ function keyToChar(e) {
 }
 
 let captureWanted=false, manualCapture=false, hybridMouse=false, wasMouseLocked=false, hybridTracking=false;
-const isMouseCaptured=()=>curCanvas.closest(".win-pass-owned")?osMouse.isMouseCaptured():curCanvas.ownerDocument.pointerLockElement===curCanvas;
+function isMouseCaptured() {
+  const target=curCanvas.closest(".win-pass-owned")?$("canvas"):curCanvas;
+  return !!target && target.ownerDocument.pointerLockElement===target;
+}
 const mouseStateChanged=()=>window.dispatchEvent(new Event('game-mouse-change'));
 const scanKeys={KeyW:0x11,KeyA:0x1e,KeyS:0x1f,KeyD:0x20,KeyR:0x13,KeyF:0x21,KeyJ:0x24,KeyL:0x26,KeyI:0x17,KeyK:0x25,KeyP:0x19,Space:0x39,
   ArrowUp:0x48,ArrowLeft:0x4b,ArrowRight:0x4d,ArrowDown:0x50};   // TempleOS merged scan codes

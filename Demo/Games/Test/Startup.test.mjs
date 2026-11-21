@@ -20,7 +20,7 @@ const words=/^(running|returned|closed|never|except:.*|fault|timeout|harness-err
 const native=Hash(JSON.stringify({real:record.real,site:record.site,inputs:record.inputs}));
 for (const [i,entry] of record.games.entries()) {
   assert.equal(entry.nativeSha256,native,stale(entry.name+"'s run, made on another runtime or check,"));
-  assert.equal(entry.filesSha256,(await GameFiles(ENTRIES[i])).sha256,stale(entry.name+"'s files"));
+  assert.equal(entry.filesSha256,(await GameFiles(ENTRIES[i],true)).sha256,stale(entry.name+"'s files"));
   for (const side of [entry.real,entry.site]) {
     assert.match(side.run,words);
     assert.match(side.quit,/^(early|esc|shift-esc|ignored|-)$/);

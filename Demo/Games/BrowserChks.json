@@ -1,7 +1,7 @@
 {
   "format": 1,
   "compilerSha256": "bd4a2cd915af54221506bea990a646a1105e7ed0bb84b54aaa10c02587d5464f",
-  "runnerSha256": "e0e4561c9b2499a2e18425796b6bbdee8e2db01039b40d4509c9b50915d548fc",
+  "runnerSha256": "7f6fb3daa45c2d9fd9e4a21c9cf000a5db534c7e43fb32dbe4ceb7f8aa50aca9",
   "programs": {
     "HolyCraft.HC": {
       "sourceSha256": "8dc9ffed9579b615e03b89f4024982c3dbf7ac2c9e36331309b9ca9a64c3e0cd",
@@ -21,6 +21,14 @@
     },
     "Snake.HC": {
       "sourceSha256": "ef07e8bad9cabc37e5b6266c439af6027ca6bd3d7e32960b2d7001e67c2cb6c5",
+      "startup": true
+    },
+    "after-davis": {
+      "sourceSha256": "7168d46c046cf94d4704470916520556842a37c85ba3c775f8eab3f2a2473832",
+      "startup": true
+    },
+    "kings-quest": {
+      "sourceSha256": "69242e0fc31d918f76473004621fd65d817629234fdc2d7037fafaf067cd4d87",
       "startup": true
     },
     "FNAF.HC": {

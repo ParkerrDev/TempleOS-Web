@@ -4590,6 +4590,111 @@
         "source": "https://github.com/austings/GamesMirror/blob/main/Temple.ISO_.C(1).zip",
         "note": "Original HolyC source and sprites recovered from the author's game disc."
       }
+    },
+    {
+      "id": "after-davis",
+      "name": "After Davis",
+      "entry": "C:/Home/AfterDavis/AfterDavis.HC",
+      "revision": "29b4bf941c2ac74a451b3530f6e58090e6c14fb1",
+      "files": [
+        {
+          "path": "C:/Home/AfterDavis/AfterDavis.HC",
+          "url": "Demo/Games/Upstream/AfterDavis/AfterDavis.HC",
+          "bytes": 20002,
+          "sha256": "602e1769581dd638b72b8dbbf64f24da233ddb9bb51e38f51c0eeb20815b5435"
+        },
+        {
+          "path": "C:/Home/AfterDavis/Art/Booth.GR",
+          "url": "Demo/Games/Upstream/AfterDavis/Art/Booth.GR",
+          "bytes": 182432,
+          "sha256": "58963653669412dd5d9d547b3074e0a2b27e314a4368c5141967398fd0e1a8fa"
+        },
+        {
+          "path": "C:/Home/AfterDavis/Art/Desk.GR",
+          "url": "Demo/Games/Upstream/AfterDavis/Art/Desk.GR",
+          "bytes": 182432,
+          "sha256": "e6a761675df49afb8ae093cfcb1d384c627d607fd5ece57437c0d425aeb2e8d8"
+        },
+        {
+          "path": "C:/Home/AfterDavis/Art/Print.GR",
+          "url": "Demo/Games/Upstream/AfterDavis/Art/Print.GR",
+          "bytes": 40864,
+          "sha256": "e664ccb66d840cd994378bb2fcce29a7e762702d4b5346e6cd1b4eaaedd0add5"
+        },
+        {
+          "path": "C:/Home/AfterDavis/Art/Spring.GR",
+          "url": "Demo/Games/Upstream/AfterDavis/Art/Spring.GR",
+          "bytes": 182432,
+          "sha256": "ce352258d3cc1ae8a688498c71a63c51b85e6920a6840007dd4baac7411d7cc6"
+        },
+        {
+          "path": "C:/Home/AfterDavis/Art/Temple.GR",
+          "url": "Demo/Games/Upstream/AfterDavis/Art/Temple.GR",
+          "bytes": 182432,
+          "sha256": "48331e6f1785746f4daef3ff31363264276593dc322debba8cb5f7e7e3d44005"
+        },
+        {
+          "path": "C:/Home/AfterDavis/Art/Terry0.GR",
+          "url": "Demo/Games/Upstream/AfterDavis/Art/Terry0.GR",
+          "bytes": 7232,
+          "sha256": "5c2d959eb545b3ef29b1845906bfc38fc7dd6d1e39e69e3a2fb8068f431284a8"
+        },
+        {
+          "path": "C:/Home/AfterDavis/Art/Terry1.GR",
+          "url": "Demo/Games/Upstream/AfterDavis/Art/Terry1.GR",
+          "bytes": 7232,
+          "sha256": "7bcad8de2e12d1c3eb2c553afcff929ac75495b20eabb9b50b8f8a27153d164a"
+        },
+        {
+          "path": "C:/Home/AfterDavis/Art/Terry2.GR",
+          "url": "Demo/Games/Upstream/AfterDavis/Art/Terry2.GR",
+          "bytes": 7232,
+          "sha256": "8275d782fe28af39f04c249a49f68bd0306109191d1ace81b38d7dc58d80f1a4"
+        },
+        {
+          "path": "C:/Home/AfterDavis/Art/Terry3.GR",
+          "url": "Demo/Games/Upstream/AfterDavis/Art/Terry3.GR",
+          "bytes": 7232,
+          "sha256": "6e17c05f407d0a637251031f2a7e72ceaa31bb44f250d5ea904321bf29ce9c17"
+        }
+      ],
+      "credit": {
+        "author": "ParkerrDev",
+        "authorUrl": "https://github.com/ParkerrDev",
+        "source": "https://github.com/ParkerrDev/afterdavis",
+        "note": "Original HolyC adventure inspired by the life and work of Terry A. Davis."
+      }
+    },
+    {
+      "id": "kings-quest",
+      "name": "King's Quest",
+      "entry": "C:/Home/KingsQuest/Run.HC",
+      "files": [
+        {
+          "path": "C:/Home/KingsQuest/Run.HC",
+          "url": "Demo/Games/KingsQuest/Run.HC",
+          "bytes": 3161,
+          "sha256": "128f5c252051a105ee9bcc84a62f60f6111e6d35b85243ffc5e35e77c1f1997e"
+        },
+        {
+          "path": "C:/Home/KingsQuest/Cpu.HC",
+          "url": "Demo/Games/KingsQuest/Cpu.HC",
+          "bytes": 11684,
+          "sha256": "7cb901d31f3097ec2ef49d0b437bed1844da1beaf212b83f73f80f66d20e3c29"
+        },
+        {
+          "path": "C:/Home/KingsQuest/Devices.HC",
+          "url": "Demo/Games/KingsQuest/Devices.HC",
+          "bytes": 4941,
+          "sha256": "75475ba0740aa0c89f285e78188f7c3ec57fc03b60946f05c0c8b47a36e6a53c"
+        }
+      ],
+      "credit": {
+        "author": "Roberta Williams / Sierra On-Line",
+        "authorUrl": "https://www.sierragamers.com/",
+        "source": "https://archive.org/details/kings-quest-1-pcjr",
+        "note": "Original PCjr edition published by IBM. The HolyC player reads your local game disk."
+      }
     }
   ]
 }

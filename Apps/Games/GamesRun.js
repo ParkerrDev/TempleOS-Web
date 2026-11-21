@@ -152,6 +152,7 @@ async function runInBrowser(g,{inEditor=false,start=true,origin=WinOrigin()}={})
   status.textContent=start?'Compiling with HolyC-WASM...':'Ready. Run starts a new game.';
   try{
     const project=start?await (await gameProject(g)).native():null;
+    if(project && g.media)project.seed.push(await (await import('./GameMedia.js')).gameDisk(g.media));
     await EdLoad();
     if(token!==launchToken)return;
     if(!inEditor)ed_game.leave();
@@ -236,6 +237,11 @@ async function runInTempleOS(g) {
     try {
       const {installGame} = await import("./GamePkgs.js");
       const writeCurrent=(path,bytes)=>{current();return OsFileWrite(path,bytes.slice(0));};
+      if(g.media){
+        const disk=await (await import('./GameMedia.js')).gameDisk(g.media);
+        const result=await writeCurrent(disk.path,disk.bytes);
+        if(!result?.ok)throw Error(result?.msg || 'Could not install the local disk.');
+      }
       opts = await installGame(g.packageId,writeCurrent,setStatus,overrides,OsGen);
     } catch(e) {
       setStatus("Install failed: " + e.message);

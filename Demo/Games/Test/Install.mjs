@@ -16,8 +16,18 @@ let installs=0;
 //guest disk and what it then launches. Both machines get exactly this. A
 //program (Apps/Programs.js) is written where it installs or launched from its
 //source, as God Tools does.
-export async function GameInstall(game,write)
+export async function GameInstall(game,write,hashOnly=false)
 {
+  if (game.media) {
+    if (hashOnly)
+      await write(game.media.path,null,game.media.sha256);
+    else {
+      assert(process.env.KQ_DISK,"Set KQ_DISK to KQ1PCJR.IMG.");
+      const bytes=await readFile(process.env.KQ_DISK);
+      assert.equal(Hash(bytes),game.media.sha256,"Incorrect PCjr game disk.");
+      await write(game.media.path,bytes);
+    }
+  }
   if (PROGRAMS.includes(game)) {
     const src=await ProgramSrc(game);
     if (!game.install)
@@ -44,13 +54,14 @@ export async function GameInstall(game,write)
 export const START_WAIT=15,START_QUIT=10,FRAME_SECONDS=0.016;
 export const ESC=[0x01,0x81],SHIFT_ESC=[0x2A,0x01,0x81,0xAA];
 
-export async function GameFiles(game)
+export async function GameFiles(game,hashOnly=false)
 {//What the entry writes and launches, and one hash over all of it.
-  const files=[],launch=await GameInstall(game,async function (path,bytes) {
-    files.push({path,bytes});
-  });
-  return {files,launch,sha256:Hash(JSON.stringify({launch,
-    files:files.map(f=>({path:f.path,sha256:Hash(f.bytes)}))}))};
+  const files=[],hashes=[];
+  const launch=await GameInstall(game,async function (path,bytes,sha256) {
+    hashes.push({path,sha256:sha256 || Hash(bytes)});
+    if (bytes) files.push({path,bytes});
+  },hashOnly);
+  return {files,launch,sha256:Hash(JSON.stringify({launch,files:hashes}))};
 }
 
 export async function StartInputs()

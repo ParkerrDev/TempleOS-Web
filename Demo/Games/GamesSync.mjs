@@ -7,6 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {syncLibrary} from './GameLibSync.mjs';
 import {gameCredits} from '../../Apps/Games/GameCredits.js';
 import {ToomPackage} from './Toom/Test/Package.mjs';
+import {AdventurePackages} from "./AdventurePkgs.mjs";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const tinker=resolve(process.argv[2]||'../.work/upstream/TinkerOS');
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -39,6 +40,7 @@ await save(resolve(tinker,'LICENSE'),'TinkerOS/LICENSE');
 // Package the site's TOOM implementation with Freedoom.
 packages.push(ToomPackage());
 await syncLibrary({tinker,save,packages});
+packages.push(...await AdventurePackages());
 for(const pkg of packages)pkg.credit=gameCredits({name:pkg.name,packageId:pkg.id});
 await writeFile(resolve(root,'Demo/Games/Catalog.json'),JSON.stringify({version:1,sources:{TinkerOS:{url:'https://github.com/tinkeros/TinkerOS',revision:revisions.tinker}},packages},null,2)+'\n');
 console.log(`Imported ${packages.length} packages and ${hashes.length} files. TinkerOS ${revisions.tinker}.`);
