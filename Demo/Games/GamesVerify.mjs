@@ -2,7 +2,7 @@ import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {EXTRA_GAMES,TERRY_DEMOS} from '../../Apps/Games/GameLib.js';
-const expected=TERRY_DEMOS.length+3+EXTRA_GAMES.length;
+const expected=TERRY_DEMOS.length+2+EXTRA_GAMES.length;
 const root=new URL('../../',import.meta.url);
 const c=JSON.parse(await readFile(new URL('Demo/Games/Catalog.json',root)));
 const hash=b=>createHash('sha256').update(b).digest('hex');

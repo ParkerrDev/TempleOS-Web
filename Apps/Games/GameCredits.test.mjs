@@ -11,7 +11,7 @@ for(const pkg of catalog.packages){
  counts.set(credit.author,(counts.get(credit.author)||0)+1);
  assert(new URL(credit.source).protocol==='https:');
 }
-assert.deepEqual(Object.fromEntries(counts),{'Terry A. Davis':47,'Austin Sierra':6,TheTinkerer:8,ParkerrDev:1,'Roberta Williams / Sierra On-Line':1});
+assert.deepEqual(Object.fromEntries(counts),{'Terry A. Davis':47,'Austin Sierra':6,TheTinkerer:8,'Roberta Williams / Sierra On-Line':1});
 const toom=gameCredits({packageId:'toom'});
 assert.equal(toom.author,'Austin Sierra');
 assert.match(toom.note,/originally created by Austin Sierra \(aichrist\)/);
@@ -28,4 +28,4 @@ for (const game of GAMES) {
     assert.equal(file.isDirectory(),match[1]=='tree',game.name+' source link');
   }
 }
-console.log('All 63 package credits match the UI, all 29 additions have matching launch entries, derivative credits and unknown-author rejection passed.');
+console.log('All 62 package credits match the UI, all 29 additions have matching launch entries, derivative credits and unknown-author rejection passed.');

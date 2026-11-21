@@ -43,7 +43,6 @@
         why=!edited && (await Gate(g)).browser;
       if(why)throw new Error(why);
       const native=await project.native();
-      if(g.media)native.seed.push(await (await import('./GameMedia.js')).gameDisk(g.media));
       await import("../Editor/App.js");
       const {source,...options}=native;
       await window.__holycEditor.runIn(document.getElementById("screen"),source,options);

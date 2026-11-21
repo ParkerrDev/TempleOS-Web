@@ -90,10 +90,6 @@ async function Launch(page,game)
  await page.locator('#gmSearch').fill(game.name);
  const card=page.locator('.gm-card').filter({has:page.getByRole('heading',{name:game.name,exact:true})});
  await card.getByRole('button',{name:'Run in Browser',exact:true}).click();
- if(game.media){
-  assert(process.env.KQ_DISK,"Set KQ_DISK to the original PCjr disk path.");
-  await page.locator('dialog input[type=file]').setInputFiles(process.env.KQ_DISK);
- }
  return {screen:'#gameWinSlot #screen',status:'#gameWinStatus',close:'#gameWinClose'};
 }
 

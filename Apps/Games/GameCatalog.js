@@ -1,13 +1,8 @@
 import {EXTRA_GAMES} from "./GameLib.js";
 
 export const GAMES = [
-  { name:"After Davis",packageId:"after-davis",disk:"C:/Home/AfterDavis/AfterDavis.HC",
-    blurb:"Walk through four rooms from Terry Davis's working life. Repair a sprite, register a ticket press and read the marks someone left behind.",
-    how:"Arrows walk · L look · Space use · N notebook · Esc quit" },
   { name:"King's Quest",packageId:"kings-quest",disk:"C:/Home/KingsQuest/Run.HC",
-    media:{name:"KQ1PCJR.IMG",path:"C:/Home/KQ1PCJR.IMG",bytes:368640,
-      sha256:"9647acdbadb0b8ebd3af8d19a02cb549dc7282659cde0efe5d15390cafb4af29"},
-    blurb:"Sierra's original 1984 PCjr adventure. Explore Daventry with your own King's Quest disk image.",
+    blurb:"Explore Daventry in a native HolyC reconstruction of Sierra's 1984 King's Quest.",
     how:"Arrows move · Type commands and press Enter · F10 sound · F12 or Shift+Esc quit" },
   // custom dual-target games (run in the browser bypass OR the real OS; your edits are cached)
   { file: "HolyCraft.HC", name: "HolyCraft", blurb: "A 3D voxel sandbox - walk a blocky world, break & place blocks. A real-time raycaster in HolyC.",

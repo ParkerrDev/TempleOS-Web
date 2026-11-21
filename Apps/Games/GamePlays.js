@@ -8,8 +8,7 @@
 // these in V5.03 and HEMU, Apps/Games/Games.browser.mjs in HolyC-WASM, and
 // Demo/Games/Play.json records what each did.
 export const PLAYS={
-  "After Davis":"1 enter;2 space;3 l;4 right;5 n;6 n;7 esc",
-  "King's Quest":"1 enter;2 enter;3 right;4 right;5 l o o k enter;6 shift+ esc shift-",
+  "King's Quest":"1 right;2 right;3 l o o k space c a s t l e enter;5 shift+ esc shift-",
   "HolyCraft":"1 w+;2 w-;3 l+;4 l-;5 m420,240;6 3;7 lb;8 esc", //Held W/A/S/D walk, J/L/I/K turn, the mouse looks, 1-9 pick a block, left button breaks, Esc quits.
   "TOOM":"1 up+;2 up-;3 left+;4 left-;5 ctrl;6 right+;7 right-;8 esc", //Toom/TmInput.HC: held arrows move and turn, Ctrl fires; TmPlay.HC: Esc quits.
   "Babel":"1 a;2 a;3 w;4 d;5 space;6 esc", //A/D move, W turns, Space drops, Esc quits.

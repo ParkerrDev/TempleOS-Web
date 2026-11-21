@@ -37,9 +37,9 @@
     "Demo/Games/Test/Start.HC": "9f8296fe0711d7e72bb512eba8cf0f63ff0aaadfa516e28fb1c1deec181d7756",
     "Demo/Games/Test/Start.mjs": "ba73626371d7a132b24a879d5d9807c4de499c911376a51a37bf3dcbb4954890",
     "Demo/Games/Test/Catalog.mjs": "e880c96ca973920cbc93e34869d983b36a0f62cb9baaf66bc503be35c9d773c8",
-    "Demo/Games/Test/Install.mjs": "648cb39a839f1cf904b9b465d019b4bd27c7afe2c6c0f24cec1d01fbe8d1e891",
+    "Demo/Games/Test/Install.mjs": "80b595e98a56ceaece363a67a678928808fbb8808ca4f714f7df56ecab79740b",
     "Demo/Games/Test/Play.mjs": "a8a7cb0afc894113f18f2e99456a23e10d173a7727185ce59fe5aebaeead732b",
-    "Apps/Games/GamePlays.js": "9993e7e3ecceb5918105a028d50fff4bb1dd6f342b012b9369876156eb36dbbe",
+    "Apps/Games/GamePlays.js": "394a9c2f258d088b0b793d98bd104d16d44108d65c7b30d3e02160fc18e0b222",
     "Apps/Games/GamePkgs.js": "a6178fbeac5951c5f1d08e49fe119b0e2018151162a4812927b9df8644163e58",
     "Apps/Games/GameSrc.js": "c72dc9d21804b5d35ecd225cdd4793cf58dab0b49211d52fd055b64d7a7fce4b",
     "Apps/Programs.js": "5e7a97a56e13e4d3be2894daad28624072611052e6e05979e8597e4de4cfd1cd"
@@ -48,7 +48,7 @@
     {
       "name": "HolyCraft",
       "filesSha256": "f19f4ffff862c106716146a5222cdd2ddd439426cd6082585459f005ce594487",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -64,7 +64,7 @@
     {
       "name": "TOOM",
       "filesSha256": "0aa61e4c25991431557f75b8836376ad898f847451a96ecbc6ec7e788bf54cd7",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -80,7 +80,7 @@
     {
       "name": "Babel",
       "filesSha256": "c64c34a2a45ccb1bd8bbf31f036ab458ab1fbbc503c7ec2d8c96ceacf399e7cd",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -96,7 +96,7 @@
     {
       "name": "Volley",
       "filesSha256": "882f9dafe8d5ec15da9f5a5ed4e47e475da24b46c1b6275814f7e219ed330378",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -112,23 +112,7 @@
     {
       "name": "Snake",
       "filesSha256": "b0da0e547fce3266e143d2b59e75443d3c3639222ff3e80d74ec71189198e833",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
-      "real": {
-        "run": "running",
-        "quit": "esc",
-        "end": "returned"
-      },
-      "site": {
-        "run": "running",
-        "quit": "esc",
-        "end": "returned"
-      },
-      "same": true
-    },
-    {
-      "name": "After Davis",
-      "filesSha256": "f4d57c11c004d320beecbaf427a4b0030d121e368cd6164287d34680d8c7028a",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -143,16 +127,16 @@
     },
     {
       "name": "King's Quest",
-      "filesSha256": "8a623f014526ebf8aede3ae6bad55632e6f7c44144fad7d8f415d1e4ee923b6c",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "filesSha256": "692cc45ae5166bb3896cc79a96c70d872205ad68beaf64842f74360da1c720b1",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
-        "quit": "shift-esc",
+        "quit": "esc",
         "end": "returned"
       },
       "site": {
         "run": "running",
-        "quit": "shift-esc",
+        "quit": "esc",
         "end": "returned"
       },
       "same": true
@@ -160,7 +144,7 @@
     {
       "name": "FNAF",
       "filesSha256": "f29cbdc97ce041df90eef6c2c38e0ad34987a323880b8d054ce14e6cdfa54ea6",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -176,7 +160,7 @@
     {
       "name": "Varoom",
       "filesSha256": "87719568c7dee2fd42db369a5be749b6074e1a490548ca26febf134bce2718b0",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -192,7 +176,7 @@
     {
       "name": "Talons",
       "filesSha256": "2da82768e97dbd92bee1cac5e023c2c6aeb75bf1fe8fbf36ed020a17de6244fc",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -208,7 +192,7 @@
     {
       "name": "BlackDiamond",
       "filesSha256": "ae353f9e8cb7045fadac7512dc01c0ac8fbff71b0f7f47beaa0ad14690505e2d",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -224,7 +208,7 @@
     {
       "name": "FlatTops",
       "filesSha256": "3989fced248fca6f58fc498f0dafef4f5023e66f95e68b270287a001137d9ae8",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -240,7 +224,7 @@
     {
       "name": "Halogen",
       "filesSha256": "fe31a20a80e1a295403ff519b5a26a1e29112c6ccbed88a5737602643c7b537c",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -256,7 +240,7 @@
     {
       "name": "CastleFrankenstein",
       "filesSha256": "426d6217c76814daadcf662305df5a36430efc6acc78eb3b17e914cccee58421",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -272,7 +256,7 @@
     {
       "name": "BattleLines",
       "filesSha256": "d80d74e1afb916ccfbae73d394847b19a30f66d19649fdcb4fc423fde36f1d72",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -288,7 +272,7 @@
     {
       "name": "BigGuns",
       "filesSha256": "14e41725c3cac554444e1bdb9edf089413106143d3ad48a2ef218dbf78f9b2cb",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -304,7 +288,7 @@
     {
       "name": "BomberGolf",
       "filesSha256": "f3a4b07f9f2d0f6295ecc8b03f131e0ee44cb7493288caa94016f786dfb1e77c",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -320,7 +304,7 @@
     {
       "name": "FlapBat",
       "filesSha256": "d0c2b54d326bacda360c14823d0ce015719d4e8ae079caf5936a48dd3fd5ffa7",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -336,7 +320,7 @@
     {
       "name": "Maze",
       "filesSha256": "9e7233ecb0b06694b858b4683beffb735d873c8165b0ee67d7fd26c02f44714c",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -352,7 +336,7 @@
     {
       "name": "TreeCheckers",
       "filesSha256": "1b83842eb81a631d89aafe4ac0f884c710b362ad32f8943c1e3b60280d8c3376",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -368,7 +352,7 @@
     {
       "name": "TicTacToe",
       "filesSha256": "67d740ae22c600691f9aea37a25417bbe20c14c9630b4d84bcc8a631e0f8a4d3",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -384,7 +368,7 @@
     {
       "name": "Whap",
       "filesSha256": "c163b538d0c910ad0f4dd4d0e4d06e1c20e7df84f72eb0bfd5d483d4220cb0b2",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -400,7 +384,7 @@
     {
       "name": "Wenceslas",
       "filesSha256": "dbfd43f5d92344074e9dbfa8e9c31fe000c65ed717b6bfa16c4f7ad9b10ed31b",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -416,7 +400,7 @@
     {
       "name": "RawHide",
       "filesSha256": "bf768361aa76478211fbcfd1963d9dad2f8b0c9df37d681f35b9cd8b808e725c",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -432,7 +416,7 @@
     {
       "name": "TheDead",
       "filesSha256": "0fb7fe75270249e0b7dc2229f5aee261a79d24138ad933c29f9f4f06da4fc38c",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -448,7 +432,7 @@
     {
       "name": "Squirt",
       "filesSha256": "54017b110c9f2d2de00770feb27d8652ba666cd4b1fa19ae1b411064ace67687",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -464,7 +448,7 @@
     {
       "name": "Zing",
       "filesSha256": "2f3182531b4e012bf6faacfa335e08e5f5f7e13f6c16b05502c21e98b9c404ee",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -480,7 +464,7 @@
     {
       "name": "ZoneOut",
       "filesSha256": "06025a257344e349dfc470b38418a9eb47fc40baf6208b9fca9080e5937366c5",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -496,7 +480,7 @@
     {
       "name": "RocketScience",
       "filesSha256": "08359eb17e11c78ca1dfcee85332dab228b9912e6871f044120eac1fa0e08e07",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -512,7 +496,7 @@
     {
       "name": "Rocket",
       "filesSha256": "50d9f417936dc04cb11465a029fc8a6276ff7f7d18b9e4f93de2f9250e7edb34",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -528,7 +512,7 @@
     {
       "name": "DunGen",
       "filesSha256": "5ec7f90fd0d3329b214792c6241f9a401d14b730ff53c557ae4352cb2223bb00",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -544,7 +528,7 @@
     {
       "name": "MassSpring",
       "filesSha256": "b68ee8e7d8892639c50611bed8786208d938efe98cc72802aff6c88fd5c363d1",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -560,7 +544,7 @@
     {
       "name": "Collision",
       "filesSha256": "4be2dd9d953d8b01913daa0ff02d025941ae3581cfd105d80c77b1349b089333",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -576,7 +560,7 @@
     {
       "name": "RainDrops",
       "filesSha256": "b029f6ec23bc6f52bc679fb5574bfaa7760bcbfb2618a9db2f84801a39bb486a",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -592,7 +576,7 @@
     {
       "name": "CircleTrace",
       "filesSha256": "bf8457963fa714a2c6aa87cbb912297abe0aaddcdb859c405637119cf7e48aac",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -608,7 +592,7 @@
     {
       "name": "ElephantWalk",
       "filesSha256": "712e51f2871aacf440005d1eb5b41309b9631df033c73a3f9d10fb491dde0ea6",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -624,7 +608,7 @@
     {
       "name": "CharDemo",
       "filesSha256": "21bcf6d11c404169d3a90724ac34d81466ab11db2ec4e45da2a6c75d70441652",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -640,7 +624,7 @@
     {
       "name": "Digits",
       "filesSha256": "98da264ae530dc9c8fd2072edc74446978cf865f8ef7661765c73013edd70f6f",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -656,7 +640,7 @@
     {
       "name": "Stadium",
       "filesSha256": "64e715141126b9cc14fa4b1aa03aca40f433d850c1eaf3373ca7a3b33ca60d95",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -672,7 +656,7 @@
     {
       "name": "AfterEgypt",
       "filesSha256": "d1ab56e11e7988927fabbcc26d41e58032a0727b4f2395239db4b7bc3a7cf6d7",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -688,7 +672,7 @@
     {
       "name": "Chess",
       "filesSha256": "311ce7367f7e5f650639c5dc50583eb779d7963c7d51df8d419b5366f05057c7",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -704,7 +688,7 @@
     {
       "name": "KeepAway",
       "filesSha256": "6f6ecc434c67b54377dfe6f93adc306ba90fae9a359d2ac19b0471b3bf4d9785",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -720,7 +704,7 @@
     {
       "name": "Span",
       "filesSha256": "aca843e01819879d631793c3f9442f0972abed366ae1178e960c7c32ae6f6c83",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -736,7 +720,7 @@
     {
       "name": "Strut",
       "filesSha256": "39cd533480e4a3e7f0f3c8aa10b1d8fc3de59158aac5c13d72c0c71bb6af4f7d",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -752,7 +736,7 @@
     {
       "name": "Titanium",
       "filesSha256": "dd7b0475164c550cc57dad6192e767a1b9e591e6ee249648afb54f4bf77112c2",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -768,7 +752,7 @@
     {
       "name": "ToTheFront",
       "filesSha256": "0662fdae6bc41493fc97b140f6d9a47619f88fe67696a61caa8c3c5c67323de5",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -784,7 +768,7 @@
     {
       "name": "Vocabulary",
       "filesSha256": "88922f44a5c30065d2adc21879f46ba951670856f331174050c3851727ee8d19",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -800,7 +784,7 @@
     {
       "name": "X-Caliber",
       "filesSha256": "f1207ce2b12e768fc82625239311097a54b69f04f70c056c715c500127148c46",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -816,7 +800,7 @@
     {
       "name": "Castle Frankenstein 2",
       "filesSha256": "60bdfd97e3aae9d289fc31b362759e06dca9ffcf7e9bd46cfb0cf23f8d1d9e87",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -832,7 +816,7 @@
     {
       "name": "Cube",
       "filesSha256": "fe8cf7b59e5b59f41938460cae7f129bcd6c94405fe866cc807117245d81985e",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -848,7 +832,7 @@
     {
       "name": "GlowUFOs",
       "filesSha256": "80e5ebc50c82b4a9c2ab9a21fc71edfb6b4937e34f79859061cb7736993a3c07",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -864,7 +848,7 @@
     {
       "name": "Oregon Trail 1975",
       "filesSha256": "8db05eca7ac83ed2200eb9d1f7624b9b5d11d9f7dc5d911e988596a50d15ba51",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -880,7 +864,7 @@
     {
       "name": "Scorch",
       "filesSha256": "6971875b4d8167feece8248a03333fbab72cd86992ccb2007ce86a00f314c3f9",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -896,7 +880,7 @@
     {
       "name": "SpyHunt",
       "filesSha256": "7f92150cc4d896c22377254e851e30b8b98b04a555a0090eb08418b4fdcd104f",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -912,7 +896,7 @@
     {
       "name": "Sudoku",
       "filesSha256": "0ae6c6b031c5f9a23c6d8ee462dc8a4ac2880782e7f06eac0e98bf026a90b814",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -928,7 +912,7 @@
     {
       "name": "Tetris",
       "filesSha256": "3a850c9a32323365b8811ceab1d3980395d070cbea70bf646fd68a6b93dfd714",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -944,7 +928,7 @@
     {
       "name": "B17",
       "filesSha256": "b3a894b3198ed235dd096a45237ce8ffc8cf70b4e28eae81c562d3fdc8da4dab",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -960,7 +944,7 @@
     {
       "name": "Coach",
       "filesSha256": "79c7351362b770cfe94afa023b0abca0c6bcd701be828a33e41d861cc5ffd536",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -976,7 +960,7 @@
     {
       "name": "DiningStars",
       "filesSha256": "6f64716611f309288c6fe6bf6e2cd037c6b477eef031ec8632a526ce45a4a36b",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -992,7 +976,7 @@
     {
       "name": "Flappy",
       "filesSha256": "3334436a85ceb1511f229814b44446534049cd4d824fcf9f7af6bb4cc7783426",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1008,7 +992,7 @@
     {
       "name": "MissileDefense",
       "filesSha256": "e829860cd7316d0ddbce466d64636f2ece58cb291c457164c4bf2eb2822b0b6e",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -1024,7 +1008,7 @@
     {
       "name": "Rocks",
       "filesSha256": "f6d17a6b165480c86875469062461587f16792dadce9ffa4dd52154cf86e9ccb",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -1040,7 +1024,7 @@
     {
       "name": "Pilgrims",
       "filesSha256": "df897a6652a71251d8bb5dab0ebe4c4e1001762c7ee7be2e045cde7457dae02f",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -1056,7 +1040,7 @@
     {
       "name": "MarioClone",
       "filesSha256": "a8134747554bb788ae211a75c85174d8eb56085bbd58204baa3c57bf996681ca",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1072,7 +1056,7 @@
     {
       "name": "Malicious Testimonies",
       "filesSha256": "e972880705858240d0218089117c6de375adf95835fb897d627f3eeea286d0d6",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -1088,7 +1072,7 @@
     {
       "name": "Ezekiel",
       "filesSha256": "11b7017c510429efc097dbec80d2e3d12663e3cb93068ff9faa1e0a890b86920",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1104,7 +1088,7 @@
     {
       "name": "Lord of Hosts",
       "filesSha256": "1084871c89d78e5786dd76cc305fb9065c2d854a04458d44b30460d93c1b2958",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -1120,7 +1104,7 @@
     {
       "name": "Solomon's Temple",
       "filesSha256": "78d74f5876ee467f823ae21f0772b95c3c860d677471a27bf4fb4e6926c3ff95",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1136,7 +1120,7 @@
     {
       "name": "Print format codes",
       "filesSha256": "b1b967421cb65884d4ad7412c168ff1df956f3dee417cb022a6b15893fd4ccfc",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1152,7 +1136,7 @@
     {
       "name": "Sub-integer access",
       "filesSha256": "766823b68f045bf2d844de3d4bd39ffa227a1f5353a9222427394417a35a5d26",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1168,7 +1152,7 @@
     {
       "name": "Sub-switch",
       "filesSha256": "eeb0e538398c93c60d4ff94c13b8b37613fce85f17f15b8ca456215c719e8130",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1184,7 +1168,7 @@
     {
       "name": "Null cases",
       "filesSha256": "84bce5dcfbe0e61b1db2b989c9f629ece4c027ae172f7a3199696db2a6b54926",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1200,7 +1184,7 @@
     {
       "name": "Carry/branch",
       "filesSha256": "f4e0e1f5e1fe80702ab5917e9c3cb0ea08d6dff3b66e4a465c5f29d6e0e34b56",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1216,7 +1200,7 @@
     {
       "name": "Word search",
       "filesSha256": "55bbc4b3250220209887b2bc2e7732c305022fc3c9e254940d1c3b32eba139b5",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1232,7 +1216,7 @@
     {
       "name": "Phone-number words",
       "filesSha256": "0f79582e07d59030ebea1447cd4fbf36d1b79f219eed83a028c14cefae76b318",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -1248,7 +1232,7 @@
     {
       "name": "Radix sort",
       "filesSha256": "05e52f51d3a5b19f8ff403fde65b52904d4898146352730de055e0cd9e8d60e6",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1264,7 +1248,7 @@
     {
       "name": "Dancing Terry (sprite)",
       "filesSha256": "de68444759eea31c748228aafe02b8cecb45a76b07fd923c315c04a65d5f7cc0",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1280,7 +1264,7 @@
     {
       "name": "Bouncing lines",
       "filesSha256": "962616af216d431afd1d351059eef1f32b24caf1259baa753997f722a912669b",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1296,7 +1280,7 @@
     {
       "name": "Bounce",
       "filesSha256": "1d6798b99ad89d0ddd12583c2f25605befd6819aa5cb7947d464cfe33dc57dbb",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1312,7 +1296,7 @@
     {
       "name": "Grid",
       "filesSha256": "ed329832eab6393900069d231949f0cd051991e3d993da7710fb3d6bd7fd632f",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -1328,7 +1312,7 @@
     {
       "name": "Net of dots",
       "filesSha256": "13dc01a13e6852b68fb552cc549799bf991c5a3720293a1645bec44a4549aba2",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1344,7 +1328,7 @@
     {
       "name": "Random points",
       "filesSha256": "34c374d4802ce2d4be7f05031f8f02a163173ee5d7e2ab7bc7064b4d84b2674c",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -1360,7 +1344,7 @@
     {
       "name": "Palette",
       "filesSha256": "62d40e50d64903dfe3d14ef32f382ba6b3353deaab578fcf8d45ef3afbd48c9c",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "shift-esc",
@@ -1376,7 +1360,7 @@
     {
       "name": "Mouse demo",
       "filesSha256": "490570f3dbb0489febd635d2e393346033cfbd48c1f812014b5d831d46b7091c",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -1392,7 +1376,7 @@
     {
       "name": "Oh Great (song)",
       "filesSha256": "ec3d7f69bc3cb53467cbf413fd4e191f1ce8cafe54fad9da7a23d1df4a085e8a",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -1408,7 +1392,7 @@
     {
       "name": "ASCII Organ",
       "filesSha256": "584b140c88fc8eccaac8a7bcd01d8385f8830e204c3e0f7c98e67be785307340",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1424,7 +1408,7 @@
     {
       "name": "Water Fowl",
       "filesSha256": "cc40ecd500fec422deb3e3eb2b735405640d384031e65d92d9b999f95540dc67",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1440,7 +1424,7 @@
     {
       "name": "Paint (click & drag)",
       "filesSha256": "8d2b0f20f92050789f7dc071554651d2c0e9f052ca082e3abce1d3d833939769",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1456,7 +1440,7 @@
     {
       "name": "Hello / FizzBuzz",
       "filesSha256": "230217ce1fab81a66c4dbedcf048f7f31e14ad80473dfde31946fb41a17601af",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1472,7 +1456,7 @@
     {
       "name": "Mandelbrot (text)",
       "filesSha256": "2333fa9c908dbc4d7b7066f310072ba8cb6af7052db50ef8a570db6eea5d5a5b",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1488,7 +1472,7 @@
     {
       "name": "Plasma (graphics)",
       "filesSha256": "4ce874535ae7f274cb49174998b9cf7f26cc36e03eb119a9bb1252eeaafccb19",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1504,7 +1488,7 @@
     {
       "name": "Sierpinski",
       "filesSha256": "d50f9415a147787676c6172df816bcf35fb12bef6e2bfc7c32eaabf394a98661",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1520,7 +1504,7 @@
     {
       "name": "Scale (music)",
       "filesSha256": "66df3dc20d0ee2424b760af4cd3f9ef9d96ad2107156ad31b8588f0de172ccdd",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1536,7 +1520,7 @@
     {
       "name": "MyProgram",
       "filesSha256": "d71271c5cc42e78cad0b557c9c57445557cda81590adf08a5675491fbffc3490",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "returned",
         "quit": "-",
@@ -1552,7 +1536,7 @@
     {
       "name": "God Word",
       "filesSha256": "c764a6749b7dc6c6fefb84baa0a93b75b64486bd055fd0eee9501fb47439008a",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1568,7 +1552,7 @@
     {
       "name": "God Passage",
       "filesSha256": "b1cdc03522f89ce6d13b0b006468dc242935a12ca75b9febc956f1eecdda5480",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "esc",
@@ -1584,7 +1568,7 @@
     {
       "name": "God Song",
       "filesSha256": "d32150b26483bdd66ec8a6d568333a4c30fb9aed5d54116f564ba51bb3c627b2",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",
@@ -1600,7 +1584,7 @@
     {
       "name": "God Doodle",
       "filesSha256": "775dc9fa6ff728d96a53e3722fc8e00b3087bf6708ca8582508ae090e583b265",
-      "nativeSha256": "34ffbce3fa6cafe9160f0f42996a5d7359f5812db109537124c1646eae025bd9",
+      "nativeSha256": "54849a85d948bc16e8dd07a9fefbabbe7a1852eb51e28e6b90966cfa528d9afc",
       "real": {
         "run": "running",
         "quit": "ignored",

@@ -8,15 +8,14 @@ Run in TempleOS installs the game in the main guest. The catalog check launches 
 
 Babel, Volley and Snake also have tests for game state and input. They compare an exact indexed frame and check cleanup after two launches in the same task. [Game-state results](Test/Evidence.json)
 
-After Davis packages the HolyC program and its native GR artwork from the revision in `Catalog.json`. Its upstream walkthrough exercises all four puzzles in stock V5.03. [Game and historical sources](https://github.com/ParkerrDev/afterdavis)
 
-King's Quest runs Sierra's original PCjr interpreter using a HolyC implementation of its CPU and devices. Choose the original IMG or ZIP when launching. Set `KQ_DISK` to the extracted image when rerunning the machine checks. The ordinary deployment tests use the published checksums. [Installation, controls and edition](KingsQuest/README.md)
+King's Quest uses native HolyC room functions, graphics, actors and controls reconstructed from the supplied 1984 PCjr edition. Its decoded assets are packaged with the source; players do not upload a disk. [Installation, controls and edition](KingsQuest/README.md)
 
 FNAF keeps its source, images and sounds together in one DolDoc file. Its catalog entry installs the complete file at `C:/Home/Games/FNAF.HC` so the game can read its embedded assets at runtime.
 
 HolyC Editor exposes the package's HolyC files through a source selector. Local edits apply to both runners. The text before a document's NUL separator is editable; the original embedded sprite bytes are appended unchanged when downloading or installing the file. Restoring a file also restores it in a previously modified guest installation on the next launch. Upstream drafts are keyed by source checksum to avoid combining source from one revision with sprite records from another.
 
-`Catalog.json` pins the upstream Git revisions and SHA-256 of every installed file. The browser verifies the complete package before asking the guest to write files. It sends raw ArrayBuffers so HolyC's embedded DolDoc sprites survive unchanged. Installation uses TempleOS's own directory and file operations; completed installations are cached until the OS restarts.
+`Catalog.json` records upstream Git revisions where available and the SHA-256 of every installed file. The browser verifies the complete package before asking the guest to write files. It sends raw ArrayBuffers so HolyC's embedded DolDoc sprites survive unchanged. Installation uses TempleOS's own directory and file operations; completed installations are cached until the OS restarts.
 
 Follow [AUTHORS.md](AUTHORS.md) to stage the verified official archives and author checkouts, then refresh the packages:
 

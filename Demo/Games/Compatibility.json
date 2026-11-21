@@ -37,19 +37,12 @@
       "browserStartup": true,
       "wasmSha256": "3d1ffe9fee7a78276189ca7ee570b235eb7e199fbb002a3a2f0b2fe8801ed796"
     },
-    "after-davis": {
-      "name": "After Davis",
-      "sourceSha256": "7168d46c046cf94d4704470916520556842a37c85ba3c775f8eab3f2a2473832",
-      "compile": true,
-      "browserStartup": true,
-      "wasmSha256": "b854851f8df3859b8ec6d786241ac1b69507b971d8eaeb52b8ee106bf65606f6"
-    },
     "kings-quest": {
       "name": "King's Quest",
-      "sourceSha256": "69242e0fc31d918f76473004621fd65d817629234fdc2d7037fafaf067cd4d87",
+      "sourceSha256": "c0640b457434916a1448d1776919da9531c033227383424427abda06b54679d4",
       "compile": true,
       "browserStartup": true,
-      "wasmSha256": "4e82cb796295066ae9581ee17b72d49779d15cc2a60fc26bae2236ee820452b7"
+      "wasmSha256": "fa71e22ce368fc658f47c81ab66c59792202b6400a3dcd123f794c5da538a210"
     },
     "FNAF.HC": {
       "name": "FNAF",

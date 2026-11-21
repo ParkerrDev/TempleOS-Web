@@ -98,7 +98,6 @@ TempleOS, HolyC, the sword-and-scales artwork and the 8×8 system font were crea
 
 [HEMU](https://github.com/ParkerrDev/HEMU) · [HolyC-wasm](https://github.com/ParkerrDev/HolyC-wasm) · [HolyC-fmt](https://github.com/ParkerrDev/HolyC-fmt) · [HolyCraft](https://github.com/ParkerrDev/HolyCraft) power the machine, compiler, formatter and voxel game.
 
-After Davis is a four-room HolyC adventure about Terry's working life. [Game and historical sources](https://github.com/ParkerrDev/afterdavis)
 
 The archive transcriber and omarchy-templeos provide the searchable video archive and Linux theme. [Archive transcriber](https://github.com/ParkerrDev/TerryADavis-archive-transcriber) · [Linux theme](https://github.com/ParkerrDev/omarchy-templeos)
 

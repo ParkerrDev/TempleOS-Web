@@ -3,14 +3,10 @@ import {EXTRA_GAMES,TERRY_DEMOS} from './GameLib.js';
 export function gameCredits(game) {
   const extra=EXTRA_GAMES.find(g=>g.packageId===game.packageId);
   if(extra)return extra.credit;
-  if(game.packageId==='after-davis')return {
-    author:'ParkerrDev',authorUrl:'https://github.com/ParkerrDev',source:'https://github.com/ParkerrDev/afterdavis',
-    note:'Original HolyC adventure inspired by the life and work of Terry A. Davis.',
-  };
   if(game.packageId==='kings-quest')return {
     author:'Roberta Williams / Sierra On-Line',authorUrl:'https://www.sierragamers.com/',
     source:'https://archive.org/details/kings-quest-1-pcjr',
-    note:'Original PCjr edition published by IBM. The HolyC player reads your local game disk.',
+    note:'Original PCjr edition published by IBM. Reconstructed in native HolyC with the original artwork and puzzles.',
   };
   if(game.packageId==='toom')return {
     author:'Austin Sierra',authorUrl:'https://github.com/austings',

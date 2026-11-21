@@ -37,12 +37,12 @@ try {
   assert(!requests.some(p=>(p.includes("/Editor/") && !p.endsWith("/Editor/Demos.js")) || p.endsWith("/GamesRun.js")),"Catalog does not load the runner");
   recordsRelease();
   await page.locator("#gmLoading").waitFor({state:"hidden"});
-  assert.equal(await page.locator(".gm-card").count(),68);
+  assert.equal(await page.locator(".gm-card").count(),67);
   await page.locator("#gmSearch").fill("HolyCraft");
   await page.locator(".gm-card:visible").getByRole("button",{name:"Edit source",exact:true}).click();
   await page.locator("#editorOverlay").waitFor();
   assert(requests.some(p=>p.endsWith("/GamesRun.js")));
-  console.log(JSON.stringify({feedbackMs:elapsed,catalogEntries:68,cancel:true,lazyRunner:true,noOptionalStartupDownloads:true}));
+  console.log(JSON.stringify({feedbackMs:elapsed,catalogEntries:67,cancel:true,lazyRunner:true,noOptionalStartupDownloads:true}));
   await context.close();
 
   const guest=await browser.newContext({serviceWorkers:"block"});

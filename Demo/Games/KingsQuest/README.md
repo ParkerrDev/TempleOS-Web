@@ -1,11 +1,18 @@
 # King's Quest for TempleOS
 
-Play the original 1984 IBM PCjr edition of Roberta Williams's adventure. The HolyC player implements the PCjr instructions and devices that Sierra's interpreter uses. The supplied floppy provides the original room logic, command vocabulary, character animation, score, encounters, sound sequences and artwork.
+The original 1984 PCjr adventure by Roberta Williams and Sierra, rebuilt in HolyC. Graham explores Daventry with the original room artwork, animated characters, vocabulary, puzzles and story. All 85 original room scripts are translated into native HolyC functions. The game draws the original vector pictures and individual sprites itself.
 
-On TempleOS V5.03 or HEMU, put `KQ1PCJR.IMG` in `C:/Home`. Copy this folder to your disk, open it and enter `#include "Run.HC"`. On TempleOS-Web choose King's Quest in Games, choose a runner and select your IMG or the original ZIP. The file is read locally.
+Copy this folder, including `Data`, to TempleOS V5.03 and run `#include "Run.HC"`. TempleOS-Web packages the same files for its TempleOS and browser runners. No floppy upload or emulated PCjr is required.
 
-Use the arrows to walk and type commands such as `look`. Return submits a command. F10 toggles sound. F12 or Shift+Esc leaves the HolyC player. Type `save game` or `restore game` and select a letter from A through Z. For progress that survives closing the player, use the TempleOS runner with disk persistence enabled. The disk's own save writes go to a working copy in `~/KQ1SAVE.IMG`. The TempleOS PC speaker plays the loudest tone channel. The port uses the TempleOS character font for BIOS text.
+Use the arrows to walk; type commands such as `look castle` or `show inventory` and press Enter. With the command line empty, `0` jumps, `-` ducks, and `=` starts swimming. F5 saves, F7 restores, F10 toggles sound, and F12 or Shift+Esc exits. `save game`, `restore game` and `restart` also work. The save file is `~/KingsQuest.SAV`; keep the TempleOS disk saved to preserve it between sessions. The direct browser runner keeps saves only until that game run closes. The PC speaker plays the strongest original tone channel.
 
-The tested disk is 368,640 bytes with SHA-256 `9647acdbadb0b8ebd3af8d19a02cb549dc7282659cde0efe5d15390cafb4af29`. The original files are supplied by the player. [Edition and credits](https://archive.org/details/kings-quest-1-pcjr)
+<details>
+<summary>Implementation and verification</summary>
 
-With the sibling projects installed, run `KQ_DISK=/path/to/KQ1PCJR.IMG node Demo/Games/KingsQuest/Test/Disk.mjs` from the website checkout. It boots stock V5.03, submits commands to the original parser, picks a carrot and restores the castle from slot A.
+`Run.HC` loads the picture and sprite decoder, game operations, translated room rules, actor movement, and TempleOS input loop. `Data/README.md` records the supplied edition and resource provenance. `Test/Extract.py` reproduces extraction and room translation from that edition for development; the disk is not a runtime dependency.
+
+The development oracles execute the original interpreter to compare room rules, operations, picture maps and sprite rendering against this native implementation. `node Demo/Games/KingsQuest/Test/Journey.mjs` plays a fresh complete winning route using the actual parser and movement, with no inventory or world-state setup. Add `--native` to replay those inputs in stock TempleOS V5.03 through the HolyC-wasm QEMU oracle. It checks each required pickup and the original coronation state. `node Demo/Games/KingsQuest/Test/State.mjs` checks saved sprite underlays and identical actor movement after restoring a save in stock TempleOS V5.03. These checks verify specific behavior, rather than claiming every possible player action has been tested.
+
+</details>
+
+Original game and artwork © Sierra On-Line. Original design by Roberta Williams. Native implementation is a port, not a new claim of authorship. [Original edition and credits](https://archive.org/details/kings-quest-1-pcjr).
