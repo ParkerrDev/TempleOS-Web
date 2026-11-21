@@ -13,7 +13,8 @@ for(const p of c.packages){
  const names=new Set();
  for(const f of p.files){
   assert(!names.has(f.path),f.path+' duplicated');names.add(f.path);
-  assert(f.path.startsWith('C:/Home/')&&!f.path.includes('..'));
+  assert(f.system?f.path.startsWith('C:/')&&f.url.startsWith('Demo/Games/Upstream/TempleOS/')&&f.url.slice(29)===f.path.slice(3):f.path.startsWith('C:/Home/'),f.path);
+  assert(!f.path.includes('..'));
   const b=await readFile(new URL(f.url,root));assert.equal(b.length,f.bytes);assert.equal(hash(b),f.sha256,f.url);count++;
  }
  if(p.id==='toom'){

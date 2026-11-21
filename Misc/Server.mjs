@@ -6,6 +6,7 @@ import {createServer} from "node:http";
 import {cpSync,existsSync,readdirSync,readFileSync,statSync,writeFileSync} from "node:fs";
 import {dirname,extname,join,normalize,resolve} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
+import {OFFLOAD} from "./Cdn/Offload.js";
 
 const ROOT=fileURLToPath(new URL("..",import.meta.url));
 //Published: the page, the machine, the shell, the windows and the games, the
@@ -94,6 +95,9 @@ function Served(rel)
   for (r of REDIRECTS)
     if (r[0].test("/"+rel))
       return false;
+  for (r of OFFLOAD["TempleOS-Web"])//The deploy sends these whole to the CDN.
+    if (r.endsWith("/")?rel.startsWith(r):rel==r)
+      return true;
   return SERVED.test(rel) && !NOT_SERVED.test(rel) &&
     !IsFile(dirname(rel)+"/wrangler.toml");
 }

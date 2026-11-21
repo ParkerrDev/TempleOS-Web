@@ -34,7 +34,7 @@ try {
   await page.locator("#gamesBtn").click();
   await page.locator("#gmLoading").waitFor();
   assert.equal(await page.locator(".gm-card").count(),0);
-  assert(!requests.some(p=>p.includes("/Editor/")||p.endsWith("/GamesRun.js")),"Catalog does not load the runner");
+  assert(!requests.some(p=>(p.includes("/Editor/") && !p.endsWith("/Editor/Demos.js")) || p.endsWith("/GamesRun.js")),"Catalog does not load the runner");
   recordsRelease();
   await page.locator("#gmLoading").waitFor({state:"hidden"});
   assert.equal(await page.locator(".gm-card").count(),66);
@@ -43,4 +43,20 @@ try {
   await page.locator("#editorOverlay").waitFor();
   assert(requests.some(p=>p.endsWith("/GamesRun.js")));
   console.log(JSON.stringify({feedbackMs:elapsed,catalogEntries:66,cancel:true,lazyRunner:true,noOptionalStartupDownloads:true}));
+  await context.close();
+
+  const guest=await browser.newContext({serviceWorkers:"block"});
+  await guest.route("https://templeosweb-*.workers.dev/**",r=>r.abort());
+  await guest.routeWebSocket(/^wss:\/\//,ws=>ws.close());
+  const desktop=await guest.newPage();
+  await desktop.goto("http://localhost:8185/?single");
+  await desktop.locator("#gamesBtn").click();
+  const varoom=desktop.locator(".gm-card").filter({has:desktop.getByRole("heading",{name:"Varoom",exact:true})});
+  await varoom.getByRole("button",{name:"Run in TempleOS",exact:true}).click();
+  const result=desktop.locator("#gmToastBody");
+  await desktop.waitForFunction(()=>/Opening .* in a TempleOS task|failed|could not|couldn't/i.test(
+    document.querySelector("#gmToastBody")?.textContent||""),null,{timeout:90000});
+  assert.match(await result.innerText(),/Opening Varoom in a TempleOS task/);
+  assert(await desktop.locator("#gamesOverlay").isHidden(),"A successful package launch closes the catalog");
+  console.log("Run in TempleOS installed Varoom from its card and the guest acknowledged launch.");
 } finally {await browser.close();server.kill();}

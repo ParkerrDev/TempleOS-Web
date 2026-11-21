@@ -83,7 +83,14 @@ async function loadProject(game,id) {
       }
       let source=files.find(file=>file.path===pkg.entry).source;
       if(!game.packageId && !game.install && !game.disk)source=gameProgram(source);
-      return {source,filename:pkg.entry,files,nativeGame:true};
+      // Every file of the package goes into the runtime's file store, as installGame puts
+      // them on the TempleOS disk. bytes is an ArrayBuffer so hashing the project stays cheap.
+      const seed=[];
+      if(game.packageId)for(const file of pkg.files){
+        const raw=drafts.get(file.path) ?? await gameFile(file);
+        seed.push({path:file.path,sha256:drafts.has(file.path)?'draft':file.sha256 || 'local',bytes:new Uint8Array(raw).slice().buffer});
+      }
+      return {source,filename:pkg.entry,files,seed,nativeGame:true};
     },
   };
 }

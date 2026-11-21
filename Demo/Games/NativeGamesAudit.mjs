@@ -31,11 +31,13 @@ if(mode!=="--audit" && !browserCurrent)
 for (const game of GAMES) {
   const id=game.packageId || game.file,project=await (await gameProject(game)).native(),
     record={name:game.name,sourceSha256:Hash(JSON.stringify(project)),
-      compile:false,browserStartup:false,gameplay:"unverified",templeos:"unverified"};
+      compile:false,browserStartup:false};
   try {
     const result=compileProject(project);
     if (!WebAssembly.validate(result.bytes))
       throw new Error("Generated module failed WebAssembly validation.");
+    if (result.compileError)//A statement V5.03 cannot compile: the program throws there.
+      throw new Error(result.compileError);
     record.compile=true;
     record.wasmSha256=Hash(result.bytes);
     if (result.warnings.length)
@@ -66,4 +68,4 @@ else if (mode=="--check") {
 } else if (failures)
   process.exitCode=1;
 console.log(GAMES.length-failures+"/"+GAMES.length+
-  " programs compile to WebAssembly. Gameplay/TempleOS parity remain unverified.");
+  " games compile to WebAssembly. See Play.json for gameplay results.");

@@ -21,6 +21,6 @@ export async function CompilerInputs(){
 export async function BrowserInputs(){
  return {
   compilerSha256:await CompilerInputs(),
-  runnerSha256:await Sources([...await Files('Adam/'),...await Files('Apps/'),'index.html','Apps/Games/Games.browser.mjs','Demo/Games/Test/BrowserEvidence.mjs'])
+  runnerSha256:await Sources([...await Files('Adam/'),...await Files('Apps/'),'index.html','Apps/Games/Games.browser.mjs','Demo/Games/Test/BrowserEvidence.mjs','Demo/Games/Test/Play.mjs'])
  };
 }

@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {sourceDocument,sourceString} from '../Editor/Source.js';
 import * as protocol from '../../hemu/holyc-wasm/src/runtime/protocol.js';
+import {DISK_FILES} from '../../Demo/Games/DiskFiles.js';
 import {Icon} from "../../Adam/Icons.js";
 import {KEY,KeyBytes,KeyInput} from '../../Adam/Keyboard.js';
 
@@ -48,7 +49,7 @@ class Worker {
 }
 const context=vm.createContext({
   ...protocol,KEY,KeyBytes,KeyInput,Icon,WinFind:id=>document.getElementById(id),document,console,URL,Event,Worker,Int32Array,Uint8Array,SharedArrayBuffer,Atomics,
-  DEMOS:[],sourceDocument,sourceString,TextEncoder,TextDecoder,fetch:async()=>new Response('// test source'),PointerEvent:true,crossOriginIsolated:true,performance,
+  DEMOS:[],DISK_FILES,sourceDocument,sourceString,TextEncoder,TextDecoder,fetch:async()=>new Response('// test source'),PointerEvent:true,crossOriginIsolated:true,performance,
   Speaker:class {resume(){} tone(){}},Framebuffer:class {present(){}},
   addEventListener:windowEvents.addEventListener.bind(windowEvents),
   dispatchEvent:windowEvents.dispatchEvent.bind(windowEvents),
@@ -63,6 +64,12 @@ const emit=(target,type,fields={})=>{
   const event=new Event(type,{cancelable:true});Object.assign(event,fields);target.dispatchEvent(event);
 };
 assert.equal(api.captureMouse(),false,'stopped previews cannot capture');
+let releaseFiles;
+const heldFiles=new Promise(resolve=>releaseFiles=resolve),fetchFile=context.fetch;
+context.fetch=async url=>{await heldFiles;return fetchFile(url);};
+const opening=api.runIn(document.getElementById('screen'),'canceled input probe');
+api.stop();releaseFiles();await opening;
+assert.equal(workers.length,0,'Closing the preview cancels a run waiting on system files');
 await api.runIn(document.getElementById('screen'),'input probe');
 const screen=document.getElementById('screen'),worker=workers.at(-1),ctrl=new Int32Array(worker.sent.controlSAB);
 assert.equal(api.captureMouse(),true,'manual capture works without a game capture hint');

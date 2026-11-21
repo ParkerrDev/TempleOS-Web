@@ -1,23 +1,383 @@
 {
   "format": 1,
-  "compilerSha256": "4f6a8e6eaef7b3fa4196277642b7627493e0ea3c34fbffc1c1ed66667a0ec2b5",
-  "runnerSha256": "7cdfefdb196db2d0570bf96a2b52c6492d0ef9c876a9f58dc3b88dfd6757cdd9",
+  "compilerSha256": "bd4a2cd915af54221506bea990a646a1105e7ed0bb84b54aaa10c02587d5464f",
+  "runnerSha256": "e0e4561c9b2499a2e18425796b6bbdee8e2db01039b40d4509c9b50915d548fc",
   "programs": {
     "HolyCraft.HC": {
-      "sourceSha256": "5f78a93f277823eaa1ffbee92e44740e2cd23e9316b937eed009b73c7f56e05d",
+      "sourceSha256": "8dc9ffed9579b615e03b89f4024982c3dbf7ac2c9e36331309b9ca9a64c3e0cd",
+      "startup": true
+    },
+    "toom": {
+      "sourceSha256": "467b5ce47fbd804f12f593cd7d6267cbb8dffe65de0064f9f4944e994d8bd89f",
       "startup": true
     },
     "Babel.HC": {
-      "sourceSha256": "4ac502f357cfd24da04a5dc4e598fbcf33c3d8de6d4a973b1f4b4212c258235c",
+      "sourceSha256": "f94ccb972ff63ebffcd064fc4b3496027277800a448d7166f0a86a7f45b138e0",
       "startup": true
     },
     "Volley.HC": {
-      "sourceSha256": "a56a8ee5032f32d5dddbd3d9a86eec3115e16274ea86ef555796eafcf9986c76",
+      "sourceSha256": "d5fc4a6e1deb5caa935ca07005c0912a6b945fa04439dae8b4b4f2357f2a8194",
       "startup": true
     },
     "Snake.HC": {
-      "sourceSha256": "d9a64ee266f765713e3b1e1ce55bab82eb93c3f15bc37f56aefa9e1ee675222b",
+      "sourceSha256": "ef07e8bad9cabc37e5b6266c439af6027ca6bd3d7e32960b2d7001e67c2cb6c5",
       "startup": true
+    },
+    "FNAF.HC": {
+      "sourceSha256": "5e251928d8b0e3cb0d0ef44181d1b27c7afdb55b2407a2a289baecf0c2050094",
+      "startup": true
+    },
+    "tinker-Varoom": {
+      "sourceSha256": "ea402588df9d540e62a54c5b21d90c2ee32d5e64ce3328fdcd84bf28bd231bea",
+      "startup": true
+    },
+    "tinker-Talons": {
+      "sourceSha256": "9dd5a5e094a67c5a57f5463a45bf16f778993da402150fd6ca871135c6131504",
+      "startup": true
+    },
+    "tinker-BlackDiamond": {
+      "sourceSha256": "648a9b26924bea620bff635a8f7481385da676a75811d9b333fab8f4ffb6cb6a",
+      "startup": true
+    },
+    "tinker-FlatTops": {
+      "sourceSha256": "68f5e08849222f7fa7097fa9d67566ea8c3edfc5a2f1b8b28a19ac428afe46c5",
+      "startup": true
+    },
+    "tinker-Halogen": {
+      "sourceSha256": "7b74876da4ba7f51bd4e19ee9c355cb40640495e9e39211edc418120584cefaa",
+      "startup": true
+    },
+    "tinker-CastleFrankenstein": {
+      "sourceSha256": "ca3d99499ad4c8a766ab1a90370cc7681a64e4bfafcca9ff9bf29a01c8177988",
+      "startup": true
+    },
+    "tinker-BattleLines": {
+      "sourceSha256": "37e66645e02bdd259de2404aa64e1238259872e5780662865d8d27062a906f30",
+      "startup": true
+    },
+    "tinker-BigGuns": {
+      "sourceSha256": "785e96424c344ee56aad0ad9178d0d048b0b48a0b01247efdac5a41fc19ba93b",
+      "startup": true
+    },
+    "tinker-BomberGolf": {
+      "sourceSha256": "ab8768185a6853a98fbd30e7d7c62bfccb6805d8d9d5cc96bd20653baf425d69",
+      "startup": true
+    },
+    "tinker-FlapBat": {
+      "sourceSha256": "533c81029c60b39efb1f10253f79e743909f8309be17a174f1b4d44b1147b9c6",
+      "startup": true
+    },
+    "tinker-Maze": {
+      "sourceSha256": "28a603dfa0280323dc031184f706b3e14b7e21341f88db7ebf16670d7084d0cf",
+      "startup": true
+    },
+    "tinker-TreeCheckers": {
+      "sourceSha256": "da3cf427b0a01eb2e909cecee4dca0c901e240e7bd9a392652ef2f00b00d2426",
+      "startup": true
+    },
+    "tinker-TicTacToe": {
+      "sourceSha256": "8a65a58d0b39b40c1d53a3fde5d3080a97c5123a0664c896ffa33490ccc8db24",
+      "startup": true
+    },
+    "tinker-Whap": {
+      "sourceSha256": "6a1c8fd54cb0a54c32905874a3125f52eb4eb10d024a1c642a24d03580e67b04",
+      "startup": true
+    },
+    "tinker-Wenceslas": {
+      "sourceSha256": "d0299fd54fc658a4cf97602c3e4fe863cb98fa2e9ec561dda2d2d1cad0ea9582",
+      "startup": true
+    },
+    "tinker-RawHide": {
+      "sourceSha256": "a8a82595ebe7f6712d51739a1649c49f561a487cdcc22b2dfb2fe396aa83ffc1",
+      "startup": true
+    },
+    "tinker-TheDead": {
+      "sourceSha256": "eece3e5845e5e4f209fd33f1596fa452cf5a5d46fbe0950b92a2d1d88f0285dd",
+      "startup": true
+    },
+    "tinker-Squirt": {
+      "sourceSha256": "969270568477716535a9800d578f851b72055ac1d9df6cc214481c1d2efbac10",
+      "startup": true
+    },
+    "tinker-Zing": {
+      "sourceSha256": "8614e1b5df55631173a10ff1ff3ae11189fd6e4bd0b6e4f697c1d62be1c903a9",
+      "startup": true
+    },
+    "tinker-ZoneOut": {
+      "sourceSha256": "70379575d9dfcdc16d6ee1b003a3f59774bb4f83b45d03b8cd975a5421d10628",
+      "startup": true
+    },
+    "tinker-RocketScience": {
+      "sourceSha256": "ea624615f6b92531aa76006618c604a0c814c7aa6e48011918a36904f9cd3f61",
+      "startup": true
+    },
+    "tinker-Rocket": {
+      "sourceSha256": "d93fc0b268a46f030f3e37cb842596c5ef426110ed233c109b4961efd0de67ac",
+      "startup": true
+    },
+    "tinker-DunGen": {
+      "sourceSha256": "a8f7a4aee0667671339b0abb6bb780373b7156f3dc8910277c6a47ad098e943b",
+      "startup": true
+    },
+    "tinker-MassSpring": {
+      "sourceSha256": "1894a678e449a6d1008dfdb68e76ace2a79794d21414469da7528b99dd3aa67f",
+      "startup": true
+    },
+    "tinker-Collision": {
+      "sourceSha256": "348156891e0f969ffc41b0ae67247453c5a539ebd5015d3b5a95fccee9d62593",
+      "startup": true
+    },
+    "tinker-RainDrops": {
+      "sourceSha256": "3e52c6a123b3cb0cdea043f4cdbb3ef0e25984b50769158b9b4f903847c013b2",
+      "startup": true
+    },
+    "tinker-CircleTrace": {
+      "sourceSha256": "6e571444c40bc714a1721840c33429608b58b1b77119633f8f78833fa3f11efd",
+      "startup": true
+    },
+    "tinker-ElephantWalk": {
+      "sourceSha256": "a4ceb6301c98a2491962eae6dc121a2f4cee640ceb3fea9e5f4d13c0e6cd2924",
+      "startup": true
+    },
+    "tinker-CharDemo": {
+      "sourceSha256": "789b4f1e2042a2511f6342d1f847275e19bef8e47205c553ef5dfbcbb39508cb",
+      "startup": true
+    },
+    "tinker-Digits": {
+      "sourceSha256": "cf0ef7e790ee2b32d12db8d2e5e66d256376986136d1d5faf43005291830e8d3",
+      "startup": true
+    },
+    "tinker-Stadium": {
+      "sourceSha256": "26b584068e30d56184e8d04050f9c18338ea104491e9a4616e6aeb7af8499fe6",
+      "startup": true
+    },
+    "library-AfterEgypt": {
+      "sourceSha256": "91bbe79138268c949e1cd188c5024b518e5db6232244ed16af2061fdd25a4f2f",
+      "startup": true
+    },
+    "library-Chess": {
+      "sourceSha256": "940d2a2e0f174a03a5d096db7a7e4c2fa5dabde85569fc1c16d118bf891be7b5",
+      "startup": true
+    },
+    "library-KeepAway": {
+      "sourceSha256": "df6dc88aec1153f51b0be6efdbc0d96b874ecfd9cb433719496a8ecabe8bd543",
+      "startup": true
+    },
+    "library-Span": {
+      "sourceSha256": "de45622847e70a2283eacc6bd08ead5f9ea52a1f390f2802ca24f0a04ad3c211",
+      "startup": true
+    },
+    "library-Strut": {
+      "sourceSha256": "084379567a09191d74e7924801e36dc6b635bc056c05e4acb4d00dbfc5cb5e82",
+      "startup": true
+    },
+    "library-Titanium": {
+      "sourceSha256": "0cbd960f5d54b49bb083b34ee9685c02edab16c1b320145c3f2758493fd2d4f6",
+      "startup": true
+    },
+    "library-ToTheFront": {
+      "sourceSha256": "6d20366e0789bcd0c411ec8f2f7a6ecbfdc25bdb38460e03f538ebddb4bbbb37",
+      "startup": true
+    },
+    "library-Vocabulary": {
+      "sourceSha256": "930bba5340c1efb9b2709bad4dbe79fd7631c587ed8c44a4a1e308187af617f5",
+      "startup": true
+    },
+    "library-XCaliber": {
+      "sourceSha256": "b6495cec2b6b9bb3755476448dfe6c753137df20d32fa96e903f208505094c26",
+      "startup": true
+    },
+    "library-CastleFrankenstein2": {
+      "sourceSha256": "501c279a3481c6b785d024ca67139856c43bdf063154191e24d381da82653e7c",
+      "startup": true
+    },
+    "library-Cube": {
+      "sourceSha256": "998a75ed672caff2f3a60475fe93ea6063874e35854c1b0feba3a05254f5a87c",
+      "startup": true
+    },
+    "library-GlowUFOs": {
+      "sourceSha256": "0c766ee84548f0655bc062df900501c213396d8da70dbebe44ed4dbccd1a44a6",
+      "startup": true
+    },
+    "library-OregonTrail1975": {
+      "sourceSha256": "06d5e0d93714030f5b92c0566d00e9fc88c69dfefb890cddf3cfec355bb53d0d",
+      "startup": true
+    },
+    "library-Scorch": {
+      "sourceSha256": "75d49c94ab58c4fc944d68ddf10b845d962c27eeb5ab40b15ae7ddca533cc642",
+      "startup": true
+    },
+    "library-SpyHunt": {
+      "sourceSha256": "bf9c1ad663dd2a58eee2f0f86682cac69a124909f0d68511b560bd16a4da261e",
+      "startup": true
+    },
+    "library-Sudoku": {
+      "sourceSha256": "18718a7052f00a2d6a4417d801e36f3f2b09e7641e6cf5a62b906c79231e3d1c",
+      "startup": true
+    },
+    "library-Tetris": {
+      "sourceSha256": "db8004261d1e80e201ae97ff093092be090030330c559840eab1deeaa4513108",
+      "startup": true
+    },
+    "library-B17": {
+      "sourceSha256": "54f24e01878691f824a3a9c1540db6677be21085dbf5141bd6e28944bb39bde6",
+      "startup": true
+    },
+    "library-Coach": {
+      "sourceSha256": "96ab7e6e9463cfd517c666b86632a8c7615f16249a4717ed982c25936859a0e1",
+      "startup": true
+    },
+    "library-DiningStars": {
+      "sourceSha256": "ff22c794bef8d7698a4650a2a9c1e9b7e47d0816ca4a237c83e588d733b1f5ea",
+      "startup": true
+    },
+    "library-Flappy": {
+      "sourceSha256": "6461b02cd27f4004ca9395bf45861bc3beecf5715e9172741516a2847a62b0aa",
+      "startup": true
+    },
+    "library-MissileDefense": {
+      "sourceSha256": "92e39025f9152a7b871d1593b994b0b83f50b66382d06932fd4ade8665c116d4",
+      "startup": true
+    },
+    "library-Rocks": {
+      "sourceSha256": "8ae8d836a1c970c5b48a38069e88bdca4e9d9423ab1ef202c849278485ccdee0",
+      "startup": true
+    },
+    "library-Pilgrims": {
+      "sourceSha256": "ab1b07ebb7cf2d60230be9030117f6eaec905d4c3efd72597d65de13e475a87a",
+      "startup": true
+    },
+    "library-MarioClone": {
+      "sourceSha256": "98c0aa20e0034c092c24147c15c1a07d7d736014829d017ac13cccd331049f32",
+      "startup": true
+    },
+    "library-MaliciousTestimonies": {
+      "sourceSha256": "616ca376fb1a16a481ce17c26f1deae8f7d860f6a8791b5bee95c11314144ab2",
+      "startup": true
+    },
+    "library-Ezekiel": {
+      "sourceSha256": "a6920e65932028a8f69e915eef1c19eda4d55d96bd6eeebfe6b73a8ffed23081",
+      "startup": true
+    },
+    "library-LordofHosts": {
+      "sourceSha256": "e63ab4a2f7bab1e3891838b13db379a975932a1f131e5ac2af6080d20b84572e",
+      "startup": true
+    },
+    "library-SolomonsTemple": {
+      "sourceSha256": "0abfd6942209899a31507d47a2abe372f1757fe89308f81cf8a14a99d93d8926",
+      "startup": true
+    },
+    "Print.HC": {
+      "sourceSha256": "da2e2d0e51a18f7827a9899c24b5fa5ff5635a209507f23b63c0376cb736c02b",
+      "startup": false
+    },
+    "SubIntAccess.HC": {
+      "sourceSha256": "c7b46ddb14ad6e14f1a5e61a75be4b133679f0568f1cf4e8e98781ba8287564d",
+      "startup": false
+    },
+    "SubSwitch.HC": {
+      "sourceSha256": "8500ac305868454e90bef308031c42c1950ffcc70850d251925be1fc1c1cc1a9",
+      "startup": false
+    },
+    "NullCase.HC": {
+      "sourceSha256": "ddd8cc82cf34020e33c9a387b43cf806b125f3341591f7b684d47998c6a43383",
+      "startup": false
+    },
+    "Carry.HC": {
+      "sourceSha256": "15d52f01f897668959fccdfc52d9ebdf56e9d4c9f125e5a1c71b3aada542146d",
+      "startup": false
+    },
+    "WordSearch.HC": {
+      "sourceSha256": "d0ae8e768eb2d6438105a02cfe603ec7793211dff89c12df32fc6859fc8dc8cc",
+      "startup": false
+    },
+    "PhoneNumWords.HC": {
+      "sourceSha256": "8714bd1a15e81b43f765182a76b64d8db3e985269796d398a20c00be2c743a1b",
+      "startup": true
+    },
+    "RadixSort.HC": {
+      "sourceSha256": "4c7ef320bd929e1b2e889cbf844cbeb9f9a822eee8542705e3b6d413187abc34",
+      "startup": false
+    },
+    "Terry.HC": {
+      "sourceSha256": "0d851a9e9b154ee992d02b23633d2c7a2d6586cbdcbf1734d9b43c68494eefe6",
+      "startup": true
+    },
+    "Lines.HC": {
+      "sourceSha256": "470b1db7207bcbe011b513a93144e36a6b755f8c8dfd44ee4ccd28c731b67d68",
+      "startup": true
+    },
+    "Bounce.HC": {
+      "sourceSha256": "b696b1df17cfacc859662da3628636852bd4f38d071d2146b1c4be8bedc116af",
+      "startup": true
+    },
+    "Grid.HC": {
+      "sourceSha256": "658b19432e51da6140814d16647da7b66ac08a64786385932f546f466b299f27",
+      "startup": true
+    },
+    "NetOfDots.HC": {
+      "sourceSha256": "55491ce92906b47571c8778243ec8cd812f47fa9fbef547d5410f36d78dfe9b1",
+      "startup": true
+    },
+    "RandDemo.HC": {
+      "sourceSha256": "9e33364c9c7dc5f7452c8fda76816739be5b9f19e9e6503c35b1e87fa3f358dd",
+      "startup": true
+    },
+    "Palette.HC": {
+      "sourceSha256": "847c62aea0f44beda741f9d2072a320b41f67755aa287112deaa0a41d687add0",
+      "startup": true
+    },
+    "MouseDemo.HC": {
+      "sourceSha256": "dd68a7bbda570f4f67af14c7ce6654d29dcf35fe2c313ea8eaaa64feb0645d82",
+      "startup": true
+    },
+    "OhGreat.HC": {
+      "sourceSha256": "b6b703f97d48ceffe8d4e3e235472bc173cf8b1468ad6e4d7a6ac71d3e88ed56",
+      "startup": true
+    },
+    "ASCIIOrgan.HC": {
+      "sourceSha256": "1d943a1e334138bf2fc44c7e85ddcac50803116ebfc6be2ae8a9a753b5b42cfc",
+      "startup": true
+    },
+    "WaterFowl.HC": {
+      "sourceSha256": "d0d25f70707de50bba2c0d9de34e525a659a8ac997e19cce50626c91ff2c88c4",
+      "startup": true
+    },
+    "Paint.HC": {
+      "sourceSha256": "2491974adc8f1d297e01667364c1313f3592435b4f796d3c489a5ea62c60be01",
+      "startup": true
+    },
+    "Hello.HC": {
+      "sourceSha256": "6a3c8248f67f68b8feb5b48b51660d834af900f3afff16a53e23274fcb1a5b8c",
+      "startup": false
+    },
+    "Mandelbrot.HC": {
+      "sourceSha256": "ad71ab62519df63f60cd1783937109af6bf352d411dbd5c24b26d5df6c41c868",
+      "startup": false
+    },
+    "Plasma.HC": {
+      "sourceSha256": "1425c59cdd705b6f23b204efa6be91b9c3ef790ed67baafcd9eff98c75fec563",
+      "startup": true
+    },
+    "Sierpinski.HC": {
+      "sourceSha256": "4004511d3d14d03a25515f06b6820403361be49c9dc1a9c451e5830409eaeabd",
+      "startup": false
+    },
+    "Scale.HC": {
+      "sourceSha256": "0197d834f685e956580876d8b025db12f6f9803035e4ca44c1c1a149ce5aae35",
+      "startup": false
+    },
+    "MyProgram.HC": {
+      "sourceSha256": "69364d43d0de131f2882c8168b0f64969643eefd9223f3699620a7e5b0e2ac4d",
+      "startup": false
+    },
+    "GodWord.HC": {
+      "sourceSha256": "cf417407c3120a5e47ff721ce4b74c96af318f2c0811594759643bf6a4ff85a9",
+      "startup": false
+    },
+    "GodPassage.HC": {
+      "sourceSha256": "2a78d37d2008b4f3df9070a3305a4eeaa80266c5a5447b7cedb8c24eab5f4664",
+      "startup": false
     }
   }
 }

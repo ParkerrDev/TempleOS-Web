@@ -1,6 +1,6 @@
 // Dancing Terry - a real TempleOS 8-bit sprite, converted from
 // Misc/TerryGifs/terrydancing.gif. One 16-color palette index per pixel; 0xFF =
-// transparent. 30 frames of 64x90, drawn 2x with GrSprite (holyc-wasm).
+// transparent. 30 frames of 64x90, drawn 2x a pixel a square, as V5.03 can.
 // Press Esc to exit.
 #define TW 64
 #define TH 90
@@ -2709,6 +2709,17 @@ U8 terry_sprite[172800]={
 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255
 };
 
+U0 TerryDraw(CDC *dc,I64 x,I64 y,U8 *src)
+{//One frame, a pixel a TS square; 0xFF is transparent.
+  I64 i,j,c;
+  for (j=0;j<TH;j++)
+    for (i=0;i<TW;i++)
+      if ((c=*src++)!=0xFF) {
+	dc->color=c;
+	GrRect(dc,x+i*TS,y+j*TS,TS,TS);
+      }
+}
+
 U0 DancingTerry()
 {
   CDC *dc=DCAlias;
@@ -2719,7 +2730,7 @@ U0 DancingTerry()
     DCFill(dc,BLACK);
     dc->color=YELLOW;
     GrPrint(dc,(GR_WIDTH-104)/2,py-18,"Dancing Terry");
-    GrSprite(dc,px,py,terry_sprite+frame*fsz,TW,TH,TS);
+    TerryDraw(dc,px,py,terry_sprite+frame*fsz);
     frame++;
     if (frame>=TN) frame=0;
     Sleep(55);

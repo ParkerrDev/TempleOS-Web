@@ -3,6 +3,7 @@ import {GAMES} from './GameCatalog.js';
 export {GAMES} from './GameCatalog.js';
 import {WinAdd,WinRaise,WinOrigin} from '../../Adam/WinMgr.js';
 import {OsInputRelease} from '../../Adam/Os.js';
+import {Gate,Records,StartNote} from '../Programs.js';
 const CSS='    /* ---- Games launcher ---- */\n'+
   '    .gm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; padding:6px 2px; }\n'+
   '    .gm-card { background:#fff; border:3px double var(--blue); color:var(--blue); padding:10px; display:flex; flex-direction:column; gap:6px; }\n'+
@@ -66,28 +67,7 @@ for(const link of document.querySelectorAll('[data-game-submit]'))link.href=subm
 
 const ovG=document.getElementById("gamesOverlay"),grid=document.getElementById("gmGrid");
 const cards = [];
-function Record(name)
-{//A verification record in Demo/Games, or null when it cannot load.
-  return fetch(new URL("../../Demo/Games/"+name+".json",import.meta.url)).
-    then(function (res) {
-      if (!res.ok)
-        throw new Error("Game verification data could not be loaded.");
-      return res.json();
-    }).catch(function (e) {console.warn(e.message);return null;});
-}
-let evidence=null,startup=null;
-function StartNote(s)
-{//What Demo/Games/Startup.json proves about one entry.
-  if (!s)
-    return "TempleOS startup check pending";
-  if (!s.same)
-    return "Starts differently here than in TempleOS V5.03";
-  if (s.real.quit=="ignored")
-    return "Starts as in TempleOS V5.03, where Esc does not end it either. Gameplay not yet compared.";
-  if (s.real.run=="running")
-    return "Starts and quits as in TempleOS V5.03. Gameplay not yet compared.";
-  return "Ends as in TempleOS V5.03 ("+s.real.run+"). Gameplay not yet compared.";
-}
+let startup=null,plays=null;
 export function QuitNote(g)
 {//The key that ended this entry in TempleOS V5.03.
   const s=startup?.games.find(s=>s.name==g.name);
@@ -98,7 +78,7 @@ export function QuitNote(g)
   return "Press <b>Esc</b> to quit.";
 }
 async function CardsLoad() {
-[evidence,startup]=await Promise.all([Record("Compatibility"),Record("Startup")]);
+[,startup,plays]=await Records();
 for (const g of GAMES) {
   const c = document.createElement("div"); c.className = "gm-card";
   c.innerHTML = `<h3>${g.name}</h3><p>${g.blurb}</p>`;
@@ -109,28 +89,27 @@ for (const g of GAMES) {
   const row = document.createElement("div"); row.className = "gm-btns";
   const bB=document.createElement("button");bB.className="gm-play";bB.textContent="Run in Browser";
   bB.title="Compile HolyC directly to WebAssembly";
-  const support=evidence?.programs[g.packageId || g.file];
-  if (!support?.compile || !support?.browserStartup) {
+  const played=plays?.games.find(p=>p.name==g.name),gate=await Gate(g);
+  if (gate.browser) {
     bB.disabled=true;
     bB.textContent="Browser support pending";
-    bB.title=support?.compile ? "This program compiles, but browser startup checks are pending." :
-      "This program has not passed the browser compiler checks.";
+    bB.title=gate.browser;
   }
   bB.addEventListener("click",e=>Run("runInBrowser",g,e.currentTarget));row.append(bB);
   const bT=document.createElement("button");bT.className="gm-play";bT.textContent="Run in TempleOS";
   const started=startup?.games.find(s=>s.name==g.name);
   bT.title="Install and launch in TempleOS V5.03, running in HEMU.";
-  if (!started?.same || started.real.run!="running" && started.real.run!="returned") {
+  if (gate.templeos) {
     bT.disabled=true;
     bT.textContent="TempleOS support pending";
-    bT.title=StartNote(started);
+    bT.title=gate.templeos;
   }
   bT.addEventListener("click",e=>Run("runInTempleOS",g,e.currentTarget));row.append(bT);
   const edit=document.createElement("button");edit.textContent="Edit source";
   edit.addEventListener("click",e=>Run("editGame",g,e.currentTarget));row.append(edit);
   c.appendChild(row);grid.appendChild(c);
   const note=document.createElement("small");
-  note.textContent=StartNote(started);
+  note.textContent=StartNote(started,played);
   c.append(note);
   cards.push({ el: c, hay: (g.name + " " + g.blurb+' '+credit.author).toLowerCase() });
 }

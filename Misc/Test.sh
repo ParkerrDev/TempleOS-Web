@@ -19,3 +19,4 @@ node Demo/Games/Toom/Test/Package.mjs
 node Demo/Games/NativeGamesAudit.mjs --check
 node Demo/Games/Test/Evidence.test.mjs
 node Demo/Games/Test/Startup.test.mjs
+node Demo/Games/Test/Play.test.mjs

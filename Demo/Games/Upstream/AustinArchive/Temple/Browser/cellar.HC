@@ -487,7 +487,7 @@ U0 Init()
 {
  I64 i,x,y;
  CDC*dc;
- QueInit(&keys);
+ MemSet(&keys,0,sizeof(Keys));
  DocClear;
  "$$$ER$BG,LTBLUE$$%h*c",TEXT_ROWS/2,'\n';
  
@@ -518,7 +518,7 @@ U0 SecondInit()
 {
  I64 i,x,y;
  CDC*dc;
- QueInit(&keys);
+ MemSet(&keys,0,sizeof(Keys));
  DocClear;
  "$$$ER$BG,LTBLUE$$%h*c",TEXT_ROWS/2,'\n';
  
@@ -528,7 +528,7 @@ U0 SecondInit()
  Free(map2);
  Free(panels_processed_bitmap2);
  map2=CAlloc(map_width*map_height*sizeof(U8));
- panels_processed_bitmap=MAlloc((map_width*map_height+7)>>3);
+ panels_processed_bitmap2=MAlloc((map_width*map_height+7)>>3);
  for(y=0;y<map_height-2;y++)
  {
   for(x=0;x<map_width-2;x++)

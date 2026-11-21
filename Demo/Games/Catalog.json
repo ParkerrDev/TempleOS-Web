@@ -17,6 +17,27 @@
           "bytes": 8782,
           "sha256": "c03377872a25690d98a91d6578f74303e662309c766b4f9a03f7009aa9921a86",
           "path": "C:/Home/Games/TinkerOS/BattleLines.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -38,6 +59,27 @@
           "bytes": 6493,
           "sha256": "5fb8a614004ce5b4768321ace953f04f03a77d4affb23645001f40cb7186403a",
           "path": "C:/Home/Games/TinkerOS/BigGuns.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -59,6 +101,27 @@
           "bytes": 62243,
           "sha256": "4eb4147d74624ea3c08e99faf58c2eaffebc792540c9a3968a6cb8925f10efbb",
           "path": "C:/Home/Games/TinkerOS/BlackDiamond.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -80,6 +143,27 @@
           "bytes": 19218,
           "sha256": "399ca4b634785f28139e69eddb69d8042ddf389d2522a762d329b79b10e14ef1",
           "path": "C:/Home/Games/TinkerOS/BomberGolf.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -107,6 +191,27 @@
           "bytes": 22711,
           "sha256": "2fe9c7b128cc02023fc83c5e29e50c8abd08a750f5677e07c07c487539b5827e",
           "path": "C:/Home/Games/TinkerOS/BrowserCastle.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -128,6 +233,27 @@
           "bytes": 4331,
           "sha256": "46f09a78f27d2cde2684bc26c85e250f6d3f2495a38fd25ed5f1cde0afc95dbf",
           "path": "C:/Home/Games/TinkerOS/CharDemo.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -149,6 +275,27 @@
           "bytes": 3538,
           "sha256": "732384d40a8c9ca475d8486cba77d573b668c916ead5799d43fdc84fa82a7c5e",
           "path": "C:/Home/Games/TinkerOS/CircleTrace.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -170,6 +317,27 @@
           "bytes": 4186,
           "sha256": "fc64e73014f87b299ab84b7509e3ee6b0e01258c95c8da1113bdecad881c791a",
           "path": "C:/Home/Games/TinkerOS/Collision.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -191,6 +359,27 @@
           "bytes": 1994,
           "sha256": "59aef4d587ae9d1d702823f949a3b4aa9971d472c3b6f2b2b02730a5d3a1668e",
           "path": "C:/Home/Games/TinkerOS/Digits.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -212,6 +401,27 @@
           "bytes": 17128,
           "sha256": "03b8e1e0ea9ba90e39a8dee3bdaf43f4e9a58baaa775585a6eb506baff35dcfc",
           "path": "C:/Home/Games/TinkerOS/DunGen.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -233,6 +443,27 @@
           "bytes": 53884,
           "sha256": "0eb630b8a07222464cf77a6c6e65c5999105fc1fa4af9f8757a1ccf7fa26bce0",
           "path": "C:/Home/Games/TinkerOS/ElephantWalk.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -254,6 +485,27 @@
           "bytes": 7842,
           "sha256": "ec67a053bdf15d5affbd95c8c6272fd421213e495b197077083b210445b4d53e",
           "path": "C:/Home/Games/TinkerOS/FlapBat.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -275,6 +527,27 @@
           "bytes": 26395,
           "sha256": "ff297c623e1dd3edb215d6396cd796ab6bee16ae788e9317ec54b711518c524c",
           "path": "C:/Home/Games/TinkerOS/FlatTops.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -296,6 +569,27 @@
           "bytes": 3298,
           "sha256": "4b536698b42e1a706d205565c15b039e6a238497c0cddff3f04c3d482c765588",
           "path": "C:/Home/Games/TinkerOS/Halogen.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -317,6 +611,27 @@
           "bytes": 3422,
           "sha256": "e3e8ea1ca49b1c40706b7342ffb24712c093d045fc0852beb7908c2bf9192054",
           "path": "C:/Home/Games/TinkerOS/MassSpring.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -338,6 +653,27 @@
           "bytes": 2792,
           "sha256": "636c08e9c69effb5866106201c8e59756413f1e2ea4603b79c1781651617a13b",
           "path": "C:/Home/Games/TinkerOS/Maze.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -359,6 +695,27 @@
           "bytes": 3969,
           "sha256": "d551e4b5e17860c03cd3e450cd071d6b9273a29173886e50bf76ceea637134cc",
           "path": "C:/Home/Games/TinkerOS/RainDrops.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -380,6 +737,27 @@
           "bytes": 27236,
           "sha256": "b28d0c257da5b13f7d19ac8c8ea204eb777035eb74f3477bf0b5344e381652c0",
           "path": "C:/Home/Games/TinkerOS/RawHide.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -401,6 +779,27 @@
           "bytes": 80298,
           "sha256": "96f001033906e6e670da7ea92b7ce701192ea2e4f9acff886d935b2867bad2b6",
           "path": "C:/Home/Games/TinkerOS/Rocket.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -422,6 +821,27 @@
           "bytes": 88004,
           "sha256": "671315e46688b352a323fa2ff3e972ee4ba17f6f322f952f43066334ecfbd4bd",
           "path": "C:/Home/Games/TinkerOS/RocketScience.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -443,6 +863,27 @@
           "bytes": 84780,
           "sha256": "de1d9631cf9b4a3f3c5f892703555cd00eeaa49c04a1bf1d2a475ec4c52bea11",
           "path": "C:/Home/Games/TinkerOS/Squirt.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -464,6 +905,27 @@
           "bytes": 138205,
           "sha256": "af31e209e1b13b4363c81b2a244b2876fe2592ac56b1b67c3074b6396a5c66b6",
           "path": "C:/Home/Games/TinkerOS/Talons.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -485,6 +947,27 @@
           "bytes": 7312,
           "sha256": "709508e4bbddbeca4327ad8fbf622fcf0354ce9478371857f51d4c1452af39c5",
           "path": "C:/Home/Games/TinkerOS/TheDead.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -506,6 +989,27 @@
           "bytes": 2392,
           "sha256": "a333bec331278e6a518c261a69a01c590da3ad3929be0ca4d2e9058c30b67f6b",
           "path": "C:/Home/Games/TinkerOS/TicTacToe.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -527,6 +1031,27 @@
           "bytes": 8190,
           "sha256": "19fb36435dd0be3edf4c4c5d56431fa1d1b55f2c010a4fc1d8c3dbdb68246303",
           "path": "C:/Home/Games/TinkerOS/TreeCheckers.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -548,6 +1073,27 @@
           "bytes": 22616,
           "sha256": "d7fa3dab65847c5f08746eabeeaff8043ecfee62e8c46c9bc9fc4784b1a27e58",
           "path": "C:/Home/Games/TinkerOS/Varoom.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -569,6 +1115,27 @@
           "bytes": 64907,
           "sha256": "703a7bea101c9d2fc4a59a472554900414ef17b5343ae9e02e63a2007121d22b",
           "path": "C:/Home/Games/TinkerOS/Wenceslas.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -590,6 +1157,27 @@
           "bytes": 4685,
           "sha256": "183fecf9d694f72513b6616f03e81a9b26cf63858f2b9d6fa0d91a9b9079e497",
           "path": "C:/Home/Games/TinkerOS/Whap.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -611,6 +1199,27 @@
           "bytes": 4844,
           "sha256": "7a858c33903e9208b3c37f29895e566769ebbb4abf107a0b5a39f01cba7e3259",
           "path": "C:/Home/Games/TinkerOS/Zing.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -632,6 +1241,27 @@
           "bytes": 111954,
           "sha256": "4c9c54c5a15a09a3c52d4f78165fb75588e734b5b19475251b6d7003e009fc80",
           "path": "C:/Home/Games/TinkerOS/ZoneOut.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -671,6 +1301,27 @@
           "bytes": 613,
           "sha256": "020b548348b486c7aa4eb251ee7f8c0e3ecf2eff1e28a7258a423a871a326bbc",
           "path": "C:/Home/Games/TinkerOS/Stadium/StadiumGen.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1007,8 +1658,8 @@
         },
         {
           "url": "Demo/Games/Toom/TmLevel.HC",
-          "bytes": 8120,
-          "sha256": "2468d9920c55a7af7ffd69abcadd5774391ccd35ed9b6d95eb48c4ff06a89846",
+          "bytes": 8153,
+          "sha256": "88167e61cdcc11b4e3134d793af9ea906a41158c4aaa3793109528fff76d0053",
           "path": "C:/Home/TOOM/TmLevel.HC"
         },
         {
@@ -1166,6 +1817,27 @@
           "bytes": 15872,
           "sha256": "72364333d295c598d75ef9553d3b3661ad0b60e27271c87b7637c74b2f46918a",
           "path": "C:/Home/TOOM/Freedoom-CREDITS.txt"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "wad": {
@@ -1334,6 +2006,34 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/AfterEgypt/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Misc/Bible.TXT.Z",
+          "bytes": 1738883,
+          "sha256": "2461b1592b20ecc4c53b476aef2ed9dd4f2963575cc180d37d044f61cea1df39",
+          "path": "C:/Misc/Bible.TXT.Z",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1373,6 +2073,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/Chess/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1412,6 +2133,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/KeepAway/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1481,6 +2223,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/Span/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1520,6 +2283,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/Strut/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1559,6 +2343,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/Titanium/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1658,6 +2463,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/ToTheFront/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1697,6 +2523,41 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/Vocabulary/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/AutoComplete/ACWords.DATA.Z",
+          "bytes": 476217,
+          "sha256": "649c61e15c401948ac72433cd81114f288222c36eb23c5ddced5a3f89eb4f10d",
+          "path": "C:/Adam/AutoComplete/ACWords.DATA.Z",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/AutoComplete/ACDefs.DATA",
+          "bytes": 26381073,
+          "sha256": "9a3640279135d84068fe1b851073010ac082178b45d08e64f21f4b854346b702",
+          "path": "C:/Adam/AutoComplete/ACDefs.DATA",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1742,6 +2603,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/X-Caliber/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1769,6 +2651,27 @@
           "bytes": 199,
           "sha256": "a07ebc8160c8ab30d6cc440344f8614b835feef7ac0c841bfb49ab2e46efee07",
           "path": "C:/Home/Games/TinkerOS/Apps/CF2/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1814,6 +2717,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/Cube/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1853,6 +2777,27 @@
           "bytes": 204,
           "sha256": "9e283f93715762172f3b0a90f94392c48338bc74e37e12571ddb0230980c6151",
           "path": "C:/Home/Games/TinkerOS/Apps/GlowUFOs/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1892,6 +2837,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/OT1975/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1931,6 +2897,27 @@
           "bytes": 202,
           "sha256": "419d27d14a9f4c8474358e4b1a408328180f0e2a02388758a105765cf16653f7",
           "path": "C:/Home/Games/TinkerOS/Apps/Scorch/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -1970,6 +2957,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/SpyHunt/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -2015,6 +3023,27 @@
           "bytes": 199,
           "sha256": "24c49c459ddf86d20befbe7bb964707c97350856cf2b5eb7066cecbbae4118bc",
           "path": "C:/Home/Games/TinkerOS/Apps/Sudoku/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -2054,6 +3083,27 @@
           "bytes": 202,
           "sha256": "945202bd83ad26d22a7183f7d7855d8f6ad4d50dd350ef5d81d2718d78793172",
           "path": "C:/Home/Games/TinkerOS/Apps/Tetris/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TinkerOS",
@@ -2081,6 +3131,27 @@
           "bytes": 199,
           "sha256": "94c1eb6465023fff907fd00e15e500194dcdc3ef5fbeaae0319fb8293a00124a",
           "path": "C:/Home/Games/TerrySupplement/B17/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TerrySupplement",
@@ -2108,6 +3179,27 @@
           "bytes": 201,
           "sha256": "3e08d70fcb4c3813236da2f3b3e11f78bfe89b7e155d4f7c1c540c893b58eb49",
           "path": "C:/Home/Games/TerrySupplement/Coach/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TerrySupplement",
@@ -2135,6 +3227,27 @@
           "bytes": 207,
           "sha256": "bc0fa2c3e33e9d736f6efa8426521ea5efdb2e68643ececd0bf83fdf017f80dd",
           "path": "C:/Home/Games/TerrySupplement/DiningStars/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TerrySupplement",
@@ -2162,6 +3275,27 @@
           "bytes": 202,
           "sha256": "e2e867f735d6988e1ea6d9984aab6a50360711f3b08c8f1dc0155b1fce6bc606",
           "path": "C:/Home/Games/TerrySupplement/Flappy/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TerrySupplement",
@@ -2189,6 +3323,27 @@
           "bytes": 210,
           "sha256": "627b5561730217230f1847911e669f880e9edd9ba4f4539b4af4ec63c9ba90d1",
           "path": "C:/Home/Games/TerrySupplement/MissileDefense/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TerrySupplement",
@@ -2216,6 +3371,27 @@
           "bytes": 201,
           "sha256": "d781ee108d24d45f9400fce42dca529b23670716f78c62d06810202bef071c0c",
           "path": "C:/Home/Games/TerrySupplement/Rocks/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TerrySupplement",
@@ -2255,6 +3431,27 @@
           "bytes": 204,
           "sha256": "5e0c387167163e1124c3d256e3bca38068a9c309e35ff789d9fc0322c24b66af",
           "path": "C:/Home/Games/TerrySupplement/Pilgrims/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "TerrySupplement",
@@ -2302,9 +3499,9 @@
           "path": "C:/Home/Games/MarioClone/Levels/World1-1.TXT"
         },
         {
-          "url": "Demo/Games/Upstream/MarioClone/Main.HC",
-          "bytes": 1687,
-          "sha256": "744057ea0bb28bddfa5e17ccbc82695ff70e195ad510807f37aee1ed1ff138b6",
+          "url": "Demo/Games/Upstream/MarioClone/Browser/Main.HC",
+          "bytes": 1681,
+          "sha256": "f3dca720094f73e45d08f48964cfbc0be1b7e08bf612beef9622984808ec261b",
           "path": "C:/Home/Games/MarioClone/Main.HC"
         },
         {
@@ -2660,6 +3857,27 @@
           "bytes": 200,
           "sha256": "6281ebd11ac8167e9d1832a57011dbb76f8dffda761b2fb0913fa61500de82d0",
           "path": "C:/Home/Games/MarioClone/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "MarioClone",
@@ -3001,9 +4219,9 @@
           "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Map.HC"
         },
         {
-          "url": "Demo/Games/Upstream/MaliciousTestimonies/RPG/Map/Matrix.HC",
-          "bytes": 4768,
-          "sha256": "79298248a871c9fa0a70eab0cb764af6335ace0e2b9b5d4b7fb8a95b1aca4829",
+          "url": "Demo/Games/Upstream/MaliciousTestimonies/Browser/RPG/Map/Matrix.HC",
+          "bytes": 4781,
+          "sha256": "9450481ac31677b00a5c441f5c3f72beaf0652ea7c5ca441ea9ff4ac2ce5bf35",
           "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Matrix.HC"
         },
         {
@@ -3013,15 +4231,15 @@
           "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Objects.HC"
         },
         {
-          "url": "Demo/Games/Upstream/MaliciousTestimonies/RPG/Map/Tensor3D.HC",
-          "bytes": 7597,
-          "sha256": "ba500fd6c7c2db9cc9fa476178712af11c8952b18848e5c1e2806a504cec76f8",
+          "url": "Demo/Games/Upstream/MaliciousTestimonies/Browser/RPG/Map/Tensor3D.HC",
+          "bytes": 7623,
+          "sha256": "8cb9a3b6abe3fb4301e76345b4fee919831df9d6c8fc9b4f8d285a010f304e7e",
           "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Tensor3D.HC"
         },
         {
-          "url": "Demo/Games/Upstream/MaliciousTestimonies/RPG/Map/Vector.HC",
-          "bytes": 4683,
-          "sha256": "2b6b9c23bde7a1e905005cc5306b08cfd25e5e5b257200dadb036fe4b9b80c59",
+          "url": "Demo/Games/Upstream/MaliciousTestimonies/Browser/RPG/Map/Vector.HC",
+          "bytes": 4730,
+          "sha256": "3c4d74861d7765de6fc20847ee482e7e116be7e69f63315b89ccc5fb0b0e3fce",
           "path": "C:/Home/Games/MaliciousTestimonies/RPG/Map/Vector.HC"
         },
         {
@@ -3125,6 +4343,27 @@
           "bytes": 393,
           "sha256": "fc304ff796e39f83a20291ebc14d2014531f025016bb628edc90ab25ab2ea9ba",
           "path": "C:/Home/Games/MaliciousTestimonies/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "MaliciousTestimonies",
@@ -3152,6 +4391,27 @@
           "bytes": 202,
           "sha256": "55d6138366b03f44ce9f8c31cfcb7e9ae3db975151ceaabe59002856f16b239d",
           "path": "C:/Home/Games/AustinArchive/Ezekiel/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "AustinArchive",
@@ -3245,6 +4505,27 @@
           "bytes": 200,
           "sha256": "001a4fe53d522a0db743aeab869482769a93f378bc8e5b4a0216a59cdf28908c",
           "path": "C:/Home/Games/AustinArchive/LordOfHosts/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "AustinArchive",
@@ -3269,8 +4550,8 @@
         },
         {
           "url": "Demo/Games/Upstream/AustinArchive/Temple/Browser/cellar.HC",
-          "bytes": 84878,
-          "sha256": "aa7ee61639bd8d37ea7d34c5106dd3bcd6ce59b6f381e08acbe7034cf1bc69b1",
+          "bytes": 84907,
+          "sha256": "4dc4b58163534ac4bbbfcfa84f67aa3968a59966825eb53ee67dcd588ce0520c",
           "path": "C:/Home/Games/AustinArchive/Temple/cellar.HC"
         },
         {
@@ -3278,6 +4559,27 @@
           "bytes": 202,
           "sha256": "2ff97674fea5a7b4b071a1c38182d632a5512b8e53deeb6ef1adbb6ac1c83e6d",
           "path": "C:/Home/Games/AustinArchive/Temple/BrowserStart.HC"
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/EdPullDown.DD",
+          "bytes": 1782,
+          "sha256": "e1555873298d749e90e8342bb9f4d0141c75d106b8bdc8d9f9953ac0d7fca94f",
+          "path": "C:/Doc/EdPullDown.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Doc/Start.DD",
+          "bytes": 219,
+          "sha256": "0f5f7dc1ebd091d2acee39b81b4211a8ffcd0febc423e6b8d5075e9854017530",
+          "path": "C:/Doc/Start.DD",
+          "system": true
+        },
+        {
+          "url": "Demo/Games/Upstream/TempleOS/Adam/God/Vocab.DD",
+          "bytes": 63178,
+          "sha256": "7a94eb027d53c82453e01185d57182006491a2f65c9e0ce8d7f8940e2bf25358",
+          "path": "C:/Adam/God/Vocab.DD",
+          "system": true
         }
       ],
       "upstream": "AustinArchive",

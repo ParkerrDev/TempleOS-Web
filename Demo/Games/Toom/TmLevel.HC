@@ -148,6 +148,7 @@ Level *LevelNew(Game *tmpg,I64 episode,I64 map_num,Bool reborn=FALSE)
     if (!(tmpl->view=ViewNew(tmpl->map,tmpg->graphics,tmpl->surfaces)))
       throw('View');
     if (old) tmpl->view->fuzz=old->view->fuzz;
+    MemSet(name,0,sizeof(name));
     StrCpy(name,"SKY1");
     if (tmpg->commercial) {
       if (map_num>=21) name[3]='3';

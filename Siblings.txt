@@ -1,3 +1,3 @@
-hemu https://github.com/ParkerrDev/HEMU 9a7e52f117992c1effc307b95b16bb2555c74845
+hemu https://github.com/ParkerrDev/HEMU 0835c0032e4e5cd9ca6be20edcb4542f6cdd46b0
 holyc-fmt https://github.com/ParkerrDev/HolyC-fmt 04aeb25acea585c3b020f58f0180cf59fd168220
 holycraft https://github.com/ParkerrDev/HolyCraft 2c6182fcce546c31b9dab7a2a3bc1fcef9ea0db0

@@ -12,6 +12,8 @@
     "test:windows:live": "node Adam/WinPassLive.browser.mjs && node Adam/GuiBridgeLive.browser.mjs",
     "test:editor": "node Apps/Editor/EditorKeys.browser.mjs && node Apps/Editor/Palette.browser.mjs && node Apps/Editor/Raw.browser.mjs && node Apps/Editor/Demos.browser.mjs",
     "test:games:browser": "node Apps/Games/Loading.browser.mjs && node Apps/Games/Games.browser.mjs && node Apps/Games/Input.browser.mjs",
+    "test:games:play": "node Demo/Games/Test/Start.mjs --write && node Apps/Games/Games.browser.mjs --write && node Demo/Games/NativeGamesAudit.mjs --write && node Demo/Games/Test/Startup.test.mjs && node Demo/Games/Test/Play.test.mjs",
+    "test:games:kvm": "node Demo/Games/Test/Kvm.mjs --write && node Demo/Games/Test/Play.test.mjs",
     "test:engine": "node Adam/Engine.browser.mjs",
     "test:snapshot": "node Apps/Disk/Snapshot.browser.mjs",
     "test:clip": "node Apps/Search/Clip/Test/Mp4.mjs && node Apps/Search/Clip/Test/Mkv.mjs && node Apps/Search/Clip/Test/Mem.mjs && node Apps/Search/Clip/Test/Clip.browser.mjs",

@@ -1,6 +1,7 @@
 <!doctype html>
-<!-- Legacy standalone links use the current source drafts. HolyCraft, Snake, Babel and Volley compile directly
-     to WebAssembly; upstream packages redirect to an isolated HEMU game session. -->
+<!-- Legacy standalone links (?game=FILE, package id or name) run a Games entry with HolyC-WASM, from its
+     current source drafts, where its play check says it plays in the browser as in TempleOS V5.03 (Apps/Programs.js
+     Gate). Edited sources have no check: they compile first and say so. -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -15,6 +16,8 @@
     #editor, #console, #demoSelect, #runBtn, #stopBtn, #status { position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0; pointer-events:none; }
     #err { display:none; color:#fff; padding:24px; font-size:15px; line-height:1.5; max-width:600px; }
     #err b { color:yellow; }
+    #note { position:fixed; left:0; right:0; top:0; color:#fff; background:#000; padding:4px 8px; font-size:13px; }
+    #note:empty { display:none; }
   </style>
 </head>
 <body>
@@ -26,24 +29,25 @@
   <button id="stopBtn"></button>
   <div id="status"></div>
   <div id="err"></div>
+  <div id="note" role="status"></div>
   <script type="module">
     const fail = (m) => { const e = document.getElementById("err"); e.textContent = m; e.style.display = "block"; document.getElementById("screen").style.display = "none"; };
     const game = new URLSearchParams(location.search).get("game") || "HolyCraft.HC";
     document.title = game.replace(/\.HC$/i, "");
     try {
-      if(['HolyCraft.HC','Snake.HC','Babel.HC','Volley.HC'].includes(game)){
-        const {gameProject}=await import('./GameSrc.js');
-        const project=await (await gameProject({file:game,name:game.replace(/\.HC$/i,'')})).native();
-        await import("../Editor/App.js");
-        const {source,...options}=project;
-        await window.__holycEditor.runIn(document.getElementById("screen"),source,options);
-        document.getElementById("screen").focus();
-      }else{
-        const {gameCatalog}=await import('./GamePkgs.js');
-        const pkg=(await gameCatalog()).packages.find(p=>p.id===game||p.name===game.replace(/\.HC$/i,''));
-        if(!pkg)throw new Error('Unknown game.');
-        location.replace('../../?gameSession='+encodeURIComponent(pkg.id));
-      }
+      const {GAMES}=await import('./GameCatalog.js'),{gameProject}=await import('./GameSrc.js'),
+        {Gate,Unchecked}=await import('../Programs.js');
+      const g=GAMES.find(g=>g.file===game||g.packageId===game||g.name===game.replace(/\.HC$/i,''));
+      if(!g)throw new Error('Unknown game.');
+      const project=await gameProject(g),edited=(await project.overrides()).size>0,
+        why=!edited && (await Gate(g)).browser;
+      if(why)throw new Error(why);
+      const native=await project.native();
+      await import("../Editor/App.js");
+      const {source,...options}=native;
+      await window.__holycEditor.runIn(document.getElementById("screen"),source,options);
+      if(edited)document.getElementById("note").textContent=Unchecked("Your edits run here.");
+      document.getElementById("screen").focus();
     } catch (e) { fail("Couldn't load " + game + ": " + e.message); }
   </script>
 </body>

@@ -19,5 +19,10 @@ try {
   }
   for (const path of ["Apps/Search/Search.test.mjs","hemu/holyc-wasm/Apps/HEMU/Kernel/Test/Disk.mjs"])
     assert.equal((await fetch(base+"/"+path)).status,404,"Test tooling stays outside the publication.");
-  console.log("Publication serves HolyC search/disk/JIT modules with exact bytes and excludes test tools.");
+  //A store the deploy sends whole to the CDN is served whole, whatever a file is.
+  const store="Demo/Games/Upstream/MaliciousTestimonies/README.md",got=await fetch(base+"/"+store);
+  assert.equal(got.status,200,store+" is in a store the deploy serves whole.");
+  assert.equal(await got.text(),await readFile(new URL("../"+store,import.meta.url),"utf8"));
+  assert.equal((await fetch(base+"/Demo/Games/README.md")).status,404,"A note outside a store stays unserved.");
+  console.log("Publication serves HolyC search/disk/JIT modules with exact bytes, stores whole, and excludes test tools.");
 } finally {server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}

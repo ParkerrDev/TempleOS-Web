@@ -7,6 +7,7 @@ import {os_game,OsCaptureSet,OsFileWrite,OsGen,OsHold,OsInputRelease,OsInputRese
 import {EdLoad,EdDraftRestore,ed_game,ed_view} from '../Editor/EditorWin.js';
 
 import {Close as closeGames,QuitNote} from "./GamesWin.js";
+import {Gate,Unchecked} from "../Programs.js";
 let packageLaunchBusy=false;
 const ovE=WinFind("editorOverlay");
 async function gameSrc(g) {
@@ -117,7 +118,18 @@ os_game.mouse={
   },
   isMouseCaptured:()=>!!previewMouse()?.isMouseCaptured(),
 };
+async function Blocked(g,runner,overrides=null)
+{//Why g's play check keeps it from runner ("browser" or "templeos"), or "" when
+//it may run. Edited sources have no check: they compile first, and say so.
+  if((overrides ?? await (await gameProject(g)).overrides()).size){
+    toast(Unchecked("Running your edited "+g.name.replace(/[<>&]/g,"")+"."));
+    return "";
+  }
+  return (await Gate(g))[runner];
+}
 async function runInBrowser(g,{inEditor=false,start=true,origin=WinOrigin()}={}) {
+  const why=start && await Blocked(g,"browser");
+  if(why){toast(why.replace(/[<>&]/g,""));setStatus(why);return;}
   ed_game.cancel();
   const view=WinFind(inEditor?'editorWin':'gameWin');
   closeGameWin({keepFullscreen:ed_view.isWithin(view)});const token=launchToken;curGame=g;closeGames();
@@ -207,7 +219,7 @@ os_game.launchFail = (message) => {
   if(!/A game is busy:/.test(message)){os_game.active=false;OsCaptureSet(false);}
   setStatus("Launch failed: "+message);toast(String(message).replace(/[<>&]/g,""),15000);
 };
-async function runInTempleOS(g,suppliedOverrides=null) {
+async function runInTempleOS(g) {
   if (packageLaunchBusy) { toast("A game is already being prepared. Please wait."); return; }
   closeGameWin();
   packageLaunchBusy = true;
@@ -216,13 +228,15 @@ async function runInTempleOS(g,suppliedOverrides=null) {
   };
   try {
   curGame = g;
+  const overrides=await (await gameProject(g)).overrides(),
+    why=await Blocked(g,"templeos",overrides);
+  if (why) {toast(why.replace(/[<>&]/g,""));setStatus(why);return;}
   let opts;
   if (g.packageId) {
     try {
       const {installGame} = await import("./GamePkgs.js");
       const writeCurrent=(path,bytes)=>{current();return OsFileWrite(path,bytes.slice(0));};
-      const project=await gameProject(g);
-      opts = await installGame(g.packageId,writeCurrent,setStatus,suppliedOverrides ?? await project.overrides(),OsGen);
+      opts = await installGame(g.packageId,writeCurrent,setStatus,overrides,OsGen);
     } catch(e) {
       setStatus("Install failed: " + e.message);
       toast("Could not install the game. " + e.message.replace(/[<>&]/g,""));

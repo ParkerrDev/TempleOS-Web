@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {addDiskFiles} from '../../GameLibSync.mjs';
 import {asset,root,version} from './Assets.mjs';
 import {gameCredits} from '../../../../Apps/Games/GameCredits.js';
 
@@ -61,6 +62,7 @@ export function ToomPackage()
 if (process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const path=resolve(root,'Demo/Games/Catalog.json'),catalog=JSON.parse(readFileSync(path)),
     i=catalog.packages.findIndex(p=>p.id==='toom'),pkg=ToomPackage();
+  await addDiskFiles([pkg]);
   assert(i>=0,'Demo/Games/Catalog.json has no toom entry.');
   if(process.argv[2]==='--write') {
     catalog.packages[i]=pkg;

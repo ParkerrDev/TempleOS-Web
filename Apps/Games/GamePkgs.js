@@ -5,7 +5,9 @@ const downloads = new Map();
 const SITE=new URL('../../',import.meta.url);   // the catalog names its files from the site's root
 export async function gameFile(file) {
   if (!downloads.has(file.url)) downloads.set(file.url, (async () => {
-    if(!file.path.startsWith('C:/Home/')||file.path.includes('..')||!file.url.startsWith('Demo/Games/')||file.url.includes('..'))throw new Error('Invalid game package path.');
+    // A system file is one of V5.03's own (a game needs it at its C:/ path); it comes from his tree.
+    const ok=file.system?file.path.startsWith('C:/')&&file.url.startsWith('Demo/Games/Upstream/TempleOS/'):file.path.startsWith('C:/Home/')&&file.url.startsWith('Demo/Games/');
+    if(!ok||file.path.includes('..')||file.url.includes('..'))throw new Error('Invalid game package path.');
     const r=await fetch(new URL(file.url,SITE),{cache:'no-cache'});
     if(!r.ok)throw new Error(`Could not read ${file.url} (${r.status}).`);
     const bytes=await r.arrayBuffer();
@@ -32,7 +34,8 @@ export async function installGame(id,writeFile,onStatus=()=>{},overrides=new Map
   for(const path of overrides.keys())if(!pkg.files.some(f=>f.path===path&&/\.(HC|HH)$/i.test(path)))throw new Error('Edited file is not a game source: '+path);
   // Download and verify the complete package before making any guest filesystem changes.
   // Eight downloads at a time: each file is a redirect to the CDN plus a fetch, so one by one is mostly waiting.
-  const need=pkg.files.filter(f=>fresh||overrides.has(f.path)||previous.edited.has(f.path));
+  // System files stay out: the TempleOS disk has the same bytes at the same paths.
+  const need=pkg.files.filter(f=>!f.system&&(fresh||overrides.has(f.path)||previous.edited.has(f.path)));
   const files=new Array(need.length);let next=0,done=0;
   const fetcher=async()=>{while(next<need.length){
     const i=next++,f=need[i],original=await gameFile(f);

@@ -20,17 +20,17 @@
     }
   },
   "fixtureLoaderSha256": "136f1cb59fa0d3d8d60925683f0f49577eaafaa518df3462895e2ab4e0e09d15",
-  "guestHarnessSha256": "72568e986bf04ff3c44faf4258dea22c39822c8043a49bbacef776c54eeabd50",
-  "machineRuntimeSha256": "175b24e1ec1b9dac60148405176434ffd743c0d5ab2fb3020bcd60d701fa5a3b",
-  "compilerRuntimeSha256": "23643e17cb970fa4fab89cbfd78695cf620e914bb990515635aad24ceaf13022",
-  "diskModuleSha256": "8de5d38a430557a714608e0b6c5ec1938a3716d64df100d279850abd99a26fdf",
-  "engineSha256": "138a19211ac1d8a4cde914ee7d2f1f7c307f454e92ea3ee31ba5eff1ca9d25c0",
+  "guestHarnessSha256": "1ed952b495f64276012b08d04418c6b0a1f77d4830b6828cbaf7f62c2b103a90",
+  "machineRuntimeSha256": "6ae43d2a621c9f3c76d6676789f24b1a14ee9f14972e344525915edc226c354e",
+  "compilerRuntimeSha256": "a6d94136ad202ec550cd8e41cbe1c08085c9860a1cd2bd9b274480cf182a5b11",
+  "diskModuleSha256": "f4dd1e34ad3123dec498c9395a2d16bdc3573a1a3fe7909945bf80ae637aa199",
+  "engineSha256": "100bd6d3aa348e7c67b60b5a0072b4a5f3721b9eaee9b15b63f148e9471d677e",
   "backend": {
     "engine": "qemu",
     "accelerator": "kvm",
     "version": "QEMU emulator version 11.1.2"
   },
-  "oracle": "qemu-nvlhi7nm",
+  "oracle": "qemu-ooif1klf",
   "programs": {
     "Babel": {
       "sourceSha256": "605df9a7f7c5cf48213f77727734778830039185daa0ccb60f44ca64e3ae0953",

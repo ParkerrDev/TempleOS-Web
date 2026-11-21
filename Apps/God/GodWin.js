@@ -1,6 +1,7 @@
 import {WinAdd,WinFocus} from "../../Adam/WinMgr.js";
 import {$,OsLaunch} from "../../Adam/Os.js";
 import {HelpGame} from "../Help/HelpWin.js";
+import {Gate,PROGRAMS,ProgramSrc} from "../Programs.js";
 
 const CSS=`
 #godWin { display:flex; flex-direction:column; gap:10px;
@@ -38,13 +39,33 @@ WinAdd(CSS,HTML);
 
 let ov=$("godOverlay"),out=$("godOut"),status=$("godStatus"),worker=null,
   pending=new Map,serial=0,generation=0;
-const BUTTONS=document.querySelectorAll("#godBar [data-action]");
+const BUTTONS=document.querySelectorAll("#godBar [data-action]"),
+  gated=new Set(BUTTONS); //Until GateLoad has the play check's word.
+
+function Program(action)
+{//The tool's entry in Apps/Programs.js.
+  return PROGRAMS.find(p=>p.name=="God "+action[0].toUpperCase()+action.slice(1));
+}
+
+async function GateLoad()
+{//A tool runs only where its play check says it does as in TempleOS V5.03.
+  let b,p,why;
+  for (b of BUTTONS) {
+    p=Program(b.dataset.action);
+    why=(await Gate(p))[p.runs=="templeos"?"templeos":"browser"];
+    if (why)
+      b.title=why;
+    else
+      gated.delete(b);
+  }
+  Busy(false);
+}
 
 function Busy(on,text="")
 {
   let b;
   for (b of BUTTONS)
-    b.disabled=on;
+    b.disabled=on || gated.has(b);
   status.textContent=text;
   out.setAttribute("aria-busy",String(on));
 }
@@ -107,21 +128,17 @@ function Append(result,action)
 async function Run(e)
 {
   let action=e.currentTarget.dataset.action,gen=++generation,result,name,how,
-    response,source;
+    source;
   Busy(true,"Opening "+action+"...");
   try {
     if (action=="doodle" || action=="song") {
       name="God Song";
       if (action=="doodle")
         name="God Doodle";
-      response=await fetch("./Apps/God/Tools.HC");
-      if (!response.ok)
-        throw new Error("Could not load the God Tools program. Try again.");
-      source=await response.text();
+      source=await ProgramSrc(Program(action));
       if (gen!=generation)
         return;
-      result=await OsLaunch({name,src:source+"\nGodTool"+
-        action[0].toUpperCase()+action.slice(1)+";"});
+      result=await OsLaunch({name,src:source});
       if (!result?.ok)
         throw new Error(result?.msg || "TempleOS is not ready. Try again.");
       if (gen!=generation)
@@ -162,15 +179,19 @@ function Close()
   Busy(false);
 }
 
+let gating=null;
 export function Open()
 {
+  gating??=GateLoad();
   ov.classList.add("open");
   ov.setAttribute("aria-modal","true");
   WinFocus($("godWin"));
 }
 
-for (const b of BUTTONS)
+for (const b of BUTTONS) {
+  b.disabled=true;
   b.addEventListener("click",Run);
+}
 $("godClear").addEventListener("click",Clear);
 $("godClose").addEventListener("click",Close);
 ov.addEventListener("pointerdown",function (e) {

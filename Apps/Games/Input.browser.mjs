@@ -23,8 +23,10 @@ try {
   await page.locator("#editor").evaluate(editor=>{
     editor.value=editor.value.replace(/HolyCraft;\s*$/,`U0 InputReport(U8 *)
 {
+  U8 sample[128];
   while (TRUE) {
-    "INPUT %.9f %.9f %.9f %.9f\\n",g_px,g_pz,g_yaw,g_pitch;
+    StrPrint(sample,"INPUT %.9f %.9f %.9f %.9f\\n",g_px,g_pz,g_yaw,g_pitch);
+    __puts(sample);
     Sleep(100);
   }
 }

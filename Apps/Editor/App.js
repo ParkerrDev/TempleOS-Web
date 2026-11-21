@@ -10,6 +10,8 @@ import {
 } from "../../hemu/holyc-wasm/src/runtime/protocol.js";
 import {KEY,KeyBytes,KeyInput} from "../../Adam/Keyboard.js";
 import { DEMOS } from "./Demos.js";
+import {DISK_FILES} from "../../Demo/Games/DiskFiles.js";
+import {Gate,PROGRAMS,STARTER,Unchecked} from "../Programs.js";
 import {sourceDocument,sourceString} from "./Source.js";
 import { Framebuffer } from "../../hemu/holyc-wasm/src/runtime/graphics.js";
 
@@ -24,7 +26,7 @@ const speaker = new Speaker();
 let worker = null;
 let ctrl = null;
 let sndTimer = null;
-let running = false;
+let running = false,runRequest=0;
 let nativeKeys = false;
 let mainFb = null;     // main-thread presenter over the shared framebuffer
 let curCanvas = canvas;
@@ -46,7 +48,7 @@ for (const group of DEMOS) {
   demoSel.appendChild(og);
 }
 
-let demoRequest=0,documentSource=sourceDocument(new Uint8Array());
+let demoRequest=0,documentSource=sourceDocument(new Uint8Array()),demoLoaded=null;
 editor.addEventListener("input",function () {demoRequest++;});
 function FileLoad(bytes,name,utf8=false,path=null)
 {
@@ -69,6 +71,7 @@ async function loadDemo(path) {
     const bytes=await response.arrayBuffer();
     if (request!==demoRequest) return;
     FileLoad(bytes,path.split("/").pop());
+    demoLoaded={path,text:editor.value};
     setStatus("loaded "+path);
   } catch (error) {
     if (request===demoRequest) setStatus("Could not load "+path+": "+error.message);
@@ -344,6 +347,7 @@ function pumpSound() {
 
 // ---- run / stop ----
 function stop() {
+  ++runRequest;
   if(curCanvas.closest(".win-pass-owned")) releaseMouse();
   cancelAnimationFrame(rafId);rafId=0;
   releaseInput();captureWanted=false;manualCapture=false;if(curCanvas.ownerDocument.pointerLockElement===curCanvas)curCanvas.ownerDocument.exitPointerLock();
@@ -356,12 +360,28 @@ function stop() {
   $("runBtn").innerHTML = Icon("play")+" Run";
 }
 
+//What V5.03's disk gives every store, for a program run with no store of its own;
+//a game's store has them.
+let diskFiles=null;
+function DiskFilesLoad() {
+  return Promise.all(DISK_FILES.map(async path=>{
+    const res=await fetch(new URL("../../Demo/Games/Upstream/TempleOS/"+path,import.meta.url));
+    if(!res.ok) throw new Error("Could not load "+path+" ("+res.status+").");
+    return {path:"C:/"+path,bytes:await res.arrayBuffer()};
+  }));
+}
+
 async function run(source,project={}) {
   if (source===undefined) {
     try {source=sourceString(FileBytes(),documentSource.utf8);}
     catch (error) {setStatus(error.message);return;}
   }
   if (running) { stop(); return; }
+  const request=++runRequest;
+  let seed;
+  try {seed=project.seed??await (diskFiles??=DiskFilesLoad().catch(error=>{diskFiles=null;throw error;}));}
+  catch (error) {if(request===runRequest)setStatus(error.message);return;}
+  if (request!==runRequest) return;
   clearConsole();
   speaker.resume();
 
@@ -416,7 +436,8 @@ async function run(source,project={}) {
     event.preventDefault();
     appendConsole("\n[error] "+(event.message||"The program worker could not start.")+"\n");setStatus("error");stop();
   };
-  worker.postMessage({ type: "run", source, controlSAB: sab, fbSAB, paletteSAB, ...project });
+  //user: the program is a user task's cmd line, as V5.03 runs every program.
+  worker.postMessage({ type: "run", source, controlSAB: sab, fbSAB, paletteSAB, user:true, seed, ...project });
   rafId = requestAnimationFrame(present);
 
   sndTimer = setInterval(pumpSound, 16);
@@ -429,7 +450,26 @@ function reattachCanvas(c) {
   window._canvas = c;
 }
 
-$("runBtn").addEventListener("click", () => { if (!running) curCanvas = $("screen"); run(); });   // editor Run targets the editor screen
+function EditorProgram()
+{//The program of Apps/Programs.js the editor holds unedited, or null.
+  if (demoLoaded && editor.value===demoLoaded.text)
+    return PROGRAMS.find(p=>p.path=="Editor/"+demoLoaded.path);
+  return editor.value===STARTER?PROGRAMS.find(p=>p.src===STARTER):null;
+}
+
+async function RunBtn()
+{//The editor's Run: a known program runs where its play check says it does as
+//in TempleOS V5.03; any other source compiles first and says it has no check.
+  if (running) {stop();return;}
+  const request=++runRequest,program=EditorProgram(),why=program && (await Gate(program)).browser;
+  if(request!==runRequest)return;
+  if (why) {setStatus(why);return;}
+  curCanvas=$("screen");   // editor Run targets the editor screen
+  await run();
+  if (!program && running)
+    consoleEl.textContent=Unchecked("")+"\n"+consoleEl.textContent;
+}
+$("runBtn").addEventListener("click",RunBtn);
 
 // Run a source snapshot in the game popup or editor preview. Keeping the textarea
 // separate lets the user edit another file or prepare the next run while playing.
@@ -446,7 +486,7 @@ if (!self.crossOriginIsolated) {
   setStatus("ready");
 }
 
-window.__holycEditor = { FileLoad,FileBytes,file:{name:"MyProgram.HC",path:null},FileName:()=>window.__holycEditor.file.name,run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null,
+window.__holycEditor = { FileLoad,FileBytes,file:{name:"MyProgram.HC",path:null},FileName:()=>window.__holycEditor.file.name,run, stop, isRunning: () => running, runIn, captureMouse, releaseMouse, isMouseCaptured, captureWanted:()=>captureWanted, hasInputFocus, keyInput:()=>running?(nativeKeys?nativeInput:screenKeys):null,
   inputCanvas:()=>running?curCanvas:null,
   touchMouse:{
     position:()=>ctrl?[Atomics.load(ctrl,CTRL.MS_X),Atomics.load(ctrl,CTRL.MS_Y)]:[320,240],

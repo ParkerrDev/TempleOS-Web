@@ -12,6 +12,8 @@ host.env.__malloc=(...args)=>++calls===failAt?0n:allocate(...args);
 const {instance}=await WebAssembly.instantiate(compiled.bytes,{env:host.env}),
   fn=instance.exports;
 host.attach(instance);fn.__main();
+// Runtime initialization allocates too; count only SearchQuery's own.
+calls=0;
 
 // Exercise the native ownership contract directly, with failure at each heap
 // allocation. The host owns the input and returned JSON; SearchQuery owns the

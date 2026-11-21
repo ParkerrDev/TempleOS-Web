@@ -1,6 +1,7 @@
 import {readFile,readdir} from "node:fs/promises";
 import {createHash} from "node:crypto";
 import {FixtureInputs} from "../../../hemu/holyc-wasm/Apps/HEMU/Kernel/Test/Fixtures.mjs";
+import {HemuPath} from "../../../hemu/holyc-wasm/Apps/HEMU/Kernel/Paths.js";
 
 export const root=new URL("../../../",import.meta.url);
 export const GAME_CHECKS=["Babel","Volley","Snake"];
@@ -25,7 +26,7 @@ export async function RuntimeInputs()
     guestHarnessSha256:Hash(await readFile(new URL("hemu/holyc-wasm/Apps/HEMU/Kernel/Test/GuestHarness.mjs",root))),
     machineRuntimeSha256:runtime.digest("hex"),
     compilerRuntimeSha256:compiler.digest("hex"),
-    diskModuleSha256:Hash(await readFile(new URL("hemu/build/disk.wasm",root)))
+    diskModuleSha256:Hash(await readFile(HemuPath("build/disk.wasm"))) //The one QCow2.js loads.
   };
 }
 

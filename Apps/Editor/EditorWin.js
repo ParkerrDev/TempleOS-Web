@@ -5,6 +5,7 @@ import {Icon} from "../../Adam/Icons.js";
 import {WinAdd,WinRaise,WinFind,WinOrigin,WinRoute,WinDialog} from "../../Adam/WinMgr.js";
 import {os_game,OsFileWrite} from "../../Adam/Os.js";
 import {setupGameViews} from "../Games/GameView.js";
+import {STARTER} from "../Programs.js";
 
 const CSS='    #editorWin { display:flex; flex-direction:column; gap:6px; width:min(1180px,96vw); height:min(88vh,840px); margin:0; padding:8px; }\n'+
   '    .ed-bar { flex:0 0 auto; }\n'+
@@ -144,7 +145,6 @@ const closeBtn = WinFind("editorClose");
 // the Games launcher (which drives the same compile+worker+canvas+input machinery).
 let appPromise=null,draft=null,draft_loading=false,draft_stored=false,draft_deleted=false,
   save_directory="C:/Home/";
-const STARTER='U0 MyProgram()\n{\n  "Hello, TempleOS!\\n";\n}\n\nMyProgram;\n';
 const loadEditorApp = () => {
   if (!appPromise) appPromise = import("./App.js")
     .then(() => {

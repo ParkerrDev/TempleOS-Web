@@ -4,127 +4,110 @@ import {mkdir,readFile,rm,writeFile} from "node:fs/promises";
 import {resolve} from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
 import {promisify} from "node:util";
-import {GAMES} from "../../../Apps/Games/GameCatalog.js";
-import {RuntimeInputs,root} from "./Evidence.mjs";
-import {GameFiles,StartInputs,START_WAIT,START_QUIT} from "./Install.mjs";
+import {ENTRIES,PROGRAMS} from "../../../Apps/Programs.js";
+import {PLAYS} from "../../../Apps/Games/GamePlays.js";
+import {Hash,RuntimeInputs,root} from "./Evidence.mjs";
+import {GameFiles,StartInputs,StartOut,StartStage,START_WAIT,START_QUIT} from "./Install.mjs";
+import {PlayEvents,PlayRecord} from "./Play.mjs";
+import {PlayCompare} from "./PlayCmp.mjs";
 
-//Every Games entry, installed and launched as the site does, in original
-//TempleOS V5.03 under QEMU and in the site's HEMU. Usage:
+//Every Games entry and program (Apps/Programs.js), installed and launched as
+//the site does, in original TempleOS V5.03 under QEMU and in the site's HEMU,
+//then played. Usage:
 //  node Demo/Games/Test/Start.mjs [--write] [NAME...]
-//--write needs every entry and writes Demo/Games/Startup.json.
+//Each machine runs the entry's control (no input, then Esc and Shift-Esc, the
+//startup check) and its play script (Apps/Games/GamePlays.js); V5.03 plays it
+//a second time to see whether the game is deterministic. --write writes
+//Demo/Games/Startup.json and the machines' part of Demo/Games/Play.json; with
+//names it replaces only theirs. Each entry keeps nativeSha256, the hash of the
+//runtime and check it ran on, so one made before a change says it is stale.
+//Frames go to OUT (tmp/games/start/) as PNGs.
 
 const write=process.argv.includes("--write"),
   names=process.argv.slice(2).filter(arg=>arg!="--write"),
   games=names.length?names.map(name=>{
-    const game=GAMES.find(g=>g.name==name);
-    assert(game,"Unknown catalog game: "+name);
+    const game=ENTRIES.find(g=>g.name==name);
+    assert(game,"Unknown entry: "+name);
     return game;
-  }):GAMES,
-  jobs=Number(process.env.JOBS || 6),
+  }):ENTRIES,
+  jobs=Number(process.env.JOBS || 2),
   out=resolve(process.env.OUT || fileURLToPath(new URL("tmp/games/start/",root))),
   oracle=resolve(process.env.HOLYC_WASM || fileURLToPath(new URL("hemu/holyc-wasm/",root)),
     "tests/oracle/"),
-  start=Buffer.concat([Buffer.from(`#define START_WAIT ${START_WAIT}\n#define START_QUIT ${START_QUIT}\n`),
-    await readFile(new URL("Start.HC",import.meta.url))]),
   run=promisify(execFile);
-assert(!write || !names.length,"--write records every entry; give no names.");
-assert(Number.isInteger(jobs) && jobs>=1 && jobs<=16,"JOBS must be 1 to 16.");
+assert(Number.isInteger(jobs) && jobs>=1 && jobs<=8,"JOBS must be 1 to 8.");
+assert.deepEqual(Object.keys(PLAYS).sort(),ENTRIES.map(g=>g.name).sort(),
+  "Apps/Games/GamePlays.js needs exactly one script for each Games entry and program.");
 await mkdir(resolve(out,"hemu"),{recursive:true});
 const {QemuRun}=await import(pathToFileURL(resolve(oracle,"Qemu.mjs"))),
   manifest=JSON.parse(await readFile(resolve(oracle,"Manifest.json"),"utf8"));
 
-function I64Str(hex)
-{//GuestExec.js's i64str, for the hex Start.HC prints.
-  let v=BigInt("0x"+hex),res="";
-  for (let i=0;i<8 && v&255n;i++,v>>=8n)
-    res+=String.fromCharCode(Number(v&255n));
-  return res;
-}
-
-function HolyStr(st)
-{
-  assert(!/["\\\x00-\x1f]/.test(st),"Unexpected character in "+st);
-  return '"'+st.replaceAll("$","$$$$")+'"';
-}
-
-async function Real({files,launch})
-{//Stage the files under 8.3 names, copy them where the site writes them, launch.
-  const staged=[],made=new Set();
-  let fixture="";
-  files.forEach(function (file,i) {
-    const name="P"+String(i).padStart(4,"0")+(/\.Z$/i.test(file.path)?".Z":".BIN"),
-      parts=file.path.split("/");
-    for (let j=2;j<parts.length;j++) {
-      const dir=parts.slice(0,j).join("/");
-      if (!made.has(dir)) {
-        made.add(dir);
-        fixture+="DirMk("+HolyStr(dir)+");\n";
-      }
-    }
-    staged.push({name,bytes:file.bytes});
-    fixture+="CopySingle("+HolyStr("C:/ORACLE/"+name)+","+HolyStr(file.path)+");\n";
-  });
-  let code;
-  if (launch.src!==undefined) {
-    staged.push({name:"GAME.HC",bytes:Buffer.from(launch.src,"latin1")});
-    code='ExePutS2(FileRead("C:/ORACLE/GAME.HC"));';
-  } else
-    code="ExeFile2("+HolyStr(launch.path)+");";
-  staged.push({name:"START.HC",bytes:start});
-  fixture+='#include "C:/ORACLE/START.HC"\nStartChk("'+
-    code.replaceAll('"','\\"').replaceAll("$","$$$$")+'");\n';
+async function Real(files,events,dir,name)
+{//The game staged in C:/ORACLE, copied where the site writes it, launched and played.
+  const {staged,fixture}=StartStage(files,events,"C:/ORACLE/");
   try {
-    const result=await QemuRun([Buffer.from(fixture,"latin1")],{files:staged,timeout:300}),
-      row=/^START (\S+) (\S+) (\S+)$/m.exec(result.results[0].out);
+    const result=await QemuRun([fixture],{files:staged,timeout:420});
     if (result.results[0].except)
-      return {run:"harness-error",quit:"-",end:"-",detail:"Fixture threw "+result.results[0].except,
+      return {start:"harness-error",quit:"-",end:"-",detail:"Fixture threw "+result.results[0].except,
         backend:result.backend};
-    assert(row,"Start.HC printed no result: "+result.results[0].out.slice(-400));
-    const word=w=>w.startsWith("except:")?"except:"+I64Str(w.slice(7)):w;
-    return {run:word(row[1]),quit:row[2],end:word(row[3]),backend:result.backend};
+    return {...await StartOut(result.results[0].out,events,dir,name),backend:result.backend};
   } catch (error) {
     const msg=String(error.message);
-    return {run:/Fault:0x/.test(msg)?"fault":/Timed out/.test(msg)?"timeout":"harness-error",
+    return {start:/Fault:0x/.test(msg)?"fault":/Timed out/.test(msg)?"timeout":"harness-error",
       quit:"-",end:"-",detail:msg.slice(0,400)};
   }
 }
 
-async function Site(game)
+async function Site(game,kind)
 {//The shared catalog harness: the site's installer and launch in HEMU.
-  const file=resolve(out,"hemu",(game.packageId || game.file)+".json");
+  const dir=resolve(out,"hemu",kind),file=resolve(dir,(game.packageId || game.file)+".json");
+  await mkdir(dir,{recursive:true});
   await rm(file,{force:true});
   let failure;
   try {
     await run(process.execPath,["--max-old-space-size=3072",
-      fileURLToPath(new URL("Catalog.mjs",import.meta.url)),game.name],
-      {timeout:300000,maxBuffer:65536,env:{...process.env,OUT:resolve(out,"hemu")}});
+      fileURLToPath(new URL("Catalog.mjs",import.meta.url)),game.name,kind],
+      {timeout:600000,maxBuffer:65536,env:{...process.env,OUT:dir,
+        FRAMES:resolve(out,game.packageId || game.file)}});
   } catch (error) {
     if (error.killed || error.signal)
-      return {run:"timeout",quit:"-",end:"-",detail:"HEMU child stopped: "+(error.signal || "time")};
+      return {start:"timeout",quit:"-",end:"-",detail:"HEMU child stopped: "+(error.signal || "time")};
     failure=String(error.message).slice(0,400);
   }
   let report;
   try {
     report=JSON.parse(await readFile(file,"utf8"));
   } catch (error) {
-    return {run:"harness-error",quit:"-",end:"-",
+    return {start:"harness-error",quit:"-",end:"-",
       detail:failure || "HEMU report unreadable: "+error.message};
   }
-  return {run:report.run || "harness-error",quit:report.quit || "-",end:report.end || "-",
-    engineSha256:report.engineSha256,
-    detail:report.failure?report.failure.split("\n")[0]:undefined};
+  return {start:report.run || "harness-error",quit:report.quit || "-",end:report.end || "-",
+    snaps:report.snaps,engineSha256:report.engineSha256,
+    detail:(report.failure || failure)?.split("\n")[0]};
 }
 
 async function Chk(game)
 {
-  const files=await GameFiles(game),[real,site]=await Promise.all([Real(files),Site(game)]),
-    same=real.run==site.run && real.quit==site.quit && real.end==site.end,
-    res={name:game.name,filesSha256:files.sha256,real,site,same};
-  await writeFile(resolve(out,(game.packageId || game.file)+".json"),JSON.stringify(res,null,2)+"\n");
-  console.log(game.name+": V5.03 "+[real.run,real.quit,real.end].join(" ")+", HEMU "+
-    [site.run,site.quit,site.end].join(" ")+(same?"":" DIFFERENT")+
-    (real.detail?"; V5.03: "+real.detail.split("\n")[0]:"")+
-    (site.detail?"; HEMU: "+site.detail:""));
+  const id=game.packageId || game.file,files=await GameFiles(game),dir=resolve(out,id),
+    control=PlayEvents(game.name,"control"),play=PlayEvents(game.name,"play");
+  const [real,realPlay,realAgain,site,sitePlay]=await Promise.all([
+    Real(files,control,dir,"real-control"),Real(files,play,dir,"real-play"),
+    Real(files,play,dir,"real-again"),Site(game,"control"),Site(game,"play")]);
+  const res={name:game.name,program:PROGRAMS.includes(game) || undefined,
+    filesSha256:files.sha256,script:PLAYS[game.name],
+    real:{control:PlayRecord(real,"control"),play:PlayRecord(realPlay,"play"),
+      again:PlayRecord(realAgain,"again")},
+    site:{control:PlayRecord(site,"control"),play:PlayRecord(sitePlay,"play")},
+    backend:real.backend,engineSha256:site.engineSha256||sitePlay.engineSha256};
+  res.verdict=PlayCompare(res);
+  await writeFile(resolve(out,id+".json"),JSON.stringify({...res,detail:{real:real.detail,
+    realPlay:realPlay.detail,realAgain:realAgain.detail,site:site.detail,sitePlay:sitePlay.detail}},
+    null,2)+"\n");
+  const words=r=>[r.start,r.quit,r.end].join(" "),v=res.verdict;
+  console.log(game.name+": V5.03 "+words(real)+" / play "+words(realPlay)+" "+v.real.response+
+    ", HEMU "+words(site)+" / play "+words(sitePlay)+" "+v.site.response+
+    (v.templeos?"":" FAILS")+(v.deterministic?", deterministic":"")+(v.siteSame?", frames agree":"")+
+    [real,realPlay,realAgain,site,sitePlay].map(r=>r.detail?"; "+r.detail.split("\n")[0]:"").join(""));
   return res;
 }
 
@@ -134,27 +117,70 @@ await Promise.all(Array.from({length:Math.min(jobs,games.length)},async function
   while (next<games.length) {
     const i=next++;
     results[i]=await Chk(games[i]);
+    const engines=new Set(results.map(r=>r?.engineSha256).filter(Boolean));
+    assert(!write || engines.size<=1,"HEMU changed during the run (at "+games[i].name+
+      "); the evidence binds one engine. Rerun when it is still.");
   }
 }));
 if (write) {
-  const backend=results.find(r=>r.real.backend)?.real.backend,
-    engines=new Set(results.map(r=>r.site.engineSha256).filter(Boolean));
+  const backend=results.find(r=>r.backend)?.backend,
+    engines=new Set(results.map(r=>r.engineSha256).filter(Boolean)),
+    site={...await RuntimeInputs(),engineSha256:[...engines][0]},
+    real={templeos:manifest.templeos,diskSha256:manifest.rawDiskSha256,backend},
+    inputs=await StartInputs(),
+    words=r=>({run:r.start,quit:r.quit,end:r.end}),
+    native={real,site,inputs},nativeSha256=Hash(JSON.stringify(native));
   assert(engines.size==1,"HEMU engines differ between runs.");
-  const record={
-    scope:"Each Games entry installed and launched as the site does, in original "+
+  let old=null;
+  try {
+    old=JSON.parse(await readFile(new URL("Demo/Games/Play.json",root)));
+  } catch (error) {
+    if (error.code!="ENOENT")
+      throw error;
+  }
+  const kept=g=>{//An entry not rerun, as the record has it, if it has one.
+      const o=old?.games.find(o=>o.name==g.name);
+      return o && {...o,nativeSha256:o.nativeSha256 || Hash(JSON.stringify(old.native))};
+    },
+    entries=ENTRIES.map(g=>results.find(r=>r.name==g.name) || kept(g)).filter(Boolean);
+  await writeFile(new URL("Demo/Games/Startup.json",root),JSON.stringify({
+    scope:"Each Games entry and program installed and launched as the site does, in original "+
       `TempleOS V5.03 under QEMU and in the site's HEMU: still running after ${START_WAIT} s `+
-      `of guest time, then completion within ${START_QUIT} s after Esc or the subsequent Shift-Esc. `+
+      "of guest time and through the times of its play script with no input, then completion "+
+      `within ${START_QUIT} s after Esc or the subsequent Shift-Esc. `+
       "These are observation windows, not proof of which key caused completion. "+
-      "Gameplay and timing parity are not compared.",
-    real:{templeos:manifest.templeos,diskSha256:manifest.rawDiskSha256,backend},
-    site:{...await RuntimeInputs(),engineSha256:[...engines][0]},
-    inputs:await StartInputs(),
-    games:results.map(r=>({name:r.name,filesSha256:r.filesSha256,
-      real:{run:r.real.run,quit:r.real.quit,end:r.real.end},
-      site:{run:r.site.run,quit:r.site.quit,end:r.site.end},same:r.same}))
-  };
-  await writeFile(new URL("Demo/Games/Startup.json",root),JSON.stringify(record,null,2)+"\n");
+      "Demo/Games/Play.json holds the same entries played.",
+    real,site,inputs,
+    games:entries.map(r=>({name:r.name,filesSha256:r.filesSha256,nativeSha256:r.nativeSha256 || nativeSha256,
+      real:words(r.real.control),site:words(r.site.control),
+      same:JSON.stringify(words(r.real.control))==JSON.stringify(words(r.site.control))}))
+  },null,2)+"\n");
+  const record={scope:"Each Games entry and program (Apps/Programs.js) played by its "+
+      "script in Apps/Games/GamePlays.js "+
+      "on three machines: original TempleOS V5.03 under QEMU (real), the site's HEMU "+
+      "(site) and HolyC-WASM in the Games window (browser). Each runs the script and "+
+      "a control without its input; V5.03 plays it twice. A snap, taken at the start "+
+      "and before each step, is the frame's FNV-1a hash below the status line, its "+
+      "count of colors and a 4-bit digest of each of 16x12 cells; a control keeps "+
+      "the cells that moved without input. verdict, from PlayCmp.mjs, says per "+
+      "machine whether the game stayed alive, drew, advanced and changed with the "+
+      "input (input: cells that do not move without it changed; moved: the frames "+
+      "changed but the game also moves by itself), and where the machines agree. "+
+      "A program (program: true) runs when it returns cleanly before the script or "+
+      "stays alive, draws and advances until its script ends it, and two machines "+
+      "agree on it when they end it the same way.",
+    native,
+    browser:old?.browser,
+    kvm:old?.kvm, //Kvm.mjs's, native HEMU on KVM.
+    games:entries.map(function (r) {
+      const o=old?.games.find(g=>g.name==r.name && g.script==r.script),
+        g={name:r.name,program:r.program,script:r.script,filesSha256:r.filesSha256,nativeSha256:r.nativeSha256 || nativeSha256,
+          real:r.real,site:r.site,browser:o?.browser,kvm:o?.kvm};
+      g.verdict=PlayCompare(g);
+      return g;
+    })};
+  await writeFile(new URL("Demo/Games/Play.json",root),JSON.stringify(record,null,1)+"\n");
 }
-const differ=results.filter(r=>!r.same).map(r=>r.name);
-console.log(results.length-differ.length+" of "+results.length+
-  " start and quit the same in V5.03 and HEMU"+(differ.length?"; different: "+differ.join(", "):"."));
+const fails=results.filter(r=>!r.verdict.templeos).map(r=>r.name);
+console.log(results.length-fails.length+" of "+results.length+
+  " run the same in V5.03 and HEMU"+(fails.length?"; not: "+fails.join(", "):"."));
