@@ -2,21 +2,21 @@ import {EXTRA_GAMES} from "./GameLib.js";
 
 export const GAMES = [
   { name:"King's Quest",packageId:"kings-quest",disk:"C:/Home/KingsQuest/Run.HC",
-    blurb:"Explore Daventry in a native HolyC reconstruction of Sierra's 1984 King's Quest.",
+    blurb:"Explore Daventry and recover three royal treasures.",
     how:"Arrows move · Type commands and press Enter · F10 sound · F12 or Shift+Esc quit" },
   // custom dual-target games (run in the browser bypass OR the real OS; your edits are cached)
-  { file: "HolyCraft.HC", name: "HolyCraft", blurb: "A 3D voxel sandbox - walk a blocky world, break & place blocks. A real-time raycaster in HolyC.",
+  { file: "HolyCraft.HC", name: "HolyCraft", blurb: "Explore a blocky world. Break blocks and build your own.",
     how: "W/S move · A/D strafe · R/F up/down · move MOUSE or J/L/I/K to look · LEFT-click break · RIGHT-click place · 1-9 pick block · Esc quit" },
   { file: "Snake.HC", name: "Snake", blurb: "The classic. Eat the apples, don't bite your tail.",
     how: "W/A/S/D to steer · Esc to quit" },
   { file: "Babel.HC", name: "Babel", blurb: "Stones fall onto the tower. Clear full rows; the Latin cross always stays upright.",
     how: "A/D or Left/Right move · W or Up turns (cross stays upright) · S or Down falls faster · Space drops · P pauses · Esc quits" },
-  { file: "Volley.HC", name: "Volley", blurb: "Two players, one ball, first to 7. Player 1 plays W/S, player 2 plays the Up and Down arrows.",
+  { file: "Volley.HC", name: "Volley", blurb: "Two-player paddle ball. First to seven wins.",
     how: "Player 1: W/S · Player 2: Up/Down · Space serves · P pauses · Esc quits" },
   // install: the file is written to that path as bytes and run from there, for
   // a game whose images and sounds follow its text in one file.
   { file: "FNAF.HC", name: "FNAF", install: "C:/Home/Games/FNAF.HC",
-    blurb: "Five Nights at Freddy's, ported to HolyC. Watch the cameras, mind the power and survive the night until 6 AM.",
+    blurb: "Watch the cameras, save power and survive until 6 AM.",
     how: "Enter starts · A/D doors · Q/E lights · Space monitor · 1-9, 0, - cameras · N mutes the call · or click the buttons · Esc twice quits" },
   // Both source collections use HolyC-WASM for browser play; TempleOS is explicit.
   { name: "Varoom",        disk: "C:/Home/Games/TinkerOS/Varoom.HC", packageId: "tinker-Varoom",        blurb: "Top-down racing - keep your foot down and hold the track." },
@@ -51,7 +51,7 @@ export const GAMES = [
   { name: "CharDemo",      disk: "C:/Home/Games/TinkerOS/CharDemo.HC", packageId: "tinker-CharDemo",      blurb: "A character-set and font demo." },
   { name: "Digits",        disk: "C:/Home/Games/TinkerOS/Digits.HC", packageId: "tinker-Digits",        blurb: "A rainbow-digits graphics demo." },
   { name: "Stadium", disk: "C:/Home/Games/TinkerOS/Stadium/Stadium.HC", packageId: "tinker-Stadium", blurb: "A stadium ball game with the original sprite background." },
-  { name: "TOOM", disk: "C:/Home/TOOM/Run.HC", packageId: "toom", blurb: "A DOOM engine written in HolyC, with Freedoom's first episode.", how: "Arrows turn and move · W/S move, A/D strafe · Ctrl fires · Space opens doors and switches · Shift runs · number keys pick a weapon · P pauses" },
+  { name: "TOOM", disk: "C:/Home/TOOM/Run.HC", packageId: "toom", blurb: "Fight through Freedoom's first episode.", how: "Arrows turn and move · W/S move, A/D strafe · Ctrl fires · Space opens doors and switches · Shift runs · number keys pick a weapon · P pauses" },
 ];
 GAMES.push(...EXTRA_GAMES);
 const featured=['HolyCraft','TOOM','Babel','Volley','Snake'];

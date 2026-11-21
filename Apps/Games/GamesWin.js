@@ -3,46 +3,48 @@ import {GAMES} from './GameCatalog.js';
 export {GAMES} from './GameCatalog.js';
 import {WinAdd,WinRaise,WinOrigin} from '../../Adam/WinMgr.js';
 import {OsInputRelease} from '../../Adam/Os.js';
-import {Gate,Records,StartNote} from '../Programs.js';
-const CSS='    /* ---- Games launcher ---- */\n'+
-  '    .gm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; padding:6px 2px; }\n'+
-  '    .gm-card { background:#fff; border:3px double var(--blue); color:var(--blue); padding:10px; display:flex; flex-direction:column; gap:6px; }\n'+
-  '    .gm-card h3 { font-size:14px; font-weight:normal; color:var(--red); }\n'+
-  '    .gm-card p { font-size:12px; line-height:1.1; flex:1 1 auto; }\n'+
-  '    .gm-card .gm-credit { flex:0 0 auto; line-height:1.3; }\n'+
-  '    .gm-credit a { color:var(--blue); text-decoration:underline; }\n'+
-  '    .gm-btns { display:flex; flex-direction:column; gap:6px; }\n'+
-  '    .gm-card .gm-play { width:100%; align-self:stretch; text-align:center; white-space:normal; font-size:11px; line-height:1.2; padding:5px 4px; height:auto; }\n'+
-  '    /* the Games window is a fixed-size dialog: search box on top, the grid scrolls below it */\n'+
-  '    #gamesWin { display:flex; flex-direction:column; width:min(880px,92vw); max-height:calc(100vh - 84px); }\n'+
-  '    .gm-search { flex:0 0 auto; box-sizing:border-box; width:100%; margin:2px 0 8px; padding:5px 9px;\n'+
-  '                 font-family:inherit; font-size:13px; background:#fff; color:var(--blue); border:3px double var(--blue); outline:none; }\n'+
-  '    .gm-search::placeholder { color:var(--dkgray); }\n'+
-  '    .gm-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; padding-right:2px; }\n'+
-  '    .gm-none { color:var(--red); font-size:13px; padding:14px 4px; }\n'+
-  '    .gm-card.gm-hide { display:none; }   /* search filter (beats .gm-card\'s display:flex) */\n'+
-  '    .game-submit { flex:0 0 auto; margin:2px 2px 8px; padding:4px 8px 12px; border-bottom:3px double var(--blue); color:var(--blue); text-align:left; }\n'+
-  '    .game-submit h2 { font-size:14px; font-weight:normal; color:var(--red); margin-bottom:8px; }\n'+
-  '    .game-submit p { font-size:12px; line-height:1.4; max-width:72ch; margin-bottom:10px; }\n'+
-  '    .game-submit-link { display:inline-block; max-width:100%; padding:7px 9px; border:2px solid var(--blue); background:var(--blue); color:#fff; font-size:12px; line-height:1.3; text-decoration:none; }\n'+
-  '    .game-submit-link:hover, .game-submit-link:focus-visible { background:#fff; color:var(--blue); outline:2px solid var(--blue); outline-offset:2px; }\n';
-const HTML='  <div id="gamesOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Games">\n'+
-  '    <div class="win" id="gamesWin" data-title="Games">\n'+
-  '      <span class="close" id="gamesClose" title="Close">[X]</span>\n'+
-  '      <section class="game-submit" id="gameSubmit" aria-labelledby="gameSubmitTitle">\n'+
-  '        <h2 id="gameSubmitTitle">Have a TempleOS or HolyC game?</h2>\n'+
-  '        <p>Share your game for a chance to be featured here. Include a link to the source code, how to run it, and the author name and link we should credit. Screenshots or a gameplay clip help us see it in action.</p>\n'+
-  '        <p>Tell us the license or permission for sharing the code and game assets. Submissions are reviewed before being added.</p>\n'+
-  '        <a class="game-submit-link" data-game-submit href="https://github.com/ParkerrDev/TempleOS-Web/issues/new" target="_blank" rel="noopener">Submit your game on GitHub</a>\n'+
-  '      </section>\n'+
-  '      <input type="search" id="gmSearch" class="gm-search" placeholder="Search games…" autocomplete="off" spellcheck="false" aria-label="Search games">\n'+
-  '      <div class="gm-scroll">\n'+
-  '        <p id="gmLoading" role="status">Loading games…</p>\n'+
-  '        <div class="gm-grid" id="gmGrid"></div>\n'+
-  '        <div class="gm-none" id="gmNone" hidden>No games match your search.</div>\n'+
-  '      </div>\n'+
-  '    </div>\n'+
-  '  </div>\n';
+import {Gate,Records} from '../Programs.js';
+const CSS=`
+    .gm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr)); gap:10px; padding:4px 2px; }
+    .gm-card { background:#fff; border:3px double var(--blue); color:var(--blue); padding:10px; display:flex; flex-direction:column; gap:8px; }
+    .gm-card h3 { font-size:14px; font-weight:normal; color:var(--red); }
+    .gm-card p { font-size:12px; line-height:1.3; }
+    .gm-card .gm-desc { flex:1; }
+    .gm-credit a,.gm-details a,.gm-intro a { color:var(--blue); text-decoration:underline; }
+    .gm-btns { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .gm-card .gm-play,.gm-card .gm-edit { width:100%; min-width:0; height:auto; padding:5px 4px; font-size:11px; line-height:1.2; text-align:center; white-space:normal; }
+    .gm-card .gm-edit { grid-column:1/-1; }
+    .gm-details { font-size:12px; line-height:1.3; }
+    .gm-details summary { cursor:pointer; width:fit-content; }
+    .gm-details summary:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+    .gm-details[open] summary { margin-bottom:8px; }
+    .gm-details:not([open])>:not(summary) { display:none; }
+    .gm-details p+p { margin-top:8px; }
+    #gamesWin { display:flex; flex-direction:column; width:min(880px,92vw); max-height:calc(100vh - 84px); }
+    .gm-intro { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px 16px; flex:0 0 auto; padding:2px 2px 10px; color:var(--blue); font-size:12px; line-height:1.3; }
+    .gm-search { flex:0 0 auto; box-sizing:border-box; width:100%; margin:2px 0 8px; padding:5px 9px; font-family:inherit; font-size:13px; background:#fff; color:var(--blue); border:3px double var(--blue); outline:none; }
+    .gm-search::placeholder { color:var(--dkgray); }
+    .gm-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; padding-right:2px; }
+    .gm-none { color:var(--red); font-size:13px; padding:14px 4px; }
+    .gm-card.gm-hide { display:none; }
+`;
+const HTML=`
+  <div id="gamesOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Games">
+    <div class="win" id="gamesWin" data-title="Games">
+      <span class="close" id="gamesClose" title="Close">[X]</span>
+      <div class="gm-intro">
+        <p>Play in your browser or in TempleOS.</p>
+        <a data-game-submit href="https://github.com/ParkerrDev/TempleOS-Web/issues/new" target="_blank" rel="noopener">Submit a game</a>
+      </div>
+      <input type="search" id="gmSearch" class="gm-search" placeholder="Search games…" autocomplete="off" spellcheck="false" aria-label="Search games">
+      <div class="gm-scroll">
+        <p id="gmLoading" role="status">Loading games…</p>
+        <div class="gm-grid" id="gmGrid"></div>
+        <div class="gm-none" id="gmNone" hidden>No games match your search.</div>
+      </div>
+    </div>
+  </div>
+`;
 WinAdd(CSS,HTML);
 
 const submission=new URL('https://github.com/ParkerrDev/TempleOS-Web/issues/new');
@@ -67,7 +69,7 @@ for(const link of document.querySelectorAll('[data-game-submit]'))link.href=subm
 
 const ovG=document.getElementById("gamesOverlay"),grid=document.getElementById("gmGrid");
 const cards = [];
-let startup=null,plays=null;
+let startup=null;
 export function QuitNote(g)
 {//The key that ended this entry in TempleOS V5.03.
   const s=startup?.games.find(s=>s.name==g.name);
@@ -78,39 +80,45 @@ export function QuitNote(g)
   return "Press <b>Esc</b> to quit.";
 }
 async function CardsLoad() {
-[,startup,plays]=await Records();
+[,startup]=await Records();
 for (const g of GAMES) {
   const c = document.createElement("div"); c.className = "gm-card";
-  c.innerHTML = `<h3>${g.name}</h3><p>${g.blurb}</p>`;
+  c.innerHTML = `<h3>${g.name}</h3><p class="gm-desc">${g.blurb}</p>`;
   const credit=gameCredits(g),by=document.createElement('p');by.className='gm-credit';
   const link=(text,url)=>{const a=document.createElement('a');a.textContent=text;a.href=url;a.target='_blank';a.rel='noopener';return a;};
-  by.append('By ',link(credit.author,credit.authorUrl),'. '+credit.note+' ',link('Original source code',credit.source));
+  by.append('By ',link(credit.author,credit.authorUrl));
   c.append(by);
   const row = document.createElement("div"); row.className = "gm-btns";
-  const bB=document.createElement("button");bB.className="gm-play";bB.textContent="Run in Browser";
+  const bB=document.createElement("button");bB.className="gm-play";bB.textContent="Browser";bB.setAttribute("aria-label","Run in Browser");
   bB.title="Compile HolyC directly to WebAssembly";
-  const played=plays?.games.find(p=>p.name==g.name),gate=await Gate(g);
+  const gate=await Gate(g);
   if (gate.browser) {
     bB.disabled=true;
-    bB.textContent="Browser support pending";
+    bB.textContent="Browser pending";
     bB.title=gate.browser;
   }
   bB.addEventListener("click",e=>Run("runInBrowser",g,e.currentTarget));row.append(bB);
-  const bT=document.createElement("button");bT.className="gm-play";bT.textContent="Run in TempleOS";
-  const started=startup?.games.find(s=>s.name==g.name);
+  const bT=document.createElement("button");bT.className="gm-play";bT.textContent="TempleOS";bT.setAttribute("aria-label","Run in TempleOS");
   bT.title="Install and launch in TempleOS V5.03, running in HEMU.";
   if (gate.templeos) {
     bT.disabled=true;
-    bT.textContent="TempleOS support pending";
+    bT.textContent="TempleOS pending";
     bT.title=gate.templeos;
   }
   bT.addEventListener("click",e=>Run("runInTempleOS",g,e.currentTarget));row.append(bT);
-  const edit=document.createElement("button");edit.textContent="Edit source";
+  const edit=document.createElement("button");edit.className="gm-edit";edit.textContent="Edit source";
   edit.addEventListener("click",e=>Run("editGame",g,e.currentTarget));row.append(edit);
   c.appendChild(row);grid.appendChild(c);
-  const note=document.createElement("small");
-  note.textContent=StartNote(started,played);
-  c.append(note);
+  const details=document.createElement("details");details.className="gm-details";
+  const summary=document.createElement("summary");summary.textContent="Details";
+  const note=document.createElement("p");note.textContent=credit.note;
+  const source=document.createElement("p");source.append(link("Original source",credit.source));
+  details.append(summary,note,source);
+  if (g.how) {
+    const controls=document.createElement("p");controls.textContent=g.how;
+    details.append(controls);
+  }
+  c.append(details);
   cards.push({ el: c, hay: (g.name + " " + g.blurb+' '+credit.author).toLowerCase() });
 }
 document.getElementById("gmLoading").hidden=true;
