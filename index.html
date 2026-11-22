@@ -146,46 +146,55 @@
     header h1 { font-size:12px; font-weight:normal; color:#fff; font-family:'TempleOS','dos_vga',monospace; }
     header p { font-size:12px; max-width:1000px; line-height:1.0; }
 
-    /* A TempleOS window (TextBorder, Adam/Gr/GrTextBase.HC): a text cell of BLUE border round a WHITE
-       text area, drawn with the font's chars 2 to 13 (Kernel/FontStd.HC), double on the focused window.
-       The site's 12px text is the 8x8 font at 1.5x, so a cell is 12px. */
-    .win, #frame { --wcell:calc(12px*var(--win-scale,1)); position:relative; background:var(--white); color:var(--blue); margin:3px 5px; overflow:visible;
-                   border-width:var(--wcell); border-style:solid; border-color:transparent; border-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' shape-rendering='crispEdges' fill='%230000AA'%3E%3Cpath d='M3 4h18v1H3zM3 20h18v1H3zM3 5h2v15H3zM19 5h2v15h-2z'/%3E%3C/svg%3E") 12 / 1; }
-    .win.active, #frame.active { border-image-source:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' shape-rendering='crispEdges' fill='%230000AA'%3E%3Cpath d='M2 2h21v1H2zM2 20h21v1H2zM2 3h2v17H2zM21 3h2v17h-2zM5 4h15v1H5zM5 18h15v1H5zM5 5h2v13H5zM18 5h2v13h-2z'/%3E%3C/svg%3E"); }
+    /* V5.03 TextBorder glyphs 2..13, extracted by Adam/WinChromeMk.mjs. */
+    .win, #frame { --wcell:calc(8px*var(--win-scale,1)); position:relative; background:var(--white); color:var(--blue); margin:3px 5px; overflow:visible;
+                   border-width:var(--wcell); border-style:solid; border-color:transparent; border-image:url('Adam/WinBorder.png') 8 / 1; image-rendering:pixelated; }
+    .win.active, #frame.active { border-image-source:url('Adam/WinBorderActive.png'); }
     .win { padding:.7em; }
     .wc { position:absolute; z-index:2; font-size:var(--wcell); line-height:var(--wcell); user-select:none; touch-action:none; }
     /* the top row (DocBorderNew, Adam/DolDoc/DocTerm.HC): MENU blinking at the left, the title inverted
        in the middle 15 columns, scrolling, and [X] at the right */
     .wbar { top:calc(-1*var(--wcell)); left:0; right:0; height:var(--wcell); display:flex; justify-content:space-between; overflow:hidden; }
     .wmenu, .wbar > .close { position:relative; z-index:1; background:var(--white); color:var(--blue); }
-    .wmenu { animation:menuBlink .4s step-start infinite; }   /* Blink at 2.5 Hz, Kernel/KMisc.HC */
-    @keyframes menuBlink { 50% { background:var(--blue); color:var(--white); } }
-    .wtitle { position:absolute; left:50%; transform:translateX(-50%); width:max(0px,min(calc(15*var(--wcell)),calc(100% - 8*var(--wcell)))); overflow:hidden; white-space:pre;
-              background:var(--blue); color:var(--white); }
-    .wtitle > span { display:inline-block; animation:wscroll linear infinite; }
-    @keyframes wscroll { to { transform:translateX(-50%); } }
-    /* the left column: the document's desc, upright (DocBorderLstDraw, Adam/DolDoc/DocRecalcLib.HC) */
-    .wvert { top:0; bottom:0; left:calc(-1*var(--wcell)); width:var(--wcell); overflow:hidden; writing-mode:vertical-rl; text-orientation:upright; }
-    .wvert > span { background:var(--white); }
+    .wbar > .close { z-index:2; font-size:var(--wcell); line-height:var(--wcell); padding:0; border:0; min-height:0; }
+    .wbar:has(> .close)::before { content:""; position:absolute; right:0; top:0; height:var(--wcell);
+                                width:calc(3*var(--wcell) + mod(100%,var(--wcell))); background:var(--white); z-index:1; }
+    .wmenu { animation:menuBlink .4s steps(1,end) infinite; }
+    @keyframes menuBlink { 50% { --wg-row:1; background:var(--blue); color:var(--white); } }
+    .wg { display:inline-block; width:var(--wcell); height:var(--wcell); font-size:0; vertical-align:top;
+          background-image:url('Adam/Fonts/WinGlyphs.png'); background-size:calc(256*var(--wcell)) calc(2*var(--wcell));
+          background-position:calc(-1*var(--glyph)*var(--wcell)) calc(-1*var(--wg-row,0)*var(--wcell)); image-rendering:pixelated; }
+    .wtitle { --title-width:max(0px,min(calc(15*var(--wcell)),calc(round(up,100%,var(--wcell)) - 8*var(--wcell))));
+              position:absolute; width:var(--title-width); left:round(down,calc((round(up,100%,var(--wcell)) - var(--title-width))/2),var(--wcell));
+              overflow:hidden; white-space:pre; background:var(--blue); color:var(--white); --wg-row:1; }
+    .wtitle::before { content:""; position:absolute; left:0; top:0; height:var(--wcell); z-index:1;
+                     background:var(--blue); width:calc(7*var(--wcell)/8); animation:wphase .125s steps(8,start) infinite; }
+    @keyframes wphase { from { width:var(--wcell); } to { width:0; } }
+    .wtitle > span { display:inline-block; position:relative; left:calc(7*var(--wcell)/8); animation:wscroll steps(var(--title-pixels),end) infinite; }
+    @keyframes wscroll { to { left:calc((7 - var(--title-pixels))*var(--wcell)/8); } }
+    /* DocBorderLstDraw writes up to eight description glyphs down the left. */
+    .wvert { top:0; bottom:0; left:calc(-1*var(--wcell)); width:var(--wcell); overflow:hidden; }
+    .wvert > span { display:block; line-height:0; background:var(--white); }
     .win > .close, #frame > .close { position:absolute; visibility:hidden; }   /* until WinMgr puts it in the bar */
     /* the scroll boxes (Adam/Ctrls/CtrlsA.HC): 8x8 YELLOW round 4x4 BLUE, the two swapped while held.
        At the start of the document they straddle the top right and bottom left corners. */
     .wsv, .wsh { z-index:3; width:var(--wcell); height:var(--wcell); background:var(--blue); border:calc(var(--wcell)/4) solid var(--yellow); }
     .wsv.on, .wsh.on { background:var(--yellow); border-color:var(--blue); }
-    .wsv { top:calc(var(--wcell)/-2); right:calc(-1*var(--wcell)); } .wsh { bottom:calc(-1*var(--wcell)); left:calc(var(--wcell)/-2); }
+    .wsv { z-index:4; top:calc(var(--wcell)/-2); right:calc(-1*var(--wcell)); } .wsh { bottom:calc(-1*var(--wcell)); left:calc(var(--wcell)/-2); }
     /* the right column sizes the width, the bottom row the height, their corner both */
     .wszr { top:0; bottom:0; right:calc(-1*var(--wcell)); width:var(--wcell); }
     .wszb { left:0; right:calc(-1*var(--wcell)); bottom:calc(-1*var(--wcell)); height:var(--wcell); }
     .win *, #frame * { scrollbar-width:none; }   /* the scroll boxes stand for the scroll bars */
     .win ::-webkit-scrollbar, #frame ::-webkit-scrollbar { display:none; }
     /* Native chrome retains the same DOM controls and geometry. */
-    .native-chrome .win, .native-chrome #frame { --wcell:calc(8px*var(--win-scale,1)); border-image:none; }
+    .native-chrome .win, .native-chrome #frame { border-image:none; }
     .wdraw { display:none; pointer-events:none; }
     .native-chrome .wdraw { display:block; left:calc(-1*var(--wcell)); top:calc(-1*var(--wcell)); z-index:2; image-rendering:pixelated; }
     .native-chrome .wmenu, .native-chrome .wtitle, .native-chrome .wvert > span,
     .native-chrome .wbar > .close { color:transparent; background:transparent; animation:none; }
-    .native-chrome .wbar > .close { font-size:var(--wcell); line-height:var(--wcell); padding:0; border:0; min-height:0; }
     .native-chrome .wtitle > span { animation:none; }
+    .native-chrome .wtitle::before, .native-chrome .wbar::before { display:none; }
+    .native-chrome .wg { background-image:none; }
     .native-chrome .wsv, .native-chrome .wsh { background:transparent; border:0; }
     #winPopupNotice { position:fixed; left:12px; right:12px; bottom:12px; z-index:2147483646; display:flex; align-items:center; gap:12px; padding:12px; background:var(--white); color:var(--blue); border:3px double var(--blue); }
     #winPopupNotice button { width:auto; }
@@ -365,7 +374,7 @@
     #helpLabel { display:block; color:var(--red); margin-bottom:6px; }
     #helpActions { display:flex; flex-wrap:wrap; gap:8px; padding:8px 2px 2px; }
     #helpActions button { width:auto; max-width:100%; }
-    @media (prefers-reduced-motion:reduce) { .wtitle > span, .wmenu { animation:none; } }
+    @media (prefers-reduced-motion:reduce) { .wtitle > span, .wtitle::before, .wmenu { animation:none; } }
     @media (max-width:979.98px) {
       html { height:auto; overflow-y:auto; overflow-x:hidden; }
       body { height:auto; min-height:100dvh; overflow:visible; padding-bottom:68px; }

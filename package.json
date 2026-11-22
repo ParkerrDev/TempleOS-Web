@@ -8,7 +8,7 @@
   "scripts": {
     "test": "sh Misc/Test.sh",
     "test:browser": "node Adam/Shell.browser.mjs",
-    "test:windows": "node Adam/WinPointer.test.mjs && node Adam/WinWorkspace.browser.mjs && node Adam/WinPass.browser.mjs && node Adam/WinDraw.browser.mjs",
+    "test:windows": "node Adam/WinPointer.test.mjs && node Adam/WinWorkspace.browser.mjs && node Adam/WinPass.browser.mjs && node Adam/WinDraw.browser.mjs && node Adam/WinChrome.browser.mjs",
     "test:windows:live": "node Adam/WinPassLive.browser.mjs && node Adam/GuiBridgeLive.browser.mjs",
     "test:editor": "node Apps/Editor/EditorKeys.browser.mjs && node Apps/Editor/Palette.browser.mjs && node Apps/Editor/Raw.browser.mjs && node Apps/Editor/Demos.browser.mjs",
     "test:games:browser": "node Apps/Games/Loading.browser.mjs && node Apps/Games/Games.browser.mjs && node Apps/Games/Input.browser.mjs",

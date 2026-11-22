@@ -444,10 +444,10 @@ function WinScrolled(e)
   if (!Scrolls(el))
     return;
   w._doc=el;
-  w._sh.style.left="calc("+Frac(el.scrollLeft,el.scrollWidth-el.clientWidth)+
-    "% - var(--wcell)/2)";
-  w._sv.style.top="calc("+Frac(el.scrollTop,el.scrollHeight-el.clientHeight)+
-    "% - var(--wcell)/2)";
+  w._sh.style.left="round(down,calc("+Frac(el.scrollLeft,el.scrollWidth-el.clientWidth)+
+    "% - var(--wcell)/2),calc(var(--wcell)/8))";
+  w._sv.style.top="round(down,calc("+Frac(el.scrollTop,el.scrollHeight-el.clientHeight)+
+    "% - var(--wcell)/2),calc(var(--wcell)/8))";
 }
 
 function BoxDown(e)
@@ -491,17 +491,27 @@ function WinDown(e)
   WinFocus(e.target._winAt?.(e) || e.currentTarget);
 }
 
+function WinGlyphs(el,text)
+{//CSS bitmap cells avoid platform font hinting and antialiasing.
+  el.replaceChildren(...text.split("").map(function (ch) {
+    const glyph=document.createElement("span"),code=ch.charCodeAt(0);
+    glyph.className="wg";
+    glyph.style.setProperty("--glyph",code<31 || code==127 || code>255?46:code);
+    glyph.textContent=ch;
+    return glyph;
+  }));
+}
+
 export function WinTitle(w,title)
-{//The title goes in the top row as DocBorderNew puts it, "title..."
-//inverted in 15 columns, scrolling 8 chars a second (DocRecalc.HC), and
-//its first word, 8 chars at most, down the left column, where
-//DocBorderLstDraw puts a document's desc.
-  let unit=title+"...",n=Math.ceil(15/unit.length)+1,
+{//DocBorderNew: a 15-cell inverted title, advancing 64 pixels per second.
+  title=title.slice(0,255);
+  const unit=title+"...",n=Math.ceil(15/unit.length)+1,
     s=w.querySelector(".wtitle > span");
   w.dataset.winTitle=title;
-  s.textContent=unit.repeat(2*n);
-  s.style.animationDuration=n*unit.length/8+"s";
-  w.querySelector(".wvert > span").textContent=title.split(" ")[0].slice(0,8);
+  WinGlyphs(s,unit.repeat(n));
+  s.style.setProperty("--title-pixels",unit.length*8);
+  s.style.animationDuration=unit.length/8+"s";
+  WinGlyphs(w.querySelector(".wvert > span"),title.split(" ")[0].slice(0,8));
 }
 
 function Chrome(w,cls)
@@ -537,8 +547,10 @@ export function WinDress(w,opts={})
   Chrome(w,"wszcorner");
   if (w.id!="frame")
     bar.firstChild.addEventListener("click",WinMenu);
+  WinGlyphs(bar.firstChild,"MENU");
   ButtonDress(bar.firstChild,"Open menu");
   if (x) {
+    WinGlyphs(x,"[X]");
     ButtonDress(x,"Close "+title);
     bar.append(x);
     if (opts.onClose)

@@ -92,7 +92,9 @@ own worker's frame sequence for a separate FPS label.
 
 **Native window drawing** draws browser window frames with a small HolyC/WASM
 renderer using TempleOS's font, `TextBorder` and `DrawWinScroll`. Titles and
-controls use the native 8x8 grid. Turn it off for the existing browser styling.
+controls use the native 8x8 grid. Turn it off for matching HTML/CSS decorations.
+The CSS mode uses bitmap cells extracted from the same system font, with no
+drawing WASM or canvas. Both modes use an 8-pixel cell at 100%.
 The renderer loads only when selected and works before boot and while paused.
 **Window decoration scale (DPI)** in Settings adjusts borders, titles and scroll
 handles from 100% to 200% in either drawing style. Contents keep their existing
@@ -101,6 +103,11 @@ Browser content and accessible controls remain HTML; this does not turn a web
 form into a TempleOS application. Native task addresses and editor status are
 omitted from browser frames. The reference check compares focused and unfocused
 borders, moving titles and scrollbar states with original V5.03 drawing.
+`node Adam/WinDrawRef.mjs` checks the HolyC renderer against an unaccelerated
+guest capture. `node Adam/WinChrome.browser.mjs` compares CSS screenshot pixels
+against that renderer at 100% and 200%, including narrow and partial cells.
+Fractional DPI and browser zoom resample the original pixel grid.
+See [Window decoration reference](WindowChrome.md) for the geometry and sources.
 
 **Window passthrough** lets you drag a compatible TempleOS title bar across the
 screen edge to move its live window onto the page. Drag its title back over the

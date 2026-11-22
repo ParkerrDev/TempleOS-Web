@@ -14,6 +14,7 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM ||
 try {
   const page=await browser.newPage({viewport:{width:1280,height:900}}),
     errors=[],loads=[];
+  await page.addInitScript(()=>localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:false,saveSession:false,saveWindows:true})));
   await page.route("**/hemu/*.gz",function (route) {route.abort();});
   await page.route("**/Apps/Terry/TerrySprites.gr.gz",route=>route.fulfill({
     path:root+"Apps/Terry/TerrySprites.gr.gz",contentType:"application/gzip"}));
@@ -157,14 +158,14 @@ try {
   });
   assert.equal(await page.locator("#frame").evaluate(function (w) {
     return getComputedStyle(w).borderLeftWidth;
-  }),"12px");
+  }),"8px");
   assert.equal(await page.locator("#frame .wdraw").isVisible(),false);
   const textSize=await page.locator("#terryRandom").evaluate(el=>getComputedStyle(el).fontSize);
   await page.locator("#godClose").click();
   await page.locator("#settingsBtn").click();
   await page.locator("#windowScale").selectOption("1.5");
   assert.equal(await page.locator("#nativeDrawing").isChecked(),false);
-  assert.equal(await page.locator("#frame").evaluate(w=>getComputedStyle(w).borderLeftWidth),"18px");
+  assert.equal(await page.locator("#frame").evaluate(w=>getComputedStyle(w).borderLeftWidth),"12px");
   await page.locator("#nativeDrawing").check();
   await page.locator("#windowScale").selectOption("2");
   await page.waitForFunction(()=>{
@@ -185,7 +186,7 @@ try {
   assert.equal(await page.locator("#windowScale").inputValue(),"2");
   assert.equal(await page.locator("#nativeDrawing").isChecked(),true);
   await page.locator("#nativeDrawing").uncheck();
-  assert.equal(await page.locator("#frame").evaluate(w=>getComputedStyle(w).borderLeftWidth),"24px");
+  assert.equal(await page.locator("#frame").evaluate(w=>getComputedStyle(w).borderLeftWidth),"16px");
   assert.deepEqual(errors,[]);
   const mobile=await browser.newPage({viewport:{width:390,height:844},
     reducedMotion:"reduce",hasTouch:true,isMobile:true});
@@ -223,7 +224,7 @@ try {
   await failed.waitForFunction(function () {return !!window.draw_error;});
   assert.equal(await failed.locator("#frame").evaluate(function (w) {
     return getComputedStyle(w).borderLeftWidth;
-  }),"12px","a failed drawing download leaves working CSS controls");
+  }),"8px","a failed drawing download leaves working CSS controls");
   assert.match(await failed.evaluate(function () {return window.draw_error;}),/503/);
   await failed.evaluate(async function () {
     const {WinDrawCfg}=await import("/Adam/WinDraw.js");
@@ -238,7 +239,7 @@ try {
   await failed.waitForFunction(function () {return /4096/.test(window.draw_error);});
   assert.equal(await failed.locator("#frame").evaluate(function (w) {
     return getComputedStyle(w).borderLeftWidth;
-  }),"12px","unsupported bitmap dimensions recover working CSS controls");
+  }),"8px","unsupported bitmap dimensions recover working CSS controls");
   console.log("WinDraw browser: lazy WASM, independent unloaded guest, native cells/transparency, accessible close, drag, persistence, CSS restoration, reduced motion and failed-download retry.");
 } finally {
   await browser.close();
