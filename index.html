@@ -251,6 +251,7 @@
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; align-items:stretch; }
     #menuActions { display:flex; flex-direction:column; gap:5px; min-height:0; overflow:auto; padding:2px; }
+    #gamesBtn, #fsBtn, #pauseBtn { margin-top:4px; }
     .toolbar button { flex:none; font-size:11px; padding:0 6px; min-height:28px; }
     .toolbar button .ico { display:inline-block; width:20px; height:20px; vertical-align:middle; }
     .ico svg { display:block; width:20px; height:20px; fill:currentColor; shape-rendering:crispEdges; }
@@ -314,7 +315,7 @@
     /* on-screen function/modifier keys - works on desktop and mobile; modifiers latch (✱) */
     #keysbar { display:flex; flex-wrap:wrap; gap:3px; justify-content:center; }
     #keysbar button { width:auto; min-height:0; font-size:12px; padding:2px 5px; text-align:center; }
-    #keysbar [data-key^="Arrow"] { display:none; }
+    #keysbar [data-touch-key] { display:none; }
     .keyswin.input-docked { position:absolute !important; left:0 !important; right:0 !important; top:auto !important; bottom:calc(env(safe-area-inset-bottom,0px) + var(--keyboard-inset, 0px)); width:auto !important; height:auto !important; margin:0; padding:4px; z-index:10 !important; }
     .keyswin.input-docked > :not(#keysbar) { display:none; }
     .keyswin.input-docked #keysbar { flex-wrap:nowrap; justify-content:flex-start; overflow-x:auto; }
@@ -400,7 +401,7 @@
     body.xcursor .wszcorner { cursor:nwse-resize !important; }
     .wmenu:focus-visible, .close:focus-visible { outline:1px solid var(--red); outline-offset:-1px; }
     #touchBtn, #mobileBar, #menuShade { display:none; }
-    @media (pointer:coarse) { #touchBtn, #keysbar [data-key^="Arrow"] { display:block; } body:not(.popup) .wc { touch-action:pan-y; } }
+    @media (pointer:coarse) { #touchBtn, #keysbar [data-touch-key] { display:block; } body:not(.popup) .wc { touch-action:pan-y; } }
     @media (pointer:coarse) { #keysbar [data-mobile-first], #keysbar [data-key^="Arrow"] { order:-1; } }
     #guide { display:flex; flex-direction:column; min-height:220px; max-height:70dvh; }
     @media (min-width:980px) and (pointer:fine) {
@@ -528,38 +529,39 @@
       <div id="desktopMenu" class="toolbar win" data-title="Menu">
         <span class="close">[X]</span>
         <div id="menuActions">
-        <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico"><svg><use href="#i-pause"/></svg></span> Pause</button>
-        <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico"><svg><use href="#i-restart"/></svg></span> Restart</button>
-        <button id="fsBtn" title="Show the OS fullscreen"><span class="ico"><svg><use href="#i-fullscreen"/></svg></span> Fullscreen</button>
-        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly - no emulation, native speed"><span class="ico"><svg><use href="#i-code"/></svg></span> HolyC Editor</button>
-        <button id="gamesBtn" title="Run games with HolyC-WASM or explicitly in TempleOS, and edit their source"><span class="ico"><svg><use href="#i-games"/></svg></span> Games</button>
-        <button id="spritesBtn" title="Convert images, GIFs and video to TempleOS sprites"><span class="ico"><svg><use href="#i-sprite"/></svg></span> Sprite Studio</button>
-        <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico"><svg><use href="#i-cross"/></svg></span> God Tools</button>
         <button id="filesBtn" title="Browse TempleOS files, import, download and open in HolyC Editor"><span class="ico"><svg><use href="#i-folder"/></svg></span> Files</button>
         <button id="diskBtn" title="Save your session or import and export backups"><span class="ico"><svg><use href="#i-save"/></svg></span> Disk &amp; Save</button>
+        <button id="editorBtn" title="Write &amp; run TempleOS HolyC compiled straight to WebAssembly - no emulation, native speed"><span class="ico"><svg><use href="#i-code"/></svg></span> HolyC Editor</button>
+        <button id="spritesBtn" title="Convert images, GIFs and video to TempleOS sprites"><span class="ico"><svg><use href="#i-sprite"/></svg></span> Sprite Studio</button>
+        <button id="gamesBtn" title="Run games with HolyC-WASM or explicitly in TempleOS, and edit their source"><span class="ico"><svg><use href="#i-games"/></svg></span> Games</button>
+        <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico"><svg><use href="#i-cross"/></svg></span> God Tools</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico"><svg><use href="#i-search"/></svg></span> Terry Search</button>
         <button id="chatBtn" title="Talk with everyone else on the site right now"><span class="ico"><svg><use href="#i-chat"/></svg></span> Chat<span id="chatUnread"></span></button>
+        <button id="fsBtn" title="Show the OS fullscreen"><span class="ico"><svg><use href="#i-fullscreen"/></svg></span> Fullscreen</button>
         <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico"><svg><use href="#i-mouse"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
-        <button id="settingsBtn" title="Frame rate, keyboard repeat and other options"><span class="ico"><svg><use href="#i-settings"/></svg></span> Settings</button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico"><svg><use href="#i-touch"/></svg></span> Touch controls</button>
+        <button id="settingsBtn" title="Frame rate, keyboard repeat and other options"><span class="ico"><svg><use href="#i-settings"/></svg></span> Settings</button>
+        <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico"><svg><use href="#i-pause"/></svg></span> Pause</button>
+        <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico"><svg><use href="#i-restart"/></svg></span> Restart</button>
         </div>
       </div>
       <div id="keysWin" class="win keyswin" data-title="Keys" data-icon="keys"><span class="close">[X]</span><div id="keysbar">
         <button type="button" data-mobile-first>Esc</button>
-        <button type="button" data-key="ArrowLeft" aria-label="Left arrow">←</button><button type="button" data-key="ArrowRight" aria-label="Right arrow">→</button>
-        <button type="button" data-key="ArrowUp" aria-label="Up arrow">↑</button><button type="button" data-key="ArrowDown" aria-label="Down arrow">↓</button>
+        <button type="button" data-touch-key data-key="ArrowLeft" aria-label="Left arrow">←</button><button type="button" data-touch-key data-key="ArrowRight" aria-label="Right arrow">→</button>
+        <button type="button" data-touch-key data-key="ArrowUp" aria-label="Up arrow">↑</button><button type="button" data-touch-key data-key="ArrowDown" aria-label="Down arrow">↓</button>
         <button type="button">F1</button><button type="button">F2</button>
         <button type="button">F3</button><button type="button">F4</button><button type="button">F5</button>
         <button type="button">F6</button><button type="button">F7</button><button type="button">F8</button>
         <button type="button">F9</button><button type="button">F10</button>
         <button type="button">F11</button><button type="button">F12</button>
-        <button type="button" data-mobile-first>Enter</button><button type="button" data-mobile-first>Space</button>
-        <button type="button">Tab</button><button type="button" class="mod">Ctrl</button>
+        <button type="button" data-touch-key data-mobile-first>Enter</button>
+        <button type="button" class="mod">Ctrl</button>
         <button type="button" class="mod">Alt</button><button type="button" class="mod">Shift</button>
-        <button type="button" class="mod">Win</button><button type="button">Ins</button>
-        <button type="button">Del</button><button type="button">Home</button>
-        <button type="button">End</button><button type="button">PgUp</button>
-        <button type="button">PgDn</button></div></div>
+        <button type="button" class="mod">Win</button>
+        <button type="button">Tab</button><button type="button" data-mobile-first>Space</button><button type="button">Del</button><button type="button" data-touch-key>Ins</button>
+        <button type="button" data-touch-key>Home</button>
+        <button type="button" data-touch-key>End</button><button type="button" data-touch-key>PgUp</button>
+        <button type="button" data-touch-key>PgDn</button></div></div>
     </div>
 
     <div class="col-center">
