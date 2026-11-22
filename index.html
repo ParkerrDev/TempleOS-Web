@@ -251,8 +251,11 @@
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; align-items:stretch; }
     #menuActions, #controlActions { display:flex; flex-direction:column; gap:5px; min-height:0; overflow:auto; padding:2px; }
-    #gamesBtn, #controlsBtn, #pauseBtn { margin-top:4px; }
+    #gamesBtn, #controlsBtn { margin-top:4px; }
+    #controlActions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+    #controlActions #fsBtn, #controlActions #captureBtn, #controlActions #touchBtn { grid-column:1 / -1; }
     .toolbar button { flex:none; font-size:11px; padding:0 6px; min-height:28px; }
+    #controlActions button { padding:0 2px; }
     .toolbar button .ico { display:inline-block; width:20px; height:20px; vertical-align:middle; }
     .ico svg { display:block; width:20px; height:20px; fill:currentColor; shape-rendering:crispEdges; }
     button, .tbtn, .ico { font-variant-emoji:text; }
@@ -488,6 +491,7 @@
   <symbol id="i-touch" viewBox="0 0 24 24"><path d="M2 14h20v2H2zm0 6h20v2H2zm0-4h2v4H2zm18 0h2v4h-2zM8 2h8v2H8zm0 2h2v4H8zm6 0h2v4h-2zM8 8h8v2H8zm3 2h2v4h-2zm-4 2h2v2H7z"/></symbol>
   <symbol id="i-window" viewBox="0 0 24 24"><path d="M2 2h20v2H2zm2 6h16v2H4zM2 20h20v2H2zM2 4h2v16H2zm18 0h2v16h-2zM5 5h2v2H5zm3 0h2v2H8z"/></symbol>
   <symbol id="i-settings" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M2 5h4v2H2zM12 5h10v2H12zM6 3h6v6H6zM8 5v2h2V5zM2 11h12v2H2zM20 11h2v2h-2zM14 9h6v6h-6zM16 11v2h2v-2zM2 17h4v2H2zM12 17h10v2H12zM6 15h6v6H6zM8 17v2h2v-2z"/></symbol>
+  <symbol id="i-controls" viewBox="0 0 24 24"><path d="M2 4h20v2H2zM2 11h20v2H2zM2 18h20v2H2zM6 2h4v6H6zM14 9h4v6h-4zM6 16h4v6H6z"/></symbol>
   <symbol id="i-keys" viewBox="0 0 24 24"><path d="M0 4h24v2h-24zM0 6h2v2h-2zM22 6h2v2h-2zM0 8h2v2h-2zM4 8h2v2h-2zM8 8h2v2h-2zM12 8h2v2h-2zM16 8h2v2h-2zM22 8h2v2h-2zM0 10h2v2h-2zM22 10h2v2h-2zM0 12h2v2h-2zM6 12h2v2h-2zM10 12h2v2h-2zM14 12h2v2h-2zM18 12h2v2h-2zM22 12h2v2h-2zM0 14h2v2h-2zM22 14h2v2h-2zM0 16h2v2h-2zM6 16h12v2h-12zM22 16h2v2h-2zM0 18h2v2h-2zM22 18h2v2h-2zM0 20h24v2h-24z"/></symbol>
   <symbol id="i-terry" viewBox="0 0 24 24"><path d="M8 0h8v2h-8zM8 2h8v2h-8zM8 4h8v2h-8zM10 6h4v2h-4zM2 8h20v2h-20zM0 10h2v2h-2zM8 10h8v2h-8zM22 10h2v2h-2zM8 12h8v2h-8zM8 14h8v2h-8zM8 16h2v2h-2zM14 16h2v2h-2zM6 18h4v2h-4zM14 18h4v2h-4zM4 20h4v2h-4zM16 20h4v2h-4zM2 22h4v2h-4zM18 22h4v2h-4z"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M6 0h12v2h-12zM4 2h4v2h-4zM16 2h4v2h-4zM4 4h4v2h-4zM16 4h4v2h-4zM16 6h4v2h-4zM14 8h4v2h-4zM12 10h4v2h-4zM10 12h4v2h-4zM10 14h4v2h-4zM10 18h4v2h-4zM10 20h4v2h-4z"/></symbol>
@@ -537,18 +541,8 @@
         <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico"><svg><use href="#i-cross"/></svg></span> God Tools</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico"><svg><use href="#i-search"/></svg></span> Terry Search</button>
         <button id="chatBtn" title="Talk with everyone else on the site right now"><span class="ico"><svg><use href="#i-chat"/></svg></span> Chat<span id="chatUnread"></span></button>
-        <button id="controlsBtn" title="Fullscreen, mouse capture, pause and restart"><span class="ico"><svg><use href="#i-touch"/></svg></span> Controls</button>
+        <button id="controlsBtn" title="Fullscreen, mouse capture, pause and restart"><span class="ico"><svg><use href="#i-controls"/></svg></span> Controls</button>
         <button id="settingsBtn" title="Frame rate, keyboard repeat and other options"><span class="ico"><svg><use href="#i-settings"/></svg></span> Settings</button>
-        </div>
-      </div>
-      <div id="controlsWin" class="toolbar win" data-title="Controls" data-icon="touch">
-        <span class="close">[X]</span>
-        <div id="controlActions">
-        <button id="fsBtn" title="Show the OS fullscreen"><span class="ico"><svg><use href="#i-fullscreen"/></svg></span> Fullscreen</button>
-        <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico"><svg><use href="#i-mouse"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
-        <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico"><svg><use href="#i-touch"/></svg></span> Touch controls</button>
-        <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico"><svg><use href="#i-pause"/></svg></span> Pause</button>
-        <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico"><svg><use href="#i-restart"/></svg></span> Restart</button>
         </div>
       </div>
       <div id="keysWin" class="win keyswin" data-title="Keys" data-icon="keys"><span class="close">[X]</span><div id="keysbar">
@@ -599,6 +593,16 @@
     </div>
 
     <div class="col-right">
+      <div id="controlsWin" class="toolbar win" data-title="Controls" data-icon="controls">
+        <span class="close">[X]</span>
+        <div id="controlActions">
+        <button id="fsBtn" title="Show the OS fullscreen"><span class="ico"><svg><use href="#i-fullscreen"/></svg></span> Fullscreen</button>
+        <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico"><svg><use href="#i-mouse"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
+        <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico"><svg><use href="#i-touch"/></svg></span> Touch controls</button>
+        <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico"><svg><use href="#i-pause"/></svg></span> Pause</button>
+        <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico"><svg><use href="#i-restart"/></svg></span> Restart</button>
+        </div>
+      </div>
       <div id="guide" class="win" data-title="Help" data-icon="help">
         <span class="close">[X]</span>
         <div id="helpBody">
