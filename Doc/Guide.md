@@ -32,7 +32,7 @@ and native Take Tour question.
 - **Help → Cheatsheet** - browse common TempleOS commands, editor shortcuts and a first HolyC program.
 - **Sync when multiple tabs are open** is on by default. One tab handles frames, sound and window updates locally; a lightweight shared worker detects other tabs without polling. A second tab activates shared frame delivery and input routing. Closing it returns the host to local delivery without restarting. The host owns the CPU workers and all connected tabs use its filesystem. Turning sync off takes effect after refresh; only one independent tab can save C:.
 - C: saves after writes. **Save full session** is off by default. When enabled, full sessions save after input settles outside gameplay and when the page hides. Only the checkpoint copy briefly stops the CPUs; compression and storage leave the OS responsive. A checkpoint whose disk changed during compression is discarded and saved again after activity settles. **Save session** creates an explicit checkpoint. Closing or refreshing the host tab restores the last completed checkpoint; a crash or immediate close can lose newer RAM changes. Newer saved files are never replaced by an older checkpoint.
-- **Remember website windows** is off by default. Enable it to preserve positions, sizes and open state. Disabling it removes the saved layout and disconnects layout-saving observers, without moving the current windows. Settings can reset their positions. Desktop windows can move into browser popups; mobile windows stay in the page so scrolling works.
+- **Remember window positions** is off by default. Enable it to preserve positions, sizes and open state. Disabling it removes the saved layout and disconnects layout-saving observers, without moving the current windows. Settings can reset their positions. Desktop windows can move into browser popups; mobile windows stay in the page so scrolling works.
 - **✞ God Tools** - God's words and Bible passages on the page itself, picked in the timing-bit
   order of Adam/God and seeded by the browser, and Terry's God Song and God Doodle opened in TempleOS.
 - **Chat** - talk with everyone else on the site. It opens in the corner without darkening the
@@ -96,8 +96,9 @@ controls use the native 8x8 grid. Turn it off for matching HTML/CSS decorations.
 The CSS mode uses bitmap cells extracted from the same system font, with no
 drawing WASM or canvas. Both modes use an 8-pixel cell at 100%.
 The renderer loads only when selected and works before boot and while paused.
-**Window decoration scale (DPI)** in Settings adjusts borders, titles and scroll
-handles from 100% to 200% in either drawing style. Contents keep their existing
+**Window scale (DPI)** in Settings adjusts borders, titles and scroll
+handles from 100% to 200% in either drawing style, defaulting to 125%. Saved
+scale preferences are preserved. Contents keep their existing
 size. The scale applies immediately, follows popup windows and survives reload.
 Browser content and accessible controls remain HTML; this does not turn a web
 form into a TempleOS application. Native task addresses and editor status are

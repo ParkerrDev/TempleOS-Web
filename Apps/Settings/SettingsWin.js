@@ -37,8 +37,7 @@ WinAdd(`
         <h3 id="stWindows">Windows</h3>
         <button id="onlyBtn" title="Move open tools into TempleOS and fill the browser" aria-pressed="false" disabled>TempleOS Only Mode</button>
         <label><input id="windowPassthrough" type="checkbox"> Window passthrough</label>
-        <label><input id="saveWindows" type="checkbox" aria-describedby="stRememberHint"> Remember website windows</label>
-        <p id="stRememberHint" class="st-note">Save their positions, sizes and open state.</p>
+        <label><input id="saveWindows" type="checkbox"> Remember window positions</label>
         <div class="st-actions">
           <button id="returnWindows">Return windows</button>
           <button id="resetWindows">Reset window positions</button>
@@ -48,29 +47,29 @@ WinAdd(`
         <details>
           <summary>How windows work</summary>
           <p>Passthrough lets you drag windows between TempleOS and the page. Tools opened inside TempleOS stay there. Video Player and Sprite Studio stay in the browser.</p>
-          <p>Return windows keeps passthrough enabled. Reset positions keeps tools open.</p>
+          <p>Remember window positions also restores sizes and open windows. Return windows keeps passthrough enabled. Reset positions keeps tools open.</p>
           <p>On desktop, drag a window beyond the page edge to open a browser popup. Close it to return the window.</p>
         </details>
       </section>
       <section class="st-section" aria-labelledby="stSaving">
         <h3 id="stSaving">Saving &amp; tabs</h3>
         <p class="st-note">Files on C: save automatically.</p>
-        <label><input id="syncTabs" type="checkbox"> Sync when multiple tabs are open</label>
+        <label><input id="syncTabs" type="checkbox"> Sync tabs</label>
         <label><input id="rememberSession" type="checkbox"> Save full session</label>
         <p class="st-note">Refresh tabs to apply these changes.</p>
         <details>
           <summary>What gets saved?</summary>
           <p>A full session also preserves running tasks and TempleOS windows. Without it, you start with a fresh desktop and your saved files.</p>
-          <p>Sync shares one running machine across tabs. When off, only one tab can save C:.</p>
+          <p>Sync shares one running machine when multiple tabs are open. When off, only one tab can save C:.</p>
         </details>
       </section>
       <section class="st-section" aria-labelledby="stAppearance">
         <h3 id="stAppearance">Appearance</h3>
-        <label><input id="showHeader" type="checkbox"> Show header introduction</label>
-        <label><input id="showFooter" type="checkbox"> Show footer credits</label>
+        <label><input id="showHeader" type="checkbox"> Show header</label>
+        <label><input id="showFooter" type="checkbox"> Show footer</label>
         <label><input id="nativeDrawing" type="checkbox"> Native window drawing</label>
         <div class="st-choice">
-          <label for="windowScale">Decoration scale (DPI)</label>
+          <label for="windowScale">Window scale (DPI)</label>
           <select id="windowScale">
             <option value="1">100%</option>
             <option value="1.25">125%</option>

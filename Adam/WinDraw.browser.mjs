@@ -25,9 +25,10 @@ try {
   await page.goto("http://localhost:8199/",{waitUntil:"load"});
   await page.locator("#frame .wbar").waitFor();
   assert.equal(loads.length,0,"default CSS mode must not load drawing WASM");
+  assert.equal(await page.locator("#frame").evaluate(w=>getComputedStyle(w).borderLeftWidth),"10px","new visitors use 125% decoration scale");
   await page.evaluate(async function () {
     const {WinDrawCfg}=await import("/Adam/WinDraw.js");
-    WinDrawCfg({native:true});
+    WinDrawCfg({native:true,scale:1});
   });
   await page.waitForFunction(function () {
     return document.body.classList.contains("native-chrome") &&
@@ -217,7 +218,7 @@ try {
     else route.continue();
   });
   await failed.addInitScript(function () {
-    localStorage.setItem("templeos.windraw",'{"native":true}');
+    localStorage.setItem("templeos.windraw",'{"native":true,"scale":1}');
     addEventListener("windrawerror",function (e) {window.draw_error=e.detail;});
   });
   await failed.goto("http://localhost:8199/",{waitUntil:"load"});

@@ -1,7 +1,7 @@
 import {WinDocuments} from "./WinPopup.js";
 import {PALETTE} from "../hemu/holyc-wasm/src/runtime/palette.js";
 
-let cfg={native:false,scale:1},core=null,loading=null,frame=0,last=0;
+let cfg={native:false,scale:1.25},core=null,loading=null,frame=0,last=0;
 const reduced=matchMedia("(prefers-reduced-motion:reduce)");
 try {
   const saved=JSON.parse(localStorage.getItem("templeos.windraw"));
