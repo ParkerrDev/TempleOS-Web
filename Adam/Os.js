@@ -89,12 +89,21 @@ canvas.parentElement.addEventListener("winsize",fitScreen);
   watchScale();   // moving to a monitor with another scale need not change the size in CSS pixels
 }
 
-// ---- live topbar clock (the OS RTC is synced to the host clock, so this matches the OS) ----
-{ const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], p2 = (n) => String(n).padStart(2, "0");
-  const tick = () => { const t = new Date();
-    $("tb-date").textContent = `${days[t.getDay()]} ${p2(t.getMonth()+1)}/${p2(t.getDate())}`;
-    $("tb-time").textContent = `${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`; };
-  tick(); setInterval(tick, 1000); }
+let clock=null;
+function ClockShow()
+{//Use the guest's rendered time while its clock is visible.
+  let date=clock?.[1],time=clock?.[2];
+  if (!clock) {
+    const t=new Date(),days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+      p2=n=>String(n).padStart(2,"0");
+    date=`${days[t.getDay()]} ${p2(t.getMonth()+1)}/${p2(t.getDate())}`;
+    time=`${p2(t.getHours())}:${p2(t.getMinutes())}:${p2(t.getSeconds())}`;
+  }
+  if ($("tb-date").textContent!==date) $("tb-date").textContent=date;
+  if ($("tb-time").textContent!==time) $("tb-time").textContent=time;
+}
+ClockShow();
+setInterval(function () {if(!clock)ClockShow();},1000);
 
 //The visitor connection starts after the first desktop frame.
 addEventListener("osstate",function PresenceStart(e) {
@@ -115,6 +124,8 @@ import("../Apps/Chat/Presence.js").then(({createPresence}) => {
 function blit(idx, w, h, immutable = false, stats = null) {
   drawFrame(idx,w,h,immutable);
   if(stats) {
+    clock=/^((?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) [01][0-9]\/[0-3][0-9]) ([0-2][0-9]:[0-5][0-9]:[0-5][0-9]) /.exec(stats.top||"");
+    ClockShow();
     fpsMeter.sample(stats.fps,stats.updates);
     updateFps();
   }
@@ -820,7 +831,7 @@ function EngineMessage(m)
     dispatchEvent(new CustomEvent("osownership",{detail:{owner:m.value}}));
   } else if (m.cmd==="restarting" || m.cmd==="starting") {
     if ((started || framed) && !restarting) osGen++;
-    started=framed=false;
+    started=framed=false;clock=null;ClockShow();
     ld.style.display="";setLoad("Restoring TempleOS…",0);
     resetPause();releaseOSInput();
     dispatchEvent(new CustomEvent("osstate",{detail:{ready:false}}));
