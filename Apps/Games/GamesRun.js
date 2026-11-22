@@ -2,7 +2,6 @@ import {Icon} from "../../Adam/Icons.js";
 import {gameProject,gameProgram} from './GameSrc.js';
 import {GAMES} from './GameCatalog.js';
 import {WinFind,WinRaise,WinRestore,WinTitle,WinOrigin,WinRoute} from '../../Adam/WinMgr.js';
-import {HelpGame} from '../Help/HelpWin.js';
 import {os_game,OsCaptureSet,OsFileWrite,OsGen,OsHold,OsInputRelease,OsInputReset,OsLaunch} from '../../Adam/Os.js';
 import {EdLoad,EdDraftRestore,ed_game,ed_view} from '../Editor/EditorWin.js';
 
@@ -133,7 +132,6 @@ async function runInBrowser(g,{inEditor=false,start=true,origin=WinOrigin()}={})
   ed_game.cancel();
   const view=WinFind(inEditor?'editorWin':'gameWin');
   closeGameWin({keepFullscreen:ed_view.isWithin(view)});const token=launchToken;curGame=g;closeGames();
-  HelpGame(g);
   runnerTarget=inEditor?'editor':'window';
   if(!inEditor)ovE.classList.remove('open','free');
   OsInputRelease();
@@ -168,7 +166,6 @@ async function runInBrowser(g,{inEditor=false,start=true,origin=WinOrigin()}={})
 }
 
 function closeGameWin({keepFullscreen=false}={}) {
-  HelpGame(null);
   ++launchToken;
   if(!keepFullscreen){
     ed_view.exitWithin(WinFind('gameWin'));
@@ -266,7 +263,6 @@ async function runInTempleOS(g) {
     toast("Opening <b>" + g.name + "</b> in a TempleOS task.<br>" + how + "<br>" + QuitNote(g));
     setStatus(g.name + ": TempleOS is compiling or running the game.");
     os_game.active = true;
-    HelpGame(g);
     OsCaptureSet(g.name === "HolyCraft");
     OsInputReset();   // clear any stuck keys + recentre the look on spawn
   } else {

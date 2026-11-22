@@ -29,7 +29,7 @@ and native Take Tour question.
 - **⏸ Pause** - freeze and resume the OS (guest time stops too).
 - **Files** - browse C: in its own window, with places, back/up navigation, a path bar, filtering and file sizes. Select a file to edit or download it; drop files into the current folder to import them. New program opens HolyC Editor with this folder as its save destination.
 - **Disk & Save** - save the session or import/export a whole snapshot or disk.
-- **Help → Cheatsheet** - browse common TempleOS commands, editor shortcuts and a first HolyC program.
+- **Menu → Cheatsheet** - browse common TempleOS commands, editor shortcuts and a first HolyC program.
 - **Sync when multiple tabs are open** is on by default. One tab handles frames, sound and window updates locally; a lightweight shared worker detects other tabs without polling. A second tab activates shared frame delivery and input routing. Closing it returns the host to local delivery without restarting. The host owns the CPU workers and all connected tabs use its filesystem. Turning sync off takes effect after refresh; only one independent tab can save C:.
 - C: saves after writes. **Save full session** is off by default. When enabled, full sessions save after input settles outside gameplay and when the page hides. Only the checkpoint copy briefly stops the CPUs; compression and storage leave the OS responsive. A checkpoint whose disk changed during compression is discarded and saved again after activity settles. **Save session** creates an explicit checkpoint. Closing or refreshing the host tab restores the last completed checkpoint; a crash or immediate close can lose newer RAM changes. Newer saved files are never replaced by an older checkpoint.
 - **Remember window positions** is off by default. Enable it to preserve positions, sizes and open state. Disabling it removes the saved layout and disconnects layout-saving observers, without moving the current windows. Settings can reset their positions. Desktop windows can move into browser popups; mobile windows stay in the page so scrolling works.
@@ -119,7 +119,7 @@ run inside TempleOS.
 
 Every site tool except Video Player and Sprite Studio can move into TempleOS,
 including Chat, HolyC Editor, Files, Disk & Save, Terry Search, Settings, Games,
-God Tools, Help, the cheatsheet, Menu and Terry. A shared converter reads the
+God Tools, the cheatsheet, Menu and Terry. A shared converter reads the
 resolved HTML/CSS layout. Native HolyC draws its text, rectangles and indexed
 images with `GrPrint`, `GrRect` and `GrBlot`. SVG icons become palette bitmaps,
 including icons that refer to shared SVG symbols.

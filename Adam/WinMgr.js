@@ -16,8 +16,7 @@ const WINS={
   tsBtn:["tsWin","../Apps/Search/SearchWin.js"],
   chatBtn:["chatWin","../Apps/Chat/ChatWin.js"],
   settingsBtn:["settingsWin","../Apps/Settings/SettingsWin.js"],
-  cheatsheetBtn:["cheatsheetWin","../Apps/Help/CheatsheetWin.js"],
-  mobileHelp:["guide","../Apps/Help/HelpWin.js"]};
+  cheatsheetBtn:["cheatsheetWin","../Apps/Help/CheatsheetWin.js"]};
 const WORKSPACE="templeos.workspace",workspace=new Map,restorers=new Map;
 let saved={},restoring=true,save_queued=false,stored=false,deleted=false,remember=PersistenceCfg().saveWindows;
 try {
@@ -161,11 +160,10 @@ async function WinWorkspaceRestore()
 {
   let id,spec,record,module,Open;
   try {
-    await import("../Apps/Help/HelpWin.js");
     for (id in WINS) {
       spec=WINS[id];
       record=saved[spec[0]];
-      if (record?.open && (id!="mobileHelp" || WinMobile())) {
+      if (record?.open) {
 	module=await import(spec[1]);
 	await module.Open();
 	WinApply($(spec[0]));
@@ -620,6 +618,7 @@ for (const w of document.querySelectorAll("[data-title]"))
     !w.classList.contains("toolbar"),onClose:w.id=="controlsWin"?function () {
       w.classList.remove("controls-open");
       w.style.display="none";
+      ControlsButton();
     }:undefined});
 WinFocus($("frame"));
 
@@ -684,7 +683,6 @@ async function WinOpen(id,origin)
     WinAction($(id),m.Open);
     WinApply($(WINS[id][0]));
     WinRoute($(WINS[id][0]),origin);
-    document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id}}));
   } catch(e) {
     if(request===opening)$("winLoadingText").textContent="Could not open this window. Close and try again.";
     console.error(e);
@@ -720,6 +718,12 @@ random.addEventListener("click",async function () {
 });
 
 
+function ControlsButton()
+{
+  const w=$("controlsWin");
+  $("controlsBtn").style.display=w.getClientRects().length?"none":"";
+}
+
 function MenuShow(open)
 {
   if (WinMobile())
@@ -730,6 +734,7 @@ function MenuShow(open)
     $("desktopMenu").style.display="";
     if (WinMobile()) $("controlsWin").classList.remove("controls-open");
   }
+  ControlsButton();
 }
 
 $("controlsBtn").addEventListener("click",function () {
@@ -754,6 +759,10 @@ document.querySelector("#desktopMenu .close").addEventListener("click",
   });
 $("mobileFull").addEventListener("click",function () {$("fsBtn").click();});
 
+$("controlsWin")._reopen=$("controlsBtn");
+queueMicrotask(ControlsButton);
+matchMedia("(max-width:979.98px)").addEventListener("change",ControlsButton);
+addEventListener("winpopupreturn",ControlsButton);
 WinWorkspaceRestore();
 
 const transcript=new URL(location.href).searchParams.get("transcript");

@@ -42,7 +42,7 @@ try {
   await Drag(page,"#godWin .wtitle",800,160);
   const moved=await page.locator("#godWin").boundingBox();
   await page.locator("#godOverlay .ovfree").click();
-  await page.locator("#guide .close").click();
+  await page.locator("#terryWin .close").click();
   const frameBefore=await page.locator("#frame").boundingBox();
   await page.reload();
   await page.locator("#godWin").waitFor();
@@ -55,7 +55,7 @@ try {
     "a restored desktop window preserves the remaining layout");
   assert(Math.abs(restored.x-moved.x)<1 && Math.abs(restored.y-moved.y)<1,
     "refresh restores the tool position");
-  assert.equal(await page.locator("#guide").isVisible(),false,
+  assert.equal(await page.locator("#terryWin").isVisible(),false,
     "refresh keeps a closed desktop window closed");
   assert(await page.locator("#godOverlay").evaluate(function (e) {
     return e.classList.contains("free");
@@ -65,7 +65,7 @@ try {
   assert.equal(await page.locator("#godWin").evaluate(function (w) {
     return w.dataset.floating || "";
   }),"","reset removes the saved floating position");
-  assert.equal(await page.locator("#guide").isVisible(),false,
+  assert.equal(await page.locator("#terryWin").isVisible(),false,
     "reset preserves closed window state");
   await page.locator("#settingsClose").click();
   await page.locator("#godWord").click();
@@ -118,24 +118,6 @@ try {
   await page.reload();
   assert.equal(await page.locator("#godWin").count(),0,
     "a closed lazy app does not reopen after refresh");
-
-  await page.locator('.toolbar [data-win="guide"]').click();
-  const helpWait=page.waitForEvent("popup");
-  await Drag(page,"#guide .wtitle",1455,180);
-  const helpPopup=await helpWait;
-  assert(await helpPopup.locator("#guide").isVisible(),
-    "Help remains visible inside a narrow browser popup");
-  const tip=await helpPopup.locator("#helpText").innerText();
-  await helpPopup.locator("#helpNext").click();
-  assert.notEqual(await helpPopup.locator("#helpText").innerText(),tip);
-  await helpPopup.locator("#guide .close").click().catch(function (error) {
-    if (!helpPopup.isClosed()) throw error;
-  });
-  await page.waitForFunction(function () {
-    return document.getElementById("guide")?.style.display=="none";
-  });
-  assert.equal(await page.locator("#guide").isVisible(),false,
-    "closing a popup's window does not reopen it when returned");
 
   const mobile=await Page(true),phone=mobile.page,cdp=await mobile.context.newCDPSession(phone);
   await phone.locator("#mobileMenu").click();

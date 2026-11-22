@@ -31,7 +31,7 @@ try {
   }
   await page.goto(origin+"/?single");await Ready(page);
   await Move(page,312);
-  await page.locator("#guide .close").click();
+  await page.locator("#terryWin .close").click();
   await page.locator("#editorBtn").click();
   await page.waitForFunction(()=>window.__holycEditor?.FileLoad && !document.getElementById("editor").disabled);
   await page.evaluate(()=>__holycEditor.FileLoad(new TextEncoder().encode('"Cleared draft";'),"Deletion.HC"));
@@ -65,7 +65,7 @@ try {
     "a surviving tab cannot rewrite its stale layout after site data is deleted");
   await page.reload();await Ready(page);
   assert.equal(await page.locator("#keysWin").evaluate(w=>w.dataset.floating || ""),"");
-  assert.equal(await page.locator("#guide").isVisible(),true,"deleted open/closed state returns to defaults");
+  assert.equal(await page.locator("#terryWin").isVisible(),true,"deleted open/closed state returns to defaults");
   assert.equal(await page.locator("#editorWin").count(),0,"deleted workspace does not reopen its old editor");
   assert.deepEqual(await page.evaluate(()=>[localStorage.getItem("templeos.editor"),sessionStorage.getItem("templeos.editor")]),
     [null,null],"unloading the previous editor cannot recreate a deleted draft");

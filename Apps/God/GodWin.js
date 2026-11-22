@@ -1,6 +1,5 @@
 import {WinAdd,WinFocus} from "../../Adam/WinMgr.js";
 import {$,OsLaunch} from "../../Adam/Os.js";
-import {HelpGame} from "../Help/HelpWin.js";
 import {Gate,PROGRAMS,ProgramSrc} from "../Programs.js";
 
 const CSS=`
@@ -127,7 +126,7 @@ function Append(result,action)
 
 async function Run(e)
 {
-  let action=e.currentTarget.dataset.action,gen=++generation,result,name,how,
+  let action=e.currentTarget.dataset.action,gen=++generation,result,name,
     source;
   Busy(true,"Opening "+action+"...");
   try {
@@ -143,12 +142,6 @@ async function Run(e)
         throw new Error(result?.msg || "TempleOS is not ready. Try again.");
       if (gen!=generation)
         return;
-      how="Choose the song settings in TempleOS, then supply timing when prompted.";
-      if (action=="doodle")
-        how="Click OKAY in the prompt, then press Space until it finishes. "+
-          "Esc then accepts; Shift+Esc discards. Accepted drawings are saved "+
-          "as GodDoodle documents in C:/Home. Enter clears; 0-9 smooth.";
-      HelpGame({name,how});
       Close();
       $("canvas").focus();
       WinFocus($("frame"));

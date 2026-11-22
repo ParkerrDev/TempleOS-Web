@@ -224,7 +224,6 @@ try {
   await page.evaluate(()=>document.getElementById("spritesClose").click());
   await page.locator("#onlyBtn").click();
   await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="desktopMenu"));
-  await Button("desktopMenu","#controlsBtn");
   await Button("controlsWin","#pauseBtn");
   await page.waitForFunction(()=>!document.body.classList.contains("os-only") && document.getElementById("onlyBtn").disabled);
   assert(await page.locator("#pauseBtn").isVisible(),"paused OS leaves its resume control reachable");

@@ -33,9 +33,10 @@ try {
     if (!mobile) {
       for (const [width,height] of [[980,700],[1280,600],[1280,800]]) {
         await page.setViewportSize({width,height});
+        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
         const layout=await page.evaluate(function () {
           const footer=document.querySelector("footer").getBoundingClientRect(),
-            windows=["desktopMenu","controlsWin","keysWin","guide","terryWin"].map(id=>{
+            windows=["desktopMenu","controlsWin","keysWin","terryWin"].map(id=>{
               const r=document.getElementById(id).getBoundingClientRect();
               return {id,left:r.left,right:r.right,bottom:r.bottom};
             });
@@ -49,8 +50,10 @@ try {
             w.id+" remains above the desktop footer at "+width+"x"+height);
       }
       await page.locator("#settingsBtn").scrollIntoViewIfNeeded();
-      assert(await page.locator("#menuActions").evaluate(e=>e.scrollTop>0),
-        "lower Menu actions remain reachable by scrolling their content");
+      assert(await page.locator("#settingsBtn").evaluate(e=>{
+        const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();
+        return r.top>=p.top && r.bottom<=p.bottom;
+      }),"lower Menu actions remain reachable within their content");
       assert.equal(await page.locator("#desktopMenu").evaluate(e=>getComputedStyle(e).overflow),"visible",
         "Menu scrolling leaves its frame and title unclipped");
       await page.screenshot({path:root+"tmp/native-layout/Shell-desktop.png"});
@@ -93,24 +96,16 @@ try {
     assert.equal(await page.locator("header").isVisible(),true);
     assert.equal(await page.locator("footer").isVisible(),true);
     await page.locator("#settingsClose").click();
-    if (mobile) await page.locator("#mobileHelp").click();
-    assert.equal(await page.locator("#desktopMenu #cheatsheetBtn").count(),0);
-    assert.equal(await page.locator("#guide #cheatsheetBtn").count(),1);
+    if (mobile) await page.locator("#mobileMenu").click();
+    assert.equal(await page.locator("#desktopMenu #cheatsheetBtn").count(),1);
+    assert.equal(await page.locator("#guide,#mobileHelp").count(),0);
     await page.locator("#cheatsheetBtn").click();
     await page.locator("#cheatsheetWin").waitFor({state:"visible"});
     assert((await page.locator("#cheatsheetWin").innerText()).includes('Ed("Hello.HC");'));
     assert.equal(await page.locator(".cheatsheet-body").evaluate(el=>el.scrollWidth<=el.clientWidth),true);
     await page.screenshot({path:root+"tmp/native-layout/cheatsheet-"+(mobile?"mobile":"desktop")+".png"});
     await page.locator("#cheatsheetClose").click();
-    if (mobile) {
-      assert(await page.locator("#guide").isVisible(),"closing Cheatsheet returns to Help");
-      await page.locator("#guide .close").click();
-    }
-    assert.equal(await page.locator("#guide").isVisible(),!mobile);
     assert.equal(await page.locator("#terryWin").isVisible(),!mobile);
-    assert.equal(await page.locator("#guide #terrySprite").count(),0);
-    assert.equal(await page.locator("#helpQuotes,#helpSource").count(),0);
-    assert.deepEqual(await page.locator("#guide button").allTextContents(),["Next tip","Cheatsheet"]);
     for(const direction of ["Left","Right","Up","Down"])
       assert.equal(await page.locator('[data-key="Arrow'+direction+'"]').isVisible(),mobile);
     if(!mobile) {
@@ -120,15 +115,20 @@ try {
       await page.waitForFunction(first=>document.getElementById("terrySprite").toDataURL()!==first,first);
       assert.equal(Math.round((await page.locator("#terrySprite").boundingBox()).height),176);
     }
-    if (mobile) await page.locator("#mobileMenu").click();
-    await page.locator("#controlsBtn").click();
+    if (mobile) {
+      await page.locator("#mobileMenu").click();
+      await page.locator("#controlsBtn").click();
+    }
     assert.equal(await page.locator("#controlsWin").isVisible(),true);
+    assert.equal(await page.locator("#controlsBtn").isVisible(),false);
     assert.equal(await page.locator("#touchBtn").isVisible(),mobile);
     await page.locator("#controlsWin .close").click();
     assert.equal(await page.locator("#controlsWin").isVisible(),false);
     if (mobile) await page.locator("#mobileMenu").click();
+    assert.equal(await page.locator("#controlsBtn").isVisible(),true);
     await page.locator("#controlsBtn").click();
     assert.equal(await page.locator("#controlsWin").isVisible(),true);
+    assert.equal(await page.locator("#controlsBtn").isVisible(),false);
     if (mobile) await page.locator("#mobileMenu").click();
     await page.locator("#godBtn").click();
     await page.locator("#godWord").click();
@@ -186,34 +186,12 @@ try {
     await page.locator("#godClose").focus();
     await page.keyboard.press("Enter");
     assert.equal(await page.locator("#godWin").isVisible(),false);
-    assert.equal(await page.locator("#helpBtn").count(),0,"Help has no Menu button");
-    if (mobile)
-      await page.locator("#mobileHelp").click();
-    await page.locator("#guide").waitFor({timeout:5000}).catch(()=>{});
-    assert.equal(await page.locator("#guide").isVisible(),true,"Help shows ("+(mobile?"mobile":"desktop")+")");
-    assert.equal(await page.locator("#helpContext").innerText(),"God Tools");
-    const tip=await page.locator("#helpText").innerText();
-    await page.locator("#helpNext").click();
-    assert.notEqual(await page.locator("#helpText").innerText(),tip);
-    await page.evaluate(()=>document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id:"spritesBtn"}})));
-    assert.equal(await page.locator("#helpNext").isVisible(),false);
-    await page.evaluate(()=>document.dispatchEvent(new CustomEvent("helpcontext",{detail:{id:"godBtn"}})));
-    assert.equal(await page.locator("#helpNext").isVisible(),true);
-    await page.locator("#guide .close").click();
     if(!mobile) {
-      const reopen=page.locator('.toolbar [data-win="guide"]');
-      assert.equal(await reopen.isVisible(),true,"a closed Help can be opened again");
-      assert.equal(await reopen.locator("use").getAttribute("href"),"#i-help");
       assert.equal(await page.locator("#settingsBtn use").getAttribute("href"),"#i-settings");
       const icons=await page.locator("#menuActions > button use").evaluateAll(u=>u.map(e=>e.getAttribute("href")));
       assert(icons.length>0,"Menu actions are included in the icon check");
       assert.equal(icons.includes("#i-window"),false,"every Menu entry has its own icon");
       assert.equal(new Set(icons).size,icons.length,"no two Menu entries share an icon");
-      await reopen.click();
-      assert.equal(await page.locator("#guide").isVisible(),true);
-      assert.equal(await reopen.isVisible(),false);
-      await page.locator("#guide .close").click();
-      assert.equal(await page.locator("#terryWin").isVisible(),true,"closing Help leaves Terry visible");
       await page.evaluate(async function () {
         const play=HTMLMediaElement.prototype.play,egg=await import("/Apps/Terry/TerryEggs.js");
         egg.CHANCE.theme=1;

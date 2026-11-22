@@ -232,7 +232,11 @@ try {
   assert.equal(await page.locator("#windowPassthrough").isChecked(),true);
   await page.locator("#settingsClose").click();
   await page.locator("#terryWin .close").click();
-  await Transfer("guide");await Button("guide","#cheatsheetBtn");
+  await page.evaluate(async()=>{
+    const {WinRoute}=await import("/Adam/WinMgr.js");
+    WinRoute(document.getElementById("desktopMenu"),{native:true});
+  });
+  await Button("desktopMenu","#cheatsheetBtn");
   await page.waitForFunction(()=>document.getElementById("cheatsheetWin")?.classList.contains("win-pass-owned"),null,{timeout:30000});
   const before=await page.locator(".cheatsheet-body").evaluate(el=>el.scrollTop);
   await page.keyboard.press("PageDown");
@@ -241,10 +245,9 @@ try {
   await page.waitForFunction(()=>{const el=document.querySelector(".cheatsheet-body");return el.scrollTop+el.clientHeight>=el.scrollHeight-1;});
   await page.waitForTimeout(300);
   await page.screenshot({path:"tmp/gui/native-cheatsheet.png"});
-  await page.locator("#settingsBtn").click();await page.locator("#returnWindows").click();
+  await page.evaluate(()=>document.getElementById("returnWindows").click());
   await page.waitForFunction(()=>!document.querySelector(".win-pass-owned"));
-  await page.locator("#cheatsheetClose").click();await page.locator("#settingsClose").click();
-  await page.locator("#guide .close").click();
+  await page.locator("#cheatsheetClose").click();
   await page.locator("#godBtn").click();await Transfer("godWin");
   await Button("godWin","#godWord");
   await page.waitForFunction(()=>!!document.querySelector("#godOut .word"));
