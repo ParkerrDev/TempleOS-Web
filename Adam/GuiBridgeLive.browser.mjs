@@ -1,3 +1,4 @@
+import {MachineObserve} from "./Test/MachineObserve.mjs";
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import {once} from "node:events";
@@ -36,7 +37,7 @@ try {
     return route.fulfill({contentType:"application/gzip",body:gzipSync(JSON.stringify([
       {t:"Native search fixture",d:"2017-01-01",f:"videos/fixture.mp4",n:60,s:[[1,"HolyC compiler inside TempleOS"]]}]))});
   });
-  await context.addInitScript(function () {
+  await MachineObserve(context,function () {
     localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
     window.passEvents=[];window.passRequests=[];window.passWindows=[];
     window.passBuffers={};window.passFrames=0;window.passActions=[];
@@ -47,6 +48,7 @@ try {
         return super.postMessage(m,...args);
       }
     };
+    try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}
     const Base=window.SharedWorker;
     window.SharedWorker=class extends Base {
       constructor(...args) {
@@ -61,7 +63,7 @@ try {
             window.passRequests.push(m);
           return Send(envelope,...args);
         };
-        this.port.addEventListener("message",function (e) {
+        ObserveMachineEvents(this.port,function (e) {
           const m=e.data;
           if (m.cmd=="windows") {
             if(m.enabled===false)window.passEvents.push(m);

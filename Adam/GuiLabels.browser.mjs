@@ -1,3 +1,4 @@
+import {MachineObserve} from "./Test/MachineObserve.mjs";
 import assert from "node:assert/strict";
 import {createServer} from "node:http";
 import {once} from "node:events";
@@ -19,14 +20,15 @@ try {
     await route.fulfill({body:await readFile(new URL("../hemu/"+name,import.meta.url)),
       contentType:"application/gzip"});
   });
-  await context.addInitScript(function () {
+  await MachineObserve(context,function () {
     window.labelWindows=[];
+    try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}
     const Base=SharedWorker;
     window.SharedWorker=class extends Base {
       constructor(...args) {
         super(...args);
         if (!String(args[0]).includes("MachineHub.js")) return;
-        this.port.addEventListener("message",function (e) {
+        ObserveMachineEvents(this.port,function (e) {
           if (e.data.cmd=="windows") window.labelWindows=e.data.windows;
           if (e.data.cmd=="frame") window.labelPixels=e.data.buf;
         });

@@ -1,3 +1,4 @@
+import {MachineObserve} from "./Test/MachineObserve.mjs";
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import {once} from "node:events";
@@ -20,11 +21,12 @@ try {
       localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false,pass:false}));
       localStorage.setItem("templeos.windraw",JSON.stringify({native,scale}));
       window.nativeWindows=[];window.machineEvents=[];
+      try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}
       const Base=window.SharedWorker;
       window.SharedWorker=class extends Base {
         constructor(...args) {
           super(...args);
-          if (String(args[0]).includes("MachineHub")) this.port.addEventListener("message",e=>{
+          if (String(args[0]).includes("MachineHub")) ObserveMachineEvents(this.port,e=>{
             if (e.data.cmd=="windows") window.nativeWindows=e.data.windows;
             else if (["restored","guestReady","error","sessionSave"].includes(e.data.cmd)) window.machineEvents.push(e.data);
           });

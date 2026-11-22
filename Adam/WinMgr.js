@@ -1,3 +1,4 @@
+import {PersistenceCfg} from "./Persistence.js";
 import {PointerDrag} from "./WinPointer.js";
 import {WinDocuments,WinFind,WinMobile,WinOutside,WinPopup,WinPopupReturn} from "./WinPopup.js";
 export {WinDocuments,WinFind,WinMobile,WinOutside,WinPopup,WinPopupReturn,WinPopupHold} from "./WinPopup.js";
@@ -18,11 +19,11 @@ const WINS={
   cheatsheetBtn:["cheatsheetWin","../Apps/Help/CheatsheetWin.js"],
   mobileHelp:["guide","../Apps/Help/HelpWin.js"]};
 const WORKSPACE="templeos.workspace",workspace=new Map,restorers=new Map;
-let saved={},restoring=true,save_queued=false,stored=false,deleted=false;
+let saved={},restoring=true,save_queued=false,stored=false,deleted=false,remember=PersistenceCfg().saveWindows;
 try {
   const local=localStorage.getItem(WORKSPACE);
   stored=local!==null;
-  if (stored) saved=JSON.parse(sessionStorage.getItem(WORKSPACE) || local) || {};
+  if (stored && remember) saved=JSON.parse(sessionStorage.getItem(WORKSPACE) || local) || {};
   else sessionStorage.removeItem(WORKSPACE);
 } catch (error) {
   saved={};
@@ -33,7 +34,7 @@ if (typeof saved!="object" || Array.isArray(saved))
 export function WinWorkspaceSave()
 {
   let id,entry,w,record,overlay,style;
-  if (restoring || deleted)
+  if (!remember || restoring || deleted)
     return;
   try {
     if (stored && localStorage.getItem(WORKSPACE)===null) {
@@ -42,6 +43,7 @@ export function WinWorkspaceSave()
     for ([id,entry] of workspace) {
       w=entry.w;
       if (!w.isConnected && w._restore) {
+	entry.observer?.disconnect();
 	workspace.delete(id);
 	delete saved[id];
       } else {
@@ -74,7 +76,7 @@ export function WinWorkspaceSave()
 
 function WinSaveSoon()
 {
-  if (!save_queued) {
+  if (remember && !save_queued) {
     save_queued=true;
     queueMicrotask(function () {
       save_queued=false;
@@ -104,11 +106,12 @@ function WinApply(w)
 
 function WinRemember(w,restore)
 {
-  let observer,record=saved[w.id];
+  let record=saved[w.id];
   if (!w.id || w.id=="winLoading")
     return;
   w._restore=restore;
-  workspace.set(w.id,{w,style:w.style.cssText});
+  const entry={w,style:w.style.cssText,observer:null};
+  workspace.set(w.id,entry);
   queueMicrotask(function () {
     let overlay=w.closest(".overlay");
     WinApply(w);
@@ -122,10 +125,7 @@ function WinRemember(w,restore)
 	  w._reopen.style.display="none";
       }
     }
-    observer=new MutationObserver(WinSaveSoon);
-    observer.observe(w,{attributes:true,attributeFilter:["class","style"]});
-    if (overlay)
-      observer.observe(overlay,{attributes:true,attributeFilter:["class"]});
+    WinWatch(entry);
     WinSaveSoon();
   });
 }
@@ -212,7 +212,31 @@ addEventListener("storage",function (e) {
 });
 addEventListener("pagehide",WinWorkspaceSave);
 addEventListener("winpopupreturn",WinSaveSoon);
-new MutationObserver(WinSaveSoon).observe(document.body,{childList:true});
+const layoutObserver=new MutationObserver(WinSaveSoon);
+if (remember) layoutObserver.observe(document.body,{childList:true});
+function WinWatch(entry)
+{
+  entry.observer?.disconnect();
+  entry.observer=null;
+  if (!remember) return;
+  const {w}=entry,overlay=w.closest(".overlay");
+  entry.observer=new MutationObserver(WinSaveSoon);
+  entry.observer.observe(w,{attributes:true,attributeFilter:["class","style"]});
+  if (overlay) entry.observer.observe(overlay,{attributes:true,attributeFilter:["class"]});
+}
+addEventListener("persistencesettings",function (e) {
+  if (remember===e.detail.saveWindows) return;
+  remember=e.detail.saveWindows;
+  layoutObserver.disconnect();
+  if (remember) layoutObserver.observe(document.body,{childList:true});
+  for (const entry of workspace.values()) WinWatch(entry);
+  saved={};stored=false;deleted=false;
+  if (remember) WinWorkspaceSave();
+  else try {
+    localStorage.removeItem(WORKSPACE);
+    sessionStorage.removeItem(WORKSPACE);
+  } catch {}
+});
 
 function Clamp(n,lo,hi)
 {

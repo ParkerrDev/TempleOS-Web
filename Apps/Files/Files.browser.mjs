@@ -17,6 +17,7 @@ try {
   await context.routeWebSocket(/templeosweb-.*\.workers\.dev/,function (socket) {socket.close();});
   await context.addInitScript(function () {
     window.fileRequests=[];
+    try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}
     const Base=SharedWorker;
     window.SharedWorker=class extends Base {
       constructor(...args) {

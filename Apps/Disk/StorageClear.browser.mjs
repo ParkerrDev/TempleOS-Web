@@ -14,6 +14,7 @@ const origin="http://127.0.0.1:"+server.address().port,
 function Stage(message) {console.log(new Date().toISOString()+" "+message);}
 try {
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
+  await context.addInitScript(()=>{try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}});
   await context.route("https://templeosweb-*.workers.dev/**",route=>route.abort());
   await context.route("**/hemu/*.gz",async route=>{
     const name=new URL(route.request().url()).pathname.split("/").pop();

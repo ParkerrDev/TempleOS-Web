@@ -8,6 +8,8 @@ import {MobileInput} from "./MobileInput.js";
 import {SnapshotInspect} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Snapshot.js";
 import {StockInspect} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Stock.js";
 import {BUS_VERSION} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/CoreBus.js";
+import {PersistenceCfg} from "./Persistence.js";
+import {Machine} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/Machine.js";
 import {MachineShared} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/MachineShared.js";
 import {DiskStoreOpen} from "../hemu/holyc-wasm/Apps/HEMU/Kernel/DiskStore.js";
 import {WinFind,WinDocuments,WinPopup,WinPopupHold} from "./WinMgr.js";
@@ -572,7 +574,20 @@ async function restartOS() {
 $("restartBtn").addEventListener("click", restartOS);
 
 // the running engine, for the Disk window and the guest requests
-const engine=MachineShared({message:EngineMessage,error:EngineError,earlyWorker:self.hemuEarly});
+const persistence=PersistenceCfg();
+const engine=(persistence.syncTabs || persistence.saveSession?MachineShared:Machine)({
+  message:EngineMessage,error:EngineError,earlyWorker:self.hemuEarly,
+  name:persistence.syncTabs?"templeos-presence-v1":"templeos-session-"+crypto.randomUUID(),
+  autoSave:persistence.saveSession});
+addEventListener("persistencesettings",function (e) {
+  engine.AutoSave?.(e.detail.saveSession);
+});
+addEventListener("storage",function (e) {
+  if (!engine.Detach && e.storageArea===localStorage && e.key===null && e.newValue===null) {
+    engine.Stop();EngineError({msg:"Browser data was deleted. Refresh this page.",
+      code:"STORAGE_CLEARED",retained:false,started:false,cores:1});
+  }
+});
 self.hemuEarly=null;
 const os_cfg=CfgRead();
 let cfg_status={ready:false,ok:true,msg:"Settings apply when TempleOS starts."};
@@ -897,7 +912,11 @@ const diskMsg = (m) => {
 const osRequest=(message,transfer=[])=>engine.Request(message,transfer);
 const listOSDir=dir=>osRequest({cmd:"listDir",dir});
 export function OsFileRead(path) {return osRequest({cmd:"readFile",path});}
-export function OsSessionSave() {return osRequest({cmd:"saveSession"});}
+export function OsSessionSave() {
+  if (!PersistenceCfg().saveSession)
+    return Promise.resolve({ok:false,msg:"Enable Save full session in Settings first."});
+  return osRequest({cmd:"saveSession"});
+}
 async function writeOSFile(path,bytes)
 {
   if (paused)
@@ -939,7 +958,7 @@ async function OsBoot()
     useSMP=attached.cores===4;
     return;
   }
-  if (!file && !boot_query.get("disk")) {
+  if (PersistenceCfg().saveSession && !file && !boot_query.get("disk")) {
     let store=await DiskStoreOpen(function () {},true);
     try {
       const session=await store?.SessionRead();

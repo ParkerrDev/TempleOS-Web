@@ -1,3 +1,4 @@
+import {MachineObserve} from "./Test/MachineObserve.mjs";
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import {once} from "node:events";
@@ -17,14 +18,15 @@ try {
   await context.route("https://templeosweb-*.workers.dev/**",route=>new URL(route.request().url()).hostname.startsWith("templeosweb-files.")?route.continue():route.abort());
   await context.routeWebSocket(/templeosweb-presence\./,()=>{});
   await context.routeWebSocket(/templeosweb-chat\./,ws=>ws.send(JSON.stringify({t:"hello",tag:"test",people:1,log:[]})));
-  await context.addInitScript(function () {
+  await MachineObserve(context,function () {
     localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false,pass:false}));
     window.nativeWindows=[];window.framesSeen=0;
+    try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}
     const Base=window.SharedWorker;
     window.SharedWorker=class extends Base {
       constructor(...args) {
         super(...args);
-        if (String(args[0]).includes("MachineHub.js")) this.port.addEventListener("message",function (e) {
+        if (String(args[0]).includes("MachineHub.js")) ObserveMachineEvents(this.port,function (e) {
           if (e.data.cmd=="windows") window.nativeWindows=e.data.windows;
           if (e.data.cmd=="frame") window.framesSeen++;
         });

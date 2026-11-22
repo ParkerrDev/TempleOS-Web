@@ -25,7 +25,8 @@
     "test:lighthouse": "node Misc/Lighthouse/Chk.mjs",
     "test:disk": "node Apps/Disk/Storage.browser.mjs && node Apps/Disk/AutoSave.browser.mjs && node Apps/Disk/DiskImport.browser.mjs && node Apps/Disk/Session.browser.mjs && node Apps/Files/Files.browser.mjs",
     "test:welcome": "node Apps/Help/Welcome.browser.mjs",
-    "build": "node hemu/holyc-wasm/Apps/HEMU/Kernel/Build.mjs hemu/build && node Misc/AppsBuild.mjs && node Misc/Preload.mjs"
+    "build": "node hemu/holyc-wasm/Apps/HEMU/Kernel/Build.mjs hemu/build && node Misc/AppsBuild.mjs && node Misc/Preload.mjs",
+    "test:games:evidence": "node Demo/Games/NativeGamesAudit.mjs --check && node Demo/Games/Test/Evidence.test.mjs && node Demo/Games/Test/Startup.test.mjs && node Demo/Games/Test/Play.test.mjs"
   },
   "devDependencies": {
     "chrome-launcher": "1.2.1",

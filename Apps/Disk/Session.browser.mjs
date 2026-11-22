@@ -32,6 +32,7 @@ async function Open()
   context.setDefaultNavigationTimeout(30000);
   await context.routeWebSocket(/templeosweb-.*\.workers\.dev/,socket=>socket.close());
   await context.addInitScript(function () {
+    try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}
     window.sessionEvents=[];
     const Base=SharedWorker;
     window.SharedWorker=class extends Base {

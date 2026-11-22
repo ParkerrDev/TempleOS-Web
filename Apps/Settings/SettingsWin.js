@@ -1,5 +1,6 @@
 import {WinAdd,WinFocus,WinWorkspaceReset} from "../../Adam/WinMgr.js";
 import {$,OsCfg,OsCfgStatus,OsWinPassStatus,OsWinPassReturn,OsOnlyMode,OsOnlyReady} from "../../Adam/Os.js";
+import {PersistenceCfg} from "../../Adam/Persistence.js";
 import {WinDrawCfg} from "../../Adam/WinDraw.js";
 
 WinAdd(`
@@ -16,6 +17,13 @@ WinAdd(`
     <span id="settingsClose" class="close">[X]</span>
     <div id="settingsBody">
       <button id="onlyBtn" title="Move open tools into TempleOS and fill the browser" aria-pressed="false" disabled>TempleOS Only Mode</button>
+      <label><input id="syncTabs" type="checkbox"> Sync when multiple tabs are open</label>
+      <p>Sharing activates when a second tab opens. When off, only one tab saves C:.</p>
+      <label><input id="rememberSession" type="checkbox"> Save full session</label>
+      <p>Resume running tasks after refresh. C: files always save.</p>
+      <label><input id="saveWindows" type="checkbox"> Remember website windows</label>
+      <p>Restore open windows, sizes and positions.</p>
+      <p>Sync and session changes apply after refreshing your tabs.</p>
       <button id="resetWindows">Reset window positions</button>
       <p>Restore the default desktop layout. Open tools stay open.</p>
       <label><input id="showHeader" type="checkbox"> Show header introduction</label>
@@ -82,6 +90,7 @@ export function Open()
   $("fastGraphics").checked=cfg.fast;
   $("nativeDrawing").checked=draw.native;
   $("windowScale").value=String(draw.scale);
+  PersistenceShow();
   OnlyModeShow();
   $("windowPassStatus").textContent=OsWinPassStatus();
   $("settingsOverlay").classList.add("open");
@@ -169,3 +178,17 @@ for (const [id,part] of [["showHeader","header"],["showFooter","footer"]])
     }
     dispatchEvent(new Event("resize"));
   });
+
+function PersistenceShow()
+{
+  const cfg=PersistenceCfg();
+  for (const [id,key] of [["syncTabs","syncTabs"],["rememberSession","saveSession"],["saveWindows","saveWindows"]])
+    $(id).checked=cfg[key];
+}
+for (const [id,key] of [["syncTabs","syncTabs"],["rememberSession","saveSession"],["saveWindows","saveWindows"]])
+  $(id).addEventListener("change",function (e) {
+    Status({msg:key==="saveWindows"?"Window preference applied.":"Preference saved. Refresh your tabs to apply it."});
+    PersistenceCfg({[key]:e.target.checked});
+  });
+addEventListener("persistencesettings",PersistenceShow);
+addEventListener("persistenceerror",e=>Status({msg:e.detail}));

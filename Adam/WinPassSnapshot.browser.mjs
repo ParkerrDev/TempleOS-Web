@@ -1,3 +1,4 @@
+import {MachineObserve} from "./Test/MachineObserve.mjs";
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import {once} from "node:events";
@@ -24,10 +25,11 @@ try {
       function (route) {route.abort();});
     await context.routeWebSocket(/templeosweb-.*\.workers\.dev/,
       function (socket) {socket.close();});
-    await context.addInitScript(function (cores) {
+    await MachineObserve(context,function (cores) {
       if (!localStorage.getItem("tos-settings"))
         localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
       window.passEvents=[];window.passWindows=[];window.passRequests=[];
+      try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}
       const WorkerBase=window.Worker,SharedBase=window.SharedWorker;
       window.Worker=class extends WorkerBase {
         constructor(...args) {
@@ -59,7 +61,7 @@ try {
               window.passRequests.push(m);
             return Send(envelope,...args);
           };
-          this.port.addEventListener("message",function ({data:m}) {
+          ObserveMachineEvents(this.port,function ({data:m}) {
             if (m.cmd=="windows")
               window.passWindows=m.windows.map(function (w) {
                 const {buf,...info}=w;return info;

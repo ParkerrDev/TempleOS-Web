@@ -1,3 +1,4 @@
+import {MachineObserve} from "./Test/MachineObserve.mjs";
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
 import {once} from "node:events";
@@ -20,10 +21,11 @@ try {
   });
   await context.route("https://templeosweb-*.workers.dev/**",
     function (route) {route.abort();});
-  await context.addInitScript(function () {
+  await MachineObserve(context,function () {
     localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
     window.passEvents=[];window.passRequests=[];window.passWindows=[];
     window.passBuffers={};window.passFrames=0;window.passActions=[];
+    try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}
     const Base=window.SharedWorker;
     window.SharedWorker=class extends Base {
       constructor(...args) {
@@ -38,7 +40,7 @@ try {
             window.passRequests.push(m);
           return Send(envelope,...args);
         };
-        this.port.addEventListener("message",function (e) {
+        ObserveMachineEvents(this.port,function (e) {
           const m=e.data;
           if (m.cmd=="windows") {
             window.passWindows=m.windows;

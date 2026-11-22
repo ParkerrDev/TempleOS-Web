@@ -43,7 +43,7 @@
   <script>
     {
       let saved=false;
-      try {saved=!!localStorage.getItem("tos-session-saved");} catch {}
+      try {saved=JSON.parse(localStorage.getItem("tos-persistence"))?.saveSession===true && !!localStorage.getItem("tos-session-saved");} catch {}
       const mobile=navigator.maxTouchPoints>1 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent),
         smp=crossOriginIsolated && !/[?&](single|nosmp)\b/.test(location.search) &&
           (/[?&]smp\b/.test(location.search) || !mobile),
@@ -65,25 +65,26 @@
   <link rel="modulepreload" href="Adam/GuestFps.js" />
   <link rel="modulepreload" href="Adam/Keyboard.js" />
   <link rel="modulepreload" href="Adam/MobileInput.js" />
+  <link rel="modulepreload" href="Adam/Persistence.js" />
   <link rel="modulepreload" href="Adam/WinDraw.js" />
   <link rel="modulepreload" href="Adam/WinPointer.js" />
   <link rel="modulepreload" href="Adam/WinPopup.js" />
   <link rel="modulepreload" href="Adam/XSel.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/CoreBus.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/DiskStore.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Machine.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/MachineShared.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Snapshot.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Speaker.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Stock.js" />
   <link rel="modulepreload" href="Adam/TouchCtrls.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/GuestPatch.js" />
-  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Machine.js" />
+  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/GuestRqsts.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Paths.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/QCow2.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/Ram.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/src/runtime/keyboard.js" />
   <link rel="modulepreload" href="hemu/holyc-wasm/src/runtime/palette.js" />
-  <link rel="modulepreload" href="hemu/holyc-wasm/Apps/HEMU/Kernel/GuestRqsts.js" />
   <style>
     /* afterdavis theme: the TempleOS desktop look. */
     /* TempleOS system font: the real 322-glyph font the site has always used, laundered CLEAN via

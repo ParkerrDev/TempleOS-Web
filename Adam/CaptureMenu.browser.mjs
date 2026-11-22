@@ -1,3 +1,4 @@
+import {MachineObserve} from "./Test/MachineObserve.mjs";
 import assert from "node:assert/strict";
 import {createServer} from "node:http";
 import {once} from "node:events";
@@ -19,17 +20,18 @@ try {
     await context.route("https://templeosweb-*.workers.dev/**",route=>
       new URL(route.request().url()).hostname.startsWith("templeosweb-files.")?route.continue():route.abort());
     await context.routeWebSocket(/templeosweb-/,()=>{});
-    await context.addInitScript(function () {
+    await MachineObserve(context,function () {
       localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false,pass:false}));
       window.nativeWindows=[];window.framesSeen=0;window.motionInputs=[];
       let mouse=null;
       document.addEventListener("mousemove",e=>{mouse={trusted:e.isTrusted,target:e.target.id,dx:e.movementX,dy:e.movementY};},true);
+      try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}
       const Base=window.SharedWorker;
       window.SharedWorker=class extends Base {
         constructor(...args) {
           super(...args);
           if (!String(args[0]).includes("MachineHub.js")) return;
-          this.port.addEventListener("message",({data:m})=>{
+          ObserveMachineEvents(this.port,({data:m})=>{
             if (m.cmd==="windows") window.nativeWindows=m.windows;
             if (m.cmd==="frame") window.framesSeen++;
           });

@@ -31,6 +31,7 @@ try {
     await context.addInitScript(function () {
       localStorage.setItem("tos-settings",JSON.stringify({rate:30,repeat:false}));
       window.guestEvents=[];
+      try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}
       const Base=window.SharedWorker;
       window.SharedWorker=class extends Base {
         constructor(...args) {

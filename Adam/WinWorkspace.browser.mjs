@@ -15,6 +15,7 @@ async function Page(mobile=false)
     {width:390,height:844}:{width:1440,height:1000},hasTouch:mobile,isMobile:mobile});
   await context.route("**/hemu/*.gz",function (route) {route.abort();});
   await context.route("https://templeosweb-*.workers.dev/**",function (route) {route.abort();});
+  await context.addInitScript(()=>{try {localStorage.setItem("tos-persistence",JSON.stringify({saveWindows:true}));} catch {}});
   const page=await context.newPage();
   page.on("pageerror",function (e) {errors.push(e.message);});
   await page.goto("http://localhost:8199/?single");

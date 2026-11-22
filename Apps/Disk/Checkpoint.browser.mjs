@@ -1,3 +1,4 @@
+import {MachineObserve} from "../../Adam/Test/MachineObserve.mjs";
 import assert from "node:assert/strict";
 import {createServer} from "node:http";
 import {once} from "node:events";
@@ -26,15 +27,16 @@ try {
     await context.route("**/hemu/*.gz",async route=>route.fulfill({
       body:await readFile(new URL("../../hemu/"+new URL(route.request().url()).pathname.split("/").pop(),import.meta.url)),
       contentType:"application/gzip"}));
+    await context.addInitScript(()=>{try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}});
     await context.routeWebSocket(/templeosweb-.*\.workers\.dev/,socket=>socket.close());
-    await context.addInitScript(()=>{
+    await MachineObserve(context,()=>{
       window.events=[];window.frames=[];
       const Base=SharedWorker;
       window.SharedWorker=class extends Base {
         constructor(...args) {
           super(...args);
           if (!String(args[0]).includes("MachineHub.js")) return;
-          this.port.addEventListener("message",({data:m})=>{
+          ObserveMachineEvents(this.port,({data:m})=>{
             if (m.cmd==="frame") frames.push(performance.now());
             else if (["sessionSave","paused","settings","restored"].includes(m.cmd))
               events.push({...m,t:performance.now()});

@@ -36,6 +36,7 @@ try {
     await context.route(/\/(?:hemu\/)?(?:live(?:-smp)?\.bin|templeos-hd\.qcow2)\.gz(?:\?.*)?$/,async route=>route.fulfill({
       body:await readFile(new URL("../../hemu/"+new URL(route.request().url()).pathname.split("/").pop(),import.meta.url)),
       contentType:"application/gzip"}));
+    await context.addInitScript(()=>{try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}});
     await context.routeWebSocket(/templeosweb-.*\.workers\.dev/,socket=>socket.close());
     context.on("page",function (page) {page.on("pageerror",function (error) {errors.push(error.message);});});
     let page=await context.newPage();

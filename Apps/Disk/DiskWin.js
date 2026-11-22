@@ -1,6 +1,7 @@
 import {WinAdd,WinRaise} from "../../Adam/WinMgr.js";
 import {$,dbg,engine,os_disk,OsReady,
   OsSessionSave} from "../../Adam/Os.js";
+import {PersistenceCfg} from "../../Adam/Persistence.js";
 import {BootFileSave} from "../../Adam/BootFile.js";
 import {SnapshotInspect} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Snapshot.js";
 import {StockIdentify,StockModuleCheck} from "../../hemu/holyc-wasm/Apps/HEMU/Kernel/Stock.js";
@@ -21,7 +22,7 @@ const HTML='  <div id="diskOverlay" class="overlay" role="dialog" aria-modal="tr
   '      <div class="disk-body">\n'+
   '        <div class="disk-sec">\n'+
   '          <h3>Save this session</h3>\n'+
-  '          <p>C: saves automatically. Session checkpoints save when idle; use Save session before leaving. Clearing site data removes these saves; export a backup to keep a separate copy.</p>\n'+
+  '          <p>C: saves automatically. Enable Save full session in Settings to also resume running tasks. Export a backup before clearing site data.</p>\n'+
   '          <p id="diskSaveStatus" role="status">Waiting for TempleOS…</p>\n'+
   '          <p>A <b>snapshot</b> saves the running machine, its C: disk and settings together. Import it to resume that session. A <b>disk image</b> saves the C: drive by itself.</p>\n'+
   '          <div class="action-bar">\n'+
@@ -59,7 +60,7 @@ function Busy(kind=null)
 {
   pending=kind;
   for (let id of actions)
-    $(id).disabled=!!pending || !OsReady() ||
+    $(id).disabled=!!pending || !OsReady() || id==="saveSession" && !PersistenceCfg().saveSession ||
       (id=="dlSnap" || id=="dlDisk") && !engine.capture.ready;
   for (let id of imports)
     $(id).disabled=!!pending;
@@ -220,3 +221,5 @@ addEventListener("disksave",function (e) {
   $("diskSaveStatus").textContent=e.detail.msg;
 });
 if (os_disk.save) $("diskSaveStatus").textContent=os_disk.save.msg;
+
+addEventListener("persistencesettings",()=>Busy(pending));

@@ -15,7 +15,7 @@ and native Take Tour question.
 
 ## Try it
 
-- The desktop restores a saved session when its disk revision still matches. Otherwise it starts from the prepared RAM/register capture with the newest saved C:.
+- With **Save full session** enabled, the desktop restores a saved session when its disk revision still matches. Otherwise it starts from the prepared RAM/register capture with the newest saved C:.
 - **Click the screen** for keyboard and mouse input. **Esc** releases mouse capture;
   use the Keys window's Esc button to send Escape to a captured game.
 - **Ctrl+M** opens the personal menu - click a game sprite (Varoom, BlackDiamond, …) to play.
@@ -30,9 +30,9 @@ and native Take Tour question.
 - **Files** - browse C: in its own window, with places, back/up navigation, a path bar, filtering and file sizes. Select a file to edit or download it; drop files into the current folder to import them. New program opens HolyC Editor with this folder as its save destination.
 - **Disk & Save** - save the session or import/export a whole snapshot or disk.
 - **Help → Cheatsheet** - browse common TempleOS commands, editor shortcuts and a first HolyC program.
-- Tabs share one live TempleOS machine. The host tab owns its four CPU workers; a shared worker routes frames and requests. This keeps all tabs on the same filesystem.
-- C: saves after writes. Full sessions save after input settles outside gameplay and when the page hides. Only the checkpoint copy briefly stops the CPUs; compression and storage leave the OS responsive. A checkpoint whose disk changed during compression is discarded and saved again after activity settles. **Save session** creates an explicit checkpoint. Closing or refreshing the host tab restores the last completed checkpoint; a crash or immediate close can lose newer RAM changes. Newer saved files are never replaced by an older checkpoint.
-- Website windows remember their positions and open state. Settings can reset their positions. Desktop windows can move into browser popups; mobile windows stay in the page so scrolling works.
+- **Sync when multiple tabs are open** is on by default. One tab handles frames, sound and window updates locally; a lightweight shared worker detects other tabs without polling. A second tab activates shared frame delivery and input routing. Closing it returns the host to local delivery without restarting. The host owns the CPU workers and all connected tabs use its filesystem. Turning sync off takes effect after refresh; only one independent tab can save C:.
+- C: saves after writes. **Save full session** is off by default. When enabled, full sessions save after input settles outside gameplay and when the page hides. Only the checkpoint copy briefly stops the CPUs; compression and storage leave the OS responsive. A checkpoint whose disk changed during compression is discarded and saved again after activity settles. **Save session** creates an explicit checkpoint. Closing or refreshing the host tab restores the last completed checkpoint; a crash or immediate close can lose newer RAM changes. Newer saved files are never replaced by an older checkpoint.
+- **Remember website windows** is off by default. Enable it to preserve positions, sizes and open state. Disabling it removes the saved layout and disconnects layout-saving observers, without moving the current windows. Settings can reset their positions. Desktop windows can move into browser popups; mobile windows stay in the page so scrolling works.
 - **✞ God Tools** - God's words and Bible passages on the page itself, picked in the timing-bit
   order of Adam/God and seeded by the browser, and Terry's God Song and God Doodle opened in TempleOS.
 - **Chat** - talk with everyone else on the site. It opens in the corner without darkening the
@@ -377,8 +377,9 @@ The Keys window routes presses to the active HolyC preview or TempleOS. Each rel
 C: is saved in this browser with IndexedDB and restored on the next visit.
 The worker batches changed sectors after each guest turn; Restart waits for the
 last transaction to commit. Importing a disk or snapshot replaces the saved C:.
-Tabs share the same running machine and saved drive. If shared workers are
-unavailable, only one independent tab can save the drive; other tabs show that
+Multiple tabs share the same running machine and saved drive by default. The
+sharing data path is inactive with one tab. If sync is disabled or shared workers
+are unavailable, only one independent tab can save the drive; other tabs show that
 their changes are not saved. The Disk & Save window shows saving, saved and storage errors,
 and still exports portable disk and machine backups. Opening it requests
 persistent browser storage where supported. Clearing site data, private browsing
@@ -388,9 +389,20 @@ Deleting this site's saved data resets C:, the saved machine, window positions,
 settings and editor drafts on refresh. Open tabs stop using the deleted machine
 and must be refreshed. Clearing only cached downloads preserves these saves.
 
-Checks: `node Apps/Disk/Checkpoint.browser.mjs` covers frame/input progress during compression, concurrent writes, automatic follow-up saves and visibility changes. `node Apps/Disk/AutoSave.browser.mjs` exercises actual guest file writes,
+Checks: `node Adam/Persistence.browser.mjs` (also with `CORES=4`) covers automatic sharing and return to local delivery, opt-out disk protection, session opt-in/opt-out, and layout persistence. `node Apps/Disk/Checkpoint.browser.mjs` covers frame/input progress during compression, concurrent writes, automatic follow-up saves and visibility changes. `node Apps/Disk/AutoSave.browser.mjs` exercises actual guest file writes,
 restart, tab close/reopen and multiple tabs with one and four cores;
 `node Apps/Disk/Storage.browser.mjs` checks exact sector restoration, replacement
 and transaction failure. `node Apps/Disk/StorageClear.browser.mjs` checks deletion
 and immediate refresh with saved RAM, C: files and surviving tabs;
 `node Adam/StorageClear.browser.mjs` checks layouts and drafts, including pending saves.
+
+### Choosing checks
+
+Use focused browser checks for settings, persistence and window changes. The
+normal `npm test` checks code and packages without requiring a fresh replay of
+every game. `npm run test:games:evidence` separately audits the recorded game
+runs against their exact source and runtime fingerprints. Those fingerprints
+include the site shell, so a shell-only change can make that full audit report
+stale evidence without a gameplay regression. Keep the recorded results intact;
+refresh them for game, compiler or emulator execution changes, or when checking
+a reported gameplay regression.

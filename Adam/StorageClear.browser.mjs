@@ -11,6 +11,7 @@ const origin="http://127.0.0.1:"+server.address().port,
     headless:true,args:["--no-sandbox"]});
 try {
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
+  await context.addInitScript(()=>{try {localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:true,saveSession:true,saveWindows:true}));} catch {}});
   await context.route("**/hemu/*.gz",route=>route.abort());
   await context.route("https://templeosweb-*.workers.dev/**",route=>route.abort());
   await context.routeWebSocket(/templeosweb-/,()=>{});
