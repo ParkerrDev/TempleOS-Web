@@ -436,18 +436,25 @@ function WinDoc(w)
   return null;
 }
 
+const scrollResize=new ResizeObserver(entries=>{
+  for (const {target:w} of entries)
+    if (w.isConnected) WinScrolled({currentTarget:w,target:w._doc});
+    else scrollResize.unobserve(w);
+});
+
 function WinScrolled(e)
 {//The two scroll boxes follow what scrolls in the window: at the start of
 //its document they straddle the top right and bottom left corners, at the
 //end the bottom right (WinDerivedScrollValsUpdate, Adam/Ctrls/CtrlsA.HC).
   let w=e.currentTarget,el=e.target;
-  if (!Scrolls(el))
+  if (!el || !Scrolls(el) || !w.clientLeft)
     return;
   w._doc=el;
-  w._sh.style.left="round(down,calc("+Frac(el.scrollLeft,el.scrollWidth-el.clientWidth)+
-    "% - var(--wcell)/2),calc(var(--wcell)/8))";
-  w._sv.style.top="round(down,calc("+Frac(el.scrollTop,el.scrollHeight-el.clientHeight)+
-    "% - var(--wcell)/2),calc(var(--wcell)/8))";
+  scrollResize.observe(w);
+  w._sh.style.setProperty("--scroll-pos",Math.floor(
+    Frac(el.scrollLeft,el.scrollWidth-el.clientWidth)/100*w.clientWidth*8/w.clientLeft)-4);
+  w._sv.style.setProperty("--scroll-pos",Math.floor(
+    Frac(el.scrollTop,el.scrollHeight-el.clientHeight)/100*w.clientHeight*8/w.clientLeft)-4);
 }
 
 function BoxDown(e)
@@ -491,15 +498,19 @@ function WinDown(e)
   WinFocus(e.target._winAt?.(e) || e.currentTarget);
 }
 
-function WinGlyphs(el,text)
-{//CSS bitmap cells avoid platform font hinting and antialiasing.
-  el.replaceChildren(...text.split("").map(function (ch) {
-    const glyph=document.createElement("span"),code=ch.charCodeAt(0);
-    glyph.className="wg";
-    glyph.style.setProperty("--glyph",code<31 || code==127 || code>255?46:code);
-    glyph.textContent=ch;
-    return glyph;
-  }));
+function WinGlyphs(el,text,vertical=false)
+{//The font advances one original cell, with no per-letter title elements.
+  text=text.replace(/[\x00-\x1e\x7f\u0100-\uffff]/g,".");
+  if (vertical)
+    el.replaceChildren(...Array.from(text,function (ch) {
+      const glyph=document.createElement("span");
+      glyph.className="wg";glyph.textContent=ch;
+      return glyph;
+    }));
+  else {
+    el.classList.add("wg");
+    el.textContent=text;
+  }
 }
 
 export function WinTitle(w,title)
@@ -509,9 +520,11 @@ export function WinTitle(w,title)
     s=w.querySelector(".wtitle > span");
   w.dataset.winTitle=title;
   WinGlyphs(s,unit.repeat(n));
-  s.style.setProperty("--title-pixels",unit.length*8);
+  s.style.setProperty("--title-chars",unit.length);
   s.style.animationDuration=unit.length/8+"s";
-  WinGlyphs(w.querySelector(".wvert > span"),title.split(" ")[0].slice(0,8));
+  const desc=title.split(" ")[0].slice(0,8),vert=w.querySelector(".wvert > span");
+  vert.style.setProperty("--desc-chars",desc.length);
+  WinGlyphs(vert,desc,true);
 }
 
 function Chrome(w,cls)
@@ -524,6 +537,10 @@ function Chrome(w,cls)
 
 export function WinDress(w,opts={})
 {
+  const border=Chrome(w,"wborder");
+  border.classList.remove("wc");
+  border.setAttribute("aria-hidden","true");
+  border.innerHTML='<span class="wtl"></span><span class="wtr"></span><span class="wbl"></span><span class="wbr"></span>';
   let bar=Chrome(w,"wbar"),x=w.querySelector(":scope > .close"),
     title=w.dataset.title,rb;
   function Close()

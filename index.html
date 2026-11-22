@@ -146,55 +146,99 @@
     header h1 { font-size:12px; font-weight:normal; color:#fff; font-family:'TempleOS','dos_vga',monospace; }
     header p { font-size:12px; max-width:1000px; line-height:1.0; }
 
-    /* V5.03 TextBorder glyphs 2..13, extracted by Adam/WinChromeMk.mjs. */
-    .win, #frame { --wcell:calc(8px*var(--win-scale,1.25)); position:relative; background:var(--white); color:var(--blue); margin:3px 5px; overflow:visible;
-                   border-width:var(--wcell); border-style:solid; border-color:transparent; border-image:url('Adam/WinBorder.png') 8 / 1; image-rendering:pixelated; }
-    .win.active, #frame.active { border-image-source:url('Adam/WinBorderActive.png'); }
+    @font-face { font-family:WinChrome100; src:url('Adam/Fonts/WinChrome-100.woff2'); font-display:block; }
+    @font-face { font-family:WinChrome125; src:url('Adam/Fonts/WinChrome-125.woff2'); font-display:block; }
+    @font-face { font-family:WinChrome150; src:url('Adam/Fonts/WinChrome-150.woff2'); font-display:block; }
+    @font-face { font-family:WinChrome175; src:url('Adam/Fonts/WinChrome-175.woff2'); font-display:block; }
+    @font-face { font-family:WinChrome200; src:url('Adam/Fonts/WinChrome-200.woff2'); font-display:block; }
+    :root { --win-font:WinChrome125; --font-phases:4; }
+    :root[data-win-scale="100"] { --win-font:WinChrome100; --font-phases:1; }
+    :root[data-win-scale="150"] { --win-font:WinChrome150; --font-phases:2; }
+    :root[data-win-scale="175"] { --win-font:WinChrome175; --font-phases:4; }
+    :root[data-win-scale="200"] { --win-font:WinChrome200; --font-phases:1; }
+
+    /* The original 8x8 grid, snapped to CSS pixels at the selected DPI. */
+    .win, #frame { --wcell:calc(8px*var(--win-scale,1.25));
+                   --p2:round(up,calc(var(--wcell)/4 - .5px),1px);
+                   --p3:round(up,calc(3*var(--wcell)/8 - .5px),1px);
+                   --p4:round(up,calc(var(--wcell)/2 - .5px),1px);
+                   --p5:round(up,calc(5*var(--wcell)/8 - .5px),1px);
+                   --p6:round(up,calc(3*var(--wcell)/4 - .5px),1px);
+                   --p7:round(up,calc(7*var(--wcell)/8 - .5px),1px);
+                   position:relative; background:var(--white); color:var(--blue); margin:3px 5px; overflow:visible;
+                   border:var(--wcell) solid transparent; }
+    .wborder { position:absolute; inset:calc(-1*var(--wcell)); pointer-events:none;
+               --hline:linear-gradient(to bottom,var(--white) var(--p4),var(--blue) 0 var(--p5),var(--white) 0);
+               --vline:linear-gradient(to right,var(--white) var(--p3),var(--blue) 0 var(--p5),var(--white) 0);
+               background:var(--hline) top / 100% var(--wcell) no-repeat,var(--hline) bottom / 100% var(--wcell) no-repeat,
+                          var(--vline) left / var(--wcell) 100% no-repeat,var(--vline) right / var(--wcell) 100% no-repeat; }
+    .active > .wborder { --hline:linear-gradient(to bottom,var(--white) var(--p2),var(--blue) 0 var(--p3),var(--white) 0 var(--p4),var(--blue) 0 var(--p5),var(--white) 0);
+                        --vline:linear-gradient(to right,var(--white) var(--p2),var(--blue) 0 var(--p4),var(--white) 0 var(--p5),var(--blue) 0 var(--p7),var(--white) 0); }
+    .wborder > span { position:absolute; width:var(--wcell); height:var(--wcell); overflow:hidden; background:var(--white);
+                      font:16px/16px var(--win-font); font-synthesis:none; }
+    .wtl { top:0; left:0; } .wtr { top:0; right:0; } .wbl { bottom:0; left:0; } .wbr { bottom:0; right:0; }
+    .wtl::before { content:"\e006"; } .wtr::before { content:"\e008"; } .wbl::before { content:"\e00a"; } .wbr::before { content:"\e00c"; }
+    .active > .wborder > .wtl::before { content:"\e007"; } .active > .wborder > .wtr::before { content:"\e009"; }
+    .active > .wborder > .wbl::before { content:"\e00b"; } .active > .wborder > .wbr::before { content:"\e00d"; }
     .win { padding:.7em; }
     .wc { position:absolute; z-index:2; font-size:var(--wcell); line-height:var(--wcell); user-select:none; touch-action:none; }
     /* the top row (DocBorderNew, Adam/DolDoc/DocTerm.HC): MENU blinking at the left, the title inverted
        in the middle 15 columns, scrolling, and [X] at the right */
-    .wbar { top:calc(-1*var(--wcell)); left:0; right:0; height:var(--wcell); display:flex; justify-content:space-between; overflow:hidden; }
-    .wmenu, .wbar > .close { position:relative; z-index:1; background:var(--white); color:var(--blue); }
-    .wbar > .close { z-index:2; font-size:var(--wcell); line-height:var(--wcell); padding:0; border:0; min-height:0; }
-    .wbar:has(> .close)::before { content:""; position:absolute; right:0; top:0; height:var(--wcell);
+    .wbar { container-type:inline-size; animation:wphase .125s steps(8,end) infinite; top:calc(-1*var(--wcell)); left:calc(-1*var(--wcell)); right:calc(-1*var(--wcell)); height:var(--wcell); overflow:hidden; }
+    .wmenu, .wbar > .close { position:absolute; top:0; z-index:1; background:var(--white); color:var(--blue); }
+    .wbar > .close { right:var(--wcell); z-index:2; padding:0; border:0; min-height:0; }
+    .wbar:has(> .close)::before { content:""; position:absolute; right:var(--wcell); top:0; height:var(--wcell);
                                 width:calc(3*var(--wcell) + mod(100%,var(--wcell))); background:var(--white); z-index:1; }
-    .wmenu { animation:menuBlink .4s steps(1,end) infinite; }
-    @keyframes menuBlink { 50% { --wg-row:1; background:var(--blue); color:var(--white); } }
-    .wg { display:inline-block; width:var(--wcell); height:var(--wcell); font-size:0; vertical-align:top;
-          background-image:url('Adam/Fonts/WinGlyphs.png'); background-size:calc(256*var(--wcell)) calc(2*var(--wcell));
-          background-position:calc(-1*var(--glyph)*var(--wcell)) calc(-1*var(--wg-row,0)*var(--wcell)); image-rendering:pixelated; }
-    .wtitle { --title-width:max(0px,min(calc(15*var(--wcell)),calc(round(up,100%,var(--wcell)) - 8*var(--wcell))));
-              position:absolute; width:var(--title-width); left:round(down,calc((round(up,100%,var(--wcell)) - var(--title-width))/2),var(--wcell));
-              overflow:hidden; white-space:pre; background:var(--blue); color:var(--white); --wg-row:1; }
+    .wmenu { left:var(--wcell); z-index:3; animation:menuBlink .4s steps(1,end) infinite; }
+    .wmenu::after { content:""; position:absolute; left:100%; top:0; height:var(--wcell); background:var(--blue);
+                    width:max(0px,min(round(up,calc(var(--title-phase)*var(--wcell)/8 - .5px),1px),
+                      calc(5*var(--wcell) - round(down,calc((round(up,100cqw,var(--wcell)) - 15*var(--wcell))/2),var(--wcell))),
+                      calc(100cqw - 9*var(--wcell)))); }
+    @keyframes menuBlink { 50% { background:var(--blue); color:var(--white); } }
+    .wg { display:inline-block; height:var(--wcell); font:16px/16px var(--win-font); font-synthesis:none; vertical-align:top; }
+    @property --title-phase { syntax:"<number>"; inherits:true; initial-value:7; }
+    .wtitle { --title-width:calc(15*var(--wcell));
+              position:absolute; width:var(--title-width); left:round(down,calc((round(up,100cqw,var(--wcell)) - var(--title-width))/2),var(--wcell));
+              overflow:hidden; white-space:pre; background:var(--blue); color:var(--white); }
     .wtitle::before { content:""; position:absolute; left:0; top:0; height:var(--wcell); z-index:1;
-                     background:var(--blue); width:calc(7*var(--wcell)/8); animation:wphase .125s steps(8,start) infinite; }
-    @keyframes wphase { from { width:var(--wcell); } to { width:0; } }
-    .wtitle > span { display:inline-block; position:relative; left:calc(7*var(--wcell)/8); animation:wscroll steps(var(--title-pixels),end) infinite; }
-    @keyframes wscroll { to { left:calc((7 - var(--title-pixels))*var(--wcell)/8); } }
+                     background:var(--blue); width:round(up,calc(var(--title-phase)*var(--wcell)/8 - .5px),1px); }
+    @keyframes wphase { from { --title-phase:7; } to { --title-phase:-1; } }
+    .wtitle > span { position:relative; left:0; animation:wscroll steps(var(--title-chars),end) infinite;
+                     font-feature-settings:"cv01" calc(mod(var(--title-phase),var(--font-phases)) + 1);
+                     translate:round(up,calc(var(--title-phase)*var(--wcell)/8 - .5px),1px) 0; }
+    @keyframes wscroll { to { left:calc(-1*var(--title-chars)*var(--wcell)); } }
     /* DocBorderLstDraw writes up to eight description glyphs down the left. */
     .wvert { top:0; bottom:0; left:calc(-1*var(--wcell)); width:var(--wcell); overflow:hidden; }
-    .wvert > span { display:block; line-height:0; background:var(--white); }
+    .wvert > span { position:absolute; top:min(0px,calc(round(up,100%,var(--wcell)) - var(--desc-chars)*var(--wcell))); display:block; line-height:0; background:var(--white); }
+    .wvert .wg { display:block; width:var(--wcell); }
     .win > .close, #frame > .close { position:absolute; visibility:hidden; }   /* until WinMgr puts it in the bar */
     /* the scroll boxes (Adam/Ctrls/CtrlsA.HC): 8x8 YELLOW round 4x4 BLUE, the two swapped while held.
        At the start of the document they straddle the top right and bottom left corners. */
-    .wsv, .wsh { z-index:3; width:var(--wcell); height:var(--wcell); background:var(--blue); border:calc(var(--wcell)/4) solid var(--yellow); }
-    .wsv.on, .wsh.on { background:var(--yellow); border-color:var(--blue); }
-    .wsv { z-index:4; top:calc(var(--wcell)/-2); right:calc(-1*var(--wcell)); } .wsh { bottom:calc(-1*var(--wcell)); left:calc(var(--wcell)/-2); }
+    .wsv, .wsh { --scroll-pos:-4;
+                 --thumb-start:round(up,calc(var(--scroll-pos)*var(--wcell)/8 - .5px),1px);
+                 --thumb-p2:calc(round(up,calc((var(--scroll-pos) + 2)*var(--wcell)/8 - .5px),1px) - var(--thumb-start));
+                 --thumb-p6:calc(round(up,calc((var(--scroll-pos) + 6)*var(--wcell)/8 - .5px),1px) - var(--thumb-start));
+                 --outer:var(--yellow); --inner:var(--blue); z-index:3; width:var(--wcell); height:var(--wcell); background:var(--outer); }
+    .wsv::before, .wsh::before { content:""; position:absolute; left:var(--p2); top:var(--p2); width:calc(var(--p6) - var(--p2)); height:calc(var(--p6) - var(--p2)); background:var(--inner); }
+    .wsv.on, .wsh.on { --outer:var(--blue); --inner:var(--yellow); }
+    .wsv { z-index:4; top:var(--thumb-start); right:calc(-1*var(--wcell)); } .wsh { bottom:calc(-1*var(--wcell)); left:var(--thumb-start); }
+    .wsv::before { top:var(--thumb-p2); height:calc(var(--thumb-p6) - var(--thumb-p2)); }
+    .wsh::before { left:var(--thumb-p2); width:calc(var(--thumb-p6) - var(--thumb-p2)); }
     /* the right column sizes the width, the bottom row the height, their corner both */
     .wszr { top:0; bottom:0; right:calc(-1*var(--wcell)); width:var(--wcell); }
     .wszb { left:0; right:calc(-1*var(--wcell)); bottom:calc(-1*var(--wcell)); height:var(--wcell); }
     .win *, #frame * { scrollbar-width:none; }   /* the scroll boxes stand for the scroll bars */
     .win ::-webkit-scrollbar, #frame ::-webkit-scrollbar { display:none; }
     /* Native chrome retains the same DOM controls and geometry. */
-    .native-chrome .win, .native-chrome #frame { border-image:none; }
+    .native-chrome .wborder { display:none; }
     .wdraw { display:none; pointer-events:none; }
-    .native-chrome .wdraw { display:block; left:calc(-1*var(--wcell)); top:calc(-1*var(--wcell)); z-index:2; image-rendering:pixelated; }
+    .native-chrome .wdraw { display:block; left:calc(-1*var(--wcell)); top:calc(-1*var(--wcell)); z-index:2; image-rendering:crisp-edges; }
     .native-chrome .wmenu, .native-chrome .wtitle, .native-chrome .wvert > span,
     .native-chrome .wbar > .close { color:transparent; background:transparent; animation:none; }
     .native-chrome .wtitle > span { animation:none; }
-    .native-chrome .wtitle::before, .native-chrome .wbar::before { display:none; }
-    .native-chrome .wg { background-image:none; }
+    .native-chrome .wtitle::before, .native-chrome .wbar::before, .native-chrome .wmenu::after { display:none; }
+    .native-chrome .wbar { animation:none; }
+    .native-chrome .wsv::before, .native-chrome .wsh::before { display:none; }
     .native-chrome .wsv, .native-chrome .wsh { background:transparent; border:0; }
     #winPopupNotice { position:fixed; left:12px; right:12px; bottom:12px; z-index:2147483646; display:flex; align-items:center; gap:12px; padding:12px; background:var(--white); color:var(--blue); border:3px double var(--blue); }
     #winPopupNotice button { width:auto; }
@@ -374,7 +418,7 @@
     #helpLabel { display:block; color:var(--red); margin-bottom:6px; }
     #helpActions { display:flex; flex-wrap:wrap; gap:8px; padding:8px 2px 2px; }
     #helpActions button { width:auto; max-width:100%; }
-    @media (prefers-reduced-motion:reduce) { .wtitle > span, .wtitle::before, .wmenu { animation:none; } }
+    @media (prefers-reduced-motion:reduce) { .wbar, .wtitle > span, .wmenu { animation:none; } }
     @media (max-width:979.98px) {
       html { height:auto; overflow-y:auto; overflow-x:hidden; }
       body { height:auto; min-height:100dvh; overflow:visible; padding-bottom:68px; }
@@ -420,7 +464,7 @@
   //page shows once they are, so nothing on it moves when they arrive.
   { const root = document.documentElement, show = () => root.classList.remove("fontwait");
     root.classList.add("fontwait");
-    Promise.all([...document.fonts].filter((f) => f.display == "block").map((f) => f.load())).finally(show);
+    Promise.all([...document.fonts].filter((f) => f.family == "TempleOS" || f.family == "dos_vga").map((f) => f.load())).finally(show);
     setTimeout(show, 3000);
   }
   </script>

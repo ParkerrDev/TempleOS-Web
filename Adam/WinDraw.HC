@@ -60,7 +60,7 @@ U0 DrawWinScroll(CDC *dc,CCtrl *c)
 U0 WinBorderDoc(I64 mS,Bool close)
 {//DocBorderNew's title, [X], MENU; DocRecalc's SCX=15 calculation.
 //No editor status fields or native task address for a browser window.
-  I64 i,j,k,cnt=MaxI64(0,MinI64(15,win_cols-10)),
+  I64 i,j,k,cnt=15,
 	x=(win_cols-2-cnt)>>1+1,attr=0xF100,
 	i_jif,shift;
   U8 st[260],*ptr;
@@ -84,8 +84,10 @@ U0 WinBorderDoc(I64 mS,Bool close)
   ptr="MENU";
   for (i=0;i<4;i++)
     TextChar(Fs,TRUE,1+i,0,attr|ATTRF_BLINK|ptr[i]);
-  for (i=0;i<8 && win_title[i] && win_title[i]!=' ' && i<win_rows-2;i++)
-    TextChar(Fs,TRUE,0,i+1,attr+win_title[i]);
+  for (j=0;j<8 && win_title[j] && win_title[j]!=' ';j++);
+  k=MaxI64(0,j-(win_rows-2));
+  for (i=k;i<j;i++)
+    TextChar(Fs,TRUE,0,i-k+1,attr+win_title[i]);
 }
 
 U0 WinTextDraw(I64 mS)

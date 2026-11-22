@@ -1,7 +1,8 @@
 U8 *win_draw_ref=NULL;
 I64 win_draw_phase,win_draw_blink;
 
-U0 WinDrawRef(Bool solid,I64 scroll_x,I64 scroll_y,I64 held)
+U0 WinDrawRef(I64 cols,I64 rows,U8 *name,U8 *desc,
+	Bool solid,I64 scroll_x,I64 scroll_y,I64 held)
 {//Capture unmodified V5.03 drawing into a private bitmap.
   I64 old_l=Fs->win_left,old_r=Fs->win_right,
 	old_t=Fs->win_top,old_b=Fs->win_bottom,
@@ -14,13 +15,14 @@ U0 WinDrawRef(Bool solid,I64 scroll_x,I64 scroll_y,I64 held)
   CCtrl c;
   CWinScroll s;
   StrCpy(title,Fs->task_title);
-  WinHorz(1,38);
-  WinVert(1,18);
+  WinHorz(1,cols-2);
+  WinVert(1,rows-2);
   Fs->border_attr=0xF1;
-  StrCpy(Fs->task_title,"Native Tools");
+  StrCpy(Fs->task_title,name);
   doc=DocBorderNew(NULL);
   pdoc=DocNew;
-  pdoc->desc='Native';
+  pdoc->desc=0;
+  MemCpy(&pdoc->desc,desc,MinI64(8,StrLen(desc)));
   doc_e=doc->head.next;
   while (doc_e!=doc) {
     next=doc_e->next;
@@ -32,7 +34,7 @@ U0 WinDrawRef(Bool solid,I64 scroll_x,I64 scroll_y,I64 held)
   CLI
   gr.dc2=dc;
   gr.text_base=buf;
-  TextBorder(sys_winmgr_task,1,38,1,18,0xF1,solid);
+  TextBorder(sys_winmgr_task,1,cols-2,1,rows-2,0xF1,solid);
   win_draw_phase=ToI64(tS*FONT_WIDTH*DOC_SCROLL_SPEED);
   win_draw_blink=Blink;
   DocRecalc(doc,RECALCt_TO_SCRN);

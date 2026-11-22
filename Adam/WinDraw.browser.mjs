@@ -15,8 +15,8 @@ try {
   const page=await browser.newPage({viewport:{width:1280,height:900}}),
     errors=[],loads=[];
   await page.addInitScript(()=>localStorage.setItem("tos-persistence",JSON.stringify({syncTabs:false,saveSession:false,saveWindows:true})));
-  await page.route("**/hemu/*.gz",function (route) {route.abort();});
-  await page.route("**/Apps/Terry/TerrySprites.gr.gz",route=>route.fulfill({
+  await page.context().route("**/hemu/*.gz",function (route) {route.abort();});
+  await page.context().route("**/Apps/Terry/TerrySprites.gr.gz",route=>route.fulfill({
     path:root+"Apps/Terry/TerrySprites.gr.gz",contentType:"application/gzip"}));
   page.on("pageerror",function (e) {errors.push(e.message);});
   page.on("request",function (r) {
@@ -128,12 +128,21 @@ try {
   await popup.waitForFunction(()=>{
     const w=document.getElementById("godWin");
     return getComputedStyle(w).borderLeftWidth=="12px" &&
-      w.querySelector(".wdraw").width==Math.round(w.getBoundingClientRect().width/1.5);
+      w.querySelector(".wdraw").width==Math.round(w.getBoundingClientRect().width);
   });
   await page.evaluate(async()=>{
-    (await import("/Adam/WinDraw.js")).WinDrawCfg({scale:1});
+    (await import("/Adam/WinDraw.js")).WinDrawCfg({native:false});
   });
-  await popup.screenshot({path:"/home/aphunt/Dev/GitHub/TempleOS/untangle/evidence/2026-11-15-workspace/Window-native-chrome-popup.png"});
+  await popup.evaluate(()=>document.fonts.ready);
+  assert.equal(await popup.evaluate(()=>[...document.fonts].every(font=>opener.document.fonts.has(font))),true,
+    "popup fonts share the opener's decoded font objects");
+  assert.equal(await popup.evaluate(()=>document.fonts.check("16px WinChrome150")),true);
+  assert.equal(await popup.locator("#godWin .wdraw").isVisible(),false);
+  await page.evaluate(async()=>{
+    (await import("/Adam/WinDraw.js")).WinDrawCfg({native:true,scale:1});
+  });
+  await popup.waitForFunction(()=>document.body.classList.contains("native-chrome"));
+  await popup.screenshot({path:root+"tmp/native-layout/WinDraw-popup.png"});
   await popup.locator("#popupReturn").click().catch(function (error) {
     if (!popup.isClosed()) throw error;
   });
@@ -172,7 +181,7 @@ try {
   await page.waitForFunction(()=>{
     const w=document.getElementById("terryWin");
     return getComputedStyle(w).borderLeftWidth=="16px" &&
-      w.querySelector(".wdraw").width==Math.round(w.getBoundingClientRect().width/2);
+      w.querySelector(".wdraw").width==Math.round(w.getBoundingClientRect().width);
   });
   assert.equal(await page.locator("#nativeDrawing").isChecked(),true,
     "changing scale preserves the selected drawing mode");

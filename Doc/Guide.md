@@ -106,8 +106,10 @@ omitted from browser frames. The reference check compares focused and unfocused
 borders, moving titles and scrollbar states with original V5.03 drawing.
 `node Adam/WinDrawRef.mjs` checks the HolyC renderer against an unaccelerated
 guest capture. `node Adam/WinChrome.browser.mjs` compares CSS screenshot pixels
-against that renderer at 100% and 200%, including narrow and partial cells.
-Fractional DPI and browser zoom resample the original pixel grid.
+against that renderer at all five DPI settings, including narrow and partial
+cells. HTML/CSS frames use pixel-aligned fonts and CSS rules with no decoration
+images or per-frame JavaScript. Only the selected scale's font loads. Arbitrary
+browser zoom and device scale can still change final rasterization.
 See [Window decoration reference](WindowChrome.md) for the geometry and sources.
 
 **Window passthrough** lets you drag a compatible TempleOS title bar across the

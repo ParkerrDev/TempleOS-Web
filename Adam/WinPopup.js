@@ -137,9 +137,10 @@ export function WinPopup(w,reuse=null)
   base=doc.createElement("base");
   base.href=document.baseURI;
   doc.head.append(base);
+  for (const font of document.fonts) doc.fonts.add(font);
   for (const sheet of document.styleSheets) {
     style=doc.createElement("style");
-    style.textContent=Array.from(sheet.cssRules,rule=>rule.cssText).join("\n");
+    style.textContent=Array.from(sheet.cssRules).filter(rule=>rule.type!=CSSRule.FONT_FACE_RULE).map(rule=>rule.cssText).join("\n");
     doc.head.append(style);
   }
   style=doc.createElement("style");
