@@ -35,7 +35,7 @@ C: changes save automatically in this browser's IndexedDB. Clearing site data re
 
 <br>
 
-The desktop runs the real TempleOS V5.03 kernel and HolyC compiler. [HEMU](https://github.com/ParkerrDev/HEMU) resumes a prepared machine capture with the Welcome card and Take Tour question already open.
+The desktop runs the real TempleOS V5.03 kernel and HolyC compiler. [HEMU](https://github.com/ParkerrDev/HEMU) resumes a prepared machine capture with the native desktop and Take Tour question already open.
 
 HEMU's CPU and devices are written in HolyC and compiled to WebAssembly by [HolyC-wasm](https://github.com/ParkerrDev/HolyC-wasm). JavaScript connects the machine to browser workers, storage, sound and input. Games launched with **Run in Browser** compile directly to WASM; **Run in TempleOS** uses the emulated machine.
 

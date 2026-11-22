@@ -112,20 +112,20 @@ try {
     await page.locator("#settingsClose").click();
     await page.waitForFunction(function () {return window.passWindows.length;},null,
       {timeout:30000});
-    const welcome=await page.evaluate(function () {
-      return window.passWindows.find(function (w) {return w.title.includes("Welcome");});
+    const terminal=await page.evaluate(function () {
+      return window.passWindows.find(function (w) {return w.title=="Unnamed Task";});
     });
-    assert(welcome,"native Welcome document exists");
+    assert(terminal,"native terminal exists");
     let r=await page.locator("#canvas").boundingBox(),scale=r.width/640;
-    await page.mouse.move(r.x+(welcome.x+welcome.w/2)*scale,
-      r.y+(welcome.y+4)*scale);
+    await page.mouse.move(r.x+(terminal.x+terminal.w/2)*scale,
+      r.y+(terminal.y+4)*scale);
     await page.mouse.down();
     await page.mouse.move(r.x+r.width+100,r.y+140,{steps:20});
     await page.mouse.up();
     await page.locator(".win-pass canvas").waitFor({timeout:30000});
     await page.waitForFunction(function (task) {
       return window.passWindows.some(function (w) {return w.task==task && w.detached;});
-    },welcome.task);
+    },terminal.task);
     await page.locator("#godBtn").click();
     const title=await page.locator("#godWin .wtitle").boundingBox();
     await page.mouse.move(title.x+70,title.y+4);
@@ -168,10 +168,10 @@ try {
       {timeout:60000});
     const restored=await page.evaluate(function () {return window.passWindows;});
     const original=restored.find(function (w) {
-      return w.task==welcome.task && w.num==welcome.num;
+      return w.task==terminal.task && w.num==terminal.num;
     });
     assert(original && !original.detached,
-      "restore returns the original Welcome task to the native desktop");
+      "restore returns the original terminal task to the native desktop");
     assert(!restored.some(function (w) {return w.task==host.task && w.num==host.num;}),
       "restore closes the old browser-owned guest proxy");
     assert(!restored.some(function (w) {return w.title=="God Tools" || w.host;}),
@@ -198,7 +198,7 @@ try {
     await page.locator("#godClose").click();
     const current=await page.evaluate(function (task) {
       return window.passWindows.find(function (w) {return w.task==task;});
-    },welcome.task);
+    },terminal.task);
     r=await page.locator("#canvas").boundingBox();scale=r.width/640;
     await page.mouse.move(r.x+(current.x+current.w/2)*scale,
       r.y+(current.y+4)*scale);

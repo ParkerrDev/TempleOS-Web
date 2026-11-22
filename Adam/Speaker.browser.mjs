@@ -129,8 +129,8 @@ Spawn(&SpeakerFault,,,${cores===4?1:-1});
       await page.waitForFunction(()=>window.machine.events.some(m=>m.cmd==="error"&&m.retained),null,{timeout:15000});
       await page.waitForFunction(()=>window.speakerRms()===0,null,{timeout:2000});
       assert.equal(await page.locator(pause).isDisabled(),true);
-      assert.ok(await page.evaluate(()=>window.machine.events.some(m=>m.cmd==="guestReady"&&m.probe.tasks.some(t=>t.name==="Welcome"))),
-        "the native startup card is already present in both hosts");
+      assert.ok(await page.evaluate(()=>window.machine.events.some(m=>m.cmd==="guestReady"&&!m.probe.tasks.some(t=>t.name==="Welcome"))),
+        "both hosts start without the added Welcome task");
       assert.deepEqual(errors,[]);
       console.log(`${desktop?"Desktop":"Web"} ${cores}: actual audio passes keyboard unlock, pause/resume, suspended-context recovery, native silence, blocked restart${desktop?", paused full-save restore":""} and native CPU fault.`);
     } catch(error) {

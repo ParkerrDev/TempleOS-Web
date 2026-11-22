@@ -104,9 +104,9 @@ try {
   let nativeBefore;
   if (process.env.WINPASS_SMP) {
     await page.evaluate(async()=>{(await import("/Adam/Os.js")).OsCfg({pass:true});});
-    await page.waitForFunction(()=>nativeWindows.some(w=>w.title.includes("Welcome")));
+    await page.waitForFunction(()=>nativeWindows.some(w=>w.title=="Unnamed Task"));
     await page.evaluate(async()=>{
-      const w=nativeWindows.find(w=>w.title.includes("Welcome")),{engine}=await import("/Adam/Os.js");
+      const w=nativeWindows.find(w=>w.title=="Unnamed Task"),{engine}=await import("/Adam/Os.js");
       const res=await engine.Request({cmd:"windows",op:"detach",task:w.task,num:w.num});
       if (!res.ok) throw Error(res.msg);
     });

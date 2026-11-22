@@ -1,10 +1,9 @@
-# Startup card
+# Startup and commands
 
-The stock capture has the native Welcome card above AutoComplete, beside
-TempleOS's own Take Tour question. Other windows can still come forward normally.
-Browser startup resumes those tasks directly. A full
-saved machine resumes its own windows.
+The stock capture opens TempleOS's own desktop and Take Tour question, without
+an added Welcome card. Full saved machines retain their own windows until Restart.
 
-HEMU owns the startup source, original bitmap, capture preparation and provenance:
+HEMU owns the source preparation and capture:
 [Misc/Capture/README.md](../../hemu/Misc/Capture/README.md).
-`Welcome.browser.mjs` checks the site's visible startup and saved-machine behavior.
+`Startup.browser.mjs` checks startup before the disk arrives and after Restart.
+The Cheatsheet opens from Menu.

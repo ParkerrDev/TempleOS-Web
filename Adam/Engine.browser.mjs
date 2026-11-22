@@ -161,11 +161,11 @@ try {
   await page.locator("#mobileMenu").click();
   await page.locator("#restartBtn").click();
   await page.waitForFunction(n=>window.guestEvents.slice(n).some(m=>
-    m.cmd==="guestReady" && m.ok && m.probe.tasks.some(t=>t.name==="Welcome")),before);
+    m.cmd==="guestReady" && m.ok && !m.probe.tasks.some(t=>t.name==="Welcome")),before);
   await page.waitForFunction(()=>document.getElementById("loadui").style.display==="none");
   assert.equal(await page.locator("#osNotice").isVisible(),false);
   assert.deepEqual(errors,[]);
-  console.log("Browser engine: captured Welcome, visible FPS, settings acknowledgement, "+
+  console.log("Browser engine: stock desktop, visible FPS, settings acknowledgement, "+
     "God Doodle input/exit and mobile Restart pass. Screen: "+screen);
 } catch (e) {
   if (page) {

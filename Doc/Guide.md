@@ -7,7 +7,7 @@ devices are HolyC, compiled to WebAssembly by
 JavaScript host that connects browser workers, storage, input and display.
 HEMU's HolyC JIT emits WebAssembly for hot guest instructions; the host loads
 those blocks. TempleOS runs its own kernel, HolyC compiler and desktop.
-The initial capture already contains the display corrections, Welcome card
+The initial capture already contains the display corrections
 and native Take Tour question.
 
 > This is a static site. Drop it on any static host (with cross‑origin isolation - see
@@ -189,8 +189,8 @@ Visitor presence and the Terry animation wait for the first desktop frame.
 Games, Chat and Terry Search load only when opened. The Games catalog loads separately
 from its editor and runners, with immediate cancellable loading feedback.
 Only populated RAM ranges are inflated and copied into the zeroed 384 MiB guest
-memory. The corrections and Welcome task were compiled in native TempleOS
-before capture; startup resumes them directly. C: restores from browser storage
+memory. The display corrections were compiled in native TempleOS
+before capture; startup resumes the desktop directly. C: restores from browser storage
 when available. The stock disk is fetched separately when no saved drive exists.
 
 ## Repository layout (6 repos)
