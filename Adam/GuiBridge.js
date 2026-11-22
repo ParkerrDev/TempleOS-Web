@@ -1,7 +1,7 @@
 import {GrLoad} from "../Apps/Sprites/Gr.js";
 import {CharByte,Identifier} from "../hemu/holyc-wasm/src/encoding.js";
 
-const LIMIT=1048576,CHROME=".wdraw,.wc,.wbar,.wvert,.wcorn,.wszcorner,.wszr,.wszb,.close",
+const LIMIT=1048576,CHROME=".wdraw,.wborder,.wc,.wbar,.wvert,.wcorn,.wszcorner,.wszr,.wszb,.close",
   codec=await GrLoad(),colors=new Map,icons=new Map,bitmaps=new WeakMap,fields=new WeakMap;
 const glyphs="☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼";
 const unicodeBytes=new Map(Array.from({length:128},(_,i)=>[Identifier(String.fromCharCode(i+128)),i+128]));

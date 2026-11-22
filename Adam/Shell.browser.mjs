@@ -35,7 +35,7 @@ try {
         await page.setViewportSize({width,height});
         const layout=await page.evaluate(function () {
           const footer=document.querySelector("footer").getBoundingClientRect(),
-            windows=["desktopMenu","keysWin","guide","terryWin"].map(id=>{
+            windows=["desktopMenu","controlsWin","keysWin","guide","terryWin"].map(id=>{
               const r=document.getElementById(id).getBoundingClientRect();
               return {id,left:r.left,right:r.right,bottom:r.bottom};
             });
@@ -120,9 +120,16 @@ try {
       await page.waitForFunction(first=>document.getElementById("terrySprite").toDataURL()!==first,first);
       assert.equal(Math.round((await page.locator("#terrySprite").boundingBox()).height),176);
     }
-    if (mobile)
-      await page.locator("#mobileMenu").click();
+    if (mobile) await page.locator("#mobileMenu").click();
+    await page.locator("#controlsBtn").click();
+    assert.equal(await page.locator("#controlsWin").isVisible(),true);
     assert.equal(await page.locator("#touchBtn").isVisible(),mobile);
+    await page.locator("#controlsWin .close").click();
+    assert.equal(await page.locator("#controlsWin").isVisible(),false);
+    if (mobile) await page.locator("#mobileMenu").click();
+    await page.locator("#controlsBtn").click();
+    assert.equal(await page.locator("#controlsWin").isVisible(),true);
+    if (mobile) await page.locator("#mobileMenu").click();
     await page.locator("#godBtn").click();
     await page.locator("#godWord").click();
     await page.locator("#godOut .word").waitFor();
@@ -172,8 +179,9 @@ try {
       await page.mouse.move(corner.x+54,corner.y+30);
       await page.mouse.up();
       const changed=await page.locator("#godWin").boundingBox();
-      assert.equal(Math.round(changed.width-bounds.width),48);
-      assert.equal(Math.round(changed.height-bounds.height),24);
+      const cell=await page.locator("#godWin").evaluate(w=>w.clientLeft);
+      assert.equal(Math.round(changed.width-bounds.width),Math.round(48/cell)*cell);
+      assert.equal(Math.round(changed.height-bounds.height),Math.round(24/cell)*cell);
     }
     await page.locator("#godClose").focus();
     await page.keyboard.press("Enter");

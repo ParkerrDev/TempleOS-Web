@@ -83,13 +83,23 @@ try {
     const frame=await page.locator("#frame").boundingBox();
     assert.deepEqual([frame.x,frame.y,frame.width,frame.height],[0,0,390,844]);
     await MenuClose();
+    await Button("desktopMenu","#controlsBtn");
+    await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="controlsWin"));
+    await Button("controlsWin","#pauseBtn");
+    await page.waitForFunction(()=>!document.body.classList.contains("os-only"));
+    assert(await page.locator("#pauseBtn").isVisible(),"mobile pause leaves Controls available to resume");
+    await page.locator("#pauseBtn").tap();
+    await page.locator("#mobileMenu").tap();
+    await page.locator("#settingsBtn").tap();
+    await page.locator("#onlyBtn").tap();
+    await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="desktopMenu"));
     await Button("desktopMenu","#settingsBtn");
     await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="settingsWin"));
     assert.equal(await page.locator("#keysWin").evaluate(el=>el.classList.contains("input-docked")),true,"touch keyboard remains reachable on the OS input surface");
     await page.locator("#fsExit").tap();
     await page.waitForFunction(()=>!document.body.classList.contains("os-only") && !document.querySelector(".win-pass-owned"));
     assert.deepEqual(errors,[]);
-    console.log("PASS touch TempleOS Only Mode: viewport, native Menu and Settings, docked input, tap exit.");
+    console.log("PASS touch TempleOS Only Mode: viewport, native Menu, Controls and Settings, pause/resume, docked input, tap exit.");
   } else {
   let nativeBefore;
   if (process.env.WINPASS_SMP) {
@@ -214,7 +224,8 @@ try {
   await page.evaluate(()=>document.getElementById("spritesClose").click());
   await page.locator("#onlyBtn").click();
   await page.waitForFunction(()=>nativeWindows.some(w=>w.host=="desktopMenu"));
-  await Button("desktopMenu","#pauseBtn");
+  await Button("desktopMenu","#controlsBtn");
+  await Button("controlsWin","#pauseBtn");
   await page.waitForFunction(()=>!document.body.classList.contains("os-only") && document.getElementById("onlyBtn").disabled);
   assert(await page.locator("#pauseBtn").isVisible(),"paused OS leaves its resume control reachable");
   await page.locator("#pauseBtn").click();

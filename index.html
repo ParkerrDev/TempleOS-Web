@@ -250,8 +250,8 @@
     .col-right { display:flex; flex-direction:column; gap:16px; width:288px; flex:0 0 auto; }
     .col-center { display:flex; flex-direction:column; align-items:center; min-width:0; }
     .toolbar { display:flex; flex-direction:column; align-items:stretch; }
-    #menuActions { display:flex; flex-direction:column; gap:5px; min-height:0; overflow:auto; padding:2px; }
-    #gamesBtn, #fsBtn, #pauseBtn { margin-top:4px; }
+    #menuActions, #controlActions { display:flex; flex-direction:column; gap:5px; min-height:0; overflow:auto; padding:2px; }
+    #gamesBtn, #controlsBtn, #pauseBtn { margin-top:4px; }
     .toolbar button { flex:none; font-size:11px; padding:0 6px; min-height:28px; }
     .toolbar button .ico { display:inline-block; width:20px; height:20px; vertical-align:middle; }
     .ico svg { display:block; width:20px; height:20px; fill:currentColor; shape-rendering:crispEdges; }
@@ -407,7 +407,7 @@
     @media (min-width:980px) and (pointer:fine) {
       .desktop-row { flex:1; min-height:0; flex-wrap:nowrap; }
       .col-left,.col-right { max-height:100%; min-height:0; }
-      #desktopMenu:not([data-floating]),#keysWin:not([data-floating]),#guide:not([data-floating]) { min-height:0; }
+      .toolbar:not([data-floating]),#keysWin:not([data-floating]),#guide:not([data-floating]) { min-height:0; }
       #keysWin { display:flex; flex-direction:column; }
       #keysbar { min-height:0; overflow:auto; padding:2px; }
       .terrywin { flex:none; }
@@ -437,8 +437,8 @@
       .desktop-row { gap:0; padding:0; }
       .col-left, .col-right { display:contents; }
       .col-center { width:100%; }
-      .toolbar { display:none; position:fixed; top:58px; left:12px; right:12px; width:auto; max-height:calc(100dvh - 140px); margin:0; z-index:2000000 !important; }
-      body.menu-open .toolbar { display:flex; }
+      .toolbar { display:none; position:fixed; top:var(--toolbar-top,58px); left:12px; right:12px; width:auto; max-height:calc(100dvh - var(--toolbar-top,58px) - 80px); margin:0; z-index:2000000 !important; }
+      body.menu-open #desktopMenu, #controlsWin.controls-open { display:flex; }
       body.menu-open #menuShade { display:block; position:fixed; inset:0; z-index:1999999; background:repeating-conic-gradient(#000 0 25%, transparent 0 50%) 0 0 / 2px 2px; }
       #frame:not(.fsmode):not([data-floating]) { margin:4px 0; max-width:100%; padding:0; }
       canvas#canvas { width:calc(100vw - 24px); max-width:calc((100dvh - 140px)*4/3); height:auto; }
@@ -537,10 +537,16 @@
         <button id="godBtn" title="The Adam/God suite - Word, Bible Passage, Song, Doodle - HolyC compiled to WASM in your browser"><span class="ico"><svg><use href="#i-cross"/></svg></span> God Tools</button>
         <button id="tsBtn" title="Fuzzy-search every word Terry A. Davis said on video - 3,679 transcribed videos from the archive.org TempleOS archive"><span class="ico"><svg><use href="#i-search"/></svg></span> Terry Search</button>
         <button id="chatBtn" title="Talk with everyone else on the site right now"><span class="ico"><svg><use href="#i-chat"/></svg></span> Chat<span id="chatUnread"></span></button>
+        <button id="controlsBtn" title="Fullscreen, mouse capture, pause and restart"><span class="ico"><svg><use href="#i-touch"/></svg></span> Controls</button>
+        <button id="settingsBtn" title="Frame rate, keyboard repeat and other options"><span class="ico"><svg><use href="#i-settings"/></svg></span> Settings</button>
+        </div>
+      </div>
+      <div id="controlsWin" class="toolbar win" data-title="Controls" data-icon="touch">
+        <span class="close">[X]</span>
+        <div id="controlActions">
         <button id="fsBtn" title="Show the OS fullscreen"><span class="ico"><svg><use href="#i-fullscreen"/></svg></span> Fullscreen</button>
         <button id="captureBtn" title="Capture the mouse for the active game or OS; Esc returns to hybrid mode" aria-pressed="false"><span class="ico"><svg><use href="#i-mouse"/></svg></span> <span id="captureLabel">Capture mouse</span></button>
         <button id="touchBtn" title="On-screen joystick + mouse buttons + keyboard (auto-enabled on touch devices)"><span class="ico"><svg><use href="#i-touch"/></svg></span> Touch controls</button>
-        <button id="settingsBtn" title="Frame rate, keyboard repeat and other options"><span class="ico"><svg><use href="#i-settings"/></svg></span> Settings</button>
         <button id="pauseBtn" title="Freeze / resume the OS (guest time stops too)"><span class="ico"><svg><use href="#i-pause"/></svg></span> Pause</button>
         <button id="restartBtn" title="Reload TempleOS in place - keeps your other windows open"><span class="ico"><svg><use href="#i-restart"/></svg></span> Restart</button>
         </div>

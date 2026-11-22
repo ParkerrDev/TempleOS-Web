@@ -617,7 +617,10 @@ function ButtonKey(e)
 
 for (const w of document.querySelectorAll("[data-title]"))
   WinDress(w,{menuReopen:w.id!="frame" &&
-    !w.classList.contains("toolbar")});
+    !w.classList.contains("toolbar"),onClose:w.id=="controlsWin"?function () {
+      w.classList.remove("controls-open");
+      w.style.display="none";
+    }:undefined});
 WinFocus($("frame"));
 
 function OvFree(ov)
@@ -719,17 +722,31 @@ random.addEventListener("click",async function () {
 
 function MenuShow(open)
 {
+  if (WinMobile())
+    document.documentElement.style.setProperty("--toolbar-top",Math.ceil($("mobileBar").getBoundingClientRect().bottom+6)+"px");
   document.body.classList.toggle("menu-open",open);
   $("mobileMenu").setAttribute("aria-expanded",String(open));
-  if (open)
+  if (open) {
     $("desktopMenu").style.display="";
+    if (WinMobile()) $("controlsWin").classList.remove("controls-open");
+  }
 }
+
+$("controlsBtn").addEventListener("click",function () {
+  const w=$("controlsWin"),origin=WinOrigin(this);
+  w.style.display="";
+  w.classList.add("controls-open");
+  MenuShow(false);
+  WinFocus(w);
+  WinRoute(w,origin);
+  WinWorkspaceSave();
+});
 
 $("mobileMenu").addEventListener("click",function () {
   MenuShow(!document.body.classList.contains("menu-open"));
 });
 $("menuShade").addEventListener("click",function () {MenuShow(false);});
-document.querySelector(".toolbar .close").addEventListener("click",
+document.querySelector("#desktopMenu .close").addEventListener("click",
   function () {
     MenuShow(false);
     if (!WinMobile())
