@@ -4,73 +4,107 @@ import {PersistenceCfg} from "../../Adam/Persistence.js";
 import {WinDrawCfg} from "../../Adam/WinDraw.js";
 
 WinAdd(`
-#settingsWin { width:min(520px,94vw); margin:0; }
-#settingsBody { display:flex; flex-direction:column; gap:16px;
+#settingsWin { width:min(560px,94vw); margin:0; }
+#settingsBody { display:flex; flex-direction:column; gap:18px;
   line-height:1.4; max-height:65dvh; overflow:auto; padding:3px; }
-#settingsBody select { font:inherit; padding:6px; background:var(--white);
+#settingsBody .st-section { display:flex; flex-direction:column; gap:10px;
+  border-top:3px double var(--blue); padding-top:12px; min-width:0; }
+#settingsBody .st-section:first-child { border-top:0; padding-top:0; }
+#settingsBody h3 { color:var(--red); font:inherit; }
+#settingsBody label { display:flex; align-items:center; gap:8px; }
+#settingsBody input { width:18px; height:18px; flex:0 0 18px; margin:0; }
+#settingsBody select { font:inherit; padding:6px; max-width:100%; background:var(--white);
   color:var(--blue); border:2px solid var(--blue); }
-#settingsBody input { width:18px; height:18px; vertical-align:middle; }
+#settingsBody .st-choice { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+#settingsBody .st-choice label { flex:1; }
+#settingsBody .st-actions { display:flex; flex-wrap:wrap; gap:8px; }
+#settingsBody button { white-space:normal; height:auto; line-height:1.3; padding:6px; }
+#settingsBody .st-actions button { flex:1 1 190px; }
+#settingsBody .st-note,#settingsBody details { font-size:12px; }
+#settingsBody summary { cursor:pointer; width:fit-content; }
+#settingsBody summary:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+#settingsBody details[open] summary { margin-bottom:8px; }
+#settingsBody details p+p { margin-top:8px; }
+#settingsBody details:not([open])>:not(summary) { display:none; }
+#settingsBody [role=status]:empty { display:none; }
 `, `
 <div id="settingsOverlay" class="overlay" role="dialog" aria-modal="true"
   aria-label="Settings">
   <div id="settingsWin" class="win" data-title="Settings">
     <span id="settingsClose" class="close">[X]</span>
     <div id="settingsBody">
-      <button id="onlyBtn" title="Move open tools into TempleOS and fill the browser" aria-pressed="false" disabled>TempleOS Only Mode</button>
-      <label><input id="syncTabs" type="checkbox"> Sync when multiple tabs are open</label>
-      <p>Sharing activates when a second tab opens. When off, only one tab saves C:.</p>
-      <label><input id="rememberSession" type="checkbox"> Save full session</label>
-      <p>Resume running tasks after refresh. C: files always save.</p>
-      <label><input id="saveWindows" type="checkbox"> Remember website windows</label>
-      <p>Restore open windows, sizes and positions.</p>
-      <p>Sync and session changes apply after refreshing your tabs.</p>
-      <button id="resetWindows">Reset window positions</button>
-      <p>Restore the default desktop layout. Open tools stay open.</p>
-      <label><input id="showHeader" type="checkbox"> Show header introduction</label>
-      <label><input id="showFooter" type="checkbox"> Show footer credits</label>
-      <label><input id="nativeDrawing" type="checkbox"> Native window drawing</label>
-      <p>Draw browser window borders with HolyC and TempleOS's own font.
-        This works independently of the emulated machine.</p>
-      <label for="windowScale">Window decoration scale (DPI)</label>
-      <select id="windowScale">
-        <option value="1">100%</option>
-        <option value="1.25">125%</option>
-        <option value="1.5">150%</option>
-        <option value="1.75">175%</option>
-        <option value="2">200%</option>
-      </select>
-      <p>Resize borders, titles and scroll handles.</p>
-      <label><input id="windowPassthrough" type="checkbox"> Window passthrough</label>
-      <button id="returnWindows">Return windows</button>
-      <p id="onlyModeHint" hidden>Exit TempleOS Only Mode to return windows or turn passthrough off.</p>
-      <p>Use a mouse to drag a TempleOS window's title out of the screen onto the
-	browser desktop. Drag it back to return it. Compatible browser tools
-	can also be dragged into TempleOS. Tools opened from a native window stay there.
-	Pausing returns windows so browser controls stay available.</p>
-      <p>Drag a browser window beyond the page edge to open it in a browser
-        popup. Close the popup or choose Return to desktop to bring it back.
-        Your browser may ask you to allow popups.</p>
-      <p>Return windows brings them back without turning passthrough off.
-        Video Player and Sprite Studio stay in the browser.</p>
-      <p id="windowPassStatus" role="status"></p>
-      <label><input id="fastGraphics" type="checkbox"> Web Optimization</label>
-      <p>Uses drawing shortcuts for better performance.
-	Turn off to run TempleOS's original drawing code.</p>
-      <label for="frameRate">TempleOS refresh rate</label>
-      <select id="frameRate">
-        <option value="0">Uncapped</option>
-        <option value="30">30 - original TempleOS timing</option>
-        <option value="60">60</option>
-        <option value="120">120</option>
-      </select>
-      <p>Uncapped runs as fast as the emulator can draw. Games that time
-        their movement by Refresh run faster above 30; choose 30 for their
-        original speed.</p>
-      <label><input id="biosRepeat" type="checkbox"> BIOS key override:
-        repeat held keys</label>
-      <p>Repeats the last held key at the keyboard rate TempleOS requests.
-        Useful for programs that read individual key presses.</p>
-      <p id="settingsStatus" role="status"></p>
+      <section class="st-section" aria-labelledby="stWindows">
+        <h3 id="stWindows">Windows</h3>
+        <button id="onlyBtn" title="Move open tools into TempleOS and fill the browser" aria-pressed="false" disabled>TempleOS Only Mode</button>
+        <label><input id="windowPassthrough" type="checkbox"> Window passthrough</label>
+        <label><input id="saveWindows" type="checkbox" aria-describedby="stRememberHint"> Remember website windows</label>
+        <p id="stRememberHint" class="st-note">Save their positions, sizes and open state.</p>
+        <div class="st-actions">
+          <button id="returnWindows">Return windows</button>
+          <button id="resetWindows">Reset window positions</button>
+        </div>
+        <p id="onlyModeHint" class="st-note" hidden>Exit TempleOS Only Mode to return windows or turn passthrough off.</p>
+        <p id="windowPassStatus" class="st-note" role="status"></p>
+        <details>
+          <summary>How windows work</summary>
+          <p>Passthrough lets you drag windows between TempleOS and the page. Tools opened inside TempleOS stay there. Video Player and Sprite Studio stay in the browser.</p>
+          <p>Return windows keeps passthrough enabled. Reset positions keeps tools open.</p>
+          <p>On desktop, drag a window beyond the page edge to open a browser popup. Close it to return the window.</p>
+        </details>
+      </section>
+      <section class="st-section" aria-labelledby="stSaving">
+        <h3 id="stSaving">Saving &amp; tabs</h3>
+        <p class="st-note">Files on C: save automatically.</p>
+        <label><input id="syncTabs" type="checkbox"> Sync when multiple tabs are open</label>
+        <label><input id="rememberSession" type="checkbox"> Save full session</label>
+        <p class="st-note">Refresh tabs to apply these changes.</p>
+        <details>
+          <summary>What gets saved?</summary>
+          <p>A full session also preserves running tasks and TempleOS windows. Without it, you start with a fresh desktop and your saved files.</p>
+          <p>Sync shares one running machine across tabs. When off, only one tab can save C:.</p>
+        </details>
+      </section>
+      <section class="st-section" aria-labelledby="stAppearance">
+        <h3 id="stAppearance">Appearance</h3>
+        <label><input id="showHeader" type="checkbox"> Show header introduction</label>
+        <label><input id="showFooter" type="checkbox"> Show footer credits</label>
+        <label><input id="nativeDrawing" type="checkbox"> Native window drawing</label>
+        <div class="st-choice">
+          <label for="windowScale">Decoration scale (DPI)</label>
+          <select id="windowScale">
+            <option value="1">100%</option>
+            <option value="1.25">125%</option>
+            <option value="1.5">150%</option>
+            <option value="1.75">175%</option>
+            <option value="2">200%</option>
+          </select>
+        </div>
+        <details>
+          <summary>About window drawing</summary>
+          <p>Uses HolyC and TempleOS's font to draw browser window borders. Scale changes borders, titles and scroll handles.</p>
+        </details>
+      </section>
+      <section class="st-section" aria-labelledby="stPerformance">
+        <h3 id="stPerformance">Performance &amp; input</h3>
+        <label><input id="fastGraphics" type="checkbox"> Web Optimization</label>
+        <div class="st-choice">
+          <label for="frameRate">Refresh rate</label>
+          <select id="frameRate">
+            <option value="0">Uncapped</option>
+            <option value="30">30 FPS (original)</option>
+            <option value="60">60 FPS</option>
+            <option value="120">120 FPS</option>
+          </select>
+        </div>
+        <label><input id="biosRepeat" type="checkbox"> Repeat held keys</label>
+        <details>
+          <summary>About performance &amp; keys</summary>
+          <p>Web Optimization uses faster replacements for selected drawing routines. Turn it off to run the original instructions.</p>
+          <p>Uncapped draws as fast as possible. Use 30 FPS for games that rely on TempleOS's original timing.</p>
+          <p>Repeat held keys overrides BIOS key handling for programs that read individual key presses.</p>
+        </details>
+      </section>
+      <p id="settingsStatus" class="st-note" role="status"></p>
     </div>
   </div>
 </div>`);
